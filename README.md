@@ -10,9 +10,10 @@ The Lumberjacks' toolbelt is the Forest CLI which makes easy to manage your back
 
 ### Commands
 
-`$ forest [command]`
+    $ forest [command]
 
 - `environments`  manage Forest environments
+- `projects`      manage Forest projects
 - `user`          show your current logged user
 - `login`         sign in to your Forest account
 - `logout`        sign out of your Forest account
