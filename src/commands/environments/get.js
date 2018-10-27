@@ -46,9 +46,9 @@ Extra documentation goes here
 `
 
 GetCommand.flags = {
-  project: flags.string({
+  projectId: flags.string({
     char: 'p',
-    description: 'The Forest project name',
+    description: 'Forest project ID',
     required: true
   }),
 };

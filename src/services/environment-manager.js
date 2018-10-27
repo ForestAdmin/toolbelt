@@ -14,20 +14,12 @@ function EnvironmentManager(config) {
     let project;
 
     return agent
-      .get(`${config.serverHost}/api/projects`)
+      .get(`${config.serverHost}/api/projects/${config.projectId}/environments`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-origin', 'Lumber')
+      .set('forest-project-id', config.projectId)
       .send()
-      .then((response) => new ProjectDeserializer.deserialize(response.body))
-      .then((projects) => {
-        project = _.find(projects, ['name', config.project]);
-        if (project) {
-          return project.environments || [];
-        } else {
-          logger.error(`Cannot find the project ${chalk.bold(config.project)}.`);
-          process.exit(1);
-        }
-      });
+      .then((response) => new EnvironmentDeserializer.deserialize(response.body));
   };
 
   this.getEnvironment = async (config) => {
@@ -38,6 +30,7 @@ function EnvironmentManager(config) {
       .get(`${config.serverHost}/api/environments/${config.environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-origin', 'Lumber')
+      .set('forest-project-id', config.projectId)
       .send()
       .then((response) => new EnvironmentDeserializer.deserialize(response.body))
       .then((environment) => {
