@@ -1,6 +1,7 @@
 const {Command, flags} = require('@oclif/command')
 const _ = require('lodash');
 const chalk = require('chalk');
+const Table = require('cli-table');
 const logger = require('../../services/logger');
 const EnvironmentManager = require('../../services/environment-manager');
 const Prompter = require('../../services/prompter');
@@ -17,10 +18,21 @@ class EnvironmentCommand extends Command {
     const environments = await manager.listEnvironments();
     console.log(`${chalk.bold('ENVIRONMENTS')}`);
 
-    environments.forEach((environment) => {
-      console.log(`\t${environment.name}: ${chalk.green(environment.apiEndpoint)} [${chalk.cyan(environment.type)}]`);
+    const table = new Table({
+      head: ['ID', 'NAME', 'URL', 'TYPE'],
+      colWidths: [10, 20, 35, 15],
+      chars: { 'top': '' , 'top-mid': '' , 'top-left': '' , 'top-right': ''
+        , 'bottom': '' , 'bottom-mid': '' , 'bottom-left': '' , 'bottom-right': ''
+        , 'left': '' , 'left-mid': '' , 'mid': '' , 'mid-mid': ''
+        , 'right': '' , 'right-mid': '' , 'middle': '' }
     });
 
+    environments.forEach((environment) => {
+      table.push([environment.id, environment.name, environment.apiEndpoint,
+        environment.type]);
+    });
+
+    console.log(table.toString());
     console.log('\n');
   }
 }
@@ -28,8 +40,11 @@ class EnvironmentCommand extends Command {
 EnvironmentCommand.description = `List existing environments.`;
 
 EnvironmentCommand.flags = {
-  name: flags.string({char: 'n', description: 'name to print'}),
-  project: flags.string({ char: 'p', description: 'The Forest project name', required: true }),
+  project: flags.string({
+    char: 'p',
+    description: 'The Forest project name',
+    required: true
+  }),
 };
 
 module.exports = EnvironmentCommand;
