@@ -31,7 +31,7 @@ function EnvironmentManager(config) {
       .set('forest-origin', 'Lumber')
       .set('forest-project-id', config.projectId)
       .send()
-      .then(response => new EnvironmentDeserializer.deserialize(response.body))
+      .then(response => new EnvironmentDeserializer.deserialize(response.body));
   };
 
   this.createEnvironment = async (config) => {
@@ -43,7 +43,7 @@ function EnvironmentManager(config) {
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-origin', 'Lumber')
       .set('forest-project-id', config.projectId)
-      .send(new EnvironmentSerializer({
+      .send(EnvironmentSerializer.serialize({
         name: config.name,
         apiEndpoint: config.url,
         project: { id: config.projectId }

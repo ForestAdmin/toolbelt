@@ -29,7 +29,7 @@ function ProjectManager(config) {
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-origin', 'Lumber')
       .send()
-      .then((response) => new ProjectDeserializer.deserialize(response.body));
+      .then(response => new ProjectDeserializer.deserialize(response.body));
   };
 }
 
