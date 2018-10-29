@@ -2,6 +2,8 @@
   <img src="https://github.com/ForestAdmin/toolbelt/blob/master/assets/logo.png?raw=true" alt="Toolbelt logo">
 </p>
 
+[![Build Status](https://travis-ci.org/ForestAdmin/toolbelt.svg?branch=master)](https://travis-ci.org/ForestAdmin/toolbelt)
+
 The Lumberjacks' toolbelt is the Forest CLI which makes easy to manage your back office application directly from the terminal.
 
 
