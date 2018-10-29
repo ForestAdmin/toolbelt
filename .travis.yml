@@ -1,0 +1,12 @@
+sudo: required
+
+language: node_js
+
+node_js:
+  - 8.8.0
+
+env:
+  - NODE_ENV=travis
+
+script:
+  - npm run test
