@@ -28,7 +28,7 @@ describe('environments:delete', () => {
   .command(['environments:delete', '324', '-p', '82', '--force'])
   .it('should delete the environment', ctx => {
     expect(ctx.stdout).to.contain('Environment Staging successfully deleted.');
-  })
+  });
 
   test
   .stderr()
@@ -40,5 +40,5 @@ describe('environments:delete', () => {
   .command(['environments:delete', '324', '-p', '82', '--force'])
   .it('should display a NotFound error', ctx => {
     expect(ctx.stderr).to.contain('Cannot find the environment 324 on the project 82.');
-  })
+  });
 });
