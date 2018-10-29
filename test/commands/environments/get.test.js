@@ -2,16 +2,16 @@ const {expect, test} = require('@oclif/test')
 
 describe('environments:get', () => {
   test
-  .stdout()
-  .command(['environments:get'])
-  .it('runs hello', ctx => {
-    expect(ctx.stdout).to.contain('hello world')
-  })
+  .stderr()
+  .command(['environments:get', '4382', '-p', '82'])
+  .it('should returns a Not Found error.', ctx => {
+    expect(ctx.stderr).to.contain('Cannot find the environment 4382 on the project 82');
+  });
 
   test
-  .stdout()
-  .command(['environments:get', '--name', 'jeff'])
-  .it('runs hello --name jeff', ctx => {
-    expect(ctx.stdout).to.contain('hello jeff')
-  })
+  .stderr()
+  .command(['environments:get', '10272', '-p', '9823'])
+  .it('should returns a Not Found error.', ctx => {
+    expect(ctx.stderr).to.contain('Cannot find the environment 10272 on the project 9823');
+  });
 })

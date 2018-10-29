@@ -1,4 +1,4 @@
-const {Command, flags} = require('@oclif/command')
+const { Command, flags } = require('@oclif/command')
 const _ = require('lodash');
 const chalk = require('chalk');
 const Table = require('cli-table');
@@ -8,7 +8,7 @@ const Prompter = require('../../services/prompter');
 
 class EnvironmentCommand extends Command {
   async run() {
-    const {flags} = this.parse(EnvironmentCommand)
+    const { flags } = this.parse(EnvironmentCommand);
 
     let config = await Prompter([]);
     config = _.merge(config, flags);

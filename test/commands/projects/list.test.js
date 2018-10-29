@@ -4,14 +4,11 @@ describe('projects:list', () => {
   test
   .stdout()
   .command(['projects:list'])
-  .it('runs hello', ctx => {
-    expect(ctx.stdout).to.contain('hello world')
-  })
-
-  test
-  .stdout()
-  .command(['projects:list', '--name', 'jeff'])
-  .it('runs hello --name jeff', ctx => {
-    expect(ctx.stdout).to.contain('hello jeff')
+  .it('should returns the projects\' list.', ctx => {
+    expect(ctx.stdout).to.contain('PROJECTS');
+    expect(ctx.stdout).to.contain('ID');
+    expect(ctx.stdout).to.contain('NAME');
+    expect(ctx.stdout).to.contain('82');
+    expect(ctx.stdout).to.contain('Forest');
   })
 })

@@ -1,4 +1,4 @@
-const {Command, flags} = require('@oclif/command')
+const { Command, flags } = require('@oclif/command')
 const _ = require('lodash');
 const chalk = require('chalk');
 const Table = require('cli-table');
