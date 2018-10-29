@@ -19,6 +19,18 @@ function ProjectManager(config) {
       .send()
       .then((response) => new ProjectDeserializer.deserialize(response.body));
   };
+
+  this.getProject = async () => {
+    const authToken = authenticator.getAuthToken();
+    let project;
+
+    return agent
+      .get(`${config.serverHost}/api/projects/${config.projectId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('forest-origin', 'Lumber')
+      .send()
+      .then((response) => new ProjectDeserializer.deserialize(response.body));
+  };
 }
 
 module.exports = ProjectManager;
