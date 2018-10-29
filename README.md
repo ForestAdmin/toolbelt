@@ -12,12 +12,24 @@ The Lumberjacks' toolbelt is the Forest CLI which makes easy to manage your back
 
     $ forest [command]
 
-- `environments`  manage Forest environments
-- `projects`      manage Forest projects
-- `user`          show your current logged user
-- `login`         sign in to your Forest account
-- `logout`        sign out of your Forest account
-- `help [cmd]`    display help for [cmd]
+#### General
+- `user`          show your current logged user.
+- `login`         sign in to your Forest account.
+- `logout`        sign out of your Forest account.
+- `help [cmd]`    display help for [cmd].
+
+#### Projects
+
+Manage Forest projects.
+
+- `projects:list` list existing projects.
+
+#### Environments
+
+Manage Forest environments.
+
+- `environments:list` manage Forest environments.
+- `environments:get`  get the configuration of an environment.
 
 ## License
 [GPL](https://github.com/ForestAdmin/toolbelt/blob/master/LICENSE)
