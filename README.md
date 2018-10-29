@@ -28,8 +28,10 @@ Manage Forest projects.
 
 Manage Forest environments.
 
-- `environments:list` manage Forest environments.
-- `environments:get`  get the configuration of an environment.
+- `environments:list`    manage Forest environments.
+- `environments:get`     get the configuration of an environment.
+- `environments:create`  create a new environment.
+- `environments:delete`  delete an environment.
 
 ## License
 [GPL](https://github.com/ForestAdmin/toolbelt/blob/master/LICENSE)
