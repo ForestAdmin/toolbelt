@@ -1,11 +1,11 @@
-const {Command, flags} = require('@oclif/command')
+const { Command } = require('@oclif/command');
 const chalk = require('chalk');
 const authenticator = require('../services/authenticator');
 const Prompter = require('../services/prompter');
 const logger = require('../services/logger');
 
 class LoginCommand extends Command {
-  async run() {
+  static async run() {
     await authenticator
       .logout({ log: false });
 
@@ -27,6 +27,6 @@ class LoginCommand extends Command {
   }
 }
 
-LoginCommand.description = `Sign in with an existing account.`
+LoginCommand.description = 'Sign in with an existing account.';
 
-module.exports = LoginCommand
+module.exports = LoginCommand;

@@ -1,7 +1,6 @@
 const { Command, flags } = require('@oclif/command');
 const _ = require('lodash');
 const chalk = require('chalk');
-const Table = require('cli-table');
 const EnvironmentManager = require('../../services/environment-manager');
 const Renderer = require('../../renderers/environment');
 const Prompter = require('../../services/prompter');
@@ -9,15 +8,14 @@ const logger = require('../../services/logger');
 
 class GetCommand extends Command {
   async run() {
-    const { args } = this.parse(GetCommand);
-    const { flags } = this.parse(GetCommand);
+    const parsed = this.parse(GetCommand);
 
     let config = await Prompter([]);
-    config = _.merge(config, flags, args);
+    config = _.merge(config, parsed.flags, parsed.args);
 
-    const manager = new EnvironmentManager();
+    const manager = new EnvironmentManager(config);
     try {
-      const environment = await manager.getEnvironment(config);
+      const environment = await manager.getEnvironment();
       new Renderer(config).render(environment);
     } catch (err) {
       logger.error(`Cannot find the environment ${chalk.bold(config.environmentId)} on the project ${chalk.bold(config.projectId)}.`);
@@ -25,13 +23,13 @@ class GetCommand extends Command {
   }
 }
 
-GetCommand.description = `Get the configuration of an environment`;
+GetCommand.description = 'Get the configuration of an environment';
 
 GetCommand.flags = {
   projectId: flags.string({
     char: 'p',
     description: 'Forest project ID',
-    required: true
+    required: true,
   }),
   format: flags.string({
     char: 'format',
@@ -42,7 +40,7 @@ GetCommand.flags = {
 };
 
 GetCommand.args = [{
-  name: 'environmentId', required: true, description: 'ID of an environment'
+  name: 'environmentId', required: true, description: 'ID of an environment',
 }];
 
 module.exports = GetCommand;

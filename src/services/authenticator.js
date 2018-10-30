@@ -1,7 +1,6 @@
 const fs = require('fs');
 const os = require('os');
 const P = require('bluebird');
-const _ = require('lodash');
 const chalk = require('chalk');
 const agent = require('superagent-promise')(require('superagent'), P);
 const logger = require('./logger');
@@ -16,12 +15,12 @@ function Authenticator() {
   };
 
   this.login = (config) => {
-    return agent
+    agent
       .post(`${config.serverHost}/api/sessions`, {
         email: config.email,
         password: config.password,
       })
-      .then((response) => response.body)
+      .then(response => response.body)
       .then((auth) => {
         config.authToken = auth.token;
         return fs.writeFileSync(`${os.homedir()}/.forestrc`, auth.token);

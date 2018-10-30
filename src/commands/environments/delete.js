@@ -8,17 +8,16 @@ const logger = require('../../services/logger');
 
 class DeleteCommand extends Command {
   async run() {
-    const { args } = this.parse(DeleteCommand);
-    const { flags } = this.parse(DeleteCommand);
+    const parsed = this.parse(DeleteCommand);
 
     let config = await Prompter([]);
-    config = _.merge(config, flags, args);
+    config = _.merge(config, parsed.flags, parsed.args);
 
 
-    const manager = new EnvironmentManager();
+    const manager = new EnvironmentManager(config);
 
     try {
-      const environment = await manager.getEnvironment(config)
+      const environment = await manager.getEnvironment();
       let answers;
 
       if (!config.force) {
@@ -47,22 +46,22 @@ class DeleteCommand extends Command {
   }
 }
 
-DeleteCommand.description = `Delete an environment`;
+DeleteCommand.description = 'Delete an environment';
 
 DeleteCommand.flags = {
   projectId: flags.string({
     char: 'p',
     description: 'Forest project ID',
-    required: true
+    required: true,
   }),
   force: flags.boolean({
     char: 'force',
-    description: 'Force delete'
+    description: 'Force delete',
   }),
-}
+};
 
 DeleteCommand.args = [{
-  name: 'environmentId', required: true, description: 'ID of an environment'
+  name: 'environmentId', required: true, description: 'ID of an environment',
 }];
 
-module.exports = DeleteCommand
+module.exports = DeleteCommand;

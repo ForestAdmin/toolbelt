@@ -1,7 +1,5 @@
-const { Command, flags } = require('@oclif/command')
+const { Command, flags } = require('@oclif/command');
 const _ = require('lodash');
-const chalk = require('chalk');
-const Table = require('cli-table');
 const EnvironmentManager = require('../../services/environment-manager');
 const Renderer = require('../../renderers/environment');
 const Prompter = require('../../services/prompter');
@@ -9,15 +7,15 @@ const logger = require('../../services/logger');
 
 class CreateCommand extends Command {
   async run() {
-    const { flags } = this.parse(CreateCommand);
+    const parsed = this.parse(CreateCommand);
 
     let config = await Prompter([]);
-    config = _.merge(config, flags);
+    config = _.merge(config, parsed.flags);
 
-    const manager = new EnvironmentManager();
+    const manager = new EnvironmentManager(config);
 
     try {
-      const environment = await manager.createEnvironment(config);
+      const environment = await manager.createEnvironment();
       new Renderer(config).render(environment);
     } catch (err) {
       logger.error(err);
@@ -25,23 +23,23 @@ class CreateCommand extends Command {
   }
 }
 
-CreateCommand.description = `Create a new environment`;
+CreateCommand.description = 'Create a new environment';
 
 CreateCommand.flags = {
   projectId: flags.string({
     char: 'p',
     description: 'Forest project ID',
-    required: true
+    required: true,
   }),
   name: flags.string({
     char: 'n',
     description: 'Environment name',
-    required: true
+    required: true,
   }),
   url: flags.string({
     char: 'u',
     description: 'Application URL',
-    required: true
+    required: true,
   }),
   format: flags.string({
     char: 'format',
@@ -51,4 +49,4 @@ CreateCommand.flags = {
   }),
 };
 
-module.exports = CreateCommand
+module.exports = CreateCommand;

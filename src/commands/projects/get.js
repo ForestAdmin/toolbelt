@@ -1,7 +1,6 @@
 const { Command, flags } = require('@oclif/command');
 const _ = require('lodash');
 const chalk = require('chalk');
-const Table = require('cli-table');
 const ProjectManager = require('../../services/project-manager');
 const Renderer = require('../../renderers/project');
 const Prompter = require('../../services/prompter');
@@ -9,10 +8,10 @@ const logger = require('../../services/logger');
 
 class GetCommand extends Command {
   async run() {
-    const { args, flags } = this.parse(GetCommand);
+    const parsed = this.parse(GetCommand);
 
     let config = await Prompter([]);
-    config = _.merge(config, flags, args);
+    config = _.merge(config, parsed.flags, parsed.args);
 
     const manager = new ProjectManager(config);
     try {
@@ -25,7 +24,7 @@ class GetCommand extends Command {
   }
 }
 
-GetCommand.description = `Get the configuration of a project`;
+GetCommand.description = 'Get the configuration of a project';
 
 GetCommand.flags = {
   format: flags.string({
@@ -37,7 +36,7 @@ GetCommand.flags = {
 };
 
 GetCommand.args = [{
-  name: 'projectId', required: true, description: 'ID of a project'
+  name: 'projectId', required: true, description: 'ID of a project',
 }];
 
-module.exports = GetCommand
+module.exports = GetCommand;

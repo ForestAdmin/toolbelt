@@ -1,11 +1,12 @@
+/* global describe */
 const Nock = require('@fancy-test/nock').default;
-const Test = require('@oclif/test');
-const test = Test.test.register('nock', Nock)
-const expect = Test.expect
+const { expect, test } = require('@oclif/test');
+
+const fancy = test.register('nock', Nock);
 const EnvironmentSerializer = require('../../../src/serializers/environment');
 
 describe('environments:list', () => {
-  const mocks = test
+  const mocks = fancy
     .stdout()
     .env({ SERVER_HOST: 'http://localhost:3001' })
     .nock('http://localhost:3001', api => api
@@ -28,12 +29,11 @@ describe('environments:list', () => {
         lianaName: 'forest-express-sequelize',
         lianaVersion: '1.3.2',
         secretKey: '1b91a1c9bb28e4bea3c941fac1c1c95db5dc1b7bc73bd649b0b113713ee18167',
-      }]))
-    );
+      }])));
 
   mocks
     .command(['environments:list', '-p', '82'])
-    .it('should return the list of environments', ctx => {
+    .it('should return the list of environments', (ctx) => {
       expect(ctx.stdout).to.contain('ENVIRONMENTS');
 
       expect(ctx.stdout).to.contain('ID');
@@ -57,7 +57,7 @@ describe('environments:list', () => {
 
   mocks
     .command(['environments:list', '-p', '82', '--format', 'json'])
-    .it('should return the list of environments in JSON', ctx => {
+    .it('should return the list of environments in JSON', (ctx) => {
       expect(JSON.parse(ctx.stdout)).to.eql([
         {
           id: '324',

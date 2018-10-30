@@ -1,9 +1,6 @@
 const _ = require('lodash');
 const inquirer = require('inquirer');
 const authenticator = require('../services/authenticator');
-const path = require('path');
-
-const FORMAT_PASSWORD = /^(?=\S*?[A-Z])(?=\S*?[a-z])((?=\S*?[0-9]))\S{8,}$/;
 
 async function Prompter(requests) {
   function isRequested(option) {
@@ -42,12 +39,9 @@ async function Prompter(requests) {
       name: 'password',
       message: 'What\'s your password: ',
       validate: (password) => {
-        if (password) {
-          return true;
-        } else {
-          return '🔥  Oops, your password cannot be blank 🔥';
-        }
-      }
+        if (password) { return true; }
+        return '🔥  Oops, your password cannot be blank 🔥';
+      },
     });
   }
 
