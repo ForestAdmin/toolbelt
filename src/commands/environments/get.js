@@ -15,7 +15,7 @@ class GetCommand extends Command {
 
     const manager = new EnvironmentManager(config);
     try {
-      const environment = await manager.getEnvironment();
+      const environment = await manager.getEnvironment(config.environmentId);
       new Renderer(config).render(environment);
     } catch (err) {
       logger.error(`Cannot find the environment ${chalk.bold(config.environmentId)} on the project ${chalk.bold(config.projectId)}.`);

@@ -25,16 +25,17 @@ The Lumberjacks' toolbelt is the Forest CLI which makes easy to manage your back
 Manage Forest projects.
 
 - `projects:list` list existing projects.
-- `projects:get` get the configuration of a project.
+- `projects:get`  get the configuration of a project.
 
 #### Environments
 
 Manage Forest environments.
 
-- `environments:list`    manage Forest environments.
-- `environments:get`     get the configuration of an environment.
-- `environments:create`  create a new environment.
-- `environments:delete`  delete an environment.
+- `environments:list`         manage Forest environments.
+- `environments:get`          get the configuration of an environment.
+- `environments:create`       create a new environment.
+- `environments:delete`       delete an environment.
+- `environments:copy-layout`  copy the layout from one environment to another.
 
 ## License
 [GPL](https://github.com/ForestAdmin/toolbelt/blob/master/LICENSE)

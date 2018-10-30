@@ -13,11 +13,10 @@ class DeleteCommand extends Command {
     let config = await Prompter([]);
     config = _.merge(config, parsed.flags, parsed.args);
 
-
     const manager = new EnvironmentManager(config);
 
     try {
-      const environment = await manager.getEnvironment();
+      const environment = await manager.getEnvironment(config.environmentId);
       let answers;
 
       if (!config.force) {
@@ -31,7 +30,7 @@ class DeleteCommand extends Command {
       }
 
       if (!answers || answers.confirm === environment.name) {
-        await manager.deleteEnvironment(config);
+        await manager.deleteEnvironment(config.environmentId);
         console.log(`Environment ${chalk.red(environment.name)} successfully deleted.`);
       } else {
         logger.error(`Confirmation did not match ${chalk.red(environment.name)}. Aborted.`);

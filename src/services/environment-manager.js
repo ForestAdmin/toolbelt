@@ -3,6 +3,7 @@ const agent = require('superagent-promise')(require('superagent'), P);
 const authenticator = require('./authenticator');
 const EnvironmentSerializer = require('../serializers/environment');
 const EnvironmentDeserializer = require('../deserializers/environment');
+const DeploymentRequestSerializer = require('../serializers/deployment-request');
 
 function EnvironmentManager(config) {
   this.listEnvironments = async () => {
@@ -18,11 +19,11 @@ function EnvironmentManager(config) {
       .then(response => new EnvironmentDeserializer.deserialize(response.body));
   };
 
-  this.getEnvironment = async () => {
+  this.getEnvironment = async (environmentId) => {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${config.serverHost}/api/environments/${config.environmentId}`)
+      .get(`${config.serverHost}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-origin', 'Lumber')
       .set('forest-project-id', config.projectId)
@@ -47,14 +48,31 @@ function EnvironmentManager(config) {
       .then(environment => environment);
   };
 
-  this.deleteEnvironment = async () => {
+  this.deleteEnvironment = async (environmentId) => {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .del(`${config.serverHost}/api/environments/${config.environmentId}`)
+      .del(`${config.serverHost}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-origin', 'Lumber')
       .set('forest-project-id', config.projectId)
+      .then(() => true);
+  };
+
+  this.copyLayout = async (fromEnvironmentId, toEnvironmentId) => {
+    const authToken = authenticator.getAuthToken();
+    const deploymentRequest = {
+      id: Math.random().toString(26).slice(2),
+      from: { id: fromEnvironmentId },
+      to: { id: toEnvironmentId },
+    };
+
+    return agent
+      .post(`${config.serverHost}/api/deployment-requests`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('forest-origin', 'Lumber')
+      .set('forest-project-id', config.projectId)
+      .send(DeploymentRequestSerializer.serialize(deploymentRequest))
       .then(() => true);
   };
 }
