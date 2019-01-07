@@ -60,12 +60,16 @@ function EnvironmentManager(config) {
   };
 
   this.copyLayout = async (fromEnvironmentId, toEnvironmentId) => {
+    console.log('fromEnvironmentId: ', fromEnvironmentId);
+    console.log('toEnvironmentId: ', toEnvironmentId);
     const authToken = authenticator.getAuthToken();
     const deploymentRequest = {
       id: Math.random().toString(26).slice(2),
       from: { id: fromEnvironmentId },
       to: { id: toEnvironmentId },
     };
+
+    console.log('DeploymentRequestSerializer.serialize(deploymentRequest):', JSON.stringify(DeploymentRequestSerializer.serialize(deploymentRequest), null, 2));
 
     return agent
       .post(`${config.serverHost}/api/deployment-requests`)
