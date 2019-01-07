@@ -1,4 +1,3 @@
-/* global describe */
 const Nock = require('@fancy-test/nock').default;
 const { test } = require('@oclif/test');
 const _ = require('lodash');
