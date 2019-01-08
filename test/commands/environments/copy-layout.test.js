@@ -45,7 +45,17 @@ describe('environments:copy-layout', () => {
         parsedBody = body;
         return body;
       })
-      .reply(204));
+      .reply(204, {
+        meta: {
+          job_id: 78,
+        },
+      }))
+    .nock('http://localhost:3001', api => api
+      .get('/api/jobs/78')
+      .reply(200, {
+        state: 'complete',
+        progress: '100',
+      }));
 
   mocks
     .command(['environments:copy-layout', '325', '324', '-p', '82', '--force'])
