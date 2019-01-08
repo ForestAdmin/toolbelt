@@ -43,8 +43,12 @@ class CopyLayoutCommand extends Command {
     }
 
     if (!answers || answers.confirm === toEnvironment.name) {
-      await manager.copyLayout(fromEnvironment.id, toEnvironment.id);
-      console.log(`Environment's layout ${chalk.red(fromEnvironment.name)} successfully copied to ${chalk.red(toEnvironment.name)}.`);
+      const copyLayout = await manager.copyLayout(fromEnvironment.id, toEnvironment.id);
+      if (copyLayout) {
+        console.log(`Environment's layout ${chalk.red(fromEnvironment.name)} successfully copied to ${chalk.red(toEnvironment.name)}.`);
+      } else {
+        logger.error('💀  Oops, something went wrong.💀');
+      }
     } else {
       logger.error(`Confirmation did not match ${chalk.red(toEnvironment.name)}. Aborted.`);
     }

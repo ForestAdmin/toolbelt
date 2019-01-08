@@ -4,6 +4,10 @@ const authenticator = require('./authenticator');
 const EnvironmentSerializer = require('../serializers/environment');
 const EnvironmentDeserializer = require('../deserializers/environment');
 const DeploymentRequestSerializer = require('../serializers/deployment-request');
+const { cli } = require('cli-ux');
+const { promisify } = require('util');
+
+const setTimeoutAsync = promisify(setTimeout);
 
 function EnvironmentManager(config) {
   this.listEnvironments = async () => {
@@ -68,13 +72,41 @@ function EnvironmentManager(config) {
       to: toEnvironmentId,
     };
 
-    return agent
+    const deploymentRequestResponse = await agent
       .post(`${config.serverHost}/api/deployment-requests`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-origin', 'Lumber')
       .set('forest-project-id', config.projectId)
-      .send(DeploymentRequestSerializer.serialize(deploymentRequest))
-      .then(() => true);
+      .send(DeploymentRequestSerializer.serialize(deploymentRequest));
+
+    const jobId = deploymentRequestResponse.body.meta.job_id;
+
+    cli.action.start('Copying layout...');
+
+    const checkState = async function checkState() {
+      const jobResponse = await agent
+        .get(`${config.serverHost}/api/jobs/${jobId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .set('forest-origin', 'Lumber')
+        .set('forest-project-id', config.projectId);
+
+      if (jobResponse
+          && jobResponse.body
+          && jobResponse.body.state
+          && jobResponse.body.state !== 'inactive'
+          && jobResponse.body.state !== 'active') {
+        cli.action.stop();
+        if (jobResponse.body.state === 'failed') {
+          return false;
+        }
+        return true;
+      }
+
+      await setTimeoutAsync(1000);
+      return checkState();
+    };
+
+    return checkState();
   };
 }
 
