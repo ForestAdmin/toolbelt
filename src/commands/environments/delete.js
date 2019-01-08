@@ -4,7 +4,6 @@ const chalk = require('chalk');
 const inquirer = require('inquirer');
 const EnvironmentManager = require('../../services/environment-manager');
 const Prompter = require('../../services/prompter');
-const logger = require('../../services/logger');
 
 class DeleteCommand extends Command {
   async run() {
@@ -30,17 +29,21 @@ class DeleteCommand extends Command {
       }
 
       if (!answers || answers.confirm === environment.name) {
-        await manager.deleteEnvironment(config.environmentId);
-        console.log(`Environment ${chalk.red(environment.name)} successfully deleted.`);
-      } else {
-        logger.error(`Confirmation did not match ${chalk.red(environment.name)}. Aborted.`);
+        const deleteEnvironment = await manager.deleteEnvironment(config.environmentId);
+        if (deleteEnvironment) {
+          return this.log(`Environment ${chalk.red(environment.name)} successfully deleted.`);
+        }
+        return this.error('💀  Oops, something went wrong.💀', { exit: 1 });
       }
+      return this.error(`Confirmation did not match ${chalk.red(environment.name)}. Aborted.`, { exit: 1 });
     } catch (err) {
       if (err.status === 404) {
-        logger.error(`Cannot find the environment ${chalk.bold(config.environmentId)} on the project ${chalk.bold(config.projectId)}.`);
-      } else {
-        throw err;
+        return this.error(`Cannot find the environment ${chalk.bold(config.environmentId)} on the project ${chalk.bold(config.projectId)}.`, { exit: 1 });
       }
+      if (err.status === 403) {
+        return this.error(`You do not have the rights to delete environment ${chalk.bold(config.environmentId)}.`, { exit: 1 });
+      }
+      throw err;
     }
   }
 }
