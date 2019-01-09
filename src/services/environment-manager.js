@@ -79,6 +79,13 @@ function EnvironmentManager(config) {
       .set('forest-project-id', config.projectId)
       .send(DeploymentRequestSerializer.serialize(deploymentRequest));
 
+    if (!deploymentRequestResponse
+        || !deploymentRequestResponse.body
+        || !deploymentRequestResponse.body.meta
+        || !deploymentRequestResponse.body.meta.job_id) {
+      return false;
+    }
+
     const jobId = deploymentRequestResponse.body.meta.job_id;
 
     cli.action.start('Copying layout...');
@@ -96,10 +103,7 @@ function EnvironmentManager(config) {
           && jobResponse.body.state !== 'inactive'
           && jobResponse.body.state !== 'active') {
         cli.action.stop();
-        if (jobResponse.body.state === 'failed') {
-          return false;
-        }
-        return true;
+        return jobResponse.body.state !== 'failed';
       }
 
       await setTimeoutAsync(1000);

@@ -22,14 +22,14 @@ class CopyLayoutCommand extends Command {
       fromEnvironment = await manager.getEnvironment(config.fromEnvironment);
     } catch (err) {
       logger.error(`Cannot find the source environment ${chalk.bold(config.fromEnvironment)} on the project ${chalk.bold(config.projectId)}.`);
-      process.exit(1);
+      process.exit(3);
     }
 
     try {
       toEnvironment = await manager.getEnvironment(config.toEnvironment);
     } catch (err) {
       logger.error(`Cannot find the target environment ${chalk.bold(config.toEnvironment)} on the project ${chalk.bold(config.projectId)}.`);
-      process.exit(1);
+      process.exit(3);
     }
 
     if (!config.force) {
@@ -45,13 +45,11 @@ class CopyLayoutCommand extends Command {
     if (!answers || answers.confirm === toEnvironment.name) {
       const copyLayout = await manager.copyLayout(fromEnvironment.id, toEnvironment.id);
       if (copyLayout) {
-        console.log(`Environment's layout ${chalk.red(fromEnvironment.name)} successfully copied to ${chalk.red(toEnvironment.name)}.`);
-      } else {
-        logger.error('💀  Oops, something went wrong.💀');
+        return this.log(`Environment's layout ${chalk.red(fromEnvironment.name)} successfully copied to ${chalk.red(toEnvironment.name)}.`);
       }
-    } else {
-      logger.error(`Confirmation did not match ${chalk.red(toEnvironment.name)}. Aborted.`);
+      return this.error('💀  Oops, something went wrong.💀', { exit: 1 });
     }
+    return this.error(`Confirmation did not match ${chalk.red(toEnvironment.name)}. Aborted.`, { exit: 2 });
   }
 }
 
