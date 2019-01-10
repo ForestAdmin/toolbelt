@@ -17,6 +17,7 @@ describe('environments:copy-layout', () => {
 
       fancy
         .stdout()
+        .stderr()
         .env({ SERVER_HOST: 'http://localhost:3001' })
         .nock('http://localhost:3001', api => api
           .get('/api/environments/324')
@@ -80,6 +81,8 @@ describe('environments:copy-layout', () => {
 
     describe('on a failed job', () => {
       fancy
+        .stdout()
+        .stderr()
         .env({ SERVER_HOST: 'http://localhost:3001' })
         .nock('http://localhost:3001', api => api
           .get('/api/environments/324')
@@ -126,6 +129,7 @@ describe('environments:copy-layout', () => {
 
   describe('on an unexisting destination environment', () => {
     fancy
+      .stdout()
       .stderr()
       .env({ SERVER_HOST: 'http://localhost:3001' })
       .nock('http://localhost:3001', api => api
