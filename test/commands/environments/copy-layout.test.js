@@ -11,88 +11,126 @@ const fancy = test.register('nock', Nock);
 const EnvironmentSerializer = require('../../../src/serializers/environment');
 
 describe('environments:copy-layout', () => {
-  describe('on a completed job', () => {
-    let parsedBody;
+  describe('on an existing destination environment', () => {
+    describe('on a completed job', () => {
+      let parsedBody;
 
-    fancy
-      .stdout()
-      .env({ SERVER_HOST: 'http://localhost:3001' })
-      .nock('http://localhost:3001', api => api
-        .get('/api/environments/324')
-        .reply(200, EnvironmentSerializer.serialize({
-          id: '324',
-          name: 'Staging',
-          apiEndpoint: 'https://forestadmin-server-staging.herokuapp.com',
-          isActive: true,
-          type: 'development',
-          lianaName: 'forest-express-sequelize',
-          lianaVersion: '1.3.2',
-          secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
-        })))
-      .nock('http://localhost:3001', api => api
-        .get('/api/environments/325')
-        .reply(200, EnvironmentSerializer.serialize({
-          id: '325',
-          name: 'Production',
-          apiEndpoint: 'https://forestadmin-server.herokuapp.com',
-          isActive: true,
-          type: 'production',
-          lianaName: 'forest-express-sequelize',
-          lianaVersion: '1.3.2',
-          secretKey: '1b91a1c9bb28e4bea3c941fac1c1c95db5dc1b7bc73bd649b0b113713ee18167',
-        })))
-      .nock('http://localhost:3001', api => api
-        .post('/api/deployment-requests', (requestBody) => {
-          parsedBody = requestBody;
-          return requestBody;
-        })
-        .reply(200, {
-          meta: {
-            job_id: 78,
-          },
-        }))
-      .nock('http://localhost:3001', api => api
-        .get('/api/jobs/78')
-        .reply(200, {
-          state: 'complete',
-          progress: '100',
-        }))
-      .command(['environments:copy-layout', '325', '324', '-p', '82', '--force'])
-      .it('should copy the layout', (ctx) => {
-        expect(ctx.stdout).to.contain('Environment\'s layout Production successfully copied to Staging.');
-      });
+      fancy
+        .stdout()
+        .env({ SERVER_HOST: 'http://localhost:3001' })
+        .nock('http://localhost:3001', api => api
+          .get('/api/environments/324')
+          .reply(200, EnvironmentSerializer.serialize({
+            id: '324',
+            name: 'Staging',
+            apiEndpoint: 'https://forestadmin-server-staging.herokuapp.com',
+            isActive: true,
+            type: 'development',
+            lianaName: 'forest-express-sequelize',
+            lianaVersion: '1.3.2',
+            secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
+          })))
+        .nock('http://localhost:3001', api => api
+          .get('/api/environments/325')
+          .reply(200, EnvironmentSerializer.serialize({
+            id: '325',
+            name: 'Production',
+            apiEndpoint: 'https://forestadmin-server.herokuapp.com',
+            isActive: true,
+            type: 'production',
+            lianaName: 'forest-express-sequelize',
+            lianaVersion: '1.3.2',
+            secretKey: '1b91a1c9bb28e4bea3c941fac1c1c95db5dc1b7bc73bd649b0b113713ee18167',
+          })))
+        .nock('http://localhost:3001', api => api
+          .post('/api/deployment-requests', (requestBody) => {
+            parsedBody = requestBody;
+            return requestBody;
+          })
+          .reply(200, {
+            meta: {
+              job_id: 78,
+            },
+          }))
+        .nock('http://localhost:3001', api => api
+          .get('/api/jobs/78')
+          .reply(200, {
+            state: 'complete',
+            progress: '100',
+          }))
+        .command(['environments:copy-layout', '325', '324', '-p', '82', '--force'])
+        .it('should copy the layout', (ctx) => {
+          expect(ctx.stdout).to.contain('Environment\'s layout Production successfully copied to Staging.');
+        });
 
-    it('should send the correct body', () => {
-      expect(parsedBody).to.containSubset({
-        data: {
-          id: _.isString,
-          attributes: {
-            type: 'environment',
-            from: '325',
-            to: '324',
+      it('should send the correct body', () => {
+        expect(parsedBody).to.containSubset({
+          data: {
+            id: _.isString,
+            attributes: {
+              type: 'environment',
+              from: '325',
+              to: '324',
+            },
+            type: 'deployment-requests',
           },
-          type: 'deployment-requests',
-        },
+        });
       });
+    });
+
+    describe('on a failed job', () => {
+      fancy
+        .env({ SERVER_HOST: 'http://localhost:3001' })
+        .nock('http://localhost:3001', api => api
+          .get('/api/environments/324')
+          .reply(200, EnvironmentSerializer.serialize({
+            id: '324',
+            name: 'Staging',
+            apiEndpoint: 'https://forestadmin-server-staging.herokuapp.com',
+            isActive: true,
+            type: 'development',
+            lianaName: 'forest-express-sequelize',
+            lianaVersion: '1.3.2',
+            secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
+          })))
+        .nock('http://localhost:3001', api => api
+          .get('/api/environments/325')
+          .reply(200, EnvironmentSerializer.serialize({
+            id: '325',
+            name: 'Production',
+            apiEndpoint: 'https://forestadmin-server.herokuapp.com',
+            isActive: true,
+            type: 'production',
+            lianaName: 'forest-express-sequelize',
+            lianaVersion: '1.3.2',
+            secretKey: '1b91a1c9bb28e4bea3c941fac1c1c95db5dc1b7bc73bd649b0b113713ee18167',
+          })))
+        .nock('http://localhost:3001', api => api
+          .post('/api/deployment-requests')
+          .reply(200, {
+            meta: {
+              job_id: 78,
+            },
+          }))
+        .nock('http://localhost:3001', api => api
+          .get('/api/jobs/78')
+          .reply(200, {
+            state: 'failed',
+            progress: '10',
+          }))
+        .command(['environments:copy-layout', '325', '324', '-p', '82', '--force'])
+        .exit(1)
+        .it('should exit with status 1');
     });
   });
 
-  describe('on a failed job', () => {
+  describe('on an unexisting destination environment', () => {
     fancy
       .stderr()
       .env({ SERVER_HOST: 'http://localhost:3001' })
       .nock('http://localhost:3001', api => api
         .get('/api/environments/324')
-        .reply(200, EnvironmentSerializer.serialize({
-          id: '324',
-          name: 'Staging',
-          apiEndpoint: 'https://forestadmin-server-staging.herokuapp.com',
-          isActive: true,
-          type: 'development',
-          lianaName: 'forest-express-sequelize',
-          lianaVersion: '1.3.2',
-          secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
-        })))
+        .reply(404))
       .nock('http://localhost:3001', api => api
         .get('/api/environments/325')
         .reply(200, EnvironmentSerializer.serialize({
@@ -105,21 +143,8 @@ describe('environments:copy-layout', () => {
           lianaVersion: '1.3.2',
           secretKey: '1b91a1c9bb28e4bea3c941fac1c1c95db5dc1b7bc73bd649b0b113713ee18167',
         })))
-      .nock('http://localhost:3001', api => api
-        .post('/api/deployment-requests')
-        .reply(200, {
-          meta: {
-            job_id: 78,
-          },
-        }))
-      .nock('http://localhost:3001', api => api
-        .get('/api/jobs/78')
-        .reply(200, {
-          state: 'failed',
-          progress: '10',
-        }))
       .command(['environments:copy-layout', '325', '324', '-p', '82', '--force'])
-      .exit(1)
-      .it('should exit with status 1');
+      .exit(3)
+      .it('should exit with status 3');
   });
 });
