@@ -63,8 +63,9 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
     const deploymentRequest = {
       id: Math.random().toString(26).slice(2),
-      from: { id: fromEnvironmentId },
-      to: { id: toEnvironmentId },
+      type: 'environment',
+      from: fromEnvironmentId,
+      to: toEnvironmentId,
     };
 
     return agent
