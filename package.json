@@ -14,11 +14,11 @@
     "bluebird": "^3.5.2",
     "chalk": "^2.4.1",
     "cli-table": "github:Automattic/cli-table#master",
-    "cli-ux": "^5.0.0",
     "inquirer": "^6.2.0",
     "jsonapi-serializer": "^3.6.2",
     "jsonwebtoken": "^8.3.0",
     "lodash": "^4.17.11",
+    "progress": "^2.0.3",
     "superagent": "^3.8.3",
     "superagent-promise": "^1.1.0",
     "winston": "^2.2.0"

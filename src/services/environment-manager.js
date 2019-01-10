@@ -4,7 +4,7 @@ const authenticator = require('./authenticator');
 const EnvironmentSerializer = require('../serializers/environment');
 const EnvironmentDeserializer = require('../deserializers/environment');
 const DeploymentRequestSerializer = require('../serializers/deployment-request');
-const { cli } = require('cli-ux');
+const ProgressBar = require('progress');
 const { promisify } = require('util');
 
 const setTimeoutAsync = promisify(setTimeout);
@@ -88,7 +88,7 @@ function EnvironmentManager(config) {
 
     const jobId = deploymentRequestResponse.body.meta.job_id;
 
-    cli.action.start('Copying layout...');
+    const bar = new ProgressBar('Copying layout [:bar] :percent', { total: 100 });
 
     const checkState = async function checkState() {
       const jobResponse = await agent
@@ -100,10 +100,12 @@ function EnvironmentManager(config) {
       if (jobResponse
           && jobResponse.body
           && jobResponse.body.state
-          && jobResponse.body.state !== 'inactive'
-          && jobResponse.body.state !== 'active') {
-        cli.action.stop();
-        return jobResponse.body.state !== 'failed';
+          && jobResponse.body.progress) {
+        bar.tick(jobResponse.body.progress);
+        if (jobResponse.body.state !== 'inactive'
+            && jobResponse.body.state !== 'active') {
+          return jobResponse.body.state !== 'failed';
+        }
       }
 
       await setTimeoutAsync(1000);
