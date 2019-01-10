@@ -3,7 +3,6 @@ const _ = require('lodash');
 const EnvironmentManager = require('../../services/environment-manager');
 const Renderer = require('../../renderers/environment');
 const Prompter = require('../../services/prompter');
-const logger = require('../../services/logger');
 
 class CreateCommand extends Command {
   async run() {
@@ -17,8 +16,19 @@ class CreateCommand extends Command {
     try {
       const environment = await manager.createEnvironment();
       new Renderer(config).render(environment);
-    } catch (err) {
-      logger.error(err);
+    } catch (error) {
+      if (error.response) {
+        const errorData = JSON.parse(error.response.text);
+        if (errorData && errorData.errors && errorData.errors.length
+          && errorData.errors[0] && errorData.errors[0].detail) {
+          this.error(errorData.errors[0].detail, {
+            code: errorData.errors[0].status,
+            exit: 1,
+          });
+          return;
+        }
+      }
+      this.error(error, { exit: 1 });
     }
   }
 }
