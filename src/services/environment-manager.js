@@ -80,9 +80,9 @@ function EnvironmentManager(config) {
       .send(DeploymentRequestSerializer.serialize(deploymentRequest));
 
     if (!deploymentRequestResponse
-        || !deploymentRequestResponse.body
-        || !deploymentRequestResponse.body.meta
-        || !deploymentRequestResponse.body.meta.job_id) {
+      || !deploymentRequestResponse.body
+      || !deploymentRequestResponse.body.meta
+      || !deploymentRequestResponse.body.meta.job_id) {
       return false;
     }
 
@@ -98,12 +98,16 @@ function EnvironmentManager(config) {
         .set('forest-project-id', config.projectId);
 
       if (jobResponse
-          && jobResponse.body
-          && jobResponse.body.state
-          && jobResponse.body.progress) {
-        bar.tick(jobResponse.body.progress);
+        && jobResponse.body
+        && jobResponse.body.state) {
+        if (jobResponse.body.progress) {
+          bar.tick(jobResponse.body.progress);
+        }
         if (jobResponse.body.state !== 'inactive'
-            && jobResponse.body.state !== 'active') {
+          && jobResponse.body.state !== 'active') {
+          if (jobResponse.body.state === 'complete') {
+            bar.tick(100);
+          }
           return jobResponse.body.state !== 'failed';
         }
       }

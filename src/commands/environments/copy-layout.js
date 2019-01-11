@@ -19,13 +19,16 @@ class CopyLayoutCommand extends Command {
 
     try {
       fromEnvironment = await manager.getEnvironment(config.fromEnvironment);
-    } catch (err) {
+    } catch (error) {
+      if (error.status === 401) {
+        return this.error(`Please use ${chalk.bold('forest login')} to sign in to your Forest account.`, { exit: 1 });
+      }
       this.error(`Cannot find the source environment ${chalk.bold(config.fromEnvironment)} on the project ${chalk.bold(config.projectId)}.`, { exit: 3 });
     }
 
     try {
       toEnvironment = await manager.getEnvironment(config.toEnvironment);
-    } catch (err) {
+    } catch (error) {
       this.error(`Cannot find the target environment ${chalk.bold(config.toEnvironment)} on the project ${chalk.bold(config.projectId)}.`, { exit: 3 });
     }
 
