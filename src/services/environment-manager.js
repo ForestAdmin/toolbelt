@@ -100,13 +100,15 @@ function EnvironmentManager(config) {
 
       if (jobResponse
         && jobResponse.state) {
+        let isBarComplete = false;
         if (jobResponse.progress) {
-          bar.tick(jobResponse.progress);
+          bar.update(jobResponse.progress / 100);
+          isBarComplete = bar.complete;
         }
         if (jobResponse.state !== 'inactive'
           && jobResponse.state !== 'active') {
-          if (jobResponse.state === 'complete') {
-            bar.tick(100);
+          if (jobResponse.state === 'complete' && !isBarComplete) {
+            bar.update(1);
           }
           return jobResponse.state !== 'failed';
         }
