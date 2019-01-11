@@ -3,7 +3,12 @@ const agent = require('superagent-promise')(require('superagent'), P);
 const authenticator = require('./authenticator');
 const EnvironmentSerializer = require('../serializers/environment');
 const EnvironmentDeserializer = require('../deserializers/environment');
+const JobDeserializer = require('../deserializers/job');
 const DeploymentRequestSerializer = require('../serializers/deployment-request');
+const ProgressBar = require('progress');
+const { promisify } = require('util');
+
+const setTimeoutAsync = promisify(setTimeout);
 
 function EnvironmentManager(config) {
   this.listEnvironments = async () => {
@@ -44,8 +49,7 @@ function EnvironmentManager(config) {
         apiEndpoint: config.url,
         project: { id: config.projectId },
       }))
-      .then(response => new EnvironmentDeserializer.deserialize(response.body))
-      .then(environment => environment);
+      .then(response => new EnvironmentDeserializer.deserialize(response.body));
   };
 
   this.deleteEnvironment = async (environmentId) => {
@@ -68,13 +72,53 @@ function EnvironmentManager(config) {
       to: toEnvironmentId,
     };
 
-    return agent
+    const deploymentRequestResponse = await agent
       .post(`${config.serverHost}/api/deployment-requests`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-origin', 'Lumber')
       .set('forest-project-id', config.projectId)
-      .send(DeploymentRequestSerializer.serialize(deploymentRequest))
-      .then(() => true);
+      .send(DeploymentRequestSerializer.serialize(deploymentRequest));
+
+    if (!deploymentRequestResponse
+      || !deploymentRequestResponse.body
+      || !deploymentRequestResponse.body.meta
+      || !deploymentRequestResponse.body.meta.job_id) {
+      return false;
+    }
+
+    const jobId = deploymentRequestResponse.body.meta.job_id;
+
+    const bar = new ProgressBar('Copying layout [:bar] :percent', { total: 100 });
+
+    const checkState = async function checkState() {
+      const jobResponse = await agent
+        .get(`${config.serverHost}/api/jobs/${jobId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .set('forest-origin', 'Lumber')
+        .set('forest-project-id', config.projectId)
+        .then(response => new JobDeserializer.deserialize(response.body));
+
+      if (jobResponse
+        && jobResponse.state) {
+        let isBarComplete = false;
+        if (jobResponse.progress) {
+          bar.update(jobResponse.progress / 100);
+          isBarComplete = bar.complete;
+        }
+        if (jobResponse.state !== 'inactive'
+          && jobResponse.state !== 'active') {
+          if (jobResponse.state === 'complete' && !isBarComplete) {
+            bar.update(1);
+          }
+          return jobResponse.state !== 'failed';
+        }
+      }
+
+      await setTimeoutAsync(1000);
+      return checkState();
+    };
+
+    return checkState();
   };
 }
 
