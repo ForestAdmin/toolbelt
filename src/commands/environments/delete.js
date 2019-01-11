@@ -7,6 +7,7 @@ const Prompter = require('../../services/prompter');
 
 class DeleteCommand extends Command {
   async run() {
+    const logError = this.error.bind(this);
     const parsed = this.parse(DeleteCommand);
 
     let config = await Prompter([]);
@@ -29,7 +30,7 @@ class DeleteCommand extends Command {
       }
 
       if (!answers || answers.confirm === environment.name) {
-        const deleteEnvironment = await manager.deleteEnvironment(config.environmentId);
+        const deleteEnvironment = await manager.deleteEnvironment(config.environmentId, logError);
         if (deleteEnvironment) {
           return this.log(`Environment ${chalk.red(environment.name)} successfully deleted.`);
         }

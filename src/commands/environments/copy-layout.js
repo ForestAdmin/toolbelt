@@ -7,6 +7,7 @@ const Prompter = require('../../services/prompter');
 
 class CopyLayoutCommand extends Command {
   async run() {
+    const logError = this.error.bind(this);
     const parsed = this.parse(CopyLayoutCommand);
 
     let config = await Prompter([]);
@@ -44,7 +45,7 @@ class CopyLayoutCommand extends Command {
 
     try {
       if (!answers || answers.confirm === toEnvironment.name) {
-        const copyLayout = await manager.copyLayout(fromEnvironment.id, toEnvironment.id);
+        const copyLayout = await manager.copyLayout(fromEnvironment.id, toEnvironment.id, logError);
         if (copyLayout) {
           return this.log(`Environment's layout ${chalk.red(fromEnvironment.name)} successfully copied to ${chalk.red(toEnvironment.name)}.`);
         }
