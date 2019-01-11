@@ -9,6 +9,7 @@ chai.use(chaiSubset);
 
 const fancy = test.register('nock', Nock);
 const EnvironmentSerializer = require('../../../src/serializers/environment');
+const JobSerializer = require('../../../src/serializers/job');
 
 describe('environments:copy-layout', () => {
   describe('on an existing destination environment', () => {
@@ -55,10 +56,10 @@ describe('environments:copy-layout', () => {
           }))
         .nock('http://localhost:3001', api => api
           .get('/api/jobs/78')
-          .reply(200, {
+          .reply(200, JobSerializer.serialize({
             state: 'complete',
             progress: '100',
-          }))
+          })))
         .command(['environments:copy-layout', '325', '324', '-p', '82', '--force'])
         .it('should copy the layout', (ctx) => {
           expect(ctx.stdout).to.contain('Environment\'s layout Production successfully copied to Staging.');
@@ -117,10 +118,10 @@ describe('environments:copy-layout', () => {
           }))
         .nock('http://localhost:3001', api => api
           .get('/api/jobs/78')
-          .reply(200, {
+          .reply(200, JobSerializer.serialize({
             state: 'failed',
             progress: '10',
-          }))
+          })))
         .command(['environments:copy-layout', '325', '324', '-p', '82', '--force'])
         .exit(1)
         .it('should exit with status 1');

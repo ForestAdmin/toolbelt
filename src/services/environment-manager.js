@@ -3,6 +3,7 @@ const agent = require('superagent-promise')(require('superagent'), P);
 const authenticator = require('./authenticator');
 const EnvironmentSerializer = require('../serializers/environment');
 const EnvironmentDeserializer = require('../deserializers/environment');
+const JobDeserializer = require('../deserializers/job');
 const DeploymentRequestSerializer = require('../serializers/deployment-request');
 const ProgressBar = require('progress');
 const { promisify } = require('util');
@@ -48,8 +49,7 @@ function EnvironmentManager(config) {
         apiEndpoint: config.url,
         project: { id: config.projectId },
       }))
-      .then(response => new EnvironmentDeserializer.deserialize(response.body))
-      .then(environment => environment);
+      .then(response => new EnvironmentDeserializer.deserialize(response.body));
   };
 
   this.deleteEnvironment = async (environmentId) => {
@@ -95,20 +95,20 @@ function EnvironmentManager(config) {
         .get(`${config.serverHost}/api/jobs/${jobId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .set('forest-origin', 'Lumber')
-        .set('forest-project-id', config.projectId);
+        .set('forest-project-id', config.projectId)
+        .then(response => new JobDeserializer.deserialize(response.body));
 
       if (jobResponse
-        && jobResponse.body
-        && jobResponse.body.state) {
-        if (jobResponse.body.progress) {
-          bar.tick(jobResponse.body.progress);
+        && jobResponse.state) {
+        if (jobResponse.progress) {
+          bar.tick(jobResponse.progress);
         }
-        if (jobResponse.body.state !== 'inactive'
-          && jobResponse.body.state !== 'active') {
-          if (jobResponse.body.state === 'complete') {
+        if (jobResponse.state !== 'inactive'
+          && jobResponse.state !== 'active') {
+          if (jobResponse.state === 'complete') {
             bar.tick(100);
           }
-          return jobResponse.body.state !== 'failed';
+          return jobResponse.state !== 'failed';
         }
       }
 
