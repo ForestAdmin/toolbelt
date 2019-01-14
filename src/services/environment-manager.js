@@ -11,6 +11,39 @@ const { promisify } = require('util');
 const setTimeoutAsync = promisify(setTimeout);
 
 function EnvironmentManager(config) {
+  let bar;
+  this.checkState = async (jobId, authToken) => {
+    try {
+      const jobResponse = await agent
+        .get(`${config.serverHost}/api/jobs/${jobId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .set('forest-origin', 'Lumber')
+        .set('forest-project-id', config.projectId)
+        .then(response => new JobDeserializer.deserialize(response.body));
+
+      if (jobResponse
+        && jobResponse.state) {
+        let isBarComplete = false;
+        if (jobResponse.progress) {
+          bar.update(jobResponse.progress / 100);
+          isBarComplete = bar.complete;
+        }
+        if (jobResponse.state !== 'inactive'
+          && jobResponse.state !== 'active') {
+          if (jobResponse.state === 'complete' && !isBarComplete) {
+            bar.update(1);
+          }
+          return jobResponse.state !== 'failed';
+        }
+      }
+    } catch (e) {
+      return false;
+    }
+
+    await setTimeoutAsync(1000);
+    return this.checkState(jobId, authToken);
+  };
+
   this.listEnvironments = async () => {
     const authToken = authenticator.getAuthToken();
 
@@ -55,12 +88,24 @@ function EnvironmentManager(config) {
   this.deleteEnvironment = async (environmentId) => {
     const authToken = authenticator.getAuthToken();
 
-    return agent
+    bar = new ProgressBar('Deleting environment [:bar] :percent', { total: 100 });
+    bar.update(0);
+
+    const deleteEnvironmentResponse = await agent
       .del(`${config.serverHost}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-origin', 'Lumber')
-      .set('forest-project-id', config.projectId)
-      .then(() => true);
+      .set('forest-project-id', config.projectId);
+
+    if (!deleteEnvironmentResponse.body
+      || !deleteEnvironmentResponse.body.meta
+      || !deleteEnvironmentResponse.body.meta.job_id) {
+      return false;
+    }
+
+    const jobId = deleteEnvironmentResponse.body.meta.job_id;
+
+    return this.checkState(jobId, authToken);
   };
 
   this.copyLayout = async (fromEnvironmentId, toEnvironmentId) => {
@@ -71,6 +116,9 @@ function EnvironmentManager(config) {
       from: fromEnvironmentId,
       to: toEnvironmentId,
     };
+
+    bar = new ProgressBar('Copying layout [:bar] :percent', { total: 100 });
+    bar.update(0);
 
     const deploymentRequestResponse = await agent
       .post(`${config.serverHost}/api/deployment-requests`)
@@ -88,37 +136,8 @@ function EnvironmentManager(config) {
 
     const jobId = deploymentRequestResponse.body.meta.job_id;
 
-    const bar = new ProgressBar('Copying layout [:bar] :percent', { total: 100 });
 
-    const checkState = async function checkState() {
-      const jobResponse = await agent
-        .get(`${config.serverHost}/api/jobs/${jobId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .set('forest-origin', 'Lumber')
-        .set('forest-project-id', config.projectId)
-        .then(response => new JobDeserializer.deserialize(response.body));
-
-      if (jobResponse
-        && jobResponse.state) {
-        let isBarComplete = false;
-        if (jobResponse.progress) {
-          bar.update(jobResponse.progress / 100);
-          isBarComplete = bar.complete;
-        }
-        if (jobResponse.state !== 'inactive'
-          && jobResponse.state !== 'active') {
-          if (jobResponse.state === 'complete' && !isBarComplete) {
-            bar.update(1);
-          }
-          return jobResponse.state !== 'failed';
-        }
-      }
-
-      await setTimeoutAsync(1000);
-      return checkState();
-    };
-
-    return checkState();
+    return this.checkState(jobId, authToken);
   };
 }
 
