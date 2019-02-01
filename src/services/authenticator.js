@@ -9,13 +9,13 @@ function Authenticator() {
   this.getAuthToken = () => {
     try {
       return fs.readFileSync(`${os.homedir()}/.forestrc`);
-    } catch (e) {
+    } catch (error) {
       return null;
     }
   };
 
-  this.login = config =>
-    agent
+  this.login = config => {
+    return agent
       .post(`${config.serverHost}/api/sessions`, {
         email: config.email,
         password: config.password,
@@ -30,8 +30,8 @@ function Authenticator() {
     const path = `${os.homedir()}/.forestrc`;
 
     return new P((resolve, reject) => {
-      fs.stat(path, (err) => {
-        if (err === null) {
+      fs.stat(path, (error) => {
+        if (error === null) {
           fs.unlinkSync(path);
 
           if (opts.log) {
@@ -39,14 +39,14 @@ function Authenticator() {
           }
 
           resolve();
-        } else if (err.code === 'ENOENT') {
+        } else if (error.code === 'ENOENT') {
           if (opts.log) {
             logger.error('🔥  You\'re not logged 🔥');
           }
 
           resolve();
         } else {
-          reject(err);
+          reject(error);
         }
       });
     });

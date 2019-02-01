@@ -18,7 +18,7 @@ class GetCommand extends AbstractAuthenticatedCommand {
     try {
       const environment = await manager.getEnvironment(config.environmentId);
       new Renderer(config).render(environment);
-    } catch (err) {
+    } catch (error) {
       logger.error(`Cannot find the environment ${chalk.bold(config.environmentId)} on the project ${chalk.bold(config.projectId)}.`);
     }
   }

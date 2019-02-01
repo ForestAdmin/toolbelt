@@ -5,6 +5,7 @@ const inquirer = require('inquirer');
 const EnvironmentManager = require('../../services/environment-manager');
 const Prompter = require('../../services/prompter');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const { catchUnexpectedError } = require('../../utils');
 
 class DeleteCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
@@ -38,14 +39,16 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
         return this.error('💀  Oops, something went wrong.💀', { exit: 1 });
       }
       return this.error(`Confirmation did not match ${chalk.red(environment.name)}. Aborted.`, { exit: 1 });
-    } catch (err) {
-      if (err.status === 404) {
+    } catch (error) {
+      if (error.status === 404) {
         return this.error(`Cannot find the environment ${chalk.bold(config.environmentId)} on the project ${chalk.bold(config.projectId)}.`, { exit: 1 });
       }
-      if (err.status === 403) {
+      if (error.status === 403) {
         return this.error(`You do not have the rights to delete environment ${chalk.bold(config.environmentId)}.`, { exit: 1 });
       }
-      throw err;
+
+      catchUnexpectedError(error);
+      return this.exit(1);
     }
   }
 }

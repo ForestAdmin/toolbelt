@@ -17,8 +17,8 @@ class LoginCommand extends Command {
     try {
       await authenticator.login(config);
       console.log(chalk.green(`👍  You're now logged as ${config.email} 👍 `));
-    } catch (err) {
-      if (err.status) {
+    } catch (error) {
+      if (error.status) {
         logger.error('🔥  The email or password you entered is incorrect 🔥');
       } else {
         logger.error('💀  Oops, something went wrong.💀');

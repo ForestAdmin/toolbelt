@@ -18,7 +18,7 @@ class GetCommand extends AbstractAuthenticatedCommand {
     try {
       const project = await manager.getProject(config);
       new Renderer(config).render(project);
-    } catch (err) {
+    } catch (error) {
       logger.error(`Cannot find the project ${chalk.bold(config.projectId)}.`);
     }
   }

@@ -5,6 +5,7 @@ const inquirer = require('inquirer');
 const EnvironmentManager = require('../../services/environment-manager');
 const Prompter = require('../../services/prompter');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const { catchUnexpectedError } = require('../../utils');
 
 class CopyLayoutCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
@@ -60,7 +61,8 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
       if (error.status === 403) {
         return this.error(`You do not have the rights to copy the layout of the environment ${chalk.bold(fromEnvironment.name)} to ${chalk.bold(toEnvironment.name)}.`, { exit: 1 });
       }
-      return this.error(error, { exit: 1 });
+      catchUnexpectedError(error);
+      return this.exit(1);
     }
   }
 }

@@ -4,6 +4,7 @@ const EnvironmentManager = require('../../services/environment-manager');
 const Renderer = require('../../renderers/environment');
 const Prompter = require('../../services/prompter');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const { catchUnexpectedError } = require('../../utils');
 
 class CreateCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
@@ -29,7 +30,8 @@ class CreateCommand extends AbstractAuthenticatedCommand {
           return;
         }
       }
-      throw error;
+      catchUnexpectedError(error);
+      this.exit(1);
     }
   }
 }
