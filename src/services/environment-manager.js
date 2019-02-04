@@ -17,7 +17,6 @@ function EnvironmentManager(config) {
       const jobResponse = await agent
         .get(`${config.serverHost}/api/jobs/${jobId}`)
         .set('Authorization', `Bearer ${authToken}`)
-        .set('forest-origin', 'Lumber')
         .set('forest-project-id', config.projectId)
         .then(response => new JobDeserializer.deserialize(response.body));
 
@@ -51,7 +50,6 @@ function EnvironmentManager(config) {
     return agent
       .get(`${config.serverHost}/api/projects/${config.projectId}/environments`)
       .set('Authorization', `Bearer ${authToken}`)
-      .set('forest-origin', 'Lumber')
       .set('forest-project-id', config.projectId)
       .send()
       .then(response => new EnvironmentDeserializer.deserialize(response.body));
@@ -63,7 +61,6 @@ function EnvironmentManager(config) {
     return agent
       .get(`${config.serverHost}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
-      .set('forest-origin', 'Lumber')
       .set('forest-project-id', config.projectId)
       .send()
       .then(response => new EnvironmentDeserializer.deserialize(response.body));
@@ -75,7 +72,6 @@ function EnvironmentManager(config) {
     return agent
       .post(`${config.serverHost}/api/environments`)
       .set('Authorization', `Bearer ${authToken}`)
-      .set('forest-origin', 'Lumber')
       .set('forest-project-id', config.projectId)
       .send(EnvironmentSerializer.serialize({
         name: config.name,
@@ -94,7 +90,6 @@ function EnvironmentManager(config) {
     const deleteEnvironmentResponse = await agent
       .del(`${config.serverHost}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
-      .set('forest-origin', 'Lumber')
       .set('forest-project-id', config.projectId);
 
     if (!deleteEnvironmentResponse.body
@@ -123,7 +118,6 @@ function EnvironmentManager(config) {
     const deploymentRequestResponse = await agent
       .post(`${config.serverHost}/api/deployment-requests`)
       .set('Authorization', `Bearer ${authToken}`)
-      .set('forest-origin', 'Lumber')
       .set('forest-project-id', config.projectId)
       .send(DeploymentRequestSerializer.serialize(deploymentRequest));
 

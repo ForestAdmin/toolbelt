@@ -27,7 +27,6 @@ function ProjectManager(config) {
     return agent
       .get(`${config.serverHost}/api/projects`)
       .set('Authorization', `Bearer ${authToken}`)
-      .set('forest-origin', 'Lumber')
       .send()
       .then(response => deserialize(response));
   };
@@ -38,7 +37,6 @@ function ProjectManager(config) {
     return agent
       .get(`${config.serverHost}/api/projects/${config.projectId}`)
       .set('Authorization', `Bearer ${authToken}`)
-      .set('forest-origin', 'Lumber')
       .send()
       .then(response => deserialize(response));
   };
