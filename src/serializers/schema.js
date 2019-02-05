@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const JSONAPISerializer = require('jsonapi-serializer').Serializer;
+const ApimapSorter = require('../services/apimap-sorter');
 
 function SchemaSerializer() {
   // WARNING: Attributes declaration order is important for .forestadmin-schema.json format.
@@ -96,7 +97,9 @@ function SchemaSerializer() {
 
     options.meta = meta;
 
-    return new JSONAPISerializer('collections', collections, options);
+    const serializedData = new JSONAPISerializer('collections', collections, options);
+
+    return new ApimapSorter(serializedData).perform();
   };
 }
 
