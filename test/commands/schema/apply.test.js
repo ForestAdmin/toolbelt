@@ -50,7 +50,7 @@ describe('schema:apply', () => {
       .stderr()
       .stdout()
       .env({ SERVER_HOST: 'http://localhost:3001' })
-      .command(['schema:apply', '1'])
+      .command(['schema:apply'])
       .exit(2)
       .it('should exist with code 2');
   });
@@ -64,7 +64,7 @@ describe('schema:apply', () => {
         .nock('http://localhost:3001', (api) => {
           return api.post('/forest/apimaps').reply(404);
         })
-        .command(['schema:apply', '1'])
+        .command(['schema:apply'])
         .exit(4)
         .it('should exit with exit code 4');
     });
@@ -77,7 +77,7 @@ describe('schema:apply', () => {
         .nock('http://localhost:3001', (api) => {
           return api.post('/forest/apimaps').reply(503);
         })
-        .command(['schema:apply', '1'])
+        .command(['schema:apply'])
         .exit(5)
         .it('should exit with exit code 5');
     });
@@ -94,7 +94,7 @@ describe('schema:apply', () => {
               return true;
             }).reply(200);
           })
-          .command(['schema:apply', '1'])
+          .command(['schema:apply'])
           .it('should send the schema', () => {
             expect(parsedBody).to.containSubset({
               meta: {
@@ -162,7 +162,7 @@ describe('schema:apply', () => {
               return true;
             }).reply(200);
           })
-          .command(['schema:apply', '1'])
+          .command(['schema:apply'])
           .it('should send the schema', () => {
             expect(parsedBody).to.containSubset({
               meta: {
@@ -195,7 +195,7 @@ describe('schema:apply', () => {
       .nock('http://localhost:3001', (api) => {
         return api.post('/forest/apimaps').reply(500);
       })
-      .command(['schema:apply', '1'])
+      .command(['schema:apply'])
       .exit(6)
       .it('should exit with exit code 6');
   });

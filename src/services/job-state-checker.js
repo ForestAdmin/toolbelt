@@ -11,12 +11,11 @@ function JobStateChecker(message, logError) {
   const bar = new ProgressBar(`${message} [:bar] :percent `, { total: 100 });
   bar.update(0);
 
-  this.check = async (jobId, projectId) => {
+  this.check = async (jobId) => {
     try {
       const jobResponse = await agent
         .get(`${config.serverHost}/api/jobs/${jobId}`)
         .set('Authorization', `Bearer ${config.authToken}`)
-        .set('forest-project-id', projectId)
         .then(response => jobDeserializer.deserialize(response.body));
 
       if (jobResponse && jobResponse.state) {
@@ -41,7 +40,7 @@ function JobStateChecker(message, logError) {
     }
 
     await setTimeoutAsync(1000);
-    return this.check(jobId, projectId);
+    return this.check(jobId);
   };
 }
 

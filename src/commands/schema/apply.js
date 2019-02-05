@@ -9,8 +9,7 @@ const Joi = require('joi');
 class ApplyCommand extends Command {
   async run() {
     const logError = this.error.bind(this);
-    const { args, flags: parsedFlags } = this.parse(ApplyCommand);
-    const { projectId } = args;
+    const { flags: parsedFlags } = this.parse(ApplyCommand);
     const serializedSchema = this.readSchema();
     const secret = this.getEnvironmentSecret(parsedFlags);
 
@@ -18,7 +17,7 @@ class ApplyCommand extends Command {
     const jobId = await new SchemaSender(serializedSchema, secret, logError).perform();
 
     if (jobId) {
-      await new JobStateChecker('Processing schema', logError).check(jobId, projectId);
+      await new JobStateChecker('Processing schema', logError).check(jobId);
       this.log('Schema successfully sent to forest.');
     } else {
       this.log('The schema is the same as before, nothing changed.');
@@ -83,12 +82,6 @@ class ApplyCommand extends Command {
 }
 
 ApplyCommand.description = 'Apply your latest schema to your Forest layouts using your ".forestadmin-schema.json" file.';
-
-ApplyCommand.args = [
-  {
-    name: 'projectId', required: true, description: 'Forest project ID',
-  },
-];
 
 ApplyCommand.flags = {
   secret: flags.string({
