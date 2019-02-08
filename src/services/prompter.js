@@ -1,23 +1,13 @@
 const _ = require('lodash');
 const inquirer = require('inquirer');
-const authenticator = require('../services/authenticator');
+const envConfig = require('../config');
 
 async function Prompter(requests) {
   function isRequested(option) {
     return requests.indexOf(option) > -1;
   }
 
-  const envConfig = {};
-
-  if (process.env.SERVER_HOST) {
-    envConfig.serverHost = process.env.SERVER_HOST;
-  } else {
-    envConfig.serverHost = 'https://api.forestadmin.com';
-  }
-
   const prompts = [];
-
-  envConfig.authToken = authenticator.getAuthToken();
 
   if (isRequested('email')) {
     if (!envConfig.authToken) {

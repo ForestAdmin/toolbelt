@@ -15,6 +15,7 @@
     "chalk": "2.4.1",
     "cli-table": "github:Automattic/cli-table#master",
     "inquirer": "6.2.0",
+    "joi": "14.3.1",
     "jsonapi-serializer": "3.6.2",
     "jsonwebtoken": "8.3.0",
     "lodash": "4.17.11",

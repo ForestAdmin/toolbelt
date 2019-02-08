@@ -2,57 +2,20 @@ const P = require('bluebird');
 const agent = require('superagent-promise')(require('superagent'), P);
 const authenticator = require('./authenticator');
 const EnvironmentSerializer = require('../serializers/environment');
-const EnvironmentDeserializer = require('../deserializers/environment');
-const JobDeserializer = require('../deserializers/job');
+const environmentDeserializer = require('../deserializers/environment');
 const DeploymentRequestSerializer = require('../serializers/deployment-request');
-const ProgressBar = require('progress');
-const { promisify } = require('util');
-
-const setTimeoutAsync = promisify(setTimeout);
+const JobStateChecker = require('../services/job-state-checker');
 
 function EnvironmentManager(config) {
-  let bar;
-  this.checkState = async (jobId, authToken) => {
-    try {
-      const jobResponse = await agent
-        .get(`${config.serverHost}/api/jobs/${jobId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .set('forest-project-id', config.projectId)
-        .then(response => new JobDeserializer.deserialize(response.body));
-
-      if (jobResponse
-        && jobResponse.state) {
-        let isBarComplete = false;
-        if (jobResponse.progress) {
-          bar.update(jobResponse.progress / 100);
-          isBarComplete = bar.complete;
-        }
-        if (jobResponse.state !== 'inactive'
-          && jobResponse.state !== 'active') {
-          if (jobResponse.state === 'complete' && !isBarComplete) {
-            bar.update(1);
-          }
-          return jobResponse.state !== 'failed';
-        }
-      }
-    } catch (e) {
-      return false;
-    }
-
-    await setTimeoutAsync(1000);
-    return this.checkState(jobId, authToken);
-  };
-
   this.listEnvironments = async () => {
     const authToken = authenticator.getAuthToken();
 
-    /* eslint new-cap: off */
     return agent
       .get(`${config.serverHost}/api/projects/${config.projectId}/environments`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
       .send()
-      .then(response => new EnvironmentDeserializer.deserialize(response.body));
+      .then(response => environmentDeserializer.deserialize(response.body));
   };
 
   this.getEnvironment = async (environmentId) => {
@@ -63,7 +26,7 @@ function EnvironmentManager(config) {
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
       .send()
-      .then(response => new EnvironmentDeserializer.deserialize(response.body));
+      .then(response => environmentDeserializer.deserialize(response.body));
   };
 
   this.createEnvironment = async () => {
@@ -78,14 +41,12 @@ function EnvironmentManager(config) {
         apiEndpoint: config.url,
         project: { id: config.projectId },
       }))
-      .then(response => new EnvironmentDeserializer.deserialize(response.body));
+      .then(response => environmentDeserializer.deserialize(response.body));
   };
 
-  this.deleteEnvironment = async (environmentId) => {
+  this.deleteEnvironment = async (environmentId, logError) => {
     const authToken = authenticator.getAuthToken();
-
-    bar = new ProgressBar('Deleting environment [:bar] :percent', { total: 100 });
-    bar.update(0);
+    const jobStateChecker = new JobStateChecker('Deleting environment', logError);
 
     const deleteEnvironmentResponse = await agent
       .del(`${config.serverHost}/api/environments/${environmentId}`)
@@ -100,10 +61,10 @@ function EnvironmentManager(config) {
 
     const jobId = deleteEnvironmentResponse.body.meta.job_id;
 
-    return this.checkState(jobId, authToken);
+    return jobStateChecker.check(jobId, config.projectId);
   };
 
-  this.copyLayout = async (fromEnvironmentId, toEnvironmentId) => {
+  this.copyLayout = async (fromEnvironmentId, toEnvironmentId, logError) => {
     const authToken = authenticator.getAuthToken();
     const deploymentRequest = {
       id: Math.random().toString(26).slice(2),
@@ -112,8 +73,7 @@ function EnvironmentManager(config) {
       to: toEnvironmentId,
     };
 
-    bar = new ProgressBar('Copying layout [:bar] :percent', { total: 100 });
-    bar.update(0);
+    const jobStateChecker = new JobStateChecker('Copying layout', logError);
 
     const deploymentRequestResponse = await agent
       .post(`${config.serverHost}/api/deployment-requests`)
@@ -131,7 +91,7 @@ function EnvironmentManager(config) {
     const jobId = deploymentRequestResponse.body.meta.job_id;
 
 
-    return this.checkState(jobId, authToken);
+    return jobStateChecker.check(jobId, config.projectId);
   };
 }
 
