@@ -14,7 +14,7 @@ function Authenticator() {
     }
   };
 
-  this.login = (config) => {
+  this.login = config =>
     agent
       .post(`${config.serverHost}/api/sessions`, {
         email: config.email,
@@ -25,7 +25,6 @@ function Authenticator() {
         config.authToken = auth.token;
         return fs.writeFileSync(`${os.homedir()}/.forestrc`, auth.token);
       });
-  };
 
   this.logout = async (opts) => {
     const path = `${os.homedir()}/.forestrc`;
