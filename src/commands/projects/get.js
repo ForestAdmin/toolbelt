@@ -1,13 +1,14 @@
-const { Command, flags } = require('@oclif/command');
+const { flags } = require('@oclif/command');
 const _ = require('lodash');
 const chalk = require('chalk');
 const ProjectManager = require('../../services/project-manager');
 const Renderer = require('../../renderers/project');
 const Prompter = require('../../services/prompter');
 const logger = require('../../services/logger');
+const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
-class GetCommand extends Command {
-  async run() {
+class GetCommand extends AbstractAuthenticatedCommand {
+  async runIfAuthenticated() {
     const parsed = this.parse(GetCommand);
 
     let config = await Prompter([]);
@@ -18,7 +19,6 @@ class GetCommand extends Command {
       const project = await manager.getProject(config);
       new Renderer(config).render(project);
     } catch (err) {
-      console.log(err);
       logger.error(`Cannot find the project ${chalk.bold(config.projectId)}.`);
     }
   }

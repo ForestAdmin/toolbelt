@@ -1,11 +1,12 @@
-const { Command, flags } = require('@oclif/command');
+const { flags } = require('@oclif/command');
 const _ = require('lodash');
 const EnvironmentManager = require('../../services/environment-manager');
 const Renderer = require('../../renderers/environment');
 const Prompter = require('../../services/prompter');
+const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
-class CreateCommand extends Command {
-  async run() {
+class CreateCommand extends AbstractAuthenticatedCommand {
+  async runIfAuthenticated() {
     const parsed = this.parse(CreateCommand);
 
     let config = await Prompter([]);
@@ -17,7 +18,7 @@ class CreateCommand extends Command {
       const environment = await manager.createEnvironment();
       new Renderer(config).render(environment);
     } catch (error) {
-      if (error.response) {
+      if (error.response && error.status !== 403) {
         const errorData = JSON.parse(error.response.text);
         if (errorData && errorData.errors && errorData.errors.length
           && errorData.errors[0] && errorData.errors[0].detail) {
@@ -28,7 +29,7 @@ class CreateCommand extends Command {
           return;
         }
       }
-      this.error(error, { exit: 1 });
+      throw error;
     }
   }
 }

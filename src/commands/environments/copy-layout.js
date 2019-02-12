@@ -1,12 +1,13 @@
-const { Command, flags } = require('@oclif/command');
+const { flags } = require('@oclif/command');
 const _ = require('lodash');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
 const EnvironmentManager = require('../../services/environment-manager');
 const Prompter = require('../../services/prompter');
+const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
-class CopyLayoutCommand extends Command {
-  async run() {
+class CopyLayoutCommand extends AbstractAuthenticatedCommand {
+  async runIfAuthenticated() {
     const logError = this.error.bind(this);
     const parsed = this.parse(CopyLayoutCommand);
 
@@ -21,8 +22,8 @@ class CopyLayoutCommand extends Command {
     try {
       fromEnvironment = await manager.getEnvironment(config.fromEnvironment);
     } catch (error) {
-      if (error.status === 401) {
-        return this.error(`Please use ${chalk.bold('forest login')} to sign in to your Forest account.`, { exit: 1 });
+      if (error.status !== 404) {
+        throw error;
       }
       this.error(`Cannot find the source environment ${chalk.bold(config.fromEnvironment)} on the project ${chalk.bold(config.projectId)}.`, { exit: 3 });
     }
@@ -30,6 +31,9 @@ class CopyLayoutCommand extends Command {
     try {
       toEnvironment = await manager.getEnvironment(config.toEnvironment);
     } catch (error) {
+      if (error.status !== 404) {
+        throw error;
+      }
       this.error(`Cannot find the target environment ${chalk.bold(config.toEnvironment)} on the project ${chalk.bold(config.projectId)}.`, { exit: 3 });
     }
 

@@ -1,11 +1,12 @@
-const { Command, flags } = require('@oclif/command');
+const { flags } = require('@oclif/command');
 const _ = require('lodash');
 const ProjectManager = require('../services/project-manager');
 const Renderer = require('../renderers/projects');
 const Prompter = require('../services/prompter');
+const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 
-class ProjectCommand extends Command {
-  async run() {
+class ProjectCommand extends AbstractAuthenticatedCommand {
+  async runIfAuthenticated() {
     const parsed = this.parse(ProjectCommand);
 
     let config = await Prompter([]);
