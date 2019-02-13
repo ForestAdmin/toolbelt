@@ -1,8 +1,8 @@
 const { Command, flags } = require('@oclif/command');
 const _ = require('lodash');
-const EnvironmentManager = require('../../services/environment-manager');
-const Renderer = require('../../renderers/environments');
-const Prompter = require('../../services/prompter');
+const EnvironmentManager = require('../services/environment-manager');
+const Renderer = require('../renderers/environments');
+const Prompter = require('../services/prompter');
 
 class EnvironmentCommand extends Command {
   async run() {
@@ -18,7 +18,7 @@ class EnvironmentCommand extends Command {
   }
 }
 
-EnvironmentCommand.description = 'List existing environments.';
+EnvironmentCommand.description = 'manage environments';
 
 EnvironmentCommand.flags = {
   projectId: flags.string({
@@ -35,4 +35,3 @@ EnvironmentCommand.flags = {
 };
 
 module.exports = EnvironmentCommand;
-

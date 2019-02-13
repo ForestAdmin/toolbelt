@@ -49,7 +49,7 @@ class DeleteCommand extends Command {
   }
 }
 
-DeleteCommand.description = 'Delete an environment';
+DeleteCommand.description = 'delete an environment';
 
 DeleteCommand.flags = {
   projectId: flags.string({

@@ -61,7 +61,7 @@ class CopyLayoutCommand extends Command {
   }
 }
 
-CopyLayoutCommand.description = 'Copy the layout from one environment to another.';
+CopyLayoutCommand.description = 'copy the layout from one environment to another';
 
 CopyLayoutCommand.flags = {
   projectId: flags.string({

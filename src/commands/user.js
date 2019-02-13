@@ -16,6 +16,6 @@ class UserCommand extends Command {
   }
 }
 
-UserCommand.description = 'Display the current logged in user';
+UserCommand.description = 'display the current logged in user';
 
 module.exports = UserCommand;

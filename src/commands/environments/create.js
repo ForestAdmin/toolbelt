@@ -33,7 +33,7 @@ class CreateCommand extends Command {
   }
 }
 
-CreateCommand.description = 'Create a new environment';
+CreateCommand.description = 'create a new environment';
 
 CreateCommand.flags = {
   projectId: flags.string({

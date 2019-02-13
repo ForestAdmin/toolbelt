@@ -23,7 +23,7 @@ class GetCommand extends Command {
   }
 }
 
-GetCommand.description = 'Get the configuration of an environment';
+GetCommand.description = 'get the configuration of an environment';
 
 GetCommand.flags = {
   projectId: flags.string({

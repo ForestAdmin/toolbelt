@@ -27,6 +27,6 @@ class LoginCommand extends Command {
   }
 }
 
-LoginCommand.description = 'Sign in with an existing account.';
+LoginCommand.description = 'sign in with an existing account';
 
 module.exports = LoginCommand;

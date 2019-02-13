@@ -1,8 +1,8 @@
 const { Command, flags } = require('@oclif/command');
 const _ = require('lodash');
-const ProjectManager = require('../../services/project-manager');
-const Renderer = require('../../renderers/projects');
-const Prompter = require('../../services/prompter');
+const ProjectManager = require('../services/project-manager');
+const Renderer = require('../renderers/projects');
+const Prompter = require('../services/prompter');
 
 class ProjectCommand extends Command {
   async run() {
@@ -17,7 +17,7 @@ class ProjectCommand extends Command {
   }
 }
 
-ProjectCommand.description = 'List existing projects.';
+ProjectCommand.description = 'manage projects';
 
 ProjectCommand.flags = {
   format: flags.string({

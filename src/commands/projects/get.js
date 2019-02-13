@@ -24,7 +24,7 @@ class GetCommand extends Command {
   }
 }
 
-GetCommand.description = 'Get the configuration of a project';
+GetCommand.description = 'get the configuration of a project';
 
 GetCommand.flags = {
   format: flags.string({
