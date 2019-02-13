@@ -4,8 +4,16 @@ const { expect, test } = require('@oclif/test');
 
 const fancy = test.register('nock', Nock);
 const EnvironmentSerializer = require('../../../src/serializers/environment');
+const authenticator = require('../../../src/services/authenticator');
 
 describe('environments:get', () => {
+  let getAuthToken;
+  before(() => {
+    getAuthToken = authenticator.getAuthToken;
+    authenticator.getAuthToken = () => 'token';
+  });
+  after(() => { authenticator.getAuthToken = getAuthToken; });
+
   const mocks = fancy
     .stdout()
     .env({ SERVER_HOST: 'http://localhost:3001' })
@@ -70,4 +78,3 @@ describe('environments:get', () => {
       expect(ctx.stderr).to.contain('Cannot find the environment 3947 on the project 82.');
     });
 });
-

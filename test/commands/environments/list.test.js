@@ -4,8 +4,16 @@ const { expect, test } = require('@oclif/test');
 
 const fancy = test.register('nock', Nock);
 const EnvironmentSerializer = require('../../../src/serializers/environment');
+const authenticator = require('../../../src/services/authenticator');
 
-describe('environments:list', () => {
+describe('environments', () => {
+  let getAuthToken;
+  before(() => {
+    getAuthToken = authenticator.getAuthToken;
+    authenticator.getAuthToken = () => 'token';
+  });
+  after(() => { authenticator.getAuthToken = getAuthToken; });
+
   const mocks = fancy
     .stdout()
     .env({ SERVER_HOST: 'http://localhost:3001' })
@@ -32,7 +40,7 @@ describe('environments:list', () => {
       }])));
 
   mocks
-    .command(['environments:list', '-p', '82'])
+    .command(['environments', '-p', '82'])
     .it('should return the list of environments', (ctx) => {
       expect(ctx.stdout).to.contain('ENVIRONMENTS');
 
@@ -56,7 +64,7 @@ describe('environments:list', () => {
     });
 
   mocks
-    .command(['environments:list', '-p', '82', '--format', 'json'])
+    .command(['environments', '-p', '82', '--format', 'json'])
     .it('should return the list of environments in JSON', (ctx) => {
       expect(JSON.parse(ctx.stdout)).to.eql([
         {
@@ -82,4 +90,3 @@ describe('environments:list', () => {
       ]);
     });
 });
-

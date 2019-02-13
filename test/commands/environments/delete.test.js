@@ -5,8 +5,16 @@ const { expect, test } = require('@oclif/test');
 const fancy = test.register('nock', Nock);
 const EnvironmentSerializer = require('../../../src/serializers/environment');
 const JobSerializer = require('../../../src/serializers/job');
+const authenticator = require('../../../src/services/authenticator');
 
 describe('environments:delete', () => {
+  let getAuthToken;
+  before(() => {
+    getAuthToken = authenticator.getAuthToken;
+    authenticator.getAuthToken = () => 'token';
+  });
+  after(() => { authenticator.getAuthToken = getAuthToken; });
+
   describe('on an existing environment', () => {
     describe('on a completed job', () => {
       fancy

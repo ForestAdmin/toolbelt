@@ -4,8 +4,16 @@ const { expect, test } = require('@oclif/test');
 
 const fancy = test.register('nock', Nock);
 const ProjectSerializer = require('../../../src/serializers/project');
+const authenticator = require('../../../src/services/authenticator');
 
-describe('projects:list', () => {
+describe('projects', () => {
+  let getAuthToken;
+  before(() => {
+    getAuthToken = authenticator.getAuthToken;
+    authenticator.getAuthToken = () => 'token';
+  });
+  after(() => { authenticator.getAuthToken = getAuthToken; });
+
   const mocks = fancy
     .stdout()
     .env({ SERVER_HOST: 'http://localhost:3001' })
@@ -38,7 +46,7 @@ describe('projects:list', () => {
       }])));
 
   mocks
-    .command(['projects:list'])
+    .command(['projects'])
     .it('should return the list of projects', (ctx) => {
       expect(ctx.stdout).to.contain('PROJECTS');
 
@@ -54,7 +62,7 @@ describe('projects:list', () => {
     });
 
   mocks
-    .command(['projects:list', '--format', 'json'])
+    .command(['projects', '--format', 'json'])
     .it('should return the list of projects', (ctx) => {
       expect(JSON.parse(ctx.stdout)).to.eql([{
         id: '82',

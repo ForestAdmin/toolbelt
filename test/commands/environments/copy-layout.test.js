@@ -10,8 +10,16 @@ chai.use(chaiSubset);
 const fancy = test.register('nock', Nock);
 const EnvironmentSerializer = require('../../../src/serializers/environment');
 const JobSerializer = require('../../../src/serializers/job');
+const authenticator = require('../../../src/services/authenticator');
 
 describe('environments:copy-layout', () => {
+  let getAuthToken;
+  before(() => {
+    getAuthToken = authenticator.getAuthToken;
+    authenticator.getAuthToken = () => 'token';
+  });
+  after(() => { authenticator.getAuthToken = getAuthToken; });
+
   describe('on an existing destination environment', () => {
     describe('on a completed job', () => {
       let parsedBody;
