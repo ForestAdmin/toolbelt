@@ -1,12 +1,13 @@
-const { Command, flags } = require('@oclif/command');
+const { flags } = require('@oclif/command');
 const _ = require('lodash');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
 const EnvironmentManager = require('../../services/environment-manager');
 const Prompter = require('../../services/prompter');
+const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
-class DeleteCommand extends Command {
-  async run() {
+class DeleteCommand extends AbstractAuthenticatedCommand {
+  async runIfAuthenticated() {
     const logError = this.error.bind(this);
     const parsed = this.parse(DeleteCommand);
 

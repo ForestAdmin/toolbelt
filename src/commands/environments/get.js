@@ -1,13 +1,14 @@
-const { Command, flags } = require('@oclif/command');
+const { flags } = require('@oclif/command');
 const _ = require('lodash');
 const chalk = require('chalk');
 const EnvironmentManager = require('../../services/environment-manager');
 const Renderer = require('../../renderers/environment');
 const Prompter = require('../../services/prompter');
 const logger = require('../../services/logger');
+const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
-class GetCommand extends Command {
-  async run() {
+class GetCommand extends AbstractAuthenticatedCommand {
+  async runIfAuthenticated() {
     const parsed = this.parse(GetCommand);
 
     let config = await Prompter([]);
