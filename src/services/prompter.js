@@ -10,17 +10,15 @@ async function Prompter(requests) {
   const prompts = [];
 
   if (isRequested('email')) {
-    if (!envConfig.authToken) {
-      prompts.push({
-        type: 'input',
-        name: 'email',
-        message: 'What\'s your email address? ',
-        validate: (email) => {
-          if (email) { return true; }
-          return '🔥  Please enter your email address 🔥';
-        },
-      });
-    }
+    prompts.push({
+      type: 'input',
+      name: 'email',
+      message: 'What\'s your email address? ',
+      validate: (email) => {
+        if (email) { return true; }
+        return '🔥  Please enter your email address 🔥';
+      },
+    });
   }
 
   if (isRequested('password')) {
