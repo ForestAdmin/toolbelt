@@ -37,5 +37,11 @@ Manage Forest environments.
 - `environments:delete`       delete an environment.
 - `environments:copy-layout`  copy the layout from one environment to another.
 
+### Schema
+
+Manage Forest schema.
+
+- `schema:apply`              apply your latest schema to your Forest layouts using your ".forestadmin-schema.json" file.
+
 ## License
 [GPL](https://github.com/ForestAdmin/toolbelt/blob/master/LICENSE)
