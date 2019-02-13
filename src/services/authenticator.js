@@ -26,7 +26,7 @@ function Authenticator() {
         return fs.writeFileSync(`${os.homedir()}/.forestrc`, auth.token);
       });
 
-  this.logout = async (opts) => {
+  this.logout = async (opts = {}) => {
     const path = `${os.homedir()}/.forestrc`;
 
     return new P((resolve, reject) => {

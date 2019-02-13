@@ -5,7 +5,7 @@ const chalk = require('chalk');
 class AbstractAuthenticatedCommand extends Command {
   async run() {
     if (!authenticator.getAuthToken()) {
-      return this.error(`🔥  Please use ${chalk.bold('forest login')} to sign in to your Forest account. 🔥`, { exit: 10 });
+      return this.displayLoginMessageAndQuit();
     }
 
     try {
@@ -17,12 +17,21 @@ class AbstractAuthenticatedCommand extends Command {
         return this.error('💀  You do not have the right to execute this action on this project 💀');
       }
 
+      if (error.status === 401) {
+        await authenticator.logout();
+        return this.displayLoginMessageAndQuit();
+      }
+
       throw error;
     }
   }
 
   async runIfAuthenticated() {
     throw new Error(`'runIfAuthenticated' is not implemented on ${this.constructor.name}`);
+  }
+
+  displayLoginMessageAndQuit() {
+    return this.error(`🔥  Please use ${chalk.bold('forest login')} to sign in to your Forest account. 🔥`, { exit: 10 });
   }
 }
 
