@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+
+## RELEASE 1.0.0 - 2019-02-14
 ### Added
 - Projects - Authentified users can list their projects.
 - Environments - Authentified users can list/create/delete their environments.
