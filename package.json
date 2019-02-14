@@ -3,6 +3,12 @@
   "description": "The Lumberjacks' toolbelt is the Forest CLI which makes easy to manage your back office application directly from the terminal.",
   "version": "0.0.0",
   "author": "Sandro Munda",
+  "contributors": [
+    "Arnaud Valensi <arnaud.valensi@gmail.com>",
+    "Vincent Molinié <molinie.vincent@gmail.com>",
+    "David Routhieau <rootio@protonmail.com>",
+    "Arnaud Besnier <arnaudibesnier@gmail.com>"
+  ],
   "bin": {
     "forest": "./bin/run"
   },
@@ -36,8 +42,11 @@
     "eslint-plugin-import": "2.7.0",
     "globby": "8.0.1",
     "mocha": "5.2.0",
+    "moment": "2.24.0",
     "nock": "10.0.1",
-    "nyc": "13.1.0"
+    "nyc": "13.1.0",
+    "semver": "5.6.0",
+    "simple-git": "1.107.0"
   },
   "engines": {
     "node": ">=8.0.0"
@@ -63,6 +72,7 @@
   },
   "repository": "ForestAdmin/toolbelt",
   "scripts": {
+    "build": "node ./bin/deploy.js",
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "oclif-dev manifest && oclif-dev readme",
     "test": "nyc mocha --forbid-only \"test/**/*.test.js\" --exit",
