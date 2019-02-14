@@ -8,7 +8,7 @@ The Lumberjacks' toolbelt is the Forest CLI which makes easy to manage your back
 
 
 ### Install
-    $ npm install -g forest-toolbelt
+    $ npm install -g forest-cli
 
 ### Commands
 
