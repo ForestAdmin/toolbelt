@@ -4,7 +4,7 @@
 
 [![Build Status](https://travis-ci.org/ForestAdmin/toolbelt.svg?branch=master)](https://travis-ci.org/ForestAdmin/toolbelt)
 
-The Lumberjacks' toolbelt is the Forest CLI which makes easy to manage your back office application directly from the terminal.
+The Lumberjacks' toolbelt is the Forest Admin CLI which makes easy to manage your back office application directly from the terminal.
 
 
 ### Install
@@ -15,33 +15,33 @@ The Lumberjacks' toolbelt is the Forest CLI which makes easy to manage your back
     $ forest [command]
 
 #### General
-- `user`          show your current logged user.
-- `login`         sign in to your Forest account.
-- `logout`        sign out of your Forest account.
-- `help [cmd]`    display help for [cmd].
+- `user` display the current logged in user.
+- `login` sign in to your Forest Admin account.
+- `logout` sign out of your Forest Admin account.
+- `help [cmd]` display help for [cmd].
 
 #### Projects
 
-Manage Forest projects.
+Manage Forest Admin projects.
 
-- `projects:list` list existing projects.
-- `projects:get`  get the configuration of a project.
+- `projects` list your projects.
+- `projects:get` get the configuration of a project.
 
 #### Environments
 
-Manage Forest environments.
+Manage Forest Admin environments.
 
-- `environments:list`         manage Forest environments.
-- `environments:get`          get the configuration of an environment.
-- `environments:create`       create a new environment.
-- `environments:delete`       delete an environment.
-- `environments:copy-layout`  copy the layout from one environment to another.
+- `environments` list your environments.
+- `environments:get` get the configuration of an environment.
+- `environments:create` create a new environment.
+- `environments:delete` delete an environment.
+- `environments:copy-layout` copy the layout from one environment to another.
 
 ### Schema
 
-Manage Forest schema.
+Manage Forest Admin schema.
 
-- `schema:apply`              apply your latest schema to your Forest layouts using your ".forestadmin-schema.json" file.
+- `schema:apply` apply the current schema of your repository to the specified environment (using your ".forestadmin-schema.json" file).
 
 ## License
 [GPL](https://github.com/ForestAdmin/toolbelt/blob/master/LICENSE)

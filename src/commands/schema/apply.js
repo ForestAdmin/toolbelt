@@ -81,7 +81,7 @@ class ApplyCommand extends Command {
   }
 }
 
-ApplyCommand.description = 'apply your latest schema to your Forest layouts using your ".forestadmin-schema.json" file';
+ApplyCommand.description = 'apply the current schema of your repository to the specified environment (using your ".forestadmin-schema.json" file)';
 
 ApplyCommand.flags = {
   secret: flags.string({
