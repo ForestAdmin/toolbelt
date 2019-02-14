@@ -41,7 +41,7 @@ Manage Forest Admin environments.
 
 Manage Forest Admin schema.
 
-- `schema:apply` apply the current schema of your repository to the specified environment (using your ".forestadmin-schema.json" file).
+- `schema:apply` apply the current schema of your repository to the specified environment (using your `.forestadmin-schema.json` file).
 
 ## License
 [GPL](https://github.com/ForestAdmin/toolbelt/blob/master/LICENSE)
