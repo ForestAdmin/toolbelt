@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+
+## RELEASE 1.0.1 - 2019-02-14
 ### Changed
 - Readme - Improve the wording.
 - Help - Improve a command description.
