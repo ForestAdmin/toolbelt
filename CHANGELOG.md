@@ -1,6 +1,7 @@
 # Change Log
 
 ## [Unreleased]
+- Build - Fix build script.
 
 ## RELEASE 1.0.1 - 2019-02-14
 ### Changed

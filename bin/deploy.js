@@ -42,22 +42,22 @@ const tag = `v${version}`;
 simpleGit
   .checkout(BRANCH_DEVEL)
   .pull((error) => { if (error) { console.log(error); } })
-  .exec(() => { console.log(`Pull ${BRANCH_DEVEL} done.`); })
-  .exec(() => {
+  .then(() => { console.log(`Pull ${BRANCH_DEVEL} done.`); })
+  .then(() => {
     fs.writeFileSync('package.json', newVersionFile);
     fs.writeFileSync('CHANGELOG.md', newChanges);
   })
   .add(['CHANGELOG.md', 'package.json'])
   .commit(`Release ${version}`)
   .push()
-  .exec(() => { console.log(`Commit Release on ${BRANCH_DEVEL} done.`); })
+  .then(() => { console.log(`Commit Release on ${BRANCH_DEVEL} done.`); })
   .checkout(BRANCH_MASTER)
   .pull((error) => { if (error) { console.log(error); } })
-  .exec(() => { console.log(`Pull ${BRANCH_MASTER} done.`); })
+  .then(() => { console.log(`Pull ${BRANCH_MASTER} done.`); })
   .mergeFromTo(BRANCH_DEVEL, BRANCH_MASTER)
-  .exec(() => { console.log(`Merge ${BRANCH_DEVEL} on ${BRANCH_MASTER} done.`); })
+  .then(() => { console.log(`Merge ${BRANCH_DEVEL} on ${BRANCH_MASTER} done.`); })
   .push()
   .addTag(tag)
   .push('origin', tag)
-  .exec(() => { console.log(`Tag ${tag} on ${BRANCH_MASTER} done.`); })
+  .then(() => { console.log(`Tag ${tag} on ${BRANCH_MASTER} done.`); })
   .checkout(BRANCH_DEVEL);
