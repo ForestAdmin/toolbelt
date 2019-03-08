@@ -5,11 +5,10 @@ const inquirer = require('inquirer');
 const EnvironmentManager = require('../../services/environment-manager');
 const Prompter = require('../../services/prompter');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
-const { catchUnexpectedError } = require('../../utils');
+const { logError } = require('../../utils');
 
 class CopyLayoutCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
-    const logError = this.error.bind(this);
     const parsed = this.parse(CopyLayoutCommand);
 
     let config = await Prompter([]);
@@ -24,7 +23,7 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
       fromEnvironment = await manager.getEnvironment(config.fromEnvironment);
     } catch (error) {
       if (error.status !== 404) {
-        throw error;
+        logError(error, { exit: 1 });
       }
       this.error(`Cannot find the source environment ${chalk.bold(config.fromEnvironment)} on the project ${chalk.bold(config.projectId)}.`, { exit: 3 });
     }
@@ -33,7 +32,7 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
       toEnvironment = await manager.getEnvironment(config.toEnvironment);
     } catch (error) {
       if (error.status !== 404) {
-        throw error;
+        logError(error, { exit: 1 });
       }
       this.error(`Cannot find the target environment ${chalk.bold(config.toEnvironment)} on the project ${chalk.bold(config.projectId)}.`, { exit: 3 });
     }
@@ -50,7 +49,7 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
 
     try {
       if (!answers || answers.confirm === toEnvironment.name) {
-        const copyLayout = await manager.copyLayout(fromEnvironment.id, toEnvironment.id, logError);
+        const copyLayout = await manager.copyLayout(fromEnvironment.id, toEnvironment.id);
         if (copyLayout) {
           return this.log(`Environment's layout ${chalk.red(fromEnvironment.name)} successfully copied to ${chalk.red(toEnvironment.name)}.`);
         }
@@ -61,8 +60,7 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
       if (error.status === 403) {
         return this.error(`You do not have the rights to copy the layout of the environment ${chalk.bold(fromEnvironment.name)} to ${chalk.bold(toEnvironment.name)}.`, { exit: 1 });
       }
-      catchUnexpectedError(error);
-      return this.exit(1);
+      return logError(error, { exit: 1 });
     }
   }
 }

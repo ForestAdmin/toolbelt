@@ -14,8 +14,8 @@ function Authenticator() {
     }
   };
 
-  this.login = config => {
-    return agent
+  this.login = config =>
+    agent
       .post(`${config.serverHost}/api/sessions`, {
         email: config.email,
         password: config.password,

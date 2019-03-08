@@ -44,9 +44,9 @@ function EnvironmentManager(config) {
       .then(response => environmentDeserializer.deserialize(response.body));
   };
 
-  this.deleteEnvironment = async (environmentId, logError) => {
+  this.deleteEnvironment = async (environmentId) => {
     const authToken = authenticator.getAuthToken();
-    const jobStateChecker = new JobStateChecker('Deleting environment', logError);
+    const jobStateChecker = new JobStateChecker('Deleting environment');
 
     const deleteEnvironmentResponse = await agent
       .del(`${config.serverHost}/api/environments/${environmentId}`)
@@ -64,7 +64,7 @@ function EnvironmentManager(config) {
     return jobStateChecker.check(jobId, config.projectId);
   };
 
-  this.copyLayout = async (fromEnvironmentId, toEnvironmentId, logError) => {
+  this.copyLayout = async (fromEnvironmentId, toEnvironmentId) => {
     const authToken = authenticator.getAuthToken();
     const deploymentRequest = {
       id: Math.random().toString(26).slice(2),
@@ -73,7 +73,7 @@ function EnvironmentManager(config) {
       to: toEnvironmentId,
     };
 
-    const jobStateChecker = new JobStateChecker('Copying layout', logError);
+    const jobStateChecker = new JobStateChecker('Copying layout');
 
     const deploymentRequestResponse = await agent
       .post(`${config.serverHost}/api/deployment-requests`)

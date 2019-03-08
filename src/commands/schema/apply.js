@@ -8,16 +8,15 @@ const Joi = require('joi');
 
 class ApplyCommand extends Command {
   async run() {
-    const logError = this.error.bind(this);
     const { flags: parsedFlags } = this.parse(ApplyCommand);
     const serializedSchema = this.readSchema();
     const secret = this.getEnvironmentSecret(parsedFlags);
 
     this.log('Sending "./.forestadmin-schema.json"...');
-    const jobId = await new SchemaSender(serializedSchema, secret, logError).perform();
+    const jobId = await new SchemaSender(serializedSchema, secret).perform();
 
     if (jobId) {
-      await new JobStateChecker('Processing schema', logError).check(jobId);
+      await new JobStateChecker('Processing schema').check(jobId);
       this.log('Schema successfully sent to forest.');
     } else {
       this.log('The schema is the same as before, nothing changed.');

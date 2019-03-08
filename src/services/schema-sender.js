@@ -1,8 +1,9 @@
 const P = require('bluebird');
 const agent = require('superagent-promise')(require('superagent'), P);
 const config = require('../config');
+const { logError } = require('../utils');
 
-function SchemaSender(serializedSchema, secret, logError) {
+function SchemaSender(serializedSchema, secret) {
   this.perform = () =>
     agent
       .post(`${config.serverHost}/forest/apimaps`)

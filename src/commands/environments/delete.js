@@ -5,11 +5,10 @@ const inquirer = require('inquirer');
 const EnvironmentManager = require('../../services/environment-manager');
 const Prompter = require('../../services/prompter');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
-const { catchUnexpectedError } = require('../../utils');
+const { logError } = require('../../utils');
 
 class DeleteCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
-    const logError = this.error.bind(this);
     const parsed = this.parse(DeleteCommand);
 
     let config = await Prompter([]);
@@ -32,7 +31,7 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
       }
 
       if (!answers || answers.confirm === environment.name) {
-        const deleteEnvironment = await manager.deleteEnvironment(config.environmentId, logError);
+        const deleteEnvironment = await manager.deleteEnvironment(config.environmentId);
         if (deleteEnvironment) {
           return this.log(`Environment ${chalk.red(environment.name)} successfully deleted.`);
         }
@@ -47,8 +46,7 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
         return this.error(`You do not have the rights to delete environment ${chalk.bold(config.environmentId)}.`, { exit: 1 });
       }
 
-      catchUnexpectedError(error);
-      return this.exit(1);
+      return logError(error, { exit: 1 });
     }
   }
 }

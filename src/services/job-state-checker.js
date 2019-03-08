@@ -4,10 +4,11 @@ const jobDeserializer = require('../deserializers/job');
 const ProgressBar = require('progress');
 const { promisify } = require('util');
 const config = require('../config');
+const { logError } = require('../utils');
 
 const setTimeoutAsync = promisify(setTimeout);
 
-function JobStateChecker(message, logError) {
+function JobStateChecker(message) {
   const bar = new ProgressBar(`${message} [:bar] :percent `, { total: 100 });
   bar.update(0);
 
@@ -33,7 +34,7 @@ function JobStateChecker(message, logError) {
       }
     } catch (error) {
       if (!error.status) {
-        throw error;
+        logError(error, { exit: 1 });
       }
 
       logError(`HTTP ${error.status}: ${error.message}`, { exit: 100 });

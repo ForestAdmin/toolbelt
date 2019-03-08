@@ -1,6 +1,7 @@
 const { Command } = require('@oclif/command');
 const authenticator = require('./services/authenticator');
 const chalk = require('chalk');
+const { logError } = require('./utils');
 
 class AbstractAuthenticatedCommand extends Command {
   async run() {
@@ -22,12 +23,13 @@ class AbstractAuthenticatedCommand extends Command {
         return this.displayLoginMessageAndQuit();
       }
 
-      throw error;
+      return logError(error, { exit: 1 });
     }
   }
 
   async runIfAuthenticated() {
-    throw new Error(`'runIfAuthenticated' is not implemented on ${this.constructor.name}`);
+    const error = new Error(`'runIfAuthenticated' is not implemented on ${this.constructor.name}`);
+    logError(error, { exit: 1 });
   }
 
   displayLoginMessageAndQuit() {
