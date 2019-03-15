@@ -27,7 +27,7 @@ describe('environments:copy-layout', () => {
       fancy
         .stdout()
         .stderr()
-        .env({ SERVER_HOST: 'http://localhost:3001' })
+        .env({ FOREST_URL: 'http://localhost:3001' })
         .nock('http://localhost:3001', api => api
           .get('/api/environments/324')
           .reply(200, EnvironmentSerializer.serialize({
@@ -92,7 +92,7 @@ describe('environments:copy-layout', () => {
       fancy
         .stdout()
         .stderr()
-        .env({ SERVER_HOST: 'http://localhost:3001' })
+        .env({ FOREST_URL: 'http://localhost:3001' })
         .nock('http://localhost:3001', api => api
           .get('/api/environments/324')
           .reply(200, EnvironmentSerializer.serialize({
@@ -140,7 +140,7 @@ describe('environments:copy-layout', () => {
     fancy
       .stdout()
       .stderr()
-      .env({ SERVER_HOST: 'http://localhost:3001' })
+      .env({ FOREST_URL: 'http://localhost:3001' })
       .nock('http://localhost:3001', api => api
         .get('/api/environments/324')
         .reply(404))

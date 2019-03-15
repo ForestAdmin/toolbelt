@@ -16,7 +16,7 @@ describe('environments:get', () => {
 
   const mocks = fancy
     .stdout()
-    .env({ SERVER_HOST: 'http://localhost:3001' })
+    .env({ FOREST_URL: 'http://localhost:3001' })
     .nock('http://localhost:3001', api => api
       .get('/api/environments/324')
       .reply(200, EnvironmentSerializer.serialize({
@@ -69,7 +69,7 @@ describe('environments:get', () => {
 
   test
     .stderr()
-    .env({ SERVER_HOST: 'http://localhost:3001' })
+    .env({ FOREST_URL: 'http://localhost:3001' })
     .nock('http://localhost:3001', api => api
       .get('/api/environments/3947')
       .reply(404))
