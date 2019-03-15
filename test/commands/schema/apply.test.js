@@ -49,7 +49,7 @@ describe('schema:apply', () => {
     fancy
       .stderr()
       .stdout()
-      .env({ SERVER_HOST: 'http://localhost:3001' })
+      .env({ FOREST_URL: 'http://localhost:3001' })
       .command(['schema:apply'])
       .exit(2)
       .it('should exist with code 2');
@@ -60,7 +60,7 @@ describe('schema:apply', () => {
       fancy
         .stderr()
         .stdout()
-        .env({ SERVER_HOST: 'http://localhost:3001', FOREST_ENV_SECRET: 'forestEnvSecret' })
+        .env({ FOREST_URL: 'http://localhost:3001', FOREST_ENV_SECRET: 'forestEnvSecret' })
         .nock('http://localhost:3001', (api) => {
           return api.post('/forest/apimaps').reply(404);
         })
@@ -73,7 +73,7 @@ describe('schema:apply', () => {
       fancy
         .stderr()
         .stdout()
-        .env({ SERVER_HOST: 'http://localhost:3001', FOREST_ENV_SECRET: 'forestEnvSecret' })
+        .env({ FOREST_URL: 'http://localhost:3001', FOREST_ENV_SECRET: 'forestEnvSecret' })
         .nock('http://localhost:3001', (api) => {
           return api.post('/forest/apimaps').reply(503);
         })
@@ -87,7 +87,7 @@ describe('schema:apply', () => {
         fancy
           .stderr()
           .stdout()
-          .env({ SERVER_HOST: 'http://localhost:3001', FOREST_ENV_SECRET: 'forestEnvSecret' })
+          .env({ FOREST_URL: 'http://localhost:3001', FOREST_ENV_SECRET: 'forestEnvSecret' })
           .nock('http://localhost:3001', (api) => {
             return api.post('/forest/apimaps', (body) => {
               parsedBody = body;
@@ -155,7 +155,7 @@ describe('schema:apply', () => {
         fancy
           .stderr()
           .stdout()
-          .env({ SERVER_HOST: 'http://localhost:3001', FOREST_ENV_SECRET: 'forestEnvSecret' })
+          .env({ FOREST_URL: 'http://localhost:3001', FOREST_ENV_SECRET: 'forestEnvSecret' })
           .nock('http://localhost:3001', (api) => {
             return api.post('/forest/apimaps', (body) => {
               parsedBody = body;
@@ -191,7 +191,7 @@ describe('schema:apply', () => {
     fancy
       .stderr()
       .stdout()
-      .env({ SERVER_HOST: 'http://localhost:3001', FOREST_ENV_SECRET: 'forestEnvSecret' })
+      .env({ FOREST_URL: 'http://localhost:3001', FOREST_ENV_SECRET: 'forestEnvSecret' })
       .nock('http://localhost:3001', (api) => {
         return api.post('/forest/apimaps').reply(500);
       })

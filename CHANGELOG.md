@@ -1,6 +1,10 @@
 # Change Log
 
 ## [Unreleased]
+### Changed
+- Technical - Rename environment variable SERVER_HOST to FOREST_URL.
+
+### Fixed
 - Build - Fix build script.
 
 ## RELEASE 1.0.1 - 2019-02-14
