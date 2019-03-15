@@ -1,6 +1,9 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- Technical - Warn users if an update of the Toolbelt is available.
+
 ### Changed
 - Technical - Rename environment variable SERVER_HOST to FOREST_URL.
 
