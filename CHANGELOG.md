@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 ### Added
-- Technical - Warn users if an update of the Toolbelt is available.
+- Updates - Warn users if an update of the Toolbelt is available.
 
 ### Changed
 - Technical - Rename environment variable SERVER_HOST to FOREST_URL.
@@ -11,7 +11,7 @@
 - Build - Fix build script.
 
 ## RELEASE 1.0.1 - 2019-02-14
-### Changed
+### Changed
 - Readme - Improve the wording.
 - Help - Improve a command description.
 
