@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - Updates - Warn users if an update of the Toolbelt is available.
+- Dependency - Upgrade lodash version to avoid warnings.
 
 ### Changed
 - Technical - Rename environment variable SERVER_HOST to FOREST_URL.
