@@ -1,11 +1,14 @@
 # Change Log
 
 ## [Unreleased]
+### Changed
+- Security - Patch `lodash` dependency vulnerabilities.
+
+## RELEASE 1.0.2 - 2019-03-28
 ### Added
 - Updates - Warn users if an update of the Toolbelt is available.
 
 ### Changed
-- Security - Patch `lodash` dependency vulnerabilities.
 - Technical - Rename environment variable SERVER_HOST to FOREST_URL.
 
 ### Fixed
