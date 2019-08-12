@@ -47,4 +47,4 @@ Manage Forest Admin schema.
 
 👇 Join our Slack community of +1000 developers
 
-[![Slack Status](https://community.forestadmin.com/badge.svg)](https://community.forestadmin.com)
+[![Slack Status](http://community.forestadmin.com/badge.svg)](https://community.forestadmin.com)
