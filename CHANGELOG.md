@@ -5,6 +5,9 @@
 - Readme - Add a community section.
 - Readme - Remove the Licence section as it is already accessible in the Github page header.
 
+### Fixed
+- License - Add missing license file.
+
 ## RELEASE 1.0.3 - 2019-07-31
 ### Added
 - Updates - Warn users if an update of the Toolbelt is available.
