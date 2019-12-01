@@ -6,6 +6,8 @@
 - Readme - Remove the Licence section as it is already accessible in the Github page header.
 - Technical - Upgrade ESLint rules.
 - Technical - Replace `package-lock.json` by `yarn.lock`.
+- Technical - Upgrade the CI Node version.
+- Technical - Add the linter in the CI.
 
 ### Fixed
 - License - Add missing license file.

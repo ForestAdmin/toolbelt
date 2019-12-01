@@ -2,11 +2,11 @@ sudo: required
 
 language: node_js
 
-node_js:
-  - 8.8.0
+node_js: lts/*
 
 env:
   - NODE_ENV=travis
 
 script:
-  - npm run test
+  - yarn lint
+  - yarn test
