@@ -28,7 +28,7 @@ describe('environments:copy-layout', () => {
         .stdout()
         .stderr()
         .env({ FOREST_URL: 'http://localhost:3001' })
-        .nock('http://localhost:3001', api => api
+        .nock('http://localhost:3001', (api) => api
           .get('/api/environments/324')
           .reply(200, EnvironmentSerializer.serialize({
             id: '324',
@@ -40,7 +40,7 @@ describe('environments:copy-layout', () => {
             lianaVersion: '1.3.2',
             secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
           })))
-        .nock('http://localhost:3001', api => api
+        .nock('http://localhost:3001', (api) => api
           .get('/api/environments/325')
           .reply(200, EnvironmentSerializer.serialize({
             id: '325',
@@ -52,7 +52,7 @@ describe('environments:copy-layout', () => {
             lianaVersion: '1.3.2',
             secretKey: '1b91a1c9bb28e4bea3c941fac1c1c95db5dc1b7bc73bd649b0b113713ee18167',
           })))
-        .nock('http://localhost:3001', api => api
+        .nock('http://localhost:3001', (api) => api
           .post('/api/deployment-requests', (requestBody) => {
             parsedBody = requestBody;
             return requestBody;
@@ -62,7 +62,7 @@ describe('environments:copy-layout', () => {
               job_id: 78,
             },
           }))
-        .nock('http://localhost:3001', api => api
+        .nock('http://localhost:3001', (api) => api
           .get('/api/jobs/78')
           .reply(200, JobSerializer.serialize({
             state: 'complete',
@@ -93,7 +93,7 @@ describe('environments:copy-layout', () => {
         .stdout()
         .stderr()
         .env({ FOREST_URL: 'http://localhost:3001' })
-        .nock('http://localhost:3001', api => api
+        .nock('http://localhost:3001', (api) => api
           .get('/api/environments/324')
           .reply(200, EnvironmentSerializer.serialize({
             id: '324',
@@ -105,7 +105,7 @@ describe('environments:copy-layout', () => {
             lianaVersion: '1.3.2',
             secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
           })))
-        .nock('http://localhost:3001', api => api
+        .nock('http://localhost:3001', (api) => api
           .get('/api/environments/325')
           .reply(200, EnvironmentSerializer.serialize({
             id: '325',
@@ -117,14 +117,14 @@ describe('environments:copy-layout', () => {
             lianaVersion: '1.3.2',
             secretKey: '1b91a1c9bb28e4bea3c941fac1c1c95db5dc1b7bc73bd649b0b113713ee18167',
           })))
-        .nock('http://localhost:3001', api => api
+        .nock('http://localhost:3001', (api) => api
           .post('/api/deployment-requests')
           .reply(200, {
             meta: {
               job_id: 78,
             },
           }))
-        .nock('http://localhost:3001', api => api
+        .nock('http://localhost:3001', (api) => api
           .get('/api/jobs/78')
           .reply(200, JobSerializer.serialize({
             state: 'failed',
@@ -141,10 +141,10 @@ describe('environments:copy-layout', () => {
       .stdout()
       .stderr()
       .env({ FOREST_URL: 'http://localhost:3001' })
-      .nock('http://localhost:3001', api => api
+      .nock('http://localhost:3001', (api) => api
         .get('/api/environments/324')
         .reply(404))
-      .nock('http://localhost:3001', api => api
+      .nock('http://localhost:3001', (api) => api
         .get('/api/environments/325')
         .reply(200, EnvironmentSerializer.serialize({
           id: '325',

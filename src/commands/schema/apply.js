@@ -1,10 +1,10 @@
 const { Command, flags } = require('@oclif/command');
 const fs = require('fs');
 const path = require('path');
+const Joi = require('joi');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
 const JobStateChecker = require('../../services/job-state-checker');
-const Joi = require('joi');
 
 class ApplyCommand extends Command {
   async run() {
@@ -58,7 +58,7 @@ class ApplyCommand extends Command {
 
     if (error) {
       let message = 'Cannot properly read the ".forestadmin-schema.json" file:\n - ';
-      message += error.details.map(detail => detail.message).join('\n - ');
+      message += error.details.map((detail) => detail.message).join('\n - ');
       this.error(message, { exit: 20 });
     }
 

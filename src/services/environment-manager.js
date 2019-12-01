@@ -15,7 +15,7 @@ function EnvironmentManager(config) {
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
       .send()
-      .then(response => environmentDeserializer.deserialize(response.body));
+      .then((response) => environmentDeserializer.deserialize(response.body));
   };
 
   this.getEnvironment = async (environmentId) => {
@@ -26,7 +26,7 @@ function EnvironmentManager(config) {
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
       .send()
-      .then(response => environmentDeserializer.deserialize(response.body));
+      .then((response) => environmentDeserializer.deserialize(response.body));
   };
 
   this.createEnvironment = async () => {
@@ -41,7 +41,7 @@ function EnvironmentManager(config) {
         apiEndpoint: config.url,
         project: { id: config.projectId },
       }))
-      .then(response => environmentDeserializer.deserialize(response.body));
+      .then((response) => environmentDeserializer.deserialize(response.body));
   };
 
   this.deleteEnvironment = async (environmentId, logError) => {

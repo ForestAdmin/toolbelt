@@ -14,13 +14,13 @@ function Authenticator() {
     }
   };
 
-  this.login = config =>
+  this.login = (config) =>
     agent
       .post(`${config.serverHost}/api/sessions`, {
         email: config.email,
         password: config.password,
       })
-      .then(response => response.body)
+      .then((response) => response.body)
       .then((auth) => {
         config.authToken = auth.token;
         return fs.writeFileSync(`${os.homedir()}/.forestrc`, auth.token);

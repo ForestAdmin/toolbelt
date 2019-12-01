@@ -1,8 +1,8 @@
 const P = require('bluebird');
 const agent = require('superagent-promise')(require('superagent'), P);
-const jobDeserializer = require('../deserializers/job');
 const ProgressBar = require('progress');
 const { promisify } = require('util');
+const jobDeserializer = require('../deserializers/job');
 const config = require('../config');
 
 const setTimeoutAsync = promisify(setTimeout);
@@ -16,7 +16,7 @@ function JobStateChecker(message, logError) {
       const jobResponse = await agent
         .get(`${config.serverHost}/api/jobs/${jobId}`)
         .set('Authorization', `Bearer ${config.authToken}`)
-        .then(response => jobDeserializer.deserialize(response.body));
+        .then((response) => jobDeserializer.deserialize(response.body));
 
       if (jobResponse && jobResponse.state) {
         let isBarComplete = false;

@@ -1,4 +1,3 @@
-/* global describe */
 const Nock = require('@fancy-test/nock').default;
 const { expect, test } = require('@oclif/test');
 
@@ -17,7 +16,7 @@ describe('environments:get', () => {
   const mocks = fancy
     .stdout()
     .env({ FOREST_URL: 'http://localhost:3001' })
-    .nock('http://localhost:3001', api => api
+    .nock('http://localhost:3001', (api) => api
       .get('/api/environments/324')
       .reply(200, EnvironmentSerializer.serialize({
         id: '324',
@@ -70,7 +69,7 @@ describe('environments:get', () => {
   test
     .stderr()
     .env({ FOREST_URL: 'http://localhost:3001' })
-    .nock('http://localhost:3001', api => api
+    .nock('http://localhost:3001', (api) => api
       .get('/api/environments/3947')
       .reply(404))
     .command(['environments:get', '3947', '-p', '82'])

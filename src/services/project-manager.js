@@ -14,7 +14,7 @@ function ProjectManager(config) {
       .deserialize(response.body)
       .then((deserialized) => {
         if (_.isArray(deserialized)) {
-          return deserialized.map(d => _.pick(d, attrs));
+          return deserialized.map((d) => _.pick(d, attrs));
         }
 
         return _.pick(deserialized, attrs);
@@ -28,7 +28,7 @@ function ProjectManager(config) {
       .get(`${config.serverHost}/api/projects`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
-      .then(response => deserialize(response));
+      .then((response) => deserialize(response));
   };
 
   this.getProject = async () => {
@@ -38,7 +38,7 @@ function ProjectManager(config) {
       .get(`${config.serverHost}/api/projects/${config.projectId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
-      .then(response => deserialize(response));
+      .then((response) => deserialize(response));
   };
 }
 

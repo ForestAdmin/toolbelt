@@ -1,4 +1,3 @@
-/* global describe */
 const Nock = require('@fancy-test/nock').default;
 const { expect, test } = require('@oclif/test');
 
@@ -17,7 +16,7 @@ describe('environments:create', () => {
   const mocks = fancy
     .stdout()
     .env({ FOREST_URL: 'http://localhost:3001' })
-    .nock('http://localhost:3001', api => api
+    .nock('http://localhost:3001', (api) => api
       .post('/api/environments')
       .reply(200, EnvironmentSerializer.serialize({
         name: 'Test',
