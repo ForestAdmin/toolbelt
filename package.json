@@ -70,7 +70,13 @@
     "plugins": [
       "@oclif/plugin-help",
       "@oclif/plugin-warn-if-update-available"
-    ]
+    ],
+    "warn-if-update-available": {
+      "timeoutInDays": 7,
+      "message": "<%= config.name %> update available from <%= chalk.greenBright(config.version) %> to <%= chalk.greenBright(latest) %>.",
+      "registry": "https://www.npmjs.com/package/forest-cli",
+      "authorization": "Basic f9feb3a6-a76b-4bd0-ab2f-471e6e46cc56"
+    }
   },
   "repository": "ForestAdmin/toolbelt",
   "scripts": {
