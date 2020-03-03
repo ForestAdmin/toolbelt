@@ -1,6 +1,9 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- Prompt - Add the `@oclif/plugin-not-found` plugin which print "did you mean ...?" to correct the user input.
+
 ### Changed
 - Readme - Add a community section.
 - Readme - Remove the Licence section as it is already accessible in the Github page header.
