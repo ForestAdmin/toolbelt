@@ -7,9 +7,9 @@ const jwtDecode = require('jwt-decode');
 const logger = require('./logger');
 
 function Authenticator() {
-  this.getAuthToken = () => {
-    const forestrcToken = this.getVerifiedToken(`${os.homedir()}/.forestrc`);
-    return forestrcToken || this.getVerifiedToken(`${os.homedir()}/.lumberrc`);
+  this.getAuthToken = (path = os.homedir()) => {
+    const forestrcToken = this.getVerifiedToken(`${path}/.forestrc`);
+    return forestrcToken || this.getVerifiedToken(`${path}/.lumberrc`);
   };
 
   this.getVerifiedToken = (path) => {
@@ -19,7 +19,7 @@ function Authenticator() {
 
   this.readAuthTokenFrom = (path) => {
     try {
-      return fs.readFileSync(path);
+      return fs.readFileSync(path, 'utf8');
     } catch (e) {
       return null;
     }
@@ -28,7 +28,7 @@ function Authenticator() {
   this.verify = (token) => {
     const decodedToken = jwtDecode(token);
     const nowInSeconds = Date.now().valueOf() / 1000;
-    if (nowInSeconds < decodedToken.exp) {
+    if (decodedToken.exp && nowInSeconds < decodedToken.exp) {
       return token;
     }
     return null;
