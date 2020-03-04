@@ -8,6 +8,7 @@
 - Technical - Replace `package-lock.json` by `yarn.lock`.
 - Technical - Upgrade the CI Node version.
 - Technical - Add the linter in the CI.
+- Authentication - Try to authent using the .lumberrc
 
 ### Fixed
 - License - Add missing license file.
