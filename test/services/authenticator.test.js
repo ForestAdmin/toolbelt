@@ -14,7 +14,6 @@ const storeToken = (fileName, expiresIn = '14 days') => {
 
 describe('Authenticator', () => {
   describe('getAuthToken', () => {
-
     beforeEach(() => {
       fsExtra.emptyDirSync(tokenPath);
     });
