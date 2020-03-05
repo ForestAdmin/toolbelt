@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - Versioning - Configure the `warn-if-update-available` plugin that warns when a new version is available.
+- Prompt - Add the `@oclif/plugin-not-found` plugin which print "did you mean ...?" to correct the user input.
 
 ### Changed
 - Readme - Add a community section.
@@ -11,6 +12,7 @@
 - Technical - Replace `package-lock.json` by `yarn.lock`.
 - Technical - Upgrade the CI Node version.
 - Technical - Add the linter in the CI.
+- Technical - Ignore .iml files
 
 ### Fixed
 - License - Add missing license file.
