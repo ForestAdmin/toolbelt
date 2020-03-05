@@ -1,6 +1,9 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- Prompt - Add the `@oclif/plugin-not-found` plugin which print "did you mean ...?" to correct the user input.
+
 ### Changed
 - Readme - Add a community section.
 - Readme - Remove the Licence section as it is already accessible in the Github page header.
@@ -9,6 +12,7 @@
 - Technical - Upgrade the CI Node version.
 - Technical - Add the linter in the CI.
 - Authentication - Try to authent using the .lumberrc
+- Technical - Ignore .iml files
 
 ### Fixed
 - License - Add missing license file.
