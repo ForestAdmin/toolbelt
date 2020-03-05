@@ -11,6 +11,7 @@
 - Technical - Replace `package-lock.json` by `yarn.lock`.
 - Technical - Upgrade the CI Node version.
 - Technical - Add the linter in the CI.
+- Technical - Ignore .iml files
 
 ### Fixed
 - License - Add missing license file.
