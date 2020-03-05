@@ -42,6 +42,7 @@
     "eslint-config-airbnb-base": "14.0.0",
     "eslint-config-oclif": "3.1.0",
     "eslint-plugin-import": "2.18.2",
+    "fs-extra": "8.1.0",
     "globby": "8.0.1",
     "mocha": "5.2.0",
     "moment": "2.24.0",

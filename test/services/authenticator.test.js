@@ -1,6 +1,7 @@
 const { expect } = require('chai');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
+const fsExtra = require('fs-extra');
 const authenticator = require('../../src/services/authenticator');
 
 const key = 'test-token-key';
@@ -13,6 +14,11 @@ const storeToken = (fileName, expiresIn = '14 days') => {
 
 describe('Authenticator', () => {
   describe('getAuthToken', () => {
+
+    beforeEach(() => {
+      fsExtra.emptyDirSync(tokenPath);
+    });
+
     describe('when .forestrc and .lumberrc does not exists', () => {
       it('should return null', () => {
         const expectedToken = null;
@@ -42,6 +48,24 @@ describe('Authenticator', () => {
       it('should return the .forestrc token', () => {
         const forestToken = storeToken('.forestrc', '1day');
         storeToken('.lumberrc', '2days');
+        const actualToken = authenticator.getAuthToken(tokenPath);
+        expect(actualToken).to.equals(forestToken);
+      });
+    });
+
+    describe('when .lumberrc and .forestrc exists and .forestrc is invalid', () => {
+      it('should return the .lumberrc token', () => {
+        storeToken('.forestrc', '0ms');
+        const lumberToken = storeToken('.lumberrc', '2days');
+        const actualToken = authenticator.getAuthToken(tokenPath);
+        expect(actualToken).to.equals(lumberToken);
+      });
+    });
+
+    describe('when .lumberrc and .forestrc exists and .lumberrc is invalid', () => {
+      it('should return the .lumberrc token', () => {
+        const forestToken = storeToken('.forestrc', '2days');
+        storeToken('.lumberrc', '0ms');
         const actualToken = authenticator.getAuthToken(tokenPath);
         expect(actualToken).to.equals(forestToken);
       });
