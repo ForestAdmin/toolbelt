@@ -43,7 +43,7 @@ describe('Authenticator', () => {
       });
     });
 
-    describe('when .lumberrc and .forestrc exists and are valid', () => {
+    describe('when .lumberrc and .forestrc exist and are valid', () => {
       it('should return the .forestrc token', () => {
         const forestToken = storeToken('.forestrc', '1day');
         storeToken('.lumberrc', '2days');
