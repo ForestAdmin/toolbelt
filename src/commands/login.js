@@ -1,29 +1,47 @@
 const { Command } = require('@oclif/command');
-const chalk = require('chalk');
+const program = require('commander');
+const inquirer = require('inquirer');
 const authenticator = require('../services/authenticator');
-const Prompter = require('../services/prompter');
 const logger = require('../services/logger');
+const { EMAIL_REGEX } = require('../utils/regexs');
 
 class LoginCommand extends Command {
   static async run() {
     await authenticator
       .logout({ log: false });
 
-    const config = await Prompter([
-      'email',
-      'password',
-    ]);
+    program
+      .description('Log into Forest Admin API')
+      .option('-e, --email <email>', 'Your Forest Admin account email')
+      .option('-P, --password <password>', 'Your Forest Admin account password (ignored if token is set)')
+      .option('-t, --token <token>', 'Your Forest Admin account token (replaces password)')
+      .parse(process.argv);
 
-    try {
-      await authenticator.login(config);
-      console.log(chalk.green(`👍  You're now logged as ${config.email} 👍 `));
-    } catch (err) {
-      if (err.status) {
-        logger.error('🔥  The email or password you entered is incorrect 🔥');
-      } else {
-        logger.error('💀  Oops, something went wrong.💀');
+    (async () => {
+      let { email } = program;
+
+      if (!email) {
+        ({ email } = await inquirer.prompt([{
+          type: 'input',
+          name: 'email',
+          message: 'What\'s your email address?',
+          validate: (input) => {
+            if (EMAIL_REGEX.test(input)) {
+              return true;
+            }
+            return input ? 'Invalid email' : 'Please enter your email address.';
+          },
+        }]));
       }
-    }
+
+      await authenticator.loginWithEmailOrTokenArgv({ ...program, email });
+
+      logger.success('Login successful');
+      process.exit(0);
+    })().catch(async (error) => {
+      logger.error(error);
+      process.exit(1);
+    });
   }
 }
 
