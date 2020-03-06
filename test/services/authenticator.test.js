@@ -18,7 +18,7 @@ describe('Authenticator', () => {
       fsExtra.emptyDirSync(tokenPath);
     });
 
-    describe('when .forestrc and .lumberrc does not exists', () => {
+    describe('when .forestrc and .lumberrc do not exist', () => {
       it('should return null', () => {
         const expectedToken = null;
         const actualToken = authenticator.getAuthToken('.');
