@@ -12,6 +12,7 @@
 - Technical - Replace `package-lock.json` by `yarn.lock`.
 - Technical - Upgrade the CI Node version.
 - Technical - Add the linter in the CI.
+- Authentication - Try to authenticate using `.lumberrc`
 - Technical - Ignore .iml files
 
 ### Fixed

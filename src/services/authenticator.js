@@ -3,15 +3,35 @@ const os = require('os');
 const P = require('bluebird');
 const chalk = require('chalk');
 const agent = require('superagent-promise')(require('superagent'), P);
+const jwtDecode = require('jwt-decode');
 const logger = require('./logger');
 
 function Authenticator() {
-  this.getAuthToken = () => {
+  this.getAuthToken = (path = os.homedir()) => {
+    const forestrcToken = this.getVerifiedToken(`${path}/.forestrc`);
+    return forestrcToken || this.getVerifiedToken(`${path}/.lumberrc`);
+  };
+
+  this.getVerifiedToken = (path) => {
+    const token = this.readAuthTokenFrom(path);
+    return token && this.verify(token);
+  };
+
+  this.readAuthTokenFrom = (path) => {
     try {
-      return fs.readFileSync(`${os.homedir()}/.forestrc`);
+      return fs.readFileSync(path, 'utf8');
     } catch (e) {
       return null;
     }
+  };
+
+  this.verify = (token) => {
+    const decodedToken = jwtDecode(token);
+    const nowInSeconds = Date.now().valueOf() / 1000;
+    if (decodedToken.exp && nowInSeconds < decodedToken.exp) {
+      return token;
+    }
+    return null;
   };
 
   this.login = (config) =>
