@@ -1,12 +1,12 @@
-const api = require('./api');
-const { terminate } = require('../utils/terminator');
-const ERROR_UNEXPECTED = require('../utils/messages');
 const fs = require('fs');
 const os = require('os');
 const P = require('bluebird');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const jwtDecode = require('jwt-decode');
+const { terminate } = require('../utils/terminator');
+const ERROR_UNEXPECTED = require('../utils/messages');
+const api = require('./api');
 const logger = require('./logger');
 
 function Authenticator() {
@@ -79,6 +79,7 @@ function Authenticator() {
 
       return terminate(1, { logs: [message] });
     }
+    return null;
   };
 
   this.login = async (config) => {
@@ -93,7 +94,7 @@ function Authenticator() {
     return this.loginWithPassword(config);
   };
 
-  this.loginWithGoogle = async (email) => {
+  this.loginWithGoogle = async () => {
     const endpoint = process.env.FOREST_URL && process.env.FOREST_URL.includes('localhost')
       ? 'http://localhost:4200' : 'https://app.forestadmin.com';
     const url = chalk.cyan.underline(`${endpoint}/authentication-token`);
@@ -103,8 +104,8 @@ function Authenticator() {
       type: 'password',
       name: 'sessionToken',
       message: 'Enter your Forest Admin authentication token:',
-      validate: (token) => !!this.verify(token) || 'Invalid token. Please enter your' +
-        ' authentication token.',
+      validate: (token) => !!this.verify(token) || 'Invalid token. Please enter your'
+        + ' authentication token.',
     }]);
     return sessionToken;
   };
@@ -118,7 +119,7 @@ function Authenticator() {
         validate: (input) => !!input || 'Please enter your password.',
       }]));
     }
-    return await api.login(email, password);
+    return api.login(email, password);
   };
 }
 
