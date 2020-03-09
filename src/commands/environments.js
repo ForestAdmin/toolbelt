@@ -4,13 +4,13 @@ const EnvironmentManager = require('../services/environment-manager');
 const Renderer = require('../renderers/environments');
 const Prompter = require('../services/prompter');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
+const withCurrentProject = require('../services/with-current-project');
 
 class EnvironmentCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
     const parsed = this.parse(EnvironmentCommand);
-
-    let config = await Prompter([]);
-    config = _.merge(config, parsed.flags);
+    const config = await withCurrentProject(_.merge(await Prompter([]), parsed.flags));
+    console.log(config);
 
     const manager = new EnvironmentManager(config);
 
@@ -22,11 +22,12 @@ class EnvironmentCommand extends AbstractAuthenticatedCommand {
 EnvironmentCommand.description = 'manage environments';
 
 EnvironmentCommand.flags = {
+  /*
   projectId: flags.string({
     char: 'p',
     description: 'Forest project ID',
-    required: true,
   }),
+  */
   format: flags.string({
     char: 'format',
     description: 'Ouput format',
