@@ -5,9 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const P = require('bluebird');
 const inquirer = require('inquirer');
-const jwtDecode = require('jwt-decode');
 const chalk = require('chalk');
-const agent = require('superagent-promise')(require('superagent'), P);
 const jwtDecode = require('jwt-decode');
 const logger = require('./logger');
 
@@ -30,12 +28,12 @@ function Authenticator() {
     }
   };
 
-
   this.pathToForestrc = `${os.homedir()}/.forestrc`;
 
   this.saveToken = (token) => fs.writeFileSync(this.pathToForestrc, token);
 
   this.verify = (token) => {
+    if (!token) return null;
     const decodedToken = jwtDecode(token);
     const nowInSeconds = Date.now().valueOf() / 1000;
     if (decodedToken.exp && nowInSeconds < decodedToken.exp) {
@@ -43,18 +41,6 @@ function Authenticator() {
     }
     return null;
   };
-
-  this.login = (config) =>
-    agent
-      .post(`${config.serverHost}/api/sessions`, {
-        email: config.email,
-        password: config.password,
-      })
-      .then((response) => response.body)
-      .then((auth) => {
-        config.authToken = auth.token;
-        return fs.writeFileSync(`${os.homedir()}/.forestrc`, auth.token);
-      });
 
   this.logout = async (opts = {}) => {
     const path = `${os.homedir()}/.forestrc`;
@@ -82,11 +68,17 @@ function Authenticator() {
     });
   };
 
-  this.verify = (token) => {
-    if (!token) return null;
-    const decodedToken = jwtDecode(token);
-    const nowInSeconds = Date.now().valueOf() / 1000;
-    return decodedToken.exp && nowInSeconds < decodedToken.exp;
+  this.loginWithEmailOrTokenArgv = async (config) => {
+    try {
+      const token = await this.login(config);
+      this.saveToken(token);
+    } catch (error) {
+      const message = error.message === 'Unauthorized'
+        ? 'Incorrect email or password.'
+        : `${ERROR_UNEXPECTED} ${chalk.red(error)}`;
+
+      return terminate(1, { logs: [message] });
+    }
   };
 
   this.login = async (config) => {
@@ -101,19 +93,6 @@ function Authenticator() {
     return this.loginWithPassword(config);
   };
 
-  this.loginWithEmailOrTokenArgv = async (config) => {
-    try {
-      const token = await this.login(config);
-      this.saveToken(token);
-    } catch (error) {
-      const message = error.message === 'Unauthorized'
-        ? 'Incorrect email or password.'
-        : `${ERROR_UNEXPECTED} ${chalk.red(error)}`;
-
-      return terminate(1, { logs: [message] });
-    }
-  };
-
   this.loginWithGoogle = async (email) => {
     const endpoint = process.env.FOREST_URL && process.env.FOREST_URL.includes('localhost')
       ? 'http://localhost:4200' : 'https://app.forestadmin.com';
@@ -121,10 +100,10 @@ function Authenticator() {
     logger.info(`To authenticate with your Google account, please follow this link and copy the authentication token: ${url}`);
 
     const { sessionToken } = await inquirer.prompt([{
-      type: 'input',
+      type: 'password',
       name: 'sessionToken',
       message: 'Enter your Forest Admin authentication token:',
-      validate: (token) => this.verify(token) || 'Invalid token. Please enter your' +
+      validate: (token) => !!this.verify(token) || 'Invalid token. Please enter your' +
         ' authentication token.',
     }]);
     return sessionToken;

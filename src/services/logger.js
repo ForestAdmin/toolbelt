@@ -1,32 +1,6 @@
-const chalk = require('chalk');
+const winston = require('winston');
 
-class Logger {
-  constructor(silent) {
-    this.silent = silent;
-  }
+winston.remove(winston.transports.Console);
+winston.add(winston.transports.Console, { colorize: true });
 
-  log(message) {
-    if (!this.silent) {
-      // eslint-disable-next-line no-console
-      console.log(message);
-    }
-  }
-
-  logLine(color, message) {
-    this.log(`${chalk[color]('>')} ${message}`);
-  }
-
-  logLines(color, messages) {
-    messages.forEach((message) => this.logLine(color, message));
-  }
-
-  success(...messages) { this.logLines('green', messages); }
-
-  info(...messages) { this.logLines('blue', messages); }
-
-  warn(...messages) { this.logLines('yellow', messages); }
-
-  error(...messages) { this.logLines('red', messages); }
-}
-
-module.exports = new Logger();
+module.exports = winston;

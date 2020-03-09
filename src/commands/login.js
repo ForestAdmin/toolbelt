@@ -36,7 +36,7 @@ class LoginCommand extends Command {
 
       await authenticator.loginWithEmailOrTokenArgv({ ...program, email });
 
-      logger.success('Login successful');
+      logger.info('Login successful');
       process.exit(0);
     })().catch(async (error) => {
       logger.error(error);
