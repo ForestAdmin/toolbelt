@@ -6,6 +6,7 @@ const chalk = require('chalk');
 const jwtDecode = require('jwt-decode');
 const { terminate } = require('../utils/terminator');
 const ERROR_UNEXPECTED = require('../utils/messages');
+const { EMAIL_REGEX } = require('../utils/regexs');
 const api = require('./api');
 const logger = require('./logger');
 
@@ -82,16 +83,31 @@ function Authenticator() {
     return null;
   };
 
-  this.login = async (config) => {
-    const { email, token } = config;
+  this.login = async ({ email, password, token }) => {
+    if (!email) email = await this.promptEmail();
     if (this.verify(token)) return token;
 
     const isGoogleAccount = await api.isGoogleAccount(email);
     if (isGoogleAccount) {
-      return this.loginWithGoogle(email);
+      return this.loginWithGoogle();
     }
 
-    return this.loginWithPassword(config);
+    return this.loginWithPassword(email, password);
+  };
+
+  this.promptEmail = async () => {
+    const { email } = await inquirer.prompt([{
+      type: 'input',
+      name: 'email',
+      message: 'What\'s your email address?',
+      validate: (input) => {
+        if (EMAIL_REGEX.test(input)) {
+          return true;
+        }
+        return input ? 'Invalid email' : 'Please enter your email address.';
+      },
+    }]);
+    return email;
   };
 
   this.loginWithGoogle = async () => {
@@ -110,7 +126,7 @@ function Authenticator() {
     return sessionToken;
   };
 
-  this.loginWithPassword = async ({ email, password }) => {
+  this.loginWithPassword = async (email, password) => {
     if (!password) {
       ({ password } = await inquirer.prompt([{
         type: 'password',
