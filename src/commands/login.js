@@ -1,6 +1,8 @@
 const { Command, flags } = require('@oclif/command');
+const chalk = require('chalk');
 const authenticator = require('../services/authenticator');
 const logger = require('../services/logger');
+const ERROR_UNEXPECTED = require('../utils/messages');
 
 class LoginCommand extends Command {
   async run() {
@@ -8,9 +10,15 @@ class LoginCommand extends Command {
       .logout({ log: false });
 
     const { flags } = this.parse(LoginCommand);
-    await authenticator.loginWithEmailOrTokenArgv(flags);
-
-    logger.info('Login successful');
+    try {
+      await authenticator.loginWithEmailOrTokenArgv(flags);
+      logger.info('Login successful');
+    } catch (error) {
+      const message = error.message === 'Unauthorized'
+        ? 'Incorrect email or password.'
+        : `${ERROR_UNEXPECTED} ${chalk.red(error)}`;
+      this.error(message, { exit: false });
+    }
   }
 }
 

@@ -4,8 +4,6 @@ const P = require('bluebird');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const jwtDecode = require('jwt-decode');
-const { terminate } = require('../utils/terminator');
-const ERROR_UNEXPECTED = require('../utils/messages');
 const { EMAIL_REGEX } = require('../utils/regexs');
 const api = require('./api');
 const logger = require('./logger');
@@ -70,16 +68,8 @@ function Authenticator() {
   };
 
   this.loginWithEmailOrTokenArgv = async (config) => {
-    try {
-      const token = await this.login(config);
-      this.saveToken(token);
-    } catch (error) {
-      const message = error.message === 'Unauthorized'
-        ? 'Incorrect email or password.'
-        : `${ERROR_UNEXPECTED} ${chalk.red(error)}`;
-
-      return terminate(1, { logs: [message] });
-    }
+    const token = await this.login(config);
+    this.saveToken(token);
     return null;
   };
 
