@@ -7,20 +7,54 @@ const P = require('bluebird');
 const inquirer = require('inquirer');
 const jwtDecode = require('jwt-decode');
 const chalk = require('chalk');
+const agent = require('superagent-promise')(require('superagent'), P);
+const jwtDecode = require('jwt-decode');
 const logger = require('./logger');
 
 function Authenticator() {
-  this.getAuthToken = () => {
+  this.getAuthToken = (path = os.homedir()) => {
+    const forestrcToken = this.getVerifiedToken(`${path}/.forestrc`);
+    return forestrcToken || this.getVerifiedToken(`${path}/.lumberrc`);
+  };
+
+  this.getVerifiedToken = (path) => {
+    const token = this.readAuthTokenFrom(path);
+    return token && this.verify(token);
+  };
+
+  this.readAuthTokenFrom = (path) => {
     try {
-      return fs.readFileSync(`${os.homedir()}/.forestrc`);
+      return fs.readFileSync(path, 'utf8');
     } catch (e) {
       return null;
     }
   };
 
+
   this.pathToForestrc = `${os.homedir()}/.forestrc`;
 
   this.saveToken = (token) => fs.writeFileSync(this.pathToForestrc, token);
+
+  this.verify = (token) => {
+    const decodedToken = jwtDecode(token);
+    const nowInSeconds = Date.now().valueOf() / 1000;
+    if (decodedToken.exp && nowInSeconds < decodedToken.exp) {
+      return token;
+    }
+    return null;
+  };
+
+  this.login = (config) =>
+    agent
+      .post(`${config.serverHost}/api/sessions`, {
+        email: config.email,
+        password: config.password,
+      })
+      .then((response) => response.body)
+      .then((auth) => {
+        config.authToken = auth.token;
+        return fs.writeFileSync(`${os.homedir()}/.forestrc`, auth.token);
+      });
 
   this.logout = async (opts = {}) => {
     const path = `${os.homedir()}/.forestrc`;
