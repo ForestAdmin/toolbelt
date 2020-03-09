@@ -86,7 +86,6 @@ function Authenticator() {
     const url = chalk.cyan.underline(`${endpoint}/authentication-token`);
     logger.info(`To authenticate with your Google account, please follow this link and copy the authentication token: ${url}`);
 
-    logger.pauseSpinner();
     const { sessionToken } = await inquirer.prompt([{
       type: 'input',
       name: 'sessionToken',
@@ -94,20 +93,17 @@ function Authenticator() {
       validate: (token) => this.verify(token) || 'Invalid token. Please enter your' +
         ' authentication token.',
     }]);
-    logger.continueSpinner();
     return sessionToken;
   };
 
   this.loginWithPassword = async ({ email, password }) => {
     if (!password) {
-      logger.pauseSpinner();
       ({ password } = await inquirer.prompt([{
         type: 'password',
         name: 'password',
         message: 'What\'s your Forest Admin password:',
         validate: (input) => !!input || 'Please enter your password.',
       }]));
-      logger.continueSpinner();
     }
     return await api.login(email, password);
   };

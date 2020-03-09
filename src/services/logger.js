@@ -3,19 +3,6 @@ const chalk = require('chalk');
 class Logger {
   constructor(silent) {
     this.silent = silent;
-    this.spinner = null;
-  }
-
-  pauseSpinner() {
-    if (this.spinner) {
-      this.spinner.pause();
-    }
-  }
-
-  continueSpinner() {
-    if (this.spinner) {
-      this.spinner.continue();
-    }
   }
 
   log(message) {
