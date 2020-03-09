@@ -10,7 +10,6 @@ class EnvironmentCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
     const parsed = this.parse(EnvironmentCommand);
     const config = await withCurrentProject(_.merge(await Prompter([]), parsed.flags));
-    console.log(config);
 
     const manager = new EnvironmentManager(config);
 

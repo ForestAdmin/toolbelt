@@ -24,14 +24,13 @@ module.exports = async function withCurrentProject(config) {
       return { ...config, projectId: projects[0].id };
     }
 
-    const projectFromPrompt = await inquirer.prompt([{
-      name: 'Select your project',
+    const response = await inquirer.prompt([{
+      name: 'project',
+      message: 'Select your project',
       type: 'list',
       choices: projects.map((project) => ({ name: project.name, value: project.id })),
     }]);
-    return { ...config, projectId: projectFromPrompt.id };
+    return { ...config, projectId: response.project };
   }
-
-  
   throw new Error('oh no.');
-}
+};
