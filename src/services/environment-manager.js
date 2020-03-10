@@ -47,14 +47,12 @@ function EnvironmentManager(config) {
   this.updateEnvironment = async () => {
     const authToken = authenticator.getAuthToken();
     return agent
-      .post(`${config.serverHost}/api/environments`)
+      .put(`${config.serverHost}/api/environments/${config.environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
-      .set('forest-project-id', config.projectId)
       .send(EnvironmentSerializer.serialize({
-        id: config.environmentId,
         name: config.name,
         apiEndpoint: config.url,
-      }))
+      }));
   };
 
   this.deleteEnvironment = async (environmentId, logError) => {
