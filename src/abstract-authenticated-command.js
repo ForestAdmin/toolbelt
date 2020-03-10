@@ -5,7 +5,7 @@ const authenticator = require('./services/authenticator');
 class AbstractAuthenticatedCommand extends Command {
   async run() {
     if (!authenticator.getAuthToken()) {
-      return this.displayLoginMessageAndQuit();
+      await authenticator.login({})
     }
 
     try {
