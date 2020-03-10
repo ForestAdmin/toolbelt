@@ -20,12 +20,11 @@ class EnvironmentCommand extends AbstractAuthenticatedCommand {
 EnvironmentCommand.description = 'manage environments';
 
 EnvironmentCommand.flags = {
-  /*
   projectId: flags.string({
     char: 'p',
     description: 'Forest project ID',
+    default: null,
   }),
-  */
   format: flags.string({
     char: 'format',
     description: 'Ouput format',
