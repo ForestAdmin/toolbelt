@@ -1,5 +1,6 @@
 const Nock = require('@fancy-test/nock').default;
 const { expect, test } = require('@oclif/test');
+
 const fancy = test.register('nock', Nock);
 const authenticator = require('../../../src/services/authenticator');
 

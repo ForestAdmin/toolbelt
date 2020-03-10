@@ -19,7 +19,6 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     } else {
       logger.error('Please provide environment name and/or url');
     }
-
   }
 }
 
