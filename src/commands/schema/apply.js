@@ -52,8 +52,8 @@ class ApplyCommand extends Command {
         orm_version: Joi.string().required(),
         database_type: Joi.string().required(),
         liana_version: Joi.string().required(),
-        framework_version: Joi.string(),
-      }).required(),
+        framework_version: Joi.string().allow(null),
+      }).unknown().required(),
     }), { convert: false });
 
     if (error) {

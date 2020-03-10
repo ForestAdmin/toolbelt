@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Fixed
+- Apimap Apply - Fix apply on recent apimap.
 
 ## RELEASE 1.0.1 - 2019-02-14
 ### Changed
