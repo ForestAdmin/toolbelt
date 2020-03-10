@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const fancy = test.register('nock', Nock);
 
 describe('login', () => {
-  describe('-e smile@gmail.com -t bad_token', () => {
+  describe('with trivial mail and bad token in args', () => {
     fancy
       .stdout()
       .stderr()
@@ -14,7 +14,7 @@ describe('login', () => {
       });
   });
 
-  describe('-e smile@gmail.com -t valid_token', () => {
+  describe('with trivial mail and valid token in args', () => {
     fancy
       .stdout()
       .stderr()
@@ -23,21 +23,5 @@ describe('login', () => {
         expect(ctx.stdout).to.contain('Login successful');
       });
   });
-
-  describe('with a google mail', () => {
-    fancy
-      .stdout()
-      .stderr()
-      .env({ FOREST_URL: 'http://localhost:3001' })
-      .nock('http://localhost:3001', (api) => api
-        .get('/api/users/google/smile@gmail.com')
-        .reply(200, { data: { isGoogleAccount: true } }))
-      // .it('should ask the google token', (ctx) => {
-      //   expect(ctx.stdout).to.contain('Login successful');
-      // });
-  });
 });
 
-/*
-
- */
