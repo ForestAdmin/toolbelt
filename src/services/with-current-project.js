@@ -3,16 +3,11 @@ const inquirer = require('inquirer');
 const ProjectManager = require('./project-manager');
 
 module.exports = async function withCurrentProject(config) {
-  function getProjectByEnvSecret() {
-    // TODO
-    return false;
-  }
-
   if (config.projectId) { return config; }
 
   const envSecret = process.env.FOREST_ENV_SECRET;
   if (envSecret) {
-    const projectFromEnv = getProjectByEnvSecret(envSecret);
+    const projectFromEnv = await new ProjectManager(config).getByEnvSecret(envSecret);
     if (projectFromEnv) {
       return { ...config, projectId: projectFromEnv.id };
     }

@@ -1,15 +1,14 @@
 const { flags } = require('@oclif/command');
-const _ = require('lodash');
 const EnvironmentManager = require('../services/environment-manager');
 const Renderer = require('../renderers/environments');
-const Prompter = require('../services/prompter');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const withCurrentProject = require('../services/with-current-project');
+const envConfig = require('../config');
 
 class EnvironmentCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
     const parsed = this.parse(EnvironmentCommand);
-    const config = await withCurrentProject(_.merge(await Prompter([]), parsed.flags));
+    const config = await withCurrentProject({ ...envConfig, ...parsed.flags });
 
     const manager = new EnvironmentManager(config);
 

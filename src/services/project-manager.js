@@ -31,6 +31,17 @@ function ProjectManager(config) {
       .then((response) => deserialize(response));
   };
 
+  this.getByEnvSecret = async (envSecret) => {
+    const authToken = authenticator.getAuthToken();
+
+    return agent
+      .get(`${config.serverHost}/api/projects?envSecret`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('forest-secret-key', envSecret)
+      .send()
+      .then((response) => deserialize(response));
+  };
+
   this.getProject = async () => {
     const authToken = authenticator.getAuthToken();
 
