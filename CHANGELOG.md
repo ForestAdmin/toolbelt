@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+
+## RELEASE 1.0.4 - 2020-03-10
 ### Added
 - Versioning - Configure the `warn-if-update-available` plugin that warns when a new version is available.
 - Prompt - Add the `@oclif/plugin-not-found` plugin which print "did you mean ...?" to correct the user input.
