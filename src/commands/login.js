@@ -9,9 +9,9 @@ class LoginCommand extends Command {
     await authenticator
       .logout({ log: false });
 
-    const { flags } = this.parse(LoginCommand);
+    const { flags: config } = this.parse(LoginCommand);
     try {
-      await authenticator.loginWithEmailOrTokenArgv(flags);
+      await authenticator.loginWithEmailOrTokenArgv(config);
       logger.info('Login successful');
     } catch (error) {
       const message = error.message === 'Unauthorized'
