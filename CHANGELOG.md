@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- Environments - Add environments:update command.
 
 ## RELEASE 1.0.5 - 2020-03-10
 ### Fixed
