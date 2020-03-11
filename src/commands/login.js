@@ -17,7 +17,7 @@ class LoginCommand extends Command {
       const message = error.message === 'Unauthorized'
         ? 'Incorrect email or password.'
         : `${ERROR_UNEXPECTED} ${chalk.red(error)}`;
-      this.error(message, { exit: false });
+      logger.error(message);
     }
   }
 }

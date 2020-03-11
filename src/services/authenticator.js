@@ -33,7 +33,12 @@ function Authenticator() {
 
   this.verify = (token) => {
     if (!token) return null;
-    const decodedToken = jwtDecode(token);
+    let decodedToken;
+    try {
+      decodedToken = jwtDecode(token);
+    } catch (error) {
+      return null;
+    }
     const nowInSeconds = Date.now().valueOf() / 1000;
     if (decodedToken.exp && nowInSeconds < decodedToken.exp) {
       return token;
