@@ -2,19 +2,6 @@ const Nock = require('@fancy-test/nock').default;
 const { expect, test } = require('@oclif/test');
 const jwt = require('jsonwebtoken');
 
-const input = (value, delay = 0) => {
-  let stdin;
-  return {
-    run: () => {
-      stdin = require('mock-stdin').stdin();
-      setTimeout(() => {
-        stdin.send(value);
-        stdin.end();
-      }, delay);
-    },
-  };
-};
-
 const fancy = test.register('nock', Nock);
 
 describe('login', () => {
