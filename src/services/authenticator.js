@@ -83,11 +83,10 @@ function Authenticator() {
 
   this.loginWithToken = (token) => {
     const validationResult = this.validateToken(token);
-    if (validationResult === true) {
-      return token;
-    } else {
+    if (validationResult !== true) {
       throw new Error(validationResult);
     }
+    return token;
   };
 
   this.login = async ({ email, password, token }) => {
