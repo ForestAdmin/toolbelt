@@ -7,11 +7,11 @@ const fancy = test.register('nock', Nock);
 describe('login', () => {
   describe('with trivial mail and bad token in args', () => {
     fancy
-      .stdout()
+      .stdout({ print: true })
       .stderr()
       .command(['login', '-e', 'smile@gmail.com', '-t', 'bad_token'])
       .it('should warn about bad token', (ctx) => {
-        expect(ctx.stderr).to.contain('InvalidTokenError: Invalid token specified');
+        expect(ctx.stderr).to.contain('Invalid token. Please enter your authentication token.');
       });
   });
 
@@ -27,7 +27,7 @@ describe('login', () => {
 
   describe('stdin test', () => {
     fancy
-      .input('token\n')
+      .stdin('token\n')
       .it('should contain data equals "token"', () => {
         process.stdin.setEncoding('utf8');
         process.stdin.once('data', (data) => {

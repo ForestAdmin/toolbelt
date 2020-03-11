@@ -46,6 +46,9 @@ function Authenticator() {
     return null;
   };
 
+  this.validateToken = (token) => !!this.verify(token) || 'Invalid token. Please enter your'
+    + ' authentication token.';
+
   this.logout = async (opts = {}) => {
     const path = `${os.homedir()}/.forestrc`;
 
@@ -78,9 +81,21 @@ function Authenticator() {
     return null;
   };
 
+  this.loginWithToken = (token) => {
+    const validationResult = this.validateToken(token);
+    if (validationResult === true) {
+      return token;
+    } else {
+      throw new Error(validationResult);
+    }
+  };
+
   this.login = async ({ email, password, token }) => {
     if (!email) email = await this.promptEmail();
-    if (this.verify(token)) return token;
+
+    if (token) {
+      return this.loginWithToken(token);
+    }
 
     const isGoogleAccount = await api.isGoogleAccount(email);
     if (isGoogleAccount) {
@@ -115,8 +130,7 @@ function Authenticator() {
       type: 'password',
       name: 'sessionToken',
       message: 'Enter your Forest Admin authentication token:',
-      validate: (token) => !!this.verify(token) || 'Invalid token. Please enter your'
-        + ' authentication token.',
+      validate: this.validateToken,
     }]);
     return sessionToken;
   };

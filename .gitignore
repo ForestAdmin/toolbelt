@@ -4,3 +4,5 @@ node_modules/
 .nyc_output/
 # IDE
 /*.iml
+test/services/tokens
+yarn-error.log
