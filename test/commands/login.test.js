@@ -2,7 +2,22 @@ const Nock = require('@fancy-test/nock').default;
 const { expect, test } = require('@oclif/test');
 const jwt = require('jsonwebtoken');
 
-const fancy = test.register('nock', Nock);
+const input = (value, delay = 0) => {
+  let stdin;
+  return {
+    run: () => {
+      stdin = require('mock-stdin').stdin();
+      setTimeout(() => {
+        stdin.send(value);
+        stdin.end();
+      }, delay);
+    },
+  };
+};
+
+const fancy = test
+  .register('nock', Nock)
+  .register('input', input);
 
 describe('login', () => {
   describe('with trivial mail and bad token in args', () => {
@@ -27,7 +42,7 @@ describe('login', () => {
 
   describe('stdin test', () => {
     fancy
-      .stdin('token\n')
+      .stdin('token')
       .it('should contain data equals "token"', () => {
         process.stdin.setEncoding('utf8');
         process.stdin.once('data', (data) => {
@@ -36,20 +51,17 @@ describe('login', () => {
       });
   });
 
-  // describe('with a google mail and a valid token', () => {
-  //   fancy
-  //     .stdout({ print: true })
-  //     .env({ FOREST_URL: 'http://localhost:3001' })
-  //     .nock('http://localhost:3001', (api) => api
-  //       .get('/api/users/google/robert@gmail.com')
-  //       .reply(200, { data: { isGoogleAccount: true } }))
-  //     .command(['login', '-e', 'robert@gmail.com'])
-  //     .stdin(jwt.sign({}, 'key', { expiresIn: '1day' }))
-  //     .it('should display Login successful', (ctx) => {
-  //       process.stdin.setEncoding('utf8');
-  //       process.stdin.once('data', () => {
-  //         expect(ctx.stdout).to.contain('Login successful');
-  //       });
-  //     });
-  // });
+  describe('with a google mail and a valid token', () => {
+    fancy
+      .stdout({ print: true })
+      .env({ FOREST_URL: 'http://localhost:3001' })
+      .nock('http://localhost:3001', (api) => api
+        .get('/api/users/google/robert@gmail.com')
+        .reply(200, { data: { isGoogleAccount: true } }))
+      .input(jwt.sign({}, 'key', { expiresIn: '1day' }) + '\n', 500)
+      .command(['login', '-e', 'robert@gmail.com'])
+      .it('should display Login successful', (ctx) =>
+        expect(ctx.stdout).to.contain('Login successful')
+      );
+  });
 });
