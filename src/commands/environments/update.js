@@ -27,17 +27,17 @@ CreateCommand.description = 'update an environment';
 CreateCommand.flags = {
   environmentId: flags.string({
     char: 'e',
-    description: 'Forest environment ID',
+    description: 'The forest environment ID to update',
     required: true,
   }),
   name: flags.string({
     char: 'n',
-    description: 'Environment name',
+    description: 'To update the environment name',
     required: false,
   }),
   url: flags.string({
     char: 'u',
-    description: 'Application URL',
+    description: 'To update the application URL',
     required: false,
   }),
 };
