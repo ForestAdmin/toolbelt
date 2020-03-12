@@ -1,19 +1,16 @@
 const { flags } = require('@oclif/command');
-const _ = require('lodash');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
 const EnvironmentManager = require('../../services/environment-manager');
-const Prompter = require('../../services/prompter');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const withCurrentProject = require('../../services/with-current-project');
+const envConfig = require('../../config');
 
 class DeleteCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
     const logError = this.error.bind(this);
     const parsed = this.parse(DeleteCommand);
-
-    let config = await Prompter([]);
-    config = _.merge(config, parsed.flags, parsed.args);
-
+    const config = await withCurrentProject({ ...envConfig, ...parsed.flags, ...parsed.args });
     const manager = new EnvironmentManager(config);
 
     try {
@@ -56,7 +53,7 @@ DeleteCommand.flags = {
   projectId: flags.string({
     char: 'p',
     description: 'Forest project ID',
-    required: true,
+    default: null,
   }),
   force: flags.boolean({
     char: 'force',

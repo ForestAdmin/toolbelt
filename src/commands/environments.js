@@ -9,9 +9,7 @@ class EnvironmentCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
     const parsed = this.parse(EnvironmentCommand);
     const config = await withCurrentProject({ ...envConfig, ...parsed.flags });
-
     const manager = new EnvironmentManager(config);
-
     const environments = await manager.listEnvironments();
     new Renderer(config).render(environments);
   }

@@ -27,5 +27,5 @@ module.exports = async function withCurrentProject(config) {
     }]);
     return { ...config, projectId: response.project };
   }
-  throw new Error('oh no.');
+  throw new Error('You don\'t have any project yet.');
 };
