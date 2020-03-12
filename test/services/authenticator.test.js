@@ -15,7 +15,12 @@ const storeToken = (fileName, expiresIn = '14 days') => {
 describe('Authenticator', () => {
   describe('getAuthToken', () => {
     beforeEach(() => {
+      fsExtra.mkdirsSync(tokenPath);
       fsExtra.emptyDirSync(tokenPath);
+    });
+
+    afterEach(() => {
+      fsExtra.removeSync(tokenPath)
     });
 
     describe('when .forestrc and .lumberrc do not exist', () => {
