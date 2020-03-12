@@ -46,8 +46,8 @@ function Authenticator() {
     return null;
   };
 
-  this.validateToken = (token) => !!this.verify(token) || 'Invalid token. Please enter your'
-    + ' authentication token.';
+  this.validateToken = (token) => !!this.verify(token) 
+    || 'Invalid token. Please enter your authentication token.';
 
   this.logout = async (opts = {}) => {
     const path = `${os.homedir()}/.forestrc`;
