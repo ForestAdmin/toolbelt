@@ -108,7 +108,7 @@ function Authenticator() {
     const { email } = await inquirer.prompt([{
       type: 'input',
       name: 'email',
-      message: 'What\'s your email address?',
+      message: 'What is your email address?',
       validate: (input) => {
         if (EMAIL_REGEX.test(input)) {
           return true;
