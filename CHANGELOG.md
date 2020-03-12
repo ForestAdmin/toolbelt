@@ -1,6 +1,9 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- Environments - Add environments:update command.
+
 ### Changed
 - Technical - Clean temporary tests files.
 

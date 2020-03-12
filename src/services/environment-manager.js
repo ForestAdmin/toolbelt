@@ -44,6 +44,17 @@ function EnvironmentManager(config) {
       .then((response) => environmentDeserializer.deserialize(response.body));
   };
 
+  this.updateEnvironment = async () => {
+    const authToken = authenticator.getAuthToken();
+    return agent
+      .put(`${config.serverHost}/api/environments/${config.environmentId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send(EnvironmentSerializer.serialize({
+        name: config.name,
+        apiEndpoint: config.url,
+      }));
+  };
+
   this.deleteEnvironment = async (environmentId, logError) => {
     const authToken = authenticator.getAuthToken();
     const jobStateChecker = new JobStateChecker('Deleting environment', logError);
