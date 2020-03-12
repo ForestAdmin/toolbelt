@@ -20,7 +20,7 @@ describe('Authenticator', () => {
     });
 
     afterEach(() => {
-      fsExtra.removeSync(tokenPath)
+      fsExtra.removeSync(tokenPath);
     });
 
     describe('when .forestrc and .lumberrc do not exist', () => {
