@@ -1,9 +1,7 @@
 const { flags } = require('@oclif/command');
-const _ = require('lodash');
 const chalk = require('chalk');
 const EnvironmentManager = require('../../services/environment-manager');
 const Renderer = require('../../renderers/environment');
-const Prompter = require('../../services/prompter');
 const logger = require('../../services/logger');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const withCurrentProject = require('../../services/with-current-project');
