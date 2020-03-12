@@ -13,12 +13,14 @@ class LoginCommand extends Command {
     try {
       await authenticator.loginWithEmailOrTokenArgv(config);
       logger.info('Login successful');
+      return 0;
     } catch (error) {
       const message = error.message === 'Unauthorized'
         ? 'Incorrect email or password.'
         : `${ERROR_UNEXPECTED} ${chalk.red(error)}`;
       logger.error(message);
     }
+    return -1;
   }
 }
 

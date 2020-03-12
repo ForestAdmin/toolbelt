@@ -1,16 +1,19 @@
 const { Command } = require('@oclif/command');
 const chalk = require('chalk');
 const authenticator = require('./services/authenticator');
+const LoginCommand = require('./commands/login');
 
 class AbstractAuthenticatedCommand extends Command {
   async run() {
     if (!authenticator.getAuthToken()) {
-      await authenticator.login({});
+      const status = await LoginCommand.run([]);
+      if (status !== 0) {
+        return;
+      }
     }
 
     try {
-      const result = await this.runIfAuthenticated();
-      return result;
+      return await this.runIfAuthenticated();
     } catch (error) {
       // NOTICE: Due to ip-whitelist, 404 will never be thrown for a project
       if (error.status === 403) {
