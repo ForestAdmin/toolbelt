@@ -4,7 +4,7 @@ const P = require('bluebird');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const jwtDecode = require('jwt-decode');
-const { EMAIL_REGEX } = require('../utils/regexs');
+const Joi = require('joi');
 const api = require('./api');
 const logger = require('./logger');
 
@@ -46,7 +46,7 @@ function Authenticator() {
     return null;
   };
 
-  this.validateToken = (token) => !!this.verify(token) 
+  this.validateToken = (token) => !!this.verify(token)
     || 'Invalid token. Please enter your authentication token.';
 
   this.logout = async (opts = {}) => {
@@ -110,7 +110,7 @@ function Authenticator() {
       name: 'email',
       message: 'What is your email address?',
       validate: (input) => {
-        if (EMAIL_REGEX.test(input)) {
+        if (!Joi.string().email().validate(input).error) {
           return true;
         }
         return input ? 'Invalid email' : 'Please enter your email address.';

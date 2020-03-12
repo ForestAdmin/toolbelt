@@ -20,7 +20,7 @@ describe('login', () => {
       .stdout()
       .stderr()
       .command(['login', '-e', 'smile@gmail.com', '-t', jwt.sign({}, 'key', { expiresIn: '1day' })])
-      .it('should warn about bad token', (ctx) => {
+      .it('should display "Login successful"', (ctx) => {
         expect(ctx.stdout).to.contain('Login successful');
       });
   });
