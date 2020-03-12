@@ -1,32 +1,42 @@
-const { Command } = require('@oclif/command');
+const { Command, flags } = require('@oclif/command');
 const chalk = require('chalk');
 const authenticator = require('../services/authenticator');
-const Prompter = require('../services/prompter');
 const logger = require('../services/logger');
+const ERROR_UNEXPECTED = require('../utils/messages');
 
 class LoginCommand extends Command {
-  static async run() {
+  async run() {
     await authenticator
       .logout({ log: false });
 
-    const config = await Prompter([
-      'email',
-      'password',
-    ]);
-
+    const { flags: config } = this.parse(LoginCommand);
     try {
-      await authenticator.login(config);
-      console.log(chalk.green(`👍  You're now logged as ${config.email} 👍 `));
-    } catch (err) {
-      if (err.status) {
-        logger.error('🔥  The email or password you entered is incorrect 🔥');
-      } else {
-        logger.error('💀  Oops, something went wrong.💀');
-      }
+      await authenticator.loginWithEmailOrTokenArgv(config);
+      logger.info('Login successful');
+    } catch (error) {
+      const message = error.message === 'Unauthorized'
+        ? 'Incorrect email or password.'
+        : `${ERROR_UNEXPECTED} ${chalk.red(error)}`;
+      logger.error(message);
     }
   }
 }
 
 LoginCommand.description = 'sign in with an existing account';
+
+LoginCommand.flags = {
+  email: flags.string({
+    char: 'e',
+    description: 'Your Forest Admin account email',
+  }),
+  password: flags.string({
+    char: 'P',
+    description: 'Your Forest Admin account password (ignored if token is set)',
+  }),
+  token: flags.string({
+    char: 't',
+    description: 'Your Forest Admin account token (replaces password)',
+  }),
+};
 
 module.exports = LoginCommand;

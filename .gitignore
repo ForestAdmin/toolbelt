@@ -4,3 +4,4 @@ node_modules/
 .nyc_output/
 # IDE
 /*.iml
+yarn-error.log
