@@ -139,7 +139,7 @@ function Authenticator() {
       ({ password } = await inquirer.prompt([{
         type: 'password',
         name: 'password',
-        message: 'What\'s your Forest Admin password:',
+        message: 'What is your Forest Admin password:',
         validate: (input) => !!input || 'Please enter your password.',
       }]));
     }
