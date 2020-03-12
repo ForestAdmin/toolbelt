@@ -8,7 +8,7 @@ const HEADER_USER_AGENT = 'User-Agent';
 
 function API() {
   this.endpoint = process.env.FOREST_URL || 'https://api.forestadmin.com';
-  this.userAgent = `lumber@${pkg.version}`;
+  this.userAgent = `forest-cli@${pkg.version}`;
 
   this.isGoogleAccount = async (email) => agent
     .get(`${this.endpoint}/api/users/google/${email}`)
