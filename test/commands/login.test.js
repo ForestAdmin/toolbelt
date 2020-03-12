@@ -3,17 +3,15 @@ const { expect, test } = require('@oclif/test');
 const jwt = require('jsonwebtoken');
 const mockStdin = require('mock-stdin');
 
-const input = (value, delay = 0) => {
-  return {
-    run: () => {
-      const stdin = mockStdin.stdin();
-      setTimeout(() => {
-        stdin.send(value);
-        stdin.end();
-      }, delay);
-    },
-  };
-};
+const input = (value, delay = 0) => ({
+  run: () => {
+    const stdin = mockStdin.stdin();
+    setTimeout(() => {
+      stdin.send(value);
+      stdin.end();
+    }, delay);
+  },
+});
 
 const fancy = test
   .register('nock', Nock)
@@ -53,7 +51,7 @@ describe('login', () => {
 
   describe('with a google mail and a valid token', () => {
     fancy
-      .stdout()
+      .stdout({ print: true })
       .env({ FOREST_URL: 'http://localhost:3001' })
       .nock('http://localhost:3001', (api) => api
         .get('/api/users/google/robert@gmail.com')
