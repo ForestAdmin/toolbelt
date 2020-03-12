@@ -1,13 +1,28 @@
 const Nock = require('@fancy-test/nock').default;
 const { expect, test } = require('@oclif/test');
 const jwt = require('jsonwebtoken');
+const mockStdin = require('mock-stdin');
 
-const fancy = test.register('nock', Nock);
+const input = (value, delay = 0) => {
+  return {
+    run: () => {
+      const stdin = mockStdin.stdin();
+      setTimeout(() => {
+        stdin.send(value);
+        stdin.end();
+      }, delay);
+    },
+  };
+};
+
+const fancy = test
+  .register('nock', Nock)
+  .register('input', input);
 
 describe('login', () => {
   describe('with trivial mail and bad token in args', () => {
     fancy
-      .stdout({ print: true })
+      .stdout()
       .stderr()
       .command(['login', '-e', 'smile@gmail.com', '-t', 'bad_token'])
       .it('should warn about bad token', (ctx) => {
@@ -33,6 +48,20 @@ describe('login', () => {
         process.stdin.once('data', (data) => {
           expect(data).to.equals('token');
         });
+      });
+  });
+
+  describe('with a google mail and a valid token', () => {
+    fancy
+      .stdout()
+      .env({ FOREST_URL: 'http://localhost:3001' })
+      .nock('http://localhost:3001', (api) => api
+        .get('/api/users/google/robert@gmail.com')
+        .reply(200, { data: { isGoogleAccount: true } }))
+      .input(jwt.sign({}, 'key', { expiresIn: '1day' }), 500)
+      .command(['login', '-e', 'robert@gmail.com'])
+      .it('should display Login successful', (ctx) => {
+        expect(ctx.stdout).to.contain('Login successful');
       });
   });
 });
