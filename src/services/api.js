@@ -12,7 +12,7 @@ function API() {
 
   this.isGoogleAccount = async (email) => agent
     .get(`${this.endpoint}/api/users/google/${email}`)
-    .set(HEADER_FOREST_ORIGIN, 'Lumber')
+    .set(HEADER_FOREST_ORIGIN, 'forest-cli')
     .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
     .set(HEADER_USER_AGENT, this.userAgent)
     .send()
@@ -21,7 +21,7 @@ function API() {
 
   this.login = async (email, password) => agent
     .post(`${this.endpoint}/api/sessions`)
-    .set(HEADER_FOREST_ORIGIN, 'Toolbelt')
+    .set(HEADER_FOREST_ORIGIN, 'forest-cli')
     .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
     .set(HEADER_USER_AGENT, this.userAgent)
     .send({ email, password })
