@@ -90,7 +90,12 @@ function Authenticator() {
   };
 
   this.login = async ({ email, password, token }) => {
-    if (!email) email = await this.promptEmail();
+    if (email) {
+      const validationResult = await this.validateEmail(email);
+      if (validationResult !== true) {
+        throw new Error(validationResult);
+      }
+    } else email = await this.promptEmail();
 
     if (token) {
       return this.loginWithToken(token);
@@ -104,17 +109,19 @@ function Authenticator() {
     return this.loginWithPassword(email, password);
   };
 
+  this.validateEmail = (input) => {
+    if (!Joi.string().email().validate(input).error) {
+      return true;
+    }
+    return input ? 'Invalid email' : 'Please enter your email address.';
+  };
+
   this.promptEmail = async () => {
     const { email } = await inquirer.prompt([{
       type: 'input',
       name: 'email',
       message: 'What is your email address?',
-      validate: (input) => {
-        if (!Joi.string().email().validate(input).error) {
-          return true;
-        }
-        return input ? 'Invalid email' : 'Please enter your email address.';
-      },
+      validate: this.validateEmail,
     }]);
     return email;
   };
