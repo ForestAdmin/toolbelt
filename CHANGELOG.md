@@ -3,7 +3,7 @@
 ## [Unreleased]
 ### Added
 - Environments - Add environments:update command.
-- Authentication - Add Google authentication.
+- Technical - Add tests on google authentication.
 
 ### Changed
 - Technical - Clean temporary tests files.
