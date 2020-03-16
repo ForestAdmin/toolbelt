@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - Environments - Add environments:update command.
+- Authentication - Add Google authentication.
 - Technical - Add tests on google authentication.
 
 ### Changed
@@ -16,7 +17,6 @@
 ### Added
 - Versioning - Configure the `warn-if-update-available` plugin that warns when a new version is available.
 - Prompt - Add the `@oclif/plugin-not-found` plugin which print "did you mean ...?" to correct the user input.
-- Authentication - Add Google authentication.
 
 ### Changed
 - Readme - Add a community section.
