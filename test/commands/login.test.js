@@ -40,7 +40,7 @@ describe('login', () => {
 
   describe('stdin test', () => {
     fancy
-      .input('token\n')
+      .input('token')
       .it('should contain data equals "token"', () => {
         process.stdin.setEncoding('utf8');
         process.stdin.once('data', (data) => {
