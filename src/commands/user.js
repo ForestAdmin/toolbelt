@@ -11,7 +11,7 @@ class UserCommand extends Command {
       const decoded = jwt.decode(token);
       console.log(chalk.bold('Email: ') + chalk.cyan(decoded.data.data.attributes.email));
     } else {
-      logger.error('🔥  You\'re not logged 🔥');
+      logger.error('You are not logged.');
     }
   }
 }
