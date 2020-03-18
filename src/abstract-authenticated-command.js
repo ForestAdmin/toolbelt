@@ -6,7 +6,7 @@ const authenticator = require('./services/authenticator');
 class AbstractAuthenticatedCommand extends Command {
   async run() {
     if (!authenticator.getAuthToken()) {
-      logger.info('Login required.')
+      logger.info('Login required.');
       await authenticator.tryLogin({});
     }
 
