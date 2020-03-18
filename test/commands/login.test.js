@@ -99,22 +99,5 @@ describe('login', () => {
         ],
       }));
     });
-
-    describe('with typing wrong password2', () => {
-      it('should display incorrect password', () => testDialog({
-        env: { FOREST_URL: 'http://localhost:3001' },
-        command: () => LoginCommand.run([]),
-        nock: nock('http://localhost:3001')
-          .post('/api/sessions', { email: 'some@mail.com', password: 'pwd' })
-          .reply(401),
-        dialog: [
-          { out: 'What is your email address?' },
-          { in: 'some@mail.com' },
-          { out: 'What is your Forest Admin password: [input is hidden] ?' },
-          { in: 'pwd' },
-          { err: 'Incorrect email or password.' },
-        ],
-      }));
-    });
   });
 });
