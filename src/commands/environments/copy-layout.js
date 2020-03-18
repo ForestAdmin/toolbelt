@@ -53,7 +53,7 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
         if (copyLayout) {
           return this.log(`Environment's layout ${chalk.red(fromEnvironment.name)} successfully copied to ${chalk.red(toEnvironment.name)}.`);
         }
-        return this.error('💀  Oops, something went wrong.💀', { exit: 1 });
+        return this.error('Oops, something went wrong.', { exit: 1 });
       }
       return this.error(`Confirmation did not match ${chalk.red(toEnvironment.name)}. Aborted.`, { exit: 2 });
     } catch (error) {

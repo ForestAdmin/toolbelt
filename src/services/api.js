@@ -7,11 +7,11 @@ const HEADER_FOREST_ORIGIN = 'forest-origin';
 const HEADER_USER_AGENT = 'User-Agent';
 
 function API() {
-  this.endpoint = process.env.FOREST_URL || 'https://api.forestadmin.com';
+  this.endpoint = () => process.env.FOREST_URL || 'https://api.forestadmin.com';
   this.userAgent = `forest-cli@${pkg.version}`;
 
   this.isGoogleAccount = async (email) => agent
-    .get(`${this.endpoint}/api/users/google/${email}`)
+    .get(`${this.endpoint()}/api/users/google/${email}`)
     .set(HEADER_FOREST_ORIGIN, 'forest-cli')
     .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
     .set(HEADER_USER_AGENT, this.userAgent)
@@ -20,7 +20,7 @@ function API() {
     .catch(() => false);
 
   this.login = async (email, password) => agent
-    .post(`${this.endpoint}/api/sessions`)
+    .post(`${this.endpoint()}/api/sessions`)
     .set(HEADER_FOREST_ORIGIN, 'forest-cli')
     .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
     .set(HEADER_USER_AGENT, this.userAgent)

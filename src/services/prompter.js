@@ -19,7 +19,7 @@ async function Prompter(requests) {
         message: 'What\'s your email address? ',
         validate: (email) => {
           if (email) { return true; }
-          return '🔥  Please enter your email address 🔥';
+          return 'Please enter your email address';
         },
       });
     }
@@ -35,7 +35,7 @@ async function Prompter(requests) {
         message: 'What\'s your password: ',
         validate: (password) => {
           if (password) { return true; }
-          return '🔥  Oops, your password cannot be blank 🔥';
+          return 'Oops, your password cannot be blank';
         },
       });
     }
