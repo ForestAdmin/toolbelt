@@ -24,11 +24,6 @@ class GetCommand extends AbstractAuthenticatedCommand {
 GetCommand.description = 'get the configuration of an environment';
 
 GetCommand.flags = {
-  projectId: flags.string({
-    char: 'p',
-    description: 'Forest project ID',
-    default: null,
-  }),
   format: flags.string({
     char: 'format',
     description: 'Ouput format',

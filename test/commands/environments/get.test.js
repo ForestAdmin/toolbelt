@@ -17,6 +17,7 @@ describe('environments:get', () => {
     .stdout()
     .env({ FOREST_URL: 'http://localhost:3001' })
     .nock('http://localhost:3001', (api) => api
+      .matchHeader('forest-environment-id', '324')
       .get('/api/environments/324')
       .reply(200, EnvironmentSerializer.serialize({
         id: '324',
@@ -30,7 +31,7 @@ describe('environments:get', () => {
       })));
 
   mocks
-    .command(['environments:get', '324', '-p', '82'])
+    .command(['environments:get', '324'])
     .it('should return the configuration of the Staging environment', (ctx) => {
       expect(ctx.stdout).to.contain('ENVIRONMENT');
       expect(ctx.stdout).to.contain('id');
@@ -52,7 +53,7 @@ describe('environments:get', () => {
     });
 
   mocks
-    .command(['environments:get', '324', '-p', '82', '--format', 'json'])
+    .command(['environments:get', '324', '--format', 'json'])
     .it('should return the configuration of the Staging environment', (ctx) => {
       expect(JSON.parse(ctx.stdout)).to.eql({
         name: 'Staging',
@@ -70,9 +71,10 @@ describe('environments:get', () => {
     .stderr()
     .env({ FOREST_URL: 'http://localhost:3001' })
     .nock('http://localhost:3001', (api) => api
+      .matchHeader('forest-environment-id', '3947')
       .get('/api/environments/3947')
       .reply(404))
-    .command(['environments:get', '3947', '-p', '82'])
+    .command(['environments:get', '3947'])
     .it('should display a NotFound error', (ctx) => {
       expect(ctx.stderr).to.contain('Cannot find the environment 3947.\n');
     });
