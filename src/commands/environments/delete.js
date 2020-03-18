@@ -35,7 +35,7 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
         if (deleteEnvironment) {
           return this.log(`Environment ${chalk.red(environment.name)} successfully deleted.`);
         }
-        return this.error('💀  Oops, something went wrong.💀', { exit: 1 });
+        return this.error('Oops, something went wrong.', { exit: 1 });
       }
       return this.error(`Confirmation did not match ${chalk.red(environment.name)}. Aborted.`, { exit: 1 });
     } catch (err) {
