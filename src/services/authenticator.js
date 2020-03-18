@@ -64,7 +64,7 @@ function Authenticator() {
           resolve();
         } else if (err.code === 'ENOENT') {
           if (opts.log) {
-            logger.error('🔥  You\'re not logged 🔥');
+            logger.error('You are not logged');
           }
 
           resolve();

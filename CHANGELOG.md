@@ -7,6 +7,7 @@
 
 ### Changed
 - Technical - Clean temporary tests files.
+- Logs - Remove worrisome emojis (such as fire and skulls) from error messages.
 
 ## RELEASE 1.0.5 - 2020-03-10
 ### Fixed
