@@ -15,8 +15,9 @@ describe('login', () => {
       }));
     });
     describe('with valid token in args', () => {
+      const token = jwt.sign({}, 'key', { expiresIn: '1day' });
       it('should login successful', () => testDialog({
-        command: () => LoginCommand.run(['-e', 'smile@gmail.com', '-t', jwt.sign({}, 'key', { expiresIn: '1day' })]),
+        command: () => LoginCommand.run(['-e', 'smile@gmail.com', '-t', token]),
         dialog: [
           { in: `${jwt.sign({}, 'key', { expiresIn: '1day' })}` },
           { out: 'Login successful' },
@@ -33,8 +34,8 @@ describe('login', () => {
             .reply(200, { data: { isGoogleAccount: true } }),
           dialog: [
             {
-              out: 'To authenticate with your Google account, please follow this link ' +
-                'and copy the authentication token:',
+              out: 'To authenticate with your Google account, please follow this link '
+                + 'and copy the authentication token:',
             },
             { in: `${jwt.sign({}, 'key', { expiresIn: '1day' })}` },
             { out: 'Login successful' },
@@ -57,8 +58,8 @@ describe('login', () => {
             { out: 'What is your email address?' },
             { in: 'robert@gmail.com' },
             {
-              out: 'To authenticate with your Google account, please follow this link ' +
-                'and copy the authentication token:',
+              out: 'To authenticate with your Google account, please follow this link '
+                + 'and copy the authentication token:',
             },
             { in: `${jwt.sign({}, 'key', { expiresIn: '1day' })}` },
             { out: 'Login successful' },

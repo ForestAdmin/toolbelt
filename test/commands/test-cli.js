@@ -3,8 +3,8 @@ const { stdout, stderr } = require('stdout-stderr');
 const { expect } = require('chai');
 
 module.exports = async function testCli({
-    nock, env, command, dialog,
-  }) {
+  nock, env, command, dialog,
+}) {
   const inputs = dialog ? dialog.filter((type) => type.in).map((type) => type.in) : [];
   const outputs = dialog ? dialog.filter((type) => type.out).map((type) => type.out) : [];
   const errorOutputs = dialog ? dialog.filter((type) => type.err).map((type) => type.err) : [];
