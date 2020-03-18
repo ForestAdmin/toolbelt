@@ -5,6 +5,7 @@
 - Environments - Add environments:update command.
 - Authentication - Add Google authentication.
 - Technical - Add tests on google authentication.
+- Technical - Add lint pre-commit-hook.
 
 ### Changed
 - Technical - Clean temporary tests files.
