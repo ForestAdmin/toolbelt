@@ -74,6 +74,6 @@ describe('environments:get', () => {
       .reply(404))
     .command(['environments:get', '3947', '-p', '82'])
     .it('should display a NotFound error', (ctx) => {
-      expect(ctx.stderr).to.contain('Cannot find the environment 3947 on the project 82.');
+      expect(ctx.stderr).to.contain('Cannot find the environment 3947.\n');
     });
 });

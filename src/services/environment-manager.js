@@ -24,7 +24,7 @@ function EnvironmentManager(config) {
     return agent
       .get(`${config.serverHost}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
-      .set('forest-project-id', config.projectId)
+      .set('forest-environment-id', environmentId)
       .send()
       .then((response) => environmentDeserializer.deserialize(response.body));
   };
@@ -62,7 +62,7 @@ function EnvironmentManager(config) {
     const deleteEnvironmentResponse = await agent
       .del(`${config.serverHost}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
-      .set('forest-project-id', config.projectId);
+      .set('forest-environment-id', environmentId);
 
     if (!deleteEnvironmentResponse.body
       || !deleteEnvironmentResponse.body.meta
