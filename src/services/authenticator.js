@@ -7,6 +7,7 @@ const jwtDecode = require('jwt-decode');
 const Joi = require('joi');
 const api = require('./api');
 const logger = require('./logger');
+const ERROR_UNEXPECTED = require('../utils/messages');
 
 function Authenticator() {
   this.getAuthToken = (path = os.homedir()) => {
@@ -75,10 +76,18 @@ function Authenticator() {
     });
   };
 
-  this.loginWithEmailOrTokenArgv = async (config) => {
-    const token = await this.login(config);
-    this.saveToken(token);
-    return null;
+  this.tryLogin = async (config) => {
+    await this.logout({ log: false });
+    try {
+      const token = await this.login(config);
+      this.saveToken(token);
+      logger.info('Login successful');
+    } catch (error) {
+      const message = error.message === 'Unauthorized'
+        ? 'Incorrect email or password.'
+        : `${ERROR_UNEXPECTED} ${chalk.red(error)}`;
+      logger.error(message);
+    }
   };
 
   this.loginWithToken = (token) => {
