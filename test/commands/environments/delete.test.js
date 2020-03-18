@@ -21,6 +21,7 @@ describe('environments:delete', () => {
         .stderr()
         .env({ FOREST_URL: 'http://localhost:3001' })
         .nock('http://localhost:3001', (api) => api
+          .matchHeader('forest-environment-id', '324')
           .get('/api/environments/324')
           .reply(200, EnvironmentSerializer.serialize({
             id: '324',
@@ -33,6 +34,7 @@ describe('environments:delete', () => {
             FOREST_ENV_SECRET: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
           })))
         .nock('http://localhost:3001', (api) => api
+          .matchHeader('forest-environment-id', '324')
           .delete('/api/environments/324')
           .reply(200, {
             meta: {
@@ -45,7 +47,7 @@ describe('environments:delete', () => {
             state: 'complete',
             progress: '100',
           })))
-        .command(['environments:delete', '324', '-p', '82', '--force'])
+        .command(['environments:delete', '324', '--force'])
         .it('should delete the environment', (ctx) => {
           expect(ctx.stdout).to.contain('Environment Staging successfully deleted.');
         });
@@ -57,6 +59,7 @@ describe('environments:delete', () => {
         .stderr()
         .env({ FOREST_URL: 'http://localhost:3001' })
         .nock('http://localhost:3001', (api) => api
+          .matchHeader('forest-environment-id', '324')
           .get('/api/environments/324')
           .reply(200, EnvironmentSerializer.serialize({
             id: '324',
@@ -81,7 +84,7 @@ describe('environments:delete', () => {
             state: 'failed',
             progress: '10',
           })))
-        .command(['environments:delete', '324', '-p', '82', '--force'])
+        .command(['environments:delete', '324', '--force'])
         .exit(1)
         .it('should exit with status 1');
     });
@@ -92,9 +95,10 @@ describe('environments:delete', () => {
       .stderr()
       .env({ FOREST_URL: 'http://localhost:3001' })
       .nock('http://localhost:3001', (api) => api
+        .matchHeader('forest-environment-id', '324')
         .get('/api/environments/324')
         .reply(404))
-      .command(['environments:delete', '324', '-p', '82', '--force'])
+      .command(['environments:delete', '324', '--force'])
       .exit(1)
       .it('should exit with status 1');
   });

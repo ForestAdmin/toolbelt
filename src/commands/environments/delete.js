@@ -49,11 +49,6 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
 DeleteCommand.description = 'delete an environment';
 
 DeleteCommand.flags = {
-  projectId: flags.string({
-    char: 'p',
-    description: 'Forest project ID',
-    default: null,
-  }),
   force: flags.boolean({
     char: 'force',
     description: 'Force delete',
