@@ -105,7 +105,6 @@ function Authenticator() {
     if (isGoogleAccount) {
       return this.loginWithGoogle();
     }
-
     return this.loginWithPassword(email, password);
   };
 
