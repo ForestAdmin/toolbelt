@@ -1,3 +1,4 @@
+require('dotenv').config();
 const authenticator = require('./services/authenticator');
 
 module.exports = {
