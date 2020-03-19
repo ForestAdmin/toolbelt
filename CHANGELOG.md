@@ -11,6 +11,7 @@
 - Technical - Clean temporary tests files.
 - Logs - Remove worrisome emojis (such as fire and skulls) from error messages.
 - Login command - Perform login before any authenticated operation if not already logged.
+- Technical - Remove caching of authToken and api endpoint.
 
 ## RELEASE 1.0.5 - 2020-03-10
 ### Fixed

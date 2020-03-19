@@ -4,6 +4,7 @@ const ProgressBar = require('progress');
 const { promisify } = require('util');
 const jobDeserializer = require('../deserializers/job');
 const config = require('../config');
+const { getAuthToken } = require('./authenticator');
 
 const setTimeoutAsync = promisify(setTimeout);
 
@@ -14,8 +15,8 @@ function JobStateChecker(message, logError) {
   this.check = async (jobId) => {
     try {
       const jobResponse = await agent
-        .get(`${config.serverHost}/api/jobs/${jobId}`)
-        .set('Authorization', `Bearer ${config.authToken}`)
+        .get(`${config.serverHost()}/api/jobs/${jobId}`)
+        .set('Authorization', `Bearer ${getAuthToken()}`)
         .then((response) => jobDeserializer.deserialize(response.body));
 
       if (jobResponse && jobResponse.state) {

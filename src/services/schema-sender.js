@@ -5,7 +5,7 @@ const config = require('../config');
 function SchemaSender(serializedSchema, secret, logError) {
   this.perform = () =>
     agent
-      .post(`${config.serverHost}/forest/apimaps`)
+      .post(`${config.serverHost()}/forest/apimaps`)
       .set('forest-secret-key', secret)
       .send(serializedSchema)
       .then(({ body }) => {
