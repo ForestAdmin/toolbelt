@@ -13,7 +13,6 @@
 - Logs - Remove worrisome emojis (such as fire and skulls) from error messages.
 - Login command - Perform login before any authenticated operation if not already logged.
 - Technical - Remove caching of authToken and api endpoint.
-- Commands - Ease the selection of project.
 
 ## RELEASE 1.0.5 - 2020-03-10
 ### Fixed
@@ -33,6 +32,7 @@
 - Technical - Add the linter in the CI.
 - Authentication - Try to authenticate using `.lumberrc`
 - Technical - Ignore .iml files
+- Commands - Ease the selection of project.
 
 ### Fixed
 - License - Add missing license file.
