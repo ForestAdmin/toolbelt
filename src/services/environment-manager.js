@@ -5,13 +5,14 @@ const EnvironmentSerializer = require('../serializers/environment');
 const environmentDeserializer = require('../deserializers/environment');
 const DeploymentRequestSerializer = require('../serializers/deployment-request');
 const JobStateChecker = require('../services/job-state-checker');
+const { serverHost } = require('../config');
 
 function EnvironmentManager(config) {
   this.listEnvironments = async () => {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${config.serverHost}/api/projects/${config.projectId}/environments`)
+      .get(`${serverHost()}/api/projects/${config.projectId}/environments`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
       .send()
@@ -22,7 +23,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${config.serverHost}/api/environments/${environmentId}`)
+      .get(`${serverHost()}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-environment-id', environmentId)
       .send()
@@ -33,7 +34,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .post(`${config.serverHost}/api/environments`)
+      .post(`${serverHost()}/api/environments`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
       .send(EnvironmentSerializer.serialize({
@@ -47,7 +48,7 @@ function EnvironmentManager(config) {
   this.updateEnvironment = async () => {
     const authToken = authenticator.getAuthToken();
     return agent
-      .put(`${config.serverHost}/api/environments/${config.environmentId}`)
+      .put(`${serverHost()}/api/environments/${config.environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send(EnvironmentSerializer.serialize({
         name: config.name,
@@ -60,7 +61,7 @@ function EnvironmentManager(config) {
     const jobStateChecker = new JobStateChecker('Deleting environment', logError);
 
     const deleteEnvironmentResponse = await agent
-      .del(`${config.serverHost}/api/environments/${environmentId}`)
+      .del(`${serverHost()}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-environment-id', environmentId);
 
@@ -87,7 +88,7 @@ function EnvironmentManager(config) {
     const jobStateChecker = new JobStateChecker('Copying layout', logError);
 
     const deploymentRequestResponse = await agent
-      .post(`${config.serverHost}/api/deployment-requests`)
+      .post(`${serverHost()}/api/deployment-requests`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
       .send(DeploymentRequestSerializer.serialize(deploymentRequest));

@@ -4,6 +4,7 @@ const agent = require('superagent-promise')(require('superagent'), P);
 const authenticator = require('./authenticator');
 const ProjectSerializer = require('../serializers/project');
 const ProjectDeserializer = require('../deserializers/project');
+const { serverHost } = require('../config');
 
 function ProjectManager(config) {
   function deserialize(response) {
@@ -25,7 +26,7 @@ function ProjectManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${config.serverHost}/api/projects`)
+      .get(`${serverHost()}/api/projects`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
       .then((response) => deserialize(response));
@@ -35,7 +36,7 @@ function ProjectManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${config.serverHost}/api/projects?envSecret`)
+      .get(`${serverHost()}/api/projects?envSecret`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-secret-key', envSecret)
       .send()
@@ -46,7 +47,7 @@ function ProjectManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${config.serverHost}/api/projects/${config.projectId}`)
+      .get(`${serverHost()}/api/projects/${config.projectId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
       .then((response) => deserialize(response));
