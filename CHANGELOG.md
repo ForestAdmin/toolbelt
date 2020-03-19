@@ -13,9 +13,6 @@
 - Login command - Perform login before any authenticated operation if not already logged.
 - Technical - config organization
 
-### Fixed
-- Commands - Ease the selection of project.
-
 ## RELEASE 1.0.5 - 2020-03-10
 ### Fixed
 - Apimap Apply - Fix apply on recent apimap.
@@ -37,6 +34,7 @@
 
 ### Fixed
 - License - Add missing license file.
+- Commands - Ease the selection of project.
 
 ## RELEASE 1.0.3 - 2019-07-31
 ### Added
