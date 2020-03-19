@@ -2,9 +2,18 @@ const mockStdin = require('mock-stdin');
 const { stdout, stderr } = require('stdout-stderr');
 const { expect } = require('chai');
 
+stdout.print = true;
+stderr.print = true;
+
+const asArray = (any) => {
+  if (!any) return [];
+  return Array.isArray(any) ? any : [any];
+};
+
 module.exports = async function testCli({
   nock, env, command, dialog,
 }) {
+  const nocks = asArray(nock);
   const inputs = dialog ? dialog.filter((type) => type.in).map((type) => type.in) : [];
   const outputs = dialog ? dialog.filter((type) => type.out).map((type) => type.out) : [];
   const errorOutputs = dialog ? dialog.filter((type) => type.err).map((type) => type.err) : [];
@@ -17,14 +26,14 @@ module.exports = async function testCli({
     setTimeout(() => stdin.send(`${inputs[i]}\n`), 500 + i * 100);
   }
 
-  stdout.start();
-  stderr.start();
+  if (outputs.length) stdout.start();
+  if (errorOutputs.length) stderr.start();
   await command();
-  nock && nock.done();
-  stdin.end();
-  stdin.reset();
-  stdout.stop();
-  stderr.stop();
+  nocks.forEach((item) => item.done());
+  if (inputs.length) stdin.end();
+  if (inputs.length) stdin.reset();
+  if (outputs.length) stdout.stop();
+  if (errorOutputs.length) stderr.stop();
 
   for (let i = 0; i < outputs.length; i += 1) {
     expect(stdout.output).to.contain(outputs[i]);
