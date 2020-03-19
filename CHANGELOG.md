@@ -6,6 +6,7 @@
 - Authentication - Add Google authentication.
 - Technical - Add tests on google authentication.
 - Technical - Add lint pre-commit-hook.
+- Technical - Add scenario test `forest environments`
 
 ### Changed
 - Technical - Clean temporary tests files.
@@ -31,7 +32,6 @@
 - Technical - Add the linter in the CI.
 - Authentication - Try to authenticate using `.lumberrc`
 - Technical - Ignore .iml files
-- Commands - Ease the selection of project.
 
 ### Fixed
 - License - Add missing license file.
