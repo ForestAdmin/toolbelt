@@ -31,10 +31,10 @@
 - Technical - Add the linter in the CI.
 - Authentication - Try to authenticate using `.lumberrc`
 - Technical - Ignore .iml files
+- Commands - Ease the selection of project.
 
 ### Fixed
 - License - Add missing license file.
-- Commands - Ease the selection of project.
 
 ## RELEASE 1.0.3 - 2019-07-31
 ### Added
