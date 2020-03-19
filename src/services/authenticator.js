@@ -122,7 +122,7 @@ function Authenticator() {
       return this.loginWithToken(email, paramToken);
     }
 
-    const isGoogleAccount = await api.isGoogleAccount();
+    const isGoogleAccount = await api.isGoogleAccount(email);
     if (isGoogleAccount) {
       return this.loginWithGoogle(email);
     }

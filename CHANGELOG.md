@@ -7,6 +7,7 @@
 - Technical - Add tests on google authentication.
 - Technical - Add lint pre-commit-hook.
 - Tests - Add test for `forest environments` command.
+- Login - check token email coherence with email.
 
 ### Changed
 - Technical - Clean temporary tests files.
