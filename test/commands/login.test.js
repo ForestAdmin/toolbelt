@@ -1,13 +1,13 @@
 const jwt = require('jsonwebtoken');
 const nock = require('nock');
 
-const testCli = require('./test-cli');
+const testDialog = require('./test-cli');
 const LoginCommand = require('../../src/commands/login');
 
 describe('login', () => {
   describe('with email in args', () => {
     describe('with bad token in args', () => {
-      it('should display invalid token', () => testCli({
+      it('should display invalid token', () => testDialog({
         command: () => LoginCommand.run(['-e', 'smile@gmail.com', '-t', 'invalid_token']),
         dialog: [
           { err: 'Invalid token. Please enter your authentication token.' },
@@ -16,7 +16,7 @@ describe('login', () => {
     });
     describe('with valid token in args', () => {
       const token = jwt.sign({}, 'key', { expiresIn: '1day' });
-      it('should login successful', () => testCli({
+      it('should login successful', () => testDialog({
         command: () => LoginCommand.run(['-e', 'smile@gmail.com', '-t', token]),
         dialog: [
           { in: `${jwt.sign({}, 'key', { expiresIn: '1day' })}` },
@@ -26,7 +26,7 @@ describe('login', () => {
     });
     describe('with a google mail', () => {
       describe('with a valid token from input', () => {
-        it('should login successful', () => testCli({
+        it('should login successful', () => testDialog({
           env: { FOREST_URL: 'http://localhost:3001' },
           command: () => LoginCommand.run(['-e', 'robert@gmail.com']),
           nock: nock('http://localhost:3001')
@@ -48,7 +48,7 @@ describe('login', () => {
   describe('with typing email', () => {
     describe('with a google mail', () => {
       describe('with a valid token from input', () => {
-        it('should login successful', () => testCli({
+        it('should login successful', () => testDialog({
           env: { FOREST_URL: 'http://localhost:3001' },
           command: () => LoginCommand.run([]),
           nock: nock('http://localhost:3001')
@@ -68,7 +68,7 @@ describe('login', () => {
       });
     });
     describe('with typing valid password', () => {
-      it('should login successful', () => testCli({
+      it('should login successful', () => testDialog({
         env: { FOREST_URL: 'http://localhost:3001' },
         command: () => LoginCommand.run([]),
         nock: nock('http://localhost:3001')
@@ -84,7 +84,7 @@ describe('login', () => {
       }));
     });
     describe('with typing wrong password', () => {
-      it('should display incorrect password', () => testCli({
+      it('should display incorrect password', () => testDialog({
         env: { FOREST_URL: 'http://localhost:3001' },
         command: () => LoginCommand.run([]),
         nock: nock('http://localhost:3001')
