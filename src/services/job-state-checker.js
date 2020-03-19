@@ -14,8 +14,8 @@ function JobStateChecker(message, logError) {
   this.check = async (jobId) => {
     try {
       const jobResponse = await agent
-        .get(`${config.serverHost}/api/jobs/${jobId}`)
-        .set('Authorization', `Bearer ${config.authToken}`)
+        .get(`${config.serverHost()}/api/jobs/${jobId}`)
+        .set('Authorization', `Bearer ${config.authToken()}`)
         .then((response) => jobDeserializer.deserialize(response.body));
 
       if (jobResponse && jobResponse.state) {
