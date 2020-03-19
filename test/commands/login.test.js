@@ -1,13 +1,22 @@
 const jwt = require('jsonwebtoken');
-const nock = require('nock');
 
-const testDialog = require('./test-cli');
+const testCli = require('./test-cli');
 const LoginCommand = require('../../src/commands/login');
+const {
+  emailAndPassword,
+} = require('../fixtures/dialogs');
+
+const {
+  aGoogleAccountNock,
+  validAuthNock,
+  invalidAuthNock,
+} = require('../fixtures/nocks');
+const { testEnv } = require('../fixtures/envs');
 
 describe('login', () => {
   describe('with email in args', () => {
     describe('with bad token in args', () => {
-      it('should display invalid token', () => testDialog({
+      it('should display invalid token', () => testCli({
         command: () => LoginCommand.run(['-e', 'smile@gmail.com', '-t', 'invalid_token']),
         dialog: [
           { err: 'Invalid token. Please enter your authentication token.' },
@@ -16,7 +25,7 @@ describe('login', () => {
     });
     describe('with valid token in args', () => {
       const token = jwt.sign({}, 'key', { expiresIn: '1day' });
-      it('should login successful', () => testDialog({
+      it('should login successful', () => testCli({
         command: () => LoginCommand.run(['-e', 'smile@gmail.com', '-t', token]),
         dialog: [
           { in: `${jwt.sign({}, 'key', { expiresIn: '1day' })}` },
@@ -26,12 +35,10 @@ describe('login', () => {
     });
     describe('with a google mail', () => {
       describe('with a valid token from input', () => {
-        it('should login successful', () => testDialog({
-          env: { FOREST_URL: 'http://localhost:3001' },
+        it('should login successful', () => testCli({
+          env: testEnv,
           command: () => LoginCommand.run(['-e', 'robert@gmail.com']),
-          nock: nock('http://localhost:3001')
-            .get('/api/users/google/robert@gmail.com')
-            .reply(200, { data: { isGoogleAccount: true } }),
+          nock: aGoogleAccountNock(),
           dialog: [
             {
               out: 'To authenticate with your Google account, please follow this link '
@@ -48,12 +55,10 @@ describe('login', () => {
   describe('with typing email', () => {
     describe('with a google mail', () => {
       describe('with a valid token from input', () => {
-        it('should login successful', () => testDialog({
-          env: { FOREST_URL: 'http://localhost:3001' },
+        it('should login successful', () => testCli({
+          env: testEnv,
           command: () => LoginCommand.run([]),
-          nock: nock('http://localhost:3001')
-            .get('/api/users/google/robert@gmail.com')
-            .reply(200, { data: { isGoogleAccount: true } }),
+          nock: aGoogleAccountNock(),
           dialog: [
             { out: 'What is your email address?' },
             { in: 'robert@gmail.com' },
@@ -68,28 +73,21 @@ describe('login', () => {
       });
     });
     describe('with typing valid password', () => {
-      it('should login successful', () => testDialog({
-        env: { FOREST_URL: 'http://localhost:3001' },
+      it('should login successful', () => testCli({
+        env: testEnv,
         command: () => LoginCommand.run([]),
-        nock: nock('http://localhost:3001')
-          .post('/api/sessions', { email: 'some@mail.com', password: 'valid_pwd' })
-          .reply(200),
+        nock: validAuthNock(),
         dialog: [
-          { out: 'What is your email address?' },
-          { in: 'some@mail.com' },
-          { out: 'What is your Forest Admin password: [input is hidden] ?' },
-          { in: 'valid_pwd' },
+          ...emailAndPassword,
           { out: 'Login successful' },
         ],
       }));
     });
     describe('with typing wrong password', () => {
-      it('should display incorrect password', () => testDialog({
-        env: { FOREST_URL: 'http://localhost:3001' },
+      it('should display incorrect password', () => testCli({
+        env: testEnv,
         command: () => LoginCommand.run([]),
-        nock: nock('http://localhost:3001')
-          .post('/api/sessions', { email: 'some@mail.com', password: 'pwd' })
-          .reply(401),
+        nock: invalidAuthNock(),
         dialog: [
           { out: 'What is your email address?' },
           { in: 'some@mail.com' },
