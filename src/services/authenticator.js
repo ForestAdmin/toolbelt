@@ -10,7 +10,7 @@ const logger = require('./logger');
 const ERROR_UNEXPECTED = require('../utils/messages');
 
 function Authenticator() {
-  this.getAuthToken = (path = os.homedir()) => {
+  this.getAuthToken = (path = process.env.TOKEN_PATH || os.homedir()) => {
     const forestrcToken = this.getVerifiedToken(`${path}/.forestrc`);
     return forestrcToken || this.getVerifiedToken(`${path}/.lumberrc`);
   };
