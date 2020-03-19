@@ -32,14 +32,17 @@ function Authenticator() {
 
   this.saveToken = (token) => fs.writeFileSync(this.pathToForestrc, token);
 
-  this.verify = (token) => {
+  this.decode = (token) => {
     if (!token) return null;
-    let decodedToken;
     try {
-      decodedToken = jwtDecode(token);
+      return jwtDecode(token);
     } catch (error) {
       return null;
     }
+  };
+
+  this.verify = (token) => {
+    const decodedToken = this.decode(token);
     const nowInSeconds = Date.now().valueOf() / 1000;
     if (decodedToken.exp && nowInSeconds < decodedToken.exp) {
       return token;
@@ -90,15 +93,24 @@ function Authenticator() {
     }
   };
 
-  this.loginWithToken = (token) => {
+  this.validateTokenEmail = (email, token) => {
+    const decodedToken = this.decode(token);
+    const tokenEmail = decodedToken && decodedToken.data.data.attributes.email;
+    if (email && email !== tokenEmail) {
+      throw new Error('Email and token mismatch.');
+    }
+  };
+
+  this.loginWithToken = (email, token) => {
     const validationResult = this.validateToken(token);
     if (validationResult !== true) {
       throw new Error(validationResult);
     }
+    this.validateTokenEmail(email, token);
     return token;
   };
 
-  this.login = async ({ email, password, token }) => {
+  this.login = async ({ email, password, token: paramToken }) => {
     if (email) {
       const validationResult = await this.validateEmail(email);
       if (validationResult !== true) {
@@ -106,14 +118,15 @@ function Authenticator() {
       }
     } else email = await this.promptEmail();
 
-    if (token) {
-      return this.loginWithToken(token);
+    if (paramToken) {
+      return this.loginWithToken(email, paramToken);
     }
 
-    const isGoogleAccount = await api.isGoogleAccount(email);
+    const isGoogleAccount = await api.isGoogleAccount();
     if (isGoogleAccount) {
-      return this.loginWithGoogle();
+      return this.loginWithGoogle(email);
     }
+
     return this.loginWithPassword(email, password);
   };
 
@@ -134,7 +147,7 @@ function Authenticator() {
     return email;
   };
 
-  this.loginWithGoogle = async () => {
+  this.loginWithGoogle = async (email) => {
     const endpoint = process.env.FOREST_URL && process.env.FOREST_URL.includes('localhost')
       ? 'http://localhost:4200' : 'https://app.forestadmin.com';
     const url = chalk.cyan.underline(`${endpoint}/authentication-token`);
@@ -146,6 +159,7 @@ function Authenticator() {
       message: 'Enter your Forest Admin authentication token:',
       validate: this.validateToken,
     }]);
+    this.validateTokenEmail(email, sessionToken);
     return sessionToken;
   };
 
