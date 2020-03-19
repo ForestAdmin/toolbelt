@@ -1,5 +1,9 @@
 const testDialog = require('./test-cli');
 const EnvironmentCommand = require('../../src/commands/environments');
+const {
+  enter,
+  arrowDown,
+} = require('../fixtures/dialogs');
 const { testEnv } = require('../fixtures/envs');
 const {
   notAGoogleAccountNock,
@@ -25,8 +29,8 @@ describe('environments', () => {
       { out: 'What is your Forest Admin password: [input is hidden] ?' },
       { in: 'valid_pwd' },
       { out: 'Login successful' },
-      { in: '\u001b[B' }, // Notice: Arrow down
-      { in: '\r' }, // Notice: Carriage return
+      ...arrowDown,
+      ...enter,
       { out: 'ENVIRONMENTS' },
       { out: 'ID        NAME                URL                                TYPE' },
       { out: '3         name1               http://localhost:1                 type1' },

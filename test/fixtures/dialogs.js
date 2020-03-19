@@ -5,4 +5,10 @@ module.exports = {
     { out: 'What is your Forest Admin password: [input is hidden] ?' },
     { in: 'valid_pwd' },
   ],
+  arrowDown: [
+    { in: '\u001b[B' },
+  ],
+  enter: [
+    { in: '\r' },
+  ],
 };
