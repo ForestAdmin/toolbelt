@@ -2,17 +2,16 @@ const mockStdin = require('mock-stdin');
 const { stdout, stderr } = require('stdout-stderr');
 const { expect } = require('chai');
 
-stdout.print = true;
-stderr.print = true;
-
 const asArray = (any) => {
   if (!any) return [];
   return Array.isArray(any) ? any : [any];
 };
 
 module.exports = async function testCli({
-  nock, env, command, dialog,
+  nock, env, command, dialog, print = false,
 }) {
+  stdout.print = print;
+  stderr.print = print;
   const nocks = asArray(nock);
   const inputs = dialog ? dialog.filter((type) => type.in).map((type) => type.in) : [];
   const outputs = dialog ? dialog.filter((type) => type.out).map((type) => type.out) : [];
