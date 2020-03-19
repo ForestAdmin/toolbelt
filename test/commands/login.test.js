@@ -1,8 +1,17 @@
 const jwt = require('jsonwebtoken');
-const nock = require('nock');
 
 const testCli = require('./test-cli');
 const LoginCommand = require('../../src/commands/login');
+const {
+  emailAndPassword,
+} = require('../fixtures/dialogs');
+
+const {
+  aGoogleAccountNock,
+  validAuthNock,
+  invalidAuthNock,
+} = require('../fixtures/nocks');
+const { testEnv } = require('../fixtures/envs');
 
 describe('login', () => {
   describe('with email in args', () => {
@@ -27,11 +36,9 @@ describe('login', () => {
     describe('with a google mail', () => {
       describe('with a valid token from input', () => {
         it('should login successful', () => testCli({
-          env: { FOREST_URL: 'http://localhost:3001' },
+          env: testEnv,
           command: () => LoginCommand.run(['-e', 'robert@gmail.com']),
-          nock: nock('http://localhost:3001')
-            .get('/api/users/google/robert@gmail.com')
-            .reply(200, { data: { isGoogleAccount: true } }),
+          nock: aGoogleAccountNock(),
           dialog: [
             {
               out: 'To authenticate with your Google account, please follow this link '
@@ -49,11 +56,9 @@ describe('login', () => {
     describe('with a google mail', () => {
       describe('with a valid token from input', () => {
         it('should login successful', () => testCli({
-          env: { FOREST_URL: 'http://localhost:3001' },
+          env: testEnv,
           command: () => LoginCommand.run([]),
-          nock: nock('http://localhost:3001')
-            .get('/api/users/google/robert@gmail.com')
-            .reply(200, { data: { isGoogleAccount: true } }),
+          nock: aGoogleAccountNock(),
           dialog: [
             { out: 'What is your email address?' },
             { in: 'robert@gmail.com' },
@@ -69,27 +74,20 @@ describe('login', () => {
     });
     describe('with typing valid password', () => {
       it('should login successful', () => testCli({
-        env: { FOREST_URL: 'http://localhost:3001' },
+        env: testEnv,
         command: () => LoginCommand.run([]),
-        nock: nock('http://localhost:3001')
-          .post('/api/sessions', { email: 'some@mail.com', password: 'valid_pwd' })
-          .reply(200),
+        nock: validAuthNock(),
         dialog: [
-          { out: 'What is your email address?' },
-          { in: 'some@mail.com' },
-          { out: 'What is your Forest Admin password: [input is hidden] ?' },
-          { in: 'valid_pwd' },
+          ...emailAndPassword,
           { out: 'Login successful' },
         ],
       }));
     });
     describe('with typing wrong password', () => {
       it('should display incorrect password', () => testCli({
-        env: { FOREST_URL: 'http://localhost:3001' },
+        env: testEnv,
         command: () => LoginCommand.run([]),
-        nock: nock('http://localhost:3001')
-          .post('/api/sessions', { email: 'some@mail.com', password: 'pwd' })
-          .reply(401),
+        nock: invalidAuthNock(),
         dialog: [
           { out: 'What is your email address?' },
           { in: 'some@mail.com' },
