@@ -14,7 +14,7 @@
 - Login command - Perform login before any authenticated operation if not already logged.
 - Commands - Ease the selection of project.
 - Technical - Remove caching of authToken and api endpoint.
-- Logout - Display an explicit message when lumber is still connected.
+- Logout command - Display an explicit message when users having a lumber session tries to logout.
 
 ## RELEASE 1.0.5 - 2020-03-10
 ### Fixed

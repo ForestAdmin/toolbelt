@@ -50,16 +50,20 @@ function Authenticator() {
     || 'Invalid token. Please enter your authentication token.';
 
   this.logout = async (opts = {}) => {
-    const forestrcPath = `${os.homedir()}/.forestrc`;
-    const isForestLoggedIn = this.getVerifiedToken(forestrcPath);
-    const lumbercPath = `${os.homedir()}/.lumberrc`;
-    const isLumberLoggedIn = this.getVerifiedToken(lumbercPath);
+    const pathForestrc = `${os.homedir()}/.forestrc`;
+    const isForestLoggedIn = this.getVerifiedToken(pathForestrc);
+    const pathLumberrc = `${os.homedir()}/.lumberrc`;
+    const isLumberLoggedIn = this.getVerifiedToken(pathLumberrc);
 
     if (isForestLoggedIn) {
-      fs.unlinkSync(forestrcPath);
+      fs.unlinkSync(pathForestrc);
     }
     if (opts.log) {
-      logger.info(`You are unlogged. ${isLumberLoggedIn ? '(still connected via lumber)' : ''}`);
+      if (isLumberLoggedIn) {
+        logger.info('You cannot be logged out with this command. Please use lumber logout');
+      } else {
+        logger.info(chalk.green('You are unlogged.'));
+      }
     }
   };
 
