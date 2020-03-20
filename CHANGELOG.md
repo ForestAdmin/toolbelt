@@ -7,7 +7,7 @@
 - Technical - Add tests on google authentication.
 - Technical - Add lint pre-commit-hook.
 - Tests - Add test for `forest environments` command.
-- Tests - Add tests.
+- Tests - Add test for `forest environments:create` command.
 
 ### Changed
 - Technical - Clean temporary tests files.
