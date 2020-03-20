@@ -39,7 +39,13 @@ module.exports = {
     ])),
 
   createEnvironmentNock: () => nock('http://localhost:3001')
-    .post('/api/environments')
+    .post('/api/environments', {
+      data: {
+        type: 'environments',
+        attributes: { name: 'Test', 'api-endpoint': 'https://test.forestadmin.com' },
+        relationships: { project: { data: { type: 'projects', id: '2' } } },
+      },
+    })
     .reply(200, EnvironmentSerializer.serialize({
       name: 'Test',
       apiEndpoint: 'https://test.forestadmin.com',
