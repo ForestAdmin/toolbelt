@@ -1,6 +1,5 @@
 const fs = require('fs');
 const os = require('os');
-const P = require('bluebird');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const jwtDecode = require('jwt-decode');
@@ -51,29 +50,17 @@ function Authenticator() {
     || 'Invalid token. Please enter your authentication token.';
 
   this.logout = async (opts = {}) => {
-    const path = `${os.homedir()}/.forestrc`;
+    const forestrcPath = `${os.homedir()}/.forestrc`;
+    const isForestLoggedIn = this.getVerifiedToken(forestrcPath);
+    const lumbercPath = `${os.homedir()}/.lumberrc`;
+    const isLumberLoggedIn = this.getVerifiedToken(lumbercPath);
 
-    return new P((resolve, reject) => {
-      fs.stat(path, (err) => {
-        if (err === null) {
-          fs.unlinkSync(path);
-
-          if (opts.log) {
-            console.log(chalk.green('👍  You\'re now unlogged 👍 '));
-          }
-
-          resolve();
-        } else if (err.code === 'ENOENT') {
-          if (opts.log) {
-            logger.error('You are not logged');
-          }
-
-          resolve();
-        } else {
-          reject(err);
-        }
-      });
-    });
+    if (isForestLoggedIn) {
+      fs.unlinkSync(forestrcPath);
+    }
+    if (opts.log) {
+      logger.info(`You are unlogged. ${isLumberLoggedIn ? '(still connected via lumber)' : ''}`);
+    }
   };
 
   this.tryLogin = async (config) => {
