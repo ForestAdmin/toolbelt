@@ -5,3 +5,4 @@ node_modules/
 # IDE
 /*.iml
 yarn-error.log
+.idea
