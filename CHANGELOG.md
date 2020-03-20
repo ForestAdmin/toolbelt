@@ -1,8 +1,8 @@
 # Change Log
 
 ## [Unreleased]
-### Added
-- Technical - Add `.idea` in `.gitignore` file.
+### Changed
+- Technical - Untrack IDE `.idea` folder.
 
 ## RELEASE 1.1.0 - 2020-03-20
 ### Added
