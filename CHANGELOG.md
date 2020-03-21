@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- Technical - Add sonar lint.
 ### Changed
 - Technical - Untrack IDE `.idea` folder.
 

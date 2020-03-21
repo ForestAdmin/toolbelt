@@ -1205,6 +1205,11 @@ eslint-plugin-node@^7.0.1:
     resolve "^1.8.1"
     semver "^5.5.0"
 
+eslint-plugin-sonarjs@0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-sonarjs/-/eslint-plugin-sonarjs-0.5.0.tgz#ce17b2daba65a874c2862213a9e38e8986ad7d7d"
+  integrity sha512-XW5MnzlRjhXpIdbULC/qAdJYHWw3rRLws/DyawdlPU/IdVr9AmRK1r2LaCvabwKOAW2XYYSo3kDX58E4MrB7PQ==
+
 eslint-plugin-unicorn@^6.0.1:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/eslint-plugin-unicorn/-/eslint-plugin-unicorn-6.0.1.tgz#4a97f0bc9449e20b82848dad12094ee2ba72347e"
