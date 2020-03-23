@@ -3,9 +3,10 @@
 ## [Unreleased]
 ### Added
 - Technical - Add sonar lint.
-- Technical - Reduce the complexity of `Prompter.isRequested` method.
+
 ### Changed
 - Technical - Untrack IDE `.idea` folder.
+- Technical - Reduce the complexity of `Prompter.isRequested` method.
 
 ## RELEASE 1.1.0 - 2020-03-20
 ### Added
