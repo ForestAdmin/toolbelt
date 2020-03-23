@@ -1,6 +1,8 @@
 const testDialog = require('./test-cli');
 const EnvironmentCommand = require('../../src/commands/environments');
 const {
+  loginRequired,
+  loginPasswordDialog,
   enter,
   arrowDown,
 } = require('../fixtures/dialogs');
@@ -23,12 +25,8 @@ describe('environments', () => {
       environmentListNock(),
     ],
     dialog: [
-      { out: 'Login required.' },
-      { out: 'What is your email address?' },
-      { in: 'some@mail.com' },
-      { out: 'What is your Forest Admin password: [input is hidden] ?' },
-      { in: 'valid_pwd' },
-      { out: 'Login successful' },
+      ...loginRequired,
+      ...loginPasswordDialog,
       ...arrowDown,
       ...enter,
       { out: 'ENVIRONMENTS' },

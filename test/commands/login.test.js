@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const testCli = require('./test-cli');
 const LoginCommand = require('../../src/commands/login');
 const {
-  emailAndPassword,
+  loginPasswordDialog,
 } = require('../fixtures/dialogs');
 
 const {
@@ -78,8 +78,7 @@ describe('login', () => {
         command: () => LoginCommand.run([]),
         nock: validAuthNock(),
         dialog: [
-          ...emailAndPassword,
-          { out: 'Login successful' },
+          ...loginPasswordDialog,
         ],
       }));
     });

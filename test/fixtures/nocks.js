@@ -37,4 +37,18 @@ module.exports = {
         id: 4, name: 'name2', apiEndpoint: 'http://localhost:2', type: 'type2',
       },
     ])),
+
+  createEnvironmentNock: () => nock('http://localhost:3001')
+    .post('/api/environments', {
+      data: {
+        type: 'environments',
+        attributes: { name: 'Test', 'api-endpoint': 'https://test.forestadmin.com' },
+        relationships: { project: { data: { type: 'projects', id: '2' } } },
+      },
+    })
+    .reply(200, EnvironmentSerializer.serialize({
+      name: 'Test',
+      apiEndpoint: 'https://test.forestadmin.com',
+      secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
+    })),
 };
