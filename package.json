@@ -39,6 +39,7 @@
   "devDependencies": {
     "@commitlint/cli": "8.3.5",
     "@commitlint/config-conventional": "8.3.4",
+    "@commitlint/travis-cli": "8.3.5",
     "@fancy-test/nock": "0.1.1",
     "@oclif/dev-cli": "1.19.4",
     "@oclif/test": "1.2.2",

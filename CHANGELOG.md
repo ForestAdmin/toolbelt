@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - Technical - Add sonar lint.
+- Technical - Make the CI lint the commit messages.
 
 ### Changed
 - Technical - Untrack IDE `.idea` folder.
