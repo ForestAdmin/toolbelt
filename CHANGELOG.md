@@ -9,6 +9,7 @@
 - Technical - Untrack IDE `.idea` folder.
 - Technical - Reduce the complexity of `Prompter.isRequested` method.
 - Technical - Introduce conventional commits.
+- Technical - Adapt release manager to conventional commits.
 
 ## RELEASE 1.1.0 - 2020-03-20
 ### Added
