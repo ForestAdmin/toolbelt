@@ -1,30 +1,30 @@
-const testDialog = require('./test-cli');
+const testCli = require('./test-cli');
 const EnvironmentCommand = require('../../src/commands/environments');
 const {
   loginRequired,
   loginPasswordDialog,
   enter,
   arrowDown,
-} = require('../fixtures/dialogs');
-const { testEnv } = require('../fixtures/envs');
+} = require('../fixtures/std');
+const { testEnv } = require('../fixtures/env');
 const {
-  notAGoogleAccountNock,
-  validAuthNock,
-  projectListNock,
-  environmentListNock,
-} = require('../fixtures/nocks');
+  notAGoogleAccount,
+  loginValid,
+  getProjectListValid,
+  getEnvironmentListValid,
+} = require('../fixtures/api');
 
 describe('environments', () => {
-  it('should display environment list', () => testDialog({
+  it('should display environment list', () => testCli({
     env: testEnv,
     command: () => EnvironmentCommand.run([]),
-    nock: [
-      notAGoogleAccountNock(),
-      validAuthNock(),
-      projectListNock(),
-      environmentListNock(),
+    api: [
+      notAGoogleAccount(),
+      loginValid(),
+      getProjectListValid(),
+      getEnvironmentListValid(),
     ],
-    dialog: [
+    std: [
       ...loginRequired,
       ...loginPasswordDialog,
       ...arrowDown,

@@ -1,48 +1,45 @@
-const Nock = require('@fancy-test/nock').default;
-const { expect, test } = require('@oclif/test');
-
-const fancy = test.register('nock', Nock);
-const authenticator = require('../../../src/services/authenticator');
+const testCli = require('./../test-cli');
+const { testEnv } = require('../../fixtures/env');
+const { updateEnvironmentName, updateEnvironmentEndpoint } = require('../../fixtures/api');
+const UpdateCommand = require('../../../src/commands/environments/update');
 
 describe('environments:update', () => {
-  let getAuthToken;
-  before(() => {
-    getAuthToken = authenticator.getAuthToken;
-    authenticator.getAuthToken = () => 'token';
+  describe('with a valid token, environment id and name', () => {
+    it('should display "environment updated"', () => testCli({
+      env: testEnv,
+      token: 'any',
+      command: () => UpdateCommand.run(['-e', '182', '-n', 'NewName']),
+      api: [
+        updateEnvironmentName(),
+      ],
+      std: [
+        { out: 'Environment updated' },
+      ],
+    }));
   });
-  after(() => {
-    authenticator.getAuthToken = getAuthToken;
+
+  describe('with a valid token, environment id and apiEnpoint', () => {
+    it('should display "environment updated"', () => testCli({
+      env: testEnv,
+      token: 'any',
+      command: () => UpdateCommand.run(['-e', '182', '-u', 'https://super.url.com']),
+      api: [
+        updateEnvironmentEndpoint(),
+      ],
+      std: [
+        { out: 'Environment updated' },
+      ],
+    }));
   });
 
-  describe('with a valid token, environment id and name', () =>
-    fancy
-      .stdout({ print: true })
-      .env({ FOREST_URL: 'http://localhost:3001' })
-      .nock('http://localhost:3001', (api) => api
-        .put('/api/environments/182', '{"data":{"type":"environments","attributes":{"name":"NewName"}}}')
-        .reply(200))
-      .command(['environments:update', '-e', '182', '-n', 'NewName'])
-      .it('should stdout "Environment updated"', (ctx) => {
-        expect(ctx.stdout).to.contain('Environment updated');
-      }));
-
-  describe('with a valid token, environment id and apiEnpoint', () =>
-    fancy
-      .stdout({ print: true })
-      .env({ FOREST_URL: 'http://localhost:3001' })
-      .nock('http://localhost:3001', (api) => api
-        .put('/api/environments/182', '{"data":{"type":"environments","attributes":{"api-endpoint":"https://super.url.com"}}}')
-        .reply(200))
-      .command(['environments:update', '-e', '182', '-u', 'https://super.url.com'])
-      .it('should stdout "Environment updated"', (ctx) => {
-        expect(ctx.stdout).to.contain('Environment updated');
-      }));
-
-  describe('without name and apiEndpoint', () =>
-    fancy
-      .stderr({ print: true })
-      .command(['environments:update', '-e', '182'])
-      .it('should stderr "Please provide environment name and/or url"', (ctx) => {
-        expect(ctx.stderr).to.contain('Please provide environment name and/or url');
-      }));
+  describe('with a valid token, environment id but neither name nor apiEndpoint', () => {
+    it('should display "Please provide environment name and/or url"', () => testCli({
+      env: testEnv,
+      token: 'any',
+      command: () => UpdateCommand.run(['-e', '182']),
+      std: [
+        { err: 'Please provide environment name and/or url' },
+      ],
+    }));
+  });
 });

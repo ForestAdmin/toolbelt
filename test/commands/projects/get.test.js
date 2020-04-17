@@ -1,58 +1,45 @@
-const Nock = require('@fancy-test/nock').default;
-const { expect, test } = require('@oclif/test');
-
-const fancy = test.register('nock', Nock);
-const ProjectSerializer = require('../../../src/serializers/project');
-const authenticator = require('../../../src/services/authenticator');
+const testCli = require('./../test-cli');
+const GetProjectCommand = require('../../../src/commands/projects/get');
+const { testEnv } = require('../../fixtures/env');
+const { getProjectValid } = require('../../fixtures/api');
 
 describe('projects:get', () => {
-  let getAuthToken;
-  before(() => {
-    getAuthToken = authenticator.getAuthToken;
-    authenticator.getAuthToken = () => 'token';
+  describe('on an existing project', () => {
+    describe('without json option', () => {
+      it('should display the configuration of the Forest project', () => testCli({
+        env: testEnv,
+        token: 'any',
+        command: () => GetProjectCommand.run(['82']),
+        api: [getProjectValid()],
+        std: [
+          { out: 'PROJECT' },
+          { out: 'id                   82' },
+          { out: 'id                   82' },
+          { out: 'name                 Forest' },
+          { out: 'default environment  production' },
+        ],
+      }));
+    });
+
+    describe('with json option', () => {
+      it('should display the configuration of the Forest project in JSON', () => testCli({
+        env: testEnv,
+        token: 'any',
+        command: () => GetProjectCommand.run(['82', '--format', 'json']),
+        api: [getProjectValid()],
+        std: [{
+          out: {
+            id: '82',
+            name: 'Forest',
+            defaultEnvironment: {
+              name: 'Production',
+              apiEndpoint: 'https://api.forestadmin.com',
+              type: 'production',
+              id: '2200',
+            },
+          },
+        }],
+      }));
+    });
   });
-  after(() => { authenticator.getAuthToken = getAuthToken; });
-
-  const mocks = fancy
-    .stdout()
-    .env({ FOREST_URL: 'http://localhost:3001' })
-    .nock('http://localhost:3001', (api) => api
-      .get('/api/projects/82')
-      .reply(200, ProjectSerializer.serialize({
-        id: '82',
-        name: 'Forest',
-        defaultEnvironment: {
-          name: 'Production',
-          apiEndpoint: 'https://api.forestadmin.com',
-          type: 'production',
-          id: '2200',
-        },
-      })));
-
-  mocks
-    .command(['projects:get', '82'])
-    .it('should display the configuration of the Forest project', (ctx) => {
-      expect(ctx.stdout).to.contain('PROJECT');
-      expect(ctx.stdout).to.contain('id');
-      expect(ctx.stdout).to.contain('82');
-      expect(ctx.stdout).to.contain('name');
-      expect(ctx.stdout).to.contain('Forest');
-      expect(ctx.stdout).to.contain('default environment');
-      expect(ctx.stdout).to.contain('production');
-    });
-
-  mocks
-    .command(['projects:get', '82', '--format', 'json'])
-    .it('should display the configuration of the Forest project in JSON', (ctx) => {
-      expect(JSON.parse(ctx.stdout)).to.eql({
-        id: '82',
-        name: 'Forest',
-        defaultEnvironment: {
-          name: 'Production',
-          apiEndpoint: 'https://api.forestadmin.com',
-          type: 'production',
-          id: '2200',
-        },
-      });
-    });
 });

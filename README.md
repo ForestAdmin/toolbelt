@@ -4,6 +4,7 @@
 
 [![npm package](https://badge.fury.io/js/forest-cli.svg)](https://badge.fury.io/js/forest-cli)
 [![Build Status](https://travis-ci.org/ForestAdmin/toolbelt.svg?branch=master)](https://travis-ci.org/ForestAdmin/toolbelt)
+![Coverage](https://img.shields.io/badge/coverage-81%25%0A-critical)
 
 The Lumberjacks' toolbelt is the Forest Admin CLI which makes easy to manage your back office application directly from the terminal.
 
