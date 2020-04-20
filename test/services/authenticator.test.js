@@ -21,7 +21,7 @@ describe('authenticator', () => {
 
     describe('when .forestrc and .lumberrc do not exist', () => {
       it('should return null', () => {
-        expect.hasAssertions();
+        expect.assertions(1);
         const expectedToken = null;
         const actualToken = authenticator.getAuthToken('.');
         expect(actualToken).toStrictEqual(expectedToken);
@@ -30,7 +30,7 @@ describe('authenticator', () => {
 
     describe('when .lumberrc exists and is valid', () => {
       it('should return the .lumberrc token', () => {
-        expect.hasAssertions();
+        expect.assertions(1);
         const expectedToken = storeToken('.lumberrc');
         const actualToken = authenticator.getAuthToken(tokenPath);
         expect(actualToken).toStrictEqual(expectedToken);
@@ -39,7 +39,7 @@ describe('authenticator', () => {
 
     describe('when .lumberrc exists and is expired', () => {
       it('should return the .lumberrc token', () => {
-        expect.hasAssertions();
+        expect.assertions(1);
         storeToken('.lumberrc', '0ms');
         const expectedToken = null;
         const actualToken = authenticator.getAuthToken(tokenPath);
@@ -49,7 +49,7 @@ describe('authenticator', () => {
 
     describe('when .lumberrc and .forestrc exist and are valid', () => {
       it('should return the .forestrc token', () => {
-        expect.hasAssertions();
+        expect.assertions(1);
         const forestToken = storeToken('.forestrc', '1day');
         storeToken('.lumberrc', '2days');
         const actualToken = authenticator.getAuthToken(tokenPath);
@@ -59,7 +59,7 @@ describe('authenticator', () => {
 
     describe('when .lumberrc and .forestrc exist and .forestrc is invalid', () => {
       it('should return the .lumberrc token', () => {
-        expect.hasAssertions();
+        expect.assertions(1);
         storeToken('.forestrc', '0ms');
         const lumberToken = storeToken('.lumberrc', '2days');
         const actualToken = authenticator.getAuthToken(tokenPath);
@@ -69,7 +69,7 @@ describe('authenticator', () => {
 
     describe('when .lumberrc and .forestrc exist and .lumberrc is invalid', () => {
       it('should return the .forestrc token', () => {
-        expect.hasAssertions();
+        expect.assertions(1);
         const forestToken = storeToken('.forestrc', '2days');
         storeToken('.lumberrc', '0ms');
         const actualToken = authenticator.getAuthToken(tokenPath);
