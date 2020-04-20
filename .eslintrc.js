@@ -18,13 +18,10 @@ module.exports = {
       {
         devDependencies: [
           'scripts/*.js',
-          'test/**/*.js'
+          'test/**/*.js',
         ]
       },
     ],
-    'jest/no-hooks': ['error', {
-      allow: ['beforeEach'],
-    }],
     'no-console': 0,
     'no-param-reassign': 0,
     'jest/expect-expect': 0,
