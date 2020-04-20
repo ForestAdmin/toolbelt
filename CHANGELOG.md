@@ -10,6 +10,7 @@
 - Technical - Reduce the complexity of `Prompter.isRequested` method.
 - Technical - Introduce conventional commits.
 - Technical - Adapt release manager to conventional commits.
+- Tests - Add test for `forest environments:create` command.
 
 ## RELEASE 1.1.0 - 2020-03-20
 ### Added
@@ -18,7 +19,6 @@
 - Technical - Add tests on google authentication.
 - Technical - Add lint pre-commit-hook.
 - Tests - Add test for `forest environments` command.
-- Tests - Add test for `forest environments:create` command.
 
 ### Changed
 - Technical - Clean temporary tests files.
