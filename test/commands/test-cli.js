@@ -1,46 +1,60 @@
-const mockStdin = require('mock-stdin');
-const { stdout, stderr } = require('stdout-stderr');
-const { expect } = require('chai');
+const { assertExitCode, assertExitMessage } = require('./test-cli-errors');
+const { mockEnv, rollbackEnv } = require('./test-cli-env');
+const { assertApi } = require('./test-cli-api');
+const { mockFile } = require('./test-cli-fs');
+const { mockToken, rollbackToken } = require('./test-cli-auth-token');
+const { validateInput } = require('./test-cli-errors');
+const {
+  mockStd,
+  planifyInputs,
+  assertOutputs,
+  rollbackStd,
+} = require('./test-cli-std');
 
-const asArray = (any) => {
+function asArray(any) {
   if (!any) return [];
   return Array.isArray(any) ? any : [any];
-};
+}
 
-module.exports = async function testCli({
-  nock, env, command, dialog, print = false,
+async function testCli({
+  file,
+  api,
+  env,
+  command,
+  exitCode: expectedExitCode,
+  exitMessage: expectedExitMessage,
+  std: stds,
+  print = false,
+  token: tokenBehavior = null,
+  ...rest
 }) {
-  stdout.print = print;
-  stderr.print = print;
-  const nocks = asArray(nock);
-  const inputs = dialog ? dialog.filter((type) => type.in).map((type) => type.in) : [];
-  const outputs = dialog ? dialog.filter((type) => type.out).map((type) => type.out) : [];
-  const errorOutputs = dialog ? dialog.filter((type) => type.err).map((type) => type.err) : [];
-  const previousEnv = process.env;
-  if (env) process.env = env;
+  validateInput(file, command, stds, expectedExitCode, expectedExitMessage, rest);
+  const nocks = asArray(api);
+  const inputs = stds ? stds.filter((type) => type.in).map((type) => type.in) : [];
+  const outputs = stds ? stds.filter((type) => type.out).map((type) => type.out) : [];
+  const errorOutputs = stds ? stds.filter((type) => type.err).map((type) => type.err) : [];
 
-  const stdin = mockStdin.stdin();
+  mockFile(file);
+  mockEnv(env);
+  mockToken(tokenBehavior);
+  const stdin = mockStd(outputs, errorOutputs, print);
+  planifyInputs(inputs, stdin);
 
-  for (let i = 0; i < inputs.length; i += 1) {
-    setTimeout(() => stdin.send(`${inputs[i]}\n`), 500 + i * 100);
+  let actualError;
+  try {
+    await command();
+  } catch (error) {
+    actualError = error;
   }
 
-  if (outputs.length) stdout.start();
-  if (errorOutputs.length) stderr.start();
-  await command();
-  nocks.forEach((item) => item.done());
-  if (inputs.length) stdin.end();
-  if (inputs.length) stdin.reset();
-  if (outputs.length) stdout.stop();
-  if (errorOutputs.length) stderr.stop();
+  assertApi(nocks);
+  assertExitCode(actualError, expectedExitCode);
+  assertExitMessage(actualError, expectedExitMessage);
+  assertOutputs(outputs, errorOutputs);
 
-  for (let i = 0; i < outputs.length; i += 1) {
-    expect(stdout.output).to.contain(outputs[i]);
-  }
+  rollbackStd(stdin, inputs, outputs, errorOutputs);
+  rollbackEnv(env);
+  rollbackToken(tokenBehavior);
+}
 
-  for (let i = 0; i < errorOutputs.length; i += 1) {
-    expect(stderr.output).to.contain(errorOutputs[i]);
-  }
-
-  process.env = previousEnv;
-};
+module.exports = testCli;

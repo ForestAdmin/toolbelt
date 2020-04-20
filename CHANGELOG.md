@@ -4,6 +4,7 @@
 ### Added
 - Technical - Add sonar lint.
 - Technical - Make the CI lint the commit messages.
+- Readme - Add the test coverage badge.
 
 ### Changed
 - Technical - Untrack IDE `.idea` folder.
@@ -11,6 +12,7 @@
 - Technical - Introduce conventional commits.
 - Technical - Adapt release manager to conventional commits.
 - Tests - Add test for `forest environments:create` command.
+- Technical - Use Jest instead of Mocha for the test base.
 
 ## RELEASE 1.1.0 - 2020-03-20
 ### Added

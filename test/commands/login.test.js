@@ -4,21 +4,21 @@ const testCli = require('./test-cli');
 const LoginCommand = require('../../src/commands/login');
 const {
   loginPasswordDialog,
-} = require('../fixtures/dialogs');
+} = require('../fixtures/std');
 
 const {
-  aGoogleAccountNock,
-  validAuthNock,
-  invalidAuthNock,
-} = require('../fixtures/nocks');
-const { testEnv } = require('../fixtures/envs');
+  aGoogleAccount,
+  loginValid,
+  loginInvalid,
+} = require('../fixtures/api');
+const { testEnv } = require('../fixtures/env');
 
 describe('login', () => {
   describe('with email in args', () => {
     describe('with bad token in args', () => {
       it('should display invalid token', () => testCli({
         command: () => LoginCommand.run(['-e', 'smile@gmail.com', '-t', 'invalid_token']),
-        dialog: [
+        std: [
           { err: 'Invalid token. Please enter your authentication token.' },
         ],
       }));
@@ -27,7 +27,7 @@ describe('login', () => {
       const token = jwt.sign({}, 'key', { expiresIn: '1day' });
       it('should login successful', () => testCli({
         command: () => LoginCommand.run(['-e', 'smile@gmail.com', '-t', token]),
-        dialog: [
+        std: [
           { in: `${jwt.sign({}, 'key', { expiresIn: '1day' })}` },
           { out: 'Login successful' },
         ],
@@ -37,9 +37,9 @@ describe('login', () => {
       describe('with a valid token from input', () => {
         it('should login successful', () => testCli({
           env: testEnv,
+          api: aGoogleAccount(),
           command: () => LoginCommand.run(['-e', 'robert@gmail.com']),
-          nock: aGoogleAccountNock(),
-          dialog: [
+          std: [
             {
               out: 'To authenticate with your Google account, please follow this link '
                 + 'and copy the authentication token:',
@@ -58,8 +58,8 @@ describe('login', () => {
         it('should login successful', () => testCli({
           env: testEnv,
           command: () => LoginCommand.run([]),
-          nock: aGoogleAccountNock(),
-          dialog: [
+          api: aGoogleAccount(),
+          std: [
             { out: 'What is your email address?' },
             { in: 'robert@gmail.com' },
             {
@@ -76,8 +76,8 @@ describe('login', () => {
       it('should login successful', () => testCli({
         env: testEnv,
         command: () => LoginCommand.run([]),
-        nock: validAuthNock(),
-        dialog: [
+        api: loginValid(),
+        std: [
           ...loginPasswordDialog,
         ],
       }));
@@ -86,8 +86,8 @@ describe('login', () => {
       it('should display incorrect password', () => testCli({
         env: testEnv,
         command: () => LoginCommand.run([]),
-        nock: invalidAuthNock(),
-        dialog: [
+        api: loginInvalid(),
+        std: [
           { out: 'What is your email address?' },
           { in: 'some@mail.com' },
           { out: 'What is your Forest Admin password: [input is hidden] ?' },
