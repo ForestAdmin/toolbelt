@@ -25,10 +25,8 @@ describe('schema:apply', () => {
       token: 'any',
       command: () => ApplySchemaCommand.run([]),
       exitCode: 2,
-      exitMessage: 'Cannot find your forest environment secret'
-        + ' in the environment variable "FOREST_ENV_SECRET".\n'
-        + 'Please set the "FOREST_ENV_SECRET" variable or pass the secret in parameter using'
-        + ' --secret.',
+      exitMessage: 'Cannot find your forest environment secret in the environment variable "FOREST_ENV_SECRET".\n'
+        + 'Please set the "FOREST_ENV_SECRET" variable or pass the secret in parameter using --secret.',
     }));
   });
 
@@ -59,8 +57,7 @@ describe('schema:apply', () => {
         api: [postSchema503()],
         command: () => ApplySchemaCommand.run([]),
         exitCode: 5,
-        exitMessage: 'Forest is in maintenance for a few minutes. We are upgrading your'
-          + ' experience in the forest. We just need a few more minutes to get it right.',
+        exitMessage: 'Forest is in maintenance for a few minutes. We are upgrading your experience in the forest. We just need a few more minutes to get it right.',
       }));
     });
 
@@ -100,8 +97,7 @@ describe('schema:apply', () => {
           std: [
             { out: 'Reading "./.forestadmin-schema.json"...' },
             {
-              out: 'Using the forest environment secret found in the environment variable'
-                + ' "FOREST_ENV_SECRET"',
+              out: 'Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"',
             },
             { out: 'Sending "./.forestadmin-schema.json"...' },
             { out: 'The schema is the same as before, nothing changed.' },
@@ -123,8 +119,7 @@ describe('schema:apply', () => {
           std: [
             { out: 'Reading "./.forestadmin-schema.json"...' },
             {
-              out: 'Using the forest environment secret found in the environment variable'
-                + ' "FOREST_ENV_SECRET"',
+              out: 'Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"',
             },
             { out: 'Sending "./.forestadmin-schema.json"...' },
             { out: 'The schema is the same as before, nothing changed.' },
@@ -147,7 +142,6 @@ describe('with forest server returning nothing', () => {
     api: [postSchema500()],
     command: () => ApplySchemaCommand.run([]),
     exitCode: 6,
-    exitMessage: 'An error occured with the schema sent to Forest. Please contact '
-      + 'support@forestadmin.com for further investigations.',
+    exitMessage: 'An error occured with the schema sent to Forest. Please contact support@forestadmin.com for further investigations.',
   }));
 });
