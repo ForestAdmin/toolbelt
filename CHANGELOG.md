@@ -5,6 +5,7 @@
 - Technical - Add sonar lint.
 - Technical - Make the CI lint the commit messages.
 - Readme - Add the test coverage badge.
+- Branch command - Add `--help` option.
 
 ### Changed
 - Technical - Untrack IDE `.idea` folder.
