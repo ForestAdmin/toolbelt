@@ -11,16 +11,19 @@ class BranchCommand extends AbstractAuthenticatedCommand {
 BranchCommand.description = 'Create a new branch or list your existing branches';
 
 BranchCommand.flags = {
-  delete: flags.boolean({
-    char: 'd',
-    description: 'Delete the branch',
-  }),
   project: flags.string({
     char: 'p',
     description: 'The name of the project to create a branch in',
   }),
+  delete: flags.boolean({
+    char: 'd',
+    description: 'Delete the branch',
+  }),
   force: flags.boolean({
     description: 'When deleting a branch, skip confirmation',
+  }),
+  help: flags.boolean({
+    description: 'Display usage information',
   }),
 };
 
