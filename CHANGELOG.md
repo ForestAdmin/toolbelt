@@ -6,6 +6,7 @@
 - Technical - Make the CI lint the commit messages.
 - Readme - Add the test coverage badge.
 - Technical - Add unexpected error management in tests.
+- Branch command - Add `--help` option.
 
 ### Changed
 - Technical - Untrack IDE `.idea` folder.
