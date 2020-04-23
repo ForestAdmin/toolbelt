@@ -19,7 +19,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     return null;
   }
 
-  async createBranche(manager, branchName) {
+  async createBranch(manager, branchName) {
     try {
       await manager.createBranch(branchName);
       // FIXME: Handle branch creation
@@ -65,6 +65,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     //        Check for ENV_SECRET is present and correct
     //        AND if project has a development environment
     //        Cases: #0a, #0, #3, #8
+    console.warn(config);
     const manager = new BranchManager(config);
     if (config.BRANCH_NAME) {
       if (config.delete) {
