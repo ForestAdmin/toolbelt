@@ -11,7 +11,8 @@ class BranchCommand extends AbstractAuthenticatedCommand {
       if (!branches || branches.length === 0) {
         return this.error("⚠️ You don't have any branch yet. Use `forest branch <branch_name>` to create one.");
       }
-      // FIXME: handle branch selection
+      // FIXME: Handle branch selection
+      //        Cases: #9
     } catch (err) {
       // FIXME: Display switch branch error
     }
@@ -21,12 +22,15 @@ class BranchCommand extends AbstractAuthenticatedCommand {
   async createBranche(manager, branchName) {
     try {
       await manager.createBranch(branchName);
+      // FIXME: Handle branch creation
+      //        Cases: #1, #2, #4
       return this.log(`✅ Switched to new branch: ${branchName}.`);
     } catch (err) {
       // FIXME: Display correct error, depending on the case
       //        - Branch already exist
       //        - Server branch creation failed
       //        - Absence of a remote or a production environment
+      //        Cases: #5, #6, #7
       return this.error(`❌ Failed create ${branchName}.`);
     }
   }
@@ -37,6 +41,8 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     }
     try {
       await manager.deleteBranch(branchName);
+      // FIXME: Handle branch deletion
+      //        Cases: #10
       return this.log(`✅ Branch ${branchName} successfully deleted.`);
     } catch (err) {
       // FIXME: Display correct error, depending on the case
@@ -58,6 +64,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     // FIXME: Check for current project version
     //        Check for ENV_SECRET is present and correct
     //        AND if project has a development environment
+    //        Cases: #0a, #0, #3, #8
     const manager = new BranchManager(config);
     if (config.BRANCH_NAME) {
       if (config.delete) {
