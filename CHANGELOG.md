@@ -13,6 +13,7 @@
 - Technical - Adapt release manager to conventional commits.
 - Tests - Add test for `forest environments:create` command.
 - Technical - Use Jest instead of Mocha for the test base.
+- Technical - Rename the class of the environments update command.
 
 ## RELEASE 1.1.0 - 2020-03-20
 ### Added

@@ -5,9 +5,9 @@ const logger = require('../../services/logger');
 const Prompter = require('../../services/prompter');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
-class CreateCommand extends AbstractAuthenticatedCommand {
+class UpdateCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
-    const parsed = this.parse(CreateCommand);
+    const parsed = this.parse(UpdateCommand);
 
     let config = await Prompter([]);
     config = _.merge(config, parsed.flags);
@@ -22,9 +22,9 @@ class CreateCommand extends AbstractAuthenticatedCommand {
   }
 }
 
-CreateCommand.description = 'update an environment';
+UpdateCommand.description = 'update an environment';
 
-CreateCommand.flags = {
+UpdateCommand.flags = {
   environmentId: flags.string({
     char: 'e',
     description: 'The forest environment ID to update',
@@ -42,4 +42,4 @@ CreateCommand.flags = {
   }),
 };
 
-module.exports = CreateCommand;
+module.exports = UpdateCommand;
