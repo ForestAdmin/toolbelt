@@ -5,9 +5,9 @@ const withCurrentProject = require('../services/with-current-project');
 const envConfig = require('../config');
 
 class BranchCommand extends AbstractAuthenticatedCommand {
-  async listBranches(manager) {
+  async listBranches() {
     try {
-      const branches = await manager.getBranches();
+      const branches = await BranchManager.getBranches();
       if (!branches || branches.length === 0) {
         return this.error("⚠️ You don't have any branch yet. Use `forest branch <branch_name>` to create one.");
       }
@@ -19,9 +19,9 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     return null;
   }
 
-  async createBranch(manager, branchName) {
+  async createBranch(branchName) {
     try {
-      await manager.createBranch(branchName);
+      await BranchManager.createBranch(branchName);
       // FIXME: Handle branch creation
       //        Cases: #1, #2, #4
       return this.log(`✅ Switched to new branch: ${branchName}.`);
@@ -35,12 +35,12 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     }
   }
 
-  async deleteBranch(manager, branchName, forceDelete) {
+  async deleteBranch(branchName, forceDelete) {
     if (!forceDelete) {
       // FIXME: Handle confirmation here
     }
     try {
-      await manager.deleteBranch(branchName);
+      await BranchManager.deleteBranch(branchName);
       // FIXME: Handle branch deletion
       //        Cases: #10
       return this.log(`✅ Branch ${branchName} successfully deleted.`);
@@ -66,14 +66,13 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     //        AND if project has a development environment
     //        Cases: #0a, #0, #3, #8
     console.warn(config);
-    const manager = new BranchManager(config);
     if (config.BRANCH_NAME) {
       if (config.delete) {
-        return this.deleteBranch(manager, config.BRANCH_NAME, config.force);
+        return this.deleteBranch(config.BRANCH_NAME, config.force);
       }
-      return this.createBranch(manager, config.BRANCH_NAME);
+      return this.createBranch(config.BRANCH_NAME);
     }
-    return this.listBranches(manager);
+    return this.listBranches();
   }
 }
 
