@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const ProjectSerializer = require('../../src/serializers/project');
 const EnvironmentSerializer = require('../../src/serializers/environment');
 const JobSerializer = require('../../src/serializers/job');
+const BranchSerializer = require('../../src/serializers/branch');
 
 module.exports = {
   aGoogleAccount: () => nock('http://localhost:3001')
@@ -222,4 +223,12 @@ module.exports = {
   postSchema500: () => nock('http://localhost:3001')
     .post('/forest/apimaps')
     .reply(500),
+
+  getBranchListValid: () => nock('http://localhost:3001')
+    .get('/api/branches')
+    .reply(200, BranchSerializer.serialize([
+      { name: 'feature/first' },
+      { name: 'feature/second', isCurrent: true },
+      { name: 'feature/third' },
+    ])),
 };

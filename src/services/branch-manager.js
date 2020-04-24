@@ -1,5 +1,6 @@
 const agent = require('superagent');
 const authenticator = require('./authenticator');
+const branchDeserializer = require('../deserializers/branch');
 const { serverHost } = require('../config');
 const ApiErrorDeserializer = require('../deserializers/api-error');
 
@@ -8,8 +9,14 @@ const ERROR_MESSAGE_ENV_SECRET_ISSUE = '⚠️  Your development environment is 
 const ERROR_MESSAGE_BRANCH_ALREADY_EXISTS = '❌ This branch already exists.';
 const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT = '❌ You cannot run branch commands until this project has either a remote or a production environment.';
 
-async function getBranches() {
-  // FIXME: Implement getBranches function
+async function getBranches(envSecret) {
+  const authToken = authenticator.getAuthToken();
+  return agent
+    .get(`${serverHost()}/api/branches`)
+    .set('Authorization', `Bearer ${authToken}`)
+    .set('forest-secret-key', envSecret)
+    .send()
+    .then((response) => branchDeserializer.deserialize(response.body));
 }
 
 async function deleteBranch() {

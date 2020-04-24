@@ -5,16 +5,17 @@ const withCurrentProject = require('../services/with-current-project');
 const envConfig = require('../config');
 
 class BranchCommand extends AbstractAuthenticatedCommand {
-  async listBranches() {
+  async listBranches(manager, envSecret) {
     try {
-      const branches = await BranchManager.getBranches();
+      const branches = await BranchManager.getBranches(envSecret);
       if (!branches || branches.length === 0) {
         return this.error("⚠️ You don't have any branch yet. Use `forest branch <branch_name>` to create one.");
       }
-      // FIXME: Handle branch selection
-      //        Cases: #9
+      branches.forEach((branch) => {
+        this.log(`${branch.name} ${branch.isCurrent ? '< current branch' : ''}`);
+      });
     } catch (err) {
-      // FIXME: Display switch branch error
+      return this.error(err.text && err.text.detail ? err.text.detail : '❌ Failed to list branches.');
     }
     return null;
   }
@@ -50,7 +51,8 @@ class BranchCommand extends AbstractAuthenticatedCommand {
 
   async runIfAuthenticated() {
     const parsed = this.parse(BranchCommand);
-    const commandOptions = { ...parsed.flags, ...parsed.args };
+    const envSecret = process.env.FOREST_ENV_SECRET;
+    const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
     let config;
     if (parsed.flags.project && parsed.flags.project.length > 0) {
       // FIXME: Handle config generation using currentUser/projectName
@@ -73,7 +75,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
       // TODO: Replace process.env.FOREST_ENV_SECRET if --project
       return this.createBranch(config.BRANCH_NAME, process.env.FOREST_ENV_SECRET);
     }
-    return this.listBranches();
+    return this.listBranches(config.envSecret);
   }
 }
 
