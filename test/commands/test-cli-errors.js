@@ -44,11 +44,11 @@ function errorIfBadCommand(command) {
 
 function errorIfNoStd(stds) {
   if (!stds || !Array.isArray(stds) || !stds.length > 0) {
-    throw new Error('testCli configuration error: "std" or "exitCode" or "exitMessage" must be' +
-      ' defined.\n' +
-      ' "std" must be a not empty array like [{in:\'john\'},{out:\'hello, john\'}]\n' +
-      ' Define "exitCode" and/or "exitMessage" instead of "std" if you are testing an error' +
-      ' case.');
+    throw new Error('testCli configuration error: "std" or "exitCode" or "exitMessage" must be'
+      + ' defined.\n'
+      + ' "std" must be a not empty array like [{in:\'john\'},{out:\'hello, john\'}]\n'
+      + ' Define "exitCode" and/or "exitMessage" instead of "std" if you are testing an error'
+      + ' case.');
   }
 }
 
@@ -67,8 +67,8 @@ function validateInput(file, command, stds, expectedExitCode, expectedExitMessag
 function assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage) {
   if (expectedExitCode || expectedExitMessage) return;
 
-  const noErrorMessage = 'Unexpected error thrown by command.\n' +
-    ' No "exitCode" and/or "exitMessage" is specified, so this error should not be thrown.';
+  const noErrorMessage = 'Unexpected error thrown by command.\n'
+    + ' No "exitCode" and/or "exitMessage" is specified, so this error should not be thrown.';
   const message = actualError || noErrorMessage;
   expect(message).toStrictEqual(noErrorMessage);
 }
