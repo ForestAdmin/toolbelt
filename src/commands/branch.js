@@ -26,12 +26,14 @@ class BranchCommand extends AbstractAuthenticatedCommand {
       //        Cases: #1, #2, #4
       return this.log(`✅ Switched to new branch: ${branchName}.`);
     } catch (err) {
+      const customError = BranchManager.handleError(err);
       // FIXME: Display correct error, depending on the case
       //        - Branch already exist
       //        - Server branch creation failed
       //        - Absence of a remote or a production environment
       //        Cases: #5, #6, #7
-      return this.error(`❌ Failed create ${branchName}.`);
+      // return this.error(`❌ Failed create ${branchName}.`);
+      return this.error(customError);
     }
   }
 
@@ -59,13 +61,17 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     if (parsed.flags.project && parsed.flags.project.length > 0) {
       // FIXME: Handle config generation using currentUser/projectName
     } else {
-      config = await withCurrentProject({ ...envConfig, ...commandOptions });
+      try {
+        config = await withCurrentProject({ ...envConfig, ...commandOptions });
+      } catch (error) {
+        const customError = BranchManager.handleError(error);
+        return this.error(customError);
+      }
     }
     // FIXME: Check for current project version
     //        Check for ENV_SECRET is present and correct
     //        AND if project has a development environment
     //        Cases: #0a, #0, #3, #8
-    console.warn(config);
     if (config.BRANCH_NAME) {
       if (config.delete) {
         return this.deleteBranch(config.BRANCH_NAME, config.force);
