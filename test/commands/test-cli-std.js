@@ -18,7 +18,6 @@ module.exports = {
     }
   },
   assertOutputs: (outputs, errorOutputs) => {
-    console.warn(outputs);
     for (let i = 0; i < outputs.length; i += 1) {
       const isString = typeof outputs[i] === 'string' || outputs[i] instanceof String;
       if (isString) {

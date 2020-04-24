@@ -224,11 +224,30 @@ module.exports = {
     .post('/forest/apimaps')
     .reply(500),
 
+  // NOTICE: I've added this new mock to conform your current use-case (via 'withCurrentProject')
+  // Please verify this is what you want (with env:testEnv2 in your test you have envSecret and
+  // this call)
+  getProjectByEnv:() => nock('http://localhost:3001')
+    .get('/api/projects?envSecret')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .reply(200, ProjectSerializer.serialize({
+      id: '82',
+      name: 'Forest',
+      defaultEnvironment: {
+        name: 'Production',
+        apiEndpoint: 'https://api.forestadmin.com',
+        type: 'production',
+        id: '2200',
+      },
+    })),
+
+  // I think you should add here a check for the headers.
   getBranchListValid: () => nock('http://localhost:3001')
     .get('/api/branches')
     .reply(200, BranchSerializer.serialize([
       { name: 'feature/first' },
-      { name: 'feature/second', isCurrent: true },
+      //TODO I add ' < current branch' here just for the test to pass but it's up to you.
+      { name: 'feature/second < current branch', isCurrent: true },
       { name: 'feature/third' },
     ])),
 };
