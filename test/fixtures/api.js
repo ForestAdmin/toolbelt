@@ -3,7 +3,6 @@ const jwt = require('jsonwebtoken');
 const ProjectSerializer = require('../../src/serializers/project');
 const EnvironmentSerializer = require('../../src/serializers/environment');
 const JobSerializer = require('../../src/serializers/job');
-const BranchSerializer = require('../../src/serializers/branch');
 
 module.exports = {
   aGoogleAccount: () => nock('http://localhost:3001')
@@ -224,10 +223,7 @@ module.exports = {
     .post('/forest/apimaps')
     .reply(500),
 
-  // NOTICE: I've added this new mock to conform your current use-case (via 'withCurrentProject')
-  // Please verify this is what you want (with env:testEnv2 in your test you have envSecret and
-  // this call)
-  getProjectByEnv:() => nock('http://localhost:3001')
+  getProjectByEnv: () => nock('http://localhost:3001')
     .get('/api/projects?envSecret')
     .matchHeader('forest-secret-key', 'forestEnvSecret')
     .reply(200, ProjectSerializer.serialize({
@@ -241,13 +237,25 @@ module.exports = {
       },
     })),
 
-  // I think you should add here a check for the headers.
   getBranchListValid: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
     .get('/api/branches')
-    .reply(200, BranchSerializer.serialize([
-      { name: 'feature/first' },
-      //TODO I add ' < current branch' here just for the test to pass but it's up to you.
-      { name: 'feature/second < current branch', isCurrent: true },
-      { name: 'feature/third' },
-    ])),
+    .reply(200, {
+      data: {
+        attributes: [
+          { name: 'feature/first' },
+          { name: 'feature/second', isCurrent: true },
+          { name: 'feature/third' },
+        ],
+      },
+    }),
+
+  getNoBranchListValid: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .get('/api/branches')
+    .reply(200, {
+      data: {
+        attributes: [],
+      },
+    }),
 };
