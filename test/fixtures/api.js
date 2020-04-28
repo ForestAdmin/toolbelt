@@ -223,9 +223,15 @@ module.exports = {
     .post('/forest/apimaps')
     .reply(500),
 
+<<<<<<< HEAD
   getProjectByEnv: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .get('/api/projects?envSecret')
     .matchHeader('forest-secret-key', envSecret)
+=======
+  getProjectByEnv: () => nock('http://localhost:3001')
+    .get('/api/projects?envSecret')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+>>>>>>> test: add cli branch tests
     .reply(200, ProjectSerializer.serialize({
       id: '82',
       name: 'Forest',
