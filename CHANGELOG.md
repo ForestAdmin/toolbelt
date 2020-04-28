@@ -7,6 +7,8 @@
 - Readme - Add the test coverage badge.
 - Technical - Add unexpected error management in tests.
 - Branch command - Add `--help` option.
+- Branch command - Add branch creation.
+- Technical - Add an api error deserializer.
 
 ### Changed
 - Technical - Untrack IDE `.idea` folder.
