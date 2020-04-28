@@ -42,13 +42,13 @@ function handleError(error) {
     }
 
     switch (message) {
-      case 'Workflow disabled':
+      case 'Workflow disabled.':
         return ERROR_MESSAGE_PROJECT_IN_V1;
-      case 'Not development environment':
+      case 'Not development environment.':
         return ERROR_MESSAGE_ENV_SECRET_ISSUE;
-      case 'Branch name already exists':
+      case 'Branch name already exists.':
         return ERROR_MESSAGE_BRANCH_ALREADY_EXISTS;
-      case 'No production/remote environment':
+      case 'No production/remote environment.':
         return ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT;
       default:
         return message;
