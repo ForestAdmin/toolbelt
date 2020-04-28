@@ -74,8 +74,8 @@ class BranchCommand extends AbstractAuthenticatedCommand {
       if (config.delete) {
         return this.deleteBranch(config.BRANCH_NAME, config.force);
       }
-      // TODO: Replace process.env.FOREST_ENV_SECRET if --project
-      return this.createBranch(config.BRANCH_NAME, process.env.FOREST_ENV_SECRET);
+      // TODO: Replace config.envSecret if --project
+      return this.createBranch(config.BRANCH_NAME, config.envSecret);
     }
     return this.listBranches(config.envSecret);
   }
