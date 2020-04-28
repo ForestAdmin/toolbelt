@@ -16,7 +16,6 @@ InitCommand.flags = {
   project: flags.string({
     char: 'p',
     description: 'The name of the project you want to init.',
-    default: null,
   }),
 };
 
