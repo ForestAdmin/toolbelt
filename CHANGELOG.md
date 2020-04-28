@@ -10,6 +10,7 @@
 - Branch command - Add branch list.
 - Branch command - Add branch delete.
 - Branch command - Allow users to specify a custom target project.
+- Environments - Add the `init` command.
 
 ### Changed
 - Technical - Untrack IDE `.idea` folder.
