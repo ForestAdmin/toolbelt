@@ -5,17 +5,19 @@ const withCurrentProject = require('../services/with-current-project');
 const envConfig = require('../config');
 
 class BranchCommand extends AbstractAuthenticatedCommand {
-  async listBranches(manager, envSecret) {
+  async listBranches(envSecret) {
     try {
       const branches = await BranchManager.getBranches(envSecret);
       if (!branches || branches.length === 0) {
-        return this.error("⚠️ You don't have any branch yet. Use `forest branch <branch_name>` to create one.");
+        return this.warn("⚠️ You don't have any branch yet. Use `forest branch <branch_name>` to create one.");
       }
       branches.forEach((branch) => {
         this.log(`${branch.name} ${branch.isCurrent ? '< current branch' : ''}`);
       });
-    } catch (err) {
-      return this.error(err.text && err.text.detail ? err.text.detail : '❌ Failed to list branches.');
+    } catch (error) {
+      const customError = BranchManager.handleError(error);
+
+      return this.error(customError);
     }
     return null;
   }
