@@ -74,11 +74,11 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     //        Check for ENV_SECRET is present and correct
     //        AND if project has a development environment
     //        Cases: #0a, #0, #3, #8
+    // TODO: Replace config.envSecret if --project
     if (config.BRANCH_NAME) {
       if (config.delete) {
         return this.deleteBranch(config.BRANCH_NAME, config.force, config.envSecret);
       }
-      // TODO: Replace config.envSecret if --project
       return this.createBranch(config.BRANCH_NAME, config.envSecret);
     }
     return this.listBranches(config.envSecret);
