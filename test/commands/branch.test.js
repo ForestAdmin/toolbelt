@@ -59,7 +59,7 @@ describe('branch', () => {
         ],
       }));
 
-      it('should display a switch to new branch message 2', () => testCli({
+      it('should display a switch to new branch message with a complex branch name', () => testCli({
         env: testEnv2,
         token: 'any',
         command: () => BranchCommand.run(['$0m3/$7r4ng38r4nChn4m3!']),
@@ -71,7 +71,6 @@ describe('branch', () => {
           { out: '✅ Switched to new branch: $0m3/$7r4ng38r4nChn4m3!.' },
         ],
       }));
-
 
       describe('when the branch name already exist', () => {
         it('should display an error message', () => testCli({
