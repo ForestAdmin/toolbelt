@@ -9,7 +9,7 @@ const ERROR_MESSAGE_ENV_SECRET_ISSUE = '⚠️  Your development environment is 
 const ERROR_MESSAGE_BRANCH_ALREADY_EXISTS = '❌ This branch already exists.';
 const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT = '❌ You cannot run branch commands until this project has either a remote or a production environment.';
 
-async function getBranches(envSecret) {
+function getBranches(envSecret) {
   const authToken = authenticator.getAuthToken();
   return agent
     .get(`${serverHost()}/api/branches`)
@@ -23,10 +23,10 @@ async function deleteBranch() {
   // FIXME: Implement deleteBranch function
 }
 
-async function createBranch(branchName, environmentSecret) {
+function createBranch(branchName, environmentSecret) {
   const authToken = authenticator.getAuthToken();
 
-  await agent
+  return agent
     .post(`${serverHost()}/api/branches`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)

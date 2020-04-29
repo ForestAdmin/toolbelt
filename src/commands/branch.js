@@ -9,7 +9,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     try {
       const branches = await BranchManager.getBranches(envSecret);
       if (!branches || branches.length === 0) {
-        return this.warn("⚠️ You don't have any branch yet. Use `forest branch <branch_name>` to create one.");
+        return this.log("⚠️ You don't have any branch yet. Use `forest branch <branch_name>` to create one.");
       }
       branches.forEach((branch) => {
         this.log(`${branch.name} ${branch.isCurrent ? '< current branch' : ''}`);
