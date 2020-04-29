@@ -12,7 +12,7 @@ const {
 const { testEnv2 } = require('../fixtures/env');
 
 describe('branch', () => {
-  describe('with a logged in user', () => {
+  describe('when the user is logged in', () => {
     describe('when environment have branches', () => {
       it('should display a list of branches', () => testCli({
         env: testEnv2,
@@ -47,7 +47,6 @@ describe('branch', () => {
 
     describe('when creating new branches', () => {
       it('should display a switch to new branch message', () => testCli({
-        print: true,
         env: testEnv2,
         token: 'any',
         command: () => BranchCommand.run(['some/randombranchename']),
@@ -59,6 +58,20 @@ describe('branch', () => {
           { out: '✅ Switched to new branch: some/randombranchename.' },
         ],
       }));
+
+      it('should display a switch to new branch message 2', () => testCli({
+        env: testEnv2,
+        token: 'any',
+        command: () => BranchCommand.run(['$0m3/$7r4ng38r4nChn4m3!']),
+        api: [
+          getProjectByEnv(),
+          postBranchValid('$0m3/$7r4ng38r4nChn4m3!'),
+        ],
+        std: [
+          { out: '✅ Switched to new branch: $0m3/$7r4ng38r4nChn4m3!.' },
+        ],
+      }));
+
 
       describe('when the branch name already exist', () => {
         it('should display an error message', () => testCli({
