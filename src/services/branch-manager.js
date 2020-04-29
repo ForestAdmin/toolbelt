@@ -19,8 +19,14 @@ function getBranches(envSecret) {
     .then((response) => branchDeserializer.deserialize(response.body));
 }
 
-async function deleteBranch() {
-  // FIXME: Implement deleteBranch function
+function deleteBranch(branchName, environmentSecret) {
+  const authToken = authenticator.getAuthToken();
+
+  return agent
+    .del(`${serverHost()}/api/branches/${branchName}`)
+    .set('Authorization', `Bearer ${authToken}`)
+    .set('forest-secret-key', `${environmentSecret}`)
+    .send();
 }
 
 function createBranch(branchName, environmentSecret) {

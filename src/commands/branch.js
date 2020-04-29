@@ -1,4 +1,5 @@
 const { flags } = require('@oclif/command');
+const inquirer = require('inquirer');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const withCurrentProject = require('../services/with-current-project');
@@ -34,20 +35,23 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     }
   }
 
-  async deleteBranch(branchName, forceDelete) {
+  async deleteBranch(branchName, forceDelete, envSecret) {
     if (!forceDelete) {
-      // FIXME: Handle confirmation here
+      const response = await inquirer
+        .prompt([{
+          type: 'confirm',
+          name: 'confirm',
+          message: `Delete branch ${branchName}`,
+        }]);
+      if (!response.confirm) return null;
     }
     try {
-      await BranchManager.deleteBranch(branchName);
-      // FIXME: Handle branch deletion
-      //        Cases: #10
+      await BranchManager.deleteBranch(branchName, envSecret);
       return this.log(`✅ Branch ${branchName} successfully deleted.`);
-    } catch (err) {
-      // FIXME: Display correct error, depending on the case
-      //        - Branch does not exist
-      //        - Server branch creation failed
-      return this.error(`❌ Failed to delete ${branchName}.`);
+    } catch (error) {
+      const customError = BranchManager.handleError(error);
+
+      return this.error(customError);
     }
   }
 
@@ -72,7 +76,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     //        Cases: #0a, #0, #3, #8
     if (config.BRANCH_NAME) {
       if (config.delete) {
-        return this.deleteBranch(config.BRANCH_NAME, config.force);
+        return this.deleteBranch(config.BRANCH_NAME, config.force, config.envSecret);
       }
       // TODO: Replace config.envSecret if --project
       return this.createBranch(config.BRANCH_NAME, config.envSecret);
