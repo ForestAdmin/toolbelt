@@ -10,21 +10,25 @@ class AbstractAuthenticatedCommand extends Command {
       await authenticator.tryLogin({});
     }
 
-    try {
-      return await this.runIfAuthenticated();
-    } catch (error) {
-      // NOTICE: Due to ip-whitelist, 404 will never be thrown for a project
-      if (error.status === 403) {
-        return this.error('You do not have the right to execute this action on this project');
-      }
+    // NOTICE: Check if really authenticated before executing runIfAuthenticated() function.
+    if (authenticator.getAuthToken()) {
+      try {
+        return await this.runIfAuthenticated();
+      } catch (error) {
+        // NOTICE: Due to ip-whitelist, 404 will never be thrown for a project
+        if (error.status === 403) {
+          return this.error('You do not have the right to execute this action on this project');
+        }
 
-      if (error.status === 401) {
-        await authenticator.logout();
-        return this.displayLoginMessageAndQuit();
-      }
+        if (error.status === 401) {
+          await authenticator.logout();
+          return this.displayLoginMessageAndQuit();
+        }
 
-      throw error;
+        throw error;
+      }
     }
+    return process.exit();
   }
 
   async runIfAuthenticated() {
