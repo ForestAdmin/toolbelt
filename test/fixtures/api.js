@@ -222,4 +222,80 @@ module.exports = {
   postSchema500: () => nock('http://localhost:3001')
     .post('/forest/apimaps')
     .reply(500),
+
+  getProjectByEnv: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .get('/api/projects?envSecret')
+    .matchHeader('forest-secret-key', envSecret)
+    .reply(200, ProjectSerializer.serialize({
+      id: '82',
+      name: 'Forest',
+      defaultEnvironment: {
+        name: 'Production',
+        apiEndpoint: 'https://api.forestadmin.com',
+        type: 'production',
+        id: '2200',
+      },
+    })),
+
+  getBranchListValid: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .get('/api/branches')
+    .reply(200, {
+      data: {
+        attributes: [
+          { name: 'feature/first' },
+          { name: 'feature/second', isCurrent: true },
+          { name: 'feature/third' },
+        ],
+      },
+    }),
+
+  getNoBranchListValid: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .get('/api/branches')
+    .reply(200, {
+      data: [],
+    }),
+
+  getBranchInvalidEnvSecret: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .get('/api/branches')
+    .reply(404),
+
+  getBranchInvalidEnvironmentV1: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .get('/api/branches')
+    .reply(422, JSON.stringify({
+      errors: [{
+        detail: 'Workflow disabled.',
+      }],
+    })),
+
+  getBranchInvalidNotDevEnv: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .get('/api/branches')
+    .reply(422, JSON.stringify({
+      errors: [{
+        detail: 'Not development environment.',
+      }],
+    })),
+
+  postBranchValid: (branchName) => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .post('/api/branches')
+    .reply(200, {
+      data: {
+        type: 'branches',
+        attributes: { name: branchName },
+      },
+    }),
+
+  postBranchInvalid: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .post('/api/branches')
+    .reply(409, JSON.stringify({
+      errors: [{
+        detail: 'Branch name already exists.',
+      }],
+    })),
 };
