@@ -14,6 +14,8 @@
 - Tests - Add test for `forest environments:create` command.
 - Technical - Use Jest instead of Mocha for the test base.
 - Technical - Rename the class of the environments update command.
+- Technical - Remove CI configuration warnings.
+- Technical - Remove useless CI configuration.
 
 ### Fixed
 - Authentication - Exit any process if the authentication fails.
