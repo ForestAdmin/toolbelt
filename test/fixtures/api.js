@@ -286,9 +286,7 @@ module.exports = {
     .reply(200, {
       data: {
         type: 'branches',
-        attributes: [
-          { name: branchName },
-        ],
+        attributes: { name: branchName },
       },
     }),
 
