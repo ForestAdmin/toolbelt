@@ -15,6 +15,9 @@
 - Technical - Use Jest instead of Mocha for the test base.
 - Technical - Rename the class of the environments update command.
 
+### Fixed
+- Authentication - Exit any process if the authentication fails.
+
 ## RELEASE 1.1.0 - 2020-03-20
 ### Added
 - Environments - Add environments:update command.
