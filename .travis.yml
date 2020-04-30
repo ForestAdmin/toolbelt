@@ -1,11 +1,5 @@
-sudo: required
-
 language: node_js
-
 node_js: lts/*
-
-env:
-  - NODE_ENV=travis
 
 script:
   - commitlint-travis
