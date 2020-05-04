@@ -9,6 +9,7 @@
 - Branch command - Add branch creation.
 - Technical - Add an api error deserializer.
 - Branch command - Add branch list.
+- Branch command - Add branch delete.
 
 ### Changed
 - Technical - Untrack IDE `.idea` folder.

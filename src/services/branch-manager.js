@@ -8,6 +8,8 @@ const ERROR_MESSAGE_PROJECT_IN_V1 = '⚠️  This project does not support branc
 const ERROR_MESSAGE_ENV_SECRET_ISSUE = '⚠️  Your development environment is not properly set up. Please run `forest init` first and retry.';
 const ERROR_MESSAGE_BRANCH_ALREADY_EXISTS = '❌ This branch already exists.';
 const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT = '❌ You cannot run branch commands until this project has either a remote or a production environment.';
+const ERROR_MESSAGE_BRANCH_DOES_NOT_EXIST = "❌ This branch doesn't exist.";
+const ERROR_MESSAGE_REMOVE_BRANCH_FAILED = '❌ Failed to delete branch.';
 
 function getBranches(envSecret) {
   const authToken = authenticator.getAuthToken();
@@ -19,8 +21,14 @@ function getBranches(envSecret) {
     .then((response) => branchDeserializer.deserialize(response.body));
 }
 
-async function deleteBranch() {
-  // FIXME: Implement deleteBranch function
+function deleteBranch(branchName, environmentSecret) {
+  const authToken = authenticator.getAuthToken();
+
+  return agent
+    .del(`${serverHost()}/api/branches/${encodeURIComponent(branchName)}`)
+    .set('Authorization', `Bearer ${authToken}`)
+    .set('forest-secret-key', `${environmentSecret}`)
+    .send();
 }
 
 function createBranch(branchName, environmentSecret) {
@@ -30,20 +38,16 @@ function createBranch(branchName, environmentSecret) {
     .post(`${serverHost()}/api/branches`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
-    .send({ branchName });
+    .send({ branchName: encodeURIComponent(branchName) });
 }
 
 function handleError(error) {
   try {
     const apiError = ApiErrorDeserializer.deserialize(error);
 
-    if (apiError.status === 404) {
+    if (apiError.status === 404 && !apiError.message) {
       // NOTICE: When no env/project can be found through envSecret
       return ERROR_MESSAGE_ENV_SECRET_ISSUE;
-    }
-
-    if (!apiError.message) {
-      return 'Unknown server error';
     }
 
     switch (apiError.message) {
@@ -55,8 +59,12 @@ function handleError(error) {
         return ERROR_MESSAGE_BRANCH_ALREADY_EXISTS;
       case 'No production/remote environment.':
         return ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT;
+      case 'Branch does not exist.':
+        return ERROR_MESSAGE_BRANCH_DOES_NOT_EXIST;
+      case 'Failed to remove branch.':
+        return ERROR_MESSAGE_REMOVE_BRANCH_FAILED;
       default:
-        return apiError.message;
+        return apiError.message ? apiError.message : 'Unknown server error';
     }
   } catch (_) {
     // NOTICE: Client issue or not well formatted server answer

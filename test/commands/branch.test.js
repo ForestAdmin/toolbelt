@@ -8,6 +8,10 @@ const {
   postBranchInvalid,
   getBranchInvalidEnvironmentV1,
   getBranchInvalidNotDevEnv,
+  getBranchInvalidEnvironmentNoRemote,
+  deleteBranchValid,
+  deleteUnknownBranch,
+  deleteBranchInvalid,
 } = require('../fixtures/api');
 const { testEnv2 } = require('../fixtures/env');
 
@@ -87,6 +91,88 @@ describe('branch', () => {
       });
     });
 
+    describe('when deleting branches', () => {
+      describe('when removing a branch that does not exist', () => {
+        it('should display an error message', () => testCli({
+          env: testEnv2,
+          token: 'any',
+          command: () => BranchCommand.run(['-d', 'unexistingbranch']),
+          api: [
+            getProjectByEnv(),
+            deleteUnknownBranch('unexistingbranch'),
+          ],
+          std: [
+            { in: 'Y' },
+          ],
+          exitCode: 2,
+          exitMessage: "❌ This branch doesn't exist.",
+        }));
+      });
+
+      describe('when removing a branch failed', () => {
+        it('should display an error message', () => testCli({
+          env: testEnv2,
+          token: 'any',
+          command: () => BranchCommand.run(['-d', 'brancherror']),
+          api: [
+            getProjectByEnv(),
+            deleteBranchInvalid('brancherror'),
+          ],
+          std: [
+            { in: 'Y' },
+          ],
+          exitCode: 2,
+          exitMessage: '❌ Failed to delete branch.',
+        }));
+      });
+
+      describe('when the branch exist', () => {
+        describe('when the branch in not the current branch of the environment', () => {
+          it('should prompt for confirmation, then remove the branch', () => testCli({
+            env: testEnv2,
+            token: 'any',
+            command: () => BranchCommand.run(['-d', 'existingbranch']),
+            api: [
+              getProjectByEnv(),
+              deleteBranchValid('existingbranch'),
+            ],
+            std: [
+              { in: 'Y' },
+              { out: '✅ Branch existingbranch successfully deleted.' },
+            ],
+          }));
+
+          it('should prompt for confirmation, then do nothing', () => testCli({
+            env: testEnv2,
+            token: 'any',
+            command: () => BranchCommand.run(['-d', 'existingbranch']),
+            api: [
+              getProjectByEnv(),
+            ],
+            std: [
+              { in: 'n' },
+              { out: '' },
+            ],
+          }));
+
+          describe('using `--force` option', () => {
+            it('should display a success branch deleted message', () => testCli({
+              env: testEnv2,
+              token: 'any',
+              command: () => BranchCommand.run(['-d', 'existingbranch', '--force']),
+              api: [
+                getProjectByEnv(),
+                deleteBranchValid('existingbranch'),
+              ],
+              std: [
+                { out: '✅ Branch existingbranch successfully deleted.' },
+              ],
+            }));
+          });
+        });
+      });
+    });
+
     describe('with errors', () => {
       describe('when environment is not compatible with the dev workflow', () => {
         it('should display an error message', () => testCli({
@@ -113,6 +199,20 @@ describe('branch', () => {
           ],
           exitCode: 2,
           exitMessage: '⚠️  Your development environment is not properly set up. Please run `forest init` first and retry.',
+        }));
+      });
+
+      describe('when there is no remote/production environment', () => {
+        it('should display an error message', () => testCli({
+          env: testEnv2,
+          token: 'any',
+          command: () => BranchCommand.run([]),
+          api: [
+            getProjectByEnv(),
+            getBranchInvalidEnvironmentNoRemote(),
+          ],
+          exitCode: 2,
+          exitMessage: '❌ You cannot run branch commands until this project has either a remote or a production environment.',
         }));
       });
     });
