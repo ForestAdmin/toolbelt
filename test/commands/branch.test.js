@@ -8,6 +8,7 @@ const {
   postBranchInvalid,
   getBranchInvalidEnvironmentV1,
   getBranchInvalidNotDevEnv,
+  getBranchInvalidEnvironmentNoRemote,
   deleteBranchValid,
   deleteUnknownBranch,
   deleteBranchInvalid,
@@ -198,6 +199,20 @@ describe('branch', () => {
           ],
           exitCode: 2,
           exitMessage: '⚠️  Your development environment is not properly set up. Please run `forest init` first and retry.',
+        }));
+      });
+
+      describe('when there is no remote/production environment', () => {
+        it('should display an error message', () => testCli({
+          env: testEnv2,
+          token: 'any',
+          command: () => BranchCommand.run([]),
+          api: [
+            getProjectByEnv(),
+            getBranchInvalidEnvironmentNoRemote(),
+          ],
+          exitCode: 2,
+          exitMessage: '❌ You cannot run branch commands until this project has either a remote or a production environment.',
         }));
       });
     });

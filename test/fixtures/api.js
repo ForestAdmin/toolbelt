@@ -280,6 +280,15 @@ module.exports = {
       }],
     })),
 
+  getBranchInvalidEnvironmentNoRemote: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .get('/api/branches')
+    .reply(422, JSON.stringify({
+      errors: [{
+        detail: 'No production/remote environment.',
+      }],
+    })),
+
   postBranchValid: (branchName) => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', 'forestEnvSecret')
     .post('/api/branches')
