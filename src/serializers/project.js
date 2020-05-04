@@ -4,6 +4,7 @@ module.exports = new JSONAPISerializer('environments', {
   attributes: [
     'name',
     'defaultEnvironment',
+    'version',
   ],
   defaultEnvironment: {
     ref: 'id',

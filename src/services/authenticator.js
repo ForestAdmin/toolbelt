@@ -6,7 +6,7 @@ const jwtDecode = require('jwt-decode');
 const Joi = require('joi');
 const api = require('./api');
 const logger = require('./logger');
-const ERROR_UNEXPECTED = require('../utils/messages');
+const { ERROR_UNEXPECTED } = require('../utils/messages');
 
 function Authenticator() {
   this.getAuthToken = (path = process.env.TOKEN_PATH || os.homedir()) => {
