@@ -10,6 +10,7 @@
 - Technical - Add an api error deserializer.
 - Branch command - Add branch list.
 - Branch command - Add branch delete.
+- Branch command - Allow users to specify a custom target project.
 
 ### Changed
 - Technical - Untrack IDE `.idea` folder.
