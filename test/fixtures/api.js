@@ -328,13 +328,4 @@ module.exports = {
         detail: 'Failed to remove branch.',
       }],
     })),
-
-  deleteCurrentBranchOfEnvironment: (branchName = 'random-branch') => nock('http://localhost:3001')
-    .matchHeader('forest-secret-key', 'forestEnvSecret')
-    .delete(`/api/branches/${branchName}`)
-    .reply(409, JSON.stringify({
-      errors: [{
-        detail: 'Cannot remove current environment branch.',
-      }],
-    })),
 };

@@ -9,8 +9,6 @@ const ERROR_MESSAGE_ENV_SECRET_ISSUE = '⚠️  Your development environment is 
 const ERROR_MESSAGE_BRANCH_ALREADY_EXISTS = '❌ This branch already exists.';
 const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT = '❌ You cannot run branch commands until this project has either a remote or a production environment.';
 const ERROR_MESSAGE_BRANCH_DOES_NOT_EXIST = "❌ This branch doesn't exist.";
-// FIXME: Validate wording
-const ERROR_MESSAGE_CANNOT_REMOVE_CURRENT_BRANCH = '❌ This branch cannot be deleted since it is the current branch for the specified environment.';
 const ERROR_MESSAGE_REMOVE_BRANCH_FAILED = '❌ Failed to delete branch.';
 
 function getBranches(envSecret) {
@@ -27,7 +25,7 @@ function deleteBranch(branchName, environmentSecret) {
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .del(`${serverHost()}/api/branches/${branchName}`)
+    .del(`${serverHost()}/api/branches/${encodeURIComponent(branchName)}`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send();
@@ -40,7 +38,7 @@ function createBranch(branchName, environmentSecret) {
     .post(`${serverHost()}/api/branches`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
-    .send({ branchName });
+    .send({ branchName: encodeURIComponent(branchName) });
 }
 
 function handleError(error) {
@@ -63,8 +61,6 @@ function handleError(error) {
         return ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT;
       case 'Branch does not exist.':
         return ERROR_MESSAGE_BRANCH_DOES_NOT_EXIST;
-      case 'Cannot remove current environment branch.':
-        return ERROR_MESSAGE_CANNOT_REMOVE_CURRENT_BRANCH;
       case 'Failed to remove branch.':
         return ERROR_MESSAGE_REMOVE_BRANCH_FAILED;
       default:

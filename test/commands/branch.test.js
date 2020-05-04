@@ -11,7 +11,6 @@ const {
   deleteBranchValid,
   deleteUnknownBranch,
   deleteBranchInvalid,
-  deleteCurrentBranchOfEnvironment,
 } = require('../fixtures/api');
 const { testEnv2 } = require('../fixtures/env');
 
@@ -123,23 +122,6 @@ describe('branch', () => {
           ],
           exitCode: 2,
           exitMessage: '❌ Failed to delete branch.',
-        }));
-      });
-
-      describe('when trying to remove the current branch of the environment', () => {
-        it('should display an error message', () => testCli({
-          env: testEnv2,
-          token: 'any',
-          command: () => BranchCommand.run(['-d', 'currentbranch']),
-          api: [
-            getProjectByEnv(),
-            deleteCurrentBranchOfEnvironment('currentbranch'),
-          ],
-          std: [
-            { in: 'Y' },
-          ],
-          exitCode: 2,
-          exitMessage: '❌ This branch cannot be deleted since it is the current branch for the specified environment.',
         }));
       });
 
