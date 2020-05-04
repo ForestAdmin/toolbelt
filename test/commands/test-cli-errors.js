@@ -44,8 +44,14 @@ function errorIfBadCommand(command) {
 
 function errorIfNoStd(stds) {
   if (!stds || !Array.isArray(stds) || !stds.length > 0) {
-    throw new Error('testCli configuration error: "std" must be an not empty array ex.'
-      + ' [{in:\'john\'},{out:\'hello, john\'}]');
+    throw new Error(
+      // eslint-disable-next-line no-multi-str
+      'testCli configuration error: "std" or "exitCode" or "exitMessage" must be \
+      defined.\n \
+      "std" must be a not empty array like [{in:\'john\'},{out:\'hello, john\'}]\n \
+      Define "exitCode" and/or "exitMessage" instead of "std" if you are testing an error \
+      case.',
+    );
   }
 }
 
@@ -58,6 +64,17 @@ function validateInput(file, command, stds, expectedExitCode, expectedExitMessag
     errorIfNoStd(stds);
     errorIfStdRest(stds);
   }
+}
+
+// NOTICE: Assert that command did not throw an error if there is no expected error.
+function assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage) {
+  if (expectedExitCode || expectedExitMessage) return;
+
+  // eslint-disable-next-line no-multi-str
+  const noErrorMessage = 'Unexpected error thrown by command.\n \
+   No "exitCode" and/or "exitMessage" is specified, so this error should not be thrown.';
+  const message = actualError || noErrorMessage;
+  expect(message).toStrictEqual(noErrorMessage);
 }
 
 function assertExitCode(actualError, expectedExitCode) {
@@ -84,4 +101,5 @@ module.exports = {
   validateInput,
   assertExitCode,
   assertExitMessage,
+  assertNoErrorThrown,
 };

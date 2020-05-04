@@ -1,4 +1,8 @@
-const { assertExitCode, assertExitMessage } = require('./test-cli-errors');
+const {
+  assertExitCode,
+  assertExitMessage,
+  assertNoErrorThrown,
+} = require('./test-cli-errors');
 const { mockEnv, rollbackEnv } = require('./test-cli-env');
 const { assertApi } = require('./test-cli-api');
 const { mockFile } = require('./test-cli-fs');
@@ -47,6 +51,7 @@ async function testCli({
     actualError = error;
   }
 
+  assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);
   assertApi(nocks);
   assertExitCode(actualError, expectedExitCode);
   assertExitMessage(actualError, expectedExitMessage);
