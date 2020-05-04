@@ -280,6 +280,15 @@ module.exports = {
       }],
     })),
 
+  getBranchInvalidEnvironmentNoRemote: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .get('/api/branches')
+    .reply(422, JSON.stringify({
+      errors: [{
+        detail: 'No production/remote environment.',
+      }],
+    })),
+
   postBranchValid: (branchName) => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', 'forestEnvSecret')
     .post('/api/branches')
@@ -296,6 +305,36 @@ module.exports = {
     .reply(409, JSON.stringify({
       errors: [{
         detail: 'Branch name already exists.',
+      }],
+    })),
+
+  deleteBranchValid: (branchName = 'random-branch') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .delete(`/api/branches/${branchName}`)
+    .reply(200, {
+      data: {
+        type: 'branches',
+        attributes: {
+          name: branchName,
+        },
+      },
+    }),
+
+  deleteUnknownBranch: (branchName = 'random-branch') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .delete(`/api/branches/${branchName}`)
+    .reply(404, JSON.stringify({
+      errors: [{
+        detail: 'Branch does not exist.',
+      }],
+    })),
+
+  deleteBranchInvalid: (branchName = 'random-branch') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .delete(`/api/branches/${branchName}`)
+    .reply(400, JSON.stringify({
+      errors: [{
+        detail: 'Failed to remove branch.',
       }],
     })),
 };
