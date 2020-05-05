@@ -6,9 +6,9 @@
 - Technical - Make the CI lint the commit messages.
 - Readme - Add the test coverage badge.
 - Technical - Add unexpected error management in tests.
+- Technical - Add an api error deserializer.
 - Branch command - Add `--help` option.
 - Branch command - Add branch creation.
-- Technical - Add an api error deserializer.
 - Branch command - Add branch list.
 - Branch command - Add branch delete.
 - Branch command - Allow users to specify a custom target project.
