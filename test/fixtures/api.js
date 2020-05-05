@@ -222,4 +222,146 @@ module.exports = {
   postSchema500: () => nock('http://localhost:3001')
     .post('/forest/apimaps')
     .reply(500),
+
+  getProjectByEnv: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .get('/api/projects?envSecret')
+    .matchHeader('forest-secret-key', envSecret)
+    .reply(200, ProjectSerializer.serialize({
+      id: '82',
+      name: 'Forest',
+      defaultEnvironment: {
+        name: 'Production',
+        apiEndpoint: 'https://api.forestadmin.com',
+        type: 'production',
+        id: '2200',
+      },
+    })),
+
+  getBranchListValid: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .get('/api/branches')
+    .reply(200, {
+      data: {
+        attributes: [
+          { name: 'feature/first' },
+          { name: 'feature/second', isCurrent: true },
+          { name: 'feature/third' },
+        ],
+      },
+    }),
+
+  getNoBranchListValid: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .get('/api/branches')
+    .reply(200, {
+      data: [],
+    }),
+
+  getBranchInvalidEnvSecret: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .get('/api/branches')
+    .reply(404),
+
+  getBranchInvalidEnvironmentV1: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .get('/api/branches')
+    .reply(422, JSON.stringify({
+      errors: [{
+        detail: 'Workflow disabled.',
+      }],
+    })),
+
+  getBranchInvalidNotDevEnv: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .get('/api/branches')
+    .reply(422, JSON.stringify({
+      errors: [{
+        detail: 'Not development environment.',
+      }],
+    })),
+
+  getBranchInvalidEnvironmentNoRemote: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .get('/api/branches')
+    .reply(422, JSON.stringify({
+      errors: [{
+        detail: 'No production/remote environment.',
+      }],
+    })),
+
+  postBranchValid: (branchName) => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .post('/api/branches')
+    .reply(200, {
+      data: {
+        type: 'branches',
+        attributes: { name: branchName },
+      },
+    }),
+
+  postBranchValidOnSpecificEnv: (branchName, envSecret) => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .post('/api/branches')
+    .reply(200, {
+      data: {
+        type: 'branches',
+        attributes: { name: branchName },
+      },
+    }),
+
+  postBranchInvalid: () => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .post('/api/branches')
+    .reply(409, JSON.stringify({
+      errors: [{
+        detail: 'Branch name already exists.',
+      }],
+    })),
+
+  deleteBranchValid: (branchName = 'random-branch') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .delete(`/api/branches/${branchName}`)
+    .reply(200, {
+      data: {
+        type: 'branches',
+        attributes: {
+          name: branchName,
+        },
+      },
+    }),
+
+  deleteUnknownBranch: (branchName = 'random-branch') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .delete(`/api/branches/${branchName}`)
+    .reply(404, JSON.stringify({
+      errors: [{
+        detail: 'Branch does not exist.',
+      }],
+    })),
+
+  deleteBranchInvalid: (branchName = 'random-branch') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .delete(`/api/branches/${branchName}`)
+    .reply(400, JSON.stringify({
+      errors: [{
+        detail: 'Failed to remove branch.',
+      }],
+    })),
+
+  getDevelopmentEnvironmentNotFound: () => nock('http://localhost:3001')
+    .get('/api/projects/1/development-environment-for-user')
+    .reply(404, JSON.stringify({
+      errors: [{
+        detail: 'Development environment not found.',
+      }],
+    })),
+
+  getDevelopmentEnvironmentValid: () => nock('http://localhost:3001')
+    .get('/api/projects/1/development-environment-for-user')
+    .reply(200, EnvironmentSerializer.serialize({
+      name: 'Test',
+      type: 'development',
+      apiEndpoint: 'https://test.forestadmin.com',
+      secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
+    })),
 };

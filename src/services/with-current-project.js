@@ -4,15 +4,17 @@ const ProjectManager = require('./project-manager');
 module.exports = async function withCurrentProject(config) {
   if (config.projectId) { return config; }
 
+  const projectManager = await new ProjectManager(config);
+
   const envSecret = process.env.FOREST_ENV_SECRET;
   if (envSecret) {
-    const projectFromEnv = await new ProjectManager(config).getByEnvSecret(envSecret);
+    const projectFromEnv = await projectManager.getByEnvSecret(envSecret);
     if (projectFromEnv) {
       return { ...config, projectId: projectFromEnv.id };
     }
   }
 
-  const projects = await new ProjectManager(config).listProjects();
+  const projects = await projectManager.listProjects();
   if (projects.length) {
     if (projects.length === 1) {
       return { ...config, projectId: projects[0].id };
