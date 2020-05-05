@@ -31,19 +31,23 @@ module.exports = {
       continue() {
         spinnies.add(key, options);
       },
+      executeAsync() {
+        return spinner.promise;
+      },
     };
     logger.spinner = spinner;
 
     if (promise) {
-      promise
+      spinner.promise = promise
         .then((result) => {
           logger.spinner = null;
           spinner.succeed();
           return result;
         })
-        .catch(() => {
+        .catch((error) => {
           logger.spinner = null;
           spinner.fail();
+          logger.error(error.message);
         });
     }
 

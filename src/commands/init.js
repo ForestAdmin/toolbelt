@@ -8,9 +8,13 @@ const ProjectManager = require('../services/project-manager');
 
 class InitCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
-    const projectSelectionAndValidationPromise = this.projectSelectionAndValidation();
-    spinners.add('project-selection', { text: 'Analyzing your setup' }, projectSelectionAndValidationPromise);
-    await projectSelectionAndValidationPromise;
+    try {
+      const projectSelectionAndValidationPromise = this.projectSelectionAndValidation();
+      const projectSpinner = spinners.add('project-selection', { text: 'Analyzing your setup' }, projectSelectionAndValidationPromise);
+      await projectSpinner.executeAsync();
+    } catch (error) {
+      logger.error(error.message);
+    }
   }
 
   async projectSelectionAndValidation() {
@@ -27,7 +31,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
     }
     const userOnProject = await new UserManager(config).getCurrentUser();
     if (userOnProject.role !== 'admin') {
-      throw new Error('You need the \'Admin\' role to create a development environment on this project.');
+      throw new Error("You need the 'Admin' role to create a development environment on this project.");
     }
     // JUST FOR TESTING PURPOSE, TO BE REMOVED LATER ON ;)
     logger.info(`All clear 🤙! My selected projectId is: ${config.projectId} and my role: ${userOnProject.role}`);
