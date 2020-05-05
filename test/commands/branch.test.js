@@ -14,6 +14,7 @@ const {
   deleteBranchInvalid,
   getDevelopmentEnvironmentValid,
   getDevelopmentEnvironmentNotFound,
+  postBranchValidOnSpecificEnv,
 } = require('../fixtures/api');
 const { testEnv: noKeyEnv, testEnv2 } = require('../fixtures/env');
 
@@ -114,7 +115,7 @@ describe('branch', () => {
             command: () => BranchCommand.run(['--projectId', '1', 'watabranch']),
             api: [
               getDevelopmentEnvironmentValid(),
-              postBranchValid('watabranch'),
+              postBranchValidOnSpecificEnv('watabranch', '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125'),
             ],
             std: [
               { out: '✅ Switched to new branch: watabranch.' },

@@ -299,6 +299,16 @@ module.exports = {
       },
     }),
 
+  postBranchValidOnSpecificEnv: (branchName, envSecret) => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .post('/api/branches')
+    .reply(200, {
+      data: {
+        type: 'branches',
+        attributes: { name: branchName },
+      },
+    }),
+
   postBranchInvalid: () => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', 'forestEnvSecret')
     .post('/api/branches')
