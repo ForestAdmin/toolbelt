@@ -4,6 +4,7 @@ const agent = require('superagent-promise')(require('superagent'), P);
 const authenticator = require('./authenticator');
 const ProjectSerializer = require('../serializers/project');
 const ProjectDeserializer = require('../deserializers/project');
+const EnvironmentDeserializer = require('../deserializers/environment');
 const { serverHost } = require('../config');
 
 function ProjectManager(config) {
@@ -51,6 +52,16 @@ function ProjectManager(config) {
       .set('Authorization', `Bearer ${authToken}`)
       .send()
       .then((response) => deserialize(response));
+  };
+
+  this.getDevelopmentEnvironmentForUser = async (projectId) => {
+    const authToken = authenticator.getAuthToken();
+
+    return agent
+      .get(`${serverHost()}/api/projects/${projectId}/development-environment-for-user`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send()
+      .then((response) => EnvironmentDeserializer.deserialize(response.body));
   };
 }
 

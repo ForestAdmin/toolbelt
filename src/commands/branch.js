@@ -2,6 +2,7 @@ const { flags } = require('@oclif/command');
 const inquirer = require('inquirer');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
+const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
 const envConfig = require('../config');
 
@@ -60,21 +61,20 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     const envSecret = process.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
     let config;
-    if (parsed.flags.project && parsed.flags.project.length > 0) {
-      // FIXME: Handle config generation using currentUser/projectName
-    } else {
-      try {
-        config = await withCurrentProject({ ...envConfig, ...commandOptions });
-      } catch (error) {
-        const customError = BranchManager.handleError(error);
-        return this.error(customError);
+
+    try {
+      config = await withCurrentProject({ ...envConfig, ...commandOptions });
+
+      if (!config.envSecret) {
+        const environment = await new ProjectManager(config)
+          .getDevelopmentEnvironmentForUser(config.projectId);
+        config.envSecret = environment.secretKey;
       }
+    } catch (error) {
+      const customError = BranchManager.handleError(error);
+      return this.error(customError);
     }
-    // FIXME: Check for current project version
-    //        Check for ENV_SECRET is present and correct
-    //        AND if project has a development environment
-    //        Cases: #0a, #0, #3, #8
-    // TODO: Replace config.envSecret if --project
+
     if (config.BRANCH_NAME) {
       if (config.delete) {
         return this.deleteBranch(config.BRANCH_NAME, config.force, config.envSecret);
@@ -88,9 +88,8 @@ class BranchCommand extends AbstractAuthenticatedCommand {
 BranchCommand.description = 'Create a new branch or list your existing branches';
 
 BranchCommand.flags = {
-  project: flags.string({
-    char: 'p',
-    description: 'The name of the project to create a branch in',
+  projectId: flags.string({
+    description: 'The id of the project to create a branch in',
   }),
   delete: flags.boolean({
     char: 'd',

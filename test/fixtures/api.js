@@ -299,6 +299,16 @@ module.exports = {
       },
     }),
 
+  postBranchValidOnSpecificEnv: (branchName, envSecret) => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .post('/api/branches')
+    .reply(200, {
+      data: {
+        type: 'branches',
+        attributes: { name: branchName },
+      },
+    }),
+
   postBranchInvalid: () => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', 'forestEnvSecret')
     .post('/api/branches')
@@ -336,5 +346,22 @@ module.exports = {
       errors: [{
         detail: 'Failed to remove branch.',
       }],
+    })),
+
+  getDevelopmentEnvironmentNotFound: () => nock('http://localhost:3001')
+    .get('/api/projects/1/development-environment-for-user')
+    .reply(404, JSON.stringify({
+      errors: [{
+        detail: 'Development environment not found.',
+      }],
+    })),
+
+  getDevelopmentEnvironmentValid: () => nock('http://localhost:3001')
+    .get('/api/projects/1/development-environment-for-user')
+    .reply(200, EnvironmentSerializer.serialize({
+      name: 'Test',
+      type: 'development',
+      apiEndpoint: 'https://test.forestadmin.com',
+      secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
     })),
 };

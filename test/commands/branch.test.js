@@ -12,8 +12,11 @@ const {
   deleteBranchValid,
   deleteUnknownBranch,
   deleteBranchInvalid,
+  getDevelopmentEnvironmentValid,
+  getDevelopmentEnvironmentNotFound,
+  postBranchValidOnSpecificEnv,
 } = require('../fixtures/api');
-const { testEnv2 } = require('../fixtures/env');
+const { testEnv: noKeyEnv, testEnv2 } = require('../fixtures/env');
 
 describe('branch', () => {
   describe('when the user is logged in', () => {
@@ -88,6 +91,37 @@ describe('branch', () => {
           exitCode: 2,
           exitMessage: '❌ This branch already exists.',
         }));
+      });
+
+      describe('when no available envSecret', () => {
+        describe('when an invalid projectId is provided', () => {
+          it('should display an error message', () => testCli({
+            env: noKeyEnv,
+            token: 'any',
+            command: () => BranchCommand.run(['--projectId', '1', 'watabranch']),
+            api: [
+              getDevelopmentEnvironmentNotFound(),
+            ],
+            exitCode: 2,
+            exitMessage: 'Development environment not found.',
+          }));
+        });
+
+        describe('with a valid projectId', () => {
+          it('should display a switch to new branch message', () => testCli({
+            print: true,
+            env: noKeyEnv,
+            token: 'any',
+            command: () => BranchCommand.run(['--projectId', '1', 'watabranch']),
+            api: [
+              getDevelopmentEnvironmentValid(),
+              postBranchValidOnSpecificEnv('watabranch', '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125'),
+            ],
+            std: [
+              { out: '✅ Switched to new branch: watabranch.' },
+            ],
+          }));
+        });
       });
     });
 
