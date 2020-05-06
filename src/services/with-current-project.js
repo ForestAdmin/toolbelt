@@ -14,22 +14,14 @@ module.exports = async function withCurrentProject(config) {
   if (envSecret) {
     const projectFromEnv = await projectManager.getByEnvSecret(envSecret);
     if (projectFromEnv) {
-      return {
-        ...config,
-        projectId: projectFromEnv.id,
-        projectVersion: projectFromEnv.version,
-      };
+      return { ...config, projectId: projectFromEnv.id };
     }
   }
 
   const projects = await projectManager.listProjects();
   if (projects.length) {
     if (projects.length === 1) {
-      return {
-        ...config,
-        projectId: projects[0].id,
-        projectVersion: projects[0].version,
-      };
+      return { ...config, projectId: projects[0].id };
     }
 
     logger.pauseSpinner();
@@ -40,12 +32,7 @@ module.exports = async function withCurrentProject(config) {
       choices: projects.map((project) => ({ name: project.name, value: project.id })),
     }]);
     logger.continueSpinner();
-    const selectedProject = projects.find((project) => project.id === response.project);
-    return {
-      ...config,
-      projectId: selectedProject.id,
-      projectVersion: selectedProject.version,
-    };
+    return { ...config, projectId: response.project };
   }
   throw new Error('You don\'t have any project yet.');
 };

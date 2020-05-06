@@ -47,7 +47,7 @@ module.exports = {
         .catch((error) => {
           logger.spinner = null;
           spinner.fail();
-          logger.error(error.message);
+          logger.error(error);
         });
     }
 

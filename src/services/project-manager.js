@@ -54,6 +54,16 @@ function ProjectManager(config) {
       .then((response) => deserialize(response));
   };
 
+  this.getProjectForDevWorkflow = async () => {
+    const authToken = authenticator.getAuthToken();
+
+    return agent
+      .get(`${serverHost()}/api/projects/${config.projectId}/init-dev-workflow`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send()
+      .then((response) => deserialize(response));
+  };
+
   this.getDevelopmentEnvironmentForUser = async (projectId) => {
     const authToken = authenticator.getAuthToken();
 

@@ -130,6 +130,7 @@ describe('branch', () => {
         it('should display an error message', () => testCli({
           env: testEnv2,
           token: 'any',
+          print: true,
           command: () => BranchCommand.run(['-d', 'unexistingbranch']),
           api: [
             getProjectByEnv(),

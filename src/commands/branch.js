@@ -38,12 +38,14 @@ class BranchCommand extends AbstractAuthenticatedCommand {
 
   async deleteBranch(branchName, forceDelete, envSecret) {
     if (!forceDelete) {
+      console.log('@@@@@ here 1');
       const response = await inquirer
         .prompt([{
           type: 'confirm',
           name: 'confirm',
           message: `Delete branch ${branchName}`,
         }]);
+      console.log('@@@@@ here 2');
       if (!response.confirm) return null;
     }
     try {
