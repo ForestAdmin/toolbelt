@@ -58,7 +58,7 @@ function ProjectManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${serverHost()}/api/projects/${config.projectId}/init-dev-workflow`)
+      .get(`${serverHost()}/api/projects/${config.projectId}/dev-workflow`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
       .then((response) => deserialize(response));

@@ -3,9 +3,6 @@ const ProjectManager = require('./project-manager');
 const logger = require('./logger');
 
 module.exports = async function withCurrentProject(config) {
-  // TO BE REMOVED: JUST TO TRY THE SPINNER ;)
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
   if (config.projectId) { return config; }
 
   const projectManager = await new ProjectManager(config);

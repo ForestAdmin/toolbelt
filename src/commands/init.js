@@ -4,20 +4,22 @@ const withCurrentProject = require('../services/with-current-project');
 const spinners = require('../services/spinners');
 const logger = require('../services/logger');
 const ProjectManager = require('../services/project-manager');
-const apiErrorManager = require('../services/api-error-manager');
+const handleError = require('../services/error-manager');
 
 const ERROR_MESSAGE_PROJECT_IN_V1 = 'This project does not support branches yet. Please migrate your environments from your Project settings first.';
 const ERROR_MESSAGE_NOT_ADMIN_USER = "You need the 'Admin' role to create a development environment on this project.";
 
-function handleInitError(error) {
-  const apiError = apiErrorManager(error);
-  switch (apiError) {
+function handleInitError(rawError) {
+  const error = handleError(rawError);
+  switch (error) {
     case 'Dev Workflow disabled.':
       return ERROR_MESSAGE_PROJECT_IN_V1;
     case 'Forbidden':
       return ERROR_MESSAGE_NOT_ADMIN_USER;
+    case 'Not Found':
+      return ERROR_MESSAGE_PROJECT_IN_V1;
     default:
-      return apiError;
+      return error;
   }
 }
 
@@ -29,6 +31,9 @@ class InitCommand extends AbstractAuthenticatedCommand {
   }
 
   async projectSelectionAndValidation() {
+    // TO BE REMOVED: JUST TO TRY THE SPINNER ;)
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     const parsed = this.parse(InitCommand);
     let project;
     try {
