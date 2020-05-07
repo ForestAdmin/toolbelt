@@ -1,14 +1,30 @@
 const { flags } = require('@oclif/command');
+const inquirer = require('inquirer');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
+const envConfig = require('../config');
 const withCurrentProject = require('../services/with-current-project');
 const spinners = require('../services/spinners');
 const logger = require('../services/logger');
 const ProjectManager = require('../services/project-manager');
+const DatabasePrompter = require('../services/prompter/database-prompter');
 const { handleError } = require('../utils/error');
+const { buildDatabaseUrl } = require('../utils/database-url');
 
 const ERROR_MESSAGE_PROJECT_IN_V1 = 'This project does not support branches yet. Please migrate your environments from your Project settings first.';
 const ERROR_MESSAGE_NOT_ADMIN_USER = "You need the 'Admin' role to create a development environment on this project.";
 const ERROR_MESSAGE_PROJECT_NOT_FOUND = 'Your project was not found. Please check your environment secret.';
+
+const OPTIONS_DATABASE = [
+  'dbDialect',
+  'dbName',
+  'dbHostname',
+  'dbPort',
+  'dbUser',
+  'dbPassword',
+  'dbSchema',
+  'ssl',
+  'mongodbSrv',
+];
 
 function handleInitError(rawError) {
   const error = handleError(rawError);
@@ -22,6 +38,26 @@ function handleInitError(rawError) {
     default:
       return error;
   }
+}
+
+async function handleDatabaseSetup() {
+  if (process.env.DATABASE_URL) {
+    return logger.info('✅ Checking your database setup');
+  }
+
+  const response = await inquirer
+    .prompt([{
+      type: 'confirm',
+      name: 'confirm',
+      message: 'You don\'t have a DATABASE_URL yet. Do you need help setting it? (Y|n)',
+    }]);
+
+  if (response.confirm) return null;
+
+  const promptContent = [];
+  await new DatabasePrompter(OPTIONS_DATABASE, envConfig, promptContent, { }).handlePrompts();
+  const databaseConfig = await inquirer.prompt(promptContent);
+  return buildDatabaseUrl(databaseConfig);
 }
 
 class InitCommand extends AbstractAuthenticatedCommand {
@@ -43,6 +79,13 @@ class InitCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       throw (handleInitError(error));
     }
+
+    // TODO: Check in-app
+    if (project.origin !== 'In-app') {
+      handleDatabaseSetup();
+    }
+
+    // TODO: step 4
 
     // JUST FOR TESTING PURPOSE, TO BE REMOVED LATER ON ;)
     return logger.info(`All clear 🤙! My selected projectId is: ${project.id} and my origin is: ${project.origin}`);
