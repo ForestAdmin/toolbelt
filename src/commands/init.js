@@ -4,10 +4,11 @@ const withCurrentProject = require('../services/with-current-project');
 const spinners = require('../services/spinners');
 const logger = require('../services/logger');
 const ProjectManager = require('../services/project-manager');
-const handleError = require('../services/error-manager');
+const { handleError } = require('../utils/error');
 
 const ERROR_MESSAGE_PROJECT_IN_V1 = 'This project does not support branches yet. Please migrate your environments from your Project settings first.';
 const ERROR_MESSAGE_NOT_ADMIN_USER = "You need the 'Admin' role to create a development environment on this project.";
+const ERROR_MESSAGE_PROJECT_NOT_FOUND = 'Your project was not found. Please check your environment secret.';
 
 function handleInitError(rawError) {
   const error = handleError(rawError);
@@ -17,7 +18,7 @@ function handleInitError(rawError) {
     case 'Forbidden':
       return ERROR_MESSAGE_NOT_ADMIN_USER;
     case 'Not Found':
-      return ERROR_MESSAGE_PROJECT_IN_V1;
+      return ERROR_MESSAGE_PROJECT_NOT_FOUND;
     default:
       return error;
   }

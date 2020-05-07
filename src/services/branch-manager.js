@@ -2,7 +2,7 @@ const agent = require('superagent');
 const authenticator = require('./authenticator');
 const branchDeserializer = require('../deserializers/branch');
 const { serverHost } = require('../config');
-const handleError = require('./error-manager');
+const { handleError } = require('../utils/error');
 
 const ERROR_MESSAGE_PROJECT_IN_V1 = '⚠️  This project does not support branches yet. Please migrate your environments from your Project settings first.';
 const ERROR_MESSAGE_ENV_SECRET_ISSUE = '⚠️  Your development environment is not properly set up. Please run `forest init` first and retry.';
