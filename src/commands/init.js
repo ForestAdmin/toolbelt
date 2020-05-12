@@ -40,7 +40,7 @@ function handleInitError(rawError) {
   }
 }
 
-async function handleDatabaseSetup() {
+async function handleDatabaseConfiguration() {
   if (process.env.DATABASE_URL) {
     return logger.info('✅ Checking your database setup');
   }
@@ -56,8 +56,7 @@ async function handleDatabaseSetup() {
 
   const promptContent = [];
   await new DatabasePrompter(OPTIONS_DATABASE, envConfig, promptContent, { }).handlePrompts();
-  const databaseConfig = await inquirer.prompt(promptContent);
-  return buildDatabaseUrl(databaseConfig);
+  return inquirer.prompt(promptContent);
 }
 
 class InitCommand extends AbstractAuthenticatedCommand {
@@ -80,9 +79,9 @@ class InitCommand extends AbstractAuthenticatedCommand {
       throw (handleInitError(error));
     }
 
-    // TODO: Check in-app
     if (project.origin !== 'In-app') {
-      handleDatabaseSetup();
+      const databaseConfiguration = await handleDatabaseConfiguration();
+      const databaseUrl = buildDatabaseUrl(databaseConfiguration);
     }
 
     // TODO: step 4
