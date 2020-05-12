@@ -28,6 +28,7 @@
 ### Fixed
 - Authentication - Exit any process if the authentication fails.
 - Tests - Fix authentication problems during tests.
+- Security - Patch `acorn` dependency vulnerabilities.
 
 ## RELEASE 1.1.0 - 2020-03-20
 ### Added
