@@ -23,6 +23,7 @@
 - Technical - Rename the class of the environments update command.
 - Technical - Remove CI configuration warnings.
 - Technical - Remove useless CI configuration.
+- Readme - Update the community badge.
 
 ### Fixed
 - Authentication - Exit any process if the authentication fails.
