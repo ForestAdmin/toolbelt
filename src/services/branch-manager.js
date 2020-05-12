@@ -41,6 +41,10 @@ function createBranch(branchName, environmentSecret) {
     .send({ branchName: encodeURIComponent(branchName) });
 }
 
+function switchBranch() {
+
+}
+
 function handleError(error) {
   try {
     const apiError = ApiErrorDeserializer.deserialize(error);
@@ -72,10 +76,10 @@ function handleError(error) {
   }
 }
 
-
 module.exports = {
   getBranches,
   deleteBranch,
   createBranch,
+  switchBranch,
   handleError,
 };
