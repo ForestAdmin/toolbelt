@@ -83,8 +83,6 @@ class DatabasePrompter extends AbstractPrompter {
   }
 
   handleSchema() {
-    console.log(this.program.schema);
-    console.log(this.program);
     if (this.isOptionRequested('dbSchema')) {
       this.envConfig.dbSchema = this.program.schema;
       if (!this.envConfig.dbSchema) {

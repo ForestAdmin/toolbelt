@@ -42,8 +42,10 @@ function handleInitError(rawError) {
 
 async function handleDatabaseConfiguration() {
   if (process.env.DATABASE_URL) {
-    return logger.info('✅ Checking your database setup');
+    return null;
   }
+
+  logger.success('✅ Checking your database setup');
 
   const response = await inquirer
     .prompt([{
@@ -52,7 +54,7 @@ async function handleDatabaseConfiguration() {
       message: 'You don\'t have a DATABASE_URL yet. Do you need help setting it? (Y|n)',
     }]);
 
-  if (response.confirm) return null;
+  if (!response.confirm) return null;
 
   const promptContent = [];
   await new DatabasePrompter(OPTIONS_DATABASE, envConfig, promptContent, { }).handlePrompts();
