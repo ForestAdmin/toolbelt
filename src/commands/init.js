@@ -7,12 +7,15 @@ const spinners = require('../services/spinners');
 const logger = require('../services/logger');
 const ProjectManager = require('../services/project-manager');
 const DatabasePrompter = require('../services/prompter/database-prompter');
+const EnvironmentManager = require('../services/environment-manager');
 const { handleError } = require('../utils/error');
 const { buildDatabaseUrl } = require('../utils/database-url');
 
 const ERROR_MESSAGE_PROJECT_IN_V1 = 'This project does not support branches yet. Please migrate your environments from your Project settings first.';
 const ERROR_MESSAGE_NOT_ADMIN_USER = "You need the 'Admin' role to create a development environment on this project.";
 const ERROR_MESSAGE_PROJECT_NOT_FOUND = 'Your project was not found. Please check your environment secret.';
+const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT = 'You cannot create your development environment until this project has either a remote or a production environment.';
+const ERROR_MESSAGE_ENVIRONMENT_OWNER_UNICITY = 'You already have a development environment on this project.';
 
 const OPTIONS_DATABASE = [
   'dbDialect',
@@ -26,6 +29,9 @@ const OPTIONS_DATABASE = [
   'mongodbSrv',
 ];
 
+const VALIDATION_REGEX_URL = /^https?:\/\/.*/i;
+const VALIDATION_REGEX_HTTPS = /^http((s:\/\/.*)|(s?:\/\/(localhost|127\.0\.0\.1).*))/i;
+
 function handleInitError(rawError) {
   const error = handleError(rawError);
   switch (error) {
@@ -35,9 +41,25 @@ function handleInitError(rawError) {
       return ERROR_MESSAGE_NOT_ADMIN_USER;
     case 'Not Found':
       return ERROR_MESSAGE_PROJECT_NOT_FOUND;
+    case 'No production/remote environment.':
+      return ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT;
+    case 'A user can have only one development environment per project.':
+      return ERROR_MESSAGE_ENVIRONMENT_OWNER_UNICITY;
+    case 'An environment with this name already exists. Please choose another name.':
+      return ERROR_MESSAGE_ENVIRONMENT_OWNER_UNICITY;
     default:
       return error;
   }
+}
+
+function validateEndpoint(input) {
+  if (!VALIDATION_REGEX_URL.test(input)) {
+    return 'Application input must be a valid url.';
+  }
+  if (!VALIDATION_REGEX_HTTPS.test(input)) {
+    return 'HTTPS protocol is mandatory, except for localhost and 127.0.0.1.';
+  }
+  return true;
 }
 
 async function handleDatabaseConfiguration() {
@@ -57,34 +79,38 @@ async function handleDatabaseConfiguration() {
 
 class InitCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
-    const projectSelectionAndValidationPromise = this.projectSelectionAndValidation();
-    const projectSpinner = spinners.add(
-      'project-selection',
-      { text: 'Analyzing your setup' },
-      projectSelectionAndValidationPromise,
-    );
-    await projectSpinner.executeAsync();
-
-    this.handleDatabaseUrlConfiguration();
-  }
-
-  async projectSelectionAndValidation() {
-    // TO BE REMOVED: JUST TO TRY THE SPINNER ;)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    const parsed = this.parse(InitCommand);
-    let project;
     try {
-      const config = await withCurrentProject({ ...parsed.flags });
-      project = await new ProjectManager(config).getProjectForDevWorkflow();
-      this.config.project = project;
+      const projectSelectionAndValidationPromise = this.projectSelectionAndValidation();
+      const projectSpinner = spinners.add(
+        'project-selection',
+        { text: 'Analyzing your setup' },
+        projectSelectionAndValidationPromise,
+      );
+      await projectSpinner.executeAsync();
+
+      await this.handleDatabaseUrlConfiguration();
+
+      const developmentEnvironmentCreationPromise = this.developmentEnvironmentCreation();
+      const envCreationSpinner = spinners.add(
+        'env-creation',
+        { text: 'Setting up your development environment' },
+        developmentEnvironmentCreationPromise,
+      );
+      await envCreationSpinner.executeAsync();
     } catch (error) {
-      throw (handleInitError(error));
+      logger.error(handleInitError(error));
     }
   }
 
+  async projectSelectionAndValidation() {
+    const parsed = this.parse(InitCommand);
+    this.config = await withCurrentProject({ ...parsed.flags });
+    const project = await new ProjectManager(this.config).getProjectForDevWorkflow();
+    this.config.projectOrigin = project.origin;
+  }
+
   async handleDatabaseUrlConfiguration() {
-    if (this.config.project.origin !== 'In-app') {
+    if (this.config.projectOrigin !== 'In-app') {
       const isDatabaseAlreadyConfigured = !!process.env.DATABASE_URL;
       logger.success('✅ Checking your database setup');
 
@@ -93,6 +119,37 @@ class InitCommand extends AbstractAuthenticatedCommand {
         this.config.databaseUrl = buildDatabaseUrl(databaseConfiguration);
       }
     }
+  }
+
+  async developmentEnvironmentCreation() {
+    let existingDevelopmentEnvironment;
+    try {
+      existingDevelopmentEnvironment = await new ProjectManager(this.config)
+        .getDevelopmentEnvironmentForUser(this.config.projectId);
+    } catch (error) {
+      existingDevelopmentEnvironment = null;
+    }
+
+    if (!existingDevelopmentEnvironment) {
+      logger.pauseSpinner();
+      const prompter = await inquirer.prompt([{
+        name: 'endpoint',
+        message: 'Enter your local admin backend endpoint:',
+        type: 'input',
+        default: 'http://localhost:3310',
+        validate: validateEndpoint,
+      }]);
+      logger.continueSpinner();
+
+      const newEnv = await new EnvironmentManager(this.config).createDevelopmentEnvironment(
+        this.config.projectId,
+        prompter.endpoint,
+      );
+        // JUST TO TESTING PURPOSE. WILL BE AMENDED ON NEXT STEP.
+      return logger.info(`New local env created: ${newEnv.name}`);
+    }
+    // JUST TO TESTING PURPOSE. WILL BE AMENDED ON NEXT STEP.
+    return logger.info(`Already have a local env named: ${existingDevelopmentEnvironment.name}`);
   }
 }
 
