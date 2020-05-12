@@ -1,6 +1,10 @@
 function buildDatabaseUrl(config) {
   let connectionString;
 
+  if (!config) {
+    return null;
+  }
+
   if (config.dbConnectionUrl) {
     connectionString = config.dbConnectionUrl;
   } else {

@@ -62,8 +62,14 @@ async function handleDatabaseConfiguration() {
 class InitCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
     const projectSelectionAndValidationPromise = this.projectSelectionAndValidation();
-    const projectSpinner = spinners.add('project-selection', { text: 'Analyzing your setup' }, projectSelectionAndValidationPromise);
+    const projectSpinner = spinners.add(
+      'project-selection',
+      { text: 'Analyzing your setup' },
+      projectSelectionAndValidationPromise,
+    );
     await projectSpinner.executeAsync();
+
+    this.handleDatabaseUrlConfiguration();
   }
 
   async projectSelectionAndValidation() {
@@ -75,19 +81,20 @@ class InitCommand extends AbstractAuthenticatedCommand {
     try {
       const config = await withCurrentProject({ ...parsed.flags });
       project = await new ProjectManager(config).getProjectForDevWorkflow();
+      this.config.project = project;
     } catch (error) {
       throw (handleInitError(error));
     }
 
-    if (project.origin !== 'In-app') {
-      const databaseConfiguration = await handleDatabaseConfiguration();
-      const databaseUrl = buildDatabaseUrl(databaseConfiguration);
-    }
-
-    // TODO: step 4
-
     // JUST FOR TESTING PURPOSE, TO BE REMOVED LATER ON ;)
-    return logger.info(`All clear 🤙! My selected projectId is: ${project.id} and my origin is: ${project.origin}`);
+    // return logger.info(`All clear 🤙! My selected projectId is: ${project.id} and my origin is: ${project.origin}`);
+  }
+
+  async handleDatabaseUrlConfiguration() {
+    if (this.config.project.origin !== 'In-app') {
+      const databaseConfiguration = await handleDatabaseConfiguration();
+      this.config.databaseUrl = buildDatabaseUrl(databaseConfiguration);
+    }
   }
 }
 
