@@ -87,9 +87,6 @@ class InitCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       throw (handleInitError(error));
     }
-
-    // JUST FOR TESTING PURPOSE, TO BE REMOVED LATER ON ;)
-    // return logger.info(`All clear 🤙! My selected projectId is: ${project.id} and my origin is: ${project.origin}`);
   }
 
   async handleDatabaseUrlConfiguration() {
