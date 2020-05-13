@@ -17,6 +17,7 @@ module.exports = {
       'error',
       {
         devDependencies: [
+          'bin/deploy.js',
           'scripts/*.js',
           'test/**/*.js',
         ]
