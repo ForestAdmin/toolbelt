@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+
+## RELEASE 1.2.0 - 2020-05-13
 ### Added
 - Technical - Add sonar lint.
 - Technical - Make the CI lint the commit messages.
