@@ -41,17 +41,11 @@ function handleInitError(rawError) {
 }
 
 async function handleDatabaseConfiguration() {
-  if (process.env.DATABASE_URL) {
-    return null;
-  }
-
-  logger.success('✅ Checking your database setup');
-
   const response = await inquirer
     .prompt([{
       type: 'confirm',
       name: 'confirm',
-      message: 'You don\'t have a DATABASE_URL yet. Do you need help setting it? (Y|n)',
+      message: 'You don\'t have a DATABASE_URL yet. Do you need help setting it?',
     }]);
 
   if (!response.confirm) return null;
@@ -91,8 +85,13 @@ class InitCommand extends AbstractAuthenticatedCommand {
 
   async handleDatabaseUrlConfiguration() {
     if (this.config.project.origin !== 'In-app') {
-      const databaseConfiguration = await handleDatabaseConfiguration();
-      this.config.databaseUrl = buildDatabaseUrl(databaseConfiguration);
+      const isDatabaseAlreadyConfigured = !!process.env.DATABASE_URL;
+      logger.success('✅ Checking your database setup');
+
+      if (!isDatabaseAlreadyConfigured) {
+        const databaseConfiguration = await handleDatabaseConfiguration();
+        this.config.databaseUrl = buildDatabaseUrl(databaseConfiguration);
+      }
     }
   }
 }
