@@ -267,7 +267,7 @@ module.exports = {
     .get('/api/branches')
     .reply(422, JSON.stringify({
       errors: [{
-        detail: 'Workflow disabled.',
+        detail: 'Dev Workflow disabled.',
       }],
     })),
 
