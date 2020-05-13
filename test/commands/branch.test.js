@@ -109,7 +109,6 @@ describe('branch', () => {
 
         describe('with a valid projectId', () => {
           it('should display a switch to new branch message', () => testCli({
-            print: true,
             env: noKeyEnv,
             token: 'any',
             command: () => BranchCommand.run(['--projectId', '1', 'watabranch']),
