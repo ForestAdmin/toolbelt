@@ -21,7 +21,7 @@
     "@oclif/plugin-not-found": "1.2.3",
     "@oclif/plugin-warn-if-update-available": "1.7.0",
     "bluebird": "3.5.2",
-    "chalk": "2.4.1",
+    "chalk": "4.0.0",
     "cli-table": "github:Automattic/cli-table#master",
     "dotenv": "8.2.0",
     "inquirer": "6.2.0",
