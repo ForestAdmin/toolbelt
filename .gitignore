@@ -1,6 +1,5 @@
 .DS_Store
 node_modules/
-.env
 .nyc_output/
 coverage/
 yarn-error.log
