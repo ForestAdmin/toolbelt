@@ -1,6 +1,4 @@
-# Change Log
-
-## [Unreleased]
+## RELEASE 1.2.0 - 2020-05-13
 ### Added
 - Technical - Add sonar lint.
 - Technical - Make the CI lint the commit messages.
@@ -23,10 +21,14 @@
 - Technical - Rename the class of the environments update command.
 - Technical - Remove CI configuration warnings.
 - Technical - Remove useless CI configuration.
+- Readme - Update the community badge.
+- Dependencies - Get rid of useless dev dependencies (`globby`, `moment`, `nyc`, `semver`).
 
 ### Fixed
 - Authentication - Exit any process if the authentication fails.
 - Tests - Fix authentication problems during tests.
+- Security - Patch `acorn` dependency vulnerabilities.
+- Dependencies - Get rid of useless `git-hooks` dependency.
 
 ## RELEASE 1.1.0 - 2020-03-20
 ### Added

@@ -1,7 +1,24 @@
 language: node_js
 node_js: lts/*
 
-script:
-  - commitlint-travis
-  - yarn lint
-  - yarn test
+stages:
+  - Lint & Tests
+  - Build & Publish
+
+jobs:
+  include:
+    - stage: Lint & Tests
+      name: Lint commit messages
+      script: commitlint-travis
+    - script: yarn lint
+      name: Lint JavaScript
+    - script: yarn test
+      name: Tests
+    - stage: Build & Publish
+      if: branch = master AND type != pull_request
+      script: skip
+      deploy:
+        provider: script
+        on:
+          branch: master
+        script: yarn && npx semantic-release
