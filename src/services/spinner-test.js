@@ -35,7 +35,7 @@ class Spinner {
   }
 
   success() {
-    if (!this.spinnies.hasActiveSpinners()) {
+    if (!this.isRunning()) {
       throw Error('No spinner is running.');
     }
 
@@ -44,7 +44,7 @@ class Spinner {
   }
 
   fail(options) {
-    if (!this.spinnies.hasActiveSpinners()) {
+    if (!this.isRunning()) {
       throw Error('No spinner is running.');
     }
 
@@ -53,19 +53,19 @@ class Spinner {
   }
 
   pause() {
-    if (!this.spinnies.hasActiveSpinners()) {
-      throw Error('No spinner is running.');
+    if (this.isRunning()) {
+      this.spinnies.stopAll();
     }
-
-    this.spinnies.stopAll();
   }
 
   continue() {
-    if (this.spinnies.hasActiveSpinners()) {
-      throw Error('A spinner is already running.');
+    if (!this.isRunning()) {
+      this.spinnies.add(DEFAULT_SPINNER_NAME, this.currentSpinnerOptions);
     }
+  }
 
-    this.spinnies.add(DEFAULT_SPINNER_NAME, this.currentSpinnerOptions);
+  isRunning() {
+    return this.spinnies.hasActiveSpinners();
   }
 
   runOnPromise(options, promise) {

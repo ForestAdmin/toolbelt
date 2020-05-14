@@ -3,7 +3,6 @@ const inquirer = require('inquirer');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const envConfig = require('../config');
 const withCurrentProject = require('../services/with-current-project');
-const spinners = require('../services/spinners');
 const logger = require('../services/logger');
 const ProjectManager = require('../services/project-manager');
 const DatabasePrompter = require('../services/prompter/database-prompter');
