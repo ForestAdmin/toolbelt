@@ -9,6 +9,7 @@ const ProjectManager = require('../services/project-manager');
 const DatabasePrompter = require('../services/prompter/database-prompter');
 const { handleError } = require('../utils/error');
 const { buildDatabaseUrl } = require('../utils/database-url');
+const spinner = require('../services/spinner-instance');
 
 const ERROR_MESSAGE_PROJECT_IN_V1 = 'This project does not support branches yet. Please migrate your environments from your Project settings first.';
 const ERROR_MESSAGE_NOT_ADMIN_USER = "You need the 'Admin' role to create a development environment on this project.";
@@ -57,13 +58,7 @@ async function handleDatabaseConfiguration() {
 
 class InitCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
-    const projectSelectionAndValidationPromise = this.projectSelectionAndValidation();
-    const projectSpinner = spinners.add(
-      'project-selection',
-      { text: 'Analyzing your setup' },
-      projectSelectionAndValidationPromise,
-    );
-    await projectSpinner.executeAsync();
+    await spinner.runOnPromise({ text: 'Analyzing your setup' }, this.projectSelectionAndValidation());
 
     this.handleDatabaseUrlConfiguration();
   }

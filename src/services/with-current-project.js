@@ -1,6 +1,6 @@
 const inquirer = require('inquirer');
 const ProjectManager = require('./project-manager');
-const logger = require('./logger');
+const spinner = require('../services/spinner-instance');
 
 module.exports = async function withCurrentProject(config) {
   if (config.projectId) { return config; }
@@ -21,14 +21,14 @@ module.exports = async function withCurrentProject(config) {
       return { ...config, projectId: projects[0].id };
     }
 
-    logger.pauseSpinner();
+    spinner.pause();
     const response = await inquirer.prompt([{
       name: 'project',
       message: 'Select your project',
       type: 'list',
       choices: projects.map((project) => ({ name: project.name, value: project.id })),
     }]);
-    logger.continueSpinner();
+    spinner.continue();
     return { ...config, projectId: response.project };
   }
   throw new Error('You don\'t have any project yet.');
