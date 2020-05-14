@@ -7,26 +7,24 @@ const withCurrentProject = require('../services/with-current-project');
 const envConfig = require('../config');
 
 class SwitchCommand extends AbstractAuthenticatedCommand {
-  async selectBranch(envSecret) {
+  async selectBranch(branches) {
     try {
-      const branches = await BranchManager.getBranches(envSecret);
-      if (!branches || branches.length === 0) {
-        return this.log("⚠️ You don't have any branch to set as current. Use `forest branch <branch_name>` to create one.");
-      }
-      const response = await inquirer.prompt([{
+      const { branch } = await inquirer.prompt([{
         name: 'branch',
         message: 'Select the branch you want to set current',
         type: 'list',
-        choices: branches.map((branch) => ({ name: branch.name, value: branch.id })),
+        choices: branches
+          // NOTICE: Current branch should be last dispalyed branch.
+          .sort(branch => branch.isCurrent ? 1 : 0)
+          .map((branch) => branch.name),
       }]);
 
-      return response;
+      return branch;
     } catch (error) {
       const customError = BranchManager.handleError(error);
 
       return this.error(customError);
     }
-    return null;
   }
 
   async switchTo(branchName, environmentSecret) {
@@ -41,27 +39,47 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
     }
   }
 
-  async runIfAuthenticated() {
+  async getConfig(envSecret) {
     const parsed = this.parse(SwitchCommand);
-    const envSecret = process.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
-    let config;
 
-    try {
-      config = await withCurrentProject({ ...envConfig, ...commandOptions });
+    const config = await withCurrentProject({ ...envConfig, ...commandOptions });
 
-      if (!config.envSecret) {
-        const environment = await new ProjectManager(config)
-          .getDevelopmentEnvironmentForUser(config.projectId);
-        config.envSecret = environment.secretKey;
-      }
-    } catch (error) {
-      const customError = BranchManager.handleError(error);
-      return this.error(customError);
+    if (!config.envSecret) {
+      const environment = await new ProjectManager(config)
+        .getDevelopmentEnvironmentForUser(config.projectId);
+      config.envSecret = environment.secretKey;
     }
 
-    const branchName = config.BRANCH_NAME || await this.selectBranch(config.envSecret);
-    return this.switchTo(branchName, config.envSecret);
+    return config;
+  }
+
+  async runIfAuthenticated() {
+    try {
+      const envSecret = process.env.FOREST_ENV_SECRET;
+      const config = await this.getConfig(envSecret);
+      const branches = await BranchManager.getBranches(envSecret) || [];
+
+      if (branches.length === 0) {
+        return this.log("⚠️  You don't have any branch to set as current. Use `forest branch <branch_name>` to create one.");
+      }
+
+      const branchName = config.BRANCH_NAME || await this.selectBranch(branches);
+      const currentBranch = branches.find((branch) => branch.isCurrent);
+      const branchExists = branches.some((branch) => branch.name === branchName);
+
+      if (!branchExists) {
+        throw new Error('Branch does not exist');
+      }
+      if (currentBranch.name === branchName) {
+        return this.log(`ℹ️  ${branchName} is already your current branch.`);
+      }
+
+      return this.switchTo(branchName, config.envSecret);
+    } catch (error) {
+      const customError = BranchManager.handleBranchError(error);
+      return this.error(customError);
+    }
   }
 }
 
