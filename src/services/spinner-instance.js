@@ -1,4 +1,4 @@
-const Spinner = require('./spinner-test');
+const Spinner = require('./spinner');
 
 let spinnerInstance = null;
 
