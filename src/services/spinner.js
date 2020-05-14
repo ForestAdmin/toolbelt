@@ -80,6 +80,7 @@ class Spinner {
       })
       .catch((error) => {
         this.fail({ text: error });
+        throw error;
       });
   }
 }

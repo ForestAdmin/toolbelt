@@ -26,9 +26,17 @@ describe('spinner', () => {
       const promise = async () => { throw error; };
 
       it('should display the error content', async () => {
-        expect.assertions(1);
+        expect.assertions(2);
         const spy = jest.spyOn(spinner, 'fail');
-        await spinner.runOnPromise({ text: 'valid' }, promise());
+
+        let message;
+        try {
+          await spinner.runOnPromise({ text: 'invalid' }, promise());
+        } catch (e) {
+          message = e.message;
+        }
+
+        expect(message).toBe('wrong');
         expect(spy).toHaveBeenCalledWith({ text: error });
       });
     });
