@@ -14,14 +14,14 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
         message: 'Select the branch you want to set current',
         type: 'list',
         choices: branches
-          // NOTICE: Current branch should be last dispalyed branch.
-          .sort(branch => branch.isCurrent ? 1 : 0)
-          .map((branch) => branch.name),
+          // NOTICE: Current branch should be last displayed branch.
+          .sort((currentBranch) => (currentBranch.isCurrent ? 1 : -1))
+          .map((currentBranch) => currentBranch.name),
       }]);
 
       return branch;
     } catch (error) {
-      const customError = BranchManager.handleError(error);
+      const customError = BranchManager.handleBranchError(error);
 
       return this.error(customError);
     }
@@ -33,7 +33,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
 
       return this.log(`✅ Switched to branch: ${branchName}.`);
     } catch (error) {
-      const customError = BranchManager.handleError(error);
+      const customError = BranchManager.handleBranchError(error);
 
       return this.error(customError);
     }
