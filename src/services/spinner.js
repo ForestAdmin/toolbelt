@@ -55,12 +55,14 @@ class Spinner {
   pause() {
     if (this.isRunning()) {
       this.spinnies.stopAll();
+      this.pausedSpinnerOptions = this.currentSpinnerOptions;
     }
   }
 
   continue() {
-    if (!this.isRunning()) {
-      this.spinnies.add(DEFAULT_SPINNER_NAME, this.currentSpinnerOptions);
+    if (!this.isRunning() && this.pausedSpinnerOptions) {
+      this.spinnies.add(DEFAULT_SPINNER_NAME, this.pausedSpinnerOptions);
+      this.pausedSpinnerOptions = null;
     }
   }
 
