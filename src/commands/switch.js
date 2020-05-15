@@ -13,10 +13,11 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
         name: 'branch',
         message: 'Select the branch you want to set current',
         type: 'list',
-        choices: branches
+        choices: [
           // NOTICE: Current branch should be last dispalyed branch.
-          .sort((currentBranch) => (currentBranch.isCurrent ? 1 : -1))
-          .map((currentBranch) => currentBranch.name),
+          ...branches.filter((currentBranch) => !currentBranch.isCurrent),
+          ...branches.filter((currentBranch) => currentBranch.isCurrent),
+        ].map((currentBranch) => currentBranch.name),
       }]);
 
       return branch;
@@ -69,7 +70,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
       const currentBranch = branches.find((branch) => branch.isCurrent);
 
       if (selectedBranch === undefined) {
-        throw new Error('Branch does not exist');
+        throw new Error('Branch does not exist.');
       }
       if (currentBranch.name === selectedBranchName) {
         return this.log(`ℹ️  ${selectedBranchName} is already your current branch.`);
