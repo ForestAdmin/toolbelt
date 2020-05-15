@@ -14,7 +14,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
         message: 'Select the branch you want to set current',
         type: 'list',
         choices: branches
-          // NOTICE: Current branch should be last displayed branch.
+          // NOTICE: Current branch should be last dispalyed branch.
           .sort((currentBranch) => (currentBranch.isCurrent ? 1 : -1))
           .map((currentBranch) => currentBranch.name),
       }]);
@@ -27,11 +27,11 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
     }
   }
 
-  async switchTo(branchName, environmentSecret) {
+  async switchTo(selectedBranch, environmentSecret) {
     try {
-      await BranchManager.switchBranch(branchName, environmentSecret);
+      await BranchManager.switchBranch(selectedBranch, environmentSecret);
 
-      return this.log(`✅ Switched to branch: ${branchName}.`);
+      return this.log(`✅ Switched to branch: ${selectedBranch.name}.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
@@ -64,18 +64,18 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
         return this.log("⚠️  You don't have any branch to set as current. Use `forest branch <branch_name>` to create one.");
       }
 
-      const branchName = config.BRANCH_NAME || await this.selectBranch(branches);
+      const selectedBranchName = config.BRANCH_NAME || await this.selectBranch(branches);
+      const selectedBranch = branches.find((branch) => branch.name === selectedBranchName);
       const currentBranch = branches.find((branch) => branch.isCurrent);
-      const branchExists = branches.some((branch) => branch.name === branchName);
 
-      if (!branchExists) {
+      if (selectedBranch === undefined) {
         throw new Error('Branch does not exist');
       }
-      if (currentBranch.name === branchName) {
-        return this.log(`ℹ️  ${branchName} is already your current branch.`);
+      if (currentBranch.name === selectedBranchName) {
+        return this.log(`ℹ️  ${selectedBranchName} is already your current branch.`);
       }
 
-      return this.switchTo(branchName, config.envSecret);
+      return this.switchTo(selectedBranch, config.envSecret);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
       return this.error(customError);

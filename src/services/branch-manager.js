@@ -43,14 +43,14 @@ function createBranch(branchName, environmentSecret) {
     .send({ branchName: encodeURIComponent(branchName) });
 }
 
-function switchBranch(currentBranchName, environmentSecret) {
+function switchBranch({ id }, environmentSecret) {
   const authToken = authenticator.getAuthToken();
 
   return agent
     .put(`${serverHost()}/api/environments`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
-    .send(EnvironmentSerializer.serialize({ currentBranchName }));
+    .send(EnvironmentSerializer.serialize({ currentBranchId: id }));
 }
 
 function handleBranchError(rawError) {
