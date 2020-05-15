@@ -56,7 +56,8 @@ async function handleDatabaseConfiguration() {
 
 class InitCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
-    await spinner.runOnPromise({ text: 'Analyzing your setup' }, this.projectSelectionAndValidation());
+    spinner.start({ text: 'Analyzing your setup' });
+    await spinner.attachToPromise(this.projectSelectionAndValidation());
 
     this.handleDatabaseUrlConfiguration();
   }
@@ -68,7 +69,9 @@ class InitCommand extends AbstractAuthenticatedCommand {
     const parsed = this.parse(InitCommand);
     let project;
     try {
+      spinner.pause();
       const config = await withCurrentProject({ ...parsed.flags });
+      spinner.continue();
       project = await new ProjectManager(config).getProjectForDevWorkflow();
       this.config.project = project;
     } catch (error) {

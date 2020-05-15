@@ -17,7 +17,7 @@ class Spinner {
   }
 
   start(options) {
-    if (this.spinnies.hasActiveSpinners()) {
+    if (this.isRunning()) {
       throw Error('A spinner is already running.');
     }
 
@@ -26,7 +26,7 @@ class Spinner {
   }
 
   stop() {
-    if (!this.spinnies.hasActiveSpinners()) {
+    if (!this.isRunning()) {
       throw Error('No spinner is running.');
     }
 
@@ -53,29 +53,40 @@ class Spinner {
   }
 
   pause() {
-    if (this.isRunning()) {
-      this.spinnies.stopAll();
-      this.pausedSpinnerOptions = this.currentSpinnerOptions;
+    if (!this.isRunning()) {
+      throw Error('No spinner is running.');
     }
+
+    this.spinnies.stopAll();
+    this.pausedSpinnerOptions = this.currentSpinnerOptions;
   }
 
   continue() {
-    if (!this.isRunning() && this.pausedSpinnerOptions) {
-      this.spinnies.add(DEFAULT_SPINNER_NAME, this.pausedSpinnerOptions);
-      this.pausedSpinnerOptions = null;
+    if (this.isRunning()) {
+      throw Error('A spinner is already running.');
     }
+
+    if (!this.pausedSpinnerOptions) {
+      throw Error('No spinner has been paused.');
+    }
+
+    this.spinnies.add(DEFAULT_SPINNER_NAME, this.pausedSpinnerOptions);
+    this.pausedSpinnerOptions = null;
   }
 
   isRunning() {
     return this.spinnies.hasActiveSpinners();
   }
 
-  runOnPromise(options, promise) {
-    this.start(options);
+  // NOTICE: spinner.start needs to be called first
+  attachToPromise(promise) {
+    if (!this.isRunning()) {
+      throw Error('No spinner is running.');
+    }
 
     return promise
       .then((result) => {
-        this.success(options);
+        this.success(this.currentSpinnerOptions);
         return result;
       })
       .catch((error) => {
