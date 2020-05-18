@@ -364,4 +364,14 @@ module.exports = {
       apiEndpoint: 'https://test.forestadmin.com',
       secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
     })),
+
+  updateEnvironmentCurrentBranchId: () => nock('http://localhost:3001')
+    .put('/api/environments')
+    .matchHeader('forest-secret-key', 'forestEnvSecret')
+    .reply(200, EnvironmentSerializer.serialize({
+      name: 'Test',
+      type: 'development',
+      apiEndpoint: 'https://test.forestadmin.com',
+      secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
+    })),
 };

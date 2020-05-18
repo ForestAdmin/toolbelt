@@ -1,6 +1,7 @@
 const agent = require('superagent');
 const authenticator = require('./authenticator');
 const branchDeserializer = require('../deserializers/branch');
+const EnvironmentSerializer = require('../serializers/environment');
 const { serverHost } = require('../config');
 const { handleError } = require('../utils/error');
 
@@ -42,6 +43,16 @@ function createBranch(branchName, environmentSecret) {
     .send({ branchName: encodeURIComponent(branchName) });
 }
 
+function switchBranch({ id }, environmentSecret) {
+  const authToken = authenticator.getAuthToken();
+
+  return agent
+    .put(`${serverHost()}/api/environments`)
+    .set('Authorization', `Bearer ${authToken}`)
+    .set('forest-secret-key', `${environmentSecret}`)
+    .send(EnvironmentSerializer.serialize({ currentBranchId: id }));
+}
+
 function handleBranchError(rawError) {
   const error = handleError(rawError);
   switch (error) {
@@ -71,5 +82,6 @@ module.exports = {
   getBranches,
   deleteBranch,
   createBranch,
+  switchBranch,
   handleBranchError,
 };
