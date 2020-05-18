@@ -6,18 +6,6 @@ class Logger {
     this.spinner = null;
   }
 
-  pauseSpinner() {
-    if (this.spinner) {
-      this.spinner.pause();
-    }
-  }
-
-  continueSpinner() {
-    if (this.spinner) {
-      this.spinner.continue();
-    }
-  }
-
   log(message, std) {
     if (!this.silent) {
       if (std === 'err') {
