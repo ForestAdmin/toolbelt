@@ -3,13 +3,16 @@ const inquirer = require('inquirer');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const envConfig = require('../config');
 const withCurrentProject = require('../services/with-current-project');
-const spinners = require('../services/spinners');
+const singletonGetter = require('../services/singleton-getter');
+const Spinner = require('../services/spinner');
 const logger = require('../services/logger');
 const ProjectManager = require('../services/project-manager');
 const DatabasePrompter = require('../services/prompter/database-prompter');
 const EnvironmentManager = require('../services/environment-manager');
 const { handleError } = require('../utils/error');
 const { buildDatabaseUrl } = require('../utils/database-url');
+
+const spinner = singletonGetter(Spinner);
 
 const ERROR_MESSAGE_PROJECT_IN_V1 = 'This project does not support branches yet. Please migrate your environments from your Project settings first.';
 const ERROR_MESSAGE_NOT_ADMIN_USER = "You need the 'Admin' role to create a development environment on this project.";
@@ -80,23 +83,14 @@ async function handleDatabaseConfiguration() {
 class InitCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
     try {
-      const projectSelectionAndValidationPromise = this.projectSelectionAndValidation();
-      const projectSpinner = spinners.add(
-        'project-selection',
-        { text: 'Analyzing your setup' },
-        projectSelectionAndValidationPromise,
-      );
-      await projectSpinner.executeAsync();
+      spinner.start({ text: 'Analyzing your setup' });
+      await spinner.attachToPromise(this.projectSelectionAndValidation());
 
-      await this.handleDatabaseUrlConfiguration();
+      spinner.start({ text: 'Checking your database setup' });
+      await spinner.attachToPromise(this.handleDatabaseUrlConfiguration());
 
-      const developmentEnvironmentCreationPromise = this.developmentEnvironmentCreation();
-      const envCreationSpinner = spinners.add(
-        'env-creation',
-        { text: 'Setting up your development environment' },
-        developmentEnvironmentCreationPromise,
-      );
-      await envCreationSpinner.executeAsync();
+      spinner.start({ text: 'Setting up your development environment' });
+      await spinner.attachToPromise(this.developmentEnvironmentCreation());
     } catch (error) {
       logger.error(handleInitError(error));
     }
@@ -104,7 +98,9 @@ class InitCommand extends AbstractAuthenticatedCommand {
 
   async projectSelectionAndValidation() {
     const parsed = this.parse(InitCommand);
+    spinner.pause();
     this.config = await withCurrentProject({ ...parsed.flags });
+    spinner.continue();
     const project = await new ProjectManager(this.config).getProjectForDevWorkflow();
     this.config.projectOrigin = project.origin;
   }
@@ -112,10 +108,11 @@ class InitCommand extends AbstractAuthenticatedCommand {
   async handleDatabaseUrlConfiguration() {
     if (this.config.projectOrigin !== 'In-app') {
       const isDatabaseAlreadyConfigured = !!process.env.DATABASE_URL;
-      logger.success('✅ Checking your database setup');
 
       if (!isDatabaseAlreadyConfigured) {
+        spinner.pause();
         const databaseConfiguration = await handleDatabaseConfiguration();
+        spinner.continue();
         this.config.databaseUrl = buildDatabaseUrl(databaseConfiguration);
       }
     }
@@ -131,7 +128,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
     }
 
     if (!existingDevelopmentEnvironment) {
-      logger.pauseSpinner();
+      spinner.pause();
       const prompter = await inquirer.prompt([{
         name: 'endpoint',
         message: 'Enter your local admin backend endpoint:',
@@ -139,7 +136,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
         default: 'http://localhost:3310',
         validate: validateEndpoint,
       }]);
-      logger.continueSpinner();
+      spinner.continue();
 
       const newEnv = await new EnvironmentManager(this.config).createDevelopmentEnvironment(
         this.config.projectId,
