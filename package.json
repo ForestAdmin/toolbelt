@@ -33,7 +33,6 @@
     "progress": "2.0.3",
     "spinnies": "0.5.1",
     "uuid": "8.0.0",
-    "stdout-stderr": "0.1.13",
     "superagent": "3.8.3",
     "superagent-promise": "1.1.0"
   },
@@ -51,7 +50,6 @@
     "eslint-plugin-jest": "23.3.0",
     "eslint-plugin-sonarjs": "0.5.0",
     "fs-extra": "8.1.0",
-    "globby": "8.0.1",
     "husky": "4.2.4",
     "jest": "24.9.0",
     "mock-stdin": "1.0.0",
