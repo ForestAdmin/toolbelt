@@ -40,7 +40,8 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
     }
   }
 
-  async getConfig(envSecret) {
+  async getConfig() {
+    const envSecret = process.env.FOREST_ENV_SECRET;
     const parsed = this.parse(SwitchCommand);
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
 
@@ -57,8 +58,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
 
   async runIfAuthenticated() {
     try {
-      const envSecret = process.env.FOREST_ENV_SECRET;
-      const config = await this.getConfig(envSecret);
+      const config = await this.getConfig();
       const branches = await BranchManager.getBranches(config.envSecret) || [];
 
       if (branches.length === 0) {
