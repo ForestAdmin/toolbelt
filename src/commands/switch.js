@@ -59,7 +59,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
     try {
       const envSecret = process.env.FOREST_ENV_SECRET;
       const config = await this.getConfig(envSecret);
-      const branches = await BranchManager.getBranches(envSecret) || [];
+      const branches = await BranchManager.getBranches(config.envSecret) || [];
 
       if (branches.length === 0) {
         return this.log("⚠️  You don't have any branch to set as current. Use `forest branch <branch_name>` to create one.");
