@@ -1,3 +1,16 @@
+# [1.3.0](https://github.com/ForestAdmin/toolbelt/compare/v1.2.0...v1.3.0) (2020-05-18)
+
+
+### Bug Fixes
+
+* **spinner:** remove unneeded check on attachToPromise ([#71](https://github.com/ForestAdmin/toolbelt/issues/71)) ([75fa9e9](https://github.com/ForestAdmin/toolbelt/commit/75fa9e93e68faa7d3bdd26eb70c3543f342ed741))
+
+
+### Features
+
+* **branch:** add switch command ([#61](https://github.com/ForestAdmin/toolbelt/issues/61)) ([74f401a](https://github.com/ForestAdmin/toolbelt/commit/74f401a4a2d8173e070e36ffd1e972db32d40e83))
+* add new spinner singleton instance and service for cli commands ([#68](https://github.com/ForestAdmin/toolbelt/issues/68)) ([2379db4](https://github.com/ForestAdmin/toolbelt/commit/2379db413476bd072128440ebd8b14f56de2a875))
+
 ## RELEASE 1.2.0 - 2020-05-13
 ### Added
 - Technical - Add sonar lint.
