@@ -12,6 +12,10 @@ const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT = '❌ You cannot run br
 const ERROR_MESSAGE_BRANCH_DOES_NOT_EXIST = "❌ This branch doesn't exist.";
 const ERROR_MESSAGE_REMOVE_BRANCH_FAILED = '❌ Failed to delete branch.';
 const ERROR_MESSAGE_NOT_ADMIN_USER = "❌ You need the 'Admin' role on this project to use branches.";
+const ERROR_MESSAGE_ENVIRONMENT_NOT_FOUND = "❌ The environment provided doesn't exist.";
+const ERROR_MESSAGE_NO_CURRENT_BRANCH = "⚠️ You don't have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.";
+const ERROR_MESSAGE_WRONG_ENVIRONMENT_TYPE = '❌ The environment on which you are trying to push your modifications is not a remote environment.';
+const ERROR_MESSAGE_NO_DESTINATION_BRANCH = "❌ The environment on which you are trying to push your modifications doesn't have current branch.";
 
 function getBranches(envSecret) {
   const authToken = authenticator.getAuthToken();
@@ -41,6 +45,16 @@ function createBranch(branchName, environmentSecret) {
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send({ branchName: encodeURIComponent(branchName) });
+}
+
+function pushBranch(destinationEnvironmentName, environmentSecret) {
+  const authToken = authenticator.getAuthToken();
+
+  return agent
+    .put(`${serverHost()}/api/branches/push`)
+    .set('Authorization', `Bearer ${authToken}`)
+    .set('forest-secret-key', `${environmentSecret}`)
+    .send({ destinationEnvironmentName: encodeURIComponent(destinationEnvironmentName) });
 }
 
 function switchBranch({ id }, environmentSecret) {
@@ -73,6 +87,14 @@ function handleBranchError(rawError) {
       return ERROR_MESSAGE_BRANCH_DOES_NOT_EXIST;
     case 'Failed to remove branch.':
       return ERROR_MESSAGE_REMOVE_BRANCH_FAILED;
+    case 'Environment not found.':
+      return ERROR_MESSAGE_ENVIRONMENT_NOT_FOUND;
+    case 'No current branch.':
+      return ERROR_MESSAGE_NO_CURRENT_BRANCH;
+    case 'Environment type should be remote.':
+      return ERROR_MESSAGE_WRONG_ENVIRONMENT_TYPE;
+    case 'No destination branch.':
+      return ERROR_MESSAGE_NO_DESTINATION_BRANCH;
     default:
       return error;
   }
@@ -82,6 +104,7 @@ module.exports = {
   getBranches,
   deleteBranch,
   createBranch,
+  pushBranch,
   switchBranch,
   handleBranchError,
 };
