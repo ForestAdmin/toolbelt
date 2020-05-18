@@ -14,7 +14,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
         message: 'Select the branch you want to set current',
         type: 'list',
         choices: [
-          // NOTICE: Current branch should be last dispalyed branch.
+          // NOTICE: Current branch should be last displayed branch.
           ...branches.filter((currentBranch) => !currentBranch.isCurrent),
           ...branches.filter((currentBranch) => currentBranch.isCurrent),
         ].map((currentBranch) => currentBranch.name),
