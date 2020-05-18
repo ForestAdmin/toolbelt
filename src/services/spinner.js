@@ -100,10 +100,6 @@ class Spinner {
 
   // NOTICE: spinner.start needs to be called first
   attachToPromise(promise) {
-    if (!this.isRunning()) {
-      throw Error('No spinner is running.');
-    }
-
     return promise
       .then((result) => {
         this.success(this.currentSpinnerOptions);
