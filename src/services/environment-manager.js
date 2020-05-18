@@ -45,6 +45,16 @@ function EnvironmentManager(config) {
       .then((response) => environmentDeserializer.deserialize(response.body));
   };
 
+  this.createDevelopmentEnvironment = async (projectId, endpoint) => {
+    const authToken = authenticator.getAuthToken();
+
+    return agent
+      .post(`${serverHost()}/api/projects/${projectId}/development-environment-for-user`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({ endpoint })
+      .then((response) => environmentDeserializer.deserialize(response.body));
+  };
+
   this.updateEnvironment = async () => {
     const authToken = authenticator.getAuthToken();
     return agent
