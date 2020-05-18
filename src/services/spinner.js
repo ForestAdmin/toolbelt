@@ -13,6 +13,21 @@ const spinniesInstance = singletonGetter(Spinnies, spinniesConstructorParameters
 
 // NOTICE: Except if you need several spinner runnign at the same time,
 //         a `singleton-getter` usage should be prefered.
+/**
+ * A single instance of spinner is intended to be used as follow:
+ * @example
+ * const singletonGetter = require('path/to/singleton-getter')
+ * const spinner = singletonGetter(Spinner)
+ *
+ * // synchronously:
+ * spinner.start({ text: 'my super text' })
+ * // do something
+ * spinner.success()
+ *
+ * // on promise:
+ * spinner.start({ text: 'my super text' })
+ * spinner.attachToPromise(mySuperPromise())
+ */
 class Spinner {
   constructor() {
     this.spinnies = spinniesInstance;
