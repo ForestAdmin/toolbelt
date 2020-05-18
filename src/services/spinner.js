@@ -9,6 +9,7 @@ const spinniesConstructorParameters = {
     frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
   },
 };
+// NOTICE: Singleton used here to attach all generated spinner to the same spinnies instance.
 const spinniesInstance = singletonGetter(Spinnies, spinniesConstructorParameters);
 
 // NOTICE: Except if you need several spinner runnign at the same time,
