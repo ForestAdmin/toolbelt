@@ -12,7 +12,7 @@ const spinniesConstructorParameters = {
 // NOTICE: Singleton used here to attach all generated spinner to the same spinnies instance.
 const spinniesInstance = singletonGetter(Spinnies, spinniesConstructorParameters);
 
-// NOTICE: Except if you need several spinner runnign at the same time,
+// NOTICE: Except if you need several spinner running at the same time,
 //         a `singleton-getter` usage should be prefered.
 /**
  * A single instance of spinner is intended to be used as follow:
@@ -28,6 +28,13 @@ const spinniesInstance = singletonGetter(Spinnies, spinniesConstructorParameters
  * // on promise:
  * spinner.start({ text: 'my super text' })
  * spinner.attachToPromise(mySuperPromise())
+ *
+ * If ever multiple instances are need to be run together:
+ * @example
+ * const Spinner = require('./spinner');
+ *
+ * const spinner1 = new Spinner();
+ * const spinner2 = new Spinner();
  */
 class Spinner {
   constructor() {
@@ -45,7 +52,7 @@ class Spinner {
     this.spinnies.add(this.currentSpinnerUniqueKey, options);
   }
 
-  // NOTICE: optionnal parameter options to have a custom success message
+  // NOTICE: optional parameter options to have a custom success message
   success(options = this.currentSpinnerOptions) {
     if (!this.isRunning()) {
       throw Error('No spinner is running.');
@@ -55,7 +62,8 @@ class Spinner {
     this.stop();
   }
 
-  fail(options) {
+  // NOTICE: optional parameter options to have a custom fail message
+  fail(options = this.currentSpinnerOptions) {
     if (!this.isRunning()) {
       throw Error('No spinner is running.');
     }
@@ -64,12 +72,12 @@ class Spinner {
     this.stop();
   }
 
-  pause() {
+  async pause() {
     if (!this.isRunning()) {
       throw Error('No spinner is running.');
     }
 
-    this.spinnies.stopAll();
+    await this.spinnies.remove(this.currentSpinnerUniqueKey);
     this.pausedSpinnerOptions = this.currentSpinnerOptions;
   }
 
@@ -87,7 +95,7 @@ class Spinner {
   }
 
   isRunning() {
-    return !!this.currentSpinnerUniqueKey;
+    return !!this.spinnies.pick(this.currentSpinnerUniqueKey);
   }
 
   // NOTICE: spinner.start needs to be called first
