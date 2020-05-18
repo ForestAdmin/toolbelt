@@ -24,11 +24,12 @@ const ERROR_MESSAGE_PROJECT_NOT_FOUND = 'Your project was not found. Please chec
 const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT = 'You cannot create your development environment until this project has either a remote or a production environment.';
 const ERROR_MESSAGE_ENVIRONMENT_OWNER_UNICITY = 'You already have a development environment on this project.';
 
-const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE = "Copying the environment variables in your `.env` file (don't forget to restart your server to make it work).";
-const SUCCESS_MESSAGE_ENV_FILE_CREATED_AND_FILLED = "Creating a new `.env` file containing your environment variables (don't forget to restart your server to make it work).";
-const SUCCESS_MESSAGE_DISPLAY_ENV_VARIABLES = "Here are the environment variables you need to copy in your configuration file (don't forget to restart your server after):\n";
-const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_TO_CLIPBOARD = 'Environment variables copied to your clipboard!';
-const SUCCESS_MESSAGE_ALL_SET_AND_READY = "You're now set up and ready to develop on Forest Admin.\nTo learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/getting-started/a-page-on-forest-cli.";
+const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE = 'Copying the environment variables in your `.env` file';
+const SUCCESS_MESSAGE_ENV_FILE_CREATED_AND_FILLED = 'Creating a new `.env` file containing your environment variables';
+const SUCCESS_MESSAGE_DISPLAY_ENV_VARIABLES = 'Here are the environment variables you need to copy in your configuration file:\n';
+const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_TO_CLIPBOARD = 'Automatically copied to your clipboard!';
+const SUCCESS_MESSAGE_ALL_SET_AND_READY = "You're now set up and ready to develop on Forest Admin";
+const SUCCESS_MESSAGE_LEARN_MORE_ON_CLI_USAGE = 'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/getting-started/a-page-on-forest-cli.';
 
 const OPTIONS_DATABASE = [
   'dbDialect',
@@ -146,6 +147,11 @@ function commentExistingVariablesInAFile(fileData, config) {
 function createOrAmendDotenvFile(config, variablesToAdd) {
   const existingEnvFile = fs.existsSync('.env');
   let newEnvFileData = variablesToAdd;
+  spinner.start({
+    text: existingEnvFile
+      ? SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE
+      : SUCCESS_MESSAGE_ENV_FILE_CREATED_AND_FILLED,
+  });
 
   if (existingEnvFile) {
     const existingEnvFileData = fs.readFileSync('.env', 'utf8');
@@ -157,17 +163,13 @@ function createOrAmendDotenvFile(config, variablesToAdd) {
     }
   }
   fs.writeFileSync('.env', newEnvFileData);
-  logger.success(
-    existingEnvFile
-      ? SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE
-      : SUCCESS_MESSAGE_ENV_FILE_CREATED_AND_FILLED,
-  );
+  spinner.success();
 }
 
 async function displayEnvironmentVariablesAndCopyToClipboard(variables) {
-  logger.success(SUCCESS_MESSAGE_DISPLAY_ENV_VARIABLES + chalk.black.bgCyan(variables));
+  logger.info(SUCCESS_MESSAGE_DISPLAY_ENV_VARIABLES + chalk.black.bgCyan(variables));
   await clipboardy.write(variables)
-    .then(() => logger.success(chalk.italic(SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_TO_CLIPBOARD)))
+    .then(() => logger.info(chalk.italic(SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_TO_CLIPBOARD)))
     .catch(() => null);
 }
 
@@ -185,7 +187,9 @@ class InitCommand extends AbstractAuthenticatedCommand {
 
       await this.environmentVariablesAutoFilling();
 
-      logger.success(SUCCESS_MESSAGE_ALL_SET_AND_READY);
+      spinner.start({ text: SUCCESS_MESSAGE_ALL_SET_AND_READY });
+      spinner.success();
+      logger.info(SUCCESS_MESSAGE_LEARN_MORE_ON_CLI_USAGE);
     } catch (error) {
       logger.error(handleInitError(error));
     }
