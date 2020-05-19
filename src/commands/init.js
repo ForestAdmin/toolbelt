@@ -140,7 +140,10 @@ function commentExistingVariablesInAFile(fileData, config) {
       'DATABASE_SSL=': '# DATABASE_SSL=',
     };
   }
-  const variablesToCommentRegex = new RegExp(Object.keys(variablesToComment).join('|'), 'g');
+  const variablesToCommentRegex = new RegExp(
+    Object.keys(variablesToComment).map((key) => `((?<!# )${key})`).join('|'),
+    'g',
+  );
   return fileData.replace(variablesToCommentRegex, (match) => variablesToComment[match]);
 }
 
