@@ -72,12 +72,14 @@ class Spinner {
     this.stop();
   }
 
-  async pause() {
+  pause() {
     if (!this.isRunning()) {
       throw Error('No spinner is running.');
     }
 
-    await this.spinnies.remove(this.currentSpinnerUniqueKey);
+    this.spinnies.remove(this.currentSpinnerUniqueKey);
+    // NOTICE: spinnies lib function that checks for active spinners and if none, release cli usage
+    this.spinnies.checkIfActiveSpinners();
     this.pausedSpinnerOptions = this.currentSpinnerOptions;
   }
 

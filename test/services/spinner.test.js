@@ -54,25 +54,19 @@ describe('spinner', () => {
     const spinnnerOptions = { text: 'trying to pause' };
 
     describe('when no spinner is running', () => {
-      it('should throw an error', async () => {
+      it('should throw an error', () => {
         expect.assertions(1);
         const spinner = new Spinner();
-        let message;
-        try {
-          await spinner.pause();
-        } catch (error) {
-          message = error.message;
-        }
-        expect(message).toStrictEqual('No spinner is running.');
+        expect(() => spinner.pause()).toThrow('No spinner is running.');
       });
     });
 
     describe('when a spinner is running', () => {
-      it('should pause the spinner correctly', async () => {
+      it('should pause the spinner correctly', () => {
         expect.assertions(2);
         const spinner = new Spinner();
         spinner.start(spinnnerOptions);
-        await spinner.pause();
+        spinner.pause();
         expect(spinner.isRunning()).toBe(false);
         expect(spinner.pausedSpinnerOptions).toStrictEqual(spinnnerOptions);
       });
@@ -92,11 +86,11 @@ describe('spinner', () => {
       });
 
       describe('when the spinner is paused', () => {
-        it('should starts the spinner again', async () => {
+        it('should starts the spinner again', () => {
           expect.assertions(2);
           const spinner = new Spinner();
           spinner.start(spinnnerOptions);
-          await spinner.pause();
+          spinner.pause();
           spinner.continue();
           expect(spinner.isRunning()).toBe(true);
           expect(spinner.pausedSpinnerOptions).toBeNull();
@@ -126,11 +120,11 @@ describe('spinner', () => {
     });
 
     describe('when a spinner has been paused', () => {
-      it('should throw an error', async () => {
+      it('should throw an error', () => {
         expect.assertions(1);
         const spinner = new Spinner();
         spinner.start(spinnnerOptions);
-        await spinner.pause();
+        spinner.pause();
         expect(() => spinner.success()).toThrow('No spinner is running.');
       });
     });
@@ -181,11 +175,11 @@ describe('spinner', () => {
     });
 
     describe('when a spinner has been paused', () => {
-      it('should throw an error', async () => {
+      it('should throw an error', () => {
         expect.assertions(1);
         const spinner = new Spinner();
         spinner.start(spinnnerOptions);
-        await spinner.pause();
+        spinner.pause();
         expect(() => spinner.fail()).toThrow('No spinner is running.');
       });
     });
