@@ -45,7 +45,10 @@ const OPTIONS_DATABASE = [
 
 const VALIDATION_REGEX_URL = /^https?:\/\/.*/i;
 const VALIDATION_REGEX_HTTPS = /^http((s:\/\/.*)|(s?:\/\/(localhost|127\.0\.0\.1).*))/i;
+const SPLIT_URL_REGEX = new RegExp('(\\w+)://([\\w\\-\\.]+)(:(\\d+))?');
 
+const PROMPT_MESSAGE_AUTO_FILLING_ENV_FILE = 'Do you want your current folder `.env` file to be completed automatically with your environment variables?';
+const PROMPT_MESSAGE_AUTO_CREATING_ENV_FILE = 'Do you want a new `.env` file (containing your environment variables) to be automatically created in your current folder?';
 const ENV_VARIABLES_AUTO_FILLING_PREFIX = '\n\n# ℹ️ The content below was automatically added by the `forest init` command ⤵️\n';
 
 function handleInitError(rawError) {
@@ -94,14 +97,11 @@ function validateEndpoint(input) {
 }
 
 function getApplicationPortFromCompleteEndpoint(endpoint) {
-  if (endpoint.startsWith('http://localhost:') || endpoint.startsWith('http://127.0.0.1:')) {
-    return endpoint.substring(17);
-  }
-  return null;
+  return endpoint.match(SPLIT_URL_REGEX)[4];
 }
 
-async function getContentToAddInDotenvFile(config) {
-  const authSecret = await generateKey();
+function getContentToAddInDotenvFile(config) {
+  const authSecret = generateKey();
   let contentToAddInDotenvFile = '';
 
   if (config.applicationPort) {
@@ -122,23 +122,17 @@ async function getContentToAddInDotenvFile(config) {
 }
 
 function commentExistingVariablesInAFile(fileData, config) {
-  let variablesToComment = {
+  const variablesToComment = {
     'FOREST_AUTH_SECRET=': '# FOREST_AUTH_SECRET=',
     'FOREST_ENV_SECRET=': '# FOREST_ENV_SECRET=',
   };
   if (config.applicationPort) {
-    variablesToComment = {
-      ...variablesToComment,
-      'APPLICATION_PORT=': '# APPLICATION_PORT=',
-    };
+    variablesToComment['APPLICATION_PORT='] = '# APPLICATION_PORT=';
   }
   if (config.databaseUrl) {
-    variablesToComment = {
-      ...variablesToComment,
-      'DATABASE_URL=': '# DATABASE_URL=',
-      'DATABASE_SCHEMA=': '# DATABASE_SCHEMA=',
-      'DATABASE_SSL=': '# DATABASE_SSL=',
-    };
+    variablesToComment['DATABASE_URL='] = '# DATABASE_URL=';
+    variablesToComment['DATABASE_SCHEMA='] = '# DATABASE_SCHEMA=';
+    variablesToComment['DATABASE_SSL='] = '# DATABASE_SSL=';
   }
   const variablesToCommentRegex = new RegExp(
     Object.keys(variablesToComment).map((key) => `((?<!# )${key})`).join('|'),
@@ -147,25 +141,22 @@ function commentExistingVariablesInAFile(fileData, config) {
   return fileData.replace(variablesToCommentRegex, (match) => variablesToComment[match]);
 }
 
-function createOrAmendDotenvFile(config, variablesToAdd) {
-  const existingEnvFile = fs.existsSync('.env');
+function amendDotenvFile(config, variablesToAdd) {
   let newEnvFileData = variablesToAdd;
-  spinner.start({
-    text: existingEnvFile
-      ? SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE
-      : SUCCESS_MESSAGE_ENV_FILE_CREATED_AND_FILLED,
-  });
-
-  if (existingEnvFile) {
-    const existingEnvFileData = fs.readFileSync('.env', 'utf8');
-
-    if (existingEnvFileData) {
-      const amendedExistingFileData = commentExistingVariablesInAFile(existingEnvFileData, config);
-      // NOTICE: We add the prefix only if the existing file was not empty.
-      newEnvFileData = amendedExistingFileData + ENV_VARIABLES_AUTO_FILLING_PREFIX + newEnvFileData;
-    }
+  spinner.start({ text: SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE });
+  const existingEnvFileData = fs.readFileSync('.env', 'utf8');
+  if (existingEnvFileData) {
+    const amendedExistingFileData = commentExistingVariablesInAFile(existingEnvFileData, config);
+    // NOTICE: We add the prefix only if the existing file was not empty.
+    newEnvFileData = amendedExistingFileData + ENV_VARIABLES_AUTO_FILLING_PREFIX + newEnvFileData;
   }
   fs.writeFileSync('.env', newEnvFileData);
+  spinner.success();
+}
+
+function createDotenvFile(variablesToAdd) {
+  spinner.start({ text: SUCCESS_MESSAGE_ENV_FILE_CREATED_AND_FILLED });
+  fs.writeFileSync('.env', variablesToAdd);
   spinner.success();
 }
 
@@ -254,17 +245,29 @@ class InitCommand extends AbstractAuthenticatedCommand {
   }
 
   async environmentVariablesAutoFilling() {
-    const contentToAddInDotenvFile = await getContentToAddInDotenvFile(this.config);
+    const contentToAddInDotenvFile = getContentToAddInDotenvFile(this.config);
 
     if (this.config.projectOrigin !== 'In-app') {
-      try {
-        createOrAmendDotenvFile(this.config, contentToAddInDotenvFile);
-      } catch (error) {
-        await displayEnvironmentVariablesAndCopyToClipboard(contentToAddInDotenvFile);
+      const existingEnvFile = fs.existsSync('.env');
+      const response = await inquirer
+        .prompt([{
+          type: 'confirm',
+          name: 'autoFillOrCreationConfirmation',
+          message: existingEnvFile
+            ? PROMPT_MESSAGE_AUTO_FILLING_ENV_FILE
+            : PROMPT_MESSAGE_AUTO_CREATING_ENV_FILE,
+        }]);
+      if (response.autoFillOrCreationConfirmation) {
+        try {
+          return existingEnvFile
+            ? amendDotenvFile(this.config, contentToAddInDotenvFile)
+            : createDotenvFile(contentToAddInDotenvFile);
+        } catch (error) {
+          return displayEnvironmentVariablesAndCopyToClipboard(contentToAddInDotenvFile);
+        }
       }
-    } else {
-      await displayEnvironmentVariablesAndCopyToClipboard(contentToAddInDotenvFile);
     }
+    return displayEnvironmentVariablesAndCopyToClipboard(contentToAddInDotenvFile);
   }
 }
 
