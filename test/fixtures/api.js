@@ -377,11 +377,9 @@ module.exports = {
 
   getInAppProjectForDevWorkflow: () => nock('http://localhost:3001')
     .get('/api/projects/82/dev-workflow')
-    // .matchHeader('forest-secret-key', 'forestEnvSecret')
     .reply(200, ProjectSerializer.serialize({ id: '82', name: 'Forest', origin: 'In-app' })),
 
   getLumberProjectForDevWorkflow: () => nock('http://localhost:3001')
     .get('/api/projects/82/dev-workflow')
-    // .matchHeader('forest-secret-key', 'forestEnvSecret')
     .reply(200, ProjectSerializer.serialize({ id: '82', name: 'Forest', origin: 'Lumber' })),
 };
