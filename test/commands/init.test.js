@@ -1,16 +1,27 @@
-// const testCli = require('./test-cli');
-// const InitCommand = require('../../src/commands/init');
-// const { getProjectByEnv } = require('../fixtures/api');
-// const { testEnv: noKeyEnv, testEnv2 } = require('../fixtures/env');
+const testCli = require('./test-cli');
+const InitCommand = require('../../src/commands/init');
+const { loginValid, getProjectListValid } = require('../fixtures/api');
+const { testEnv: noKeyEnv, testEnv2 } = require('../fixtures/env');
 
 
 describe('init command', () => {
   describe('login', () => {
     describe('when user is not logged in', () => {
-      it('should prompt a login invitation and go to project selection on success', () => {
-        // TODO
-        expect.assertions(0);
-      });
+      it('should prompt a login invitation and go to project selection on success', () => testCli({
+        command: () => InitCommand.run([]),
+        print: true,
+        env: noKeyEnv,
+        api: [loginValid()],
+        std: [
+          { out: 'Login required' },
+          { out: 'What is your email address?' },
+          { in: 'some@mail.com' },
+          { out: 'What is your Forest Admin password: [input is hidden] ?' },
+          { in: 'valid_pwd' },
+          { out: 'Login successful' },
+          // { out: 'Select your project' },
+        ],
+      }));
     });
 
     describe('when user is already logged in', () => {
