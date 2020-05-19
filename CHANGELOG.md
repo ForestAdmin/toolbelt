@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/ForestAdmin/toolbelt/compare/v1.3.0...v1.3.1) (2020-05-19)
+
+
+### Bug Fixes
+
+* **spinner:** fix cli lock on spinner pause ([#73](https://github.com/ForestAdmin/toolbelt/issues/73)) ([d7bdad6](https://github.com/ForestAdmin/toolbelt/commit/d7bdad6a02d78ced5d33619fdc566de57054d366))
+
 # [1.3.0](https://github.com/ForestAdmin/toolbelt/compare/v1.2.0...v1.3.0) (2020-05-18)
 
 
