@@ -23,6 +23,7 @@
     "bluebird": "3.5.2",
     "chalk": "4.0.0",
     "cli-table": "github:Automattic/cli-table#master",
+    "clipboardy": "2.3.0",
     "dotenv": "8.2.0",
     "inquirer": "6.2.0",
     "joi": "14.3.1",
