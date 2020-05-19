@@ -54,7 +54,7 @@ describe('spinner', () => {
     const spinnnerOptions = { text: 'trying to pause' };
 
     describe('when no spinner is running', () => {
-      it('should throw an error', async () => {
+      it('should throw an error', () => {
         expect.assertions(1);
         const spinner = new Spinner();
         expect(() => spinner.pause()).toThrow('No spinner is running.');
@@ -62,7 +62,7 @@ describe('spinner', () => {
     });
 
     describe('when a spinner is running', () => {
-      it('should pause the spinner correctly', async () => {
+      it('should pause the spinner correctly', () => {
         expect.assertions(2);
         const spinner = new Spinner();
         spinner.start(spinnnerOptions);
@@ -86,7 +86,7 @@ describe('spinner', () => {
       });
 
       describe('when the spinner is paused', () => {
-        it('should starts the spinner again', async () => {
+        it('should starts the spinner again', () => {
           expect.assertions(2);
           const spinner = new Spinner();
           spinner.start(spinnnerOptions);
@@ -120,7 +120,7 @@ describe('spinner', () => {
     });
 
     describe('when a spinner has been paused', () => {
-      it('should throw an error', async () => {
+      it('should throw an error', () => {
         expect.assertions(1);
         const spinner = new Spinner();
         spinner.start(spinnnerOptions);
@@ -175,7 +175,7 @@ describe('spinner', () => {
     });
 
     describe('when a spinner has been paused', () => {
-      it('should throw an error', async () => {
+      it('should throw an error', () => {
         expect.assertions(1);
         const spinner = new Spinner();
         spinner.start(spinnnerOptions);
