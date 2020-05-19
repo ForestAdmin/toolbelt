@@ -57,13 +57,7 @@ describe('spinner', () => {
       it('should throw an error', async () => {
         expect.assertions(1);
         const spinner = new Spinner();
-        let message;
-        try {
-          await spinner.pause();
-        } catch (error) {
-          message = error.message;
-        }
-        expect(message).toStrictEqual('No spinner is running.');
+        expect(() => spinner.pause()).toThrow('No spinner is running.');
       });
     });
 
@@ -72,7 +66,7 @@ describe('spinner', () => {
         expect.assertions(2);
         const spinner = new Spinner();
         spinner.start(spinnnerOptions);
-        await spinner.pause();
+        spinner.pause();
         expect(spinner.isRunning()).toBe(false);
         expect(spinner.pausedSpinnerOptions).toStrictEqual(spinnnerOptions);
       });
@@ -96,7 +90,7 @@ describe('spinner', () => {
           expect.assertions(2);
           const spinner = new Spinner();
           spinner.start(spinnnerOptions);
-          await spinner.pause();
+          spinner.pause();
           spinner.continue();
           expect(spinner.isRunning()).toBe(true);
           expect(spinner.pausedSpinnerOptions).toBeNull();
@@ -130,7 +124,7 @@ describe('spinner', () => {
         expect.assertions(1);
         const spinner = new Spinner();
         spinner.start(spinnnerOptions);
-        await spinner.pause();
+        spinner.pause();
         expect(() => spinner.success()).toThrow('No spinner is running.');
       });
     });
@@ -185,7 +179,7 @@ describe('spinner', () => {
         expect.assertions(1);
         const spinner = new Spinner();
         spinner.start(spinnnerOptions);
-        await spinner.pause();
+        spinner.pause();
         expect(() => spinner.fail()).toThrow('No spinner is running.');
       });
     });
