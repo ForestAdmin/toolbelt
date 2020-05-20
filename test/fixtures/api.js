@@ -41,6 +41,14 @@ module.exports = {
       { id: 2, name: 'project2' },
     ])),
 
+  getProjectListSingleProject: () => nock('http://localhost:3001')
+    .get('/api/projects')
+    .reply(200, ProjectSerializer.serialize([{ id: 82, name: 'project1' }])),
+
+  getProjectListEmpty: () => nock('http://localhost:3001')
+    .get('/api/projects')
+    .reply(200, ProjectSerializer.serialize([])),
+
   getProjectDetailledList: () => nock('http://localhost:3001')
     .get('/api/projects')
     .reply(200, ProjectSerializer.serialize([{

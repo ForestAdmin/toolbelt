@@ -5,8 +5,10 @@ const {
   getProjectByEnv,
   getInAppProjectForDevWorkflow,
   getDevelopmentEnvironmentValid,
+  getProjectListEmpty,
+  getProjectListSingleProject,
 } = require('../fixtures/api');
-const { testEnv2 } = require('../fixtures/env');
+const { testEnv: noKeyEnv, testEnv2 } = require('../fixtures/env');
 const { loginPasswordDialog } = require('../fixtures/std');
 
 describe('init command', () => {
@@ -55,24 +57,56 @@ describe('init command', () => {
 
   describe('project selection', () => {
     describe('when the project already has an environment secret', () => {
-      it('should go to project validation', () => {
-        // TODO
-        expect.assertions(0);
-      });
+      it('should go to project validation', () => testCli({
+        command: () => InitCommand.run([]),
+        env: testEnv2,
+        token: 'any',
+        api: [
+          getProjectByEnv(),
+          getInAppProjectForDevWorkflow(),
+          getDevelopmentEnvironmentValid(82),
+        ],
+        std: [
+          // NOTICE: spinnies outputs to std.err
+          { err: 'Analyzing your setup' },
+          { err: 'Checking your database setup' },
+          { out: 'Here are the environment variables you need to copy in your configuration file' },
+        ],
+      }));
     });
 
     describe('when the user has no project', () => {
-      it('should stop executing with a custom message', () => {
-        // TODO
-        expect.assertions(0);
-      });
+      it('should stop executing with a custom message', () => testCli({
+        command: () => InitCommand.run([]),
+        env: noKeyEnv,
+        token: 'any',
+        print: true,
+        api: [
+          getProjectListEmpty(),
+        ],
+        exitCode: 1,
+        exitMessage: 'You don\'t have any project yet.',
+      }));
     });
 
     describe('when the user has only one project', () => {
-      it('should continue exectuting', () => {
-        // TODO
-        expect.assertions(0);
-      });
+      it('should continue executing', () => testCli({
+        command: () => InitCommand.run([]),
+        env: noKeyEnv,
+        token: 'any',
+        print: true,
+        api: [
+          getProjectListSingleProject(),
+          getInAppProjectForDevWorkflow(),
+          getDevelopmentEnvironmentValid(82),
+        ],
+        std: [
+          // NOTICE: spinnies outputs to std.err
+          { err: 'Analyzing your setup' },
+          { err: 'Checking your database setup' },
+          { out: 'Here are the environment variables you need to copy in your configuration file' },
+        ],
+      }));
     });
 
     describe('when the user explicitely specify an invalid project', () => {
