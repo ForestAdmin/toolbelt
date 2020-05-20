@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/ForestAdmin/toolbelt/compare/v1.3.1...v1.3.2) (2020-05-20)
+
+
+### Bug Fixes
+
+* **spinner:** avoid promise failures on paused spinner ([#75](https://github.com/ForestAdmin/toolbelt/issues/75)) ([bc11afe](https://github.com/ForestAdmin/toolbelt/commit/bc11afe28f9fc1e07d3121ae460a7bf5f4d427b0))
+
 ## [1.3.1](https://github.com/ForestAdmin/toolbelt/compare/v1.3.0...v1.3.1) (2020-05-19)
 
 
