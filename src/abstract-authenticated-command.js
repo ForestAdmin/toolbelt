@@ -8,7 +8,7 @@ class AbstractAuthenticatedCommand extends Command {
     if (!authenticator.getAuthToken()) {
       logger.info('Login required.');
       await authenticator.tryLogin({});
-      if (!authenticator.getAuthToken()) this.displayLoginMessageAndQuit();
+      if (!authenticator.getAuthToken()) this.exit(10);
     }
 
     try {

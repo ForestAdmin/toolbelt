@@ -61,7 +61,7 @@ function Authenticator() {
       if (isLumberLoggedIn) {
         logger.info('You cannot be logged out with this command. Please use "lumber logout" command.');
       } else {
-        logger.info(chalk.green('You are unlogged.'));
+        logger.info(chalk.green('You are logged out.'));
       }
     }
   };
