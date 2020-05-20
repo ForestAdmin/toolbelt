@@ -6,6 +6,9 @@ function handleError(rawError) {
   let error;
   // NOTICE: We check if the errors are from the API (have a status) or if thrown internally.
   if (rawError.status) {
+    if (rawError.status === 500) {
+      return UNEXPECTED_ERROR_MESSAGE;
+    }
     try {
       error = ApiErrorDeserializer.deserialize(rawError);
     } catch (e) {
