@@ -1,23 +1,53 @@
-// const testCli = require('./test-cli');
-// const InitCommand = require('../../src/commands/init');
-// const { getProjectByEnv } = require('../fixtures/api');
-// const { testEnv: noKeyEnv, testEnv2 } = require('../fixtures/env');
-
+const testCli = require('./test-cli');
+const InitCommand = require('../../src/commands/init');
+const {
+  loginValid,
+  getProjectByEnv,
+  getInAppProjectForDevWorkflow,
+  getDevelopmentEnvironmentValid,
+} = require('../fixtures/api');
+const { testEnv2 } = require('../fixtures/env');
+const { loginPasswordDialog } = require('../fixtures/std');
 
 describe('init command', () => {
   describe('login', () => {
     describe('when user is not logged in', () => {
-      it('should prompt a login invitation and go to project selection on success', () => {
-        // TODO
-        expect.assertions(0);
-      });
+      it('should prompt a login invitation and go to project selection on success', () => testCli({
+        command: () => InitCommand.run([]),
+        env: testEnv2,
+        api: [
+          loginValid(),
+          getProjectByEnv(),
+          getInAppProjectForDevWorkflow(),
+          getDevelopmentEnvironmentValid(82),
+        ],
+        std: [
+          ...loginPasswordDialog,
+          // NOTICE: spinnies outputs to std.err
+          { err: 'Analyzing your setup' },
+          { err: 'Checking your database setup' },
+          { out: 'Here are the environment variables you need to copy in your configuration file' },
+        ],
+      }));
     });
 
     describe('when user is already logged in', () => {
-      it('should prompt the project selection', () => {
-        // TODO
-        expect.assertions(0);
-      });
+      it('should prompt the project selection', () => testCli({
+        command: () => InitCommand.run([]),
+        env: testEnv2,
+        token: 'any',
+        api: [
+          getProjectByEnv(),
+          getInAppProjectForDevWorkflow(),
+          getDevelopmentEnvironmentValid(82),
+        ],
+        std: [
+          // NOTICE: spinnies outputs to std.err
+          { err: 'Analyzing your setup' },
+          { err: 'Checking your database setup' },
+          { out: 'Here are the environment variables you need to copy in your configuration file' },
+        ],
+      }));
     });
   });
 
