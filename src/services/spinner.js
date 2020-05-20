@@ -108,7 +108,10 @@ class Spinner {
         return result;
       })
       .catch((error) => {
-        this.fail({ text: error });
+        // NOTICE: Only trigger the fail if the spinner is running (ie. not paused)
+        if (this.isRunning()) {
+          this.fail({ text: error });
+        }
         throw error;
       });
   }
