@@ -383,11 +383,11 @@ module.exports = {
       secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
     })),
 
-  getInAppProjectForDevWorkflow: () => nock('http://localhost:3001')
-    .get('/api/projects/82/dev-workflow')
-    .reply(200, ProjectSerializer.serialize({ id: '82', name: 'Forest', origin: 'In-app' })),
+  getInAppProjectForDevWorkflow: (projectId) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/dev-workflow`)
+    .reply(200, ProjectSerializer.serialize({ id: `${projectId}`, name: 'Forest', origin: 'In-app' })),
 
-  getLumberProjectForDevWorkflow: () => nock('http://localhost:3001')
-    .get('/api/projects/82/dev-workflow')
-    .reply(200, ProjectSerializer.serialize({ id: '82', name: 'Forest', origin: 'Lumber' })),
+  getLumberProjectForDevWorkflow: (projectId) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/dev-workflow`)
+    .reply(200, ProjectSerializer.serialize({ id: `${projectId}`, name: 'Forest', origin: 'Lumber' })),
 };

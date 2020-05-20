@@ -7,9 +7,10 @@ const {
   getDevelopmentEnvironmentValid,
   getProjectListEmpty,
   getProjectListSingleProject,
+  getProjectListValid,
 } = require('../fixtures/api');
 const { testEnv: noKeyEnv, testEnv2 } = require('../fixtures/env');
-const { loginPasswordDialog } = require('../fixtures/std');
+const { loginPasswordDialog, enter } = require('../fixtures/std');
 
 describe('init command', () => {
   describe('login', () => {
@@ -20,7 +21,7 @@ describe('init command', () => {
         api: [
           loginValid(),
           getProjectByEnv(),
-          getInAppProjectForDevWorkflow(),
+          getInAppProjectForDevWorkflow(82),
           getDevelopmentEnvironmentValid(82),
         ],
         std: [
@@ -41,7 +42,7 @@ describe('init command', () => {
         token: 'any',
         api: [
           getProjectByEnv(),
-          getInAppProjectForDevWorkflow(),
+          getInAppProjectForDevWorkflow(82),
           getDevelopmentEnvironmentValid(82),
         ],
         std: [
@@ -63,11 +64,12 @@ describe('init command', () => {
         token: 'any',
         api: [
           getProjectByEnv(),
-          getInAppProjectForDevWorkflow(),
+          getInAppProjectForDevWorkflow(82),
           getDevelopmentEnvironmentValid(82),
         ],
         std: [
           // NOTICE: spinnies outputs to std.err
+          { err: 'Selecting your project' },
           { err: 'Analyzing your setup' },
           { err: 'Checking your database setup' },
           { out: 'Here are the environment variables you need to copy in your configuration file' },
@@ -97,11 +99,12 @@ describe('init command', () => {
         print: true,
         api: [
           getProjectListSingleProject(),
-          getInAppProjectForDevWorkflow(),
+          getInAppProjectForDevWorkflow(82),
           getDevelopmentEnvironmentValid(82),
         ],
         std: [
           // NOTICE: spinnies outputs to std.err
+          { err: 'Selecting your project' },
           { err: 'Analyzing your setup' },
           { err: 'Checking your database setup' },
           { out: 'Here are the environment variables you need to copy in your configuration file' },
@@ -110,22 +113,49 @@ describe('init command', () => {
     });
 
     describe('when the user explicitely specify an invalid project', () => {
-      it('should stop executing with a custom message', () => {
-        // TODO
-        expect.assertions(0);
-      });
+      // it('should stop executing with a custom message', () => testCli({
+      //   command: () => InitCommand.run(['--projectId', '1234567']),
+      //   env: noKeyEnv,
+      //   token: 'any',
+      //   print: true,
+      //   api: [
+      //     getProjectListSingleProject(),
+      //     getInAppProjectForDevWorkflow(82),
+      //     getDevelopmentEnvironmentValid(82),
+      //   ],
+      //   std: [
+      //     // NOTICE: spinnies outputs to std.err
+      //     { err: 'Selecting your project' },
+      //     { err: 'Analyzing your setup' },
+      //     { err: 'Checking your database setup' },
+      //     { out: 'Here are the environment variables you need to copy in your configuration file' },
+      //   ],
+      // }));
     });
 
     describe('when the user has multiple project', () => {
-      it('should display a spinner', () => {
-        // TODO
-        expect.assertions(0);
-      });
-
-      it('should prompt a project selection input and go to project validation', () => {
-        // TODO
-        expect.assertions(0);
-      });
+      it('should prompt a project selection input and go to project validation', () => testCli({
+        command: () => InitCommand.run([]),
+        env: noKeyEnv,
+        token: 'any',
+        print: true,
+        api: [
+          getProjectListValid(),
+          getInAppProjectForDevWorkflow(1),
+          getDevelopmentEnvironmentValid(1),
+        ],
+        std: [
+          { out: 'Select your project' },
+          { out: 'project1' },
+          { out: 'project2' },
+          ...enter,
+          // NOTICE: spinnies outputs to std.err
+          { err: 'Selecting your project' },
+          { err: 'Analyzing your setup' },
+          { err: 'Checking your database setup' },
+          { out: 'Here are the environment variables you need to copy in your configuration file' },
+        ],
+      }));
     });
   });
 
