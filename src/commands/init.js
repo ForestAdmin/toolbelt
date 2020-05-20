@@ -36,8 +36,11 @@ class InitCommand extends AbstractAuthenticatedCommand {
 
   async runIfAuthenticated() {
     try {
+      spinner.start({ text: 'Selecting your project' });
+      await spinner.attachToPromise(this.projectSelection());
+
       spinner.start({ text: 'Analyzing your setup' });
-      await spinner.attachToPromise(this.projectSelectionAndValidation());
+      await spinner.attachToPromise(this.projectValidation());
 
       spinner.start({ text: 'Checking your database setup' });
       await spinner.attachToPromise(this.handleDatabaseUrlConfiguration());
@@ -56,11 +59,14 @@ class InitCommand extends AbstractAuthenticatedCommand {
     }
   }
 
-  async projectSelectionAndValidation() {
+  async projectSelection() {
     const parsed = this.parse(InitCommand);
     spinner.pause();
     this.config = await withCurrentProject({ ...envConfig, ...parsed.flags });
     spinner.continue();
+  }
+
+  async projectValidation() {
     const project = await new ProjectManager(this.config).getProjectForDevWorkflow();
     this.environmentVariables.projectOrigin = project.origin;
   }

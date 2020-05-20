@@ -3,6 +3,7 @@ const Spinnies = require('spinnies');
 const singletonGetter = require('./singleton-getter');
 
 const spinniesConstructorParameters = {
+  color: 'yellow',
   spinnerColor: 'yellow',
   spinner: {
     interval: 80,
