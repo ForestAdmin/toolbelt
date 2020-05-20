@@ -1,3 +1,10 @@
+## [1.3.3](https://github.com/ForestAdmin/toolbelt/compare/v1.3.2...v1.3.3) (2020-05-20)
+
+
+### Bug Fixes
+
+* **authentication:** fix login and logout messages ([#80](https://github.com/ForestAdmin/toolbelt/issues/80)) ([da42a02](https://github.com/ForestAdmin/toolbelt/commit/da42a025c6d3bd4f2d6deef93ec837741aa2ebcb))
+
 ## [1.3.2](https://github.com/ForestAdmin/toolbelt/compare/v1.3.1...v1.3.2) (2020-05-20)
 
 
