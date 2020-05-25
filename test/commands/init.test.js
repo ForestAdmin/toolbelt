@@ -138,10 +138,9 @@ describe('init command', () => {
           { out: 'project1' },
           { out: 'project2' },
           ...enter,
-          // NOTICE: spinnies outputs to std.err
-          { err: 'Selecting your project' },
-          { err: 'Analyzing your setup' },
-          { err: 'Checking your database setup' },
+          { spinner: 'Selecting your project' },
+          { spinner: 'Analyzing your setup' },
+          { spinner: 'Checking your database setup' },
           { out: 'Here are the environment variables you need to copy in your configuration file' },
         ],
       }));
