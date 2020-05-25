@@ -11,6 +11,7 @@ const {
   getV1ProjectForDevWorkflow,
   getNoProdProjectForDevWorkflow,
   getProjectNotFoundForDevWorkflow,
+  getProjectForDevWorkflowUnallowed,
 } = require('../fixtures/api');
 const { testEnv: noKeyEnv, testEnv2 } = require('../fixtures/env');
 const { loginPasswordDialog, enter } = require('../fixtures/std');
@@ -82,7 +83,6 @@ describe('init command', () => {
         command: () => InitCommand.run([]),
         env: noKeyEnv,
         token: 'any',
-        print: true,
         api: [
           getProjectListEmpty(),
         ],
@@ -96,7 +96,6 @@ describe('init command', () => {
         command: () => InitCommand.run([]),
         env: noKeyEnv,
         token: 'any',
-        print: true,
         api: [
           getProjectListSingleProject(),
           getInAppProjectForDevWorkflow(1),
@@ -116,7 +115,6 @@ describe('init command', () => {
         command: () => InitCommand.run(['--projectId', '1']),
         env: noKeyEnv,
         token: 'any',
-        print: true,
         api: [
           getProjectNotFoundForDevWorkflow(),
         ],
@@ -130,7 +128,6 @@ describe('init command', () => {
         command: () => InitCommand.run([]),
         env: noKeyEnv,
         token: 'any',
-        print: true,
         api: [
           getProjectListValid(),
           getInAppProjectForDevWorkflow(1),
@@ -153,10 +150,21 @@ describe('init command', () => {
 
   describe('project validation', () => {
     describe('when the user has no admin rights on the given project', () => {
-      it('should stop executing with a custom error message', () => {
-        // TODO
-        expect.assertions(0);
-      });
+      it('should stop executing with a custom error message', () => testCli({
+        command: () => InitCommand.run([]),
+        env: testEnv2,
+        token: 'any',
+        api: [
+          getProjectByEnv(),
+          getProjectForDevWorkflowUnallowed(82),
+        ],
+        std: [
+          { spinner: 'Selecting your project' },
+          { spinner: 'Analyzing your setup' },
+        ],
+        exitCode: 1,
+        exitMessage: 'You need the \'Admin\' role to create a development environment on this project.',
+      }));
     });
 
     describe('when the project is still flagged as v1', () => {
@@ -200,7 +208,6 @@ describe('init command', () => {
         command: () => InitCommand.run([]),
         env: noKeyEnv,
         token: 'any',
-        print: true,
         api: [
           getProjectListSingleProject(),
           getInAppProjectForDevWorkflow(1),

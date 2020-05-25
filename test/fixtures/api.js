@@ -414,4 +414,12 @@ module.exports = {
         detail: 'Project not found',
       }],
     })),
+
+  getProjectForDevWorkflowUnallowed: (projectId = '1') => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/dev-workflow`)
+    .reply(403, JSON.stringify({
+      errors: [{
+        detail: 'Forbidden',
+      }],
+    })),
 };
