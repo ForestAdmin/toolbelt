@@ -12,9 +12,10 @@ const {
   getNoProdProjectForDevWorkflow,
   getProjectNotFoundForDevWorkflow,
   getProjectForDevWorkflowUnallowed,
+  getLumberProjectForDevWorkflow,
 } = require('../fixtures/api');
-const { testEnv: noKeyEnv, testEnv2 } = require('../fixtures/env');
-const { loginPasswordDialog, enter } = require('../fixtures/std');
+const { testEnv: noKeyEnv, testEnv2, testEnvWithDatabaseUrl } = require('../fixtures/env');
+const { loginPasswordDialog, databaseDialog, enter } = require('../fixtures/std');
 
 describe('init command', () => {
   describe('login', () => {
@@ -224,43 +225,100 @@ describe('init command', () => {
 
   describe('database setup', () => {
     describe('when the project has an in-app origin', () => {
-      it('should go to backend endpoint setup without spinner', () => {
-        // TODO
-        expect.assertions(0);
-      });
+      it('should go to backend endpoint setup', () => testCli({
+        command: () => InitCommand.run([]),
+        env: testEnv2,
+        token: 'any',
+        api: [
+          getProjectByEnv(),
+          getInAppProjectForDevWorkflow(82),
+          getDevelopmentEnvironmentValid(82),
+        ],
+        std: [
+          { spinner: 'Selecting your project' },
+          { spinner: 'Analyzing your setup' },
+          { spinner: 'Checking your database setup' },
+          { out: 'Here are the environment variables you need to copy in your configuration file' },
+        ],
+      }));
     });
 
     describe('when the project has a lumber origin', () => {
-      it('should display a spinner', () => {
-        // TODO
-        expect.assertions(0);
-      });
-
       describe('when the project .env has a database url', () => {
-        it('should display a green mark with the relevant message', () => {
-          // TODO
-          expect.assertions(0);
-        });
+        it('should continue executing', () => testCli({
+          command: () => InitCommand.run([]),
+          env: testEnvWithDatabaseUrl,
+          token: 'any',
+          print: true,
+          api: [
+            getProjectByEnv(),
+            getLumberProjectForDevWorkflow(82),
+            getDevelopmentEnvironmentValid(82),
+          ],
+          std: [
+            { spinner: 'Selecting your project' },
+            { spinner: 'Analyzing your setup' },
+            { spinner: 'Checking your database setup' },
+            { spinner: 'Setting up your development environment' },
+            { out: 'Do you want your current folder `.env` file to be completed automatically with' },
+            { out: 'your environment variables?' },
+            { in: 'n' },
+            { out: 'Here are the environment variables you need to copy in your configuration file' },
+          ],
+        }));
       });
 
-      describe('when the project .env file or database url in it', () => {
-        it('should display a green mark with the relevant message', () => {
-          // TODO
-          expect.assertions(0);
-        });
-
+      describe('when the project .env file has no database url in it', () => {
         describe('when the user answer positively to specify its credentials', () => {
-          it('should display a database detail input', () => {
-            // TODO
-            expect.assertions(0);
-          });
+          it('should display a database detail input and prompt the database credentials as env variables', () => testCli({
+            command: () => InitCommand.run([]),
+            env: testEnv2,
+            token: 'any',
+            print: true,
+            api: [
+              getProjectByEnv(),
+              getLumberProjectForDevWorkflow(82),
+              getDevelopmentEnvironmentValid(82),
+            ],
+            std: [
+              { spinner: 'Selecting your project' },
+              { spinner: 'Analyzing your setup' },
+              { spinner: 'Checking your database setup' },
+              ...databaseDialog('someDbName'),
+              { out: 'Do you want your current folder `.env` file to be completed automatically with' },
+              { out: 'your environment variables?' },
+              { in: 'n' },
+              { out: 'Here are the environment variables you need to copy in your configuration file' },
+              { out: 'DATABASE_URL=postgres://root@localhost:5432/someDbName' },
+              { out: 'DATABASE_SCHEMA=public' },
+              { out: 'DATABASE_SSL=false' },
+            ],
+          }));
         });
 
         describe('when the user answer negatively to specify its credentials', () => {
-          it('should go to the backend endpoint setup', () => {
-            // TODO
-            expect.assertions(0);
-          });
+          it('should go to the backend endpoint setup without database credentials as env variables', () => testCli({
+            command: () => InitCommand.run([]),
+            env: testEnv2,
+            token: 'any',
+            print: true,
+            api: [
+              getProjectByEnv(),
+              getLumberProjectForDevWorkflow(82),
+              getDevelopmentEnvironmentValid(82),
+            ],
+            std: [
+              { spinner: 'Selecting your project' },
+              { spinner: 'Analyzing your setup' },
+              { spinner: 'Checking your database setup' },
+              { out: 'You don\'t have a DATABASE_URL yet. Do you need help setting it?' },
+              { in: 'n' },
+              { out: 'Do you want your current folder `.env` file to be completed automatically with' },
+              { out: 'your environment variables?' },
+              { in: 'n' },
+              { out: 'Here are the environment variables you need to copy in your configuration file' },
+            ],
+          }));
         });
       });
     });
@@ -304,15 +362,6 @@ describe('init command', () => {
 
     describe('when the project is NOT flagged as in-app or does not have a .env file', () => {
       it('should display a green mark with a relevant message and environment variables', () => {
-        // TODO
-        expect.assertions(0);
-      });
-    });
-  });
-
-  describe('all process', () => {
-    describe('when  passing through all steps', () => {
-      it('should display a green mark with a relevant message', () => {
         // TODO
         expect.assertions(0);
       });
