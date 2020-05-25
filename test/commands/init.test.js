@@ -8,6 +8,8 @@ const {
   getProjectListEmpty,
   getProjectListSingleProject,
   getProjectListValid,
+  getV1ProjectForDevWorkflow,
+  getNoProdProjectForDevWorkflow,
 } = require('../fixtures/api');
 const { testEnv: noKeyEnv, testEnv2 } = require('../fixtures/env');
 const { loginPasswordDialog, enter } = require('../fixtures/std');
@@ -96,8 +98,8 @@ describe('init command', () => {
         print: true,
         api: [
           getProjectListSingleProject(),
-          getInAppProjectForDevWorkflow(82),
-          getDevelopmentEnvironmentValid(82),
+          getInAppProjectForDevWorkflow(1),
+          getDevelopmentEnvironmentValid(1),
         ],
         std: [
           { spinner: 'Selecting your project' },
@@ -115,9 +117,9 @@ describe('init command', () => {
       //   token: 'any',
       //   print: true,
       //   api: [
-      //     getProjectListSingleProject(),
-      //     getInAppProjectForDevWorkflow(82),
-      //     getDevelopmentEnvironmentValid(82),
+      //     getProjectListSingleProject(1),
+      //     getInAppProjectForDevWorkflow(1),
+      //     getDevelopmentEnvironmentValid(1),
       //   ],
       //   std: [
       //     // NOTICE: spinnies outputs to std.err
@@ -156,11 +158,6 @@ describe('init command', () => {
   });
 
   describe('project validation', () => {
-    it('should display a spinner', () => {
-      // TODO
-      expect.assertions(0);
-    });
-
     describe('when the user has no admin rights on the given project', () => {
       it('should stop executing with a custom error message', () => {
         // TODO
@@ -169,17 +166,59 @@ describe('init command', () => {
     });
 
     describe('when the project is still flagged as v1', () => {
-      it('should stop executing with a custom error message', () => {
-        // TODO
-        expect.assertions(0);
-      });
+      it('should stop executing with a custom error message', () => testCli({
+        command: () => InitCommand.run([]),
+        env: testEnv2,
+        token: 'any',
+        api: [
+          getProjectByEnv(),
+          getV1ProjectForDevWorkflow(82),
+        ],
+        std: [
+          { spinner: 'Selecting your project' },
+          { spinner: 'Analyzing your setup' },
+        ],
+        exitCode: 1,
+        exitMessage: 'This project does not support branches yet. Please migrate your environments from your Project settings first.',
+      }));
+    });
+
+    describe('when the project has no prod or remote', () => {
+      it('should stop executing with a custom error message', () => testCli({
+        command: () => InitCommand.run([]),
+        env: testEnv2,
+        token: 'any',
+        api: [
+          getProjectByEnv(),
+          getNoProdProjectForDevWorkflow(82),
+        ],
+        std: [
+          { spinner: 'Selecting your project' },
+          { spinner: 'Analyzing your setup' },
+        ],
+        exitCode: 1,
+        exitMessage: 'You cannot create your development environment until this project has either a remote or a production environment.',
+      }));
     });
 
     describe('when the project is flagged as v2 and the user is admin on it', () => {
-      it('should display a validation green mark and go to database setup', () => {
-        // TODO
-        expect.assertions(0);
-      });
+      it('should display a validation green mark and go to database setup', () => testCli({
+        command: () => InitCommand.run([]),
+        env: noKeyEnv,
+        token: 'any',
+        print: true,
+        api: [
+          getProjectListSingleProject(),
+          getInAppProjectForDevWorkflow(1),
+          getDevelopmentEnvironmentValid(1),
+        ],
+        std: [
+          { spinner: 'Selecting your project' },
+          { spinner: 'Analyzing your setup' },
+          { spinner: 'Checking your database setup' },
+          { out: 'Here are the environment variables you need to copy in your configuration file' },
+        ],
+      }));
     });
   });
 

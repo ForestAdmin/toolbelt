@@ -43,7 +43,7 @@ module.exports = {
 
   getProjectListSingleProject: () => nock('http://localhost:3001')
     .get('/api/projects')
-    .reply(200, ProjectSerializer.serialize([{ id: 82, name: 'project1' }])),
+    .reply(200, ProjectSerializer.serialize([{ id: 1, name: 'project1' }])),
 
   getProjectListEmpty: () => nock('http://localhost:3001')
     .get('/api/projects')
@@ -381,6 +381,22 @@ module.exports = {
       type: 'development',
       apiEndpoint: 'https://test.forestadmin.com',
       secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
+    })),
+
+  getV1ProjectForDevWorkflow: (projectId) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/dev-workflow`)
+    .reply(422, JSON.stringify({
+      errors: [{
+        detail: 'Dev Workflow disabled.',
+      }],
+    })),
+
+  getNoProdProjectForDevWorkflow: (projectId) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/dev-workflow`)
+    .reply(422, JSON.stringify({
+      errors: [{
+        detail: 'No production/remote environment.',
+      }],
     })),
 
   getInAppProjectForDevWorkflow: (projectId) => nock('http://localhost:3001')
