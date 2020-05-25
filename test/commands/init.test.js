@@ -249,6 +249,7 @@ describe('init command', () => {
           command: () => InitCommand.run([]),
           env: testEnvWithDatabaseUrl,
           token: 'any',
+          print: true,
           api: [
             getProjectByEnv(),
             getLumberProjectForDevWorkflow(82),
@@ -274,6 +275,7 @@ describe('init command', () => {
             command: () => InitCommand.run([]),
             env: testEnv2,
             token: 'any',
+            print: true,
             api: [
               getProjectByEnv(),
               getLumberProjectForDevWorkflow(82),
@@ -301,6 +303,7 @@ describe('init command', () => {
             command: () => InitCommand.run([]),
             env: testEnv2,
             token: 'any',
+            print: true,
             api: [
               getProjectByEnv(),
               getLumberProjectForDevWorkflow(82),
