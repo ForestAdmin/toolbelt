@@ -61,9 +61,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
 
   async projectSelection() {
     const parsed = this.parse(InitCommand);
-    spinner.pause();
     this.config = await withCurrentProject({ ...envConfig, ...parsed.flags });
-    spinner.continue();
   }
 
   async projectValidation() {

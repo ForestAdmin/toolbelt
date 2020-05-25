@@ -18,7 +18,8 @@ const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_TO_CLIPBOARD = 'Automatically copied 
 
 const ERROR_MESSAGE_PROJECT_IN_V1 = 'This project does not support branches yet. Please migrate your environments from your Project settings first.';
 const ERROR_MESSAGE_NOT_ADMIN_USER = "You need the 'Admin' role to create a development environment on this project.";
-const ERROR_MESSAGE_PROJECT_NOT_FOUND = 'Your project was not found. Please check your environment secret.';
+const ERROR_MESSAGE_PROJECT_BY_ENV_NOT_FOUND = 'Your project was not found. Please check your environment secret.';
+const ERROR_MESSAGE_PROJECT_BY_OPTION_NOT_FOUND = 'The project you specified does not exist.';
 const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT = 'You cannot create your development environment until this project has either a remote or a production environment.';
 const ERROR_MESSAGE_ENVIRONMENT_OWNER_UNICITY = 'You already have a development environment on this project.';
 
@@ -49,8 +50,10 @@ function handleInitError(rawError) {
       return ERROR_MESSAGE_PROJECT_IN_V1;
     case 'Forbidden':
       return ERROR_MESSAGE_NOT_ADMIN_USER;
-    case 'Not Found':
-      return ERROR_MESSAGE_PROJECT_NOT_FOUND;
+    case 'Project by env secret not found':
+      return ERROR_MESSAGE_PROJECT_BY_ENV_NOT_FOUND;
+    case 'Project not found':
+      return ERROR_MESSAGE_PROJECT_BY_OPTION_NOT_FOUND;
     case 'No production/remote environment.':
       return ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT;
     case 'A user can have only one development environment per project.':
