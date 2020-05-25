@@ -77,14 +77,14 @@ module.exports = {
       },
     }])),
 
-  getEnvironmentListValid: () => nock('http://localhost:3001')
-    .get('/api/projects/2/environments')
+  getEnvironmentListValid: (projectId = 2) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/environments`)
     .reply(200, EnvironmentSerializer.serialize([
       {
-        id: 3, name: 'name1', apiEndpoint: 'http://localhost:1', type: 'type1',
+        id: 3, name: 'name1', apiEndpoint: 'http://localhost:1', type: 'remote',
       },
       {
-        id: 4, name: 'name2', apiEndpoint: 'http://localhost:2', type: 'type2',
+        id: 4, name: 'name2', apiEndpoint: 'http://localhost:2', type: 'production',
       },
     ])),
 
@@ -109,6 +109,12 @@ module.exports = {
       lianaVersion: '1.3.2',
       secretKey: '1b91a1c9bb28e4bea3c941fac1c1c95db5dc1b7bc73bd649b0b113713ee18167',
     }])),
+
+  getNoEnvironmentListValid: (projectId = 2) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/environments`)
+    .reply(200, {
+      data: [],
+    }),
 
   getEnvironmentValid: () => nock('http://localhost:3001')
     .matchHeader('forest-environment-id', '324')
@@ -245,21 +251,21 @@ module.exports = {
       },
     })),
 
-  getBranchListValid: () => nock('http://localhost:3001')
-    .matchHeader('forest-secret-key', 'forestEnvSecret')
+  getBranchListValid: (envSecret = 'forestEnvSecret', haveCurrent = true) => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
     .get('/api/branches')
     .reply(200, {
       data: {
         attributes: [
           { name: 'feature/first' },
-          { name: 'feature/second', isCurrent: true },
+          { name: 'feature/second', isCurrent: haveCurrent },
           { name: 'feature/third' },
         ],
       },
     }),
 
-  getNoBranchListValid: () => nock('http://localhost:3001')
-    .matchHeader('forest-secret-key', 'forestEnvSecret')
+  getNoBranchListValid: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
     .get('/api/branches')
     .reply(200, {
       data: [],
@@ -323,6 +329,45 @@ module.exports = {
     .reply(409, JSON.stringify({
       errors: [{
         detail: 'Branch name already exists.',
+      }],
+    })),
+
+  pushBranchValid: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .put('/api/branches/push')
+    .reply(200, {
+      data: {
+        type: 'branches',
+        attributes: {
+          name: 'branchPushed',
+        },
+      },
+    }),
+
+  pushBranchInvalidDestination: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .put('/api/branches/push')
+    .reply(404, JSON.stringify({
+      errors: [{
+        detail: 'Environment not found.',
+      }],
+    })),
+
+  pushBranchInvalidType: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .put('/api/branches/push')
+    .reply(400, JSON.stringify({
+      errors: [{
+        detail: 'Environment type should be remote.',
+      }],
+    })),
+
+  pushBranchInvalidDestinationBranch: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .put('/api/branches/push')
+    .reply(404, JSON.stringify({
+      errors: [{
+        detail: 'No destination branch.',
       }],
     })),
 
