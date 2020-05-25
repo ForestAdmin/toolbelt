@@ -36,7 +36,15 @@ async function testCli({
   const nocks = asArray(api);
   const inputs = stds ? stds.filter((type) => type.in).map((type) => type.in) : [];
   const outputs = stds ? stds.filter((type) => type.out).map((type) => type.out) : [];
-  const errorOutputs = stds ? stds.filter((type) => type.err).map((type) => type.err) : [];
+  let errorOutputs;
+  if (stds) {
+    // NOTICE: spinnies outputs to std.err
+    errorOutputs = stds
+      .filter((type) => type.err || type.spinner)
+      .map((type) => type.err || type.spinner);
+  } else {
+    errorOutputs = [];
+  }
 
   mockFile(file);
   mockEnv(env);
