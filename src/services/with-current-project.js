@@ -24,6 +24,7 @@ module.exports = async function withCurrentProject(config) {
       return { ...config, projectId: projects[0].id };
     }
 
+    // NOTICE: If a spinner is running, it has to be paused during the prompt and resumed after.
     const existingSpinner = spinner.isRunning();
     if (existingSpinner) spinner.pause();
     const response = await inquirer.prompt([{
