@@ -25,12 +25,12 @@ function errorIfRest(rest) {
 }
 
 function errorIfStdRest(stds) {
-  const valids = ['in', 'out', 'err'];
+  const valids = ['in', 'out', 'err', 'spinner'];
   const rest = stds.filter((type) =>
     !valids.find((valid) =>
       Object.prototype.hasOwnProperty.call(type, valid)));
   if (rest.length > 0) {
-    throw new Error(`testCli configuration error: Invalid "std" attribute(s). 
+    throw new Error(`testCli configuration error: Invalid "std" attribute(s).
       Valids are: ${valids.join(', ')}`);
   }
 }
