@@ -406,4 +406,12 @@ module.exports = {
   getLumberProjectForDevWorkflow: (projectId) => nock('http://localhost:3001')
     .get(`/api/projects/${projectId}/dev-workflow`)
     .reply(200, ProjectSerializer.serialize({ id: `${projectId}`, name: 'Forest', origin: 'Lumber' })),
+
+  getProjectNotFoundForDevWorkflow: (projectId = '1') => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/dev-workflow`)
+    .reply(404, JSON.stringify({
+      errors: [{
+        detail: 'Project not found',
+      }],
+    })),
 };

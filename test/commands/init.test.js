@@ -10,6 +10,7 @@ const {
   getProjectListValid,
   getV1ProjectForDevWorkflow,
   getNoProdProjectForDevWorkflow,
+  getProjectNotFoundForDevWorkflow,
 } = require('../fixtures/api');
 const { testEnv: noKeyEnv, testEnv2 } = require('../fixtures/env');
 const { loginPasswordDialog, enter } = require('../fixtures/std');
@@ -111,24 +112,17 @@ describe('init command', () => {
     });
 
     describe('when the user explicitely specify an invalid project', () => {
-      // it('should stop executing with a custom message', () => testCli({
-      //   command: () => InitCommand.run(['--projectId', '1234567']),
-      //   env: noKeyEnv,
-      //   token: 'any',
-      //   print: true,
-      //   api: [
-      //     getProjectListSingleProject(1),
-      //     getInAppProjectForDevWorkflow(1),
-      //     getDevelopmentEnvironmentValid(1),
-      //   ],
-      //   std: [
-      //     // NOTICE: spinnies outputs to std.err
-      //     { err: 'Selecting your project' },
-      //     { err: 'Analyzing your setup' },
-      //     { err: 'Checking your database setup' },
-      //     { out: 'Here are the environment variables you need to copy in your configuration file' },
-      //   ],
-      // }));
+      it('should stop executing with a custom message', () => testCli({
+        command: () => InitCommand.run(['--projectId', '1']),
+        env: noKeyEnv,
+        token: 'any',
+        print: true,
+        api: [
+          getProjectNotFoundForDevWorkflow(),
+        ],
+        exitCode: 1,
+        exitMessage: 'The project you specified does not exist.',
+      }));
     });
 
     describe('when the user has multiple project', () => {
