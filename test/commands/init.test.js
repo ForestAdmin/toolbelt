@@ -249,7 +249,6 @@ describe('init command', () => {
           command: () => InitCommand.run([]),
           env: testEnvWithDatabaseUrl,
           token: 'any',
-          print: true,
           api: [
             getProjectByEnv(),
             getLumberProjectForDevWorkflow(82),
@@ -260,8 +259,9 @@ describe('init command', () => {
             { spinner: 'Analyzing your setup' },
             { spinner: 'Checking your database setup' },
             { spinner: 'Setting up your development environment' },
+            // NOTICE: Trimed in order not to exceed the max length of a line
+            //         (that differs between local and travis)
             { out: 'Do you want your current folder `.env` file to be completed automatically with' },
-            { out: 'your environment variables?' },
             { in: 'n' },
             { out: 'Here are the environment variables you need to copy in your configuration file' },
           ],
@@ -274,7 +274,6 @@ describe('init command', () => {
             command: () => InitCommand.run([]),
             env: testEnv2,
             token: 'any',
-            print: true,
             api: [
               getProjectByEnv(),
               getLumberProjectForDevWorkflow(82),
@@ -285,8 +284,9 @@ describe('init command', () => {
               { spinner: 'Analyzing your setup' },
               { spinner: 'Checking your database setup' },
               ...databaseDialog('someDbName'),
+              // NOTICE: Trimed in order not to exceed the max length of a line
+              //         (that differs between local and travis)
               { out: 'Do you want your current folder `.env` file to be completed automatically with' },
-              { out: 'your environment variables?' },
               { in: 'n' },
               { out: 'Here are the environment variables you need to copy in your configuration file' },
               { out: 'DATABASE_URL=postgres://root@localhost:5432/someDbName' },
@@ -301,7 +301,6 @@ describe('init command', () => {
             command: () => InitCommand.run([]),
             env: testEnv2,
             token: 'any',
-            print: true,
             api: [
               getProjectByEnv(),
               getLumberProjectForDevWorkflow(82),
@@ -313,8 +312,9 @@ describe('init command', () => {
               { spinner: 'Checking your database setup' },
               { out: 'You don\'t have a DATABASE_URL yet. Do you need help setting it?' },
               { in: 'n' },
+              // NOTICE: Trimed in order not to exceed the max length of a line
+              //         (that differs between local and travis)
               { out: 'Do you want your current folder `.env` file to be completed automatically with' },
-              { out: 'your environment variables?' },
               { in: 'n' },
               { out: 'Here are the environment variables you need to copy in your configuration file' },
             ],
