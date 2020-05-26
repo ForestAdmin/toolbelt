@@ -246,10 +246,14 @@ describe('init command', () => {
     describe('when the project has a lumber origin', () => {
       describe('when the project .env has a database url', () => {
         it('should continue executing', () => testCli({
+          file: {
+            chdir: '/tmp',
+            name: './.env',
+            content: 'SOMETHING=1',
+          },
           command: () => InitCommand.run([]),
           env: testEnvWithDatabaseUrl,
           token: 'any',
-          print: true,
           api: [
             getProjectByEnv(),
             getLumberProjectForDevWorkflow(82),
@@ -262,7 +266,7 @@ describe('init command', () => {
             { spinner: 'Setting up your development environment' },
             // NOTICE: Trimed in order not to exceed the max length of a line
             //         (that differs between local and travis)
-            { out: 'Do you want your current folder `.env` file to be completed automatically with' },
+            { out: 'Do you want your current folder `.env` file to be completed automatically' },
             { in: 'n' },
             { out: 'Here are the environment variables you need to copy in your configuration file' },
           ],
@@ -272,10 +276,14 @@ describe('init command', () => {
       describe('when the project .env file has no database url in it', () => {
         describe('when the user answer positively to specify its credentials', () => {
           it('should display a database detail input and prompt the database credentials as env variables', () => testCli({
+            file: {
+              chdir: '/tmp',
+              name: './.env',
+              content: 'SOMETHING=1',
+            },
             command: () => InitCommand.run([]),
             env: testEnv2,
             token: 'any',
-            print: true,
             api: [
               getProjectByEnv(),
               getLumberProjectForDevWorkflow(82),
@@ -288,7 +296,7 @@ describe('init command', () => {
               ...databaseDialog('someDbName'),
               // NOTICE: Trimed in order not to exceed the max length of a line
               //         (that differs between local and travis)
-              { out: 'Do you want your current folder `.env` file to be completed automatically with' },
+              { out: 'Do you want your current folder `.env` file to be completed automatically' },
               { in: 'n' },
               { out: 'Here are the environment variables you need to copy in your configuration file' },
               { out: 'DATABASE_URL=postgres://root@localhost:5432/someDbName' },
@@ -300,10 +308,14 @@ describe('init command', () => {
 
         describe('when the user answer negatively to specify its credentials', () => {
           it('should go to the backend endpoint setup without database credentials as env variables', () => testCli({
+            file: {
+              chdir: '/tmp',
+              name: './.env',
+              content: 'SOMETHING=1',
+            },
             command: () => InitCommand.run([]),
             env: testEnv2,
             token: 'any',
-            print: true,
             api: [
               getProjectByEnv(),
               getLumberProjectForDevWorkflow(82),
@@ -317,7 +329,7 @@ describe('init command', () => {
               { in: 'n' },
               // NOTICE: Trimed in order not to exceed the max length of a line
               //         (that differs between local and travis)
-              { out: 'Do you want your current folder `.env` file to be completed automatically with' },
+              { out: 'Do you want your current folder `.env` file to be completed automatically' },
               { in: 'n' },
               { out: 'Here are the environment variables you need to copy in your configuration file' },
             ],

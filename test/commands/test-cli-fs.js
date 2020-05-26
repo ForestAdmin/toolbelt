@@ -6,4 +6,10 @@ module.exports = {
     if (chdir) process.chdir(chdir);
     if (name) fs.writeFileSync(name, content);
   },
+
+  cleanMockedFile: (file = {}) => {
+    const { chdir, name } = file;
+    if (chdir) process.chdir(chdir);
+    if (name) fs.unlinkSync(name);
+  },
 };
