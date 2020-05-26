@@ -8,4 +8,10 @@ module.exports = {
     TOKEN_PATH: './test/services/tokens',
     FOREST_ENV_SECRET: 'forestEnvSecret',
   },
+  testEnvWithDatabaseUrl: {
+    FOREST_URL: 'http://localhost:3001',
+    TOKEN_PATH: './test/services/tokens',
+    FOREST_ENV_SECRET: 'forestEnvSecret',
+    DATABASE_URL: 'postgres://some:cred@localhost:5435/ma-db',
+  },
 };

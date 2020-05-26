@@ -5,7 +5,7 @@ const {
 } = require('./test-cli-errors');
 const { mockEnv, rollbackEnv } = require('./test-cli-env');
 const { assertApi } = require('./test-cli-api');
-const { mockFile } = require('./test-cli-fs');
+const { mockFile, cleanMockedFile } = require('./test-cli-fs');
 const { mockToken, rollbackToken } = require('./test-cli-auth-token');
 const { validateInput } = require('./test-cli-errors');
 const {
@@ -58,6 +58,8 @@ async function testCli({
   } catch (error) {
     actualError = error;
   }
+
+  cleanMockedFile(file);
 
   assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);
   assertApi(nocks);
