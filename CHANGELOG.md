@@ -1,3 +1,10 @@
+## [1.3.4](https://github.com/ForestAdmin/toolbelt/compare/v1.3.3...v1.3.4) (2020-05-26)
+
+
+### Bug Fixes
+
+* homogenize the format of the command descriptions ([#83](https://github.com/ForestAdmin/toolbelt/issues/83)) ([4a1aecb](https://github.com/ForestAdmin/toolbelt/commit/4a1aecb853807dd195141c1d975c530fd9cf9b8d))
+
 ## [1.3.3](https://github.com/ForestAdmin/toolbelt/compare/v1.3.2...v1.3.3) (2020-05-20)
 
 
