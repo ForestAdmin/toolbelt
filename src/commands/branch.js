@@ -85,26 +85,26 @@ class BranchCommand extends AbstractAuthenticatedCommand {
   }
 }
 
-BranchCommand.description = 'Create a new branch or list your existing branches';
+BranchCommand.description = 'Create a new branch or list your existing branches.';
 
 BranchCommand.flags = {
   projectId: flags.string({
-    description: 'The id of the project to create a branch in',
+    description: 'The id of the project to create a branch in.',
   }),
   delete: flags.boolean({
     char: 'd',
-    description: 'Delete the branch',
+    description: 'Delete the branch.',
   }),
   force: flags.boolean({
-    description: 'When deleting a branch, skip confirmation',
+    description: 'When deleting a branch, skip confirmation.',
   }),
   help: flags.boolean({
-    description: 'Display usage information',
+    description: 'Display usage information.',
   }),
 };
 
 BranchCommand.args = [{
-  name: 'BRANCH_NAME', required: false, description: 'The name of the branch to create',
+  name: 'BRANCH_NAME', required: false, description: 'The name of the branch to create.',
 }];
 
 module.exports = BranchCommand;

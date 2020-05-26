@@ -7,6 +7,6 @@ class LogoutCommand extends Command {
   }
 }
 
-LogoutCommand.description = 'sign out of your account';
+LogoutCommand.description = 'Sign out of your account.';
 
 module.exports = LogoutCommand;

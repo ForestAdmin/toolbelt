@@ -31,27 +31,27 @@ class CreateCommand extends AbstractAuthenticatedCommand {
   }
 }
 
-CreateCommand.description = 'create a new environment';
+CreateCommand.description = 'Create a new environment.';
 
 CreateCommand.flags = {
   projectId: flags.string({
     char: 'p',
-    description: 'Forest project ID',
+    description: 'Forest project ID.',
     default: null,
   }),
   name: flags.string({
     char: 'n',
-    description: 'Environment name',
+    description: 'Environment name.',
     required: true,
   }),
   url: flags.string({
     char: 'u',
-    description: 'Application URL',
+    description: 'Application URL.',
     required: true,
   }),
   format: flags.string({
     char: 'format',
-    description: 'Ouput format',
+    description: 'Ouput format.',
     options: ['table', 'json'],
     default: 'table',
   }),

@@ -21,19 +21,19 @@ class GetCommand extends AbstractAuthenticatedCommand {
   }
 }
 
-GetCommand.description = 'get the configuration of an environment';
+GetCommand.description = 'Get the configuration of an environment.';
 
 GetCommand.flags = {
   format: flags.string({
     char: 'format',
-    description: 'Ouput format',
+    description: 'Ouput format.',
     options: ['table', 'json'],
     default: 'table',
   }),
 };
 
 GetCommand.args = [{
-  name: 'environmentId', required: true, description: 'ID of an environment',
+  name: 'environmentId', required: true, description: 'ID of an environment.',
 }];
 
 module.exports = GetCommand;

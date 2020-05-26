@@ -24,19 +24,19 @@ class GetCommand extends AbstractAuthenticatedCommand {
   }
 }
 
-GetCommand.description = 'get the configuration of a project';
+GetCommand.description = 'Get the configuration of a project.';
 
 GetCommand.flags = {
   format: flags.string({
     char: 'format',
-    description: 'Ouput format',
+    description: 'Ouput format.',
     options: ['table', 'json'],
     default: 'table',
   }),
 };
 
 GetCommand.args = [{
-  name: 'projectId', required: true, description: 'ID of a project',
+  name: 'projectId', required: true, description: 'ID of a project.',
 }];
 
 module.exports = GetCommand;

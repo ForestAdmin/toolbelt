@@ -84,16 +84,16 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
   }
 }
 
-SwitchCommand.description = 'Switch to another branch in your local development environment';
+SwitchCommand.description = 'Switch to another branch in your local development environment.';
 
 SwitchCommand.flags = {
   help: flags.boolean({
-    description: 'Display usage information',
+    description: 'Display usage information.',
   }),
 };
 
 SwitchCommand.args = [{
-  name: 'BRANCH_NAME', required: false, description: 'The name of the local branch to set as current',
+  name: 'BRANCH_NAME', required: false, description: 'The name of the local branch to set as current.',
 }];
 
 module.exports = SwitchCommand;

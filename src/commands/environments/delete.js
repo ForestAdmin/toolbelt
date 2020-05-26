@@ -46,17 +46,17 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
   }
 }
 
-DeleteCommand.description = 'delete an environment';
+DeleteCommand.description = 'Delete an environment.';
 
 DeleteCommand.flags = {
   force: flags.boolean({
     char: 'force',
-    description: 'Force delete',
+    description: 'Force delete.',
   }),
 };
 
 DeleteCommand.args = [{
-  name: 'environmentId', required: true, description: 'ID of an environment',
+  name: 'environmentId', required: true, description: 'ID of an environment.',
 }];
 
 module.exports = DeleteCommand;

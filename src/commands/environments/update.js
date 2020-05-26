@@ -22,22 +22,22 @@ class UpdateCommand extends AbstractAuthenticatedCommand {
   }
 }
 
-UpdateCommand.description = 'update an environment';
+UpdateCommand.description = 'Update an environment.';
 
 UpdateCommand.flags = {
   environmentId: flags.string({
     char: 'e',
-    description: 'The forest environment ID to update',
+    description: 'The forest environment ID to update.',
     required: true,
   }),
   name: flags.string({
     char: 'n',
-    description: 'To update the environment name',
+    description: 'To update the environment name.',
     required: false,
   }),
   url: flags.string({
     char: 'u',
-    description: 'To update the application URL',
+    description: 'To update the application URL.',
     required: false,
   }),
 };

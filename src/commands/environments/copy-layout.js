@@ -63,23 +63,23 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
   }
 }
 
-CopyLayoutCommand.description = 'copy the layout from one environment to another';
+CopyLayoutCommand.description = 'Copy the layout from one environment to another.';
 
 CopyLayoutCommand.flags = {
   projectId: flags.string({
     char: 'p',
-    description: 'Forest project ID',
+    description: 'Forest project ID.',
     default: null,
   }),
   force: flags.boolean({
     char: 'force',
-    description: 'Force copy',
+    description: 'Force copy.',
   }),
 };
 
 CopyLayoutCommand.args = [
-  { name: 'fromEnvironment', required: true, description: 'Source environment ID' },
-  { name: 'toEnvironment', required: true, description: 'Target environment ID' },
+  { name: 'fromEnvironment', required: true, description: 'Source environment ID.' },
+  { name: 'toEnvironment', required: true, description: 'Target environment ID.' },
 ];
 
 module.exports = CopyLayoutCommand;
