@@ -18,12 +18,12 @@ class ProjectCommand extends AbstractAuthenticatedCommand {
   }
 }
 
-ProjectCommand.description = 'manage projects';
+ProjectCommand.description = 'Manage projects.';
 
 ProjectCommand.flags = {
   format: flags.string({
     char: 'format',
-    description: 'Ouput format',
+    description: 'Ouput format.',
     options: ['table', 'json'],
     default: 'table',
   }),

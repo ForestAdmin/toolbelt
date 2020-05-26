@@ -8,20 +8,20 @@ class LoginCommand extends Command {
   }
 }
 
-LoginCommand.description = 'sign in with an existing account';
+LoginCommand.description = 'Sign in with an existing account.';
 
 LoginCommand.flags = {
   email: flags.string({
     char: 'e',
-    description: 'Your Forest Admin account email',
+    description: 'Your Forest Admin account email.',
   }),
   password: flags.string({
     char: 'P',
-    description: 'Your Forest Admin account password (ignored if token is set)',
+    description: 'Your Forest Admin account password (ignored if token is set).',
   }),
   token: flags.string({
     char: 't',
-    description: 'Your Forest Admin account token (replaces password)',
+    description: 'Your Forest Admin account token (replaces password).',
   }),
 };
 

@@ -81,12 +81,12 @@ class ApplyCommand extends Command {
   }
 }
 
-ApplyCommand.description = 'apply the current schema of your repository to the specified environment (using your ".forestadmin-schema.json" file)';
+ApplyCommand.description = 'Apply the current schema of your repository to the specified environment (using your ".forestadmin-schema.json" file).';
 
 ApplyCommand.flags = {
   secret: flags.string({
     char: 's',
-    description: 'Environment secret of the project (FOREST_ENV_SECRET)',
+    description: 'Environment secret of the project (FOREST_ENV_SECRET).',
     required: false,
   }),
 };
