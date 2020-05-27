@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/ForestAdmin/toolbelt/compare/v1.3.4...v1.4.0) (2020-05-27)
+
+
+### Features
+
+* add forest init command ([#58](https://github.com/ForestAdmin/toolbelt/issues/58)) ([872b130](https://github.com/ForestAdmin/toolbelt/commit/872b1307aadce1deda032d20115e3f3c11c6d0c3))
+
 ## [1.3.4](https://github.com/ForestAdmin/toolbelt/compare/v1.3.3...v1.3.4) (2020-05-26)
 
 
