@@ -13,6 +13,8 @@ const {
   getProjectNotFoundForDevWorkflow,
   getProjectForDevWorkflowUnallowed,
   getLumberProjectForDevWorkflow,
+  getDevelopmentEnvironmentNotFound,
+  createDevelopmentEnvironment,
 } = require('../fixtures/api');
 const { testEnv: noKeyEnv, testEnv2, testEnvWithDatabaseUrl } = require('../fixtures/env');
 const { loginPasswordDialog, databaseDialog, enter } = require('../fixtures/std');
@@ -341,45 +343,110 @@ describe('init command', () => {
 
   describe('backend endpoint setup', () => {
     describe('when the user already have an existing development environment', () => {
-      it('should go to the environment variables step', () => {
-        // TODO
-        expect.assertions(0);
-      });
+      it('should go to the environment variables step', () => testCli({
+        command: () => InitCommand.run([]),
+        env: testEnvWithDatabaseUrl,
+        token: 'any',
+        api: [
+          getProjectByEnv(),
+          getInAppProjectForDevWorkflow(82),
+          getDevelopmentEnvironmentValid(82),
+        ],
+        std: [
+          { spinner: 'Selecting your project' },
+          { spinner: 'Analyzing your setup' },
+          { spinner: 'Checking your database setup' },
+          { spinner: 'Setting up your development environment' },
+          { out: 'Here are the environment variables you need to copy in your configuration file' },
+        ],
+      }));
     });
 
     describe('when the user does not have an existing development environment', () => {
       describe('when the user enters a correct endpoint', () => {
-        it('should display a green mark with a relevant message', () => {
-          // TODO
-          expect.assertions(0);
-        });
+        it('should display a green mark with a relevant message', () => testCli({
+          command: () => InitCommand.run([]),
+          env: testEnvWithDatabaseUrl,
+          token: 'any',
+          api: [
+            getProjectByEnv(),
+            getInAppProjectForDevWorkflow(82),
+            getDevelopmentEnvironmentNotFound(82),
+            createDevelopmentEnvironment(82),
+          ],
+          std: [
+            { spinner: 'Selecting your project' },
+            { spinner: 'Analyzing your setup' },
+            { spinner: 'Checking your database setup' },
+            { spinner: 'Setting up your development environment' },
+            { out: 'Enter your local admin backend endpoint:' },
+            ...enter,
+            { out: 'Here are the environment variables you need to copy in your configuration file' },
+            { out: 'APPLICATION_PORT=3310' },
+          ],
+        }));
       });
     });
   });
 
   describe('environment variables', () => {
-    describe('when the project is flagged as in-app and has a .env file', () => {
-      it('should display the appropriate spinner', () => {
-        // TODO
-        expect.assertions(0);
-      });
-
-      it('should should copy the env variable in the .env file', () => {
-        // TODO
-        expect.assertions(0);
-      });
-
-      it('should display a green mark with a relevant message', () => {
-        // TODO
-        expect.assertions(0);
-      });
+    describe('when the project is NOT flagged as in-app and has a .env file', () => {
+      it('should copy the env variable in the .env file', () => testCli({
+        file: {
+          chdir: '/tmp',
+          name: './.env',
+          content: 'SOMETHING=1',
+        },
+        command: () => InitCommand.run([]),
+        env: testEnvWithDatabaseUrl,
+        token: 'any',
+        api: [
+          getProjectByEnv(),
+          getLumberProjectForDevWorkflow(82),
+          getDevelopmentEnvironmentNotFound(82),
+          createDevelopmentEnvironment(82),
+        ],
+        std: [
+          { spinner: 'Selecting your project' },
+          { spinner: 'Analyzing your setup' },
+          { spinner: 'Checking your database setup' },
+          { out: 'Enter your local admin backend endpoint:' },
+          ...enter,
+          { out: 'Do you want your current folder `.env` file to be completed automatically' },
+          ...enter,
+          { spinner: 'Copying the environment variables in your `.env` file' },
+          { spinner: 'You\'re now set up and ready to develop on Forest Admin' },
+          { out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/getting-started/a-page-on-forest-cli.' },
+        ],
+      }));
     });
 
-    describe('when the project is NOT flagged as in-app or does not have a .env file', () => {
-      it('should display a green mark with a relevant message and environment variables', () => {
-        // TODO
-        expect.assertions(0);
-      });
+    describe('when the project is NOT flagged as in-app and does not have a .env file', () => {
+      it('should ask if the user wants to create an env file and if not, displays the environment variables', () => testCli({
+        command: () => InitCommand.run([]),
+        env: testEnvWithDatabaseUrl,
+        token: 'any',
+        api: [
+          getProjectByEnv(),
+          getLumberProjectForDevWorkflow(82),
+          getDevelopmentEnvironmentNotFound(82),
+          createDevelopmentEnvironment(82),
+        ],
+        std: [
+          { spinner: 'Selecting your project' },
+          { spinner: 'Analyzing your setup' },
+          { spinner: 'Checking your database setup' },
+          { out: 'Enter your local admin backend endpoint:' },
+          ...enter,
+          { out: 'Do you want a new `.env` file (containing your environment variables)' },
+          { in: 'n' },
+          { out: 'Here are the environment variables you need to copy in your configuration file' },
+          { out: 'APPLICATION_PORT=3310' },
+          { out: 'FOREST_AUTH_SECRET=' },
+          { out: 'FOREST_ENV_SECRET=2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125' },
+          { out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/getting-started/a-page-on-forest-cli.' },
+        ],
+      }));
     });
   });
 });
