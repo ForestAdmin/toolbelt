@@ -3,7 +3,6 @@ const chalk = require('chalk');
 class Logger {
   constructor(silent) {
     this.silent = silent;
-    this.spinner = null;
   }
 
   log(message, std) {
