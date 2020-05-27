@@ -41,6 +41,14 @@ module.exports = {
       { id: 2, name: 'project2' },
     ])),
 
+  getProjectListSingleProject: () => nock('http://localhost:3001')
+    .get('/api/projects')
+    .reply(200, ProjectSerializer.serialize([{ id: 1, name: 'project1' }])),
+
+  getProjectListEmpty: () => nock('http://localhost:3001')
+    .get('/api/projects')
+    .reply(200, ProjectSerializer.serialize([])),
+
   getProjectDetailledList: () => nock('http://localhost:3001')
     .get('/api/projects')
     .reply(200, ProjectSerializer.serialize([{
@@ -348,20 +356,29 @@ module.exports = {
       }],
     })),
 
-  getDevelopmentEnvironmentNotFound: () => nock('http://localhost:3001')
-    .get('/api/projects/1/development-environment-for-user')
+  getDevelopmentEnvironmentNotFound: (projectId = 1) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/development-environment-for-user`)
     .reply(404, JSON.stringify({
       errors: [{
         detail: 'Development environment not found.',
       }],
     })),
 
-  getDevelopmentEnvironmentValid: () => nock('http://localhost:3001')
-    .get('/api/projects/1/development-environment-for-user')
+  getDevelopmentEnvironmentValid: (projectId = 1) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/development-environment-for-user`)
     .reply(200, EnvironmentSerializer.serialize({
       name: 'Test',
       type: 'development',
       apiEndpoint: 'https://test.forestadmin.com',
+      secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
+    })),
+
+  createDevelopmentEnvironment: (projectId = 1) => nock('http://localhost:3001')
+    .post(`/api/projects/${projectId}/development-environment-for-user`, { endpoint: 'http://localhost:3310' })
+    .reply(200, EnvironmentSerializer.serialize({
+      name: 'Test',
+      type: 'development',
+      apiEndpoint: 'http://localhost:3310',
       secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
     })),
 
@@ -373,5 +390,45 @@ module.exports = {
       type: 'development',
       apiEndpoint: 'https://test.forestadmin.com',
       secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
+    })),
+
+  getV1ProjectForDevWorkflow: (projectId) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/dev-workflow`)
+    .reply(422, JSON.stringify({
+      errors: [{
+        detail: 'Dev Workflow disabled.',
+      }],
+    })),
+
+  getNoProdProjectForDevWorkflow: (projectId) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/dev-workflow`)
+    .reply(422, JSON.stringify({
+      errors: [{
+        detail: 'No production/remote environment.',
+      }],
+    })),
+
+  getInAppProjectForDevWorkflow: (projectId) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/dev-workflow`)
+    .reply(200, ProjectSerializer.serialize({ id: `${projectId}`, name: 'Forest', origin: 'In-app' })),
+
+  getLumberProjectForDevWorkflow: (projectId) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/dev-workflow`)
+    .reply(200, ProjectSerializer.serialize({ id: `${projectId}`, name: 'Forest', origin: 'Lumber' })),
+
+  getProjectNotFoundForDevWorkflow: (projectId = '1') => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/dev-workflow`)
+    .reply(404, JSON.stringify({
+      errors: [{
+        detail: 'Project not found',
+      }],
+    })),
+
+  getProjectForDevWorkflowUnallowed: (projectId = '1') => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/dev-workflow`)
+    .reply(403, JSON.stringify({
+      errors: [{
+        detail: 'Forbidden',
+      }],
     })),
 };

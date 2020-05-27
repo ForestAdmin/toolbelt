@@ -5,7 +5,7 @@ const {
 } = require('./test-cli-errors');
 const { mockEnv, rollbackEnv } = require('./test-cli-env');
 const { assertApi } = require('./test-cli-api');
-const { mockFile } = require('./test-cli-fs');
+const { mockFile, cleanMockedFile } = require('./test-cli-fs');
 const { mockToken, rollbackToken } = require('./test-cli-auth-token');
 const { validateInput } = require('./test-cli-errors');
 const {
@@ -36,7 +36,15 @@ async function testCli({
   const nocks = asArray(api);
   const inputs = stds ? stds.filter((type) => type.in).map((type) => type.in) : [];
   const outputs = stds ? stds.filter((type) => type.out).map((type) => type.out) : [];
-  const errorOutputs = stds ? stds.filter((type) => type.err).map((type) => type.err) : [];
+  let errorOutputs;
+  if (stds) {
+    // NOTICE: spinnies outputs to std.err
+    errorOutputs = stds
+      .filter((type) => type.err || type.spinner)
+      .map((type) => type.err || type.spinner);
+  } else {
+    errorOutputs = [];
+  }
 
   mockFile(file);
   mockEnv(env);
@@ -50,6 +58,8 @@ async function testCli({
   } catch (error) {
     actualError = error;
   }
+
+  cleanMockedFile(file);
 
   assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);
   assertApi(nocks);
