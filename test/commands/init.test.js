@@ -347,7 +347,6 @@ describe('init command', () => {
         command: () => InitCommand.run([]),
         env: testEnvWithDatabaseUrl,
         token: 'any',
-        print: true,
         api: [
           getProjectByEnv(),
           getInAppProjectForDevWorkflow(82),
@@ -369,7 +368,6 @@ describe('init command', () => {
           command: () => InitCommand.run([]),
           env: testEnvWithDatabaseUrl,
           token: 'any',
-          print: true,
           api: [
             getProjectByEnv(),
             getInAppProjectForDevWorkflow(82),
@@ -391,7 +389,7 @@ describe('init command', () => {
     });
   });
 
-  describe('environment variables lol', () => {
+  describe('environment variables', () => {
     describe('when the project is NOT flagged as in-app and has a .env file', () => {
       it('should should copy the env variable in the .env file', () => testCli({
         file: {
@@ -402,7 +400,6 @@ describe('init command', () => {
         command: () => InitCommand.run([]),
         env: testEnvWithDatabaseUrl,
         token: 'any',
-        print: true,
         api: [
           getProjectByEnv(),
           getLumberProjectForDevWorkflow(82),
@@ -429,7 +426,6 @@ describe('init command', () => {
         command: () => InitCommand.run([]),
         env: testEnvWithDatabaseUrl,
         token: 'any',
-        print: true,
         api: [
           getProjectByEnv(),
           getLumberProjectForDevWorkflow(82),
@@ -445,7 +441,6 @@ describe('init command', () => {
           { out: 'Do you want a new `.env` file (containing your environment variables)' },
           { in: 'n' },
           { out: 'Here are the environment variables you need to copy in your configuration file' },
-          { out: 'Automatically copied to your clipboard!' },
           { out: 'APPLICATION_PORT=3310' },
           { out: 'FOREST_AUTH_SECRET=' },
           { out: 'FOREST_ENV_SECRET=2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125' },
