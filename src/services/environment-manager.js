@@ -66,24 +66,13 @@ function EnvironmentManager(config) {
       }));
   };
 
-  this.deleteEnvironment = async (environmentId, oclifExit) => {
+  this.deleteEnvironment = async (environmentId) => {
     const authToken = authenticator.getAuthToken();
-    const jobStateChecker = new JobStateChecker('Deleting environment', oclifExit);
 
-    const deleteEnvironmentResponse = await agent
+    return agent
       .del(`${serverHost()}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-environment-id', environmentId);
-
-    if (!deleteEnvironmentResponse.body
-      || !deleteEnvironmentResponse.body.meta
-      || !deleteEnvironmentResponse.body.meta.job_id) {
-      return false;
-    }
-
-    const jobId = deleteEnvironmentResponse.body.meta.job_id;
-
-    return jobStateChecker.check(jobId, config.projectId);
   };
 
   this.copyLayout = async (fromEnvironmentId, toEnvironmentId, oclifExit) => {
