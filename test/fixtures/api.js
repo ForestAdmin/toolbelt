@@ -184,11 +184,12 @@ module.exports = {
   deleteEnvironment: () => nock('http://localhost:3001')
     .matchHeader('forest-environment-id', '324')
     .delete('/api/environments/324')
-    .reply(200, {
-      meta: {
-        job_id: 78,
-      },
-    }),
+    .reply(200),
+
+  deleteEnvironmentFailure: () => nock('http://localhost:3001')
+    .matchHeader('forest-environment-id', '324')
+    .delete('/api/environments/324')
+    .reply(404),
 
   getJob: () => nock('http://localhost:3001')
     .get('/api/jobs/78')
