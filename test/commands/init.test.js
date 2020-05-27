@@ -391,7 +391,7 @@ describe('init command', () => {
 
   describe('environment variables', () => {
     describe('when the project is NOT flagged as in-app and has a .env file', () => {
-      it('should should copy the env variable in the .env file', () => testCli({
+      it('should copy the env variable in the .env file', () => testCli({
         file: {
           chdir: '/tmp',
           name: './.env',
@@ -421,8 +421,8 @@ describe('init command', () => {
       }));
     });
 
-    describe('when the project is NOT flagged as in-app, does not have a .env file', () => {
-      it('should if user wants to create an env file and if not, displays the environment variables', () => testCli({
+    describe('when the project is NOT flagged as in-app and does not have a .env file', () => {
+      it('should ask if the user wants to create an env file and if not, displays the environment variables', () => testCli({
         command: () => InitCommand.run([]),
         env: testEnvWithDatabaseUrl,
         token: 'any',
