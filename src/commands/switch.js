@@ -75,7 +75,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
       if (selectedBranch === undefined) {
         throw new Error('Branch does not exist.');
       }
-      if (currentBranch.name === selectedBranchName) {
+      if (currentBranch && currentBranch.name === selectedBranchName) {
         return this.log(`ℹ️  ${selectedBranchName} is already your current branch.`);
       }
 
