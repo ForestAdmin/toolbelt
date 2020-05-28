@@ -31,8 +31,11 @@ class PushCommand extends AbstractAuthenticatedCommand {
     try {
       const config = await withCurrentProject({ ...envConfig, ...commandOptions });
 
-      const developmentEnvironment = await new ProjectManager(config)
-        .getDevelopmentEnvironmentForUser(config.projectId);
+      const projectManager = new ProjectManager(config);
+      const project = await projectManager.getProjectForDevWorkflow();
+
+      const developmentEnvironment = await projectManager
+        .getDevelopmentEnvironmentForUser(project.id);
       config.envSecret = developmentEnvironment.secretKey;
 
       const developmentBranches = await BranchManager.getBranches(config.envSecret);

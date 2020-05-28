@@ -5,10 +5,12 @@ const {
   getBranchListValid,
   getDevelopmentEnvironmentValid,
   getEnvironmentListValid,
+  getInAppProjectForDevWorkflow,
   getNoBranchListValid,
   getNoEnvironmentListValid,
   getProjectByEnv,
   getProjectListValid,
+  getV1ProjectForDevWorkflow,
   pushBranchInvalidDestination,
   pushBranchInvalidDestinationBranch,
   pushBranchInvalidType,
@@ -29,6 +31,7 @@ describe('push', () => {
         command: () => PushCommand.run([]),
         api: [
           getProjectListValid(),
+          getInAppProjectForDevWorkflow(projectId),
           getDevelopmentEnvironmentValid(),
           getBranchListValid(envSecret),
           getEnvironmentListValid(projectId),
@@ -61,6 +64,7 @@ describe('push', () => {
         command: () => PushCommand.run([]),
         api: [
           getProjectByEnv(),
+          getInAppProjectForDevWorkflow(projectId),
           getDevelopmentEnvironmentValid(projectId),
           getBranchListValid(envSecret),
           getEnvironmentListValid(projectId),
@@ -89,6 +93,7 @@ describe('push', () => {
         command: () => PushCommand.run(['-e', 'name1']),
         api: [
           getProjectByEnv(),
+          getInAppProjectForDevWorkflow(projectId),
           getDevelopmentEnvironmentValid(projectId),
           getBranchListValid(envSecret),
           pushBranchValid(envSecret),
@@ -113,6 +118,7 @@ describe('push', () => {
         command: () => PushCommand.run(['-e', 'name1', '--force']),
         api: [
           getProjectByEnv(),
+          getInAppProjectForDevWorkflow(projectId),
           getDevelopmentEnvironmentValid(projectId),
           getBranchListValid(envSecret),
           pushBranchValid(envSecret),
@@ -134,6 +140,7 @@ describe('push', () => {
         command: () => PushCommand.run(['-e', 'name1']),
         api: [
           getProjectByEnv(),
+          getInAppProjectForDevWorkflow(projectId),
           getDevelopmentEnvironmentValid(projectId),
           getBranchListValid(envSecret),
         ],
@@ -154,6 +161,7 @@ describe('push', () => {
         command: () => PushCommand.run(['-e', 'name1']),
         api: [
           getProjectByEnv(),
+          getInAppProjectForDevWorkflow(projectId),
           getDevelopmentEnvironmentValid(projectId),
           getNoBranchListValid(envSecret),
         ],
@@ -171,6 +179,7 @@ describe('push', () => {
         command: () => PushCommand.run(['-e', 'name1']),
         api: [
           getProjectByEnv(),
+          getInAppProjectForDevWorkflow(projectId),
           getDevelopmentEnvironmentValid(projectId),
           getBranchListValid(envSecret, false),
         ],
@@ -188,6 +197,7 @@ describe('push', () => {
         command: () => PushCommand.run(['-e', 'notExist', '--force']),
         api: [
           getProjectByEnv(),
+          getInAppProjectForDevWorkflow(projectId),
           getDevelopmentEnvironmentValid(projectId),
           getBranchListValid(envSecret),
           pushBranchInvalidDestination(envSecret),
@@ -206,6 +216,7 @@ describe('push', () => {
         command: () => PushCommand.run(['-e', 'noRemote', '--force']),
         api: [
           getProjectByEnv(),
+          getInAppProjectForDevWorkflow(projectId),
           getDevelopmentEnvironmentValid(projectId),
           getBranchListValid(envSecret),
           pushBranchInvalidType(envSecret),
@@ -224,6 +235,7 @@ describe('push', () => {
         command: () => PushCommand.run(['-e', 'noRemote', '--force']),
         api: [
           getProjectByEnv(),
+          getInAppProjectForDevWorkflow(projectId),
           getDevelopmentEnvironmentValid(projectId),
           getBranchListValid(envSecret),
           pushBranchInvalidDestinationBranch(envSecret),
@@ -242,12 +254,28 @@ describe('push', () => {
         command: () => PushCommand.run([]),
         api: [
           getProjectByEnv(),
+          getInAppProjectForDevWorkflow(projectId),
           getDevelopmentEnvironmentValid(projectId),
           getBranchListValid(envSecret),
           getNoEnvironmentListValid(projectId),
         ],
         exitCode: 2,
         exitMessage: '❌ You cannot run branch commands until this project has either a remote or a production environment.',
+      }));
+    });
+
+    describe('when project is version 1', () => {
+      const projectId = 82;
+      it('should throw an error', () => testCli({
+        env: testEnv2,
+        token: 'any',
+        command: () => PushCommand.run([]),
+        api: [
+          getProjectByEnv(),
+          getV1ProjectForDevWorkflow(projectId),
+        ],
+        exitCode: 2,
+        exitMessage: '⚠️  This project does not support branches yet. Please migrate your environments from your Project settings first.',
       }));
     });
   });
