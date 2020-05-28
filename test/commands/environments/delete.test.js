@@ -1,4 +1,3 @@
-const chalk = require('chalk');
 const { testEnv } = require('../../fixtures/env');
 const {
   getEnvironmentNotFound,
@@ -50,9 +49,9 @@ describe('environments:delete', () => {
       api: [
         getEnvironmentNotFound(),
       ],
+      std: [{ err: 'Cannot find the environment 3947.' }],
       command: () => DeleteCommand.run(['3947', '--force']),
       exitCode: 1,
-      exitMessage: `Cannot find the environment ${chalk.bold(3947)}.`,
     }));
   });
 });

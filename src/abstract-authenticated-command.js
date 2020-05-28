@@ -16,7 +16,8 @@ class AbstractAuthenticatedCommand extends Command {
     } catch (error) {
       // NOTICE: Due to ip-whitelist, 404 will never be thrown for a project
       if (error.status === 403) {
-        return this.error('You do not have the right to execute this action on this project');
+        logger.error('You do not have the right to execute this action on this project');
+        return this.exit(2);
       }
 
       if (error.status === 401) {
@@ -33,7 +34,8 @@ class AbstractAuthenticatedCommand extends Command {
   }
 
   displayLoginMessageAndQuit() {
-    return this.error(`Please use ${chalk.bold('forest login')} to sign in to your Forest account.`, { exit: 10 });
+    logger.error(`Please use ${chalk.bold('forest login')} to sign in to your Forest account.`);
+    this.exit(10);
   }
 }
 

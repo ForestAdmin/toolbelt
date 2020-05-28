@@ -5,10 +5,11 @@ const { promisify } = require('util');
 const jobDeserializer = require('../deserializers/job');
 const config = require('../config');
 const { getAuthToken } = require('./authenticator');
+const logger = require('./logger');
 
 const setTimeoutAsync = promisify(setTimeout);
 
-function JobStateChecker(message, logError) {
+function JobStateChecker(message, oclifExit) {
   const bar = new ProgressBar(`${message} [:bar] :percent `, { total: 100 });
   bar.update(0);
 
@@ -37,7 +38,8 @@ function JobStateChecker(message, logError) {
         throw error;
       }
 
-      logError(`HTTP ${error.status}: ${error.message}`, { exit: 100 });
+      logger.error(`HTTP ${error.status}: ${error.message}`);
+      oclifExit(100);
     }
 
     await setTimeoutAsync(1000);

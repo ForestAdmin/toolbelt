@@ -66,9 +66,9 @@ function EnvironmentManager(config) {
       }));
   };
 
-  this.deleteEnvironment = async (environmentId, logError) => {
+  this.deleteEnvironment = async (environmentId, oclifExit) => {
     const authToken = authenticator.getAuthToken();
-    const jobStateChecker = new JobStateChecker('Deleting environment', logError);
+    const jobStateChecker = new JobStateChecker('Deleting environment', oclifExit);
 
     const deleteEnvironmentResponse = await agent
       .del(`${serverHost()}/api/environments/${environmentId}`)
@@ -86,7 +86,7 @@ function EnvironmentManager(config) {
     return jobStateChecker.check(jobId, config.projectId);
   };
 
-  this.copyLayout = async (fromEnvironmentId, toEnvironmentId, logError) => {
+  this.copyLayout = async (fromEnvironmentId, toEnvironmentId, oclifExit) => {
     const authToken = authenticator.getAuthToken();
     const deploymentRequest = {
       id: Math.random().toString(26).slice(2),
@@ -95,7 +95,7 @@ function EnvironmentManager(config) {
       to: toEnvironmentId,
     };
 
-    const jobStateChecker = new JobStateChecker('Copying layout', logError);
+    const jobStateChecker = new JobStateChecker('Copying layout', oclifExit);
 
     const deploymentRequestResponse = await agent
       .post(`${serverHost()}/api/deployment-requests`)

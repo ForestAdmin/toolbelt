@@ -89,8 +89,10 @@ describe('init command', () => {
         api: [
           getProjectListEmpty(),
         ],
+        std: [
+          { err: 'You don\'t have any project yet.' },
+        ],
         exitCode: 1,
-        exitMessage: 'You don\'t have any project yet.',
       }));
     });
 
@@ -121,8 +123,10 @@ describe('init command', () => {
         api: [
           getProjectNotFoundForDevWorkflow(),
         ],
+        std: [
+          { err: 'The project you specified does not exist.' },
+        ],
         exitCode: 1,
-        exitMessage: 'The project you specified does not exist.',
       }));
     });
 
@@ -163,9 +167,9 @@ describe('init command', () => {
         std: [
           { spinner: 'Selecting your project' },
           { spinner: 'Analyzing your setup' },
+          { err: 'You need the \'Admin\' role to create a development environment on this project.' },
         ],
         exitCode: 1,
-        exitMessage: 'You need the \'Admin\' role to create a development environment on this project.',
       }));
     });
 
@@ -181,9 +185,9 @@ describe('init command', () => {
         std: [
           { spinner: 'Selecting your project' },
           { spinner: 'Analyzing your setup' },
+          { err: 'This project does not support branches yet. Please migrate your environments from your Project settings first.' },
         ],
         exitCode: 1,
-        exitMessage: 'This project does not support branches yet. Please migrate your environments from your Project settings first.',
       }));
     });
 
@@ -199,9 +203,9 @@ describe('init command', () => {
         std: [
           { spinner: 'Selecting your project' },
           { spinner: 'Analyzing your setup' },
+          { err: 'You cannot create your development environment until this project has either a remote or a production environment.' },
         ],
         exitCode: 1,
-        exitMessage: 'You cannot create your development environment until this project has either a remote or a production environment.',
       }));
     });
 

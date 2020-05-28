@@ -55,7 +55,8 @@ class InitCommand extends AbstractAuthenticatedCommand {
       logger.info(SUCCESS_MESSAGE_LEARN_MORE_ON_CLI_USAGE);
     } catch (error) {
       const exitMessage = handleInitError(error);
-      this.error(exitMessage, { exit: 1 });
+      logger.error(exitMessage);
+      this.exit(1);
     }
   }
 
