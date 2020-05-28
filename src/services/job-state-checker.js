@@ -5,7 +5,7 @@ const { promisify } = require('util');
 const jobDeserializer = require('../deserializers/job');
 const config = require('../config');
 const { getAuthToken } = require('./authenticator');
-const logger = require('../services/logger');
+const logger = require('./logger');
 
 const setTimeoutAsync = promisify(setTimeout);
 
