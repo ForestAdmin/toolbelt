@@ -1,3 +1,11 @@
+## [1.4.1](https://github.com/ForestAdmin/toolbelt/compare/v1.4.0...v1.4.1) (2020-05-28)
+
+
+### Bug Fixes
+
+* **branch:** fix switch command when environment has no current branch ([#88](https://github.com/ForestAdmin/toolbelt/issues/88)) ([d118b1f](https://github.com/ForestAdmin/toolbelt/commit/d118b1f7da99918b04a2b2b045025b912420aae9))
+* homogenize all displayed error messages style ([#87](https://github.com/ForestAdmin/toolbelt/issues/87)) ([2f14aa4](https://github.com/ForestAdmin/toolbelt/commit/2f14aa4316ee244ce64276c40fa06c799e11dcea))
+
 # [1.4.0](https://github.com/ForestAdmin/toolbelt/compare/v1.3.4...v1.4.0) (2020-05-27)
 
 
