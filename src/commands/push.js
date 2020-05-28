@@ -9,17 +9,15 @@ const envConfig = require('../config');
 
 class PushCommand extends AbstractAuthenticatedCommand {
   static async askForEnvironment(config) {
-    const environemnts = await new EnvironmentManager(config).listEnvironments();
-    const remoteEnvironments = environemnts.filter((environemnt) => environemnt.type === 'remote');
+    const environments = await new EnvironmentManager(config).listEnvironments();
+    const remoteEnvironments = environments.filter((environment) => environment.type === 'remote');
 
     if (remoteEnvironments.length) {
       const response = await inquirer.prompt([{
         name: 'environment',
         message: 'Select the remote environment you want to push onto',
         type: 'list',
-        choices: remoteEnvironments.map(
-          (environemnt) => ({ name: environemnt.name, value: environemnt.name }),
-        ),
+        choices: remoteEnvironments.map(({ name }) => name),
       }]);
       return response.environment;
     }
@@ -29,10 +27,9 @@ class PushCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
     const parsed = this.parse(PushCommand);
     const commandOptions = { ...parsed.flags, ...parsed.args };
-    let config;
 
     try {
-      config = await withCurrentProject({ ...envConfig, ...commandOptions });
+      const config = await withCurrentProject({ ...envConfig, ...commandOptions });
 
       const developmentEnvironment = await new ProjectManager(config)
         .getDevelopmentEnvironmentForUser(config.projectId);
@@ -68,21 +65,21 @@ class PushCommand extends AbstractAuthenticatedCommand {
   }
 }
 
-PushCommand.description = 'Push layout changes of your current branch to a remote environment';
+PushCommand.description = 'Push layout changes of your current branch to a remote environment.';
 
 PushCommand.flags = {
   environment: flags.string({
     char: 'e',
-    description: 'The remote environment name to push onto',
+    description: 'The remote environment name to push onto.',
   }),
   projectId: flags.string({
-    description: 'The id of the project to work on',
+    description: 'The id of the project to work on.',
   }),
   force: flags.boolean({
-    description: 'Skip push changes confirmation',
+    description: 'Skip push changes confirmation.',
   }),
   help: flags.boolean({
-    description: 'Display usage information',
+    description: 'Display usage information.',
   }),
 };
 
