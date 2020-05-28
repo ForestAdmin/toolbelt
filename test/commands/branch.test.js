@@ -88,8 +88,10 @@ describe('branch', () => {
             getProjectByEnv(),
             postBranchInvalid(),
           ],
+          std: [
+            { err: '❌ This branch already exists.' },
+          ],
           exitCode: 2,
-          exitMessage: '❌ This branch already exists.',
         }));
       });
 
@@ -102,8 +104,10 @@ describe('branch', () => {
             api: [
               getDevelopmentEnvironmentNotFound(),
             ],
+            std: [
+              { err: 'Development environment not found.' },
+            ],
             exitCode: 2,
-            exitMessage: 'Development environment not found.',
           }));
         });
 
@@ -136,9 +140,9 @@ describe('branch', () => {
           ],
           std: [
             { in: 'Y' },
+            { err: "❌ This branch doesn't exist." },
           ],
           exitCode: 2,
-          exitMessage: "❌ This branch doesn't exist.",
         }));
       });
 
@@ -153,9 +157,9 @@ describe('branch', () => {
           ],
           std: [
             { in: 'Y' },
+            { err: '❌ Failed to delete branch.' },
           ],
           exitCode: 2,
-          exitMessage: '❌ Failed to delete branch.',
         }));
       });
 
@@ -216,8 +220,10 @@ describe('branch', () => {
             getProjectByEnv(),
             getBranchInvalidEnvironmentV1(),
           ],
+          std: [
+            { err: '⚠️  This project does not support branches yet. Please migrate your environments from your Project settings first.' },
+          ],
           exitCode: 2,
-          exitMessage: '⚠️  This project does not support branches yet. Please migrate your environments from your Project settings first.',
         }));
       });
 
@@ -230,8 +236,10 @@ describe('branch', () => {
             getProjectByEnv(),
             getBranchInvalidNotDevEnv(),
           ],
+          std: [
+            { err: '⚠️  Your development environment is not properly set up. Please run `forest init` first and retry.' },
+          ],
           exitCode: 2,
-          exitMessage: '⚠️  Your development environment is not properly set up. Please run `forest init` first and retry.',
         }));
       });
 
@@ -244,8 +252,10 @@ describe('branch', () => {
             getProjectByEnv(),
             getBranchInvalidEnvironmentNoRemote(),
           ],
+          std: [
+            { err: '❌ You cannot run branch commands until this project has either a remote or a production environment.' },
+          ],
           exitCode: 2,
-          exitMessage: '❌ You cannot run branch commands until this project has either a remote or a production environment.',
         }));
       });
     });

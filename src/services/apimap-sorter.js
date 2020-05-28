@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const logger = require('./logger');
 
 function ApimapSorter(apimap) {
   function sortArrayOfObjects(array) {
@@ -93,7 +94,7 @@ function ApimapSorter(apimap) {
 
       return apimap;
     } catch (error) {
-      console.warn('An Apimap reordering issue occured:', error);
+      logger.warn('An Apimap reordering issue occured:', error);
       return apimap;
     }
   };

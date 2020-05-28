@@ -24,9 +24,11 @@ describe('schema:apply', () => {
       env: testEnv,
       token: 'any',
       command: () => ApplySchemaCommand.run([]),
+      std: [{
+        err: 'Cannot find your forest environment secret in the environment variable "FOREST_ENV_SECRET".\n'
+      + 'Please set the "FOREST_ENV_SECRET" variable or pass the secret in parameter using --secret.',
+      }],
       exitCode: 2,
-      exitMessage: 'Cannot find your forest environment secret in the environment variable "FOREST_ENV_SECRET".\n'
-        + 'Please set the "FOREST_ENV_SECRET" variable or pass the secret in parameter using --secret.',
     }));
   });
 
@@ -41,8 +43,8 @@ describe('schema:apply', () => {
         env: testEnv2,
         command: () => ApplySchemaCommand.run([]),
         api: [postSchema404()],
+        std: [{ err: 'Cannot find the project related to the environment secret you configured.' }],
         exitCode: 4,
-        exitMessage: 'Cannot find the project related to the environment secret you configured.',
       }));
     });
 
@@ -56,8 +58,8 @@ describe('schema:apply', () => {
         env: testEnv2,
         api: [postSchema503()],
         command: () => ApplySchemaCommand.run([]),
+        std: [{ err: 'Forest is in maintenance for a few minutes. We are upgrading your experience in the forest. We just need a few more minutes to get it right.' }],
         exitCode: 5,
-        exitMessage: 'Forest is in maintenance for a few minutes. We are upgrading your experience in the forest. We just need a few more minutes to get it right.',
       }));
     });
 
@@ -141,7 +143,7 @@ describe('with forest server returning nothing', () => {
     token: 'any',
     api: [postSchema500()],
     command: () => ApplySchemaCommand.run([]),
+    std: [{ err: 'An error occured with the schema sent to Forest. Please contact support@forestadmin.com for further investigations.' }],
     exitCode: 6,
-    exitMessage: 'An error occured with the schema sent to Forest. Please contact support@forestadmin.com for further investigations.',
   }));
 });

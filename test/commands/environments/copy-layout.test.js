@@ -40,8 +40,8 @@ describe('environments:copy-layout', () => {
           postCopyLayout(),
           getJobFailed(),
         ],
+        std: [{ err: 'Oops, something went wrong.' }],
         exitCode: 1,
-        exitMessage: 'Oops, something went wrong.',
       }));
     });
   });
@@ -55,9 +55,8 @@ describe('environments:copy-layout', () => {
         getEnvironmentNotFound(324),
         getEnvironmentValid2(),
       ],
+      std: [{ err: 'Cannot find the target environment 324 on the project 82' }],
       exitCode: 3,
-      // NOTICE: Fails in the CI (due to chalk formatting?)
-      // exitMessage: 'Cannot find the target environment [1m324[22m on the project [1m82[22m.',
     }));
   });
 });

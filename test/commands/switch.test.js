@@ -60,8 +60,10 @@ describe('switch', () => {
             getProjectByEnv(),
             getBranchListValid(),
           ],
+          std: [
+            { err: "❌ This branch doesn't exist." },
+          ],
           exitCode: 2,
-          exitMessage: "❌ This branch doesn't exist.",
         }));
       });
 

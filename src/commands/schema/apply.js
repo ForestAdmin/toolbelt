@@ -5,19 +5,20 @@ const Joi = require('joi');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
 const JobStateChecker = require('../../services/job-state-checker');
+const logger = require('../../services/logger');
 
 class ApplyCommand extends Command {
   async run() {
-    const logError = this.error.bind(this);
+    const oclifExit = this.exit.bind(this);
     const { flags: parsedFlags } = this.parse(ApplyCommand);
     const serializedSchema = this.readSchema();
     const secret = this.getEnvironmentSecret(parsedFlags);
 
     this.log('Sending "./.forestadmin-schema.json"...');
-    const jobId = await new SchemaSender(serializedSchema, secret, logError).perform();
+    const jobId = await new SchemaSender(serializedSchema, secret, oclifExit).perform();
 
     if (jobId) {
-      await new JobStateChecker('Processing schema', logError).check(jobId);
+      await new JobStateChecker('Processing schema', oclifExit).check(jobId);
       this.log('Schema successfully sent to forest.');
     } else {
       this.log('The schema is the same as before, nothing changed.');
@@ -31,18 +32,21 @@ class ApplyCommand extends Command {
     const filename = path.resolve('./.forestadmin-schema.json');
 
     if (!fs.existsSync(filename)) {
-      this.error('Cannot find the file ".forestadmin-schema.json" in this directory. Please be sure to run this command inside your project directory.', { exit: 1 });
+      logger.error('Cannot find the file ".forestadmin-schema.json" in this directory. Please be sure to run this command inside your project directory.');
+      this.exit(1);
     }
 
     let schema;
     try {
       schema = JSON.parse(fs.readFileSync(filename, 'utf8'));
     } catch (error) {
-      this.error(`Invalid json: ${error.message}`, { exit: 1 });
+      logger.error(`Invalid json: ${error.message}`);
+      this.exit(1);
     }
 
     if (!schema) {
-      this.error('The ".forestadmin-schema.json" file is empty', { exit: 1 });
+      logger.error('The ".forestadmin-schema.json" file is empty');
+      this.exit(1);
     }
 
     const { error } = Joi.validate(schema, Joi.object().keys({
@@ -59,7 +63,8 @@ class ApplyCommand extends Command {
     if (error) {
       let message = 'Cannot properly read the ".forestadmin-schema.json" file:\n - ';
       message += error.details.map((detail) => detail.message).join('\n - ');
-      this.error(message, { exit: 20 });
+      logger.error(message);
+      this.exit(20);
     }
 
     return new SchemaSerializer().perform(schema.collections, schema.meta);
@@ -74,7 +79,8 @@ class ApplyCommand extends Command {
       this.log('Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"');
       secret = process.env.FOREST_ENV_SECRET;
     } else {
-      this.error('Cannot find your forest environment secret in the environment variable "FOREST_ENV_SECRET".\nPlease set the "FOREST_ENV_SECRET" variable or pass the secret in parameter using --secret.', { exit: 2 });
+      logger.error('Cannot find your forest environment secret in the environment variable "FOREST_ENV_SECRET".\nPlease set the "FOREST_ENV_SECRET" variable or pass the secret in parameter using --secret.');
+      this.exit(2);
     }
 
     return secret;

@@ -4,6 +4,7 @@ const AbstractAuthenticatedCommand = require('../abstract-authenticated-command'
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
+const logger = require('../services/logger');
 const envConfig = require('../config');
 
 class SwitchCommand extends AbstractAuthenticatedCommand {
@@ -24,7 +25,8 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
-      return this.error(customError);
+      logger.error(customError);
+      return this.exit(2);
     }
   }
 
@@ -36,7 +38,8 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
-      return this.error(customError);
+      logger.error(customError);
+      return this.exit(2);
     }
   }
 
@@ -79,7 +82,8 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
       return this.switchTo(selectedBranch, config.envSecret);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
-      return this.error(customError);
+      logger.error(customError);
+      return this.exit(2);
     }
   }
 }
