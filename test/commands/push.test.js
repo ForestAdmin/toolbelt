@@ -18,6 +18,13 @@ const {
 } = require('../fixtures/api');
 const { testEnv, testEnv2 } = require('../fixtures/env');
 
+const getValidProjectEnvironementAndBranch = (projectId, envSecret) => [
+  getProjectByEnv(),
+  getInAppProjectForDevWorkflow(projectId),
+  getDevelopmentEnvironmentValid(projectId),
+  getBranchListValid(envSecret),
+];
+
 describe('push', () => {
   describe('when the user is logged in', () => {
     describe('when no project was provided', () => {
@@ -63,10 +70,7 @@ describe('push', () => {
         token: 'any',
         command: () => PushCommand.run([]),
         api: [
-          getProjectByEnv(),
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(projectId),
-          getBranchListValid(envSecret),
+          ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           getEnvironmentListValid(projectId),
           pushBranchValid(envSecret),
         ],
@@ -92,10 +96,7 @@ describe('push', () => {
         token: 'any',
         command: () => PushCommand.run(['-e', 'name1']),
         api: [
-          getProjectByEnv(),
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(projectId),
-          getBranchListValid(envSecret),
+          ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           pushBranchValid(envSecret),
         ],
         std: [
@@ -117,10 +118,7 @@ describe('push', () => {
         token: 'any',
         command: () => PushCommand.run(['-e', 'name1', '--force']),
         api: [
-          getProjectByEnv(),
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(projectId),
-          getBranchListValid(envSecret),
+          ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           pushBranchValid(envSecret),
         ],
         std: [
@@ -139,10 +137,7 @@ describe('push', () => {
         token: 'any',
         command: () => PushCommand.run(['-e', 'name1']),
         api: [
-          getProjectByEnv(),
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(projectId),
-          getBranchListValid(envSecret),
+          ...getValidProjectEnvironementAndBranch(projectId, envSecret),
         ],
         std: [
           { in: 'n' },
@@ -196,10 +191,7 @@ describe('push', () => {
         token: 'any',
         command: () => PushCommand.run(['-e', 'notExist', '--force']),
         api: [
-          getProjectByEnv(),
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(projectId),
-          getBranchListValid(envSecret),
+          ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           pushBranchInvalidDestination(envSecret),
         ],
         exitCode: 2,
@@ -215,10 +207,7 @@ describe('push', () => {
         token: 'any',
         command: () => PushCommand.run(['-e', 'noRemote', '--force']),
         api: [
-          getProjectByEnv(),
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(projectId),
-          getBranchListValid(envSecret),
+          ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           pushBranchInvalidType(envSecret),
         ],
         exitCode: 2,
@@ -234,10 +223,7 @@ describe('push', () => {
         token: 'any',
         command: () => PushCommand.run(['-e', 'noRemote', '--force']),
         api: [
-          getProjectByEnv(),
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(projectId),
-          getBranchListValid(envSecret),
+          ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           pushBranchInvalidDestinationBranch(envSecret),
         ],
         exitCode: 2,
@@ -253,10 +239,7 @@ describe('push', () => {
         token: 'any',
         command: () => PushCommand.run([]),
         api: [
-          getProjectByEnv(),
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(projectId),
-          getBranchListValid(envSecret),
+          ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           getNoEnvironmentListValid(projectId),
         ],
         exitCode: 2,
