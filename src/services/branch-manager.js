@@ -47,6 +47,7 @@ function createBranch(branchName, environmentSecret) {
     .send({ branchName: encodeURIComponent(branchName) });
 }
 
+// TODO: DWO EP17 remove destinationEnvironmentName handle
 function pushBranch(destinationEnvironmentName, environmentSecret) {
   const authToken = authenticator.getAuthToken();
 

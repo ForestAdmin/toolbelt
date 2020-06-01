@@ -8,6 +8,7 @@ const withCurrentProject = require('../services/with-current-project');
 const envConfig = require('../config');
 
 class PushCommand extends AbstractAuthenticatedCommand {
+  // TODO: DWO EP17 probably update this function to handle environment selection
   static async askForEnvironment(config) {
     const environments = await new EnvironmentManager(config).listEnvironments();
     const remoteEnvironments = environments.filter((environment) => environment.type === 'remote');
@@ -45,6 +46,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
         throw new Error('No current branch.');
       }
 
+      // TODO: DWO EP17 remove destination environemnt handle
       if (!config.environment) {
         config.environment = await PushCommand.askForEnvironment(config);
       }
@@ -71,6 +73,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
 PushCommand.description = 'Push layout changes of your current branch to a remote environment.';
 
 PushCommand.flags = {
+  // TODO: DWO EP17 remove environment option
   environment: flags.string({
     char: 'e',
     description: 'The remote environment name to push onto.',
