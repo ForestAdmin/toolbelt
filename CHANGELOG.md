@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/ForestAdmin/toolbelt/compare/v1.5.0...v1.5.1) (2020-06-01)
+
+
+### Bug Fixes
+
+* **commands:** make each commands run as expected ([0531c08](https://github.com/ForestAdmin/toolbelt/commit/0531c08c0fdc8d7f17b522fcd379d1577855c7da))
+
 # [1.5.0](https://github.com/ForestAdmin/toolbelt/compare/v1.4.2...v1.5.0) (2020-06-01)
 
 
