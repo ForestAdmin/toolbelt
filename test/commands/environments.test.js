@@ -31,8 +31,8 @@ describe('environments', () => {
       ...enter,
       { out: 'ENVIRONMENTS' },
       { out: 'ID        NAME                URL                                TYPE' },
-      { out: '3         name1               http://localhost:1                 type1' },
-      { out: '4         name2               http://localhost:2                 type2' },
+      { out: '3         name1               http://localhost:1                 remote' },
+      { out: '4         name2               http://localhost:2                 production' },
     ],
   }));
 });
