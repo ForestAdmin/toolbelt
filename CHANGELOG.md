@@ -5,19 +5,12 @@
 
 * **commands:** make each commands run as expected ([0531c08](https://github.com/ForestAdmin/toolbelt/commit/0531c08c0fdc8d7f17b522fcd379d1577855c7da))
 
-# [1.5.0](https://github.com/ForestAdmin/toolbelt/compare/v1.4.2...v1.5.0) (2020-06-01)
+# [1.5.0](https://github.com/ForestAdmin/toolbelt/compare/v1.4.1...v1.5.0) (2020-06-01)
 
 
 ### Features
 
 * **command:** add new push branch command ([#78](https://github.com/ForestAdmin/toolbelt/issues/78)) ([f255fba](https://github.com/ForestAdmin/toolbelt/commit/f255fba67bf8d4b13258d411b82edf5fff92b61e))
-
-## [1.4.2](https://github.com/ForestAdmin/toolbelt/compare/v1.4.1...v1.4.2) (2020-06-01)
-
-
-### Bug Fixes
-
-* **commands:** make each commands run as expected ([#90](https://github.com/ForestAdmin/toolbelt/issues/90)) ([66ad9a8](https://github.com/ForestAdmin/toolbelt/commit/66ad9a8d12facb37b2e6ddae2021ae5cbfc976cd))
 
 ## [1.4.1](https://github.com/ForestAdmin/toolbelt/compare/v1.4.0...v1.4.1) (2020-05-28)
 
