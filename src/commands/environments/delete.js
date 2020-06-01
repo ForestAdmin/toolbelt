@@ -8,7 +8,6 @@ const envConfig = require('../../config');
 
 class DeleteCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
-    const oclifExit = this.exit.bind(this);
     const parsed = this.parse(DeleteCommand);
     const config = { ...envConfig, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
@@ -28,12 +27,13 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
       }
 
       if (!answers || answers.confirm === environment.name) {
-        const deleteEnvironment = await manager.deleteEnvironment(config.environmentId, oclifExit);
-        if (deleteEnvironment) {
+        try {
+          await manager.deleteEnvironment(config.environmentId);
           return this.log(`Environment ${chalk.red(environment.name)} successfully deleted.`);
+        } catch (error) {
+          logger.error('Oops, something went wrong.');
+          return this.exit(1);
         }
-        logger.error('Oops, something went wrong.');
-        return this.exit(1);
       }
       logger.error(`Confirmation did not match ${chalk.red(environment.name)}. Aborted.`);
       return this.exit(1);

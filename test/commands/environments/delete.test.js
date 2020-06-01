@@ -3,15 +3,14 @@ const {
   getEnvironmentNotFound,
   getEnvironmentValid,
   deleteEnvironment,
-  getJob,
-  getJobFailed,
+  deleteEnvironmentFailure,
 } = require('../../fixtures/api');
 const testCli = require('./../test-cli');
 const DeleteCommand = require('../../../src/commands/environments/delete');
 
 describe('environments:delete', () => {
   describe('on an existing environment', () => {
-    describe('on a completed job', () => {
+    describe('on a succcesful removal', () => {
       it('should display environment deleted', () => testCli({
         env: testEnv,
         token: 'any',
@@ -19,7 +18,6 @@ describe('environments:delete', () => {
         api: [
           getEnvironmentValid(),
           deleteEnvironment(),
-          getJob(),
         ],
         std: [
           { out: 'Environment Staging successfully deleted.' },
@@ -27,15 +25,14 @@ describe('environments:delete', () => {
       }));
     });
 
-    describe('on a failed job', () => {
+    describe('on a failed removal', () => {
       it('should exit with status 1', () => testCli({
         env: testEnv,
         token: 'any',
         command: () => DeleteCommand.run(['324', '--force']),
         api: [
           getEnvironmentValid(),
-          deleteEnvironment(),
-          getJobFailed(),
+          deleteEnvironmentFailure(),
         ],
         exitCode: 1,
       }));
