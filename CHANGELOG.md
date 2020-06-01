@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/ForestAdmin/toolbelt/compare/v1.4.2...v1.5.0) (2020-06-01)
+
+
+### Features
+
+* **command:** add new push branch command ([#78](https://github.com/ForestAdmin/toolbelt/issues/78)) ([f255fba](https://github.com/ForestAdmin/toolbelt/commit/f255fba67bf8d4b13258d411b82edf5fff92b61e))
+
 ## [1.4.2](https://github.com/ForestAdmin/toolbelt/compare/v1.4.1...v1.4.2) (2020-06-01)
 
 
