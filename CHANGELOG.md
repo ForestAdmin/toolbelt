@@ -1,3 +1,10 @@
+## [1.4.2](https://github.com/ForestAdmin/toolbelt/compare/v1.4.1...v1.4.2) (2020-06-01)
+
+
+### Bug Fixes
+
+* **commands:** make each commands run as expected ([#90](https://github.com/ForestAdmin/toolbelt/issues/90)) ([66ad9a8](https://github.com/ForestAdmin/toolbelt/commit/66ad9a8d12facb37b2e6ddae2021ae5cbfc976cd))
+
 ## [1.4.1](https://github.com/ForestAdmin/toolbelt/compare/v1.4.0...v1.4.1) (2020-05-28)
 
 
