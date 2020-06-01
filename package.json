@@ -92,6 +92,8 @@
   "repository": "ForestAdmin/toolbelt",
   "scripts": {
     "lint": "./node_modules/eslint/bin/eslint.js src test",
+    "postpack": "rm -f oclif.manifest.json",
+    "prepack": "oclif-dev manifest",
     "readme:update-coverage": "yarn test:coverage && node ./scripts/update-coverage.js",
     "test": "jest",
     "test:coverage": "jest --coverage"
