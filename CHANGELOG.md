@@ -1,3 +1,10 @@
+## [1.5.2](https://github.com/ForestAdmin/toolbelt/compare/v1.5.1...v1.5.2) (2020-06-02)
+
+
+### Bug Fixes
+
+* remove "Cannot read property 'dim' of undefined" message when command is not found ([#89](https://github.com/ForestAdmin/toolbelt/issues/89)) ([e9a85b6](https://github.com/ForestAdmin/toolbelt/commit/e9a85b6789de7504fddb3adcd95e13b7c3e628c0))
+
 ## [1.5.1](https://github.com/ForestAdmin/toolbelt/compare/v1.5.0...v1.5.1) (2020-06-01)
 
 
