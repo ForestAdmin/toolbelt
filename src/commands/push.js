@@ -22,7 +22,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
       }]);
       return response.environment;
     }
-    throw new Error('No production/remote environment.');
+    throw new Error('No remote environment.');
   }
 
   async runIfAuthenticated() {
