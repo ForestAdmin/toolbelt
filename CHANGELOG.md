@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/ForestAdmin/toolbelt/compare/v1.5.2...v1.5.3) (2020-06-19)
+
+
+### Bug Fixes
+
+* **commands:** update misleading error message for push command ([#92](https://github.com/ForestAdmin/toolbelt/issues/92)) ([4c406c7](https://github.com/ForestAdmin/toolbelt/commit/4c406c72ee69dd7380af57055a2ed678cf1de8f3))
+
 ## [1.5.2](https://github.com/ForestAdmin/toolbelt/compare/v1.5.1...v1.5.2) (2020-06-02)
 
 
