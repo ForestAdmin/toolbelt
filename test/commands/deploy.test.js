@@ -24,7 +24,7 @@ function inOutConfirmDeploy(environmentName) {
 
 function inOutSelectEnvironment(environmentName) {
   return [
-    { out: 'Select the environment containing the layout changes you want to deploy to production' },
+    { out: 'Select the environment containing the layout changes you want to deploy' },
     { out: environmentName },
     ...enter,
   ];
