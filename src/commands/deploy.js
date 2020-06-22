@@ -3,7 +3,8 @@ const inquirer = require('inquirer');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const EnvironmentManager = require('../services/environment-manager');
 const ProjectManager = require('../services/project-manager');
-const { deploy, handleBranchError } = require('../services/branch-manager');
+const { handleBranchError } = require('../services/branch-manager');
+const { deploy } = require('../services/layout-manager');
 const withCurrentProject = require('../services/with-current-project');
 const envConfig = require('../config');
 
