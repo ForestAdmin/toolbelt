@@ -6,6 +6,7 @@ const {
   getEnvironmentListValid,
   getProjectByEnv,
   getProjectListValid,
+  deployValid,
 } = require('../fixtures/api');
 const { testEnv, testEnv2 } = require('../fixtures/env');
 
@@ -33,6 +34,7 @@ function inOutSelectEnvironment(environmentName) {
 describe('deploy', () => {
   describe('when the user is logged in', () => {
     describe('when no project was provided', () => {
+      const validEnvSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
       const environmentName = 'name1';
       it('should display the list of projects', () => testCli({
         env: testEnv,
@@ -42,6 +44,7 @@ describe('deploy', () => {
           getProjectListValid(),
           getDevelopmentEnvironmentValid(1),
           getEnvironmentListValid(1),
+          deployValid(validEnvSecret),
         ],
         std: [
           { out: 'Select your project' },
@@ -64,6 +67,7 @@ describe('deploy', () => {
         api: [
           getProjectByEnv(),
           getEnvironmentListValid(projectId),
+          deployValid(),
         ],
         std: [
           ...inOutSelectEnvironment(environmentName),
@@ -82,6 +86,7 @@ describe('deploy', () => {
         api: [
           getProjectByEnv(),
           getEnvironmentListValid(projectId),
+          deployValid(),
         ],
         std: inOutConfirmDeploy(environmentName),
       }));
@@ -97,6 +102,7 @@ describe('deploy', () => {
         api: [
           getProjectByEnv(),
           getEnvironmentListValid(projectId),
+          deployValid(),
         ],
         std: [inOutDeploySuccessMessage(environmentName)],
       }));
