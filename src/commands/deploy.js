@@ -4,7 +4,6 @@ const AbstractAuthenticatedCommand = require('../abstract-authenticated-command'
 const EnvironmentManager = require('../services/environment-manager');
 const ProjectManager = require('../services/project-manager');
 const { handleBranchError } = require('../services/branch-manager');
-const { deploy } = require('../services/layout-manager');
 const withCurrentProject = require('../services/with-current-project');
 const envConfig = require('../config');
 
@@ -94,7 +93,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
       if (environment.type === 'production') throw new Error('❌ You cannot deploy production onto itself.');
       if (!config.force && !(await DeployCommand.confirm(environment))) return null;
 
-      await deploy(environment, config.envSecret);
+      await new EnvironmentManager(config).deploy(environment);
 
       return this.log(`✅ Deployed ${environment.name} layout changes to production.`);
     } catch (error) {
