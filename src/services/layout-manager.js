@@ -11,7 +11,7 @@ function deploy({ id }, environmentSecret) {
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .post(`${serverHost()}/api/layout/deploy`)
+    .post(`${serverHost()}/api/environments/deploy`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send({ environmentId: id });

@@ -374,7 +374,7 @@ module.exports = {
 
   deployValid: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', envSecret)
-    .post('/api/layout/deploy')
+    .post('/api/environments/deploy')
     .reply(200, {}),
 
   deleteBranchValid: (branchName = 'random-branch') => nock('http://localhost:3001')
