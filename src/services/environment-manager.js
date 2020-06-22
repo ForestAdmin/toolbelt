@@ -104,6 +104,20 @@ function EnvironmentManager(config) {
 
     return jobStateChecker.check(jobId, config.projectId);
   };
+
+  /**
+   * Deploy layout changes of an environment to production.
+   * @param {Number} environment.id - The environment id that contains the layout changes to deploy.
+   */
+  this.deploy = ({ id }) => {
+    const authToken = authenticator.getAuthToken();
+
+    return agent
+      .post(`${serverHost()}/api/environments/deploy`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('forest-secret-key', `${config.envSecret}`)
+      .send({ environmentId: id });
+  };
 }
 
 module.exports = EnvironmentManager;
