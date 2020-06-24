@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/ForestAdmin/toolbelt/compare/v1.5.3...v1.6.0) (2020-06-24)
+
+
+### Features
+
+* **command:** add deploy command ([#93](https://github.com/ForestAdmin/toolbelt/issues/93)) ([a5fd0cf](https://github.com/ForestAdmin/toolbelt/commit/a5fd0cfe769fb95656176b1ad492f5424a9cc726))
+
 ## [1.5.3](https://github.com/ForestAdmin/toolbelt/compare/v1.5.2...v1.5.3) (2020-06-19)
 
 
