@@ -11,3 +11,4 @@ test/services/tokens
 # IDE
 /*.iml
 .idea
+/.vscode
