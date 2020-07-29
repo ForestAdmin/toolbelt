@@ -1,21 +1,29 @@
-const { Command, flags } = require('@oclif/command');
+const { flags } = require('@oclif/command');
 const fs = require('fs');
 const path = require('path');
 const Joi = require('joi');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
 const JobStateChecker = require('../../services/job-state-checker');
+const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const logger = require('../../services/logger');
+const authenticator = require('../../services/authenticator');
 
-class ApplyCommand extends Command {
-  async run() {
+class ApplyCommand extends AbstractAuthenticatedCommand {
+  async runIfAuthenticated() {
     const oclifExit = this.exit.bind(this);
     const { flags: parsedFlags } = this.parse(ApplyCommand);
     const serializedSchema = this.readSchema();
     const secret = this.getEnvironmentSecret(parsedFlags);
+    const authToken = authenticator.getAuthToken();
 
     this.log('Sending "./.forestadmin-schema.json"...');
-    const jobId = await new SchemaSender(serializedSchema, secret, oclifExit).perform();
+    const jobId = await new SchemaSender(
+      serializedSchema,
+      secret,
+      oclifExit,
+      authToken,
+    ).perform();
 
     if (jobId) {
       await new JobStateChecker('Processing schema', oclifExit).check(jobId);

@@ -3,11 +3,23 @@ const agent = require('superagent-promise')(require('superagent'), P);
 const config = require('../config');
 const logger = require('../services/logger');
 
-function SchemaSender(serializedSchema, secret, oclifExit) {
+/**
+ * @class
+ * @param {string} serializedSchema
+ * @param {string} secret
+ * @param {(code: number) => void} oclifExit
+ * @param {string} authToken
+ */
+function SchemaSender(serializedSchema, secret, oclifExit, authToken) {
+  /**
+   * @function
+   * @returns {Promise<number | undefined>}
+   */
   this.perform = () =>
     agent
       .post(`${config.serverHost()}/forest/apimaps`)
       .set('forest-secret-key', secret)
+      .set('Authorization', `Bearer ${authToken}`)
       .send(serializedSchema)
       .then(({ body }) => {
         if (body && body.meta) {
