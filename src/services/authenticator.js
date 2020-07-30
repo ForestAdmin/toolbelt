@@ -8,7 +8,14 @@ const api = require('./api');
 const logger = require('./logger');
 const { ERROR_UNEXPECTED } = require('../utils/messages');
 
+/**
+ * @class
+ */
 function Authenticator() {
+  /**
+   * @param {string?} path
+   * @returns {string}
+   */
   this.getAuthToken = (path = process.env.TOKEN_PATH || os.homedir()) => {
     const forestrcToken = this.getVerifiedToken(`${path}/.forestrc`);
     return forestrcToken || this.getVerifiedToken(`${path}/.lumberrc`);
