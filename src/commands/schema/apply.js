@@ -15,14 +15,14 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
     const { flags: parsedFlags } = this.parse(ApplyCommand);
     const serializedSchema = this.readSchema();
     const secret = this.getEnvironmentSecret(parsedFlags);
-    const authToken = authenticator.getAuthToken();
+    const authenticationToken = authenticator.getAuthToken();
 
     this.log('Sending "./.forestadmin-schema.json"...');
     const jobId = await new SchemaSender(
       serializedSchema,
       secret,
+      authenticationToken,
       oclifExit,
-      authToken,
     ).perform();
 
     if (jobId) {

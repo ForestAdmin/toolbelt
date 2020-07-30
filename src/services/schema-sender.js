@@ -7,10 +7,10 @@ const logger = require('../services/logger');
  * @class
  * @param {string} serializedSchema
  * @param {string} secret
+ * @param {string} authenticationToken
  * @param {(code: number) => void} oclifExit
- * @param {string} authToken
  */
-function SchemaSender(serializedSchema, secret, oclifExit, authToken) {
+function SchemaSender(serializedSchema, secret, authenticationToken, oclifExit) {
   /**
    * @function
    * @returns {Promise<number | undefined>}
@@ -19,7 +19,7 @@ function SchemaSender(serializedSchema, secret, oclifExit, authToken) {
     agent
       .post(`${config.serverHost()}/forest/apimaps`)
       .set('forest-secret-key', secret)
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Authorization', `Bearer ${authenticationToken}`)
       .send(serializedSchema)
       .then(({ body }) => {
         if (body && body.meta) {
