@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/ForestAdmin/toolbelt/compare/v1.6.0...v1.6.1) (2020-07-30)
+
+
+### Bug Fixes
+
+* **vulnerabilities:** bump 2 dependencies of dependencies ([#96](https://github.com/ForestAdmin/toolbelt/issues/96)) ([fb17fbe](https://github.com/ForestAdmin/toolbelt/commit/fb17fbe8afa9de9b6478343869e2b84bb2d559d8))
+
 # [1.6.0](https://github.com/ForestAdmin/toolbelt/compare/v1.5.3...v1.6.0) (2020-06-24)
 
 
