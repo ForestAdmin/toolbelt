@@ -37,6 +37,31 @@ function postSchemaMatch(body) {
 }
 
 describe('schema:apply', () => {
+  describe('when the user is not logged in', () => {
+    it('should ask for the login/password and then send the schema', () => testCli({
+      file: {
+        chdir: '/tmp',
+        name: './.forestadmin-schema.json',
+        content: forestadminSchema,
+      },
+      env: testEnv2,
+      api: [
+        loginValid(),
+        postSchema(postSchemaMatch),
+      ],
+      command: () => ApplySchemaCommand.run([]),
+      std: [
+        ...loginPasswordDialog,
+        { out: 'Reading "./.forestadmin-schema.json"...' },
+        {
+          out: 'Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"',
+        },
+        { out: 'Sending "./.forestadmin-schema.json"...' },
+        { out: 'The schema is the same as before, nothing changed.' },
+      ],
+    }));
+  });
+
   describe('when the user is logged in', () => {
     describe('with no environment secret', () => {
       it('should exist with code 2', () => testCli({
@@ -135,31 +160,6 @@ describe('schema:apply', () => {
         });
       });
     });
-  });
-
-  describe('when the user is not logged in', () => {
-    it('should as for the login/password and then send the schema', () => testCli({
-      file: {
-        chdir: '/tmp',
-        name: './.forestadmin-schema.json',
-        content: forestadminSchema,
-      },
-      env: testEnv2,
-      api: [
-        loginValid(),
-        postSchema(postSchemaMatch),
-      ],
-      command: () => ApplySchemaCommand.run([]),
-      std: [
-        ...loginPasswordDialog,
-        { out: 'Reading "./.forestadmin-schema.json"...' },
-        {
-          out: 'Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"',
-        },
-        { out: 'Sending "./.forestadmin-schema.json"...' },
-        { out: 'The schema is the same as before, nothing changed.' },
-      ],
-    }));
   });
 });
 
