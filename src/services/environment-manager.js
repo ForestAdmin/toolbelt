@@ -116,6 +116,7 @@ function EnvironmentManager(config) {
       .post(`${serverHost()}/api/environments/deploy`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-secret-key', `${config.envSecret}`)
+      .set('forest-environment-id', `${id}`)
       .send({ environmentId: id });
   };
 }
