@@ -44,7 +44,7 @@ describe('deploy', () => {
           getProjectListValid(),
           getDevelopmentEnvironmentValid(1),
           getEnvironmentListValid(1),
-          deployValid(validEnvSecret),
+          deployValid(1001, validEnvSecret),
         ],
         std: [
           { out: 'Select your project' },
@@ -67,7 +67,7 @@ describe('deploy', () => {
         api: [
           getProjectByEnv(),
           getEnvironmentListValid(projectId),
-          deployValid(),
+          deployValid(1001),
         ],
         std: [
           ...inOutSelectEnvironment(environmentName),
@@ -86,7 +86,7 @@ describe('deploy', () => {
         api: [
           getProjectByEnv(),
           getEnvironmentListValid(projectId),
-          deployValid(),
+          deployValid(1001),
         ],
         std: inOutConfirmDeploy(environmentName),
       }));
@@ -102,7 +102,7 @@ describe('deploy', () => {
         api: [
           getProjectByEnv(),
           getEnvironmentListValid(projectId),
-          deployValid(),
+          deployValid(1001),
         ],
         std: [inOutDeploySuccessMessage(environmentName)],
       }));
