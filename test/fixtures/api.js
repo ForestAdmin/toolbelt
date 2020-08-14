@@ -335,7 +335,7 @@ module.exports = {
 
   pushBranchValid: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', envSecret)
-    .put('/api/branches/push')
+    .post('/api/branches/push')
     .reply(200, {
       data: {
         type: 'branches',
@@ -347,7 +347,7 @@ module.exports = {
 
   pushBranchInvalidDestination: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', envSecret)
-    .put('/api/branches/push')
+    .post('/api/branches/push')
     .reply(404, JSON.stringify({
       errors: [{
         detail: 'Environment not found.',
@@ -356,7 +356,7 @@ module.exports = {
 
   pushBranchInvalidType: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', envSecret)
-    .put('/api/branches/push')
+    .post('/api/branches/push')
     .reply(400, JSON.stringify({
       errors: [{
         detail: 'Environment type should be remote.',
@@ -365,7 +365,7 @@ module.exports = {
 
   pushBranchInvalidDestinationBranch: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', envSecret)
-    .put('/api/branches/push')
+    .post('/api/branches/push')
     .reply(404, JSON.stringify({
       errors: [{
         detail: 'No destination branch.',

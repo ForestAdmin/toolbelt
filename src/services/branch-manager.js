@@ -53,7 +53,7 @@ function pushBranch(destinationEnvironmentName, environmentSecret) {
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .put(`${serverHost()}/api/branches/push`)
+    .post(`${serverHost()}/api/branches/push`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send({ destinationEnvironmentName: encodeURIComponent(destinationEnvironmentName) });
