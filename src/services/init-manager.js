@@ -2,6 +2,7 @@ const inquirer = require('inquirer');
 const chalk = require('chalk');
 const clipboardy = require('clipboardy');
 const fs = require('fs');
+const { EOL } = require('os');
 const logger = require('../services/logger');
 const { handleError } = require('../utils/error');
 const { generateKey } = require('../utils/key-generator');
@@ -112,6 +113,7 @@ function getContentToAddInDotenvFile(environmentVariables) {
   }
   contentToAddInDotenvFile += `FOREST_AUTH_SECRET=${authSecret}\n`;
   contentToAddInDotenvFile += `FOREST_ENV_SECRET=${environmentVariables.forestEnvSecret}`;
+  contentToAddInDotenvFile += EOL;
   return contentToAddInDotenvFile;
 }
 
