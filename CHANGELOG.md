@@ -1,3 +1,10 @@
+## [1.6.2](https://github.com/ForestAdmin/toolbelt/compare/v1.6.1...v1.6.2) (2020-08-17)
+
+
+### Bug Fixes
+
+* add missing `forest-environment-id` header to deploy command API call ([#103](https://github.com/ForestAdmin/toolbelt/issues/103)) ([902d0e6](https://github.com/ForestAdmin/toolbelt/commit/902d0e6e4e815aef17a4cb2ae0a0051dcfcd4af1))
+
 ## [1.6.1](https://github.com/ForestAdmin/toolbelt/compare/v1.6.0...v1.6.1) (2020-07-30)
 
 
