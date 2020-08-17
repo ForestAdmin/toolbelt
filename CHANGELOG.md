@@ -1,3 +1,11 @@
+## [1.6.3](https://github.com/ForestAdmin/toolbelt/compare/v1.6.2...v1.6.3) (2020-08-17)
+
+
+### Bug Fixes
+
+* **commands:** add newline at end of generated `.env` file ([#104](https://github.com/ForestAdmin/toolbelt/issues/104)) ([8dc6ec7](https://github.com/ForestAdmin/toolbelt/commit/8dc6ec75a324b4e48e7e87986954472a7e5d3089))
+* **commands:** remove Slack reference in error messages ([#105](https://github.com/ForestAdmin/toolbelt/issues/105)) ([d2b1d6c](https://github.com/ForestAdmin/toolbelt/commit/d2b1d6ca703c589c9c3df210f64ca0c19ef98878))
+
 ## [1.6.2](https://github.com/ForestAdmin/toolbelt/compare/v1.6.1...v1.6.2) (2020-08-17)
 
 
