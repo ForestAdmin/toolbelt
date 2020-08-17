@@ -372,9 +372,9 @@ module.exports = {
       }],
     })),
 
-  deployValid: (environmentId, envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+  deployValid: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', envSecret)
-    .matchHeader('forest-environment-id', environmentId)
+    // .matchHeader('forest-environment-id', environmentId)
     .post('/api/environments/deploy')
     .reply(200, {}),
 
@@ -419,7 +419,7 @@ module.exports = {
   getDevelopmentEnvironmentValid: (projectId = 1) => nock('http://localhost:3001')
     .get(`/api/projects/${projectId}/development-environment-for-user`)
     .reply(200, EnvironmentSerializer.serialize({
-      id: 1001,
+      // id: 1001,
       name: 'Test',
       type: 'development',
       apiEndpoint: 'https://test.forestadmin.com',
