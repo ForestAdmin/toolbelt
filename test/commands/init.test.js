@@ -3,6 +3,7 @@ const InitCommand = require('../../src/commands/init');
 const {
   loginValid,
   getProjectByEnv,
+  getProjectByEnvIncludeLegacy,
   getInAppProjectForDevWorkflow,
   getDevelopmentEnvironmentValid,
   getProjectListEmpty,
@@ -47,7 +48,7 @@ describe('init command', () => {
         env: testEnv2,
         token: 'any',
         api: [
-          getProjectByEnv(),
+          getProjectByEnvIncludeLegacy(),
           getInAppProjectForDevWorkflow(82),
           getDevelopmentEnvironmentValid(82),
         ],
@@ -68,7 +69,7 @@ describe('init command', () => {
         env: testEnv2,
         token: 'any',
         api: [
-          getProjectByEnv(),
+          getProjectByEnvIncludeLegacy(),
           getInAppProjectForDevWorkflow(82),
           getDevelopmentEnvironmentValid(82),
         ],
@@ -161,7 +162,7 @@ describe('init command', () => {
         env: testEnv2,
         token: 'any',
         api: [
-          getProjectByEnv(),
+          getProjectByEnvIncludeLegacy(),
           getProjectForDevWorkflowUnallowed(82),
         ],
         std: [
@@ -179,7 +180,7 @@ describe('init command', () => {
         env: testEnv2,
         token: 'any',
         api: [
-          getProjectByEnv(),
+          getProjectByEnvIncludeLegacy(),
           getV1ProjectForDevWorkflow(82),
         ],
         std: [
@@ -197,7 +198,7 @@ describe('init command', () => {
         env: testEnv2,
         token: 'any',
         api: [
-          getProjectByEnv(),
+          getProjectByEnvIncludeLegacy(),
           getNoProdProjectForDevWorkflow(82),
         ],
         std: [
@@ -236,7 +237,7 @@ describe('init command', () => {
         env: testEnv2,
         token: 'any',
         api: [
-          getProjectByEnv(),
+          getProjectByEnvIncludeLegacy(),
           getInAppProjectForDevWorkflow(82),
           getDevelopmentEnvironmentValid(82),
         ],
@@ -261,7 +262,7 @@ describe('init command', () => {
           env: testEnvWithDatabaseUrl,
           token: 'any',
           api: [
-            getProjectByEnv(),
+            getProjectByEnvIncludeLegacy(),
             getLumberProjectForDevWorkflow(82),
             getDevelopmentEnvironmentValid(82),
           ],
@@ -291,7 +292,7 @@ describe('init command', () => {
             env: testEnv2,
             token: 'any',
             api: [
-              getProjectByEnv(),
+              getProjectByEnvIncludeLegacy(),
               getLumberProjectForDevWorkflow(82),
               getDevelopmentEnvironmentValid(82),
             ],
@@ -323,7 +324,7 @@ describe('init command', () => {
             env: testEnv2,
             token: 'any',
             api: [
-              getProjectByEnv(),
+              getProjectByEnvIncludeLegacy(),
               getLumberProjectForDevWorkflow(82),
               getDevelopmentEnvironmentValid(82),
             ],
@@ -352,7 +353,7 @@ describe('init command', () => {
         env: testEnvWithDatabaseUrl,
         token: 'any',
         api: [
-          getProjectByEnv(),
+          getProjectByEnvIncludeLegacy(),
           getInAppProjectForDevWorkflow(82),
           getDevelopmentEnvironmentValid(82),
         ],
@@ -373,7 +374,7 @@ describe('init command', () => {
           env: testEnvWithDatabaseUrl,
           token: 'any',
           api: [
-            getProjectByEnv(),
+            getProjectByEnvIncludeLegacy(),
             getInAppProjectForDevWorkflow(82),
             getDevelopmentEnvironmentNotFound(82),
             createDevelopmentEnvironment(82),
@@ -405,7 +406,7 @@ describe('init command', () => {
         env: testEnvWithDatabaseUrl,
         token: 'any',
         api: [
-          getProjectByEnv(),
+          getProjectByEnvIncludeLegacy(),
           getLumberProjectForDevWorkflow(82),
           getDevelopmentEnvironmentNotFound(82),
           createDevelopmentEnvironment(82),
@@ -430,8 +431,9 @@ describe('init command', () => {
         command: () => InitCommand.run([]),
         env: testEnvWithDatabaseUrl,
         token: 'any',
+        print: true,
         api: [
-          getProjectByEnv(),
+          getProjectByEnvIncludeLegacy(),
           getLumberProjectForDevWorkflow(82),
           getDevelopmentEnvironmentNotFound(82),
           createDevelopmentEnvironment(82),
