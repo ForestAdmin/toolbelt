@@ -2,7 +2,6 @@ const testCli = require('./test-cli');
 const InitCommand = require('../../src/commands/init');
 const {
   loginValid,
-  getProjectByEnv,
   getProjectByEnvIncludeLegacy,
   getInAppProjectForDevWorkflow,
   getDevelopmentEnvironmentValid,
@@ -28,7 +27,7 @@ describe('init command', () => {
         env: testEnv2,
         api: [
           loginValid(),
-          getProjectByEnv(),
+          getProjectByEnvIncludeLegacy(),
           getInAppProjectForDevWorkflow(82),
           getDevelopmentEnvironmentValid(82),
         ],
