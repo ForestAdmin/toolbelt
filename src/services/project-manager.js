@@ -33,11 +33,12 @@ function ProjectManager(config) {
       .then((response) => deserialize(response));
   };
 
-  this.getByEnvSecret = async (envSecret) => {
+  this.getByEnvSecret = async (envSecret, includeLegacy = false) => {
     const authToken = authenticator.getAuthToken();
+    const includeLegacyParameter = includeLegacy ? '&includeLegacy' : '';
 
     return agent
-      .get(`${serverHost()}/api/projects?envSecret`)
+      .get(`${serverHost()}/api/projects?envSecret${includeLegacyParameter}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-secret-key', envSecret)
       .send()

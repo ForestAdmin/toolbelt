@@ -12,7 +12,8 @@ module.exports = async function withCurrentProject(config) {
 
   const envSecret = process.env.FOREST_ENV_SECRET;
   if (envSecret) {
-    const projectFromEnv = await projectManager.getByEnvSecret(envSecret);
+    const { includeLegacy } = config;
+    const projectFromEnv = await projectManager.getByEnvSecret(envSecret, includeLegacy);
     if (projectFromEnv) {
       return { ...config, projectId: projectFromEnv.id };
     }
