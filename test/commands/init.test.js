@@ -254,7 +254,7 @@ describe('init command', () => {
         it('should continue executing', () => testCli({
           file: {
             chdir: '/tmp',
-            name: './.env',
+            name: '.env',
             content: 'SOMETHING=1',
           },
           command: () => InitCommand.run([]),
@@ -284,7 +284,7 @@ describe('init command', () => {
           it('should display a database detail input and prompt the database credentials as env variables', () => testCli({
             file: {
               chdir: '/tmp',
-              name: './.env',
+              name: '.env',
               content: 'SOMETHING=1',
             },
             command: () => InitCommand.run([]),
@@ -316,7 +316,7 @@ describe('init command', () => {
           it('should go to the backend endpoint setup without database credentials as env variables', () => testCli({
             file: {
               chdir: '/tmp',
-              name: './.env',
+              name: '.env',
               content: 'SOMETHING=1',
             },
             command: () => InitCommand.run([]),
@@ -398,7 +398,7 @@ describe('init command', () => {
       it('should copy the env variable in the .env file', () => testCli({
         file: {
           chdir: '/tmp',
-          name: './.env',
+          name: '.env',
           content: 'SOMETHING=1',
         },
         command: () => InitCommand.run([]),

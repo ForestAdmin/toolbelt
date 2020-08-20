@@ -41,7 +41,7 @@ describe('schema:apply', () => {
     it('should ask for the login/password and then send the schema', () => testCli({
       file: {
         chdir: '/tmp',
-        name: './.forestadmin-schema.json',
+        name: '.forestadmin-schema.json',
         content: forestadminSchema,
       },
       env: testEnv2,
@@ -67,7 +67,7 @@ describe('schema:apply', () => {
       it('should exist with code 2', () => testCli({
         file: {
           chdir: '/tmp',
-          name: './.forestadmin-schema.json',
+          name: '.forestadmin-schema.json',
           content: forestadminSchema,
         },
         env: testEnv,
@@ -86,7 +86,7 @@ describe('schema:apply', () => {
         it('should exit with exit code 4', () => testCli({
           file: {
             chdir: '/tmp',
-            name: './.forestadmin-schema.json',
+            name: '.forestadmin-schema.json',
             content: forestadminSchema,
           },
           token: 'any',
@@ -102,7 +102,7 @@ describe('schema:apply', () => {
         it('should exit with exit code 5', () => testCli({
           file: {
             chdir: '/tmp',
-            name: './.forestadmin-schema.json',
+            name: '.forestadmin-schema.json',
             content: forestadminSchema,
           },
           env: testEnv2,
@@ -119,7 +119,7 @@ describe('schema:apply', () => {
           it('should send the schema', () => testCli({
             file: {
               chdir: '/tmp',
-              name: './.forestadmin-schema.json',
+              name: '.forestadmin-schema.json',
               content: forestadminSchema,
             },
             env: testEnv2,
@@ -141,7 +141,7 @@ describe('schema:apply', () => {
           it('should send the schema', () => testCli({
             file: {
               chdir: '/tmp',
-              name: './.forestadmin-schema.json',
+              name: '.forestadmin-schema.json',
               content: forestadminSchemaSnake,
             },
             env: testEnv2,
@@ -167,7 +167,7 @@ describe('with forest server returning nothing', () => {
   it('should exit with exit code 6', () => testCli({
     file: {
       chdir: '/tmp',
-      name: './.forestadmin-schema.json',
+      name: '.forestadmin-schema.json',
       content: forestadminSchema,
     },
     env: testEnv2,
