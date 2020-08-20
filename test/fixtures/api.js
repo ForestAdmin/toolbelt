@@ -252,6 +252,7 @@ module.exports = {
       },
     })),
 
+
   getBranchListValid: (envSecret = 'forestEnvSecret', haveCurrent = true) => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', envSecret)
     .get('/api/branches')
