@@ -1,3 +1,5 @@
+const { v4: uuidv4 } = require('uuid');
+
 const {
   assertExitCode,
   assertExitMessage,
@@ -32,6 +34,8 @@ async function testCli({
   token: tokenBehavior = null,
   ...rest
 }) {
+  if (file && !file.chdir) file.chdir = `/tmp/toolbelt-tests/${uuidv4()}`;
+
   validateInput(file, command, stds, expectedExitCode, expectedExitMessage, rest);
   const nocks = asArray(api);
   const inputs = stds ? stds.filter((type) => type.in).map((type) => type.in) : [];
