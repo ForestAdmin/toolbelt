@@ -34,6 +34,9 @@ async function testCli({
   token: tokenBehavior = null,
   ...rest
 }) {
+  // NOTICE: Ensure a unique temporary directory is created.
+  //         If a `file` is not given, or if no directory (`chdir`) is specified.
+  if (!file) file = {};
   if (file && !file.chdir) {
     file.chdir = `${TMP_DIRECTORY_BASE}/${uuidv4()}`;
     file.temporaryDirectory = true;
