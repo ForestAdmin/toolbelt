@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/ForestAdmin/toolbelt/compare/v1.6.3...v1.7.0) (2020-08-21)
+
+
+### Features
+
+* add includeLegacy parameter to project by env secret retrieval ([#106](https://github.com/ForestAdmin/toolbelt/issues/106)) ([d32c0ad](https://github.com/ForestAdmin/toolbelt/commit/d32c0ad9e009ed6e3cee314203b603b481aac450))
+
 ## [1.6.3](https://github.com/ForestAdmin/toolbelt/compare/v1.6.2...v1.6.3) (2020-08-17)
 
 
