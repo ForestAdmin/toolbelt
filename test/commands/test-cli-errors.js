@@ -3,7 +3,7 @@ const _ = require('lodash');
 function errorIfBadFile(file) {
   if (!file) return;
   const {
-    chdir, name, content, ...rest
+    chdir, name, content, temporaryDirectory, ...rest
   } = file;
   if (Object.keys(rest).length > 0) {
     throw new Error(`Unknown testCli.file parameter(s): ${Object.keys(rest).join(', ')}.

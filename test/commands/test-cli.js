@@ -7,7 +7,7 @@ const {
 } = require('./test-cli-errors');
 const { mockEnv, rollbackEnv } = require('./test-cli-env');
 const { assertApi } = require('./test-cli-api');
-const { mockFile, cleanMockedFile } = require('./test-cli-fs');
+const { mockFile, cleanMockedFile, TMP_DIRECTORY_BASE } = require('./test-cli-fs');
 const { mockToken, rollbackToken } = require('./test-cli-auth-token');
 const { validateInput } = require('./test-cli-errors');
 const {
@@ -34,7 +34,10 @@ async function testCli({
   token: tokenBehavior = null,
   ...rest
 }) {
-  if (file && !file.chdir) file.chdir = `/tmp/toolbelt-tests/${uuidv4()}`;
+  if (file && !file.chdir) {
+    file.chdir = `${TMP_DIRECTORY_BASE}/${uuidv4()}`;
+    file.temporaryDirectory = true;
+  }
 
   validateInput(file, command, stds, expectedExitCode, expectedExitMessage, rest);
   const nocks = asArray(api);
