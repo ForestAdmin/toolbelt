@@ -97,7 +97,7 @@
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "oclif-dev manifest",
     "readme:update-coverage": "yarn test:coverage && node ./scripts/update-coverage.js",
-    "test": "jest",
-    "test:coverage": "jest --coverage"
+    "test": "jest --runInBand",
+    "test:coverage": "jest --runInBand --coverage"
   }
 }
