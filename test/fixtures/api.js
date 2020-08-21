@@ -238,6 +238,21 @@ module.exports = {
     .post('/forest/apimaps')
     .reply(500),
 
+  getProjectByEnvIncludeLegacy: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .get('/api/projects?envSecret&includeLegacy')
+    .matchHeader('forest-secret-key', envSecret)
+    .reply(200, ProjectSerializer.serialize({
+      id: '82',
+      name: 'Forest',
+      defaultEnvironment: {
+        name: 'Production',
+        apiEndpoint: 'https://api.forestadmin.com',
+        type: 'production',
+        id: '2200',
+      },
+    })),
+
+
   getProjectByEnv: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .get('/api/projects?envSecret')
     .matchHeader('forest-secret-key', envSecret)
