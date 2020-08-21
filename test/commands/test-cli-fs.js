@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fsExtra = require('fs-extra');
 
 const TMP_DIRECTORY_BASE = '/tmp/toolbelt-tests';
 
@@ -8,19 +8,19 @@ module.exports = {
   mockFile: (file = {}) => {
     const { chdir, name, content } = file;
     if (chdir) {
-      fs.mkdirSync(chdir, { recursive: true });
+      fsExtra.mkdirsSync(chdir);
       process.chdir(chdir);
     }
-    if (name) fs.writeFileSync(name, content);
+    if (name) fsExtra.outputFileSync(name, content);
   },
 
   cleanMockedFile: (file = {}) => {
     const { chdir, name, temporaryDirectory } = file;
     if (chdir) process.chdir(chdir);
-    if (name) fs.unlinkSync(name);
+    if (name) fsExtra.removeSync(name);
     if (temporaryDirectory) {
       process.chdir(TMP_DIRECTORY_BASE);
-      fs.rmdirSync(chdir, { recursive: true });
+      fsExtra.removeSync(chdir);
     }
   },
 };
