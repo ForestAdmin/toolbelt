@@ -1,5 +1,3 @@
-const { v4: uuidv4 } = require('uuid');
-
 const {
   assertExitCode,
   assertExitMessage,
@@ -7,7 +5,7 @@ const {
 } = require('./test-cli-errors');
 const { mockEnv, rollbackEnv } = require('./test-cli-env');
 const { assertApi } = require('./test-cli-api');
-const { mockFile, cleanMockedFile, TMP_DIRECTORY_BASE } = require('./test-cli-fs');
+const { mockFile, cleanMockedFile, randomDirectoryName } = require('./test-cli-fs');
 const { mockToken, rollbackToken } = require('./test-cli-auth-token');
 const { validateInput } = require('./test-cli-errors');
 const {
@@ -38,7 +36,7 @@ async function testCli({
   //         If a `file` is not given, or if no directory (`chdir`) is specified.
   if (!file) file = {};
   if (file && !file.chdir) {
-    file.chdir = `${TMP_DIRECTORY_BASE}/${uuidv4()}`;
+    file.chdir = randomDirectoryName();
     file.temporaryDirectory = true;
   }
 

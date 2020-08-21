@@ -1,9 +1,10 @@
 const fsExtra = require('fs-extra');
+const { v4: uuidv4 } = require('uuid');
 
 const TMP_DIRECTORY_BASE = '/tmp/toolbelt-tests';
 
 module.exports = {
-  TMP_DIRECTORY_BASE,
+  randomDirectoryName: () => `${TMP_DIRECTORY_BASE}/${uuidv4()}`,
 
   mockFile: (file = {}) => {
     const { chdir, name, content } = file;
