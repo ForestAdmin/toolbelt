@@ -40,8 +40,7 @@ describe('schema:apply', () => {
   describe('when the user is not logged in', () => {
     it('should ask for the login/password and then send the schema', () => testCli({
       file: {
-        chdir: '/tmp',
-        name: './.forestadmin-schema.json',
+        name: '.forestadmin-schema.json',
         content: forestadminSchema,
       },
       env: testEnv2,
@@ -66,8 +65,7 @@ describe('schema:apply', () => {
     describe('with no environment secret', () => {
       it('should exist with code 2', () => testCli({
         file: {
-          chdir: '/tmp',
-          name: './.forestadmin-schema.json',
+          name: '.forestadmin-schema.json',
           content: forestadminSchema,
         },
         env: testEnv,
@@ -85,8 +83,7 @@ describe('schema:apply', () => {
       describe('with forest server returning 404', () => {
         it('should exit with exit code 4', () => testCli({
           file: {
-            chdir: '/tmp',
-            name: './.forestadmin-schema.json',
+            name: '.forestadmin-schema.json',
             content: forestadminSchema,
           },
           token: 'any',
@@ -101,8 +98,7 @@ describe('schema:apply', () => {
       describe('with forest server returning 503', () => {
         it('should exit with exit code 5', () => testCli({
           file: {
-            chdir: '/tmp',
-            name: './.forestadmin-schema.json',
+            name: '.forestadmin-schema.json',
             content: forestadminSchema,
           },
           env: testEnv2,
@@ -118,8 +114,7 @@ describe('schema:apply', () => {
         describe('with a schema with camelcased keys', () => {
           it('should send the schema', () => testCli({
             file: {
-              chdir: '/tmp',
-              name: './.forestadmin-schema.json',
+              name: '.forestadmin-schema.json',
               content: forestadminSchema,
             },
             env: testEnv2,
@@ -140,8 +135,7 @@ describe('schema:apply', () => {
         describe('with a schema with snakecased keys', () => {
           it('should send the schema', () => testCli({
             file: {
-              chdir: '/tmp',
-              name: './.forestadmin-schema.json',
+              name: '.forestadmin-schema.json',
               content: forestadminSchemaSnake,
             },
             env: testEnv2,
@@ -166,8 +160,7 @@ describe('schema:apply', () => {
 describe('with forest server returning nothing', () => {
   it('should exit with exit code 6', () => testCli({
     file: {
-      chdir: '/tmp',
-      name: './.forestadmin-schema.json',
+      name: '.forestadmin-schema.json',
       content: forestadminSchema,
     },
     env: testEnv2,

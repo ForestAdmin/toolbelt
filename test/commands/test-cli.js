@@ -5,7 +5,7 @@ const {
 } = require('./test-cli-errors');
 const { mockEnv, rollbackEnv } = require('./test-cli-env');
 const { assertApi } = require('./test-cli-api');
-const { mockFile, cleanMockedFile } = require('./test-cli-fs');
+const { mockFile, cleanMockedFile, randomDirectoryName } = require('./test-cli-fs');
 const { mockToken, rollbackToken } = require('./test-cli-auth-token');
 const { validateInput } = require('./test-cli-errors');
 const {
@@ -32,6 +32,14 @@ async function testCli({
   token: tokenBehavior = null,
   ...rest
 }) {
+  // NOTICE: Ensure a unique temporary directory is created.
+  //         If a `file` is not given, or if no directory (`chdir`) is specified.
+  if (!file) file = {};
+  if (file && !file.chdir) {
+    file.chdir = randomDirectoryName();
+    file.temporaryDirectory = true;
+  }
+
   validateInput(file, command, stds, expectedExitCode, expectedExitMessage, rest);
   const nocks = asArray(api);
   const inputs = stds ? stds.filter((type) => type.in).map((type) => type.in) : [];

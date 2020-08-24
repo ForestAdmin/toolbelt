@@ -1,7 +1,28 @@
+const fsExtra = require('fs-extra');
+const { v4: uuidv4 } = require('uuid');
+
 const authenticator = require('../../src/services/authenticator');
 const { clearTokenPath, getTokenPath, storeToken } = require('../commands/test-cli-auth-token');
 
+const TMP_DIRECTORY_ROOT = '/tmp/toolbelt-tests';
+const TMP_DIRECTORY_BASE = `${TMP_DIRECTORY_ROOT}/authenticator`;
+
 describe('authenticator', () => {
+  // NOTICE: Ensure each test proerly runs in a separate unique directory.
+  // eslint-disable-next-line jest/no-hooks
+  beforeEach(async () => {
+    const temporaryDirectory = `${TMP_DIRECTORY_BASE}/${uuidv4()}`;
+    fsExtra.mkdirsSync(temporaryDirectory);
+    process.chdir(temporaryDirectory);
+  });
+
+  // NOTICE: Properly cleanup temporary directories.
+  // eslint-disable-next-line jest/no-hooks
+  afterAll(async () => {
+    process.chdir(TMP_DIRECTORY_ROOT);
+    fsExtra.removeSync(TMP_DIRECTORY_BASE);
+  });
+
   describe('getAuthToken', () => {
     describe('when .forestrc and .lumberrc do not exist', () => {
       it('should return null', () => {

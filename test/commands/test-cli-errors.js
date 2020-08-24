@@ -3,7 +3,7 @@ const _ = require('lodash');
 function errorIfBadFile(file) {
   if (!file) return;
   const {
-    chdir, name, content, ...rest
+    chdir, name, content, temporaryDirectory, ...rest
   } = file;
   if (Object.keys(rest).length > 0) {
     throw new Error(`Unknown testCli.file parameter(s): ${Object.keys(rest).join(', ')}.
@@ -14,6 +14,9 @@ function errorIfBadFile(file) {
   }
   if ((!name && content) || (name && !content)) {
     throw new Error('testCli.file name AND content must be defined');
+  }
+  if (temporaryDirectory !== undefined && typeof temporaryDirectory !== 'boolean') {
+    throw new Error('testCli.temporaryDirectory must be a boolean value if specified');
   }
 }
 
