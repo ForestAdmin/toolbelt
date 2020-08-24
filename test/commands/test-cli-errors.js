@@ -15,6 +15,9 @@ function errorIfBadFile(file) {
   if ((!name && content) || (name && !content)) {
     throw new Error('testCli.file name AND content must be defined');
   }
+  if (temporaryDirectory !== undefined && typeof temporaryDirectory !== 'boolean') {
+    throw new Error('testCli.temporaryDirectory must be a boolean value if specified');
+  }
 }
 
 function errorIfRest(rest) {
