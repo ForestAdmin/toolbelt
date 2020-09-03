@@ -21,7 +21,7 @@ const {
 } = require('../services/init-manager');
 
 const SUCCESS_MESSAGE_ALL_SET_AND_READY = "You're now set up and ready to develop on Forest Admin";
-const SUCCESS_MESSAGE_LEARN_MORE_ON_CLI_USAGE = 'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/getting-started/a-page-on-forest-cli.';
+const SUCCESS_MESSAGE_LEARN_MORE_ON_CLI_USAGE = 'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/documentation/reference-guide/how-it-works/forest-cli-commands.';
 
 const PROMPT_MESSAGE_AUTO_FILLING_ENV_FILE = 'Do you want your current folder `.env` file to be completed automatically with your environment variables?';
 const PROMPT_MESSAGE_AUTO_CREATING_ENV_FILE = 'Do you want a new `.env` file (containing your environment variables) to be automatically created in your current folder?';
