@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/ForestAdmin/toolbelt/compare/v1.7.0...v1.7.1) (2020-09-07)
+
+
+### Bug Fixes
+
+* **test:** isolate temporary files to reduce random test fails ([#107](https://github.com/ForestAdmin/toolbelt/issues/107)) ([e9717bc](https://github.com/ForestAdmin/toolbelt/commit/e9717bcf5908aeff23115266b33e85d55a63d9de))
+
 # [1.7.0](https://github.com/ForestAdmin/toolbelt/compare/v1.6.3...v1.7.0) (2020-08-21)
 
 
