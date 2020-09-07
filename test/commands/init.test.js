@@ -416,7 +416,7 @@ describe('init command', () => {
           ...enter,
           { spinner: 'Copying the environment variables in your `.env` file' },
           { spinner: 'You\'re now set up and ready to develop on Forest Admin' },
-          { out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/getting-started/a-page-on-forest-cli.' },
+          { out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/documentation/reference-guide/how-it-works/forest-cli-commands.' },
         ],
       }));
     });
@@ -445,7 +445,7 @@ describe('init command', () => {
           { out: 'APPLICATION_PORT=3310' },
           { out: 'FOREST_AUTH_SECRET=' },
           { out: 'FOREST_ENV_SECRET=2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125' },
-          { out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/getting-started/a-page-on-forest-cli.' },
+          { out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/documentation/reference-guide/how-it-works/forest-cli-commands.' },
         ],
       }));
     });
