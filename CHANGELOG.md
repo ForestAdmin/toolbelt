@@ -1,3 +1,10 @@
+## [1.7.2](https://github.com/ForestAdmin/toolbelt/compare/v1.7.1...v1.7.2) (2020-09-24)
+
+
+### Bug Fixes
+
+* change link to docs in the init command ([#112](https://github.com/ForestAdmin/toolbelt/issues/112)) ([35a114e](https://github.com/ForestAdmin/toolbelt/commit/35a114e240d4f6a4b722eaf4b76b2d2d4cdf9e0a))
+
 ## [1.7.1](https://github.com/ForestAdmin/toolbelt/compare/v1.7.0...v1.7.1) (2020-09-07)
 
 
