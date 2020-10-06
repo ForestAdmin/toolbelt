@@ -1,6 +1,9 @@
 const mockStdin = require('mock-stdin');
 const { stdout, stderr } = require('stdout-stderr');
 
+const TIME_TO_LOAD_TEST = 1000;
+const TIME_TO_REACH_NEXT_PROMPT = 100;
+
 module.exports = {
   mockStd: (outputs, errorOutputs, print) => {
     stdout.previousPrint = stdout.print;
@@ -14,8 +17,8 @@ module.exports = {
   },
   planifyInputs: (inputs, stdin) => {
     for (let i = 0; i < inputs.length; i += 1) {
-      // Smelly code...
-      setTimeout(() => stdin.send(`${inputs[i]}\n`), 1000 + i * 100);
+      // WARNING: Smelly code..., could break if the test pre-loading time increases.
+      setTimeout(() => stdin.send(`${inputs[i]}\n`), TIME_TO_LOAD_TEST + i * TIME_TO_REACH_NEXT_PROMPT);
     }
   },
   assertOutputs: (outputs, errorOutputs) => {
