@@ -94,6 +94,7 @@ describe('spinner', () => {
           spinner.continue();
           expect(spinner.isRunning()).toBe(true);
           expect(spinner.pausedSpinnerOptions).toBeNull();
+          spinner.pause();
         });
       });
     });
@@ -104,6 +105,7 @@ describe('spinner', () => {
         const spinner = new Spinner();
         spinner.start(spinnnerOptions);
         expect(() => spinner.continue()).toThrow('A spinner is already running.');
+        spinner.pause();
       });
     });
   });
@@ -143,7 +145,6 @@ describe('spinner', () => {
         expect(spinner.currentSpinnerOptions).toBeNull();
       });
 
-
       describe('when a custom success message is given', () => {
         it('should call success with the message', () => {
           expect.assertions(4);
@@ -161,7 +162,6 @@ describe('spinner', () => {
       });
     });
   });
-
 
   describe('when calling fail', () => {
     const spinnnerOptions = { text: 'trying to fail' };
@@ -197,7 +197,6 @@ describe('spinner', () => {
         expect(spinner.currentSpinnerUniqueKey).toBeNull();
         expect(spinner.currentSpinnerOptions).toBeNull();
       });
-
 
       describe('when a custom fail message is given', () => {
         it('should call fail with the message', () => {
