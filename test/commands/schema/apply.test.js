@@ -155,19 +155,19 @@ describe('schema:apply', () => {
       });
     });
   });
-});
 
-describe('with forest server returning nothing', () => {
-  it('should exit with exit code 6', () => testCli({
-    file: {
-      name: '.forestadmin-schema.json',
-      content: forestadminSchema,
-    },
-    env: testEnv2,
-    token: 'any',
-    api: [postSchema500()],
-    command: () => ApplySchemaCommand.run([]),
-    std: [{ err: 'An error occured with the schema sent to Forest. Please contact support@forestadmin.com for further investigations.' }],
-    exitCode: 6,
-  }));
+  describe('with forest server returning nothing', () => {
+    it('should exit with exit code 6', () => testCli({
+      file: {
+        name: '.forestadmin-schema.json',
+        content: forestadminSchema,
+      },
+      env: testEnv2,
+      token: 'any',
+      api: [postSchema500()],
+      command: () => ApplySchemaCommand.run([]),
+      std: [{ err: 'An error occured with the schema sent to Forest. Please contact support@forestadmin.com for further investigations.' }],
+      exitCode: 6,
+    }));
+  });
 });
