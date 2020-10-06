@@ -14,7 +14,8 @@ module.exports = {
   },
   planifyInputs: (inputs, stdin) => {
     for (let i = 0; i < inputs.length; i += 1) {
-      setTimeout(() => stdin.send(`${inputs[i]}\n`), 500 + i * 100);
+      // Smelly code...
+      setTimeout(() => stdin.send(`${inputs[i]}\n`), 1000 + i * 100);
     }
   },
   assertOutputs: (outputs, errorOutputs) => {
