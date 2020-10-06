@@ -17,7 +17,6 @@ module.exports = {
       'error',
       {
         devDependencies: [
-          'scripts/*.js',
           'test/**/*.js',
         ]
       },

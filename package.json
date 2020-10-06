@@ -42,7 +42,6 @@
     "@commitlint/cli": "8.3.5",
     "@commitlint/config-conventional": "8.3.4",
     "@commitlint/travis-cli": "8.3.5",
-    "@forestadmin/devops": "2.0.1",
     "@oclif/dev-cli": "1.22.2",
     "@semantic-release/changelog": "5.0.1",
     "@semantic-release/git": "9.0.0",
@@ -96,7 +95,6 @@
     "lint": "./node_modules/eslint/bin/eslint.js src test",
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "oclif-dev manifest",
-    "readme:update-coverage": "yarn test:coverage && node ./scripts/update-coverage.js",
     "test": "jest --runInBand",
     "test:coverage": "jest --runInBand --coverage"
   }
