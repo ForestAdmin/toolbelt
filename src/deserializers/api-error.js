@@ -9,9 +9,14 @@ function deserialize(error) {
   };
 
   if (error.response && error.response.text) {
-    const errorDetails = JSON.parse(error.response.text);
-    if (errorDetails.errors && errorDetails.errors[0] && errorDetails.errors[0].detail) {
-      deserializedError.message = errorDetails.errors[0].detail;
+    try {
+      const errorDetails = JSON.parse(error.response.text);
+      if (errorDetails.errors && errorDetails.errors[0] && errorDetails.errors[0].detail) {
+        deserializedError.message = errorDetails.errors[0].detail;
+      }
+    } catch (e) {
+      // In case the error.response.text is not parsable, return it as-is.
+      deserializedError.message = error.response.text;
     }
   }
 
