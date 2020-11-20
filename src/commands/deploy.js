@@ -112,6 +112,11 @@ DeployCommand.flags = {
     char: 'f',
     description: 'Skip deploy confirmation.',
   }),
+  projectId: flags.string({
+    char: 'p',
+    description: 'Forest project ID.',
+    default: null,
+  }),
 };
 
 DeployCommand.args = [{
