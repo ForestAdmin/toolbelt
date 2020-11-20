@@ -63,7 +63,7 @@ describe('deploy', () => {
       it('should not display the list of projects', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => DeployCommand.run(['-p', projectId]),
+        command: () => DeployCommand.run(['-p', '82']),
         api: [
           getEnvironmentListValid(projectId),
           deployValid(),
