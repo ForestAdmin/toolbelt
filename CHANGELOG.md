@@ -1,3 +1,10 @@
+## [1.7.3](https://github.com/ForestAdmin/toolbelt/compare/v1.7.2...v1.7.3) (2020-11-20)
+
+
+### Bug Fixes
+
+* **push-command:** allow project to be passed in as argument using --projectId or -p ([#123](https://github.com/ForestAdmin/toolbelt/issues/123)) ([fd6250e](https://github.com/ForestAdmin/toolbelt/commit/fd6250e01b11226978e9ce97376c25d19d4018af))
+
 ## [1.7.2](https://github.com/ForestAdmin/toolbelt/compare/v1.7.1...v1.7.2) (2020-09-24)
 
 
