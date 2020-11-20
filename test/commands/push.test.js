@@ -68,9 +68,11 @@ describe('push', () => {
       it('should not display the list of projects', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => PushCommand.run([]),
+        command: () => PushCommand.run(['--projectId', '82']),
         api: [
-          ...getValidProjectEnvironementAndBranch(projectId, envSecret),
+          getInAppProjectForDevWorkflow(projectId),
+          getDevelopmentEnvironmentValid(projectId),
+          getBranchListValid(envSecret),
           getEnvironmentListValid(projectId),
           pushBranchValid(envSecret),
         ],

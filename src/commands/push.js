@@ -78,14 +78,16 @@ PushCommand.flags = {
     char: 'e',
     description: 'The remote environment name to push onto.',
   }),
-  projectId: flags.string({
-    description: 'The id of the project to work on.',
-  }),
   force: flags.boolean({
     description: 'Skip push changes confirmation.',
   }),
   help: flags.boolean({
     description: 'Display usage information.',
+  }),
+  projectId: flags.string({
+    char: 'p',
+    description: 'The id of the project to work on.',
+    default: null,
   }),
 };
 
