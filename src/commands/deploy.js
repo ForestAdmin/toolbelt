@@ -114,7 +114,7 @@ DeployCommand.flags = {
   }),
   projectId: flags.string({
     char: 'p',
-    description: 'Forest project ID.',
+    description: 'The id of the project you want to deploy.',
     default: null,
   }),
 };
