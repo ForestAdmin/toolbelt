@@ -58,21 +58,42 @@ describe('deploy', () => {
     });
 
     describe('when project was provided', () => {
-      const projectId = 82;
-      const environmentName = 'name1';
-      it('should not display the list of projects', () => testCli({
-        env: testEnv2,
-        token: 'any',
-        command: () => DeployCommand.run(['-p', '82']),
-        api: [
-          getEnvironmentListValid(projectId),
-          deployValid(),
-        ],
-        std: [
-          ...inOutSelectEnvironment(environmentName),
-          ...inOutConfirmDeploy(environmentName),
-        ],
-      }));
+      describe('using command line', () => {
+        const projectId = 82;
+        const environmentName = 'name1';
+        it('should not display the list of projects', () => testCli({
+          env: testEnv2,
+          token: 'any',
+          command: () => DeployCommand.run(['-p', '82']),
+          api: [
+            getEnvironmentListValid(projectId),
+            deployValid(),
+          ],
+          std: [
+            ...inOutSelectEnvironment(environmentName),
+            ...inOutConfirmDeploy(environmentName),
+          ],
+        }));
+      });
+
+      describe('guessed from FOREST_ENV_SECRET', () => {
+        const projectId = 82;
+        const environmentName = 'name1';
+        it('should not display the list of projects', () => testCli({
+          env: testEnv2,
+          token: 'any',
+          command: () => DeployCommand.run([]),
+          api: [
+            getProjectByEnv(),
+            getEnvironmentListValid(projectId),
+            deployValid(),
+          ],
+          std: [
+            ...inOutSelectEnvironment(environmentName),
+            ...inOutConfirmDeploy(environmentName),
+          ],
+        }));
+      });
     });
 
     describe('when destination environment was provided', () => {
