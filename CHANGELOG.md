@@ -1,3 +1,10 @@
+## [1.7.4](https://github.com/ForestAdmin/toolbelt/compare/v1.7.3...v1.7.4) (2020-11-26)
+
+
+### Bug Fixes
+
+* **deploy-command:** allow project to be passed in as argument using --projectId or -p ([#122](https://github.com/ForestAdmin/toolbelt/issues/122)) ([2e36d3c](https://github.com/ForestAdmin/toolbelt/commit/2e36d3ce5955325556e1218f5257eafacb3df10d))
+
 ## [1.7.3](https://github.com/ForestAdmin/toolbelt/compare/v1.7.2...v1.7.3) (2020-11-20)
 
 
