@@ -23,7 +23,7 @@
     "@oclif/plugin-warn-if-update-available": "1.7.0",
     "bluebird": "3.5.2",
     "chalk": "4.0.0",
-    "cli-table": "github:Automattic/cli-table#master",
+    "cli-table": "github:Automattic/cli-table#7b14232ba779929e1859b267bf753c150d90a618",
     "clipboardy": "2.3.0",
     "dotenv": "8.2.0",
     "inquirer": "6.2.0",
