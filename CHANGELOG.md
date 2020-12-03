@@ -1,3 +1,10 @@
+## [1.7.5](https://github.com/ForestAdmin/toolbelt/compare/v1.7.4...v1.7.5) (2020-12-03)
+
+
+### Bug Fixes
+
+* prevent installation error due to premature evaluation caused by a dependency ([99799e3](https://github.com/ForestAdmin/toolbelt/commit/99799e3010d385a6d9212115d438536fc486b2be))
+
 ## [1.7.4](https://github.com/ForestAdmin/toolbelt/compare/v1.7.3...v1.7.4) (2020-11-26)
 
 
