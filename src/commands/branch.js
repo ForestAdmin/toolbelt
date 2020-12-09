@@ -1,11 +1,12 @@
 const { flags } = require('@oclif/command');
-const inquirer = require('inquirer');
+const context = require('../context');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
 const logger = require('../services/logger');
-const envConfig = require('../config');
+
+const { inquirer, config: envConfig } = context.inject();
 
 class BranchCommand extends AbstractAuthenticatedCommand {
   async listBranches(envSecret) {
