@@ -1,11 +1,12 @@
 const { flags } = require('@oclif/command');
-const inquirer = require('inquirer');
+const context = require('../context');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const EnvironmentManager = require('../services/environment-manager');
 const ProjectManager = require('../services/project-manager');
 const { handleBranchError } = require('../services/branch-manager');
 const withCurrentProject = require('../services/with-current-project');
-const envConfig = require('../config');
+
+const { inquirer, config: envConfig } = context.inject();
 
 /** Deploy layout changes of an environment to production. */
 class DeployCommand extends AbstractAuthenticatedCommand {

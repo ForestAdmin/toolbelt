@@ -1,8 +1,9 @@
 const { Command } = require('@oclif/command');
 const jwt = require('jsonwebtoken');
-const chalk = require('chalk');
-const logger = require('../services/logger');
+const context = require('../context');
 const authenticator = require('../services/authenticator');
+
+const { chalk, logger } = context.inject();
 
 class UserCommand extends Command {
   static async run() {

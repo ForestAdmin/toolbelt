@@ -1,3 +1,8 @@
+const context = require('../../src/context');
+const initContext = require('../../src/context/init');
+
+initContext(context);
+
 const {
   assertExitCode,
   assertExitMessage,

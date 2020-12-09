@@ -1,13 +1,11 @@
 const fs = require('fs');
 const { flags } = require('@oclif/command');
-const inquirer = require('inquirer');
-const envConfig = require('../config');
+const context = require('../context');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const { buildDatabaseUrl } = require('../utils/database-url');
 const withCurrentProject = require('../services/with-current-project');
 const singletonGetter = require('../services/singleton-getter');
 const Spinner = require('../services/spinner');
-const logger = require('../services/logger');
 const ProjectManager = require('../services/project-manager');
 const EnvironmentManager = require('../services/environment-manager');
 const {
@@ -28,6 +26,8 @@ const PROMPT_MESSAGE_AUTO_CREATING_ENV_FILE = 'Do you want a new `.env` file (co
 
 const spinner = singletonGetter(Spinner);
 
+
+const { config: envConfig, inquirer, logger } = context.inject();
 class InitCommand extends AbstractAuthenticatedCommand {
   constructor(...args) {
     super(...args);

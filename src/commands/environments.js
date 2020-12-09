@@ -1,10 +1,11 @@
 const { flags } = require('@oclif/command');
+const context = require('../context');
 const EnvironmentManager = require('../services/environment-manager');
 const Renderer = require('../renderers/environments');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const withCurrentProject = require('../services/with-current-project');
-const envConfig = require('../config');
 
+const { config: envConfig } = context.inject();
 class EnvironmentCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
     const parsed = this.parse(EnvironmentCommand);
