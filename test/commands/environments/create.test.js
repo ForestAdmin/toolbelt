@@ -3,14 +3,12 @@ const EnvironmentCreateCommand = require('../../../src/commands/environments/cre
 const {
   arrowDown,
   enter,
-  loginPasswordDialog,
   loginRequired,
 } = require('../../fixtures/std');
 const {
-  notAGoogleAccount,
-  loginValid,
   getProjectListValid,
   createEnvironmentValid,
+  loginValidOidc,
 } = require('../../fixtures/api');
 const { testEnv } = require('../../fixtures/env');
 
@@ -64,14 +62,13 @@ describe('environments:create', () => {
       env: testEnv,
       command: () => EnvironmentCreateCommand.run(['-n', 'Test', '-u', 'https://test.forestadmin.com']),
       api: [
-        notAGoogleAccount(),
-        loginValid(),
+        loginValidOidc(),
         getProjectListValid(),
         createEnvironmentValid(),
       ],
       std: [
         ...loginRequired,
-        ...loginPasswordDialog,
+        { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
         ...arrowDown,
         ...enter,
         { out: 'ENVIRONMENT' },

@@ -1,7 +1,7 @@
 const { Command } = require('@oclif/command');
-const chalk = require('chalk');
-const logger = require('./services/logger');
-const authenticator = require('./services/authenticator');
+const context = require('./context');
+
+const { chalk, logger, authenticator } = context.inject();
 
 class AbstractAuthenticatedCommand extends Command {
   async run() {

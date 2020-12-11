@@ -32,6 +32,8 @@
     "jsonwebtoken": "8.5.1",
     "jwt-decode": "2.2.0",
     "lodash": "4.17.19",
+    "open": "7.3.0",
+    "openid-client": "4.2.2",
     "progress": "2.0.3",
     "spinnies": "0.5.1",
     "superagent": "3.8.3",

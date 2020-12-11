@@ -2,13 +2,12 @@ const testCli = require('./../test-cli');
 const ApplySchemaCommand = require('../../../src/commands/schema/apply');
 const { testEnv, testEnv2 } = require('../../fixtures/env');
 const {
-  loginValid,
   postSchema,
   postSchema404,
   postSchema500,
   postSchema503,
+  loginValidOidc,
 } = require('../../fixtures/api');
-const { loginPasswordDialog } = require('../../fixtures/std');
 
 const {
   forestadminSchema,
@@ -38,19 +37,19 @@ function postSchemaMatch(body) {
 
 describe('schema:apply', () => {
   describe('when the user is not logged in', () => {
-    it('should ask for the login/password and then send the schema', () => testCli({
+    it('should login the user and then send the schema', () => testCli({
       file: {
         name: '.forestadmin-schema.json',
         content: forestadminSchema,
       },
       env: testEnv2,
       api: [
-        loginValid(),
+        loginValidOidc(),
         postSchema(postSchemaMatch),
       ],
       command: () => ApplySchemaCommand.run([]),
       std: [
-        ...loginPasswordDialog,
+        { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
         { out: 'Reading "./.forestadmin-schema.json"...' },
         {
           out: 'Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"',

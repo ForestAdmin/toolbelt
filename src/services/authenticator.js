@@ -1,22 +1,19 @@
-const fs = require('fs');
-const os = require('os');
-const inquirer = require('inquirer');
-const chalk = require('chalk');
-const jwtDecode = require('jwt-decode');
-const Joi = require('joi');
-const api = require('./api');
-const logger = require('./logger');
+const ApplicationError = require('../utils/application-error');
 const { ERROR_UNEXPECTED } = require('../utils/messages');
 
 /**
  * @class
+ * @param {import('../context/init').Context} context
  */
-function Authenticator() {
+function Authenticator({
+  logger, api, chalk, inquirer, os, jwtDecode, fs, joi, env,
+  oidcAuthenticator, applicationTokenService,
+}) {
   /**
    * @param {string?} path
    * @returns {string}
    */
-  this.getAuthToken = (path = process.env.TOKEN_PATH || os.homedir()) => {
+  this.getAuthToken = (path = env.TOKEN_PATH || os.homedir()) => {
     const forestrcToken = this.getVerifiedToken(`${path}/.forestrc`);
     return forestrcToken || this.getVerifiedToken(`${path}/.lumberrc`);
   };
@@ -46,7 +43,7 @@ function Authenticator() {
       return null;
     }
     const nowInSeconds = Date.now().valueOf() / 1000;
-    if (decodedToken.exp && nowInSeconds < decodedToken.exp) {
+    if (!decodedToken.exp || nowInSeconds < decodedToken.exp) {
       return token;
     }
     return null;
@@ -80,26 +77,31 @@ function Authenticator() {
       this.saveToken(token);
       logger.info('Login successful');
     } catch (error) {
-      const message = error.message === 'Unauthorized'
-        ? 'Incorrect email or password.'
+      const message = error instanceof ApplicationError
+        ? error.message
         : `${ERROR_UNEXPECTED} ${chalk.red(error)}`;
       logger.error(message);
     }
   };
 
-  this.loginWithToken = (token) => {
-    const validationResult = this.validateToken(token);
-    if (validationResult !== true) {
-      throw new Error(validationResult);
-    }
-    return token;
-  };
-
+  /**
+   * @param {{
+    *  email: string;
+    *  password: string;
+    *  token: string;
+    * }} params
+    * @returns {Promise<string>}
+    */
   this.login = async ({ email, password, token }) => {
+    if (!password && !token) {
+      const sessionToken = await oidcAuthenticator.authenticate();
+      return applicationTokenService.generateApplicationToken(sessionToken);
+    }
+
     if (email) {
       const validationResult = await this.validateEmail(email);
       if (validationResult !== true) {
-        throw new Error(validationResult);
+        throw new ApplicationError(validationResult);
       }
     } else email = await this.promptEmail();
 
@@ -107,15 +109,28 @@ function Authenticator() {
       return this.loginWithToken(token);
     }
 
-    const isGoogleAccount = await api.isGoogleAccount(email);
-    if (isGoogleAccount) {
-      return this.loginWithGoogle();
+    try {
+      return await this.loginWithPassword(email, password);
+    } catch (e) {
+      if (e.message === 'Unauthorized') {
+        throw new ApplicationError('Incorrect email or password.');
+      }
+
+      throw e;
     }
-    return this.loginWithPassword(email, password);
   };
 
+  this.loginWithToken = (token) => {
+    const validationResult = this.validateToken(token);
+    if (validationResult !== true) {
+      throw new ApplicationError(validationResult);
+    }
+    return token;
+  };
+
+
   this.validateEmail = (input) => {
-    if (!Joi.string().email().validate(input).error) {
+    if (!joi.string().email().validate(input).error) {
       return true;
     }
     return input ? 'Invalid email' : 'Please enter your email address.';
@@ -131,21 +146,6 @@ function Authenticator() {
     return email;
   };
 
-  this.loginWithGoogle = async () => {
-    const endpoint = process.env.FOREST_URL && process.env.FOREST_URL.includes('localhost')
-      ? 'http://localhost:4200' : 'https://app.forestadmin.com';
-    const url = chalk.cyan.underline(`${endpoint}/authentication-token`);
-    logger.info(`To authenticate with your Google account, please follow this link and copy the authentication token: ${url}`);
-
-    const { sessionToken } = await inquirer.prompt([{
-      type: 'password',
-      name: 'sessionToken',
-      message: 'Enter your Forest Admin authentication token:',
-      validate: this.validateToken,
-    }]);
-    return sessionToken;
-  };
-
   this.loginWithPassword = async (email, password) => {
     if (!password) {
       ({ password } = await inquirer.prompt([{
@@ -159,4 +159,4 @@ function Authenticator() {
   };
 }
 
-module.exports = new Authenticator();
+module.exports = Authenticator;

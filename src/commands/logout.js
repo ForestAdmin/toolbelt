@@ -1,5 +1,7 @@
 const { Command } = require('@oclif/command');
-const authenticator = require('../services/authenticator');
+const context = require('../context');
+
+const { authenticator } = context.inject();
 
 class LogoutCommand extends Command {
   static async run() {
