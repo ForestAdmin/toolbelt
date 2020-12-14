@@ -18,6 +18,8 @@ const {
   planifyInputs,
   assertOutputs,
   rollbackStd,
+  stopStdMocks,
+  logErrors,
 } = require('./test-cli-std');
 
 function asArray(any) {
@@ -67,9 +69,16 @@ async function testCli({
 
   let actualError;
   try {
-    await command();
+    try {
+      await command();
+    } finally {
+      stopStdMocks();
+    }
   } catch (error) {
     actualError = error;
+    if (!expectedExitCode) {
+      logErrors();
+    }
   }
 
   cleanMockedFile(file);

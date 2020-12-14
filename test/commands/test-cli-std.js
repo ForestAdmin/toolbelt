@@ -49,4 +49,11 @@ module.exports = {
     stdout.previousPrint = null;
     stderr.previousPrint = null;
   },
+  stopStdMocks: () => {
+    stdout.stop();
+    stderr.stop();
+  },
+  logErrors: () => {
+    process.stderr.write(stdout.output);
+  },
 };
