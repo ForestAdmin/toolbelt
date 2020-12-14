@@ -38,22 +38,21 @@ module.exports = {
       expect(stderr.output).toContain(errorOutputs[i]);
     }
   },
-  rollbackStd: (stdin, inputs, outputs, errorOutputs) => {
+  rollbackStd: (stdin, inputs, outputs) => {
     if (inputs.length) stdin.end();
     if (inputs.length) stdin.reset();
     if (outputs.length) stdout.stop();
-    if (errorOutputs.length) stderr.stop();
+    stderr.stop();
 
     stdout.print = stdout.previousPrint;
     stderr.print = stderr.previousPrint;
     stdout.previousPrint = null;
     stderr.previousPrint = null;
   },
-  stopStdMocks: () => {
-    stdout.stop();
-    stderr.stop();
+  logStdErr: () => {
+    process.stderr.write(stderr.output);
   },
-  logErrors: () => {
+  logStdOut: () => {
     process.stderr.write(stdout.output);
   },
 };

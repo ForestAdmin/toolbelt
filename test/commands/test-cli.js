@@ -18,8 +18,8 @@ const {
   planifyInputs,
   assertOutputs,
   rollbackStd,
-  stopStdMocks,
-  logErrors,
+  logStdErr,
+  logStdOut,
 } = require('./test-cli-std');
 
 function asArray(any) {
@@ -72,24 +72,29 @@ async function testCli({
     try {
       await command();
     } finally {
-      stopStdMocks();
+      rollbackStd(stdin, inputs, outputs);
     }
   } catch (error) {
     actualError = error;
     if (!expectedExitCode) {
-      logErrors();
+      logStdErr();
     }
   }
 
   cleanMockedFile(file);
 
-  assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);
-  assertApi(nocks);
-  assertExitCode(actualError, expectedExitCode);
-  assertExitMessage(actualError, expectedExitMessage);
-  assertOutputs(outputs, errorOutputs);
+  try {
+    assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);
+    assertApi(nocks);
+    assertExitCode(actualError, expectedExitCode);
+    assertExitMessage(actualError, expectedExitMessage);
+    assertOutputs(outputs, errorOutputs);
+  } catch (e) {
+    logStdErr();
+    logStdOut();
+    throw e;
+  }
 
-  rollbackStd(stdin, inputs, outputs, errorOutputs);
   rollbackEnv(env);
   rollbackToken(tokenBehavior);
 }
