@@ -24,7 +24,6 @@ describe('environments:copy-layout', () => {
           getJob(),
         ],
         std: [
-          { err: 'Copying layout' },
           { out: 'Environment\'s layout Production successfully copied to Staging.' },
         ],
       }));
