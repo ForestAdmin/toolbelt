@@ -30,7 +30,7 @@ module.exports = {
     stderr.stop();
 
     if (!errorOutputs.length && stderr.output) {
-      expect(stderr.output).toBe('');
+      expect(stderr.output.trim()).toBe('');
     }
 
     for (let i = 0; i < outputs.length; i += 1) {
