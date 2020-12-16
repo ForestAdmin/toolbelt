@@ -10,6 +10,7 @@ describe('services > ApplicationToken', () => {
 
     const api = {
       createApplicationToken: jest.fn(),
+      deleteApplicationToken: jest.fn(),
     };
 
     const context = { api, os };
@@ -47,6 +48,44 @@ describe('services > ApplicationToken', () => {
 
       await expect(applicationTokenService.generateApplicationToken(SESSION_TOKEN))
         .rejects.toHaveProperty('message', 'Unable to create an application token: Internal error.');
+    });
+  });
+
+  describe('deleteApplicationToken', () => {
+    it('should call the api to delete the current token', async () => {
+      expect.assertions(1);
+
+      const { api, applicationTokenService } = setup();
+
+      api.deleteApplicationToken.mockResolvedValue(undefined);
+
+      await applicationTokenService.deleteApplicationToken('TOKEN');
+
+      expect(api.deleteApplicationToken).toHaveBeenCalledWith('TOKEN');
+    });
+
+    it('should catch 404 errors and resolve anyway', async () => {
+      expect.assertions(1);
+
+      const { api, applicationTokenService } = setup();
+
+      api.deleteApplicationToken.mockRejectedValue({ status: 404 });
+
+      await applicationTokenService.deleteApplicationToken('TOKEN');
+
+      expect(api.deleteApplicationToken).toHaveBeenCalledWith('TOKEN');
+    });
+
+    it('should propagate errors that are non 404s', async () => {
+      expect.assertions(1);
+
+      const { api, applicationTokenService } = setup();
+
+      const error = new Error('The error');
+
+      api.deleteApplicationToken.mockRejectedValue(error);
+
+      await expect(applicationTokenService.deleteApplicationToken('TOKEN')).rejects.toBe(error);
     });
   });
 });

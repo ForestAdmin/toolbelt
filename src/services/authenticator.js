@@ -54,12 +54,13 @@ function Authenticator({
 
   this.logout = async (opts = {}) => {
     const pathForestrc = `${os.homedir()}/.forestrc`;
-    const isForestLoggedIn = this.getVerifiedToken(pathForestrc);
+    const forestToken = this.getVerifiedToken(pathForestrc);
     const pathLumberrc = `${os.homedir()}/.lumberrc`;
     const isLumberLoggedIn = this.getVerifiedToken(pathLumberrc);
 
-    if (isForestLoggedIn) {
+    if (forestToken) {
       fs.unlinkSync(pathForestrc);
+      await applicationTokenService.deleteApplicationToken(forestToken);
     }
     if (opts.log) {
       if (isLumberLoggedIn) {
