@@ -7,10 +7,11 @@ describe('services > authenticator', () => {
     };
     const applicationTokenService = {
       generateApplicationToken: jest.fn(),
+      deleteApplicationToken: jest.fn(),
     };
 
     const os = {
-      homedir: jest.fn(),
+      homedir: jest.fn().mockReturnValue('sweet-home'),
     };
 
     const fs = {
@@ -21,6 +22,7 @@ describe('services > authenticator', () => {
 
     const chalk = {
       red: jest.fn().mockImplementation((value) => `[red]${value}[/red]`),
+      green: jest.fn().mockImplementation((value) => `[green]${value}[/green]`),
     };
 
     const logger = {
@@ -38,6 +40,8 @@ describe('services > authenticator', () => {
       chalk,
       logger,
       jwtDecode,
+      FOREST_PATH: 'sweet-home/.forestrc',
+      LUMBER_PATH: 'sweet-home/.lumberrc',
     };
     const authenticator = new Authenticator(context);
 
@@ -53,14 +57,13 @@ describe('services > authenticator', () => {
           authenticator,
           oidcAuthenticator,
           applicationTokenService,
-          os,
           fs,
           logger,
+          FOREST_PATH,
         } = setup();
 
         oidcAuthenticator.authenticate.mockResolvedValue('SESSION-TOKEN');
         applicationTokenService.generateApplicationToken.mockResolvedValue('APP-TOKEN');
-        os.homedir.mockReturnValue('~');
 
         await authenticator.tryLogin({});
 
@@ -68,7 +71,7 @@ describe('services > authenticator', () => {
         expect(oidcAuthenticator.authenticate).toHaveBeenCalledWith();
         expect(applicationTokenService.generateApplicationToken).toHaveBeenCalledWith('SESSION-TOKEN');
         expect(fs.writeFileSync).toHaveBeenCalledWith(
-          '~/.forestrc',
+          FOREST_PATH,
           'APP-TOKEN',
         );
       });
@@ -83,17 +86,17 @@ describe('services > authenticator', () => {
             authenticator,
             oidcAuthenticator,
             applicationTokenService,
-            os,
             fs,
             logger,
             jwtDecode,
+            FOREST_PATH,
+            LUMBER_PATH,
           } = setup();
 
           oidcAuthenticator.authenticate.mockResolvedValue('SESSION-TOKEN');
           applicationTokenService.generateApplicationToken.mockResolvedValue('APP-TOKEN');
-          os.homedir.mockReturnValue('~');
           fs.readFileSync.mockImplementation((path) => {
-            if (path === '~/.forestrc') return 'PREVIOUS-TOKEN';
+            if (path === FOREST_PATH) return 'PREVIOUS-TOKEN';
             return '';
           });
           jwtDecode.mockReturnValue({ exp: (Date.now().valueOf() / 1000) + 5000 });
@@ -101,10 +104,10 @@ describe('services > authenticator', () => {
           await authenticator.tryLogin({});
 
           expect(logger.error).not.toHaveBeenCalled();
-          expect(fs.readFileSync).toHaveBeenCalledWith('~/.forestrc', 'utf8');
-          expect(fs.readFileSync).toHaveBeenCalledWith('~/.lumberrc', 'utf8');
+          expect(fs.readFileSync).toHaveBeenCalledWith(FOREST_PATH, 'utf8');
+          expect(fs.readFileSync).toHaveBeenCalledWith(LUMBER_PATH, 'utf8');
           expect(jwtDecode).toHaveBeenCalledWith('PREVIOUS-TOKEN');
-          expect(fs.unlinkSync).toHaveBeenCalledWith('~/.forestrc');
+          expect(fs.unlinkSync).toHaveBeenCalledWith(FOREST_PATH);
         });
       });
 
@@ -116,17 +119,16 @@ describe('services > authenticator', () => {
             authenticator,
             oidcAuthenticator,
             applicationTokenService,
-            os,
             fs,
             logger,
             jwtDecode,
+            LUMBER_PATH,
           } = setup();
 
           oidcAuthenticator.authenticate.mockResolvedValue('SESSION-TOKEN');
           applicationTokenService.generateApplicationToken.mockResolvedValue('APP-TOKEN');
-          os.homedir.mockReturnValue('~');
           fs.readFileSync.mockImplementation((path) => {
-            if (path === '~/.lumberrc') return 'PREVIOUS-TOKEN';
+            if (path === LUMBER_PATH) return 'PREVIOUS-TOKEN';
             return '';
           });
           jwtDecode.mockReturnValue({ exp: (Date.now().valueOf() / 1000) + 5000 });
@@ -134,8 +136,104 @@ describe('services > authenticator', () => {
           await authenticator.tryLogin({});
 
           expect(logger.error).not.toHaveBeenCalled();
-          expect(fs.unlinkSync).not.toHaveBeenCalledWith('~/.lumberrc');
+          expect(fs.unlinkSync).not.toHaveBeenCalledWith(LUMBER_PATH);
         });
+      });
+    });
+  });
+
+  describe('logout', () => {
+    function mockGetToken(pathWithAToken) {
+      return (path) => {
+        if (path === pathWithAToken) {
+          return 'THE TOKEN';
+        }
+        throw new Error('Not found');
+      };
+    }
+
+    describe('when called without options', () => {
+      it('should delete the .forestrc file and call the api to invalidate the token', async () => {
+        expect.assertions(5);
+        const {
+          authenticator, fs, jwtDecode, applicationTokenService,
+          FOREST_PATH, logger,
+        } = setup();
+
+        fs.readFileSync
+          .mockImplementation(mockGetToken(FOREST_PATH));
+        jwtDecode.mockReturnValue({ exp: (Date.now() / 1000) + 60 });
+        applicationTokenService.deleteApplicationToken
+          .mockResolvedValue(undefined);
+
+        await authenticator.logout();
+
+        expect(fs.readFileSync).toHaveBeenCalledWith(FOREST_PATH, 'utf8');
+        expect(fs.unlinkSync).toHaveBeenCalledWith(FOREST_PATH);
+        expect(fs.unlinkSync).toHaveBeenCalledTimes(1);
+        expect(applicationTokenService.deleteApplicationToken).toHaveBeenCalledWith('THE TOKEN');
+        expect(logger.info).not.toHaveBeenCalled();
+      });
+
+      it('should do nothing if the token is in the lumberrc file', async () => {
+        expect.assertions(4);
+        const {
+          authenticator, fs, jwtDecode, applicationTokenService,
+          LUMBER_PATH, logger,
+        } = setup();
+
+        fs.readFileSync
+          .mockImplementation(mockGetToken(LUMBER_PATH));
+        jwtDecode.mockReturnValue({ exp: (Date.now() / 1000) + 60 });
+
+        await authenticator.logout();
+
+        expect(fs.readFileSync).toHaveBeenCalledWith(LUMBER_PATH, 'utf8');
+        expect(fs.unlinkSync).not.toHaveBeenCalled();
+        expect(applicationTokenService.deleteApplicationToken).not.toHaveBeenCalled();
+        expect(logger.info).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('when called with the option to write log messages', () => {
+      it('should logout and write a message', async () => {
+        expect.assertions(3);
+        const {
+          authenticator, fs, jwtDecode, applicationTokenService,
+          FOREST_PATH, logger,
+        } = setup();
+
+        fs.readFileSync
+          .mockImplementation(mockGetToken(FOREST_PATH));
+        jwtDecode.mockReturnValue({ exp: (Date.now() / 1000) + 60 });
+        applicationTokenService.deleteApplicationToken
+          .mockResolvedValue(undefined);
+
+        await authenticator.logout({ log: true });
+
+        expect(fs.unlinkSync).toHaveBeenCalledWith(FOREST_PATH);
+        expect(applicationTokenService.deleteApplicationToken).toHaveBeenCalledWith('THE TOKEN');
+        expect(logger.info).toHaveBeenCalledWith('[green]You are logged out.[/green]');
+      });
+
+      it('should not do anything and write a message', async () => {
+        expect.assertions(3);
+        const {
+          authenticator, fs, jwtDecode, applicationTokenService,
+          LUMBER_PATH, logger,
+        } = setup();
+
+        fs.readFileSync
+          .mockImplementation(mockGetToken(LUMBER_PATH));
+        jwtDecode.mockReturnValue({ exp: (Date.now() / 1000) + 60 });
+        applicationTokenService.deleteApplicationToken
+          .mockResolvedValue(undefined);
+
+        await authenticator.logout({ log: true });
+
+        expect(fs.unlinkSync).not.toHaveBeenCalled();
+        expect(applicationTokenService.deleteApplicationToken).not.toHaveBeenCalled();
+        expect(logger.info).toHaveBeenCalledWith('You cannot be logged out with this command. Please use "lumber logout" command.');
       });
     });
   });

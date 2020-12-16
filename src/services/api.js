@@ -35,6 +35,19 @@ function Api({
     .set('Authorization', `Bearer ${sessionToken}`)
     .send(applicationTokenSerializer.serialize(applicationToken))
     .then((response) => applicationTokenDeserializer.deserialize(response.body));
+
+
+  /**
+   * @param {string} sessionToken
+   * @returns {Promise<import('../deserializers/application-token').ApplicationToken>}
+   */
+  this.deleteApplicationToken = async (sessionToken) => agent
+    .delete(`${this.endpoint()}/api/application-tokens`)
+    .set(HEADER_FOREST_ORIGIN, 'forest-cli')
+    .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
+    .set(HEADER_USER_AGENT, this.userAgent)
+    .set('Authorization', `Bearer ${sessionToken}`)
+    .send();
 }
 
 module.exports = Api;
