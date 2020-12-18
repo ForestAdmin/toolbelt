@@ -1,13 +1,14 @@
 const { flags } = require('@oclif/command');
-const fs = require('fs');
 const path = require('path');
-const Joi = require('joi');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
 const JobStateChecker = require('../../services/job-state-checker');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
-const logger = require('../../services/logger');
-const authenticator = require('../../services/authenticator');
+const context = require('../../context');
+
+const {
+  authenticator, logger, fs, joi,
+} = context.inject();
 
 class ApplyCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
@@ -57,14 +58,14 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
       this.exit(1);
     }
 
-    const { error } = Joi.validate(schema, Joi.object().keys({
-      collections: Joi.array().items(Joi.object()).required(),
-      meta: Joi.object().keys({
-        liana: Joi.string().required(),
-        orm_version: Joi.string().required(),
-        database_type: Joi.string().required(),
-        liana_version: Joi.string().required(),
-        framework_version: Joi.string().allow(null),
+    const { error } = joi.validate(schema, joi.object().keys({
+      collections: joi.array().items(joi.object()).required(),
+      meta: joi.object().keys({
+        liana: joi.string().required(),
+        orm_version: joi.string().required(),
+        database_type: joi.string().required(),
+        liana_version: joi.string().required(),
+        framework_version: joi.string().allow(null),
       }).unknown().required(),
     }), { convert: false });
 

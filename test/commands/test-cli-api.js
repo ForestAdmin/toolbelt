@@ -1,5 +1,7 @@
 module.exports = {
   assertApi: (api) => {
-    api.forEach((nock) => nock.done());
+    api.forEach((nock) => {
+      nock.done();
+    });
   },
 };

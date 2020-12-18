@@ -4,14 +4,165 @@ const ProjectSerializer = require('../../src/serializers/project');
 const EnvironmentSerializer = require('../../src/serializers/environment');
 const JobSerializer = require('../../src/serializers/job');
 
-module.exports = {
-  aGoogleAccount: () => nock('http://localhost:3001')
-    .get('/api/users/google/robert@gmail.com')
-    .reply(200, { data: { isGoogleAccount: true } }),
+nock.disableNetConnect();
 
-  notAGoogleAccount: () => nock('http://localhost:3001')
-    .get('/api/users/google/some@mail.com')
-    .reply(200, { data: { isGoogleAccount: false } }),
+/**
+ * @param {import('nock').Scope} nockScope
+ */
+function getOidcConfig(nockScope) {
+  return nockScope
+    .get('/oidc/.well-known/openid-configuration')
+    .reply(200, {
+      authorization_endpoint: 'http://localhost:3001/oidc/auth',
+      device_authorization_endpoint: 'http://localhost:3001/oidc/device/auth',
+      claims_parameter_supported: false,
+      claims_supported: ['sub', 'email', 'sid', 'auth_time', 'iss'],
+      code_challenge_methods_supported: ['S256'],
+      end_session_endpoint: 'http://localhost:3001/oidc/session/end',
+      grant_types_supported: ['implicit', 'authorization_code', 'refresh_token', 'urn:ietf:params:oauth:grant-type:device_code'],
+      id_token_signing_alg_values_supported: ['HS256', 'RS256'],
+      issuer: 'http://localhost:3001',
+      jwks_uri: 'http://localhost:3001/oidc/jwks',
+      registration_endpoint: 'http://localhost:3001/oidc/reg',
+      response_modes_supported: ['form_post', 'fragment', 'query'],
+      response_types_supported: ['code id_token', 'code', 'id_token', 'none'],
+      scopes_supported: ['openid', 'offline_access', 'email'],
+      subject_types_supported: ['public'],
+      token_endpoint_auth_methods_supported: ['none', 'client_secret_basic', 'client_secret_jwt', 'client_secret_post', 'private_key_jwt'],
+      token_endpoint_auth_signing_alg_values_supported: ['HS256', 'RS256', 'PS256', 'ES256', 'EdDSA'],
+      token_endpoint: 'http://localhost:3001/oidc/token',
+      request_object_signing_alg_values_supported: ['HS256', 'RS256', 'PS256', 'ES256', 'EdDSA'],
+      request_parameter_supported: false,
+      request_uri_parameter_supported: true,
+      require_request_uri_registration: true,
+      userinfo_endpoint: 'http://localhost:3001/oidc/me',
+      userinfo_signing_alg_values_supported: ['HS256', 'RS256'],
+      introspection_endpoint: 'http://localhost:3001/oidc/token/introspection',
+      introspection_endpoint_auth_methods_supported: ['none', 'client_secret_basic', 'client_secret_jwt', 'client_secret_post', 'private_key_jwt'],
+      introspection_endpoint_auth_signing_alg_values_supported: ['HS256', 'RS256', 'PS256', 'ES256', 'EdDSA'],
+      revocation_endpoint: 'http://localhost:3001/oidc/token/revocation',
+      revocation_endpoint_auth_methods_supported: ['none', 'client_secret_basic', 'client_secret_jwt', 'client_secret_post', 'private_key_jwt'],
+      revocation_endpoint_auth_signing_alg_values_supported: ['HS256', 'RS256', 'PS256', 'ES256', 'EdDSA'],
+      claim_types_supported: ['normal'],
+    });
+}
+
+/**
+ * @param {import('nock').Scope} scope
+ */
+function registerOidcClient(scope) {
+  return scope
+    .post('/oidc/reg', {
+      name: 'forest-cli',
+      application_type: 'native',
+      redirect_uris: ['com.forestadmin.cli://authenticate'],
+      token_endpoint_auth_method: 'none',
+      grant_types: ['urn:ietf:params:oauth:grant-type:device_code'],
+      response_types: ['none'],
+    })
+    .reply(201, {
+      client_id: 'the-client-id',
+      name: 'forest-cli',
+      application_type: 'native',
+      redirect_uris: ['com.forestadmin.cli://authenticate'],
+      token_endpoint_auth_method: 'none',
+      grant_types: ['urn:ietf:params:oauth:grant-type:device_code'],
+      response_types: ['none'],
+    });
+}
+
+/**
+ * @param {import('nock').Scope} scope
+ */
+function startAuthenticationFlow(scope) {
+  return scope.post('/oidc/device/auth', 'client_id=the-client-id&scope=openid&scopes=openid%2Cemail%2Cprofile')
+    .reply(200, {
+      user_code: 'USER-CODE',
+      verification_uri: 'http://app.localhost/device/check',
+      verification_uri_complete: 'http://app.localhost/device/check?code=ABCD',
+      device_code: 'DEVICE-CODE',
+      expires_in: 3600,
+      interval: 1,
+    });
+}
+
+/**
+ * @param {import('nock').Scope} scope
+ */
+function authenticationFailed(scope) {
+  return scope.post('/oidc/token', 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code&device_code=DEVICE-CODE&client_id=the-client-id')
+    .reply(401, {
+      error: 'The authentication failed',
+    });
+}
+
+/**
+ * @param {import('nock').Scope} scope
+ */
+function authenticationSucceeded(scope) {
+  return scope.post('/oidc/token', 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code&device_code=DEVICE-CODE&client_id=the-client-id')
+    .reply(200, {
+      access_token: jwt.sign({}, 'key', { expiresIn: '1day' }),
+    });
+}
+
+/**
+ * @param {import('nock').Scope} scope
+ */
+function createAuthenticationToken(scope) {
+  return scope.post('/api/application-tokens', {
+    data: {
+      type: 'application-tokens',
+      attributes: {
+        name: /forest-cli @.+/,
+      },
+    },
+  })
+    .matchHeader('authorization', /Bearer .+/)
+    .matchHeader('forest-origin', 'forest-cli')
+    .reply(200, {
+      data: {
+        id: 42,
+        attributes: {
+          token: jwt.sign({}, 'key', { expiresIn: '1day' }),
+        },
+      },
+    });
+}
+
+function loginInvalidOidc() {
+  const scope = nock('http://localhost:3001');
+
+  return [
+    getOidcConfig,
+    registerOidcClient,
+    startAuthenticationFlow,
+    authenticationFailed,
+  ].reduce(
+    (currentScope, registration) => registration(currentScope),
+    scope,
+  );
+}
+
+function loginValidOidc() {
+  const scope = nock('http://localhost:3001');
+
+  return [
+    getOidcConfig,
+    registerOidcClient,
+    startAuthenticationFlow,
+    authenticationSucceeded,
+    createAuthenticationToken,
+  ].reduce(
+    (currentScope, registration) => registration(currentScope),
+    scope,
+  );
+}
+
+
+module.exports = {
+  loginInvalidOidc,
+  loginValidOidc,
 
   loginValid: () => nock('http://localhost:3001')
     .post('/api/sessions', { email: 'some@mail.com', password: 'valid_pwd' })

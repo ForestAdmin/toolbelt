@@ -2,16 +2,14 @@ const testCli = require('./test-cli');
 const EnvironmentCommand = require('../../src/commands/environments');
 const {
   loginRequired,
-  loginPasswordDialog,
   enter,
   arrowDown,
 } = require('../fixtures/std');
 const { testEnv } = require('../fixtures/env');
 const {
-  notAGoogleAccount,
-  loginValid,
   getProjectListValid,
   getEnvironmentListValid,
+  loginValidOidc,
 } = require('../fixtures/api');
 
 describe('environments', () => {
@@ -19,14 +17,13 @@ describe('environments', () => {
     env: testEnv,
     command: () => EnvironmentCommand.run([]),
     api: [
-      notAGoogleAccount(),
-      loginValid(),
+      loginValidOidc(),
       getProjectListValid(),
       getEnvironmentListValid(),
     ],
     std: [
       ...loginRequired,
-      ...loginPasswordDialog,
+      { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
       ...arrowDown,
       ...enter,
       { out: 'ENVIRONMENTS' },

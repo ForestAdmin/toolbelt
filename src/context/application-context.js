@@ -60,6 +60,19 @@ class ApplicationContext {
   }
 
   /**
+   * This function is meant to be used only in tests, when some
+   * dependencies need to be mocked but not all
+   * @param {string} name
+   * @param {*} newInstance
+   * @returns {this}
+   */
+  replaceInstance(name, newInstance) {
+    if (!this.context[name]) throw new Error(`the instance { key: '${name}'} cannot be replaced because it is not defined`);
+    this.context[name] = newInstance;
+    return this;
+  }
+
+  /**
    * @param {string} name
    * @param {(param: any) => void} work
    * @returns {this}

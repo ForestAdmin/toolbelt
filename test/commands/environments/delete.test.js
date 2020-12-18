@@ -34,6 +34,7 @@ describe('environments:delete', () => {
           getEnvironmentValid(),
           deleteEnvironmentFailure(),
         ],
+        std: [{ err: 'Oops, something went wrong.' }],
         exitCode: 1,
       }));
     });

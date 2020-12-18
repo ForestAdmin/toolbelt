@@ -1,7 +1,6 @@
 const testCli = require('./test-cli');
 const InitCommand = require('../../src/commands/init');
 const {
-  loginValid,
   getProjectByEnvIncludeLegacy,
   getInAppProjectForDevWorkflow,
   getDevelopmentEnvironmentValid,
@@ -15,9 +14,10 @@ const {
   getLumberProjectForDevWorkflow,
   getDevelopmentEnvironmentNotFound,
   createDevelopmentEnvironment,
+  loginValidOidc,
 } = require('../fixtures/api');
 const { testEnv: noKeyEnv, testEnv2, testEnvWithDatabaseUrl } = require('../fixtures/env');
-const { loginPasswordDialog, databaseDialog, enter } = require('../fixtures/std');
+const { databaseDialog, enter } = require('../fixtures/std');
 
 describe('init command', () => {
   describe('login', () => {
@@ -26,13 +26,13 @@ describe('init command', () => {
         command: () => InitCommand.run([]),
         env: testEnv2,
         api: [
-          loginValid(),
+          loginValidOidc(),
           getProjectByEnvIncludeLegacy(),
           getInAppProjectForDevWorkflow(82),
           getDevelopmentEnvironmentValid(82),
         ],
         std: [
-          ...loginPasswordDialog,
+          { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
           { spinner: 'Selecting your project' },
           { spinner: 'Analyzing your setup' },
           { spinner: 'Checking your database setup' },
