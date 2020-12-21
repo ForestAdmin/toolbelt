@@ -32,7 +32,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * @throws Will throw an error when there is no production environment.
    * @return {Object} The environment found.
    */
-  static async getEnvironment(config) {
+  async getEnvironment(config) {
     const environments = await new EnvironmentManager(config).listEnvironments();
     const productionExists = environments.find((environment) => environment.type === 'production');
 
@@ -40,7 +40,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
     if (!productionExists) throw new Error('❌ You need a production environment to run this command.');
 
     const environmentName = config.ENVIRONMENT_NAME
-      || await DeployCommand.selectEnvironment(environments);
+      || await this.selectEnvironment(environments);
     return environments.find((environment) => environment.name === environmentName);
   }
 
@@ -49,7 +49,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * @param {Array} environments List of environments (from backend).
    * @see getEnvironment
    */
-  static async selectEnvironment(environments) {
+  async selectEnvironment(environments) {
     const response = await this.inquirer.prompt([{
       name: 'environment',
       message: 'Select the environment containing the layout changes you want to deploy to production',
@@ -86,7 +86,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * @param {Object} environment - The environment containing the layout changes to deploy.
    * @returns {Boolean} Return true if user has confirmed.
    */
-  static async confirm(environment) {
+  async confirm(environment) {
     const response = await this.inquirer
       .prompt([{
         type: 'confirm',
@@ -103,11 +103,11 @@ class DeployCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
     try {
       const config = await this.getConfig();
-      const environment = await DeployCommand.getEnvironment(config);
+      const environment = await this.getEnvironment(config);
 
       if (environment === undefined) throw new Error('Environment not found.');
       if (environment.type === 'production') throw new Error('❌ You cannot deploy production onto itself.');
-      if (!config.force && !(await DeployCommand.confirm(environment))) return null;
+      if (!config.force && !(await this.confirm(environment))) return null;
 
       await new EnvironmentManager(config).deploy(environment);
 

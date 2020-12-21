@@ -4,7 +4,7 @@ const context = require('./context');
 class AbstractAuthenticatedCommand extends Command {
   constructor(...args) {
     super(...args);
-    /** @type {Context} */
+    /** @type {import('./context/init').Context} */
     const { logger, authenticator, chalk } = context.inject();
 
     /** @protected @readonly */

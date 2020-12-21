@@ -23,7 +23,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
   }
 
   // TODO: DWO EP17 probably update this function to handle environment selection
-  static async askForEnvironment(config) {
+  async askForEnvironment(config) {
     const environments = await new EnvironmentManager(config).listEnvironments();
     const remoteEnvironments = environments.filter((environment) => environment.type === 'remote');
 
@@ -62,7 +62,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
 
       // TODO: DWO EP17 remove destination environemnt handle
       if (!config.environment) {
-        config.environment = await PushCommand.askForEnvironment(config);
+        config.environment = await this.askForEnvironment(config);
       }
 
       if (!config.force) {
