@@ -25,13 +25,23 @@ const PROMPT_MESSAGE_AUTO_FILLING_ENV_FILE = 'Do you want your current folder `.
 const PROMPT_MESSAGE_AUTO_CREATING_ENV_FILE = 'Do you want a new `.env` file (containing your environment variables) to be automatically created in your current folder?';
 
 const spinner = singletonGetter(Spinner);
-
-
-const { config: envConfig, inquirer, logger } = context.inject();
 class InitCommand extends AbstractAuthenticatedCommand {
   constructor(...args) {
     super(...args);
     this.environmentVariables = {};
+
+    /** @type {import('../context/init').Context} */
+    const { config: envConfig, inquirer } = context.inject();
+
+    /** @private @readonly */
+    this.envConfig = envConfig;
+
+    /** @private @readonly */
+    this.inquirer = inquirer;
+
+    ['envConfig', 'inquirer'].forEach((name) => {
+      if (!this[name]) throw new Error(`Missing dependency ${name}`);
+    });
   }
 
   async runIfAuthenticated() {
@@ -52,17 +62,21 @@ class InitCommand extends AbstractAuthenticatedCommand {
 
       spinner.start({ text: SUCCESS_MESSAGE_ALL_SET_AND_READY });
       spinner.success();
-      logger.info(SUCCESS_MESSAGE_LEARN_MORE_ON_CLI_USAGE);
+      this.logger.info(SUCCESS_MESSAGE_LEARN_MORE_ON_CLI_USAGE);
     } catch (error) {
       const exitMessage = handleInitError(error);
-      logger.error(exitMessage);
+      this.logger.error(exitMessage);
       this.exit(1);
     }
   }
 
   async projectSelection() {
     const parsed = this.parse(InitCommand);
-    this.config = await withCurrentProject({ ...envConfig, ...parsed.flags, includeLegacy: true });
+    this.config = await withCurrentProject({
+      ...this.envConfig,
+      ...parsed.flags,
+      includeLegacy: true,
+    });
   }
 
   async projectValidation() {
@@ -98,7 +112,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
 
     if (!developmentEnvironment) {
       spinner.pause();
-      const prompter = await inquirer.prompt([{
+      const prompter = await this.inquirer.prompt([{
         name: 'endpoint',
         message: 'Enter your local admin backend endpoint:',
         type: 'input',
@@ -119,7 +133,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
   async environmentVariablesAutoFilling() {
     if (this.environmentVariables.projectOrigin !== 'In-app') {
       const existingEnvFile = fs.existsSync('.env');
-      const response = await inquirer
+      const response = await this.inquirer
         .prompt([{
           type: 'confirm',
           name: 'autoFillOrCreationConfirmation',

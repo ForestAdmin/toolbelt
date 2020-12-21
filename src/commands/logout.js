@@ -1,11 +1,20 @@
 const { Command } = require('@oclif/command');
 const context = require('../context');
 
-const { authenticator } = context.inject();
-
 class LogoutCommand extends Command {
+  constructor(...args) {
+    super(...args);
+    /** @type {import('../context/init').Context} */
+    const { authenticator } = context.inject();
+
+    /** @private @readonly */
+    this.authenticator = authenticator;
+
+    if (!this.authenticator) throw new Error('Missing dependency authenticator');
+  }
+
   static async run() {
-    await authenticator.logout({ log: true });
+    await this.authenticator.logout({ log: true });
   }
 }
 

@@ -6,10 +6,25 @@ const ProjectManager = require('../services/project-manager');
 const { handleBranchError } = require('../services/branch-manager');
 const withCurrentProject = require('../services/with-current-project');
 
-const { inquirer, config: envConfig } = context.inject();
-
 /** Deploy layout changes of an environment to production. */
 class DeployCommand extends AbstractAuthenticatedCommand {
+  constructor(...args) {
+    super(...args);
+
+    /** @type {import('../context/init').Context} */
+    const { inquirer, config } = context.inject();
+
+    /** @private @readonly */
+    this.inquirer = inquirer;
+
+    /** @private @readonly */
+    this.envConfig = config;
+
+    ['inquirer', 'envConfig'].forEach((name) => {
+      if (!this[name]) throw new Error(`Missing dependency ${name}`);
+    });
+  }
+
   /**
    * Get selected environment; prompt for environment when none is provided.
    * @param {Object} config - Actual command config (including command parameters).
@@ -35,7 +50,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * @see getEnvironment
    */
   static async selectEnvironment(environments) {
-    const response = await inquirer.prompt([{
+    const response = await this.inquirer.prompt([{
       name: 'environment',
       message: 'Select the environment containing the layout changes you want to deploy to production',
       type: 'list',
@@ -55,7 +70,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
     const envSecret = process.env.FOREST_ENV_SECRET;
     const parsed = this.parse(DeployCommand);
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
-    const config = await withCurrentProject({ ...envConfig, ...commandOptions });
+    const config = await withCurrentProject({ ...this.envConfig, ...commandOptions });
 
     if (!config.envSecret) {
       const environment = await new ProjectManager(config)
@@ -72,7 +87,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * @returns {Boolean} Return true if user has confirmed.
    */
   static async confirm(environment) {
-    const response = await inquirer
+    const response = await this.inquirer
       .prompt([{
         type: 'confirm',
         name: 'confirm',
