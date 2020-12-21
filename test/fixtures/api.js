@@ -368,6 +368,7 @@ module.exports = {
         type: 'deployment-requests',
       },
     })
+    .delay(20)
     .reply(200, {
       meta: {
         job_id: 78,
