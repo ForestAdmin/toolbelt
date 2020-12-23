@@ -1,3 +1,10 @@
+# [2.0.0-beta.2](https://github.com/ForestAdmin/toolbelt/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2020-12-23)
+
+
+### Bug Fixes
+
+* error when preparing the release ([#137](https://github.com/ForestAdmin/toolbelt/issues/137)) ([79eb5b8](https://github.com/ForestAdmin/toolbelt/commit/79eb5b828f00b86faf6691400bd00642344b59e4))
+
 # [2.0.0-beta.1](https://github.com/ForestAdmin/toolbelt/compare/v1.7.5...v2.0.0-beta.1) (2020-12-18)
 
 
