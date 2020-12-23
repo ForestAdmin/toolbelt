@@ -25,11 +25,11 @@ module.exports = {
       setTimeout(() => stdin.send(`${inputs[i]}\n`), TIME_TO_LOAD_TEST + i * TIME_TO_REACH_NEXT_PROMPT);
     }
   },
-  assertOutputs: (outputs, errorOutputs) => {
+  assertOutputs: (outputs, errorOutputs, { assertNoStdError }) => {
     stdout.stop();
     stderr.stop();
 
-    if (!errorOutputs.length && stderr.output) {
+    if (!errorOutputs.length && stderr.output && assertNoStdError) {
       expect(stderr.output.trim()).toBe('');
     }
 

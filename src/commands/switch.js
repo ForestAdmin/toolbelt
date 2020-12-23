@@ -5,12 +5,24 @@ const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
 
-const { inquirer, config: envConfig, logger } = context.inject();
-
 class SwitchCommand extends AbstractAuthenticatedCommand {
+  constructor(...args) {
+    super(...args);
+
+    /** @type {import('../context/init').Context} */
+    const { inquirer, config: envConfig } = context.inject();
+
+    this.inquirer = inquirer;
+    this.envConfig = envConfig;
+
+    ['inquirer', 'envConfig'].forEach((name) => {
+      if (!this[name]) throw new Error(`Missing dependency ${name}`);
+    });
+  }
+
   async selectBranch(branches) {
     try {
-      const { branch } = await inquirer.prompt([{
+      const { branch } = await this.inquirer.prompt([{
         name: 'branch',
         message: 'Select the branch you want to set current',
         type: 'list',
@@ -25,7 +37,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
-      logger.error(customError);
+      this.logger.error(customError);
       return this.exit(2);
     }
   }
@@ -38,7 +50,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
-      logger.error(customError);
+      this.logger.error(customError);
       return this.exit(2);
     }
   }
@@ -48,7 +60,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
     const parsed = this.parse(SwitchCommand);
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
 
-    const config = await withCurrentProject({ ...envConfig, ...commandOptions });
+    const config = await withCurrentProject({ ...this.envConfig, ...commandOptions });
 
     if (!config.envSecret) {
       const environment = await new ProjectManager(config)
@@ -82,7 +94,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
       return this.switchTo(selectedBranch, config.envSecret);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
-      logger.error(customError);
+      this.logger.error(customError);
       return this.exit(2);
     }
   }

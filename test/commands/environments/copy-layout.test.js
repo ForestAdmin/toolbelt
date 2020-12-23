@@ -23,6 +23,7 @@ describe('environments:copy-layout', () => {
           postCopyLayout(),
           getJob(),
         ],
+        assertNoStdError: false,
         std: [
           { out: 'Environment\'s layout Production successfully copied to Staging.' },
         ],
