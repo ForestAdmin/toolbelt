@@ -1,3 +1,10 @@
+## [1.7.6](https://github.com/ForestAdmin/toolbelt/compare/v1.7.5...v1.7.6) (2020-12-24)
+
+
+### Bug Fixes
+
+* serialize hooks information with schema:apply ([#139](https://github.com/ForestAdmin/toolbelt/issues/139)) ([2e0589a](https://github.com/ForestAdmin/toolbelt/commit/2e0589a10ea95d1d2a5d2647b60d41d5ba418320))
+
 ## [1.7.5](https://github.com/ForestAdmin/toolbelt/compare/v1.7.4...v1.7.5) (2020-12-03)
 
 
