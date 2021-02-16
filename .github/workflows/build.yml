@@ -37,8 +37,6 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - uses: actions/setup-node@v1
       - name: Cache node_modules
         uses: actions/cache@v2
@@ -68,8 +66,6 @@ jobs:
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
-      - name: Build package
-        run: yarn build
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v2
         id: semantic
