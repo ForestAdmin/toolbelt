@@ -11,7 +11,7 @@ jobs:
   lint:
     name: Linting
     runs-on: ubuntu-latest
-    if: true || "!contains(github.event.head_commit.message, '[skip ci]')"
+    if: github.event_name == 'pull_request' || "!contains(github.event.head_commit.message, '[skip ci]')"
     steps:
       - name: Cancel previous running workflows
         uses: fkirc/skip-duplicate-actions@master
@@ -34,7 +34,7 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     needs: [lint]
-    if: true || "!contains(github.event.head_commit.message, '[skip ci]')"
+    if: github.event_name == 'pull_request' || "!contains(github.event.head_commit.message, '[skip ci]')"
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
