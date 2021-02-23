@@ -1,6 +1,8 @@
 const fsExtra = require('fs-extra');
 const jwt = require('jsonwebtoken');
-const authenticator = require('./../../src/services/authenticator');
+const context = require('../../src/context');
+
+const { authenticator } = context.inject();
 
 const getTokenPath = () => process.env.TOKEN_PATH || './test/services/tokens';
 const fakeKey = 'test-token-key';

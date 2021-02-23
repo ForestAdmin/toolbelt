@@ -1,18 +1,30 @@
 const { Command } = require('@oclif/command');
 const jwt = require('jsonwebtoken');
 const context = require('../context');
-const authenticator = require('../services/authenticator');
-
-const { chalk, logger } = context.inject();
 
 class UserCommand extends Command {
-  static async run() {
-    const token = authenticator.getAuthToken();
+  constructor(...args) {
+    super(...args);
+
+    /** @type {import('../context/init').Context} */
+    const { chalk, logger, authenticator } = context.inject();
+
+    this.chalk = chalk;
+    this.logger = logger;
+    this.authenticator = authenticator;
+
+    ['chalk', 'logger', 'authenticator'].forEach((name) => {
+      if (!this[name]) throw new Error(`Missing dependency ${name}`);
+    });
+  }
+
+  async run() {
+    const token = this.authenticator.getAuthToken();
     if (token) {
       const decoded = jwt.decode(token);
-      console.log(chalk.bold('Email: ') + chalk.cyan(decoded.data.data.attributes.email));
+      console.log(this.chalk.bold('Email: ') + this.chalk.cyan(decoded.data.data.attributes.email));
     } else {
-      logger.error('You are not logged.');
+      this.logger.error('You are not logged.');
     }
   }
 }

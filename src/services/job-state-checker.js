@@ -4,8 +4,9 @@ const ProgressBar = require('progress');
 const { promisify } = require('util');
 const jobDeserializer = require('../deserializers/job');
 const config = require('../config');
-const { getAuthToken } = require('./authenticator');
-const logger = require('./logger');
+const context = require('../context');
+
+const { authenticator, logger } = context.inject();
 
 const setTimeoutAsync = promisify(setTimeout);
 
@@ -17,7 +18,7 @@ function JobStateChecker(message, oclifExit) {
     try {
       const jobResponse = await agent
         .get(`${config.serverHost()}/api/jobs/${jobId}`)
-        .set('Authorization', `Bearer ${getAuthToken()}`)
+        .set('Authorization', `Bearer ${authenticator.getAuthToken()}`)
         .then((response) => jobDeserializer.deserialize(response.body));
 
       if (jobResponse && jobResponse.state) {

@@ -2,14 +2,12 @@ const jwt = require('jsonwebtoken');
 
 const testCli = require('./test-cli');
 const LoginCommand = require('../../src/commands/login');
-const {
-  loginPasswordDialog,
-} = require('../fixtures/std');
 
 const {
-  aGoogleAccount,
   loginValid,
   loginInvalid,
+  loginInvalidOidc,
+  loginValidOidc,
 } = require('../fixtures/api');
 const { testEnv } = require('../fixtures/env');
 
@@ -26,6 +24,7 @@ describe('login', () => {
     describe('with valid token in args', () => {
       const token = jwt.sign({}, 'key', { expiresIn: '1day' });
       it('should login successful', () => testCli({
+        env: testEnv,
         command: () => LoginCommand.run(['-e', 'smile@gmail.com', '-t', token]),
         std: [
           { in: `${jwt.sign({}, 'key', { expiresIn: '1day' })}` },
@@ -33,66 +32,51 @@ describe('login', () => {
         ],
       }));
     });
-    describe('with a google mail', () => {
-      describe('with a valid token from input', () => {
-        it('should login successful', () => testCli({
-          env: testEnv,
-          api: aGoogleAccount(),
-          command: () => LoginCommand.run(['-e', 'robert@gmail.com']),
-          std: [
-            {
-              out: 'To authenticate with your Google account, please follow this link '
-                + 'and copy the authentication token:',
-            },
-            { in: `${jwt.sign({}, 'key', { expiresIn: '1day' })}` },
-            { out: 'Login successful' },
-          ],
-        }));
-      });
-    });
-  });
 
-  describe('with typing email', () => {
-    describe('with a google mail', () => {
-      describe('with a valid token from input', () => {
-        it('should login successful', () => testCli({
-          env: testEnv,
-          command: () => LoginCommand.run([]),
-          api: aGoogleAccount(),
-          std: [
-            { out: 'What is your email address?' },
-            { in: 'robert@gmail.com' },
-            {
-              out: 'To authenticate with your Google account, please follow this link '
-                + 'and copy the authentication token:',
-            },
-            { in: `${jwt.sign({}, 'key', { expiresIn: '1day' })}` },
-            { out: 'Login successful' },
-          ],
-        }));
-      });
-    });
-    describe('with typing valid password', () => {
-      it('should login successful', () => testCli({
+    describe('with a valid password in args', () => {
+      it('should login successfully', () => testCli({
+        command: () => LoginCommand.run(['-e', 'some@mail.com', '-P', 'valid_pwd']),
         env: testEnv,
-        command: () => LoginCommand.run([]),
         api: loginValid(),
         std: [
-          ...loginPasswordDialog,
+          { out: 'Login successful' },
         ],
       }));
     });
-    describe('with typing wrong password', () => {
+
+    describe('with an invalid password in args', () => {
       it('should display incorrect password', () => testCli({
         env: testEnv,
-        command: () => LoginCommand.run([]),
+        command: () => LoginCommand.run(['-e', 'some@mail.com', '-P', 'pwd']),
         api: loginInvalid(),
         std: [
-          { out: 'What is your email address?' },
-          { in: 'some@mail.com' },
-          { out: 'What is your Forest Admin password: [input is hidden] ?' },
-          { in: 'pwd' },
           { err: 'Incorrect email or password.' },
+        ],
+      }));
+    });
+  });
+
+  describe('with the oidc authentication', () => {
+    describe('with a successful oidc authentication', () => {
+      it('should login successful', () => testCli({
+        env: testEnv,
+        command: () => LoginCommand.run([]),
+        api: loginValidOidc(),
+        std: [
+          { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
+          { out: 'Login successful' },
+        ],
+      }));
+    });
+
+    describe('with an failed oidc authentication', () => {
+      it('should display the error message', () => testCli({
+        env: testEnv,
+        command: () => LoginCommand.run([]),
+        api: loginInvalidOidc(),
+        std: [
+          { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
+          { err: 'Error during the authentication: The authentication failed.' },
         ],
       }));
     });

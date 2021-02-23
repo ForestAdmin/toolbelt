@@ -21,12 +21,28 @@ const {
   logStdErr,
   logStdOut,
 } = require('./test-cli-std');
+const { mockDependencies } = require('./test-cli-dependencies');
+
 
 function asArray(any) {
   if (!any) return [];
   return Array.isArray(any) ? any : [any];
 }
 
+/**
+ * @param {{
+ *  file?: any;
+ *  api?: import('nock').Scope|Array<import('nock').Scope>,
+ *  env?: any;
+ *  command: () => PromiseLike<any>;
+ *  exitCode?: number;
+ *  exitMessage?: string;
+ *  std?: Array<{in?: string; out?: string; err?: string; spinner?: string}>
+ *  assertNoStdError?: boolean;
+ *  print?: boolean;
+ *  token?: string;
+ * }} params
+ */
 async function testCli({
   file,
   api,
@@ -35,6 +51,7 @@ async function testCli({
   exitCode: expectedExitCode,
   exitMessage: expectedExitMessage,
   std: stds,
+  assertNoStdError = true,
   print = false,
   token: tokenBehavior = null,
   ...rest
@@ -64,6 +81,7 @@ async function testCli({
   mockFile(file);
   mockEnv(env);
   mockToken(tokenBehavior);
+  mockDependencies(context);
   const stdin = mockStd(outputs, errorOutputs, print);
   planifyInputs(inputs, stdin);
 
@@ -88,7 +106,7 @@ async function testCli({
     assertApi(nocks);
     assertExitCode(actualError, expectedExitCode);
     assertExitMessage(actualError, expectedExitMessage);
-    assertOutputs(outputs, errorOutputs);
+    assertOutputs(outputs, errorOutputs, { assertNoStdError });
   } catch (e) {
     logStdErr();
     logStdOut();

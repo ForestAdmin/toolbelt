@@ -1,21 +1,30 @@
 const { flags } = require('@oclif/command');
-const fs = require('fs');
 const path = require('path');
-const Joi = require('joi');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
 const JobStateChecker = require('../../services/job-state-checker');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
-const logger = require('../../services/logger');
-const authenticator = require('../../services/authenticator');
+const context = require('../../context');
 
 class ApplyCommand extends AbstractAuthenticatedCommand {
+  constructor(...args) {
+    super(...args);
+    /** @type {import('../../context/init').Context} */
+    const { fs, joi } = context.inject();
+
+    this.fs = fs;
+    this.joi = joi;
+    ['fs', 'joi'].forEach((name) => {
+      if (!this[name]) throw new Error(`Missing dependency ${name}`);
+    });
+  }
+
   async runIfAuthenticated() {
     const oclifExit = this.exit.bind(this);
     const { flags: parsedFlags } = this.parse(ApplyCommand);
     const serializedSchema = this.readSchema();
     const secret = this.getEnvironmentSecret(parsedFlags);
-    const authenticationToken = authenticator.getAuthToken();
+    const authenticationToken = this.authenticator.getAuthToken();
 
     this.log('Sending "./.forestadmin-schema.json"...');
     const jobId = await new SchemaSender(
@@ -39,39 +48,39 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
     this.log('Reading "./.forestadmin-schema.json"...');
     const filename = path.resolve('./.forestadmin-schema.json');
 
-    if (!fs.existsSync(filename)) {
-      logger.error('Cannot find the file ".forestadmin-schema.json" in this directory. Please be sure to run this command inside your project directory.');
+    if (!this.fs.existsSync(filename)) {
+      this.logger.error('Cannot find the file ".forestadmin-schema.json" in this directory. Please be sure to run this command inside your project directory.');
       this.exit(1);
     }
 
     let schema;
     try {
-      schema = JSON.parse(fs.readFileSync(filename, 'utf8'));
+      schema = JSON.parse(this.fs.readFileSync(filename, 'utf8'));
     } catch (error) {
-      logger.error(`Invalid json: ${error.message}`);
+      this.logger.error(`Invalid json: ${error.message}`);
       this.exit(1);
     }
 
     if (!schema) {
-      logger.error('The ".forestadmin-schema.json" file is empty');
+      this.logger.error('The ".forestadmin-schema.json" file is empty');
       this.exit(1);
     }
 
-    const { error } = Joi.validate(schema, Joi.object().keys({
-      collections: Joi.array().items(Joi.object()).required(),
-      meta: Joi.object().keys({
-        liana: Joi.string().required(),
-        orm_version: Joi.string().required(),
-        database_type: Joi.string().required(),
-        liana_version: Joi.string().required(),
-        framework_version: Joi.string().allow(null),
+    const { error } = this.joi.validate(schema, this.joi.object().keys({
+      collections: this.joi.array().items(this.joi.object()).required(),
+      meta: this.joi.object().keys({
+        liana: this.joi.string().required(),
+        orm_version: this.joi.string().required(),
+        database_type: this.joi.string().required(),
+        liana_version: this.joi.string().required(),
+        framework_version: this.joi.string().allow(null),
       }).unknown().required(),
     }), { convert: false });
 
     if (error) {
       let message = 'Cannot properly read the ".forestadmin-schema.json" file:\n - ';
       message += error.details.map((detail) => detail.message).join('\n - ');
-      logger.error(message);
+      this.logger.error(message);
       this.exit(20);
     }
 
@@ -87,7 +96,7 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
       this.log('Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"');
       secret = process.env.FOREST_ENV_SECRET;
     } else {
-      logger.error('Cannot find your forest environment secret in the environment variable "FOREST_ENV_SECRET".\nPlease set the "FOREST_ENV_SECRET" variable or pass the secret in parameter using --secret.');
+      this.logger.error('Cannot find your forest environment secret in the environment variable "FOREST_ENV_SECRET".\nPlease set the "FOREST_ENV_SECRET" variable or pass the secret in parameter using --secret.');
       this.exit(2);
     }
 

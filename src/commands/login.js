@@ -1,10 +1,21 @@
 const { Command, flags } = require('@oclif/command');
-const authenticator = require('../services/authenticator');
+const context = require('../context');
 
 class LoginCommand extends Command {
+  constructor(...args) {
+    super(...args);
+    /** @type {import('../context/init').Context} */
+    const { authenticator } = context.inject();
+
+    /** @private @readonly */
+    this.authenticator = authenticator;
+
+    if (!this.authenticator) throw new Error('Missing dependency authenticator');
+  }
+
   async run() {
     const { flags: config } = this.parse(LoginCommand);
-    await authenticator.tryLogin(config);
+    await this.authenticator.tryLogin(config);
   }
 }
 

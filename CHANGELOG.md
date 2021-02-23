@@ -1,9 +1,35 @@
+# [2.0.0-beta.3](https://github.com/ForestAdmin/toolbelt/compare/v2.0.0-beta.2...v2.0.0-beta.3) (2021-02-22)
+
+
+### Bug Fixes
+
+* serialize hooks information with schema:apply ([#139](https://github.com/ForestAdmin/toolbelt/issues/139)) ([2e0589a](https://github.com/ForestAdmin/toolbelt/commit/2e0589a10ea95d1d2a5d2647b60d41d5ba418320))
+
 ## [1.7.6](https://github.com/ForestAdmin/toolbelt/compare/v1.7.5...v1.7.6) (2020-12-24)
 
 
 ### Bug Fixes
 
 * serialize hooks information with schema:apply ([#139](https://github.com/ForestAdmin/toolbelt/issues/139)) ([2e0589a](https://github.com/ForestAdmin/toolbelt/commit/2e0589a10ea95d1d2a5d2647b60d41d5ba418320))
+
+# [2.0.0-beta.2](https://github.com/ForestAdmin/toolbelt/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2020-12-23)
+
+
+### Bug Fixes
+
+* error when preparing the release ([#137](https://github.com/ForestAdmin/toolbelt/issues/137)) ([79eb5b8](https://github.com/ForestAdmin/toolbelt/commit/79eb5b828f00b86faf6691400bd00642344b59e4))
+
+# [2.0.0-beta.1](https://github.com/ForestAdmin/toolbelt/compare/v1.7.5...v2.0.0-beta.1) (2020-12-18)
+
+
+### Features
+
+* login without entering a password, and use application tokens ([#136](https://github.com/ForestAdmin/toolbelt/issues/136)) ([6bc64e8](https://github.com/ForestAdmin/toolbelt/commit/6bc64e86e88409fef08644d9c1822dd36e10ae69))
+
+
+### BREAKING CHANGES
+
+* the default login method now require to validate a temporary code on Forest Admin
 
 ## [1.7.5](https://github.com/ForestAdmin/toolbelt/compare/v1.7.4...v1.7.5) (2020-12-03)
 

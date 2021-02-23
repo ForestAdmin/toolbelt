@@ -6,16 +6,29 @@ const ProjectManager = require('../services/project-manager');
 const EnvironmentManager = require('../services/environment-manager');
 const withCurrentProject = require('../services/with-current-project');
 
-const { inquirer, config: envConfig } = context.inject();
-
 class PushCommand extends AbstractAuthenticatedCommand {
+  constructor(...args) {
+    super(...args);
+    /** @type {import('../context/init').Context} */
+    const { inquirer, config: envConfig } = context.inject();
+
+    /** @private @readonly */
+    this.inquirer = inquirer;
+    /** @private @readonly */
+    this.envConfig = envConfig;
+
+    ['inquirer', 'envConfig'].forEach((name) => {
+      if (!this[name]) throw new Error(`Missing dependency ${name}`);
+    });
+  }
+
   // TODO: DWO EP17 probably update this function to handle environment selection
-  static async askForEnvironment(config) {
+  async askForEnvironment(config) {
     const environments = await new EnvironmentManager(config).listEnvironments();
     const remoteEnvironments = environments.filter((environment) => environment.type === 'remote');
 
     if (remoteEnvironments.length) {
-      const response = await inquirer.prompt([{
+      const response = await this.inquirer.prompt([{
         name: 'environment',
         message: 'Select the remote environment you want to push onto',
         type: 'list',
@@ -31,7 +44,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
     const commandOptions = { ...parsed.flags, ...parsed.args };
 
     try {
-      const config = await withCurrentProject({ ...envConfig, ...commandOptions });
+      const config = await withCurrentProject({ ...this.envConfig, ...commandOptions });
 
       const projectManager = new ProjectManager(config);
       const project = await projectManager.getProjectForDevWorkflow();
@@ -49,11 +62,11 @@ class PushCommand extends AbstractAuthenticatedCommand {
 
       // TODO: DWO EP17 remove destination environemnt handle
       if (!config.environment) {
-        config.environment = await PushCommand.askForEnvironment(config);
+        config.environment = await this.askForEnvironment(config);
       }
 
       if (!config.force) {
-        const response = await inquirer
+        const response = await this.inquirer
           .prompt([{
             type: 'confirm',
             name: 'confirm',

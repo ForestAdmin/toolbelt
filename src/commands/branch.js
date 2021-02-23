@@ -4,11 +4,23 @@ const AbstractAuthenticatedCommand = require('../abstract-authenticated-command'
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
-const logger = require('../services/logger');
-
-const { inquirer, config: envConfig } = context.inject();
 
 class BranchCommand extends AbstractAuthenticatedCommand {
+  constructor(...args) {
+    super(...args);
+
+    /** @type {import('../context/init').Context} */
+    const { inquirer, config } = context.inject();
+
+    /** @private @readonly */
+    this.inquirer = inquirer;
+    this.envConfig = config;
+
+    ['inquirer', 'envConfig'].forEach((name) => {
+      if (!this[name]) throw new Error(`Missing dependency ${name}`);
+    });
+  }
+
   async listBranches(envSecret) {
     try {
       const branches = await BranchManager.getBranches(envSecret);
@@ -21,7 +33,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
-      logger.error(customError);
+      this.logger.error(customError);
       return this.exit(2);
     }
     return null;
@@ -35,14 +47,14 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
-      logger.error(customError);
+      this.logger.error(customError);
       return this.exit(2);
     }
   }
 
   async deleteBranch(branchName, forceDelete, envSecret) {
     if (!forceDelete) {
-      const response = await inquirer
+      const response = await this.inquirer
         .prompt([{
           type: 'confirm',
           name: 'confirm',
@@ -56,7 +68,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
-      logger.error(customError);
+      this.logger.error(customError);
       return this.exit(2);
     }
   }
@@ -68,7 +80,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     let config;
 
     try {
-      config = await withCurrentProject({ ...envConfig, ...commandOptions });
+      config = await withCurrentProject({ ...this.envConfig, ...commandOptions });
 
       if (!config.envSecret) {
         const environment = await new ProjectManager(config)
@@ -77,7 +89,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
       }
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
-      logger.error(customError);
+      this.logger.error(customError);
       return this.exit(2);
     }
 

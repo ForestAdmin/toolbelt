@@ -1,11 +1,13 @@
 const P = require('bluebird');
 const agent = require('superagent-promise')(require('superagent'), P);
-const authenticator = require('./authenticator');
+const context = require('../context');
 const EnvironmentSerializer = require('../serializers/environment');
 const environmentDeserializer = require('../deserializers/environment');
 const DeploymentRequestSerializer = require('../serializers/deployment-request');
 const JobStateChecker = require('../services/job-state-checker');
 const { serverHost } = require('../config');
+
+const { authenticator } = context.inject();
 
 function EnvironmentManager(config) {
   this.listEnvironments = async () => {
