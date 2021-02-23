@@ -1,3 +1,20 @@
+# [2.0.0](https://github.com/ForestAdmin/toolbelt/compare/v1.7.6...v2.0.0) (2021-02-23)
+
+
+### Bug Fixes
+
+* error when preparing the release ([#137](https://github.com/ForestAdmin/toolbelt/issues/137)) ([79eb5b8](https://github.com/ForestAdmin/toolbelt/commit/79eb5b828f00b86faf6691400bd00642344b59e4))
+
+
+### Features
+
+* login without entering a password, and use application tokens ([#136](https://github.com/ForestAdmin/toolbelt/issues/136)) ([6bc64e8](https://github.com/ForestAdmin/toolbelt/commit/6bc64e86e88409fef08644d9c1822dd36e10ae69))
+
+
+### BREAKING CHANGES
+
+* the default login method now require to validate a temporary code on Forest Admin
+
 # [2.0.0-beta.3](https://github.com/ForestAdmin/toolbelt/compare/v2.0.0-beta.2...v2.0.0-beta.3) (2021-02-22)
 
 
