@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/ForestAdmin/toolbelt/compare/v2.0.0...v2.0.1) (2021-03-19)
+
+
+### Bug Fixes
+
+* **logout:** logout command now works as expected ([#153](https://github.com/ForestAdmin/toolbelt/issues/153)) ([c289d7f](https://github.com/ForestAdmin/toolbelt/commit/c289d7f9f1d26ca625b050957a390b51a04591df))
+
 # [2.0.0](https://github.com/ForestAdmin/toolbelt/compare/v1.7.6...v2.0.0) (2021-02-23)
 
 
