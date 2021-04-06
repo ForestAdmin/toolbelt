@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/ForestAdmin/toolbelt/compare/v2.0.1...v2.0.2) (2021-04-06)
+
+
+### Bug Fixes
+
+* **security:** patch y18n dependency vulnerabilities ([#155](https://github.com/ForestAdmin/toolbelt/issues/155)) ([2786cd1](https://github.com/ForestAdmin/toolbelt/commit/2786cd178a7c0c9b64ad0366f3749e24ccd29257))
+
 ## [2.0.1](https://github.com/ForestAdmin/toolbelt/compare/v2.0.0...v2.0.1) (2021-03-19)
 
 
