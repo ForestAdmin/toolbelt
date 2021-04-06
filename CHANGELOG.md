@@ -1,3 +1,10 @@
+## [2.0.3](https://github.com/ForestAdmin/toolbelt/compare/v2.0.2...v2.0.3) (2021-04-06)
+
+
+### Bug Fixes
+
+* **security:** patch ini dependency vulnerabilities ([#156](https://github.com/ForestAdmin/toolbelt/issues/156)) ([6e2f979](https://github.com/ForestAdmin/toolbelt/commit/6e2f979f7b1495d199ee26c3e21628a9b26ef6e8))
+
 ## [2.0.2](https://github.com/ForestAdmin/toolbelt/compare/v2.0.1...v2.0.2) (2021-04-06)
 
 
