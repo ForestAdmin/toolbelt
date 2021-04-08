@@ -11,12 +11,12 @@ const {
 const { testEnv, testEnv2 } = require('../fixtures/env');
 
 function inOutDeploySuccessMessage(environmentName) {
-  return { out: `✅ Deployed ${environmentName} layout changes to production.` };
+  return { out: `✅ Deployed ${environmentName} layout changes to reference.` };
 }
 
 function inOutConfirmDeploy(environmentName) {
   return [
-    { out: `Deploy ${environmentName} layout changes to production?` },
+    { out: `Deploy ${environmentName} layout changes to reference?` },
     { in: 'y' },
     ...enter,
     inOutDeploySuccessMessage(environmentName),
@@ -142,7 +142,7 @@ describe('deploy', () => {
         std: [
           { in: 'n' },
           ...enter,
-          { out: `? Deploy ${environmentName} layout changes to production? No` },
+          { out: `? Deploy ${environmentName} layout changes to reference? No` },
         ],
       }));
     });

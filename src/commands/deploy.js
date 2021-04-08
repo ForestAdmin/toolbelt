@@ -6,7 +6,7 @@ const ProjectManager = require('../services/project-manager');
 const { handleBranchError } = require('../services/branch-manager');
 const withCurrentProject = require('../services/with-current-project');
 
-/** Deploy layout changes of an environment to production. */
+/** Deploy layout changes of an environment to the reference one. */
 class DeployCommand extends AbstractAuthenticatedCommand {
   constructor(...args) {
     super(...args);
@@ -29,7 +29,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * Get selected environment; prompt for environment when none is provided.
    * @param {Object} config - Actual command config (including command parameters).
    * @throws Will throw an error when there is no environment (unreachable).
-   * @throws Will throw an error when there is no production environment.
+   * @throws Will throw an error when there is no reference environment.
    * @return {Object} The environment found.
    */
   async getEnvironment(config) {
@@ -37,7 +37,12 @@ class DeployCommand extends AbstractAuthenticatedCommand {
     const productionExists = environments.find((environment) => environment.type === 'production');
 
     if (environments.length === 0) throw new Error('❌ No environment found.');
-    if (!productionExists) throw new Error('❌ You need a production environment to run this command.');
+    if (!productionExists) {
+      const remoteEnvironments = environments.filter((environment) => environment.type === 'remote');
+      if (!remoteEnvironments.length) {
+        throw new Error('❌ No reference environment, please create a remote or production environment');
+      }
+    }
 
     const environmentName = config.ENVIRONMENT_NAME
       || await this.selectEnvironment(environments);
@@ -50,14 +55,19 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * @see getEnvironment
    */
   async selectEnvironment(environments) {
+    const choices = environments
+      .reduce((accumulator, environment) => {
+        if (environment.type === 'production' || (environment.currentBranch && environment.currentBranch.origin === null)) {
+          return accumulator;
+        }
+        accumulator.push({ name: environment.name });
+        return accumulator;
+      }, []);
     const response = await this.inquirer.prompt([{
       name: 'environment',
-      message: 'Select the environment containing the layout changes you want to deploy to production',
+      message: 'Select the environment containing the layout changes you want to deploy to the reference environment',
       type: 'list',
-      choices: environments
-        // NOTICE: Remove production since it should not be deployable on itself.
-        .filter((environment) => environment.type !== 'production')
-        .map(({ name }) => name),
+      choices,
     }]);
     return response.environment;
   }
@@ -91,7 +101,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
       .prompt([{
         type: 'confirm',
         name: 'confirm',
-        message: `Deploy ${environment.name} layout changes to production?`,
+        message: `Deploy ${environment.name} layout changes to reference?`,
       }]);
     return response.confirm;
   }
@@ -106,19 +116,18 @@ class DeployCommand extends AbstractAuthenticatedCommand {
       const environment = await this.getEnvironment(config);
 
       if (environment === undefined) throw new Error('Environment not found.');
-      if (environment.type === 'production') throw new Error('❌ You cannot deploy production onto itself.');
       if (!config.force && !(await this.confirm(environment))) return null;
 
       await new EnvironmentManager(config).deploy(environment);
 
-      return this.log(`✅ Deployed ${environment.name} layout changes to production.`);
+      return this.log(`✅ Deployed ${environment.name} layout changes to reference environment.`);
     } catch (error) {
       return this.error(handleBranchError(error));
     }
   }
 }
 
-DeployCommand.description = 'Deploy layout changes of an environment to production.';
+DeployCommand.description = 'Deploy layout changes of an environment to the reference one.';
 
 DeployCommand.flags = {
   help: flags.boolean({
@@ -136,7 +145,7 @@ DeployCommand.flags = {
 };
 
 DeployCommand.args = [{
-  name: 'ENVIRONMENT_NAME', required: false, description: 'The name of the environment containing the layout changes to deploy to production.',
+  name: 'ENVIRONMENT_NAME', required: false, description: 'The name of the environment containing the layout changes to deploy to the reference one.',
 }];
 
 module.exports = DeployCommand;
