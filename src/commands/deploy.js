@@ -34,18 +34,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    */
   async getEnvironment(config) {
     const environments = await new EnvironmentManager(config).listEnvironments();
-    const productionExists = environments.find((environment) => environment.type === 'production');
-
-    if (environments.length === 0) throw new Error('❌ No environment found.');
-    if (!productionExists) {
-      const remoteEnvironments = environments.filter((environment) => environment.type === 'remote');
-      if (!remoteEnvironments.length) {
-        throw new Error('❌ No reference environment, please create a remote or production environment.');
-      }
-    }
-
-    const environmentName = config.ENVIRONMENT_NAME
-      || await this.selectEnvironment(environments);
+    const environmentName = config.ENVIRONMENT_NAME || await this.selectEnvironment(environments);
     return environments.find((environment) => environment.name === environmentName);
   }
 
