@@ -55,14 +55,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * @see getEnvironment
    */
   async selectEnvironment(environments) {
-    const choices = environments
-      .reduce((accumulator, environment) => {
-        if (environment.type === 'production' || (environment.currentBranch && environment.currentBranch.origin === null)) {
-          return accumulator;
-        }
-        accumulator.push({ name: environment.name });
-        return accumulator;
-      }, []);
+    const choices = environments.map(({ name }) => name);
     const response = await this.inquirer.prompt([{
       name: 'environment',
       message: 'Select the environment containing the layout changes you want to deploy to the reference environment',
