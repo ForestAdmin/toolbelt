@@ -40,7 +40,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
     if (!productionExists) {
       const remoteEnvironments = environments.filter((environment) => environment.type === 'remote');
       if (!remoteEnvironments.length) {
-        throw new Error('❌ No reference environment, please create a remote or production environment');
+        throw new Error('❌ No reference environment, please create a remote or production environment.');
       }
     }
 

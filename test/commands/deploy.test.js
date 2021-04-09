@@ -4,6 +4,7 @@ const { enter } = require('../fixtures/std');
 const {
   getDevelopmentEnvironmentValid,
   getEnvironmentListValid,
+  getEnvironmentListValidNoReference,
   getProjectByEnv,
   getProjectListValid,
   deployValid,
@@ -159,6 +160,21 @@ describe('deploy', () => {
         ],
         exitCode: 2,
         exitMessage: "❌ The environment provided doesn't exist.",
+      }));
+    });
+
+    describe('when no reference environment exist', () => {
+      const projectId = 82;
+      it('should throw an error', () => testCli({
+        env: testEnv2,
+        token: 'any',
+        command: () => DeployCommand.run([]),
+        api: [
+          getProjectByEnv(),
+          getEnvironmentListValidNoReference(projectId),
+        ],
+        exitCode: 2,
+        exitMessage: '❌ No reference environment, please create a remote or production environment.',
       }));
     });
   });

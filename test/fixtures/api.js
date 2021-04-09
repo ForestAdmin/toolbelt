@@ -261,6 +261,17 @@ module.exports = {
       secretKey: '1b91a1c9bb28e4bea3c941fac1c1c95db5dc1b7bc73bd649b0b113713ee18167',
     }])),
 
+  getEnvironmentListValidNoReference: (projectId = 2) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/environments`)
+    .reply(200, EnvironmentSerializer.serialize([
+      {
+        id: 3, name: 'name1', apiEndpoint: 'http://localhost:1', type: 'development',
+      },
+      {
+        id: 4, name: 'name2', apiEndpoint: 'http://localhost:2', type: 'development',
+      },
+    ])),
+
   getNoEnvironmentListValid: (projectId = 2) => nock('http://localhost:3001')
     .get(`/api/projects/${projectId}/environments`)
     .reply(200, {
