@@ -34,6 +34,9 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    */
   async getEnvironment(config) {
     const environments = await new EnvironmentManager(config).listEnvironments();
+
+    if (environments.length === 0) throw new Error('❌ No environment found.');
+
     const environmentName = config.ENVIRONMENT_NAME || await this.selectEnvironment(environments);
     return environments.find((environment) => environment.name === environmentName);
   }
@@ -44,7 +47,10 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * @see getEnvironment
    */
   async selectEnvironment(environments) {
-    const choices = environments.map(({ name }) => name);
+    // NOTICE: Remove production since it should not be deployable on itself.
+    const choices = environments
+      .filter((environment) => environment.type !== 'production')
+      .map(({ name }) => name);
     const response = await this.inquirer.prompt([{
       name: 'environment',
       message: 'Select the environment containing the layout changes you want to deploy to the reference environment',
