@@ -1,3 +1,10 @@
+## [2.0.5](https://github.com/ForestAdmin/toolbelt/compare/v2.0.4...v2.0.5) (2021-04-09)
+
+
+### Bug Fixes
+
+* **dwo:** allow to deploy on remote non production reference environment ([d68c52a](https://github.com/ForestAdmin/toolbelt/commit/d68c52affb2169df23236b14a37db66f8054827d))
+
 ## [2.0.4](https://github.com/ForestAdmin/toolbelt/compare/v2.0.3...v2.0.4) (2021-04-06)
 
 
