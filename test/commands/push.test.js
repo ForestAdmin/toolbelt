@@ -245,7 +245,7 @@ describe('push', () => {
           getNoEnvironmentListValid(projectId),
         ],
         exitCode: 2,
-        exitMessage: '❌ You cannot run branch commands until this project has a remote environment.',
+        exitMessage: '❌ You cannot run this command until this project has a remote non-production environment.',
       }));
     });
 
