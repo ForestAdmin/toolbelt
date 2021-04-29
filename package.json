@@ -1,7 +1,7 @@
 {
   "name": "forest-cli",
   "description": "The Lumberjacks' toolbelt is the Forest CLI which makes easy to manage your back office application directly from the terminal.",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "author": "Sandro Munda",
   "contributors": [
     "Arnaud Valensi <arnaud.valensi@gmail.com>",

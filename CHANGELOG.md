@@ -1,3 +1,10 @@
+## [2.0.6](https://github.com/ForestAdmin/toolbelt/compare/v2.0.5...v2.0.6) (2021-04-29)
+
+
+### Bug Fixes
+
+* add missing keys isReadOnly for actions fields, isPrimaryKey and foreignAndPrimaryKey for fields ([5c031cc](https://github.com/ForestAdmin/toolbelt/commit/5c031cc79b018bf84c1a3b36e734f5edfbdee447))
+
 ## [2.0.5](https://github.com/ForestAdmin/toolbelt/compare/v2.0.4...v2.0.5) (2021-04-09)
 
 
