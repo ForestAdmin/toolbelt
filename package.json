@@ -27,7 +27,7 @@
     "clipboardy": "2.3.0",
     "dotenv": "8.2.0",
     "inquirer": "6.2.0",
-    "joi": "14.3.1",
+    "joi": "17.4.0",
     "jsonapi-serializer": "3.6.2",
     "jsonwebtoken": "8.5.1",
     "jwt-decode": "2.2.0",
@@ -64,7 +64,7 @@
     "stdout-stderr": "0.1.13"
   },
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=11.0.0"
   },
   "files": [
     "/bin",

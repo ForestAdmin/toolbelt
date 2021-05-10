@@ -66,7 +66,7 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
       this.exit(1);
     }
 
-    const { error } = this.joi.validate(schema, this.joi.object().keys({
+    const schemaValidator = this.joi.object().keys({
       collections: this.joi.array().items(this.joi.object()).required(),
       meta: this.joi.object().keys({
         liana: this.joi.string().required(),
@@ -75,7 +75,9 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
         liana_version: this.joi.string().required(),
         framework_version: this.joi.string().allow(null),
       }).unknown().required(),
-    }), { convert: false });
+    });
+
+    const { error } = schemaValidator.validate(schema, { convert: false });
 
     if (error) {
       let message = 'Cannot properly read the ".forestadmin-schema.json" file:\n - ';
