@@ -99,7 +99,7 @@ function initDependencies(context) {
   // Instead, we change the value of `realOpen`, which will be accessed by
   // the function open which is just here to keep a reference to the context.
   context.addInstance('realOpen', open);
-  context.addFunction('open', (...args) => context.inject().realOpen(...args));
+  context.addFunction('open', (...args) => context.get().realOpen(...args));
 }
 
 /**
