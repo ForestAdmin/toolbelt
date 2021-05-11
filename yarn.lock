@@ -434,6 +434,11 @@
   resolved "https://registry.yarnpkg.com/@commitlint/types/-/types-11.0.0.tgz#719cf05fcc1abb6533610a2e0f5dd1e61eac14fe"
   integrity sha512-VoNqai1vR5anRF5Tuh/+SWDFk7xi7oMwHrHrbm1BprYXjB2RJsWLhUrStMssDxEl5lW/z3EUdg8RvH/IUBccSQ==
 
+"@forestadmin/context@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@forestadmin/context/-/context-1.1.0.tgz#db9abcc331d8074aeeb9d4e3f53f77b3a16af5f9"
+  integrity sha512-6YkQ6sfV9dagUw1IqUL3S9z0vzW/9UOS5VZzTowsxRn36uDlNi+UF2zRoUKoOjxX29KeHYHeKI+SGYf+WGV0Sg==
+
 "@iarna/cli@^1.2.0":
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@iarna/cli/-/cli-1.2.0.tgz#0f7af5e851afe895104583c4ca07377a8094d641"
