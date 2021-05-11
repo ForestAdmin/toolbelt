@@ -1,12 +1,11 @@
 /* eslint-disable max-classes-per-file */
-const ApplicationContext = require('../../src/context/application-context');
+const { init } = require('@forestadmin/context');
 
 describe('context > ApplicationContext', () => {
   it('should call the init function with itself', async () => {
     expect.assertions(1);
-    const context = new ApplicationContext();
 
-    context.init((givenContext) => {
+    const context = init((givenContext) => {
       expect(givenContext).toBe(context);
     });
   });
@@ -14,9 +13,8 @@ describe('context > ApplicationContext', () => {
   it('should add a instance to the context', () => {
     expect.assertions(1);
     const propertyValue = Symbol('instance.value');
-    const context = new ApplicationContext();
 
-    context.init((givenContext) => givenContext.addInstance('instanceServiceName', {
+    const context = init((givenContext) => givenContext.addInstance('instanceServiceName', {
       propertyName: propertyValue,
     }));
 
@@ -38,9 +36,7 @@ describe('context > ApplicationContext', () => {
       }
     };
 
-    const context = new ApplicationContext();
-
-    context.init((givenContext) => givenContext.addClass(clazz));
+    const context = init((givenContext) => givenContext.addClass(clazz));
 
     const { testedClass } = context.inject();
 
@@ -62,8 +58,7 @@ describe('context > ApplicationContext', () => {
       }
     };
 
-    const context = new ApplicationContext();
-    expect(() => context.init((givenContext) => givenContext.addClass(clazz, {
+    expect(() => init((givenContext) => givenContext.addClass(clazz, {
       staticMethod: () => staticMethodStubResult,
       instanceMethod: () => instanceMethodStubResult,
     }))).toThrow('overrides are forbidden in application-context. Use test-application-context.js');
@@ -81,8 +76,7 @@ describe('context > ApplicationContext', () => {
       };
     }
 
-    const context = new ApplicationContext();
-    context.init((givenContext) => givenContext
+    const context = init((givenContext) => givenContext
       .addClass(TestClass)
       .with('testClass', (testClass) => testClass.testMethod()));
 
@@ -95,8 +89,7 @@ describe('context > ApplicationContext', () => {
     it('should add the value to the context', () => {
       expect.assertions(1);
 
-      const context = new ApplicationContext();
-      context.init((givenContext) => givenContext
+      const context = init((givenContext) => givenContext
         .addValue('theValue', 42));
 
       expect(context.inject().theValue).toBe(42);
@@ -109,8 +102,7 @@ describe('context > ApplicationContext', () => {
 
       function theFunction() {}
 
-      const context = new ApplicationContext();
-      context.init((givenContext) => givenContext
+      const context = init((givenContext) => givenContext
         .addFunction('theFunction', theFunction));
 
       expect(context.inject().theFunction).toBe(theFunction);
