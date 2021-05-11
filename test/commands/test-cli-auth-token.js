@@ -2,8 +2,6 @@ const fsExtra = require('fs-extra');
 const jwt = require('jsonwebtoken');
 const context = require('@forestadmin/context');
 
-const { authenticator } = context.inject();
-
 const getTokenPath = () => process.env.TOKEN_PATH || './test/services/tokens';
 const fakeKey = 'test-token-key';
 const clearTokenPath = () => {
@@ -21,6 +19,7 @@ module.exports = {
   getTokenPath,
   clearTokenPath,
   mockToken: (behavior) => {
+    const { authenticator } = context.inject();
     if (behavior !== null) {
       authenticator.getAuthTokenBack = authenticator.getAuthToken;
       authenticator.getAuthToken = () => behavior;
@@ -28,6 +27,7 @@ module.exports = {
     clearTokenPath();
   },
   rollbackToken: (behavior) => {
+    const { authenticator } = context.inject();
     if (behavior !== null) {
       authenticator.getAuthToken = authenticator.getAuthTokenBack;
       authenticator.getAuthTokenBack = null;
