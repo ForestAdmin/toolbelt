@@ -1,12 +1,11 @@
 const fsExtra = require('fs-extra');
 const { v4: uuidv4 } = require('uuid');
-const ApplicationContext = require('../../src/context/application-context');
+const { init, inject } = require('@forestadmin/context');
 const { clearTokenPath, getTokenPath, storeToken } = require('../commands/test-cli-auth-token');
 const initContext = require('../../src/context/init');
 
-const context = new ApplicationContext();
-initContext(context);
-const { authenticator } = context.inject();
+init(initContext);
+const { authenticator } = inject();
 
 const TMP_DIRECTORY_ROOT = '/tmp/toolbelt-tests';
 const TMP_DIRECTORY_BASE = `${TMP_DIRECTORY_ROOT}/authenticator`;

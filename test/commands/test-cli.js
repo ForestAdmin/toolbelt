@@ -1,7 +1,7 @@
-const context = require('@forestadmin/context');
+const { init, getInstance } = require('@forestadmin/context');
 const initContext = require('../../src/context/init');
 
-initContext(context);
+init(initContext);
 
 const {
   assertExitCode,
@@ -81,7 +81,7 @@ async function testCli({
   mockFile(file);
   mockEnv(env);
   mockToken(tokenBehavior);
-  mockDependencies(context);
+  mockDependencies(getInstance());
   const stdin = mockStd(outputs, errorOutputs, print);
   planifyInputs(inputs, stdin);
 
