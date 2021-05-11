@@ -1,5 +1,5 @@
 const { Command } = require('@oclif/command');
-const context = require('../context');
+const context = require('@forestadmin/context');
 
 class LogoutCommand extends Command {
   constructor(...args) {

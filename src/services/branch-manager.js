@@ -1,4 +1,4 @@
-const context = require('../context');
+const context = require('@forestadmin/context');
 const branchDeserializer = require('../deserializers/branch');
 const EnvironmentSerializer = require('../serializers/environment');
 const { serverHost } = require('../config');

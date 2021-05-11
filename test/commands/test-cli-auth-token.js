@@ -1,6 +1,6 @@
 const fsExtra = require('fs-extra');
 const jwt = require('jsonwebtoken');
-const context = require('../../src/context');
+const context = require('@forestadmin/context');
 
 const { authenticator } = context.inject();
 
