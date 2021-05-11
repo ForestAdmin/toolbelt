@@ -1,4 +1,4 @@
-const context = require('../../src/context');
+const context = require('@forestadmin/context');
 const initContext = require('../../src/context/init');
 
 initContext(context);
