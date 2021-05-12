@@ -26,6 +26,7 @@ describe('services > Oidc > Authenticator', () => {
       const open = jest.fn();
 
       const context = {
+        assertPresent: jest.fn(),
         env: {
           FOREST_URL: 'https://forest.admin',
         },
@@ -51,6 +52,19 @@ describe('services > Oidc > Authenticator', () => {
         flow,
       };
     }
+
+    it('should call assertPresent within constructor', async () => {
+      expect.assertions(1);
+
+      const context = setupTest();
+      const {
+        openIdClient, env, process, open,
+      } = context;
+
+      expect(context.assertPresent).toHaveBeenCalledWith({
+        openIdClient, env, process, open,
+      });
+    });
 
     it('should successfully authenticate the user', async () => {
       expect.assertions(7);
