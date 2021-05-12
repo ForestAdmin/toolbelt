@@ -10,9 +10,13 @@ class OidcAuthenticator {
     assertPresent({
       openIdClient, env, process, open,
     });
+    /** @private @readonly */
     this.openIdClient = openIdClient;
+    /** @private @readonly */
     this.env = env;
+    /** @private @readonly */
     this.process = process;
+    /** @private @readonly */
     this.open = open;
   }
 
