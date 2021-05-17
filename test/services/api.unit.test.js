@@ -40,7 +40,7 @@ describe('services > API', () => {
 
   describe('createApplicationToken', () => {
     it('should send a query with the serialized token', async () => {
-      expect.assertions(7);
+      expect.assertions(9);
 
       const {
         superagent, api, applicationTokenSerializer, applicationTokenDeserializer,
@@ -79,11 +79,9 @@ describe('services > API', () => {
 
       expect(result).toBe(deserializedToken);
       expect(superagent.post).toHaveBeenCalledWith('https://api.test.forestadmin.com/api/application-tokens');
-      expect(superagent.set).toHaveBeenCalledWith({
-        'forest-origin': 'forest-cli',
-        'Content-Type': 'application/json',
-        'User-Agent': 'forest-cli@1.2.3',
-      });
+      expect(superagent.set).toHaveBeenCalledWith('forest-origin', 'forest-cli');
+      expect(superagent.set).toHaveBeenCalledWith('Content-Type', 'application/json');
+      expect(superagent.set).toHaveBeenCalledWith('User-Agent', 'forest-cli@1.2.3');
       expect(superagent.set).toHaveBeenCalledWith('Authorization', 'Bearer SESSION');
       expect(superagent.send).toHaveBeenCalledWith(serializedToken);
       expect(applicationTokenSerializer.serialize)
@@ -94,12 +92,14 @@ describe('services > API', () => {
   });
 
   describe('deleteApplicationToken', () => {
-    it('should send a delete query authenticated with the given token', async () => {
+    it('should send a query to delete the application token', async () => {
       expect.assertions(6);
 
-      const { superagent, api } = setup();
+      const {
+        superagent, api,
+      } = setup();
 
-      superagent.send.mockResolvedValue();
+      superagent.send.mockResolvedValue(undefined);
 
       await api.deleteApplicationToken('THE-TOKEN');
 
