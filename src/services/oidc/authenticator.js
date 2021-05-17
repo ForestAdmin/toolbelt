@@ -4,19 +4,20 @@ class OidcAuthenticator {
   /**
    * @param {import('../../context/init').Context} context
    */
-  constructor(context) {
-    /** @private @readonly */
-    this.openIdClient = context.openIdClient;
-    /** @private @readonly */
-    this.env = context.env;
-    /** @private @readonly */
-    this.process = context.process;
-    /** @private @readonly */
-    this.open = context.open;
-
-    ['openIdClient', 'env', 'process', 'open'].forEach((name) => {
-      if (!this[name]) throw new Error(`Missing dependency ${name}`);
+  constructor({
+    assertPresent, openIdClient, env, process, open,
+  }) {
+    assertPresent({
+      openIdClient, env, process, open,
     });
+    /** @private @readonly */
+    this.openIdClient = openIdClient;
+    /** @private @readonly */
+    this.env = env;
+    /** @private @readonly */
+    this.process = process;
+    /** @private @readonly */
+    this.open = open;
   }
 
   /**

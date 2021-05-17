@@ -204,7 +204,7 @@ describe('spinner', () => {
           const spinner = new Spinner();
           spinner.start(spinnnerOptions);
           const spy = jest.spyOn(spinner.spinnies, 'fail');
-          const customOptions = { text: 'par la' };
+          const customOptions = { text: 'dummy option text' };
           const spinnerUniqueKey = spinner.currentSpinnerUniqueKey;
           spinner.fail(customOptions);
           expect(spy).toHaveBeenCalledWith(spinnerUniqueKey, customOptions);
