@@ -46,6 +46,7 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const dumper = getDumper();
     await dumper.dump(simpleModel, CONFIG);
+    console.log(process.cwd());
     const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_CUSTOMERS_PATH, 'utf8');
     const expectedFile = fs.readFileSync('./test-expected/sequelize/dumper-output/customers.expected.js', 'utf-8');
 
