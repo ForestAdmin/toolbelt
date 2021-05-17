@@ -1,0 +1,28 @@
+version: '3.4'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+{{#if network}}
+      network: {{network}}
+{{/if}}
+    container_name: {{ containerName }}
+    environment:
+      - APPLICATION_PORT=${APPLICATION_PORT}
+      - APPLICATION_URL=${APPLICATION_URL}
+      - DATABASE_URL={{ databaseUrl }}
+{{#if dbSchema }}
+      - DATABASE_SCHEMA=${DATABASE_SCHEMA}
+{{/if}}
+      - DATABASE_SSL=${DATABASE_SSL}
+      - FOREST_AUTH_SECRET=${FOREST_AUTH_SECRET}
+      - FOREST_ENV_SECRET=${FOREST_ENV_SECRET}
+{{#if forestUrl }}
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+      - FOREST_URL={{ forestUrl }}
+{{/if}}
+    ports:
+      - "${APPLICATION_PORT}:${APPLICATION_PORT}"
+    volumes:
+      - ./:/usr/src/app
