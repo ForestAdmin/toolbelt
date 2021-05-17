@@ -12,3 +12,5 @@ test/services/tokens
 /*.iml
 .idea
 .vscode
+
+test-output/

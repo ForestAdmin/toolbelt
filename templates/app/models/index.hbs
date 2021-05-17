@@ -1,0 +1,56 @@
+const fs = require('fs');
+const path = require('path');
+{{#if isMongoDB}}
+const Mongoose = require('mongoose');
+{{else}}
+const Sequelize = require('sequelize');
+{{/if}}
+
+const databasesConfiguration = require('../config/databases');
+
+const connections = {};
+const db = {};
+
+databasesConfiguration.forEach((databaseInfo) => {
+  {{#if isMongoDB}}
+  const connection = Mongoose.createConnection(databaseInfo.connection.url, databaseInfo.connection.options);
+  {{else}}
+  const connection = new Sequelize(databaseInfo.connection.url, databaseInfo.connection.options);
+  {{/if}}
+  connections[databaseInfo.name] = connection;
+
+  const modelsDir = databaseInfo.modelsDir || path.join(__dirname, databaseInfo.name);
+  fs
+    .readdirSync(modelsDir)
+    .filter((file) => file.indexOf('.') !== 0 && file !== 'index.js')
+    .forEach((file) => {
+      try {
+        {{#if isMongoDB}}
+        const model = require(path.join(modelsDir, file))(connection, Mongoose);
+        db[model.modelName] = model;
+        {{else}}
+        const model = connection.import(path.join(modelsDir, file));
+        db[model.name] = model;
+        {{/if}}
+      } catch (error) {
+        console.error(`Model creation error: ${error}`);
+      }
+    });
+});
+{{#unless isMongoDB}}
+
+Object.keys(db).forEach((modelName) => {
+  if ('associate' in db[modelName]) {
+    db[modelName].associate(db);
+  }
+});
+{{/unless}}
+
+{{#if isMongoDB}}
+db.objectMapping = Mongoose;
+{{else}}
+db.objectMapping = Sequelize;
+{{/if}}
+db.connections = connections;
+
+module.exports = db;
