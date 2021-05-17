@@ -13,3 +13,5 @@ oclif.manifest.json
 /*.iml
 .idea
 .vscode
+
+test-output/
