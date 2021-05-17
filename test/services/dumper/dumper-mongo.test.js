@@ -85,8 +85,8 @@ describe('services > dumper > MongoDB', () => {
       expect.assertions(1);
       const dumper = await getDumper();
       await dumper.dump(simpleModel, CONFIG);
-      const indexGeneratedFile = fs.readFileSync(`${appRoot}/test-output/mongo/models/index.js`, 'utf-8');
-      const expectedFile = fs.readFileSync(`${appRoot}/test-expected/mongo/dumper-output/index.expected.js`, 'utf-8');
+      const indexGeneratedFile = fs.readFileSync('./test-output/mongo/models/index.js', 'utf-8');
+      const expectedFile = fs.readFileSync('./test-expected/mongo/dumper-output/index.expected.js', 'utf-8');
 
       expect(indexGeneratedFile).toStrictEqual(expectedFile);
       cleanOutput();
@@ -107,7 +107,7 @@ describe('services > dumper > MongoDB', () => {
   it('generate a model file with a nested object', async () => {
     expect.assertions(1);
     const generatedFile = await getGeneratedFileFromPersonModel(nestedObjectModel);
-    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/mongo/dumper-output/nested-object.expected.js`, 'utf-8');
+    const expectedFile = fs.readFileSync('./test-expected/mongo/dumper-output/nested-object.expected.js', 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -116,7 +116,7 @@ describe('services > dumper > MongoDB', () => {
   it('generate a model file with a nested array of numbers', async () => {
     expect.assertions(1);
     const generatedFile = await getGeneratedFileFromPersonModel(nestedArrayOfNumbersModel);
-    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/mongo/dumper-output/nested-array-of-numbers.expected.js`, 'utf-8');
+    const expectedFile = fs.readFileSync('./test-expected/mongo/dumper-output/nested-array-of-numbers.expected.js', 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -125,7 +125,7 @@ describe('services > dumper > MongoDB', () => {
   it('generate a model file with a nested array of objects', async () => {
     expect.assertions(1);
     const generatedFile = await getGeneratedFileFromPersonModel(nestedArrayOfObjectsModel);
-    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/mongo/dumper-output/nested-array-of-objects.expected.js`, 'utf-8');
+    const expectedFile = fs.readFileSync('./test-expected/mongo/dumper-output/nested-array-of-objects.expected.js', 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -134,7 +134,7 @@ describe('services > dumper > MongoDB', () => {
   it('generate a model file with a deep nested objects/array', async () => {
     expect.assertions(1);
     const generatedFile = await getGeneratedFileFromPersonModel(deepNestedModel);
-    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/mongo/dumper-output/deep-nested.expected.js`, 'utf-8');
+    const expectedFile = fs.readFileSync('./test-expected/mongo/dumper-output/deep-nested.expected.js', 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -143,7 +143,7 @@ describe('services > dumper > MongoDB', () => {
   it('generate a model file with subDocuments using _ids', async () => {
     expect.assertions(1);
     const generatedFile = await getGeneratedFileFromPersonModel(subDocumentsUsingIds);
-    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/mongo/dumper-output/sub-documents-using-ids.expected.js`, 'utf-8');
+    const expectedFile = fs.readFileSync('./test-expected/mongo/dumper-output/sub-documents-using-ids.expected.js', 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -161,7 +161,7 @@ describe('services > dumper > MongoDB', () => {
   it('generate a model file with subDocuments with ambiguous _ids', async () => {
     expect.assertions(1);
     const generatedFile = await getGeneratedFileFromPersonModel(subDocumentsAmbiguousIds);
-    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/mongo/dumper-output/sub-documents-ambiguous-ids.expected.js`, 'utf-8');
+    const expectedFile = fs.readFileSync('./test-expected/mongo/dumper-output/sub-documents-ambiguous-ids.expected.js', 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -170,7 +170,7 @@ describe('services > dumper > MongoDB', () => {
   it('generate a model file with subDocument using _ids', async () => {
     expect.assertions(1);
     const generatedFile = await getGeneratedFileFromPersonModel(subDocumentUsingIds);
-    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/mongo/dumper-output/sub-document-using-ids.expected.js`, 'utf-8');
+    const expectedFile = fs.readFileSync('./test-expected/mongo/dumper-output/sub-document-using-ids.expected.js', 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();

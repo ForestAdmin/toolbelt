@@ -1,6 +1,11 @@
-const Context = require('@forestadmin/context');
 const rimraf = require('rimraf');
+const Context = require('@forestadmin/context');
 const fs = require('fs');
+
+const renderingModel = require('../../../test-expected/sequelize/db-analysis-output/renderings.expected.json');
+const context = require('../../../context');
+const initContext = require('../../../context/init');
+
 const appRoot = require('app-root-path');
 const renderingModel = require('../../../test-expected/sequelize/db-analysis-output/renderings.expected.json');
 const initContext = require('../../../context/init');

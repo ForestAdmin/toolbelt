@@ -174,7 +174,7 @@ describe('services > dumper > sequelize', () => {
       expect.assertions(1);
 
       const dumper = getDumper();
-      jest.spyOn(dumper, 'isLinuxBasedOs').mockImplementation().mockReturnValue(true);
+      dumper.isLinuxBasedOs = jest.fn().mockReturnValue(true);
       await dumper.dump(simpleModel, CONFIG);
 
       const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/.env`, 'utf8');
@@ -188,7 +188,7 @@ describe('services > dumper > sequelize', () => {
       expect.assertions(1);
 
       const dumper = getDumper();
-      jest.spyOn(dumper, 'isLinuxBasedOs').mockImplementation().mockReturnValue(false);
+      dumper.isLinuxBasedOs = jest.fn().mockReturnValue(false)
       await dumper.dump(simpleModel, CONFIG);
 
       const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/.env`, 'utf8');

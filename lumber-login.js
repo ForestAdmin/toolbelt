@@ -1,15 +1,14 @@
 const program = require('commander');
 const inquirer = require('inquirer');
-const Context = require('@forestadmin/context');
-
+const context = require('./context');
 const initContext = require('./context/init');
 const { EMAIL_REGEX } = require('./utils/regexs');
 
-const context = Context.execute(initContext);
+initContext(context);
 
 const {
   logger, authenticator, oidcAuthenticator, errorHandler, applicationTokenService,
-} = context;
+} = context.inject();
 
 if (!logger) throw new Error('Missing dependency logger');
 if (!authenticator) throw new Error('Missing dependency authenticator');
