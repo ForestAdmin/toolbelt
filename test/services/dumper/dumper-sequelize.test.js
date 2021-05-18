@@ -15,9 +15,6 @@ const parenthesisColumnNameUnderscored = require('../../../test-expected/sequeli
 const parenthesisColumnNameUnderscoredTrue = require('../../../test-expected/sequelize/db-analysis-output/parenthesis_underscored_true.expected.json');
 const context = require('../../../context');
 const initContext = require('../../../context/init');
-
-process.chdir('/tmp')
-
 const appRoot = require('app-root-path');
 
 console.log(appRoot);
