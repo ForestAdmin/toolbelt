@@ -36,10 +36,10 @@ const CONFIG = {
 };
 
 function cleanOutput() {
-  rimraf.sync(appRoot + '/test-output/sequelize');
+  rimraf.sync(`${appRoot}/test-output/sequelize`);
 }
 
-const TEST_OUTPUT_MODEL_CUSTOMERS_PATH = appRoot + '/test-output/sequelize/models/customers.js';
+const TEST_OUTPUT_MODEL_CUSTOMERS_PATH = `${appRoot}/test-output/sequelize/models/customers.js`;
 
 describe('services > dumper > sequelize', () => {
   it('should generate a simple model file', async () => {
@@ -47,7 +47,7 @@ describe('services > dumper > sequelize', () => {
     const dumper = getDumper();
     await dumper.dump(simpleModel, CONFIG);
     const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_CUSTOMERS_PATH, 'utf8');
-    const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/customers.expected.js', 'utf-8');
+    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/customers.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -58,8 +58,8 @@ describe('services > dumper > sequelize', () => {
     const dumper = getDumper();
     await dumper.dump(belongsToModel, CONFIG);
     console.log(appRoot);
-    const generatedFile = fs.readFileSync(appRoot + '/test-output/sequelize/models/addresses.js', 'utf8');
-    const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/addresses.expected.js', 'utf-8');
+    const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/addresses.js`, 'utf8');
+    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/addresses.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -70,10 +70,10 @@ describe('services > dumper > sequelize', () => {
     const dumper = getDumper();
     await dumper.dump({ ...simpleModelNonPrimary, ...belongsToModelNonPrimary }, CONFIG);
 
-    const ownersGeneratedFile = fs.readFileSync(appRoot + '/test-output/sequelize/models/owners.js', 'utf8');
-    const ownersExpectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/owners.expected.js', 'utf-8');
-    const projectsGeneratedFile = fs.readFileSync(appRoot + '/test-output/sequelize/models/projects.js', 'utf8');
-    const projectsExpectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/projects.expected.js', 'utf-8');
+    const ownersGeneratedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/owners.js`, 'utf8');
+    const ownersExpectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/owners.expected.js`, 'utf-8');
+    const projectsGeneratedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/projects.js`, 'utf8');
+    const projectsExpectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/projects.expected.js`, 'utf-8');
 
     expect(ownersGeneratedFile).toStrictEqual(ownersExpectedFile);
     expect(projectsGeneratedFile).toStrictEqual(projectsExpectedFile);
@@ -84,8 +84,8 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const dumper = getDumper();
     await dumper.dump(parenthesisColumnName, CONFIG);
-    const generatedFile = fs.readFileSync(appRoot + '/test-output/sequelize/models/parenthesis.js', 'utf8');
-    const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/parenthesis.expected.js', 'utf-8');
+    const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/parenthesis.js`, 'utf8');
+    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/parenthesis.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -95,8 +95,8 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const dumper = getDumper();
     await dumper.dump(parenthesisColumnNameUnderscored, CONFIG);
-    const generatedFile = fs.readFileSync(appRoot + '/test-output/sequelize/models/parenthesis-underscored.js', 'utf8');
-    const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/parenthesis_underscored.expected.js', 'utf-8');
+    const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/parenthesis-underscored.js`, 'utf8');
+    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/parenthesis_underscored.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -106,8 +106,8 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const dumper = getDumper();
     await dumper.dump(parenthesisColumnNameUnderscoredTrue, CONFIG);
-    const generatedFile = fs.readFileSync(appRoot + '/test-output/sequelize/models/parenthesis-underscored-true.js', 'utf8');
-    const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/parenthesis_underscored_true.expected.js', 'utf-8');
+    const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/parenthesis-underscored-true.js`, 'utf8');
+    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/parenthesis_underscored_true.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -117,8 +117,8 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const dumper = getDumper();
     await dumper.dump(otherAssociationsModel, CONFIG);
-    const generatedFile = fs.readFileSync(appRoot + '/test-output/sequelize/models/users.js', 'utf8');
-    const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/users.expected.js', 'utf-8');
+    const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/users.js`, 'utf8');
+    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/users.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -128,10 +128,10 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(2);
     const dumper = getDumper();
     await dumper.dump(exportModel, CONFIG);
-    const generatedModelFile = fs.readFileSync(appRoot + '/test-output/sequelize/models/export.js', 'utf8');
-    const generatedRouteFile = fs.readFileSync(appRoot + '/test-output/sequelize/routes/export.js', 'utf8');
-    const expectedModelFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/export.expected.js', 'utf-8');
-    const expectedRouteFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/export.expected.route.js', 'utf-8');
+    const generatedModelFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/export.js`, 'utf8');
+    const generatedRouteFile = fs.readFileSync(`${appRoot}/test-output/sequelize/routes/export.js`, 'utf8');
+    const expectedModelFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/export.expected.js`, 'utf-8');
+    const expectedRouteFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/export.expected.route.js`, 'utf-8');
 
     expect(generatedModelFile).toStrictEqual(expectedModelFile);
     expect(generatedRouteFile).toStrictEqual(expectedRouteFile);
@@ -142,8 +142,8 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const dumper = getDumper();
     await dumper.dump(defaultValuesModel, CONFIG);
-    const generatedFile = fs.readFileSync(appRoot + '/test-output/sequelize/models/default-values.js', 'utf8');
-    const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/default-values.expected.js', 'utf-8');
+    const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/default-values.js`, 'utf8');
+    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/default-values.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -153,8 +153,8 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const dumper = getDumper();
     await dumper.dump(simpleModel, CONFIG);
-    const generatedFile = fs.readFileSync(appRoot + '/test-output/sequelize/models/index.js', 'utf8');
-    const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/index.expected.js', 'utf-8');
+    const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/index.js`, 'utf8');
+    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/index.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -164,8 +164,8 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const dumper = await getDumper();
     await dumper.dump(simpleModel, CONFIG);
-    const indexGeneratedFile = fs.readFileSync(appRoot + '/test-output/sequelize/config/databases.js', 'utf-8');
-    const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/databases.config.expected.js', 'utf-8');
+    const indexGeneratedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/config/databases.js`, 'utf-8');
+    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/databases.config.expected.js`, 'utf-8');
 
     expect(indexGeneratedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -179,8 +179,8 @@ describe('services > dumper > sequelize', () => {
       dumper.isLinuxBasedOs = jest.fn().mockReturnValue(true)
       await dumper.dump(simpleModel, CONFIG);
 
-      const generatedFile = fs.readFileSync(appRoot + '/test-output/sequelize/.env', 'utf8');
-      const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/env.linux.expected', 'utf-8');
+      const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/.env`, 'utf8');
+      const expectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/env.linux.expected`, 'utf-8');
 
       expect(generatedFile).toStrictEqual(expectedFile);
       cleanOutput();
@@ -193,8 +193,8 @@ describe('services > dumper > sequelize', () => {
       dumper.isLinuxBasedOs = jest.fn().mockReturnValue(false)
       await dumper.dump(simpleModel, CONFIG);
 
-      const generatedFile = fs.readFileSync(appRoot + '/test-output/sequelize/.env', 'utf8');
-      const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/env.darwin.expected', 'utf-8');
+      const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/.env`, 'utf8');
+      const expectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/env.darwin.expected`, 'utf-8');
 
       expect(generatedFile).toStrictEqual(expectedFile);
       cleanOutput();
@@ -205,8 +205,8 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const dumper = await getDumper();
     await dumper.dump(joinTableWithIdKey, CONFIG);
-    const generatedFile = fs.readFileSync(appRoot + '/test-output/sequelize/models/only-foreign-keys-and-id.js', 'utf8');
-    const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/only-foreign-keys-and-id.expected.js', 'utf-8');
+    const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/only-foreign-keys-and-id.js`, 'utf8');
+    const expectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/only-foreign-keys-and-id.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
     cleanOutput();
@@ -223,7 +223,7 @@ describe('services > dumper > sequelize', () => {
 
       await dumper.dump(simpleModel, { ...CONFIG, isUpdate: true });
       const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_CUSTOMERS_PATH, 'utf8');
-      const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/customers.expected.js', 'utf-8');
+      const expectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/customers.expected.js`, 'utf-8');
 
       // Then we ensure that the file that were removed exists after a redump
       expect(generatedFile).toStrictEqual(expectedFile);
