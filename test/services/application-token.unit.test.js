@@ -1,5 +1,4 @@
 const ApplicationTokenService = require('../../src/services/application-token');
-const UnableToCreateApplicationTokenError = require('../../utils/errors/application-token/unable-to-create-application-token-error');
 
 const SESSION_TOKEN = 'SESSION-TOKEN';
 
@@ -48,7 +47,7 @@ describe('services > ApplicationToken', () => {
       api.createApplicationToken.mockRejectedValue(new Error('Internal error'));
 
       await expect(applicationTokenService.generateApplicationToken(SESSION_TOKEN))
-        .rejects.toBeInstanceOf(UnableToCreateApplicationTokenError);
+        .rejects.toHaveProperty('message', 'Unable to create an application token: Internal error.');
     });
   });
 
@@ -60,32 +59,33 @@ describe('services > ApplicationToken', () => {
 
       api.deleteApplicationToken.mockResolvedValue(undefined);
 
-      await applicationTokenService.deleteApplicationToken('THE-TOKEN');
+      await applicationTokenService.deleteApplicationToken('TOKEN');
 
-      expect(api.deleteApplicationToken).toHaveBeenCalledWith('THE-TOKEN');
+      expect(api.deleteApplicationToken).toHaveBeenCalledWith('TOKEN');
     });
 
-    it('should hide 404 errors, because it indicates that the token is a normal token', async () => {
+    it('should catch 404 errors and resolve anyway', async () => {
       expect.assertions(1);
 
       const { api, applicationTokenService } = setup();
 
       api.deleteApplicationToken.mockRejectedValue({ status: 404 });
 
-      await applicationTokenService.deleteApplicationToken('THE-TOKEN');
+      await applicationTokenService.deleteApplicationToken('TOKEN');
 
-      expect(api.deleteApplicationToken).toHaveBeenCalledWith('THE-TOKEN');
+      expect(api.deleteApplicationToken).toHaveBeenCalledWith('TOKEN');
     });
 
-    it('should propagate non-404 errors', async () => {
+    it('should propagate errors that are non 404s', async () => {
       expect.assertions(1);
 
       const { api, applicationTokenService } = setup();
 
-      const error = new Error('the error');
+      const error = new Error('The error');
+
       api.deleteApplicationToken.mockRejectedValue(error);
 
-      await expect(applicationTokenService.deleteApplicationToken('THE-TOKEN')).rejects.toBe(error);
+      await expect(applicationTokenService.deleteApplicationToken('TOKEN')).rejects.toBe(error);
     });
   });
 });
