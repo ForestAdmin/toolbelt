@@ -374,7 +374,6 @@ class Dumper {
     const projectPath = config.appName ? `${cwd}/${config.appName}` : cwd;
     const { isUpdate, useMultiDatabase, modelsExportPath } = config;
 
-    console.log('projectPath', projectPath);
     await this.mkdirp(projectPath);
     await this.mkdirp(`${projectPath}/routes`);
     await this.mkdirp(`${projectPath}/forest`);

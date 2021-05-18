@@ -15,6 +15,9 @@ const parenthesisColumnNameUnderscored = require('../../../test-expected/sequeli
 const parenthesisColumnNameUnderscoredTrue = require('../../../test-expected/sequelize/db-analysis-output/parenthesis_underscored_true.expected.json');
 const context = require('../../../context');
 const initContext = require('../../../context/init');
+
+process.chdir('/tmp')
+
 const appRoot = require('app-root-path');
 
 console.log(appRoot);
@@ -43,12 +46,11 @@ function cleanOutput() {
   rimraf.sync('./test-output/sequelize');
 }
 
-const TEST_OUTPUT_MODEL_CUSTOMERS_PATH = './test-output/sequelize/models/customers.js';
+const TEST_OUTPUT_MODEL_CUSTOMERS_PATH = appRoot + '/test-output/sequelize/models/customers.js';
 
 describe('services > dumper > sequelize', () => {
   it('should generate a simple model file', async () => {
     expect.assertions(1);
-    process.chdir('/tmp')
     const dumper = getDumper();
     await dumper.dump(simpleModel, CONFIG);
     const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_CUSTOMERS_PATH, 'utf8');
