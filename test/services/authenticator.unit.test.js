@@ -52,8 +52,8 @@ describe('services > Authenticator', () => {
       authenticatorHelper,
       inquirer,
       fsAsync,
-      applicationTokenService,
       FOREST_PATH: 'sweet-home/.forestrc',
+      LUMBER_PATH: 'sweet-home/.lumberrc',
     };
 
     const authenticator = new Authenticator(context);
