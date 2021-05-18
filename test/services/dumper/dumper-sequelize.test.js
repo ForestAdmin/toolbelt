@@ -1,7 +1,6 @@
 const rimraf = require('rimraf');
 const fs = require('fs');
-const sinon = require('sinon');
-const os = require('os');
+const appRoot = require('app-root-path');
 const simpleModel = require('../../../test-expected/sequelize/db-analysis-output/customers.expected.json');
 const belongsToModel = require('../../../test-expected/sequelize/db-analysis-output/addresses.expected.json');
 const simpleModelNonPrimary = require('../../../test-expected/sequelize/db-analysis-output/owners.expected.json');
@@ -15,9 +14,6 @@ const parenthesisColumnNameUnderscored = require('../../../test-expected/sequeli
 const parenthesisColumnNameUnderscoredTrue = require('../../../test-expected/sequelize/db-analysis-output/parenthesis_underscored_true.expected.json');
 const context = require('../../../context');
 const initContext = require('../../../context/init');
-const appRoot = require('app-root-path');
-
-console.log(appRoot);
 
 initContext(context);
 
