@@ -1,7 +1,6 @@
 const rimraf = require('rimraf');
 const fs = require('fs');
 const appRoot = require('app-root-path');
-process.chdir('/tmp')
 const renderingModel = require('../../../test-expected/sequelize/db-analysis-output/renderings.expected.json');
 const context = require('../../../context');
 const initContext = require('../../../context/init');
