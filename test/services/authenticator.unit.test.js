@@ -235,5 +235,4 @@ describe('services > authenticator', () => {
       });
     });
   });
-
 });
