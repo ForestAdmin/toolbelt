@@ -11,13 +11,19 @@ module.exports = {
   env: {
     node: true,
   },
+  ignorePatterns: ["test-expected"],
   rules: {
     'implicit-arrow-linebreak': 0,
+    'no-underscore-dangle': [
+      'error',
+      {'allow': ["_id"]},
+    ],
     'import/no-extraneous-dependencies': [
       'error',
       {
         devDependencies: [
-          'test/**/*.js',
+          '.eslint-bin/*.js',
+          'test/**/*.js'
         ]
       },
     ],
