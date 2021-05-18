@@ -43,7 +43,7 @@ const CONFIG = {
 };
 
 function cleanOutput() {
-  rimraf.sync('./test-output/sequelize');
+  rimraf.sync(appRoot + '/test-output/sequelize');
 }
 
 const TEST_OUTPUT_MODEL_CUSTOMERS_PATH = appRoot + '/test-output/sequelize/models/customers.js';
@@ -182,14 +182,9 @@ describe('services > dumper > sequelize', () => {
     it('should generate the env file on Linux', async () => {
       expect.assertions(1);
 
-      // Pretend we are on Linux.
-      const osStub = sinon.stub(os, 'platform');
-      osStub.returns('linux');
-
       const dumper = getDumper();
+      dumper.isLinuxBasedOs = jest.fn().mockReturnValue(true)
       await dumper.dump(simpleModel, CONFIG);
-
-      osStub.restore();
 
       const generatedFile = fs.readFileSync(appRoot + '/test-output/sequelize/.env', 'utf8');
       const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/env.linux.expected', 'utf-8');
@@ -201,14 +196,9 @@ describe('services > dumper > sequelize', () => {
     it('should generate the env file on macOS', async () => {
       expect.assertions(1);
 
-      // Pretend we are on macOS.
-      const osStub = sinon.stub(os, 'platform');
-      osStub.returns('darwin');
-
       const dumper = getDumper();
+      dumper.isLinuxBasedOs = jest.fn().mockReturnValue(false)
       await dumper.dump(simpleModel, CONFIG);
-
-      osStub.restore();
 
       const generatedFile = fs.readFileSync(appRoot + '/test-output/sequelize/.env', 'utf8');
       const expectedFile = fs.readFileSync(appRoot + '/test-expected/sequelize/dumper-output/env.darwin.expected', 'utf-8');

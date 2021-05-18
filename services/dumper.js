@@ -188,6 +188,7 @@ class Dumper {
       hasDockerDatabaseUrl: false,
       applicationUrl: Dumper.getApplicationUrl(config),
     };
+    console.log('we are on linux: ', this.isLinuxBasedOs())
     if (!this.isLinuxBasedOs()) {
       context.dockerDatabaseUrl = databaseUrl.replace('localhost', 'host.docker.internal');
       context.hasDockerDatabaseUrl = true;
