@@ -370,10 +370,11 @@ class Dumper {
 
   // NOTICE: Generate files in alphabetical order to ensure a nice generation console logs display.
   async dump(schema, config) {
-    const cwd = process.cwd();
+    const cwd = config.path || process.cwd();
     const projectPath = config.appName ? `${cwd}/${config.appName}` : cwd;
     const { isUpdate, useMultiDatabase, modelsExportPath } = config;
 
+    console.log('projectPath', projectPath);
     await this.mkdirp(projectPath);
     await this.mkdirp(`${projectPath}/routes`);
     await this.mkdirp(`${projectPath}/forest`);
