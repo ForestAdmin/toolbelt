@@ -1,12 +1,13 @@
+const Context = require('@forestadmin/context');
 require('dotenv').config();
 const program = require('commander');
 const DatabaseAnalyzer = require('./services/analyzer/database-analyzer');
 const spinners = require('./services/spinners');
 const LumberError = require('./utils/lumber-error');
-const context = require('./context');
+
 const initContext = require('./context/init');
 
-initContext(context);
+const context = Context.execute(initContext);
 
 program
   .description('Update your project by generating files that does not currently exist')
@@ -22,7 +23,7 @@ const {
   fs,
   logger,
   path,
-} = context.inject();
+} = context;
 
 (async () => {
   const options = {
