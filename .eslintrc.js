@@ -27,6 +27,14 @@ module.exports = {
         ]
       },
     ],
+    'no-multiple-empty-lines': [
+      'error',
+      {
+        max: 1,
+        maxBOF: 0,
+        maxEOF: 0
+      }
+    ],
     'no-console': 0,
     'no-param-reassign': 0,
     'jest/expect-expect': 0,
