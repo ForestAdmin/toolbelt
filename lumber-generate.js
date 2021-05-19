@@ -1,9 +1,9 @@
 const program = require('commander');
 const chalk = require('chalk');
-const context = require('./context');
+const Context = require('@forestadmin/context');
 const initContext = require('./context/init');
 
-initContext(context);
+const context = Context.execute(initContext);
 
 const spinners = require('./services/spinners');
 const DatabaseAnalyzer = require('./services/analyzer/database-analyzer');
@@ -13,7 +13,7 @@ const ProjectCreator = require('./services/project-creator');
 const { terminate } = require('./utils/terminator');
 const { ERROR_UNEXPECTED } = require('./utils/messages');
 
-const { logger, authenticator, dumper } = context.inject();
+const { logger, authenticator, dumper } = context;
 
 if (!authenticator) throw new Error('Missing dependency authenticator');
 if (!logger) throw new Error('Missing dependency logger');

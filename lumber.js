@@ -7,10 +7,6 @@
 
 const program = require('commander');
 const packagejson = require('./package.json');
-const context = require('./context');
-const initContext = require('./context/init');
-
-initContext(context);
 
 program
   .version(packagejson.version)
