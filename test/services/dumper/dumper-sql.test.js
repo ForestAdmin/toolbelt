@@ -1,16 +1,14 @@
+const Context = require('@forestadmin/context');
 const rimraf = require('rimraf');
 const fs = require('fs');
 const appRoot = require('app-root-path');
 const renderingModel = require('../../../test-expected/sequelize/db-analysis-output/renderings.expected.json');
-const context = require('../../../context');
 const initContext = require('../../../context/init');
 
+const injectedContext = Context.execute(initContext);
 const Dumper = require('../../../services/dumper');
 
 const TYPE_CAST = 'databaseOptions.dialectOptions.typeCast';
-
-initContext(context);
-const injectedContext = context.inject();
 
 function cleanOutput() {
   rimraf.sync(`${appRoot}/test-output/mssql`);
