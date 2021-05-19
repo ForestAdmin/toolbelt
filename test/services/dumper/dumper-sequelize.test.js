@@ -18,7 +18,6 @@ const initContext = require('../../../context/init');
 const context = Context.execute(initContext);
 const Dumper = require('../../../services/dumper');
 
-
 function getDumper() {
   return new Dumper(context);
 }

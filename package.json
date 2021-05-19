@@ -111,7 +111,7 @@
   },
   "repository": "ForestAdmin/toolbelt",
   "scripts": {
-    "lint": "./node_modules/eslint/bin/eslint.js src test",
+    "lint": "./node_modules/eslint/bin/eslint.js ./*.js deserializers serializers services test utils",
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "oclif-dev manifest",
     "test": "jest --runInBand",
