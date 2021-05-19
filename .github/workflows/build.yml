@@ -35,16 +35,32 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint]
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    strategy:
+      matrix:
+        node: ['10', '14']
+        include:
+          - node: '14'
+            withCoverage: ${{ true }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
       - name: Cache node_modules
         uses: actions/cache@v2
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
-      - name: Send coverage
+      - name: Login on dockerhub
+        run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+      - name: Start docker container
+        run: docker-compose up -d; sleep 15
+      - name: Test with Node ${{ matrix.node }}
+        if: '!matrix.withCoverage'
+        run: yarn test
+      - name: Test with Node ${{ matrix.node }} & Send coverage
         uses: paambaati/codeclimate-action@v2.7.4
+        if: matrix.withCoverage
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
         with:

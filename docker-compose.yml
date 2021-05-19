@@ -1,6 +1,6 @@
 MongoDB-MIN:
   image: mongo:3.2
-  container_name : test_lumber_mongo_min
+  container_name : forestadmin_test_toolbelt_mongo_min
   ports:
     - "27015:27017"
   volumes:
@@ -8,7 +8,7 @@ MongoDB-MIN:
 
 MongoDB-MAX:
   image: mongo:4.2
-  container_name : test_lumber_mongo_max
+  container_name : forestadmin_test_toolbelt_mongo_max
   ports:
     - "27016:27017"
   volumes:
@@ -16,30 +16,30 @@ MongoDB-MAX:
 
 PostgreSQL-MIN:
   image : postgres:9.4
-  container_name : test_lumber_postgres_min
+  container_name : forestadmin_test_toolbelt_postgres_min
   ports :
     - "54368:5432"
   environment:
-    - POSTGRES_DB=lumber-sequelize-test
+    - POSTGRES_DB=forestadmin_test_toolbelt-sequelize
     - POSTGRES_USER=forest
     - POSTGRES_PASSWORD=secret
 
 PostgreSQL-MAX:
   image : postgres:12.2
-  container_name : test_lumber_postgres_max
+  container_name : forestadmin_test_toolbelt_postgres_max
   ports :
     - "54369:5432"
   environment:
-    - POSTGRES_DB=lumber-sequelize-test
+    - POSTGRES_DB=forestadmin_test_toolbelt-sequelize
     - POSTGRES_USER=forest
     - POSTGRES_PASSWORD=secret
 
 MySQL-MIN:
   image: mysql:5.6
-  container_name: test_lumber_mysql_min
+  container_name: forestadmin_test_toolbelt_mysql_min
   environment:
     MYSQL_ROOT_PASSWORD: secret
-    MYSQL_DATABASE: lumber-sequelize-test
+    MYSQL_DATABASE: forestadmin_test_toolbelt-sequelize
     MYSQL_USER: forest
     MYSQL_PASSWORD: secret
   ports:
@@ -47,10 +47,10 @@ MySQL-MIN:
 
 MySQL-MAX:
   image: mysql:8.0
-  container_name: test_lumber_mysql_max
+  container_name: forestadmin_test_toolbelt_mysql_max
   environment:
     MYSQL_ROOT_PASSWORD: secret
-    MYSQL_DATABASE: lumber-sequelize-test
+    MYSQL_DATABASE: forestadmin_test_toolbelt-sequelize
     MYSQL_USER: forest
     MYSQL_PASSWORD: secret
   ports:
@@ -58,7 +58,7 @@ MySQL-MAX:
 
 MS-SQL-MIN:
   image: mcr.microsoft.com/mssql/server:2017-latest
-  container_name: test_lumber_mssql_min
+  container_name: forestadmin_test_toolbelt_mssql_min
   environment:
     ACCEPT_EULA: "Y"
     SA_PASSWORD: "forest2019:"
@@ -67,7 +67,7 @@ MS-SQL-MIN:
 
 MS-SQL-MAX:
   image: mcr.microsoft.com/mssql/server:2019-latest
-  container_name: test_lumber_mssql_max
+  container_name: forestadmin_test_toolbelt_mssql_max
   environment:
     ACCEPT_EULA: "Y"
     SA_PASSWORD: "forest2019:"
