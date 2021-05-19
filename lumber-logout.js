@@ -1,10 +1,9 @@
 const program = require('commander');
-const context = require('./context');
+const Context = require('@forestadmin/context');
+
 const initContext = require('./context/init');
 
-initContext(context);
-
-const { logger, authenticator } = context.inject();
+const { logger, authenticator } = Context.execute(initContext);
 
 if (!logger) throw new Error('Missing dependency logger');
 if (!authenticator) throw new Error('Missing dependency authenticator');

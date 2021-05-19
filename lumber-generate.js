@@ -1,9 +1,9 @@
 const program = require('commander');
 const chalk = require('chalk');
-const context = require('./context');
+const Context = require('@forestadmin/context');
 const initContext = require('./context/init');
 
-initContext(context);
+const context = Context.execute(initContext);
 
 const spinners = require('./services/spinners');
 const DatabaseAnalyzer = require('./services/analyzer/database-analyzer');
@@ -13,7 +13,7 @@ const ProjectCreator = require('./services/project-creator');
 const { terminate } = require('./utils/terminator');
 const { ERROR_UNEXPECTED } = require('./utils/messages');
 
-const { logger, authenticator, dumper } = context.inject();
+const { logger, authenticator, dumper } = context;
 
 if (!authenticator) throw new Error('Missing dependency authenticator');
 if (!logger) throw new Error('Missing dependency logger');
@@ -34,7 +34,9 @@ program
   .parse(process.argv);
 
 (async () => {
-  const { database } = context.inject();
+  const { api, database } = context.inject();
+  if (!api) throw new Error('Missing dependency api');
+  if (!database) throw new Error('Missing dependency database');
 
   eventSender.command = 'generate';
   [eventSender.appName] = program.args;
@@ -52,7 +54,7 @@ program
   spinners.add('database-analysis', { text: 'Analyzing the database' }, schemaPromise);
   schema = await schemaPromise;
 
-  const projectCreationPromise = new ProjectCreator(sessionToken)
+  const projectCreationPromise = new ProjectCreator(sessionToken, api)
     .createProject(config.appName, config);
   spinners.add('project-creation', { text: 'Creating your project on Forest Admin' }, projectCreationPromise);
 
