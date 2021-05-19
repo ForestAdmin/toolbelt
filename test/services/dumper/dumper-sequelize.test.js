@@ -1,3 +1,4 @@
+const Context = require('@forestadmin/context');
 const rimraf = require('rimraf');
 const fs = require('fs');
 const appRoot = require('app-root-path');
@@ -12,15 +13,14 @@ const defaultValuesModel = require('../../../test-expected/sequelize/db-analysis
 const parenthesisColumnName = require('../../../test-expected/sequelize/db-analysis-output/parenthesis.expected.json');
 const parenthesisColumnNameUnderscored = require('../../../test-expected/sequelize/db-analysis-output/parenthesis_underscored.expected.json');
 const parenthesisColumnNameUnderscoredTrue = require('../../../test-expected/sequelize/db-analysis-output/parenthesis_underscored_true.expected.json');
-const context = require('../../../context');
 const initContext = require('../../../context/init');
 
-initContext(context);
-
+const context = Context.execute(initContext);
 const Dumper = require('../../../services/dumper');
 
+
 function getDumper() {
-  return new Dumper(context.inject());
+  return new Dumper(context);
 }
 
 const CONFIG = {
