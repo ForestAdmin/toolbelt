@@ -4,7 +4,6 @@ const KeyGenerator = require('./key-generator');
 const { terminate } = require('../utils/terminator');
 const { ERROR_UNEXPECTED } = require('../utils/messages');
 
-
 function ProjectCreator(sessionToken, api) {
   this.createProject = async (projectName, config) => {
     try {
