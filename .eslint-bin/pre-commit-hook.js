@@ -1,4 +1,6 @@
+const { spawn } = require('child_process');
 const simpleGit = require('simple-git')(`${__dirname}/..`);
+
 let listFilesModified = [];
 
 function excludeNonCommitedFiles(file) {
@@ -10,19 +12,20 @@ function excludeNonCommitedFiles(file) {
 function getFilesModified(callback) {
   simpleGit.status((error, status) => {
     if (error) {
+      // eslint-disable-next-line no-console
       console.error(error);
       process.exit(-1);
     }
 
     listFilesModified = status.files
       .filter(excludeNonCommitedFiles)
-      .map(file => {
+      .map((file) => {
         if (file.index === 'R') {
           return file.path.substring(file.path.indexOf(' -> ') + 4);
         }
         return file.path;
       })
-      .filter(file => file.endsWith('.js'));
+      .filter((file) => file.endsWith('.js'));
 
     callback();
   });
@@ -33,16 +36,17 @@ function runEslint(callback) {
     return callback(0);
   }
 
+  // eslint-disable-next-line no-console
   console.log(`[ESLint] Validating changed files:\n${listFilesModified.join('\n')}`);
   const eslintPath = `${__dirname}/../node_modules/.bin/eslint`;
-  const spawn = require('child_process').spawn;
   const cmd = spawn(eslintPath, listFilesModified, { stdio: 'inherit', shell: true });
 
-  cmd.on('exit',code => callback(code));
+  return cmd.on('exit', (code) => callback(code));
 }
 
 getFilesModified((error) => {
   if (error) {
+    // eslint-disable-next-line no-console
     console.error(error);
     process.exit(-2);
   }
