@@ -34,7 +34,9 @@ program
   .parse(process.argv);
 
 (async () => {
-  const { database } = context.inject();
+  const { api, database } = context.inject();
+  if (!api) throw new Error('Missing dependency api');
+  if (!database) throw new Error('Missing dependency database');
 
   eventSender.command = 'generate';
   [eventSender.appName] = program.args;
@@ -52,7 +54,7 @@ program
   spinners.add('database-analysis', { text: 'Analyzing the database' }, schemaPromise);
   schema = await schemaPromise;
 
-  const projectCreationPromise = new ProjectCreator(sessionToken)
+  const projectCreationPromise = new ProjectCreator(sessionToken, api)
     .createProject(config.appName, config);
   spinners.add('project-creation', { text: 'Creating your project on Forest Admin' }, projectCreationPromise);
 
