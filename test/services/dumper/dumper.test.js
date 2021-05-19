@@ -1,13 +1,12 @@
+const Context = require('@forestadmin/context');
 const fs = require('fs');
 const sinon = require('sinon');
 const os = require('os');
 const rimraf = require('rimraf');
 const Dumper = require('../../../services/dumper');
-const context = require('../../../context');
 const initContext = require('../../../context/init');
 
-initContext(context);
-const injectedContext = context.inject();
+const injectedContext = Context.execute(initContext);
 
 const DOCKER_COMPOSE_FILE_LOCATION = './test-output/Linux/docker-compose.yml';
 const DOT_ENV_FILE_LOCATION = './test-output/Linux/.env';

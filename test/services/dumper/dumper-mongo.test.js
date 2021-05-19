@@ -1,3 +1,4 @@
+const Context = require('@forestadmin/context');
 const rimraf = require('rimraf');
 const fs = require('fs');
 const appRoot = require('app-root-path');
@@ -14,14 +15,12 @@ const subDocumentsNotUsingIds = require('../../../test-expected/mongo/db-analysi
 const subDocumentsUsingIds = require('../../../test-expected/mongo/db-analysis-output/sub-documents-using-ids.expected');
 const subDocumentUsingIds = require('../../../test-expected/mongo/db-analysis-output/sub-document-using-ids.expected');
 const Dumper = require('../../../services/dumper');
-const context = require('../../../context');
 const initContext = require('../../../context/init');
 
-initContext(context);
-const injectedContext = context.inject();
+const context = Context.execute(initContext);
 
 function getDumper() {
-  return new Dumper(injectedContext);
+  return new Dumper(context);
 }
 
 const CONFIG = {
