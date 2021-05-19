@@ -159,7 +159,6 @@ function loginValidOidc() {
   );
 }
 
-
 module.exports = {
   loginInvalidOidc,
   loginValidOidc,
@@ -402,7 +401,6 @@ module.exports = {
         id: '2200',
       },
     })),
-
 
   getProjectByEnv: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .get('/api/projects?envSecret')

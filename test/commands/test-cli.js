@@ -23,7 +23,6 @@ const {
 } = require('./test-cli-std');
 const { mockDependencies } = require('./test-cli-dependencies');
 
-
 function asArray(any) {
   if (!any) return [];
   return Array.isArray(any) ? any : [any];
