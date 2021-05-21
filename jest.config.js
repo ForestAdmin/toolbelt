@@ -1,4 +1,14 @@
 module.exports = {
+  coverageReporters: [
+    [
+      'lcov',
+      {
+        // Prevents unwanted sketchy `../../` prefix in lcov report.
+        // This lead to error when sharing coverage with CodeClimate.
+        projectRoot: process.cwd(),
+      }],
+  ],
+
   collectCoverageFrom: [
     '**/*.{js,ts,tsx}',
   ],
