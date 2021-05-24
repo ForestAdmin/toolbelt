@@ -1,14 +1,106 @@
 const { flags } = require('@oclif/command');
+const { inject } = require('@forestadmin/context');
+
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class CreateCommand extends AbstractAuthenticatedCommand {
   constructor(...args) {
     super(...args);
-    this.log('projects:create init');
+
+    const {
+      api,
+      authenticator,
+      chalk,
+      commandGenerateConfigGetter,
+      database,
+      databaseAnalyzer,
+      dumper,
+      eventSender,
+      logger,
+      messages,
+      projectCreator,
+      spinners,
+      terminator,
+    } = inject();
+    if (!api) throw new Error('Missing dependency api');
+    if (!authenticator) throw new Error('Missing dependency authenticator');
+    if (!chalk) throw new Error('Missing dependency chalk');
+    if (!commandGenerateConfigGetter) throw new Error('Missing dependency commandGenerateConfigGetter');
+    if (!database) throw new Error('Missing dependency database');
+    if (!databaseAnalyzer) throw new Error('Missing dependency databaseAnalyzer');
+    if (!dumper) throw new Error('Missing dependency dumper');
+    if (!eventSender) throw new Error('Missing dependency eventSender');
+    if (!logger) throw new Error('Missing dependency logger');
+    if (!messages) throw new Error('Missing dependency messages');
+    if (!projectCreator) throw new Error('Missing dependency this.projectCreator');
+    if (!spinners) throw new Error('Missing dependency spinners');
+    if (!terminator) throw new Error('Missing dependency this.terminator');
+    this.api = api;
+    this.authenticator = authenticator;
+    this.chalk = chalk;
+    this.commandGenerateConfigGetter = commandGenerateConfigGetter;
+    this.database = database;
+    this.databaseAnalyzer = databaseAnalyzer;
+    this.dumper = dumper;
+    this.eventSender = eventSender;
+    this.logger = logger;
+    this.messages = messages;
+    this.projectCreator = projectCreator;
+    this.spinners = spinners;
+    this.terminator = terminator;
   }
 
   async runIfAuthenticated() {
-    this.log('projects:create runIfAuthenticated');
+    const { args: parsedArgs, flags: parsedFlags } = this.parse(CreateCommand);
+    const authenticationToken = this.authenticator.getAuthToken();
+
+    this.args = parsedArgs;
+    this.flags = parsedFlags;
+    this.config = { ...this.args, ...this.flags };
+
+    this.eventSender.command = 'projects:create';
+    this.eventSender.appName = this.args.appName;
+
+    const config = await this.commandGenerateConfigGetter.get(this.config);
+
+    let schema = {};
+
+    const connectionPromise = this.database.connect(config);
+    this.spinners.add('database-connection', { text: 'Connecting to your database' }, connectionPromise);
+    const connection = await connectionPromise;
+
+    const schemaPromise = this.databaseAnalyzer.perform(connection, config, true);
+    this.spinners.add('database-analysis', { text: 'Analyzing the database' }, schemaPromise);
+    schema = await schemaPromise;
+
+    const projectCreationPromise = this.projectCreator.create(
+      authenticationToken, this.api, config.appName, config,
+    );
+    this.spinners.add('project-creation', { text: 'Creating your project on Forest Admin' }, projectCreationPromise);
+
+    const { envSecret, authSecret } = await projectCreationPromise;
+    config.forestEnvSecret = envSecret;
+    config.forestAuthSecret = authSecret;
+
+    const spinner = this.spinners.add('dumper', { text: 'Creating your project files' });
+    this.logger.spinner = spinner;
+    await this.dumper.dump(schema, config);
+    spinner.succeed();
+
+    this.logger.success(`Hooray, ${this.chalk.green('installation success')}!`);
+    await this.eventSender.notifySuccess();
+    process.exit(0);
+  }
+
+  async catch(error) {
+    const logs = [
+      'Cannot generate your project.',
+      `${this.messages.ERROR_UNEXPECTED} ${this.chalk.red(error)}`,
+    ];
+
+    await this.terminator.terminate(1, {
+      logs,
+    });
   }
 }
 
