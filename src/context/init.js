@@ -7,6 +7,8 @@ const open = require('open');
 const jwtDecode = require('jwt-decode');
 const fs = require('fs');
 const joi = require('joi');
+const mkdirp = require('mkdirp');
+const Handlebars = require('handlebars');
 
 const Sequelize = require('sequelize');
 const mongodb = require('mongodb');
@@ -23,7 +25,10 @@ const Api = require('../services/api');
 const applicationTokenSerializer = require('../serializers/application-token');
 const applicationTokenDeserializer = require('../deserializers/application-token');
 
+const environmentDeserializer = require('../deserializers/environment');
+const environmentSerializer = require('../serializers/environment');
 const projectDeserializer = require('../deserializers/project');
+const projectSerializer = require('../serializers/project');
 
 const CommandGenerateConfigGetter = require('../../services/command-generate-config-getter');
 const Database = require('../../services/database');
@@ -32,6 +37,8 @@ const Dumper = require('../../services/dumper');
 const EventSender = require('../../services/event-sender');
 const spinners = require('../../services/spinners');
 const ProjectCreator = require('../../services/project-creator');
+
+const DEFAULT_FOREST_URL = 'https://api.forestadmin.com';
 
 /**
  * @typedef {{
@@ -78,6 +85,12 @@ const ProjectCreator = require('../../services/project-creator');
  *
  * @typedef {EnvPart & Dependencies & Utils & Services & Serializers} Context
  */
+
+function initConstants(context) {
+  context.addInstance('constants', {
+    DEFAULT_FOREST_URL,
+  });
+}
 
 /**
  * @param {import('./application-context')} context
@@ -130,6 +143,10 @@ function initUtils(context) {
 function initSerializers(context) {
   context.addInstance('applicationTokenSerializer', applicationTokenSerializer);
   context.addInstance('applicationTokenDeserializer', applicationTokenDeserializer);
+  context.addInstance('environmentDeserializer', environmentDeserializer);
+  context.addInstance('environmentSerializer', environmentSerializer);
+  context.addInstance('projectDeserializer', projectDeserializer);
+  context.addInstance('projectSerializer', projectSerializer);
 }
 
 /**
@@ -149,8 +166,8 @@ function initServices(context) {
 function initCommandProjectsCreate(context) {
   context.addInstance('Sequelize', Sequelize);
   context.addInstance('mongodb', mongodb);
-
-  context.addInstance('projectDeserializer', projectDeserializer);
+  context.addInstance('mkdirp', mkdirp);
+  context.addInstance('Handlebars', Handlebars);
 
   context.addClass(CommandGenerateConfigGetter);
   context.addClass(DatabaseAnalyzer);
@@ -166,6 +183,7 @@ function initCommandProjectsCreate(context) {
  * @returns {import('./application-context')<Context>}
  */
 function initContext(context) {
+  initConstants(context);
   initEnv(context);
   initDependencies(context);
   initUtils(context);
