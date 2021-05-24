@@ -86,7 +86,7 @@ module.exports = class SchemaService {
     return databasesSchema;
   }
 
-  async dumpDoudou(databasesSchema, appName, isUpdate, useMultiDatabase){
+  async dumpSchemas(databasesSchema, appName, isUpdate, useMultiDatabase){
     const spinner = spinners.add('dumper', { text: 'Generating your files' });
 
     const dumperOptions = {
@@ -131,7 +131,7 @@ module.exports = class SchemaService {
       const databasesSchema = await this.analyzeDatabases(databasesConnection, dbSchema);
       const useMultiDatabase = databasesSchema.length > 1;
 
-      await this.dumpDoudou(databasesSchema, outputDirectory, isUpdate, useMultiDatabase);
+      await this.dumpSchemas(databasesSchema, outputDirectory, isUpdate, useMultiDatabase);
 
       this.warnIfSingleToMulti();
     } catch (error) {

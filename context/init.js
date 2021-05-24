@@ -27,6 +27,9 @@ const ErrorHandler = require('../services/error-handler');
 const messages = require('../utils/messages');
 const DatabaseAnalyzer = require('../services/analyzer/database-analyzer');
 const SchemaService = require('../src/services/schema-service');
+const { terminate } = require('../utils/terminator');
+const mongoAnalyzer = require('../services/analyzer/mongo-collections-analyzer');
+const sequelizeAnalyzer = require('../services/analyzer/sequelize-tables-analyzer');
 
 const CommandGenerateConfigGetter = require('../services/command-generate-config-getter');
 const DatabaseAnalyzer = require('../services/analyzer/database-analyzer');
@@ -162,6 +165,9 @@ function initServices(context) {
 }
 
 const initCommandSchemaUpdate = (context) => context
+  .addFunction('terminate', terminate)
+  .addFunction('mongoAnalyzer', mongoAnalyzer)
+  .addFunction('sequelizeAnalyzer', sequelizeAnalyzer)
   .addClass(DatabaseAnalyzer)
   .addClass(SchemaService);
 
