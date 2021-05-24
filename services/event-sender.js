@@ -50,4 +50,4 @@ class EventSender {
   }
 }
 
-module.exports = new EventSender();
+module.exports = EventSender;
