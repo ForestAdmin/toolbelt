@@ -19,8 +19,9 @@ async function reportEmptyDatabase(orm, dialect) {
   });
 }
 
-function DatabaseAnalyzer(databaseConnection, config, allowWarning) {
-  this.perform = async () => {
+class DatabaseAnalyzer {
+  // eslint-disable-next-line class-methods-use-this
+  async perform(databaseConnection, config, allowWarning) {
     let analyze;
     if (config.dbDialect === 'mongodb') {
       analyze = analyzeMongoCollections;
@@ -34,7 +35,7 @@ function DatabaseAnalyzer(databaseConnection, config, allowWarning) {
         }
         throw error;
       });
-  };
+  }
 }
 
 module.exports = DatabaseAnalyzer;

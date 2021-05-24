@@ -4,8 +4,9 @@ const KeyGenerator = require('./key-generator');
 const { terminate } = require('../utils/terminator');
 const { ERROR_UNEXPECTED } = require('../utils/messages');
 
-function ProjectCreator(sessionToken, api) {
-  this.createProject = async (projectName, config) => {
+class ProjectCreator {
+  // eslint-disable-next-line class-methods-use-this
+  async create(sessionToken, api, projectName, config) {
     try {
       const newProject = await api.createProject(config, sessionToken, { name: projectName });
 
@@ -27,7 +28,7 @@ function ProjectCreator(sessionToken, api) {
         logs: [message],
       });
     }
-  };
+  }
 }
 
 module.exports = ProjectCreator;
