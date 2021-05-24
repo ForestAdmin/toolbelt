@@ -19,6 +19,14 @@ const Api = require('../services/api');
 const applicationTokenSerializer = require('../serializers/application-token');
 const applicationTokenDeserializer = require('../deserializers/application-token');
 
+const CommandGenerateConfigGetter = require('../../services/command-generate-config-getter');
+const Database = require('../../services/database');
+const DatabaseAnalyzer = require('../../services/analyzer/database-analyzer');
+const Dumper = require('../../services/dumper');
+const EventSender = require('../../services/event-sender');
+const spinners = require('../../services/spinners');
+const ProjectCreator = require('../../services/project-creator');
+
 /**
  * @typedef {{
  *   FOREST_URL: string;
@@ -130,6 +138,19 @@ function initServices(context) {
 }
 
 /**
+ * @param {import('./application-context')} context
+ */
+function initCommandProjectsCreate(context) {
+  context.addClass(CommandGenerateConfigGetter);
+  context.addClass(DatabaseAnalyzer);
+  context.addClass(Database);
+  context.addClass(Dumper);
+  context.addClass(EventSender);
+  context.addClass(ProjectCreator);
+  context.addInstance('spinners', spinners);
+}
+
+/**
  * @param {import('./application-context')<Context>} context
  * @returns {import('./application-context')<Context>}
  */
@@ -139,6 +160,8 @@ function initContext(context) {
   initUtils(context);
   initSerializers(context);
   initServices(context);
+
+  initCommandProjectsCreate(context);
 
   return context;
 }
