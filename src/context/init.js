@@ -23,6 +23,8 @@ const Api = require('../services/api');
 const applicationTokenSerializer = require('../serializers/application-token');
 const applicationTokenDeserializer = require('../deserializers/application-token');
 
+const projectDeserializer = require('../deserializers/project');
+
 const CommandGenerateConfigGetter = require('../../services/command-generate-config-getter');
 const Database = require('../../services/database');
 const DatabaseAnalyzer = require('../../services/analyzer/database-analyzer');
@@ -147,6 +149,8 @@ function initServices(context) {
 function initCommandProjectsCreate(context) {
   context.addInstance('Sequelize', Sequelize);
   context.addInstance('mongodb', mongodb);
+
+  context.addInstance('projectDeserializer', projectDeserializer);
 
   context.addClass(CommandGenerateConfigGetter);
   context.addClass(DatabaseAnalyzer);
