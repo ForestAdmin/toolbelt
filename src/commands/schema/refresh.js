@@ -5,15 +5,15 @@ const AbstractAuthenticatedCommand = require('../../abstract-authenticated-comma
 class RefreshCommand extends AbstractAuthenticatedCommand {
   constructor(...args) {
     super(...args);
-    this.log('environments:refresh init');
+    this.log('schema:refresh init');
   }
 
   async runIfAuthenticated() {
-    this.log('environments:refresh runIfAuthenticated');
+    this.log('schema:refresh runIfAuthenticated');
   }
 }
 
-RefreshCommand.description = 'Update your environment by generating files that do not currently exist.';
+RefreshCommand.description = 'Refresh your schema by generating files that do not currently exist.';
 
 RefreshCommand.flags = {
   config: flags.string({
