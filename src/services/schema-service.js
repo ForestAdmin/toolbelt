@@ -35,7 +35,7 @@ module.exports = class SchemaService {
     this.spinners = spinners;
   }
 
-  assertOutputDirectory(outputDirectory) {
+  _assertOutputDirectory(outputDirectory) {
     if (!outputDirectory) {
       this.dumper.checkLumberProjectStructure();
     } else if (this.fs.existsSync(outputDirectory)) {
@@ -43,7 +43,7 @@ module.exports = class SchemaService {
     }
   }
 
-  getDatabasesConfig(path) {
+  _getDatabasesConfig(path) {
     const configPath = this.path.resolve(path);
     if (!this.fs.existsSync(configPath)) {
       throw new LumberError(`The configuration file "${configPath}" does not exist.`);
@@ -57,7 +57,7 @@ module.exports = class SchemaService {
     return databasesConfig;
   }
 
-  async connectToDatabases(databasesConfig) {
+  async _connectToDatabases(databasesConfig) {
     const spinner = this.spinners.add('databases-connection', { text: 'Connecting to your' +
         ' database(s)' });
     const databasesConnection = await this.database.connectFromDatabasesConfig(databasesConfig);
@@ -65,7 +65,7 @@ module.exports = class SchemaService {
     return databasesConnection;
   }
 
-  async analyzeDatabases(databasesConnection, dbSchema) {
+  async _analyzeDatabases(databasesConnection, dbSchema) {
     const spinner = this.spinners.add('analyze-databases', { text: 'Analyzing the database(s)' });
     const databasesSchema = await Promise.all(
       databasesConnection
@@ -89,7 +89,7 @@ module.exports = class SchemaService {
     return databasesSchema;
   }
 
-  async dumpSchemas(databasesSchema, appName, isUpdate, useMultiDatabase){
+  async _dumpSchemas(databasesSchema, appName, isUpdate, useMultiDatabase){
     const spinner = this.spinners.add('dumper', { text: 'Generating your files' });
 
     const dumperOptions = {
@@ -112,7 +112,7 @@ module.exports = class SchemaService {
     spinner.succeed();
   }
 
-  warnIfSingleToMulti(outputDirectory, useMultiDatabase) {
+  _warnIfSingleToMulti(outputDirectory, useMultiDatabase) {
     const fromSingleToMultipleDatabases = !outputDirectory
       && useMultiDatabase
       && !this.dumper.hasMultipleDatabaseStructure();
@@ -128,15 +128,15 @@ module.exports = class SchemaService {
   }) {
     try {
       this.dumper.checkLianaCompatiblityForUpdate();
-      this.assertOutputDirectory(outputDirectory);
-      const databasesConfig = this.getDatabasesConfig(dbConfigPath);
-      const databasesConnection = await this.connectToDatabases(databasesConfig);
-      const databasesSchema = await this.analyzeDatabases(databasesConnection, dbSchema);
+      this._assertOutputDirectory(outputDirectory);
+      const databasesConfig = this._getDatabasesConfig(dbConfigPath);
+      const databasesConnection = await this._connectToDatabases(databasesConfig);
+      const databasesSchema = await this._analyzeDatabases(databasesConnection, dbSchema);
       const useMultiDatabase = databasesSchema.length > 1;
 
-      await this.dumpSchemas(databasesSchema, outputDirectory, isUpdate, useMultiDatabase);
+      await this._dumpSchemas(databasesSchema, outputDirectory, isUpdate, useMultiDatabase);
 
-      this.warnIfSingleToMulti();
+      this._warnIfSingleToMulti();
     } catch (error) {
       await this.errorHandler.handle(error);
     }
