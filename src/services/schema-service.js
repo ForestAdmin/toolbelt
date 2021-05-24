@@ -1,4 +1,3 @@
-const spinners = require('../../services/spinners');
 const LumberError = require('../../utils/lumber-error');
 
 module.exports = class SchemaService {
@@ -12,6 +11,7 @@ module.exports = class SchemaService {
     fs,
     logger,
     path,
+    spinners,
   }) {
     assertPresent({
       database,
@@ -22,6 +22,7 @@ module.exports = class SchemaService {
       fs,
       logger,
       path,
+      spinners,
     });
     this.database = database;
     this.databaseAnalyzer = databaseAnalyzer;
@@ -31,6 +32,7 @@ module.exports = class SchemaService {
     this.fs = fs;
     this.logger = logger;
     this.path = path;
+    this.spinners = spinners;
   }
 
   assertOutputDirectory(outputDirectory) {
@@ -56,14 +58,15 @@ module.exports = class SchemaService {
   }
 
   async connectToDatabases(databasesConfig) {
-    const spinner = spinners.add('databases-connection', { text: 'Connecting to your database(s)' });
+    const spinner = this.spinners.add('databases-connection', { text: 'Connecting to your' +
+        ' database(s)' });
     const databasesConnection = await this.database.connectFromDatabasesConfig(databasesConfig);
     spinner.succeed();
     return databasesConnection;
   }
 
   async analyzeDatabases(databasesConnection, dbSchema) {
-    const spinner = spinners.add('analyze-databases', { text: 'Analyzing the database(s)' });
+    const spinner = this.spinners.add('analyze-databases', { text: 'Analyzing the database(s)' });
     const databasesSchema = await Promise.all(
       databasesConnection
         .map(async (databaseConnection) => {
@@ -87,7 +90,7 @@ module.exports = class SchemaService {
   }
 
   async dumpSchemas(databasesSchema, appName, isUpdate, useMultiDatabase){
-    const spinner = spinners.add('dumper', { text: 'Generating your files' });
+    const spinner = this.spinners.add('dumper', { text: 'Generating your files' });
 
     const dumperOptions = {
       appName,
