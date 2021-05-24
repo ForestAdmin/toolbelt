@@ -25,6 +25,8 @@ const authenticatorHelper = require('../utils/authenticator-helper');
 const OidcAuthenticator = require('../services/oidc/authenticator');
 const ErrorHandler = require('../services/error-handler');
 const messages = require('../utils/messages');
+const DatabaseAnalyzer = require('../services/analyzer/database-analyzer');
+const SchemaService = require('../src/services/schema-service');
 
 const CommandGenerateConfigGetter = require('../services/command-generate-config-getter');
 const DatabaseAnalyzer = require('../services/analyzer/database-analyzer');
@@ -159,6 +161,10 @@ function initServices(context) {
   context.addClass(ErrorHandler);
 }
 
+const initCommandSchemaUpdate = (context) => context
+  .addClass(DatabaseAnalyzer)
+  .addClass(SchemaService);
+
 /**
  * @param {import('./application-context')} context
  */
@@ -181,6 +187,7 @@ function initContext(context) {
   initUtils(context);
   initSerializers(context);
   initServices(context);
+  initCommandSchemaUpdate(context);
 
   initCommandProjectsCreate(context);
 
