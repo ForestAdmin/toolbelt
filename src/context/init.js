@@ -7,6 +7,10 @@ const open = require('open');
 const jwtDecode = require('jwt-decode');
 const fs = require('fs');
 const joi = require('joi');
+
+const Sequelize = require('sequelize');
+const mongodb = require('mongodb');
+
 const config = require('../config');
 const pkg = require('../../package.json');
 const logger = require('../services/logger');
@@ -141,6 +145,9 @@ function initServices(context) {
  * @param {import('./application-context')} context
  */
 function initCommandProjectsCreate(context) {
+  context.addInstance('Sequelize', Sequelize);
+  context.addInstance('mongodb', mongodb);
+
   context.addClass(CommandGenerateConfigGetter);
   context.addClass(DatabaseAnalyzer);
   context.addClass(Database);
