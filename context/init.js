@@ -26,6 +26,12 @@ const OidcAuthenticator = require('../services/oidc/authenticator');
 const ErrorHandler = require('../services/error-handler');
 const messages = require('../utils/messages');
 
+const CommandGenerateConfigGetter = require('../services/command-generate-config-getter');
+const DatabaseAnalyzer = require('../services/analyzer/database-analyzer');
+const eventSender = require('../services/event-sender');
+const spinners = require('../services/spinners');
+const ProjectCreator = require('../services/project-creator');
+
 const fsAsync = {
   readFile: promisify(fs.readFile),
   stat: promisify(fs.stat),
@@ -154,6 +160,17 @@ function initServices(context) {
 }
 
 /**
+ * @param {import('./application-context')} context
+ */
+function initCommandProjectsCreate(context) {
+  context.addClass(CommandGenerateConfigGetter);
+  context.addClass(DatabaseAnalyzer);
+  context.addClass(ProjectCreator);
+  context.addInstance('eventSender', eventSender);
+  context.addInstance('spinners', spinners);
+}
+
+/**
  * @param {import('./application-context')<Context>} context
  * @returns {import('./application-context')<Context>}
  */
@@ -164,6 +181,8 @@ function initContext(context) {
   initUtils(context);
   initSerializers(context);
   initServices(context);
+
+  initCommandProjectsCreate(context);
 
   return context;
 }
