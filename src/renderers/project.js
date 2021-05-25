@@ -35,9 +35,9 @@ class ProjectRenderer {
         console.log(`${chalk.bold('PROJECT')}`);
 
         table.push(
-          { id: project.id },
-          { name: project.name },
-          { 'default environment': project.defaultEnvironment.type },
+          { id: project.id || '' },
+          { name: project.name || '' },
+          { 'default environment': project.defaultEnvironment.type || '' },
         );
 
         console.log(table.toString());
