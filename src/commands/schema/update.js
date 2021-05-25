@@ -8,7 +8,8 @@ class UpdateCommand extends AbstractAuthenticatedCommand {
   constructor(...args) {
     super(...args);
     this.plan = initContext;
-    const { schemaService, env } = this.getContext();
+    const { assertPresent, env, schemaService } = this.getContext();
+    assertPresent({ env, schemaService });
     this.env = env;
     this.schemaService = schemaService;
   }
