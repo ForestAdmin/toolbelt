@@ -1,13 +1,30 @@
+const Context = require('@forestadmin/context');
 const { flags } = require('@oclif/command');
-const { inject } = require('@forestadmin/context');
 
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const initContext = require('../../context/init');
 
 class CreateCommand extends AbstractAuthenticatedCommand {
   constructor(...args) {
     super(...args);
-
+    this.plan = initContext;
     const {
+      api,
+      assertPresent,
+      authenticator,
+      chalk,
+      CommandGenerateConfigGetter,
+      database,
+      DatabaseAnalyzer,
+      dumper,
+      eventSender,
+      logger,
+      messages,
+      ProjectCreator,
+      spinners,
+      terminator,
+    } = this.getContext();
+    assertPresent({
       api,
       authenticator,
       chalk,
@@ -21,20 +38,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       ProjectCreator,
       spinners,
       terminator,
-    } = inject();
-    if (!api) throw new Error('Missing dependency api');
-    if (!authenticator) throw new Error('Missing dependency authenticator');
-    if (!chalk) throw new Error('Missing dependency chalk');
-    if (!CommandGenerateConfigGetter) throw new Error('Missing dependency CommandGenerateConfigGetter');
-    if (!database) throw new Error('Missing dependency database');
-    if (!DatabaseAnalyzer) throw new Error('Missing dependency DatabaseAnalyzer');
-    if (!dumper) throw new Error('Missing dependency dumper');
-    if (!eventSender) throw new Error('Missing dependency eventSender');
-    if (!logger) throw new Error('Missing dependency logger');
-    if (!messages) throw new Error('Missing dependency messages');
-    if (!ProjectCreator) throw new Error('Missing dependency this.ProjectCreator');
-    if (!spinners) throw new Error('Missing dependency spinners');
-    if (!terminator) throw new Error('Missing dependency this.terminator');
+    });
     this.api = api;
     this.authenticator = authenticator;
     this.chalk = chalk;
@@ -48,6 +52,10 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     this.ProjectCreator = ProjectCreator;
     this.spinners = spinners;
     this.terminator = terminator;
+  }
+
+  getContext() {
+    return Context.execute(this.plan);
   }
 
   async runIfAuthenticated() {
