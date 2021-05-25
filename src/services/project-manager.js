@@ -7,9 +7,10 @@ const ProjectDeserializer = require('../deserializers/project');
 const EnvironmentDeserializer = require('../deserializers/environment');
 const { serverHost } = require('../config');
 
-const { authenticator } = context.inject();
-
 function ProjectManager(config) {
+  const { assertPresent, authenticator } = context.inject();
+  assertPresent({ authenticator });
+
   function deserialize(response) {
     const attrs = _.clone(ProjectSerializer.opts.attributes);
     attrs.push('id');
