@@ -11,41 +11,41 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       api,
       authenticator,
       chalk,
-      commandGenerateConfigGetter,
+      CommandGenerateConfigGetter,
       database,
-      databaseAnalyzer,
+      DatabaseAnalyzer,
       dumper,
       eventSender,
       logger,
       messages,
-      projectCreator,
+      ProjectCreator,
       spinners,
       terminator,
     } = inject();
     if (!api) throw new Error('Missing dependency api');
     if (!authenticator) throw new Error('Missing dependency authenticator');
     if (!chalk) throw new Error('Missing dependency chalk');
-    if (!commandGenerateConfigGetter) throw new Error('Missing dependency commandGenerateConfigGetter');
+    if (!CommandGenerateConfigGetter) throw new Error('Missing dependency CommandGenerateConfigGetter');
     if (!database) throw new Error('Missing dependency database');
-    if (!databaseAnalyzer) throw new Error('Missing dependency databaseAnalyzer');
+    if (!DatabaseAnalyzer) throw new Error('Missing dependency DatabaseAnalyzer');
     if (!dumper) throw new Error('Missing dependency dumper');
     if (!eventSender) throw new Error('Missing dependency eventSender');
     if (!logger) throw new Error('Missing dependency logger');
     if (!messages) throw new Error('Missing dependency messages');
-    if (!projectCreator) throw new Error('Missing dependency this.projectCreator');
+    if (!ProjectCreator) throw new Error('Missing dependency this.ProjectCreator');
     if (!spinners) throw new Error('Missing dependency spinners');
     if (!terminator) throw new Error('Missing dependency this.terminator');
     this.api = api;
     this.authenticator = authenticator;
     this.chalk = chalk;
-    this.commandGenerateConfigGetter = commandGenerateConfigGetter;
+    this.CommandGenerateConfigGetter = CommandGenerateConfigGetter;
     this.database = database;
-    this.databaseAnalyzer = databaseAnalyzer;
+    this.DatabaseAnalyzer = DatabaseAnalyzer;
     this.dumper = dumper;
     this.eventSender = eventSender;
     this.logger = logger;
     this.messages = messages;
-    this.projectCreator = projectCreator;
+    this.ProjectCreator = ProjectCreator;
     this.spinners = spinners;
     this.terminator = terminator;
   }
@@ -61,7 +61,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     this.eventSender.command = 'projects:create';
     this.eventSender.appName = this.args.appName;
 
-    const config = await this.commandGenerateConfigGetter.get(this.config);
+    const config = await this.CommandGenerateConfigGetter.get(this.config);
 
     let schema = {};
 
@@ -69,11 +69,11 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     this.spinners.add('database-connection', { text: 'Connecting to your database' }, connectionPromise);
     const connection = await connectionPromise;
 
-    const schemaPromise = this.databaseAnalyzer.perform(connection, config, true);
+    const schemaPromise = this.DatabaseAnalyzer.perform(connection, config, true);
     this.spinners.add('database-analysis', { text: 'Analyzing the database' }, schemaPromise);
     schema = await schemaPromise;
 
-    const projectCreationPromise = this.projectCreator.create(
+    const projectCreationPromise = this.ProjectCreator.create(
       authenticationToken, this.api, config.appName, config,
     );
     this.spinners.add('project-creation', { text: 'Creating your project on Forest Admin' }, projectCreationPromise);

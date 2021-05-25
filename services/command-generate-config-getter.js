@@ -41,8 +41,7 @@ class CommandGenerateConfigGetter {
     return OPTIONS.forFullPrompt;
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  get(args) {
+  static get(args) {
     return new Prompter(
       CommandGenerateConfigGetter.getOptions(args), args,
     ).getConfig();
