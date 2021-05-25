@@ -7,19 +7,14 @@ const initContext = require('../../../context/init');
 class UpdateCommand extends AbstractAuthenticatedCommand {
   constructor(...args) {
     super(...args);
+    this.plan = initContext;
     const { schemaService, env } = this.getContext();
     this.env = env;
     this.schemaService = schemaService;
   }
 
   getContext() {
-    this.log('schema:update getContext');
-    try {
-      return Context.execute(initContext);
-    } catch (e) {
-      console.log(e);
-      throw e;
-    }
+    return Context.execute(this.plan);
   }
 
   async runIfAuthenticated() {
