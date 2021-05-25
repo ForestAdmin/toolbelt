@@ -27,7 +27,7 @@ defaultsValueExpected[databaseUrls.DATABASE_URL_POSTGRESQL_MIN]
   .default_values
   .fields[9].defaultValue.val = 'now()';
 
-const getContext = () => ({
+const setupTest = () => ({
   assertPresent: jest.fn(),
   terminator: jest.fn(),
   mongoAnalyzer: jest.fn(),
@@ -37,7 +37,7 @@ const getContext = () => ({
 describe('services > database analyser > Sequelize', () => {
   describeSequelizeDatabases(({ connectionUrl, dialect }) => () => {
     function performDatabaseAnalysis(connection) {
-      return new DatabaseAnalyzer(getContext()).analyze(connection, { dbDialect: dialect });
+      return new DatabaseAnalyzer(setupTest()).analyze(connection, { dbDialect: dialect });
     }
 
     it('should connect and create a record.', async () => {

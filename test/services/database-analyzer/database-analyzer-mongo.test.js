@@ -35,7 +35,7 @@ const expectedSubDocumentUsingIds = require('../../../test-expected/mongo/db-ana
 const expectedComplexModelWithAView = require('../../../test-expected/mongo/db-analysis-output/complex-model-with-a-view.expected');
 const mongoAnalyzer = require('../../../services/analyzer/mongo-collections-analyzer');
 
-const getContext = () => ({
+const setupTest = () => ({
   assertPresent: jest.fn(),
   terminator: jest.fn(),
   mongoAnalyzer,
@@ -51,7 +51,7 @@ async function getAnalyzerOutput(mongoUrl, callback) {
   const databaseConnection = await mongoHelper.connect();
   await mongoHelper.dropAllCollections();
   await callback(mongoHelper);
-  const databaseAnalyzer = new DatabaseAnalyzer(getContext());
+  const databaseAnalyzer = new DatabaseAnalyzer(setupTest());
   const outputModel = await databaseAnalyzer.analyze(databaseConnection, { dbDialect: 'mongodb' });
   await mongoHelper.close();
   return outputModel;
