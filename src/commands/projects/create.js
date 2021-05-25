@@ -15,7 +15,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       chalk,
       CommandGenerateConfigGetter,
       database,
-      DatabaseAnalyzer,
+      databaseAnalyzer,
       dumper,
       eventSender,
       logger,
@@ -30,7 +30,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       chalk,
       CommandGenerateConfigGetter,
       database,
-      DatabaseAnalyzer,
+      databaseAnalyzer,
       dumper,
       eventSender,
       logger,
@@ -44,7 +44,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     this.chalk = chalk;
     this.CommandGenerateConfigGetter = CommandGenerateConfigGetter;
     this.database = database;
-    this.DatabaseAnalyzer = DatabaseAnalyzer;
+    this.databaseAnalyzer = databaseAnalyzer;
     this.dumper = dumper;
     this.eventSender = eventSender;
     this.logger = logger;
@@ -77,7 +77,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     this.spinners.add('database-connection', { text: 'Connecting to your database' }, connectionPromise);
     const connection = await connectionPromise;
 
-    const schemaPromise = this.DatabaseAnalyzer.perform(connection, config, true);
+    const schemaPromise = this.databaseAnalyzer.analyze(connection, config, true);
     this.spinners.add('database-analysis', { text: 'Analyzing the database' }, schemaPromise);
     schema = await schemaPromise;
 
