@@ -1,4 +1,4 @@
-const context = require('@forestadmin/context');
+const context = require('../../src/context');
 
 const { env: injectedEnv } = context.inject();
 
