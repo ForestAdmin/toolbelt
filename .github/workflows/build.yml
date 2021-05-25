@@ -43,6 +43,10 @@ jobs:
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
+      - name: Test prepack
+        run: yarn prepack
+      - name: Test postpack
+        run: yarn postpack
       - name: Send coverage
         uses: paambaati/codeclimate-action@v2.7.4
         env:
