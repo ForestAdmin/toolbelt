@@ -7,6 +7,7 @@ const databaseUrls = require('../../../test-utils/database-urls');
 const expectedDefaultValuesPostgres = require('../../../test-expected/sequelize/db-analysis-output/default_values.postgres.expected');
 const expectedDefaultValuesMysql = require('../../../test-expected/sequelize/db-analysis-output/default_values.mysql.expected');
 const expectedDefaultValuesMssql = require('../../../test-expected/sequelize/db-analysis-output/default_values.mssql.expected');
+const sequelizeAnalyzer = require('../../../services/analyzer/sequelize-tables-analyzer');
 
 const TIMEOUT = 30000;
 
@@ -26,10 +27,17 @@ defaultsValueExpected[databaseUrls.DATABASE_URL_POSTGRESQL_MIN]
   .default_values
   .fields[9].defaultValue.val = 'now()';
 
+const getContext = () => ({
+  assertPresent: jest.fn(),
+  terminator: jest.fn(),
+  mongoAnalyzer: jest.fn(),
+  sequelizeAnalyzer,
+});
+
 describe('services > database analyser > Sequelize', () => {
   describeSequelizeDatabases(({ connectionUrl, dialect }) => () => {
     function performDatabaseAnalysis(connection) {
-      return new DatabaseAnalyzer(connection, { dbDialect: dialect }).perform();
+      return new DatabaseAnalyzer(getContext()).analyze(connection, { dbDialect: dialect });
     }
 
     it('should connect and create a record.', async () => {
