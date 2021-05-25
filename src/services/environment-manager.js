@@ -7,9 +7,10 @@ const DeploymentRequestSerializer = require('../serializers/deployment-request')
 const JobStateChecker = require('../services/job-state-checker');
 const { serverHost } = require('../config');
 
-const { authenticator } = context.inject();
-
 function EnvironmentManager(config) {
+  const { assertPresent, authenticator } = context.inject();
+  assertPresent({ authenticator });
+
   this.listEnvironments = async () => {
     const authToken = authenticator.getAuthToken();
 
