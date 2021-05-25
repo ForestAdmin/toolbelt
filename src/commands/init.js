@@ -1,6 +1,6 @@
 const fs = require('fs');
 const { flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
+const context = require('../context');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const { buildDatabaseUrl } = require('../utils/database-url');
 const withCurrentProject = require('../services/with-current-project');

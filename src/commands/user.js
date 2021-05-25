@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken');
 const { Command } = require('@oclif/command');
-const context = require('@forestadmin/context');
+const jwt = require('jsonwebtoken');
+const context = require('../context');
 
 class UserCommand extends Command {
   constructor(...args) {

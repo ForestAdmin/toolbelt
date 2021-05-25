@@ -1,6 +1,6 @@
 const P = require('bluebird');
 const agent = require('superagent-promise')(require('superagent'), P);
-const context = require('@forestadmin/context');
+const context = require('../context');
 const EnvironmentSerializer = require('../serializers/environment');
 const environmentDeserializer = require('../deserializers/environment');
 const DeploymentRequestSerializer = require('../serializers/deployment-request');

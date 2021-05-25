@@ -1,5 +1,5 @@
 const { flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
+const context = require('../context');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');

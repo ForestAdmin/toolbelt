@@ -1,5 +1,5 @@
 const { Command } = require('@oclif/command');
-const context = require('@forestadmin/context');
+const context = require('./context');
 
 class AbstractAuthenticatedCommand extends Command {
   constructor(...args) {

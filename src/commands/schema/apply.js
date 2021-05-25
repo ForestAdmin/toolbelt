@@ -1,10 +1,10 @@
-const path = require('path');
 const { flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
+const path = require('path');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
 const JobStateChecker = require('../../services/job-state-checker');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const context = require('../../context');
 
 class ApplyCommand extends AbstractAuthenticatedCommand {
   constructor(...args) {
