@@ -1,3 +1,10 @@
+## [2.0.7](https://github.com/ForestAdmin/toolbelt/compare/v2.0.6...v2.0.7) (2021-05-25)
+
+
+### Bug Fixes
+
+* update cli-table dependency ([28638b2](https://github.com/ForestAdmin/toolbelt/commit/28638b26bf846109ed179fd0d6b122249983dc61))
+
 ## [2.0.6](https://github.com/ForestAdmin/toolbelt/compare/v2.0.5...v2.0.6) (2021-04-29)
 
 
