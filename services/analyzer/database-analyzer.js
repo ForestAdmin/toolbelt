@@ -20,8 +20,7 @@ async function reportEmptyDatabase(orm, dialect) {
 }
 
 class DatabaseAnalyzer {
-  // eslint-disable-next-line class-methods-use-this
-  async perform(databaseConnection, config, allowWarning) {
+  static async perform(databaseConnection, config, allowWarning) {
     let analyze;
     if (config.dbDialect === 'mongodb') {
       analyze = analyzeMongoCollections;

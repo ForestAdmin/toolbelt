@@ -169,12 +169,12 @@ function initCommandProjectsCreate(context) {
   context.addInstance('mkdirp', mkdirp);
   context.addInstance('Handlebars', Handlebars);
 
-  context.addClass(CommandGenerateConfigGetter);
-  context.addClass(DatabaseAnalyzer);
   context.addClass(Database);
   context.addClass(Dumper);
   context.addClass(EventSender);
-  context.addClass(ProjectCreator);
+  context.addInstance('CommandGenerateConfigGetter', CommandGenerateConfigGetter);
+  context.addInstance('DatabaseAnalyzer', DatabaseAnalyzer);
+  context.addInstance('ProjectCreator', ProjectCreator);
   context.addInstance('spinners', spinners);
 }
 

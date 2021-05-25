@@ -5,8 +5,7 @@ const { terminate } = require('../utils/terminator');
 const { ERROR_UNEXPECTED } = require('../utils/messages');
 
 class ProjectCreator {
-  // eslint-disable-next-line class-methods-use-this
-  async create(sessionToken, api, projectName, config) {
+  static async create(sessionToken, api, projectName, config) {
     try {
       const newProject = await api.createProject(config, sessionToken, { name: projectName });
 
