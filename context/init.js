@@ -33,9 +33,7 @@ const sequelizeAnalyzer = require('../services/analyzer/sequelize-tables-analyze
 const spinners = require('../services/spinners');
 
 const CommandGenerateConfigGetter = require('../services/command-generate-config-getter');
-const DatabaseAnalyzer = require('../services/analyzer/database-analyzer');
 const eventSender = require('../services/event-sender');
-const spinners = require('../services/spinners');
 const ProjectCreator = require('../services/project-creator');
 
 const fsAsync = {
