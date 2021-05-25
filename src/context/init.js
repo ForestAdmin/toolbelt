@@ -9,6 +9,7 @@ const fs = require('fs');
 const joi = require('joi');
 const mkdirp = require('mkdirp');
 const Handlebars = require('handlebars');
+const path = require('path');
 
 const Sequelize = require('sequelize');
 const mongodb = require('mongodb');
@@ -37,6 +38,10 @@ const Dumper = require('../../services/dumper');
 const EventSender = require('../../services/event-sender');
 const spinners = require('../../services/spinners');
 const ProjectCreator = require('../../services/project-creator');
+const ErrorHandler = require('../../services/error-handler');
+const mongoAnalyzer = require('../../services/analyzer/mongo-collections-analyzer');
+const sequelizeAnalyzer = require('../../services/analyzer/sequelize-tables-analyzer');
+const SchemaService = require('../services/schema-service');
 
 const DEFAULT_FOREST_URL = 'https://api.forestadmin.com';
 
@@ -178,6 +183,14 @@ function initCommandProjectsCreate(context) {
   context.addInstance('spinners', spinners);
 }
 
+const initCommandSchemaUpdate = (context) => context
+  .addInstance('path', path)
+  .addClass(ErrorHandler)
+  .addFunction('mongoAnalyzer', mongoAnalyzer)
+  .addFunction('sequelizeAnalyzer', sequelizeAnalyzer)
+  .addClass(DatabaseAnalyzer)
+  .addClass(SchemaService);
+
 /**
  * @param {import('./application-context')<Context>} context
  * @returns {import('./application-context')<Context>}
@@ -191,6 +204,7 @@ function initContext(context) {
   initServices(context);
 
   initCommandProjectsCreate(context);
+  initCommandSchemaUpdate(context);
 
   return context;
 }

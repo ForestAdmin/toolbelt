@@ -2,7 +2,7 @@ const path = require('path');
 const Context = require('@forestadmin/context');
 const { flags } = require('@oclif/command');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
-const initContext = require('../../../context/init');
+const initContext = require('../../context/init');
 
 class UpdateCommand extends AbstractAuthenticatedCommand {
   constructor(...args) {

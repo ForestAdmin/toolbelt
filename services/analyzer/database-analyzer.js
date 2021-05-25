@@ -3,16 +3,16 @@ const EmptyDatabaseError = require('../../utils/errors/database/empty-database-e
 module.exports = class DatabaseAnalyzer {
   constructor({
     assertPresent,
-    terminate,
+    terminator,
     mongoAnalyzer,
     sequelizeAnalyzer,
   }) {
     assertPresent({
-      terminate,
+      terminator,
       mongoAnalyzer,
       sequelizeAnalyzer,
     });
-    this.terminate = terminate;
+    this.terminator = terminator;
     this.mongoAnalyzer = mongoAnalyzer;
     this.sequelizeAnalyzer = sequelizeAnalyzer;
   }
@@ -22,7 +22,7 @@ module.exports = class DatabaseAnalyzer {
     if (orm === 'sequelize') {
       logs.push('If not, check whether you are using a custom database schema (use in that case the --schema option).');
     }
-    return this.terminate(1, {
+    return this.terminator.terminate(1, {
       logs,
       errorCode: 'database_empty',
       errorMessage: 'Your database is empty.',
