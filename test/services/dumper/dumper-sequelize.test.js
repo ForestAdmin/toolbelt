@@ -13,7 +13,7 @@ const defaultValuesModel = require('../../../test-expected/sequelize/db-analysis
 const parenthesisColumnName = require('../../../test-expected/sequelize/db-analysis-output/parenthesis.expected.json');
 const parenthesisColumnNameUnderscored = require('../../../test-expected/sequelize/db-analysis-output/parenthesis_underscored.expected.json');
 const parenthesisColumnNameUnderscoredTrue = require('../../../test-expected/sequelize/db-analysis-output/parenthesis_underscored_true.expected.json');
-const initContext = require('../../../context/init');
+const initContext = require('../../../src/context/init');
 
 const context = Context.execute(initContext);
 const Dumper = require('../../../services/dumper');

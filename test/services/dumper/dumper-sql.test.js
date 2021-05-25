@@ -8,7 +8,7 @@ const initContext = require('../../../context/init');
 
 const appRoot = require('app-root-path');
 const renderingModel = require('../../../test-expected/sequelize/db-analysis-output/renderings.expected.json');
-const initContext = require('../../../context/init');
+const initContext = require('../../../src/context/init');
 
 const injectedContext = Context.execute(initContext);
 const Dumper = require('../../../services/dumper');

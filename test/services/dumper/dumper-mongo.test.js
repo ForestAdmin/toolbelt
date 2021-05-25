@@ -15,7 +15,7 @@ const subDocumentsNotUsingIds = require('../../../test-expected/mongo/db-analysi
 const subDocumentsUsingIds = require('../../../test-expected/mongo/db-analysis-output/sub-documents-using-ids.expected');
 const subDocumentUsingIds = require('../../../test-expected/mongo/db-analysis-output/sub-document-using-ids.expected');
 const Dumper = require('../../../services/dumper');
-const initContext = require('../../../context/init');
+const initContext = require('../../../src/context/init');
 
 const context = Context.execute(initContext);
 
