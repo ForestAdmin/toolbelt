@@ -85,8 +85,8 @@ describe('services > dumper > MongoDB', () => {
       expect.assertions(1);
       const dumper = await getDumper();
       await dumper.dump(simpleModel, CONFIG);
-      const indexGeneratedFile = fs.readFileSync('./test-output/mongo/models/index.js', 'utf-8');
-      const expectedFile = fs.readFileSync('./test-expected/mongo/dumper-output/index.expected.js', 'utf-8');
+      const indexGeneratedFile = fs.readFileSync(`${appRoot}/test-output/mongo/models/index.js`, 'utf-8');
+      const expectedFile = fs.readFileSync(`${appRoot}/test-expected/mongo/dumper-output/index.expected.js`, 'utf-8');
 
       expect(indexGeneratedFile).toStrictEqual(expectedFile);
       cleanOutput();
