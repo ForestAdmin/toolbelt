@@ -59,16 +59,16 @@ jobs:
         if: '!matrix.withCoverage'
         run: yarn test
       - name: Test with Node ${{ matrix.node }} & Send coverage
-      - name: Test prepack
-        run: yarn prepack
-      - name: Test postpack
-        run: yarn postpack
         uses: paambaati/codeclimate-action@v2.7.4
         if: matrix.withCoverage
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
         with:
           coverageCommand: yarn test:coverage
+      - name: Test prepack
+        run: yarn prepack
+      - name: Test postpack
+        run: yarn postpack
 
   deploy:
     name: Release package
