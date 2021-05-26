@@ -94,12 +94,14 @@ describe('services > API', () => {
   });
 
   describe('deleteApplicationToken', () => {
-    it('should send a delete query authenticated with the given token', async () => {
+    it('should send a query to delete the application token', async () => {
       expect.assertions(6);
 
-      const { superagent, api } = setup();
+      const {
+        superagent, api,
+      } = setup();
 
-      superagent.send.mockResolvedValue();
+      superagent.send.mockResolvedValue(undefined);
 
       await api.deleteApplicationToken('THE-TOKEN');
 

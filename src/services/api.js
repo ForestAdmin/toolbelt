@@ -8,7 +8,15 @@ const HEADER_USER_AGENT = 'User-Agent';
  * @param {import('../context/init').Context} context
  */
 function Api({
-  pkg, env, superagent: agent, applicationTokenSerializer, applicationTokenDeserializer,
+  pkg,
+  env,
+  superagent: agent,
+  applicationTokenSerializer,
+  applicationTokenDeserializer,
+  environmentDeserializer,
+  environmentSerializer,
+  projectDeserializer,
+  projectSerializer,
 }) {
   this.endpoint = () => env.FOREST_URL || 'https://api.forestadmin.com';
   this.userAgent = `forest-cli@${pkg.version}`;
@@ -36,7 +44,6 @@ function Api({
     .send(applicationTokenSerializer.serialize(applicationToken))
     .then((response) => applicationTokenDeserializer.deserialize(response.body));
 
-
   /**
    * @param {string} sessionToken
    * @returns {Promise<import('../deserializers/application-token').ApplicationToken>}
@@ -48,6 +55,59 @@ function Api({
     .set(HEADER_USER_AGENT, this.userAgent)
     .set('Authorization', `Bearer ${sessionToken}`)
     .send();
+
+  this.createProject = async (config, sessionToken, project) => {
+    let newProject;
+
+    try {
+      newProject = await agent
+        .post(`${this.endpoint()}/api/projects`)
+        .set(HEADER_FOREST_ORIGIN, 'Lumber')
+        .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
+        .set(HEADER_USER_AGENT, this.userAgent)
+        .set('Authorization', `Bearer ${sessionToken}`)
+        .send(projectSerializer.serialize(project))
+        .then((response) => projectDeserializer.deserialize(response.body));
+    } catch (error) {
+      if (error.message === 'Conflict') {
+        const { projectId } = error.response.body.errors[0].meta;
+
+        if (!projectId) {
+          throw error;
+        }
+
+        newProject = await agent
+          .get(`${this.endpoint()}/api/projects/${projectId}`)
+          .set('Authorization', `Bearer ${sessionToken}`)
+          .set(HEADER_FOREST_ORIGIN, 'Lumber')
+          .set(HEADER_USER_AGENT, this.userAgent)
+          .send()
+          .then((response) => projectDeserializer.deserialize(response.body));
+
+        // NOTICE: Avoid to erase an existing project that has been already initialized.
+        if (newProject.initializedAt) { throw error; }
+      } else {
+        throw error;
+      }
+    }
+
+    const hostname = config.appHostname || 'http://localhost';
+    const port = config.appPort || 3310;
+    const protocol = hostname.startsWith('http') ? '' : 'http://';
+    newProject.defaultEnvironment.apiEndpoint = `${protocol}${hostname}:${port}`;
+    const updatedEnvironment = await agent
+      .put(`${this.endpoint()}/api/environments/${newProject.defaultEnvironment.id}`)
+      .set(HEADER_FOREST_ORIGIN, 'Lumber')
+      .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
+      .set(HEADER_USER_AGENT, this.userAgent)
+      .set('Authorization', `Bearer ${sessionToken}`)
+      .send(environmentSerializer.serialize(newProject.defaultEnvironment))
+      .then((response) => environmentDeserializer.deserialize(response.body));
+
+    newProject.defaultEnvironment.secretKey = updatedEnvironment.secretKey;
+
+    return newProject;
+  };
 }
 
 module.exports = Api;

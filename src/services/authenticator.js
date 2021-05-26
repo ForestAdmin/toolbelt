@@ -129,7 +129,6 @@ function Authenticator({
     return token;
   };
 
-
   this.validateEmail = (input) => {
     if (!joi.string().email().validate(input).error) {
       return true;

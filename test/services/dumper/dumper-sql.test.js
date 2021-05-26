@@ -1,9 +1,9 @@
-const Context = require('@forestadmin/context');
-const rimraf = require('rimraf');
-const fs = require('fs');
 const appRoot = require('app-root-path');
+const rimraf = require('rimraf');
+const Context = require('@forestadmin/context');
+const fs = require('fs');
 const renderingModel = require('../../../test-expected/sequelize/db-analysis-output/renderings.expected.json');
-const initContext = require('../../../context/init');
+const initContext = require('../../../src/context/init');
 
 const injectedContext = Context.execute(initContext);
 const Dumper = require('../../../services/dumper');
