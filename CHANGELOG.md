@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/ForestAdmin/toolbelt/compare/v2.0.8...v2.1.0) (2021-05-26)
+
+
+### Features
+
+* **switch-command:** add branch:switch alias ([#170](https://github.com/ForestAdmin/toolbelt/issues/170)) ([a4ab481](https://github.com/ForestAdmin/toolbelt/commit/a4ab48143ad70a949126d43b9a3e550dc4482b88))
+
 ## [2.0.8](https://github.com/ForestAdmin/toolbelt/compare/v2.0.7...v2.0.8) (2021-05-25)
 
 ## [2.0.7](https://github.com/ForestAdmin/toolbelt/compare/v2.0.6...v2.0.7) (2021-05-25)
