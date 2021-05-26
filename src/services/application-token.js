@@ -1,3 +1,5 @@
+const UnableToCreateApplicationTokenError = require('../../utils/errors/application-token/unable-to-create-application-token-error');
+
 class ApplicationTokenService {
   /**
    * @param {import("../context/init").Context} context
@@ -28,7 +30,7 @@ class ApplicationTokenService {
 
       return applicationToken.token;
     } catch (e) {
-      throw new Error(`Unable to create an application token: ${e.message}.`);
+      throw new UnableToCreateApplicationTokenError({ reason: e.message });
     }
   }
 
@@ -41,11 +43,13 @@ class ApplicationTokenService {
       await this.api.deleteApplicationToken(sessionToken);
     } catch (error) {
       if (error.status === 404) {
-        return;
+        return undefined;
       }
 
       throw error;
     }
+
+    return undefined;
   }
 }
 

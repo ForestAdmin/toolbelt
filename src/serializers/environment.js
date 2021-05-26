@@ -9,6 +9,7 @@ module.exports = new JSONAPISerializer('environments', {
     'type',
     'lianaName',
     'lianaVersion',
+    'project',
     'secretKey',
     'currentBranchId',
   ],
