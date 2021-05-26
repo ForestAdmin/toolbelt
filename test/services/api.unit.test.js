@@ -40,7 +40,7 @@ describe('services > API', () => {
 
   describe('createApplicationToken', () => {
     it('should send a query with the serialized token', async () => {
-      expect.assertions(9);
+      expect.assertions(7);
 
       const {
         superagent, api, applicationTokenSerializer, applicationTokenDeserializer,
@@ -79,9 +79,11 @@ describe('services > API', () => {
 
       expect(result).toBe(deserializedToken);
       expect(superagent.post).toHaveBeenCalledWith('https://api.test.forestadmin.com/api/application-tokens');
-      expect(superagent.set).toHaveBeenCalledWith('forest-origin', 'forest-cli');
-      expect(superagent.set).toHaveBeenCalledWith('Content-Type', 'application/json');
-      expect(superagent.set).toHaveBeenCalledWith('User-Agent', 'forest-cli@1.2.3');
+      expect(superagent.set).toHaveBeenCalledWith({
+        'forest-origin': 'forest-cli',
+        'Content-Type': 'application/json',
+        'User-Agent': 'forest-cli@1.2.3',
+      });
       expect(superagent.set).toHaveBeenCalledWith('Authorization', 'Bearer SESSION');
       expect(superagent.send).toHaveBeenCalledWith(serializedToken);
       expect(applicationTokenSerializer.serialize)
