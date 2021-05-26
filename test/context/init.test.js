@@ -1,5 +1,5 @@
 const ApplicationContext = require('@forestadmin/context');
-const initContext = require('../../context/init');
+const initContext = require('../../src/context/init');
 
 describe('context > init', () => {
   it('should not throw error with an empty context', () => {

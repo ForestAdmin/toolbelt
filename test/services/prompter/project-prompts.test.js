@@ -51,7 +51,7 @@ describe('services > prompter > project prompts', () => {
 
       describe('and the projectName has already been passed in', () => {
         function getProjectPrompts() {
-          program.args = [FAKE_PROJECT_NAME];
+          program.appName = FAKE_PROJECT_NAME;
           return new ProjectPrompts(requests, envConfig, program);
         }
 
@@ -62,7 +62,7 @@ describe('services > prompter > project prompts', () => {
             const projectPrompts = getProjectPrompts();
             fs.mkdirSync(`${process.cwd()}/${FAKE_PROJECT_NAME}`);
 
-            const message = `The directory ${chalk.red(`${process.cwd()}/${program.args[0]}`)} already exists.`;
+            const message = `The directory ${chalk.red(`${process.cwd()}/${program.appName}`)} already exists.`;
             const handleName = projectPrompts.handleName();
             await expect(handleName).rejects.toThrow(PrompterError);
             await expect(handleName).rejects.toThrow(message);

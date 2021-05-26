@@ -1,14 +1,114 @@
+const Context = require('@forestadmin/context');
 const { flags } = require('@oclif/command');
+
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const initContext = require('../../context/init');
 
 class CreateCommand extends AbstractAuthenticatedCommand {
   constructor(...args) {
     super(...args);
-    this.log('projects:create init');
+    this.plan = initContext;
+    const {
+      api,
+      assertPresent,
+      authenticator,
+      chalk,
+      CommandGenerateConfigGetter,
+      database,
+      databaseAnalyzer,
+      dumper,
+      eventSender,
+      logger,
+      messages,
+      ProjectCreator,
+      spinners,
+      terminator,
+    } = this.getContext();
+    assertPresent({
+      api,
+      authenticator,
+      chalk,
+      CommandGenerateConfigGetter,
+      database,
+      databaseAnalyzer,
+      dumper,
+      eventSender,
+      logger,
+      messages,
+      ProjectCreator,
+      spinners,
+      terminator,
+    });
+    this.api = api;
+    this.authenticator = authenticator;
+    this.chalk = chalk;
+    this.CommandGenerateConfigGetter = CommandGenerateConfigGetter;
+    this.database = database;
+    this.databaseAnalyzer = databaseAnalyzer;
+    this.dumper = dumper;
+    this.eventSender = eventSender;
+    this.logger = logger;
+    this.messages = messages;
+    this.ProjectCreator = ProjectCreator;
+    this.spinners = spinners;
+    this.terminator = terminator;
+  }
+
+  getContext() {
+    return Context.execute(this.plan);
   }
 
   async runIfAuthenticated() {
-    this.log('projects:create runIfAuthenticated');
+    const { args: parsedArgs, flags: parsedFlags } = this.parse(CreateCommand);
+    const authenticationToken = this.authenticator.getAuthToken();
+
+    this.args = parsedArgs;
+    this.flags = parsedFlags;
+    this.config = { ...this.args, ...this.flags };
+
+    this.eventSender.command = 'projects:create';
+    this.eventSender.appName = this.args.appName;
+
+    const config = await this.CommandGenerateConfigGetter.get(this.config);
+
+    let schema = {};
+
+    const connectionPromise = this.database.connect(config);
+    this.spinners.add('database-connection', { text: 'Connecting to your database' }, connectionPromise);
+    const connection = await connectionPromise;
+
+    const schemaPromise = this.databaseAnalyzer.analyze(connection, config, true);
+    this.spinners.add('database-analysis', { text: 'Analyzing the database' }, schemaPromise);
+    schema = await schemaPromise;
+
+    const projectCreationPromise = this.ProjectCreator.create(
+      authenticationToken, this.api, config.appName, config,
+    );
+    this.spinners.add('project-creation', { text: 'Creating your project on Forest Admin' }, projectCreationPromise);
+
+    const { envSecret, authSecret } = await projectCreationPromise;
+    config.forestEnvSecret = envSecret;
+    config.forestAuthSecret = authSecret;
+
+    const spinner = this.spinners.add('dumper', { text: 'Creating your project files' });
+    this.logger.spinner = spinner;
+    await this.dumper.dump(schema, config);
+    spinner.succeed();
+
+    this.logger.success(`Hooray, ${this.chalk.green('installation success')}!`);
+    await this.eventSender.notifySuccess();
+    process.exit(0);
+  }
+
+  async catch(error) {
+    const logs = [
+      'Cannot generate your project.',
+      `${this.messages.ERROR_UNEXPECTED} ${this.chalk.red(error)}`,
+    ];
+
+    await this.terminator.terminate(1, {
+      logs,
+    });
   }
 }
 

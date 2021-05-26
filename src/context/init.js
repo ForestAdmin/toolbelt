@@ -7,6 +7,13 @@ const open = require('open');
 const jwtDecode = require('jwt-decode');
 const fs = require('fs');
 const joi = require('joi');
+const mkdirp = require('mkdirp');
+const Handlebars = require('handlebars');
+const path = require('path');
+
+const Sequelize = require('sequelize');
+const mongodb = require('mongodb');
+
 const config = require('../config');
 const pkg = require('../../package.json');
 const logger = require('../services/logger');
@@ -18,6 +25,25 @@ const ApplicationTokenService = require('../services/application-token');
 const Api = require('../services/api');
 const applicationTokenSerializer = require('../serializers/application-token');
 const applicationTokenDeserializer = require('../deserializers/application-token');
+
+const environmentDeserializer = require('../deserializers/environment');
+const environmentSerializer = require('../serializers/environment');
+const projectDeserializer = require('../deserializers/project');
+const projectSerializer = require('../serializers/project');
+
+const CommandGenerateConfigGetter = require('../../services/command-generate-config-getter');
+const Database = require('../../services/database');
+const DatabaseAnalyzer = require('../../services/analyzer/database-analyzer');
+const Dumper = require('../../services/dumper');
+const EventSender = require('../../services/event-sender');
+const spinners = require('../../services/spinners');
+const ProjectCreator = require('../../services/project-creator');
+const ErrorHandler = require('../../services/error-handler');
+const mongoAnalyzer = require('../../services/analyzer/mongo-collections-analyzer');
+const sequelizeAnalyzer = require('../../services/analyzer/sequelize-tables-analyzer');
+const SchemaService = require('../services/schema-service');
+
+const DEFAULT_FOREST_URL = 'https://api.forestadmin.com';
 
 /**
  * @typedef {{
@@ -64,6 +90,12 @@ const applicationTokenDeserializer = require('../deserializers/application-token
  *
  * @typedef {EnvPart & Dependencies & Utils & Services & Serializers} Context
  */
+
+function initConstants(context) {
+  context.addInstance('constants', {
+    DEFAULT_FOREST_URL,
+  });
+}
 
 /**
  * @param {import('./application-context')} context
@@ -116,6 +148,10 @@ function initUtils(context) {
 function initSerializers(context) {
   context.addInstance('applicationTokenSerializer', applicationTokenSerializer);
   context.addInstance('applicationTokenDeserializer', applicationTokenDeserializer);
+  context.addInstance('environmentDeserializer', environmentDeserializer);
+  context.addInstance('environmentSerializer', environmentSerializer);
+  context.addInstance('projectDeserializer', projectDeserializer);
+  context.addInstance('projectSerializer', projectSerializer);
 }
 
 /**
@@ -130,15 +166,45 @@ function initServices(context) {
 }
 
 /**
+ * @param {import('./application-context')} context
+ */
+function initCommandProjectsCreate(context) {
+  context.addInstance('Sequelize', Sequelize);
+  context.addInstance('mongodb', mongodb);
+  context.addInstance('mkdirp', mkdirp);
+  context.addInstance('Handlebars', Handlebars);
+
+  context.addClass(Database);
+  context.addClass(Dumper);
+  context.addClass(EventSender);
+  context.addInstance('CommandGenerateConfigGetter', CommandGenerateConfigGetter);
+  context.addInstance('DatabaseAnalyzer', DatabaseAnalyzer);
+  context.addInstance('ProjectCreator', ProjectCreator);
+  context.addInstance('spinners', spinners);
+}
+
+const initCommandSchemaUpdate = (context) => context
+  .addInstance('path', path)
+  .addClass(ErrorHandler)
+  .addFunction('mongoAnalyzer', mongoAnalyzer)
+  .addFunction('sequelizeAnalyzer', sequelizeAnalyzer)
+  .addClass(DatabaseAnalyzer)
+  .addClass(SchemaService);
+
+/**
  * @param {import('./application-context')<Context>} context
  * @returns {import('./application-context')<Context>}
  */
 function initContext(context) {
+  initConstants(context);
   initEnv(context);
   initDependencies(context);
   initUtils(context);
   initSerializers(context);
   initServices(context);
+
+  initCommandProjectsCreate(context);
+  initCommandSchemaUpdate(context);
 
   return context;
 }
