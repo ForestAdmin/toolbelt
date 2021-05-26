@@ -112,4 +112,6 @@ SwitchCommand.args = [{
   name: 'BRANCH_NAME', required: false, description: 'The name of the local branch to set as current.',
 }];
 
+SwitchCommand.aliases = ['branch:switch'];
+
 module.exports = SwitchCommand;
