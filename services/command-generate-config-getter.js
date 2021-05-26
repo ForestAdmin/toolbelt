@@ -20,29 +20,32 @@ const OPTIONS_APPLICATION = [
   'email',
 ];
 
-function CommandGenerateConfigGetter(program) {
-  this.options = {
-    forConnectionUrl: [
-      'dbConnectionUrl',
-      ...OPTIONS_DATABASE_OPTIONAL,
-      ...OPTIONS_APPLICATION,
-    ],
-    forFullPrompt: [
-      ...OPTIONS_DATABASE_MANDATORY,
-      ...OPTIONS_DATABASE_OPTIONAL,
-      ...OPTIONS_APPLICATION,
-    ],
-  };
+const OPTIONS = {
+  forConnectionUrl: [
+    'dbConnectionUrl',
+    ...OPTIONS_DATABASE_OPTIONAL,
+    ...OPTIONS_APPLICATION,
+  ],
+  forFullPrompt: [
+    ...OPTIONS_DATABASE_MANDATORY,
+    ...OPTIONS_DATABASE_OPTIONAL,
+    ...OPTIONS_APPLICATION,
+  ],
+};
 
-  this.getOptions = () => {
-    if (program.connectionUrl) {
-      return this.options.forConnectionUrl;
+class CommandGenerateConfigGetter {
+  static getOptions(args) {
+    if (args.connectionUrl) {
+      return OPTIONS.forConnectionUrl;
     }
+    return OPTIONS.forFullPrompt;
+  }
 
-    return this.options.forFullPrompt;
-  };
-
-  this.perform = async () => new Prompter(this.getOptions(), program).getConfig();
+  static get(args) {
+    return new Prompter(
+      CommandGenerateConfigGetter.getOptions(args), args,
+    ).getConfig();
+  }
 }
 
 module.exports = CommandGenerateConfigGetter;

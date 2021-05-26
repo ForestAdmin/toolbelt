@@ -13,7 +13,7 @@ const defaultValuesModel = require('../../../test-expected/sequelize/db-analysis
 const parenthesisColumnName = require('../../../test-expected/sequelize/db-analysis-output/parenthesis.expected.json');
 const parenthesisColumnNameUnderscored = require('../../../test-expected/sequelize/db-analysis-output/parenthesis_underscored.expected.json');
 const parenthesisColumnNameUnderscoredTrue = require('../../../test-expected/sequelize/db-analysis-output/parenthesis_underscored_true.expected.json');
-const initContext = require('../../../context/init');
+const initContext = require('../../../src/context/init');
 
 const context = Context.execute(initContext);
 const Dumper = require('../../../services/dumper');
@@ -174,7 +174,7 @@ describe('services > dumper > sequelize', () => {
       expect.assertions(1);
 
       const dumper = getDumper();
-      jest.spyOn(dumper, 'isLinuxBasedOs').mockImplementation().mockReturnValue(true);
+      jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(true);
       await dumper.dump(simpleModel, CONFIG);
 
       const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/.env`, 'utf8');
@@ -188,7 +188,7 @@ describe('services > dumper > sequelize', () => {
       expect.assertions(1);
 
       const dumper = getDumper();
-      jest.spyOn(dumper, 'isLinuxBasedOs').mockImplementation().mockReturnValue(false);
+      jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(false);
       await dumper.dump(simpleModel, CONFIG);
 
       const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/.env`, 'utf8');
