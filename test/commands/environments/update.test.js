@@ -9,6 +9,11 @@ describe('environments:update', () => {
       env: testEnv,
       token: 'any',
       command: () => UpdateCommand.run(['-e', '182', '-n', 'NewName']),
+      commandBis: () => {
+        const command = new UpdateCommand(['-e', '182', '-n', 'NewName']);
+        command.init('context');
+        command.run();
+      },
       api: [
         updateEnvironmentName(),
       ],
