@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const AbstractCommand = require('../../src/abstract-command');
 
 function errorIfBadFile(file) {
   if (!file) return;
@@ -38,10 +39,27 @@ function errorIfStdRest(stds) {
   }
 }
 
-function errorIfBadCommand(command) {
-  if (!command || !_.isFunction(command)) {
-    throw new Error('testCli configuration error: "command" must be a function ex.'
-      + ' () => GetCommand.run([\'324\'])');
+function errorIfBadCommand({ commandLegacy, commandClass, commandArgs }) {
+  // FIXME: remove all "command" usages
+  if (commandLegacy) {
+    if (commandClass || commandArgs) {
+      throw new Error('Only "command" or "commandClass+commandArgs" should be defined');
+    }
+    if (!_.isFunction(commandLegacy)) {
+      throw new Error('testCli configuration error: "command" must be a function ex.'
+        + ' () => GetCommand.run([\'324\'])');
+    }
+    // command is valid
+  } else if (commandClass) {
+    if (!(commandClass.prototype instanceof AbstractCommand)) {
+      throw new Error('"commandClass" must inherit "AbstractCommand"');
+    }
+    if (commandArgs && !Array.isArray(commandArgs)) {
+      throw new Error('"commandArgs" must be an array');
+    }
+    // commandClass+commandArgs are valid
+  } else {
+    throw new Error('commandClass must defined');
   }
 }
 
@@ -58,10 +76,12 @@ function errorIfNoStd(stds) {
   }
 }
 
-function validateInput(file, command, stds, expectedExitCode, expectedExitMessage, rest) {
+function validateInput(
+  file, { commandLegacy, commandClass, commandArgs }, stds, expectedExitCode, expectedExitMessage, rest
+) {
   errorIfBadFile(file);
   errorIfRest(rest);
-  errorIfBadCommand(command);
+  errorIfBadCommand({ commandLegacy, commandClass, commandArgs });
   const noExitExpected = !expectedExitCode && !expectedExitMessage;
   if (stds || noExitExpected) {
     errorIfNoStd(stds);

@@ -8,17 +8,8 @@ describe('environments:update', () => {
     it('should display "environment updated"', () => testCli({
       env: testEnv,
       token: 'any',
-      command: () => UpdateCommand.run(['-e', '182', '-n', 'NewName']),
       commandClass: UpdateCommand,
       commandArgs: ['-e', '182', '-n', 'NewName'],
-
-      commandBis: () => {
-        // const command = new UpdateCommand(['-e', '182', '-n', 'NewName']);
-        // const context = Context.executePlan(testUpdatePlan);
-        // const { mockFs, doudou, toto } = context;
-        // command.init(context);
-        // command.run();
-      },
       api: [
         updateEnvironmentName(),
       ],
