@@ -62,7 +62,12 @@ async function testCli({
   }
 
   validateInput(
-    file, { commandLegacy, commandClass, commandArgs }, stds, expectedExitCode, expectedExitMessage, rest,
+    file,
+    { commandLegacy, commandClass, commandArgs },
+    stds,
+    expectedExitCode,
+    expectedExitMessage,
+    rest,
   );
   const nocks = asArray(api);
   const inputs = stds ? stds.filter((type) => type.in).map((type) => type.in) : [];

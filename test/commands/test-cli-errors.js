@@ -77,7 +77,12 @@ function errorIfNoStd(stds) {
 }
 
 function validateInput(
-  file, { commandLegacy, commandClass, commandArgs }, stds, expectedExitCode, expectedExitMessage, rest
+  file,
+  { commandLegacy, commandClass, commandArgs },
+  stds,
+  expectedExitCode,
+  expectedExitMessage,
+  rest,
 ) {
   errorIfBadFile(file);
   errorIfRest(rest);
