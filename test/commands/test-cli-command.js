@@ -3,7 +3,7 @@ const { init } = require('@forestadmin/context');
 
 const basePlan = require('../../src/context/init');
 
-const prepareCommand = ({ commandLegacy, commandClass: CommandClass, commandArgs }) => {
+const prepareCommand = ({ commandLegacy, commandClass: CommandClass, commandArgs = [] }) => {
   if (commandLegacy) {
     init(basePlan);
     return { command: commandLegacy, context: Context.getInstance() };

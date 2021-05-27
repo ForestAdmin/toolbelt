@@ -8,8 +8,7 @@ describe('environments:update', () => {
     it('should display "environment updated"', () => testCli({
       env: testEnv,
       token: 'any',
-      commandClass: UpdateCommand,
-      commandArgs: ['-e', '182', '-n', 'NewName'],
+      command: () => UpdateCommand.run(['-e', '182', '-n', 'NewName']),
       api: [
         updateEnvironmentName(),
       ],

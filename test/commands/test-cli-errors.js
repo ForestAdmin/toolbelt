@@ -96,6 +96,7 @@ function assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage)
   // eslint-disable-next-line no-multi-str
   const noErrorMessage = 'Unexpected error thrown by command.\n \
    No "exitCode" and/or "exitMessage" is specified, so this error should not be thrown.';
+  // FIXME: show the error stack
   const message = actualError || noErrorMessage;
   expect(message).toStrictEqual(noErrorMessage);
 }
