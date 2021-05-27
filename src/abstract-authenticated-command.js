@@ -1,22 +1,16 @@
-const { Command } = require('@oclif/command');
 const Context = require('@forestadmin/context');
 const commonPlan = require('./context/init');
+const AbstractCommand = require('./abstract-command');
 
-class AbstractAuthenticatedCommand extends Command {
+class AbstractAuthenticatedCommand extends AbstractCommand {
   init(context) {
     this.context = context || Context.execute(commonPlan);
-    const {
-      assertPresent, logger, authenticator, chalk,
-    } = this.context;
-    assertPresent({ logger, authenticator, chalk });
-    /** @protected @readonly */
-    this.logger = logger;
+    const { assertPresent, authenticator } = this.context;
+    assertPresent({ authenticator });
 
     /** @protected @readonly */
     this.authenticator = authenticator;
-
-    /** @protected @readonly */
-    this.chalk = chalk;
+    super.init();
   }
 
   async run() {
