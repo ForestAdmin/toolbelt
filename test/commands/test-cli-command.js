@@ -6,7 +6,7 @@ const basePlan = require('../../src/context/init');
 const prepareCommand = ({ commandLegacy, commandClass: CommandClass, commandArgs = [] }) => {
   if (commandLegacy) {
     init(basePlan);
-    return { command: commandLegacy, context: Context.getInstance() };
+    return { command: commandLegacy, context: Context.inject() };
   }
   const instance = new CommandClass(commandArgs);
   const context = Context.execute(basePlan);
