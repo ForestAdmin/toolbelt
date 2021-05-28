@@ -2,20 +2,17 @@ const path = require('path');
 const Context = require('@forestadmin/context');
 const { flags } = require('@oclif/command');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
-const initContext = require('../../context/init');
+const plan = require('../../context/init');
 
 class UpdateCommand extends AbstractAuthenticatedCommand {
-  constructor(...args) {
-    super(...args);
-    this.plan = initContext;
-    const { assertPresent, env, schemaService } = this.getContext();
+  init(context) {
+    this.context = context || Context.execute(plan);
+    const { assertPresent, env, schemaService } = this.context;
     assertPresent({ env, schemaService });
+
     this.env = env;
     this.schemaService = schemaService;
-  }
-
-  getContext() {
-    return Context.execute(this.plan);
+    super.init();
   }
 
   async runIfAuthenticated() {
