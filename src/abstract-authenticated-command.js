@@ -1,24 +1,16 @@
-const { Command } = require('@oclif/command');
-const context = require('@forestadmin/context');
+const Context = require('@forestadmin/context');
+const commonPlan = require('./context/init');
+const AbstractCommand = require('./abstract-command');
 
-class AbstractAuthenticatedCommand extends Command {
-  constructor(...args) {
-    super(...args);
-    /** @type {import('./context/init').Context} */
-    const { logger, authenticator, chalk } = context.inject();
-
-    /** @protected @readonly */
-    this.logger = logger;
+class AbstractAuthenticatedCommand extends AbstractCommand {
+  init(context) {
+    this.context = context || Context.execute(commonPlan);
+    const { assertPresent, authenticator } = this.context;
+    assertPresent({ authenticator });
 
     /** @protected @readonly */
     this.authenticator = authenticator;
-
-    /** @protected @readonly */
-    this.chalk = chalk;
-
-    ['logger', 'authenticator', 'chalk'].forEach((name) => {
-      if (!this[name]) throw new Error(`Missing dependency ${name}`);
-    });
+    super.init();
   }
 
   async run() {

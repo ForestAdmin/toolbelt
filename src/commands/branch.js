@@ -21,6 +21,11 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     });
   }
 
+  init(){
+    super.init();
+
+  }
+
   async listBranches(envSecret) {
     try {
       const branches = await BranchManager.getBranches(envSecret);
