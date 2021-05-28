@@ -1,3 +1,4 @@
+const { newPlan } = require('@forestadmin/context');
 const chalk = require('chalk');
 const os = require('os');
 const superagent = require('superagent');
@@ -91,37 +92,34 @@ const DEFAULT_FOREST_URL = 'https://api.forestadmin.com';
  * @typedef {EnvPart & Dependencies & Utils & Services & Serializers} Context
  */
 
-function initConstants(context) {
-  context.addInstance('constants', {
+const initConstants = (context) => context
+  .addInstance('constants', {
     DEFAULT_FOREST_URL,
   });
-}
+
+const initEnv = newPlan()
+  .addStep('variables', (context) => context
+    .addInstance('env', {
+      ...process.env,
+      FOREST_URL: process.env.FOREST_URL || 'https://api.forestadmin.com',
+    }))
+  .addStep('other', (context) => context
+    .addInstance('process', process)
+    .addInstance('pkg', pkg)
+    .addInstance('config', config));
 
 /**
  * @param {import('./application-context')} context
  */
-function initEnv(context) {
-  context.addInstance('env', {
-    ...process.env,
-    FOREST_URL: process.env.FOREST_URL || 'https://api.forestadmin.com',
-  });
-  context.addInstance('process', process);
-  context.addInstance('pkg', pkg);
-  context.addInstance('config', config);
-}
-
-/**
- * @param {import('./application-context')} context
- */
-function initDependencies(context) {
-  context.addInstance('chalk', chalk);
-  context.addInstance('os', os);
-  context.addInstance('fs', fs);
-  context.addInstance('superagent', superagent);
-  context.addInstance('inquirer', inquirer);
-  context.addInstance('openIdClient', openIdClient);
-  context.addInstance('jwtDecode', jwtDecode);
-  context.addInstance('joi', joi);
+const initDependencies = (context) => context
+  .addInstance('chalk', chalk)
+  .addInstance('os', os)
+  .addInstance('fs', fs)
+  .addInstance('superagent', superagent)
+  .addInstance('inquirer', inquirer)
+  .addInstance('openIdClient', openIdClient)
+  .addInstance('jwtDecode', jwtDecode)
+  .addInstance('joi', joi)
 
   // We need to change the behavior of the open function for tests
   // because we don't want the tests to open a browser for real at each run
@@ -130,58 +128,52 @@ function initDependencies(context) {
   // the real open function in its properties).
   // Instead, we change the value of `realOpen`, which will be accessed by
   // the function open which is just here to keep a reference to the context.
-  context.addInstance('realOpen', open);
-  context.addFunction('open', (...args) => context.get().realOpen(...args));
-}
+  .addInstance('realOpen', open)
+  .addFunction('open', (...args) => context.get().realOpen(...args));
 
 /**
  * @param {import('./application-context')} context
  */
-function initUtils(context) {
-  context.addInstance('terminator', terminator);
-  context.addInstance('messages', messages);
-}
+const initUtils = (context) => context
+  .addInstance('terminator', terminator)
+  .addInstance('messages', messages);
 
 /**
  * @param {import('./application-context')} context
  */
-function initSerializers(context) {
-  context.addInstance('applicationTokenSerializer', applicationTokenSerializer);
-  context.addInstance('applicationTokenDeserializer', applicationTokenDeserializer);
-  context.addInstance('environmentDeserializer', environmentDeserializer);
-  context.addInstance('environmentSerializer', environmentSerializer);
-  context.addInstance('projectDeserializer', projectDeserializer);
-  context.addInstance('projectSerializer', projectSerializer);
-}
+const initSerializers = (context) => context
+  .addInstance('applicationTokenSerializer', applicationTokenSerializer)
+  .addInstance('applicationTokenDeserializer', applicationTokenDeserializer)
+  .addInstance('environmentDeserializer', environmentDeserializer)
+  .addInstance('environmentSerializer', environmentSerializer)
+  .addInstance('projectDeserializer', projectDeserializer)
+  .addInstance('projectSerializer', projectSerializer);
 
 /**
  * @param {import('./application-context')} context
  */
-function initServices(context) {
-  context.addInstance('logger', logger);
-  context.addClass(Api);
-  context.addClass(OidcAuthenticator);
-  context.addClass(ApplicationTokenService);
-  context.addClass(Authenticator);
-}
+const initServices = (context) => context
+  .addInstance('logger', logger)
+  .addClass(Api)
+  .addClass(OidcAuthenticator)
+  .addClass(ApplicationTokenService)
+  .addClass(Authenticator);
 
 /**
  * @param {import('./application-context')} context
  */
-function initCommandProjectsCreate(context) {
-  context.addInstance('Sequelize', Sequelize);
-  context.addInstance('mongodb', mongodb);
-  context.addInstance('mkdirp', mkdirp);
-  context.addInstance('Handlebars', Handlebars);
-
-  context.addClass(Database);
-  context.addClass(Dumper);
-  context.addClass(EventSender);
-  context.addInstance('CommandGenerateConfigGetter', CommandGenerateConfigGetter);
-  context.addInstance('DatabaseAnalyzer', DatabaseAnalyzer);
-  context.addInstance('ProjectCreator', ProjectCreator);
-  context.addInstance('spinners', spinners);
-}
+const initCommandProjectsCreate = (context) => context
+  .addInstance('Sequelize', Sequelize)
+  .addInstance('mongodb', mongodb)
+  .addInstance('mkdirp', mkdirp)
+  .addInstance('Handlebars', Handlebars)
+  .addClass(Database)
+  .addClass(Dumper)
+  .addClass(EventSender)
+  .addInstance('CommandGenerateConfigGetter', CommandGenerateConfigGetter)
+  .addInstance('DatabaseAnalyzer', DatabaseAnalyzer)
+  .addInstance('ProjectCreator', ProjectCreator)
+  .addInstance('spinners', spinners);
 
 const initCommandSchemaUpdate = (context) => context
   .addInstance('path', path)
@@ -191,22 +183,12 @@ const initCommandSchemaUpdate = (context) => context
   .addClass(DatabaseAnalyzer)
   .addClass(SchemaService);
 
-/**
- * @param {import('./application-context')<Context>} context
- * @returns {import('./application-context')<Context>}
- */
-function initContext(context) {
-  initConstants(context);
-  initEnv(context);
-  initDependencies(context);
-  initUtils(context);
-  initSerializers(context);
-  initServices(context);
-
-  initCommandProjectsCreate(context);
-  initCommandSchemaUpdate(context);
-
-  return context;
-}
-
-module.exports = initContext;
+module.exports = newPlan()
+  .addStep('constants', initConstants)
+  .addStep('env', initEnv)
+  .addStep('dependencies', initDependencies)
+  .addStep('utils', initUtils)
+  .addStep('serializers', initSerializers)
+  .addStep('services', initServices)
+  .addStep('commandProjectCreate', initCommandProjectsCreate)
+  .addStep('commandProjectUpdate', initCommandSchemaUpdate);

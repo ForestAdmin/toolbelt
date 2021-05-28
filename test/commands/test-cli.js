@@ -1,14 +1,10 @@
-const { init, getInstance } = require('@forestadmin/context');
-const initContext = require('../../src/context/init');
-
-init(initContext);
-
 const {
   assertExitCode,
   assertExitMessage,
   assertNoErrorThrown,
 } = require('./test-cli-errors');
-const { mockEnv, rollbackEnv } = require('./test-cli-env');
+// const { mockEnv, rollbackEnv } = require('./test-cli-env');
+const { prepareCommand } = require('./test-cli-command');
 const { assertApi } = require('./test-cli-api');
 const { mockFile, cleanMockedFile, randomDirectoryName } = require('./test-cli-fs');
 const { mockToken, rollbackToken } = require('./test-cli-auth-token');
@@ -46,7 +42,9 @@ async function testCli({
   file,
   api,
   env,
-  command,
+  command: commandLegacy,
+  commandClass,
+  commandArgs,
   exitCode: expectedExitCode,
   exitMessage: expectedExitMessage,
   std: stds,
@@ -63,7 +61,14 @@ async function testCli({
     file.temporaryDirectory = true;
   }
 
-  validateInput(file, command, stds, expectedExitCode, expectedExitMessage, rest);
+  validateInput(
+    file,
+    { commandLegacy, commandClass, commandArgs },
+    stds,
+    expectedExitCode,
+    expectedExitMessage,
+    rest,
+  );
   const nocks = asArray(api);
   const inputs = stds ? stds.filter((type) => type.in).map((type) => type.in) : [];
   const outputs = stds ? stds.filter((type) => type.out).map((type) => type.out) : [];
@@ -77,10 +82,12 @@ async function testCli({
     errorOutputs = [];
   }
 
+  const { command, context } = prepareCommand({ commandLegacy, commandClass, commandArgs });
+
   mockFile(file);
-  mockEnv(env);
-  mockToken(tokenBehavior);
-  mockDependencies(getInstance());
+  // mockEnv(env);
+  mockToken(tokenBehavior, context);
+  mockDependencies();
   const stdin = mockStd(outputs, errorOutputs, print);
   planifyInputs(inputs, stdin);
 
@@ -112,8 +119,8 @@ async function testCli({
     throw e;
   }
 
-  rollbackEnv(env);
-  rollbackToken(tokenBehavior);
+  // rollbackEnv(env);
+  rollbackToken(tokenBehavior, context);
 }
 
 module.exports = testCli;
