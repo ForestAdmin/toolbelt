@@ -1,7 +1,7 @@
 const fsExtra = require('fs-extra');
 const jwt = require('jsonwebtoken');
 
-const getTokenPath = () => process.env.TOKEN_PATH || './test/services/tokens';
+const getTokenPath = () => process.env.TOKEN_PATH || process.cwd();
 const fakeKey = 'test-token-key';
 const clearTokenPath = () => {
   fsExtra.removeSync(getTokenPath());
