@@ -101,7 +101,7 @@ const initEnv = newPlan()
   .addStep('variables', (context) => context
     .addInstance('env', {
       ...process.env,
-      FOREST_URL: process.env.FOREST_URL || 'https://api.forestadmin.com',
+      FOREST_URL: process.env.FOREST_URL || DEFAULT_FOREST_URL,
     }))
   .addStep('other', (context) => context
     .addInstance('process', process)

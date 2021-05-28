@@ -30,7 +30,7 @@ class Api {
       if (!this[name]) throw new Error(`Missing dependency ${name}`);
     });
 
-    this.endpoint = this.env.FOREST_URL || 'https://api.forestadmin.com';
+    this.endpoint = this.env.FOREST_URL;
     this.userAgent = `lumber@${this.pkg.version}`;
   }
 
