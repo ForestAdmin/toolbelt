@@ -18,7 +18,7 @@ function Api({
   projectDeserializer,
   projectSerializer,
 }) {
-  this.endpoint = () => env.FOREST_URL || 'https://api.forestadmin.com';
+  this.endpoint = () => env.FOREST_URL;
   this.userAgent = `forest-cli@${pkg.version}`;
   const headers = {
     [HEADER_FOREST_ORIGIN]: 'forest-cli',
