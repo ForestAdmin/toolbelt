@@ -1,23 +1,20 @@
 const { flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
+const Context = require('@forestadmin/context');
+const plan = require('../context/init');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
 
 class SwitchCommand extends AbstractAuthenticatedCommand {
-  constructor(...args) {
-    super(...args);
-
-    /** @type {import('../context/init').Context} */
-    const { inquirer, config: envConfig } = context.inject();
+  init(context) {
+    this.context = context || Context.execute(plan);
+    const { assertPresent, inquirer, config } = this.context;
+    assertPresent({ inquirer, config });
 
     this.inquirer = inquirer;
-    this.envConfig = envConfig;
-
-    ['inquirer', 'envConfig'].forEach((name) => {
-      if (!this[name]) throw new Error(`Missing dependency ${name}`);
-    });
+    this.envConfig = config;
+    super.init();
   }
 
   async selectBranch(branches) {

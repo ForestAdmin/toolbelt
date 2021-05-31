@@ -16,7 +16,7 @@ describe('switch', () => {
         it('should display a list of branches then switch to selected branch', () => testCli({
           env: testEnv2,
           token: 'any',
-          command: () => SwitchCommand.run([]),
+          commandClass: SwitchCommand,
           api: [
             getProjectByEnv(),
             getBranchListValid(),
@@ -38,7 +38,8 @@ describe('switch', () => {
         it('should switch to selected branch', () => testCli({
           env: testEnv2,
           token: 'any',
-          command: () => SwitchCommand.run(['feature/third']),
+          commandClass: SwitchCommand,
+          commandArgs: ['feature/third'],
           api: [
             getProjectByEnv(),
             getBranchListValid(),
@@ -55,7 +56,8 @@ describe('switch', () => {
           env: testEnv2,
           print: true,
           token: 'any',
-          command: () => SwitchCommand.run(['pouet']),
+          commandClass: SwitchCommand,
+          commandArgs: ['not-existing-branch'],
           api: [
             getProjectByEnv(),
             getBranchListValid(),
@@ -71,7 +73,8 @@ describe('switch', () => {
         it('should display an info message', () => testCli({
           env: testEnv2,
           token: 'any',
-          command: () => SwitchCommand.run(['feature/second']),
+          commandClass: SwitchCommand,
+          commandArgs: ['feature/second'],
           api: [
             getProjectByEnv(),
             getBranchListValid(),
@@ -87,7 +90,7 @@ describe('switch', () => {
       it('should display a warning message', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => SwitchCommand.run([]),
+        commandClass: SwitchCommand,
         api: [
           getProjectByEnv(),
           getNoBranchListValid(),
