@@ -1,11 +1,11 @@
 const fsExtra = require('fs-extra');
 const { v4: uuidv4 } = require('uuid');
 const { init, inject } = require('@forestadmin/context');
-const { clearTokenPath, getTokenPath, storeToken } = require('../commands/test-cli-auth-token');
+const { clearTokenPath, storeToken } = require('../commands/test-cli-auth-token');
 const initContext = require('../../src/context/init');
 
 init(initContext);
-const { authenticator } = inject();
+const { authenticator, env } = inject();
 
 const TMP_DIRECTORY_ROOT = '/tmp/toolbelt-tests';
 const TMP_DIRECTORY_BASE = `${TMP_DIRECTORY_ROOT}/authenticator`;
@@ -30,9 +30,9 @@ describe('authenticator', () => {
     describe('when .forestrc and .lumberrc do not exist', () => {
       it('should return null', () => {
         expect.assertions(1);
-        clearTokenPath();
+        clearTokenPath({ env });
         const expectedToken = null;
-        const actualToken = authenticator.getAuthToken(getTokenPath());
+        const actualToken = authenticator.getAuthToken(env.TOKEN_PATH);
         expect(actualToken).toStrictEqual(expectedToken);
       });
     });
@@ -40,9 +40,9 @@ describe('authenticator', () => {
     describe('when .lumberrc exists and is valid', () => {
       it('should return the .lumberrc token', () => {
         expect.assertions(1);
-        clearTokenPath();
+        clearTokenPath({ env });
         const expectedToken = storeToken('.lumberrc');
-        const actualToken = authenticator.getAuthToken(getTokenPath());
+        const actualToken = authenticator.getAuthToken(env.TOKEN_PATH);
         expect(actualToken).toStrictEqual(expectedToken);
       });
     });
@@ -50,10 +50,10 @@ describe('authenticator', () => {
     describe('when .lumberrc exists and is expired', () => {
       it('should return the .lumberrc token', () => {
         expect.assertions(1);
-        clearTokenPath();
+        clearTokenPath({ env });
         storeToken('.lumberrc', '0ms');
         const expectedToken = null;
-        const actualToken = authenticator.getAuthToken(getTokenPath());
+        const actualToken = authenticator.getAuthToken(env.TOKEN_PATH);
         expect(actualToken).toStrictEqual(expectedToken);
       });
     });
@@ -61,10 +61,10 @@ describe('authenticator', () => {
     describe('when .lumberrc and .forestrc exist and are valid', () => {
       it('should return the .forestrc token', () => {
         expect.assertions(1);
-        clearTokenPath();
+        clearTokenPath({ env });
         const forestToken = storeToken('.forestrc', '1day');
         storeToken('.lumberrc', '2days');
-        const actualToken = authenticator.getAuthToken(getTokenPath());
+        const actualToken = authenticator.getAuthToken(env.TOKEN_PATH);
         expect(actualToken).toStrictEqual(forestToken);
       });
     });
@@ -72,10 +72,10 @@ describe('authenticator', () => {
     describe('when .lumberrc and .forestrc exist and .forestrc is invalid', () => {
       it('should return the .lumberrc token', () => {
         expect.assertions(1);
-        clearTokenPath();
+        clearTokenPath({ env });
         storeToken('.forestrc', '0ms');
         const lumberToken = storeToken('.lumberrc', '2days');
-        const actualToken = authenticator.getAuthToken(getTokenPath());
+        const actualToken = authenticator.getAuthToken(env.TOKEN_PATH);
         expect(actualToken).toStrictEqual(lumberToken);
       });
     });
@@ -83,10 +83,10 @@ describe('authenticator', () => {
     describe('when .lumberrc and .forestrc exist and .lumberrc is invalid', () => {
       it('should return the .forestrc token', () => {
         expect.assertions(1);
-        clearTokenPath();
+        clearTokenPath({ env });
         const forestToken = storeToken('.forestrc', '2days');
         storeToken('.lumberrc', '0ms');
-        const actualToken = authenticator.getAuthToken(getTokenPath());
+        const actualToken = authenticator.getAuthToken(env.TOKEN_PATH);
         expect(actualToken).toStrictEqual(forestToken);
       });
     });

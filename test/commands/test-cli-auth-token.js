@@ -1,12 +1,14 @@
 const fsExtra = require('fs-extra');
 const jwt = require('jsonwebtoken');
 
-const getTokenPath = () => process.env.TOKEN_PATH || process.cwd();
 const fakeKey = 'test-token-key';
-const clearTokenPath = () => {
-  fsExtra.removeSync(getTokenPath());
-  fsExtra.mkdirsSync(getTokenPath());
-  fsExtra.emptyDirSync(getTokenPath());
+
+const getTokenPath = () => process.env.TOKEN_PATH || process.cwd();
+
+const clearTokenPath = ({ env }) => {
+  fsExtra.removeSync(env.TOKEN_PATH);
+  fsExtra.mkdirsSync(env.TOKEN_PATH);
+  fsExtra.emptyDirSync(env.TOKEN_PATH);
 };
 
 module.exports = {
@@ -17,12 +19,12 @@ module.exports = {
   },
   getTokenPath,
   clearTokenPath,
-  mockToken: (behavior, { authenticator }) => {
+  mockToken: (behavior, { authenticator, env }) => {
     if (behavior !== null) {
       authenticator.getAuthTokenBack = authenticator.getAuthToken;
       authenticator.getAuthToken = () => behavior;
     }
-    clearTokenPath();
+    clearTokenPath({ env });
   },
   rollbackToken: (behavior, { authenticator }) => {
     if (behavior !== null) {
