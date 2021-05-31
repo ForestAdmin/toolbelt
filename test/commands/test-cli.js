@@ -71,10 +71,6 @@ async function testCli({
     rest,
   );
 
-  const nocks = asArray(api);
-  nock.disableNetConnect();
-  nocks.forEach((nockFlow) => nockFlow());
-
   const inputs = stds ? stds.filter((type) => type.in).map((type) => type.in) : [];
   const outputs = stds ? stds.filter((type) => type.out).map((type) => type.out) : [];
   let errorOutputs;
@@ -111,6 +107,8 @@ async function testCli({
     ...env,
   }));
 
+  mockDependencies(commandPlan);
+
   const context = prepareContext({ commandLegacy, commandPlan });
 
   mockToken(tokenBehavior, context);
@@ -124,6 +122,10 @@ async function testCli({
     commandLegacy,
     context,
   });
+
+  const nocks = asArray(api);
+  nock.disableNetConnect();
+  nocks.forEach((nockFlow) => nockFlow());
 
   let actualError;
   try {
