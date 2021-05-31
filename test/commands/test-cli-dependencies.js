@@ -1,10 +1,10 @@
-function mockDependencies(context) {
-  try {
-    context
-      .replace('realOpen', jest.fn());
-  } catch (error) {
-    // no-op
-  }
+function mockDependencies(contextPlan) {
+  contextPlan
+    .step('dependencies')
+    .replace(
+      'open',
+      (context) => context.addFunction('open', jest.fn()),
+    );
 }
 
 module.exports = { mockDependencies };
