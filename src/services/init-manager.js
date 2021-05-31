@@ -3,14 +3,13 @@ const chalk = require('chalk');
 const clipboardy = require('clipboardy');
 const fs = require('fs');
 const { EOL } = require('os');
+const context = require('@forestadmin/context');
 const logger = require('../services/logger');
 const { handleError } = require('../utils/error');
 const { generateKey } = require('../utils/key-generator');
 const DatabasePrompter = require('../services/prompter/database-prompter');
-const envConfig = require('../config');
 const singletonGetter = require('../services/singleton-getter');
 const Spinner = require('../services/spinner');
-
 
 const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE = 'Copying the environment variables in your `.env` file';
 const SUCCESS_MESSAGE_ENV_FILE_CREATED_AND_FILLED = 'Creating a new `.env` file containing your environment variables';
@@ -67,6 +66,8 @@ function handleInitError(rawError) {
 }
 
 async function handleDatabaseConfiguration() {
+  const { env } = context.inject();
+
   const response = await inquirer
     .prompt([{
       type: 'confirm',
@@ -77,7 +78,7 @@ async function handleDatabaseConfiguration() {
   if (!response.confirm) return null;
 
   const promptContent = [];
-  await new DatabasePrompter(OPTIONS_DATABASE, envConfig, promptContent, { }).handlePrompts();
+  await new DatabasePrompter(OPTIONS_DATABASE, env, promptContent, { }).handlePrompts();
   return inquirer.prompt(promptContent);
 }
 

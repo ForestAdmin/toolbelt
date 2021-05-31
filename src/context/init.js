@@ -15,7 +15,7 @@ const path = require('path');
 const Sequelize = require('sequelize');
 const mongodb = require('mongodb');
 
-const config = require('../config');
+require('../config');
 const pkg = require('../../package.json');
 const logger = require('../services/logger');
 const Authenticator = require('../services/authenticator');
@@ -102,10 +102,9 @@ const initEnv = newPlan()
     // ...process.env,
     FOREST_URL: process.env.FOREST_URL || DEFAULT_FOREST_URL,
   }))
-  .addStep('other', (context) => context
+  .addStep('others', (context) => context
     .addInstance('process', process)
-    .addInstance('pkg', pkg)
-    .addInstance('config', config));
+    .addInstance('pkg', pkg));
 
 /**
  * @param {import('./application-context')} context

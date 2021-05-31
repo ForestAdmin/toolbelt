@@ -5,11 +5,10 @@ const context = require('@forestadmin/context');
 const ProjectSerializer = require('../serializers/project');
 const ProjectDeserializer = require('../deserializers/project');
 const EnvironmentDeserializer = require('../deserializers/environment');
-const { serverHost } = require('../config');
 
 function ProjectManager(config) {
-  const { assertPresent, authenticator } = context.inject();
-  assertPresent({ authenticator });
+  const { assertPresent, authenticator, env } = context.inject();
+  assertPresent({ authenticator, env });
 
   function deserialize(response) {
     const attrs = _.clone(ProjectSerializer.opts.attributes);
@@ -30,7 +29,7 @@ function ProjectManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${serverHost()}/api/projects`)
+      .get(`${env.FOREST_URL}/api/projects`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
       .then((response) => deserialize(response));
@@ -41,7 +40,7 @@ function ProjectManager(config) {
     const includeLegacyParameter = includeLegacy ? '&includeLegacy' : '';
 
     return agent
-      .get(`${serverHost()}/api/projects?envSecret${includeLegacyParameter}`)
+      .get(`${env.FOREST_URL}/api/projects?envSecret${includeLegacyParameter}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-secret-key', envSecret)
       .send()
@@ -52,7 +51,7 @@ function ProjectManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${serverHost()}/api/projects/${config.projectId}`)
+      .get(`${env.FOREST_URL}/api/projects/${config.projectId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
       .then((response) => deserialize(response));
@@ -62,7 +61,7 @@ function ProjectManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${serverHost()}/api/projects/${config.projectId}/dev-workflow`)
+      .get(`${env.FOREST_URL}/api/projects/${config.projectId}/dev-workflow`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
       .then((response) => deserialize(response));
@@ -72,7 +71,7 @@ function ProjectManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${serverHost()}/api/projects/${projectId}/development-environment-for-user`)
+      .get(`${env.FOREST_URL}/api/projects/${projectId}/development-environment-for-user`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
       .then((response) => EnvironmentDeserializer.deserialize(response.body));
