@@ -26,8 +26,8 @@ describe('branch', () => {
         token: 'any',
         command: () => BranchCommand.run([]),
         api: [
-          getProjectByEnv(),
-          getBranchListValid(),
+          () => getProjectByEnv(),
+          () => getBranchListValid(),
         ],
         std: [
           { out: 'feature/first' },
@@ -43,8 +43,8 @@ describe('branch', () => {
         token: 'any',
         command: () => BranchCommand.run([]),
         api: [
-          getProjectByEnv(),
-          getNoBranchListValid(),
+          () => getProjectByEnv(),
+          () => getNoBranchListValid(),
         ],
         std: [
           { out: "⚠️ You don't have any branch yet. Use `forest branch <branch_name>` to create one." },
@@ -58,8 +58,8 @@ describe('branch', () => {
         token: 'any',
         command: () => BranchCommand.run(['some/randombranchename']),
         api: [
-          getProjectByEnv(),
-          postBranchValid('some/randombranchename'),
+          () => getProjectByEnv(),
+          () => postBranchValid('some/randombranchename'),
         ],
         std: [
           { out: '✅ Switched to new branch: some/randombranchename.' },
@@ -71,8 +71,8 @@ describe('branch', () => {
         token: 'any',
         command: () => BranchCommand.run(['$0m3/$7r4ng38r4nChn4m3!']),
         api: [
-          getProjectByEnv(),
-          postBranchValid('$0m3/$7r4ng38r4nChn4m3!'),
+          () => getProjectByEnv(),
+          () => postBranchValid('$0m3/$7r4ng38r4nChn4m3!'),
         ],
         std: [
           { out: '✅ Switched to new branch: $0m3/$7r4ng38r4nChn4m3!.' },
@@ -85,8 +85,8 @@ describe('branch', () => {
           token: 'any',
           command: () => BranchCommand.run(['already/existingbranch']),
           api: [
-            getProjectByEnv(),
-            postBranchInvalid(),
+            () => getProjectByEnv(),
+            () => postBranchInvalid(),
           ],
           std: [
             { err: '❌ This branch already exists.' },
@@ -102,7 +102,7 @@ describe('branch', () => {
             token: 'any',
             command: () => BranchCommand.run(['--projectId', '1', 'watabranch']),
             api: [
-              getDevelopmentEnvironmentNotFound(),
+              () => getDevelopmentEnvironmentNotFound(),
             ],
             std: [
               { err: 'Development environment not found.' },
@@ -117,8 +117,8 @@ describe('branch', () => {
             token: 'any',
             command: () => BranchCommand.run(['--projectId', '1', 'watabranch']),
             api: [
-              getDevelopmentEnvironmentValid(),
-              postBranchValidOnSpecificEnv('watabranch', '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125'),
+              () => getDevelopmentEnvironmentValid(),
+              () => postBranchValidOnSpecificEnv('watabranch', '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125'),
             ],
             std: [
               { out: '✅ Switched to new branch: watabranch.' },
@@ -135,8 +135,8 @@ describe('branch', () => {
           token: 'any',
           command: () => BranchCommand.run(['-d', 'unexistingbranch']),
           api: [
-            getProjectByEnv(),
-            deleteUnknownBranch('unexistingbranch'),
+            () => getProjectByEnv(),
+            () => deleteUnknownBranch('unexistingbranch'),
           ],
           std: [
             { in: 'Y' },
@@ -152,8 +152,8 @@ describe('branch', () => {
           token: 'any',
           command: () => BranchCommand.run(['-d', 'brancherror']),
           api: [
-            getProjectByEnv(),
-            deleteBranchInvalid('brancherror'),
+            () => getProjectByEnv(),
+            () => deleteBranchInvalid('brancherror'),
           ],
           std: [
             { in: 'Y' },
@@ -170,8 +170,8 @@ describe('branch', () => {
             token: 'any',
             command: () => BranchCommand.run(['-d', 'existingbranch']),
             api: [
-              getProjectByEnv(),
-              deleteBranchValid('existingbranch'),
+              () => getProjectByEnv(),
+              () => deleteBranchValid('existingbranch'),
             ],
             std: [
               { in: 'Y' },
@@ -184,7 +184,7 @@ describe('branch', () => {
             token: 'any',
             command: () => BranchCommand.run(['-d', 'existingbranch']),
             api: [
-              getProjectByEnv(),
+              () => getProjectByEnv(),
             ],
             std: [
               { in: 'n' },
@@ -198,8 +198,8 @@ describe('branch', () => {
               token: 'any',
               command: () => BranchCommand.run(['-d', 'existingbranch', '--force']),
               api: [
-                getProjectByEnv(),
-                deleteBranchValid('existingbranch'),
+                () => getProjectByEnv(),
+                () => deleteBranchValid('existingbranch'),
               ],
               std: [
                 { out: '✅ Branch existingbranch successfully deleted.' },
@@ -217,8 +217,8 @@ describe('branch', () => {
           token: 'any',
           command: () => BranchCommand.run([]),
           api: [
-            getProjectByEnv(),
-            getBranchInvalidEnvironmentV1(),
+            () => getProjectByEnv(),
+            () => getBranchInvalidEnvironmentV1(),
           ],
           std: [
             { err: '⚠️  This project does not support branches yet. Please migrate your environments from your Project settings first.' },
@@ -233,8 +233,8 @@ describe('branch', () => {
           token: 'any',
           command: () => BranchCommand.run([]),
           api: [
-            getProjectByEnv(),
-            getBranchInvalidNotDevEnv(),
+            () => getProjectByEnv(),
+            () => getBranchInvalidNotDevEnv(),
           ],
           std: [
             { err: '⚠️  Your development environment is not properly set up. Please run `forest init` first and retry.' },
@@ -249,8 +249,8 @@ describe('branch', () => {
           token: 'any',
           command: () => BranchCommand.run([]),
           api: [
-            getProjectByEnv(),
-            getBranchInvalidEnvironmentNoRemote(),
+            () => getProjectByEnv(),
+            () => getBranchInvalidEnvironmentNoRemote(),
           ],
           std: [
             { err: '❌ You cannot run branch commands until this project has either a remote or a production environment.' },
