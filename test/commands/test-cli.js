@@ -120,9 +120,9 @@ async function testCli({
     context,
   });
 
-  const nocks = asArray(api);
   nock.disableNetConnect();
-  nocks.forEach((nockFlow) => nockFlow());
+  const nocksToStart = asArray(api);
+  const nocks = nocksToStart.map((nockFlow) => nockFlow());
 
   let actualError;
   try {
