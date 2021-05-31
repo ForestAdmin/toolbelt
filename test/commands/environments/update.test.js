@@ -8,7 +8,8 @@ describe('environments:update', () => {
     it('should display "environment updated"', () => testCli({
       env: testEnv,
       token: 'any',
-      command: () => UpdateCommand.run(['-e', '182', '-n', 'NewName']),
+      commandClass: UpdateCommand,
+      commandArgs: ['-e', '182', '-n', 'NewName'],
       api: [
         () => updateEnvironmentName(),
       ],
@@ -22,7 +23,8 @@ describe('environments:update', () => {
     it('should display "environment updated"', () => testCli({
       env: testEnv,
       token: 'any',
-      command: () => UpdateCommand.run(['-e', '182', '-u', 'https://super.url.com']),
+      commandClass: UpdateCommand,
+      commandArgs: ['-e', '182', '-u', 'https://super.url.com'],
       api: [
         () => updateEnvironmentEndpoint(),
       ],
@@ -36,7 +38,8 @@ describe('environments:update', () => {
     it('should display "Please provide environment name and/or url"', () => testCli({
       env: testEnv,
       token: 'any',
-      command: () => UpdateCommand.run(['-e', '182']),
+      commandClass: UpdateCommand,
+      commandArgs: ['-e', '182'],
       std: [
         { err: 'Please provide environment name and/or url' },
       ],

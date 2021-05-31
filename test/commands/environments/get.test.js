@@ -12,7 +12,8 @@ describe('environments:get', () => {
       it('should display the configuration of the Staging environment', () => testCli({
         env: testEnv,
         token: 'any',
-        command: () => GetCommand.run(['324']),
+        commandClass: GetCommand,
+        commandArgs: ['324'],
         api: [
           () => getEnvironmentValid(),
         ],
@@ -32,7 +33,8 @@ describe('environments:get', () => {
       it('should display the configuration of the Staging environment', () => testCli({
         env: testEnv,
         token: 'any',
-        command: () => GetCommand.run(['324', '--format', 'json']),
+        commandClass: GetCommand,
+        commandArgs: ['324', '--format', 'json'],
         api: [
           () => getEnvironmentValid(),
         ],
@@ -58,7 +60,8 @@ describe('environments:get', () => {
     it('should display a NotFound error', () => testCli({
       env: testEnv,
       token: 'any',
-      command: () => GetCommand.run(['3947']),
+      commandClass: GetCommand,
+      commandArgs: ['3947'],
       api: [
         () => getEnvironmentNotFound(),
       ],

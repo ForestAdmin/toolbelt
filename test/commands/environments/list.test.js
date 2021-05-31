@@ -11,7 +11,8 @@ describe('environments', () => {
       api: [
         getEnvironmentListValid2(),
       ],
-      command: () => EnvironmentCommand.run(['-p', '82']),
+      commandClass: EnvironmentCommand,
+      commandArgs: ['-p', '82'],
       std: [
         { out: 'ENVIRONMENTS' },
         { out: 'ID        NAME                URL                                TYPE' },
@@ -28,7 +29,8 @@ describe('environments', () => {
       api: [
         () => getEnvironmentListValid2(),
       ],
-      command: () => EnvironmentCommand.run(['-p', '82', '--format', 'json']),
+      commandClass: EnvironmentCommand,
+      commandArgs: ['-p', '82', '--format', 'json'],
       std: [{
         out: [
           {

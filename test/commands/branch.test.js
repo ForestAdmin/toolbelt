@@ -24,7 +24,7 @@ describe('branch', () => {
       it('should display a list of branches', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => BranchCommand.run([]),
+        commandClass: BranchCommand,
         api: [
           () => getProjectByEnv(),
           () => getBranchListValid(),
@@ -41,7 +41,7 @@ describe('branch', () => {
       it('should display a warning message', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => BranchCommand.run([]),
+        commandClass: BranchCommand,
         api: [
           () => getProjectByEnv(),
           () => getNoBranchListValid(),
@@ -56,7 +56,8 @@ describe('branch', () => {
       it('should display a switch to new branch message', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => BranchCommand.run(['some/randombranchename']),
+        commandClass: BranchCommand,
+        commandArgs: ['some/randombranchename'],
         api: [
           () => getProjectByEnv(),
           () => postBranchValid('some/randombranchename'),
@@ -69,7 +70,8 @@ describe('branch', () => {
       it('should display a switch to new branch message with a complex branch name', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => BranchCommand.run(['$0m3/$7r4ng38r4nChn4m3!']),
+        commandClass: BranchCommand,
+        commandArgs: ['$0m3/$7r4ng38r4nChn4m3!'],
         api: [
           () => getProjectByEnv(),
           () => postBranchValid('$0m3/$7r4ng38r4nChn4m3!'),
@@ -83,7 +85,8 @@ describe('branch', () => {
         it('should display an error message', () => testCli({
           env: testEnv2,
           token: 'any',
-          command: () => BranchCommand.run(['already/existingbranch']),
+          commandClass: BranchCommand,
+          commandArgs: ['already/existingbranch'],
           api: [
             () => getProjectByEnv(),
             () => postBranchInvalid(),
@@ -100,7 +103,8 @@ describe('branch', () => {
           it('should display an error message', () => testCli({
             env: noKeyEnv,
             token: 'any',
-            command: () => BranchCommand.run(['--projectId', '1', 'watabranch']),
+            commandClass: BranchCommand,
+            commandArgs: ['--projectId', '1', 'watabranch'],
             api: [
               () => getDevelopmentEnvironmentNotFound(),
             ],
@@ -115,7 +119,8 @@ describe('branch', () => {
           it('should display a switch to new branch message', () => testCli({
             env: noKeyEnv,
             token: 'any',
-            command: () => BranchCommand.run(['--projectId', '1', 'watabranch']),
+            commandClass: BranchCommand,
+            commandArgs: ['--projectId', '1', 'watabranch'],
             api: [
               () => getDevelopmentEnvironmentValid(),
               () => postBranchValidOnSpecificEnv('watabranch', '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125'),
@@ -133,7 +138,8 @@ describe('branch', () => {
         it('should display an error message', () => testCli({
           env: testEnv2,
           token: 'any',
-          command: () => BranchCommand.run(['-d', 'unexistingbranch']),
+          commandClass: BranchCommand,
+          commandArgs: ['-d', 'unexistingbranch'],
           api: [
             () => getProjectByEnv(),
             () => deleteUnknownBranch('unexistingbranch'),
@@ -150,7 +156,8 @@ describe('branch', () => {
         it('should display an error message', () => testCli({
           env: testEnv2,
           token: 'any',
-          command: () => BranchCommand.run(['-d', 'brancherror']),
+          commandClass: BranchCommand,
+          commandArgs: ['-d', 'brancherror'],
           api: [
             () => getProjectByEnv(),
             () => deleteBranchInvalid('brancherror'),
@@ -168,7 +175,8 @@ describe('branch', () => {
           it('should prompt for confirmation, then remove the branch', () => testCli({
             env: testEnv2,
             token: 'any',
-            command: () => BranchCommand.run(['-d', 'existingbranch']),
+            commandClass: BranchCommand,
+            commandArgs: ['-d', 'existingbranch'],
             api: [
               () => getProjectByEnv(),
               () => deleteBranchValid('existingbranch'),
@@ -182,7 +190,8 @@ describe('branch', () => {
           it('should prompt for confirmation, then do nothing', () => testCli({
             env: testEnv2,
             token: 'any',
-            command: () => BranchCommand.run(['-d', 'existingbranch']),
+            commandClass: BranchCommand,
+            commandArgs: ['-d', 'existingbranch'],
             api: [
               () => getProjectByEnv(),
             ],
@@ -196,7 +205,8 @@ describe('branch', () => {
             it('should display a success branch deleted message', () => testCli({
               env: testEnv2,
               token: 'any',
-              command: () => BranchCommand.run(['-d', 'existingbranch', '--force']),
+              commandClass: BranchCommand,
+              commandArgs: ['-d', 'existingbranch', '--force'],
               api: [
                 () => getProjectByEnv(),
                 () => deleteBranchValid('existingbranch'),
@@ -215,7 +225,7 @@ describe('branch', () => {
         it('should display an error message', () => testCli({
           env: testEnv2,
           token: 'any',
-          command: () => BranchCommand.run([]),
+          commandClass: BranchCommand,
           api: [
             () => getProjectByEnv(),
             () => getBranchInvalidEnvironmentV1(),
@@ -231,7 +241,7 @@ describe('branch', () => {
         it('should display an error message', () => testCli({
           env: testEnv2,
           token: 'any',
-          command: () => BranchCommand.run([]),
+          commandClass: BranchCommand,
           api: [
             () => getProjectByEnv(),
             () => getBranchInvalidNotDevEnv(),
@@ -247,7 +257,7 @@ describe('branch', () => {
         it('should display an error message', () => testCli({
           env: testEnv2,
           token: 'any',
-          command: () => BranchCommand.run([]),
+          commandClass: BranchCommand,
           api: [
             () => getProjectByEnv(),
             () => getBranchInvalidEnvironmentNoRemote(),

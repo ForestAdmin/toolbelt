@@ -15,7 +15,7 @@ const {
 describe('environments', () => {
   it('should display environment list', () => testCli({
     env: testEnv,
-    command: () => EnvironmentCommand.run([]),
+    commandClass: EnvironmentCommand,
     api: [
       loginValidOidc(),
       getProjectListValid(),

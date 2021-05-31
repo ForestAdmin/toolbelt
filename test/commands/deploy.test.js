@@ -39,7 +39,7 @@ describe('deploy', () => {
       it('should display the list of projects', () => testCli({
         env: testEnv,
         token: 'any',
-        command: () => DeployCommand.run([]),
+        commandClass: DeployCommand,
         api: [
           getProjectListValid(),
           getDevelopmentEnvironmentValid(1),
@@ -64,7 +64,8 @@ describe('deploy', () => {
         it('should not display the list of projects', () => testCli({
           env: testEnv2,
           token: 'any',
-          command: () => DeployCommand.run(['-p', '82']),
+          commandClass: DeployCommand,
+          commandArgs: ['-p', '82'],
           api: [
             getEnvironmentListValid(projectId),
             deployValid(),
@@ -82,7 +83,7 @@ describe('deploy', () => {
         it('should not display the list of projects', () => testCli({
           env: testEnv2,
           token: 'any',
-          command: () => DeployCommand.run([]),
+          commandClass: DeployCommand,
           api: [
             getProjectByEnv(),
             getEnvironmentListValid(projectId),
@@ -102,7 +103,8 @@ describe('deploy', () => {
       it('should not display the list of environments', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => DeployCommand.run([environmentName]),
+        commandClass: DeployCommand,
+        commandArgs: [environmentName],
         api: [
           getProjectByEnv(),
           getEnvironmentListValid(projectId),
@@ -118,7 +120,8 @@ describe('deploy', () => {
       it('should not display the list of environments', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => DeployCommand.run([environmentName, '--force']),
+        commandClass: DeployCommand,
+        commandArgs: [environmentName, '--force'],
         api: [
           getProjectByEnv(),
           getEnvironmentListValid(projectId),
@@ -134,7 +137,8 @@ describe('deploy', () => {
       it('should not push branch', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => DeployCommand.run([environmentName]),
+        commandClass: DeployCommand,
+        commandArgs: [environmentName],
         api: [
           getProjectByEnv(),
           getEnvironmentListValid(projectId),
@@ -152,7 +156,8 @@ describe('deploy', () => {
       it('should throw an error', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => DeployCommand.run(['notExist']),
+        commandClass: DeployCommand,
+        commandArgs: ['notExist'],
         api: [
           getProjectByEnv(),
           getEnvironmentListValid(projectId),
