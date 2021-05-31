@@ -1,7 +1,3 @@
-const context = require('@forestadmin/context');
-
-const { env: injectedEnv } = context.inject();
-
 function copyValuesInSameReference(source, destination) {
 // We need to keep the same reference
   Object.keys(destination).forEach((name) => {
@@ -14,17 +10,17 @@ function copyValuesInSameReference(source, destination) {
 }
 
 module.exports = {
-  mockEnv: (env) => {
+  mockEnv: (env, context) => {
     if (env) {
       process.previousEnv = { ...process.env };
       copyValuesInSameReference(env, process.env);
-      copyValuesInSameReference(env, injectedEnv);
+      copyValuesInSameReference(env, context.env);
     }
   },
-  rollbackEnv: (env) => {
+  rollbackEnv: (env, context) => {
     if (env) {
       copyValuesInSameReference(process.previousEnv, process.env);
-      copyValuesInSameReference(process.previousEnv, injectedEnv);
+      copyValuesInSameReference(process.previousEnv, context.env);
       process.previousEnv = null;
     }
   },

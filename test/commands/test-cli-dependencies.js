@@ -1,11 +1,6 @@
-const { getInstance } = require('@forestadmin/context');
-
-/**
- * @param {import('../../src/context/application-context')} applicationContext
- */
-function mockDependencies() {
+function mockDependencies(context) {
   try {
-    getInstance()
+    context
       .replace('realOpen', jest.fn());
   } catch (error) {
     // no-op

@@ -20,16 +20,16 @@ const { testEnv: noKeyEnv, testEnv2, testEnvWithDatabaseUrl } = require('../fixt
 const { databaseDialog, enter } = require('../fixtures/std');
 
 describe('init command', () => {
-  describe('login', () => {
-    describe('when user is not logged in', () => {
+  describe.only('login', () => {
+    describe.only('when user is not logged in', () => {
       it('should prompt a login invitation and go to project selection on success', () => testCli({
         command: () => InitCommand.run([]),
         env: testEnv2,
         api: [
-          loginValidOidc(),
-          getProjectByEnvIncludeLegacy(),
-          getInAppProjectForDevWorkflow(82),
-          getDevelopmentEnvironmentValid(82),
+          () => loginValidOidc(),
+          () => getProjectByEnvIncludeLegacy(),
+          () => getInAppProjectForDevWorkflow(82),
+          () => getDevelopmentEnvironmentValid(82),
         ],
         std: [
           { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
@@ -47,9 +47,9 @@ describe('init command', () => {
         env: testEnv2,
         token: 'any',
         api: [
-          getProjectByEnvIncludeLegacy(),
-          getInAppProjectForDevWorkflow(82),
-          getDevelopmentEnvironmentValid(82),
+          () => getProjectByEnvIncludeLegacy(),
+          () => getInAppProjectForDevWorkflow(82),
+          () => getDevelopmentEnvironmentValid(82),
         ],
         std: [
           { spinner: 'Selecting your project' },
@@ -68,9 +68,9 @@ describe('init command', () => {
         env: testEnv2,
         token: 'any',
         api: [
-          getProjectByEnvIncludeLegacy(),
-          getInAppProjectForDevWorkflow(82),
-          getDevelopmentEnvironmentValid(82),
+          () => getProjectByEnvIncludeLegacy(),
+          () => getInAppProjectForDevWorkflow(82),
+          () => getDevelopmentEnvironmentValid(82),
         ],
         std: [
           { spinner: 'Selecting your project' },
@@ -87,7 +87,7 @@ describe('init command', () => {
         env: noKeyEnv,
         token: 'any',
         api: [
-          getProjectListEmpty(),
+          () => getProjectListEmpty(),
         ],
         std: [
           { err: 'You don\'t have any project yet.' },
@@ -102,9 +102,9 @@ describe('init command', () => {
         env: noKeyEnv,
         token: 'any',
         api: [
-          getProjectListSingleProject(),
-          getInAppProjectForDevWorkflow(1),
-          getDevelopmentEnvironmentValid(1),
+          () => getProjectListSingleProject(),
+          () => getInAppProjectForDevWorkflow(1),
+          () => getDevelopmentEnvironmentValid(1),
         ],
         std: [
           { spinner: 'Selecting your project' },
@@ -121,7 +121,7 @@ describe('init command', () => {
         env: noKeyEnv,
         token: 'any',
         api: [
-          getProjectNotFoundForDevWorkflow(),
+          () => getProjectNotFoundForDevWorkflow(),
         ],
         std: [
           { err: 'The project you specified does not exist.' },
@@ -136,9 +136,9 @@ describe('init command', () => {
         env: noKeyEnv,
         token: 'any',
         api: [
-          getProjectListValid(),
-          getInAppProjectForDevWorkflow(1),
-          getDevelopmentEnvironmentValid(1),
+          () => getProjectListValid(),
+          () => getInAppProjectForDevWorkflow(1),
+          () => getDevelopmentEnvironmentValid(1),
         ],
         std: [
           { out: 'Select your project' },
@@ -161,8 +161,8 @@ describe('init command', () => {
         env: testEnv2,
         token: 'any',
         api: [
-          getProjectByEnvIncludeLegacy(),
-          getProjectForDevWorkflowUnallowed(82),
+          () => getProjectByEnvIncludeLegacy(),
+          () => getProjectForDevWorkflowUnallowed(82),
         ],
         std: [
           { spinner: 'Selecting your project' },
@@ -179,8 +179,8 @@ describe('init command', () => {
         env: testEnv2,
         token: 'any',
         api: [
-          getProjectByEnvIncludeLegacy(),
-          getV1ProjectForDevWorkflow(82),
+          () => getProjectByEnvIncludeLegacy(),
+          () => getV1ProjectForDevWorkflow(82),
         ],
         std: [
           { spinner: 'Selecting your project' },
@@ -197,8 +197,8 @@ describe('init command', () => {
         env: testEnv2,
         token: 'any',
         api: [
-          getProjectByEnvIncludeLegacy(),
-          getNoProdProjectForDevWorkflow(82),
+          () => getProjectByEnvIncludeLegacy(),
+          () => getNoProdProjectForDevWorkflow(82),
         ],
         std: [
           { spinner: 'Selecting your project' },
@@ -215,9 +215,9 @@ describe('init command', () => {
         env: noKeyEnv,
         token: 'any',
         api: [
-          getProjectListSingleProject(),
-          getInAppProjectForDevWorkflow(1),
-          getDevelopmentEnvironmentValid(1),
+          () => getProjectListSingleProject(),
+          () => getInAppProjectForDevWorkflow(1),
+          () => getDevelopmentEnvironmentValid(1),
         ],
         std: [
           { spinner: 'Selecting your project' },
@@ -236,9 +236,9 @@ describe('init command', () => {
         env: testEnv2,
         token: 'any',
         api: [
-          getProjectByEnvIncludeLegacy(),
-          getInAppProjectForDevWorkflow(82),
-          getDevelopmentEnvironmentValid(82),
+          () => getProjectByEnvIncludeLegacy(),
+          () => getInAppProjectForDevWorkflow(82),
+          () => getDevelopmentEnvironmentValid(82),
         ],
         std: [
           { spinner: 'Selecting your project' },
@@ -260,9 +260,9 @@ describe('init command', () => {
           env: testEnvWithDatabaseUrl,
           token: 'any',
           api: [
-            getProjectByEnvIncludeLegacy(),
-            getLumberProjectForDevWorkflow(82),
-            getDevelopmentEnvironmentValid(82),
+            () => getProjectByEnvIncludeLegacy(),
+            () => getLumberProjectForDevWorkflow(82),
+            () => getDevelopmentEnvironmentValid(82),
           ],
           std: [
             { spinner: 'Selecting your project' },
@@ -289,9 +289,9 @@ describe('init command', () => {
             env: testEnv2,
             token: 'any',
             api: [
-              getProjectByEnvIncludeLegacy(),
-              getLumberProjectForDevWorkflow(82),
-              getDevelopmentEnvironmentValid(82),
+              () => getProjectByEnvIncludeLegacy(),
+              () => getLumberProjectForDevWorkflow(82),
+              () => getDevelopmentEnvironmentValid(82),
             ],
             std: [
               { spinner: 'Selecting your project' },
@@ -320,9 +320,9 @@ describe('init command', () => {
             env: testEnv2,
             token: 'any',
             api: [
-              getProjectByEnvIncludeLegacy(),
-              getLumberProjectForDevWorkflow(82),
-              getDevelopmentEnvironmentValid(82),
+              () => getProjectByEnvIncludeLegacy(),
+              () => getLumberProjectForDevWorkflow(82),
+              () => getDevelopmentEnvironmentValid(82),
             ],
             std: [
               { spinner: 'Selecting your project' },
@@ -349,9 +349,9 @@ describe('init command', () => {
         env: testEnvWithDatabaseUrl,
         token: 'any',
         api: [
-          getProjectByEnvIncludeLegacy(),
-          getInAppProjectForDevWorkflow(82),
-          getDevelopmentEnvironmentValid(82),
+          () => getProjectByEnvIncludeLegacy(),
+          () => getInAppProjectForDevWorkflow(82),
+          () => getDevelopmentEnvironmentValid(82),
         ],
         std: [
           { spinner: 'Selecting your project' },
@@ -370,10 +370,10 @@ describe('init command', () => {
           env: testEnvWithDatabaseUrl,
           token: 'any',
           api: [
-            getProjectByEnvIncludeLegacy(),
-            getInAppProjectForDevWorkflow(82),
-            getDevelopmentEnvironmentNotFound(82),
-            createDevelopmentEnvironment(82),
+            () => getProjectByEnvIncludeLegacy(),
+            () => getInAppProjectForDevWorkflow(82),
+            () => getDevelopmentEnvironmentNotFound(82),
+            () => createDevelopmentEnvironment(82),
           ],
           std: [
             { spinner: 'Selecting your project' },
@@ -401,10 +401,10 @@ describe('init command', () => {
         env: testEnvWithDatabaseUrl,
         token: 'any',
         api: [
-          getProjectByEnvIncludeLegacy(),
-          getLumberProjectForDevWorkflow(82),
-          getDevelopmentEnvironmentNotFound(82),
-          createDevelopmentEnvironment(82),
+          () => getProjectByEnvIncludeLegacy(),
+          () => getLumberProjectForDevWorkflow(82),
+          () => getDevelopmentEnvironmentNotFound(82),
+          () => createDevelopmentEnvironment(82),
         ],
         std: [
           { spinner: 'Selecting your project' },
@@ -428,10 +428,10 @@ describe('init command', () => {
         token: 'any',
         print: true,
         api: [
-          getProjectByEnvIncludeLegacy(),
-          getLumberProjectForDevWorkflow(82),
-          getDevelopmentEnvironmentNotFound(82),
-          createDevelopmentEnvironment(82),
+          () => getProjectByEnvIncludeLegacy(),
+          () => getLumberProjectForDevWorkflow(82),
+          () => getDevelopmentEnvironmentNotFound(82),
+          () => createDevelopmentEnvironment(82),
         ],
         std: [
           { spinner: 'Selecting your project' },

@@ -16,8 +16,8 @@ describe('environments:delete', () => {
         token: 'any',
         command: () => DeleteCommand.run(['324', '--force']),
         api: [
-          getEnvironmentValid(),
-          deleteEnvironment(),
+          () => getEnvironmentValid(),
+          () => deleteEnvironment(),
         ],
         std: [
           { out: 'Environment Staging successfully deleted.' },
@@ -31,8 +31,8 @@ describe('environments:delete', () => {
         token: 'any',
         command: () => DeleteCommand.run(['324', '--force']),
         api: [
-          getEnvironmentValid(),
-          deleteEnvironmentFailure(),
+          () => getEnvironmentValid(),
+          () => deleteEnvironmentFailure(),
         ],
         std: [{ err: 'Oops, something went wrong.' }],
         exitCode: 1,
@@ -45,7 +45,7 @@ describe('environments:delete', () => {
       token: 'any',
       env: testEnv,
       api: [
-        getEnvironmentNotFound(),
+        () => getEnvironmentNotFound(),
       ],
       std: [{ err: 'Cannot find the environment 3947.' }],
       command: () => DeleteCommand.run(['3947', '--force']),

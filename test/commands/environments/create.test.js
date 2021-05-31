@@ -20,7 +20,7 @@ describe('environments:create', () => {
         token: 'any',
         command: () => EnvironmentCreateCommand.run(['-p', '2', '-n', 'Test', '-u', 'https://test.forestadmin.com']),
         api: [
-          createEnvironmentValid(),
+          () => createEnvironmentValid(),
         ],
         std: [
           { out: 'ENVIRONMENT' },
@@ -42,7 +42,7 @@ describe('environments:create', () => {
         token: 'any',
         command: () => EnvironmentCreateCommand.run(['-p', '2', '-n', 'Test', '-u', 'https://test.forestadmin.com', '--format', 'json']),
         api: [
-          createEnvironmentValid(),
+          () => createEnvironmentValid(),
         ],
         std: [
           {
@@ -62,9 +62,9 @@ describe('environments:create', () => {
       env: testEnv,
       command: () => EnvironmentCreateCommand.run(['-n', 'Test', '-u', 'https://test.forestadmin.com']),
       api: [
-        loginValidOidc(),
-        getProjectListValid(),
-        createEnvironmentValid(),
+        () => loginValidOidc(),
+        () => getProjectListValid(),
+        () => createEnvironmentValid(),
       ],
       std: [
         ...loginRequired,
