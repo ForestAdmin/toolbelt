@@ -1,19 +1,19 @@
 const { flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
+const Context = require('@forestadmin/context');
+const plan = require('../context/init');
 const EnvironmentManager = require('../services/environment-manager');
 const Renderer = require('../renderers/environments');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const withCurrentProject = require('../services/with-current-project');
 
 class EnvironmentCommand extends AbstractAuthenticatedCommand {
-  constructor(...args) {
-    super(...args);
-
-    const { config } = context.inject();
+  init(context) {
+    this.context = context || Context.execute(plan);
+    const { assertPresent, config } = this.context;
+    assertPresent({ config });
 
     this.envConfig = config;
-
-    if (!this.envConfig) throw new Error('Missing dependency envConfig');
+    super.init();
   }
 
   async runIfAuthenticated() {

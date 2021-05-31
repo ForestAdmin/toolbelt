@@ -1,5 +1,6 @@
 const { flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
+const Context = require('@forestadmin/context');
+const plan = require('../context/init');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const EnvironmentManager = require('../services/environment-manager');
 const ProjectManager = require('../services/project-manager');
@@ -8,21 +9,14 @@ const withCurrentProject = require('../services/with-current-project');
 
 /** Deploy layout changes of an environment to the reference one. */
 class DeployCommand extends AbstractAuthenticatedCommand {
-  constructor(...args) {
-    super(...args);
+  init(context) {
+    this.context = context || Context.execute(plan);
+    const { assertPresent, inquirer, config } = this.context;
+    assertPresent({ inquirer, config });
 
-    /** @type {import('../context/init').Context} */
-    const { inquirer, config } = context.inject();
-
-    /** @private @readonly */
     this.inquirer = inquirer;
-
-    /** @private @readonly */
     this.envConfig = config;
-
-    ['inquirer', 'envConfig'].forEach((name) => {
-      if (!this[name]) throw new Error(`Missing dependency ${name}`);
-    });
+    super.init();
   }
 
   /**

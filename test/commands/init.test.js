@@ -23,7 +23,7 @@ describe('init command', () => {
   describe('login', () => {
     describe('when user is not logged in', () => {
       it('should prompt a login invitation and go to project selection on success', () => testCli({
-        command: () => InitCommand.run([]),
+        commandClass: InitCommand,
         env: testEnv2,
         api: [
           () => loginValidOidc(),
@@ -43,7 +43,7 @@ describe('init command', () => {
 
     describe('when user is already logged in', () => {
       it('should prompt the project selection', () => testCli({
-        command: () => InitCommand.run([]),
+        commandClass: InitCommand,
         env: testEnv2,
         token: 'any',
         api: [
@@ -64,7 +64,7 @@ describe('init command', () => {
   describe('project selection', () => {
     describe('when the project already has an environment secret', () => {
       it('should go to project validation', () => testCli({
-        command: () => InitCommand.run([]),
+        commandClass: InitCommand,
         env: testEnv2,
         token: 'any',
         api: [
@@ -83,7 +83,7 @@ describe('init command', () => {
 
     describe('when the user has no project', () => {
       it('should stop executing with a custom message', () => testCli({
-        command: () => InitCommand.run([]),
+        commandClass: InitCommand,
         env: noKeyEnv,
         token: 'any',
         api: [
@@ -98,7 +98,7 @@ describe('init command', () => {
 
     describe('when the user has only one project', () => {
       it('should continue executing', () => testCli({
-        command: () => InitCommand.run([]),
+        commandClass: InitCommand,
         env: noKeyEnv,
         token: 'any',
         api: [
@@ -117,7 +117,8 @@ describe('init command', () => {
 
     describe('when the user explicitely specify an invalid project', () => {
       it('should stop executing with a custom message', () => testCli({
-        command: () => InitCommand.run(['--projectId', '1']),
+        commandClass: InitCommand,
+        commandArgs: (['--projectId', '1']),
         env: noKeyEnv,
         token: 'any',
         api: [
@@ -132,7 +133,7 @@ describe('init command', () => {
 
     describe('when the user has multiple project', () => {
       it('should prompt a project selection input and go to project validation', () => testCli({
-        command: () => InitCommand.run([]),
+        commandClass: InitCommand,
         env: noKeyEnv,
         token: 'any',
         api: [
@@ -157,7 +158,7 @@ describe('init command', () => {
   describe('project validation', () => {
     describe('when the user has no admin rights on the given project', () => {
       it('should stop executing with a custom error message', () => testCli({
-        command: () => InitCommand.run([]),
+        commandClass: InitCommand,
         env: testEnv2,
         token: 'any',
         api: [
@@ -175,7 +176,7 @@ describe('init command', () => {
 
     describe('when the project is still flagged as v1', () => {
       it('should stop executing with a custom error message', () => testCli({
-        command: () => InitCommand.run([]),
+        commandClass: InitCommand,
         env: testEnv2,
         token: 'any',
         api: [
@@ -193,7 +194,7 @@ describe('init command', () => {
 
     describe('when the project has no prod or remote', () => {
       it('should stop executing with a custom error message', () => testCli({
-        command: () => InitCommand.run([]),
+        commandClass: InitCommand,
         env: testEnv2,
         token: 'any',
         api: [
@@ -211,7 +212,7 @@ describe('init command', () => {
 
     describe('when the project is flagged as v2 and the user is admin on it', () => {
       it('should display a validation green mark and go to database setup', () => testCli({
-        command: () => InitCommand.run([]),
+        commandClass: InitCommand,
         env: noKeyEnv,
         token: 'any',
         api: [
@@ -232,7 +233,7 @@ describe('init command', () => {
   describe('database setup', () => {
     describe('when the project has an in-app origin', () => {
       it('should go to backend endpoint setup', () => testCli({
-        command: () => InitCommand.run([]),
+        commandClass: InitCommand,
         env: testEnv2,
         token: 'any',
         api: [
@@ -256,7 +257,7 @@ describe('init command', () => {
             name: '.env',
             content: 'SOMETHING=1',
           },
-          command: () => InitCommand.run([]),
+          commandClass: InitCommand,
           env: testEnvWithDatabaseUrl,
           token: 'any',
           api: [
@@ -285,7 +286,7 @@ describe('init command', () => {
               name: '.env',
               content: 'SOMETHING=1',
             },
-            command: () => InitCommand.run([]),
+            commandClass: InitCommand,
             env: testEnv2,
             token: 'any',
             api: [
@@ -316,7 +317,7 @@ describe('init command', () => {
               name: '.env',
               content: 'SOMETHING=1',
             },
-            command: () => InitCommand.run([]),
+            commandClass: InitCommand,
             env: testEnv2,
             token: 'any',
             api: [
@@ -345,7 +346,7 @@ describe('init command', () => {
   describe('backend endpoint setup', () => {
     describe('when the user already have an existing development environment', () => {
       it('should go to the environment variables step', () => testCli({
-        command: () => InitCommand.run([]),
+        commandClass: InitCommand,
         env: testEnvWithDatabaseUrl,
         token: 'any',
         api: [
@@ -366,7 +367,7 @@ describe('init command', () => {
     describe('when the user does not have an existing development environment', () => {
       describe('when the user enters a correct endpoint', () => {
         it('should display a green mark with a relevant message', () => testCli({
-          command: () => InitCommand.run([]),
+          commandClass: InitCommand,
           env: testEnvWithDatabaseUrl,
           token: 'any',
           api: [
@@ -397,7 +398,7 @@ describe('init command', () => {
           name: '.env',
           content: 'SOMETHING=1',
         },
-        command: () => InitCommand.run([]),
+        commandClass: InitCommand,
         env: testEnvWithDatabaseUrl,
         token: 'any',
         api: [
@@ -423,7 +424,7 @@ describe('init command', () => {
 
     describe('when the project is NOT flagged as in-app and does not have a .env file', () => {
       it('should ask if the user wants to create an env file and if not, displays the environment variables', () => testCli({
-        command: () => InitCommand.run([]),
+        commandClass: InitCommand,
         env: testEnvWithDatabaseUrl,
         token: 'any',
         print: true,

@@ -16,7 +16,8 @@ describe('environments:copy-layout', () => {
       it('should copy the layout', () => testCli({
         env: testEnv,
         token: 'any',
-        command: () => CopyLayoutCommand.run(['325', '324', '-p', '82', '--force']),
+        commandClass: CopyLayoutCommand,
+        commandArgs: ['325', '324', '-p', '82', '--force'],
         api: [
           getEnvironmentValid(),
           getEnvironmentValid2(),
@@ -34,7 +35,8 @@ describe('environments:copy-layout', () => {
       it('should exit with status 1', () => testCli({
         env: testEnv,
         token: 'any',
-        command: () => CopyLayoutCommand.run(['325', '324', '-p', '82', '--force']),
+        commandClass: CopyLayoutCommand,
+        commandArgs: ['325', '324', '-p', '82', '--force'],
         api: [
           getEnvironmentValid(),
           getEnvironmentValid2(),
@@ -51,7 +53,8 @@ describe('environments:copy-layout', () => {
     it('should exit with status 3', () => testCli({
       env: testEnv,
       token: 'any',
-      command: () => CopyLayoutCommand.run(['325', '324', '-p', '82', '--force']),
+      commandClass: CopyLayoutCommand,
+      commandArgs: ['325', '324', '-p', '82', '--force'],
       api: [
         getEnvironmentNotFound(324),
         getEnvironmentValid2(),

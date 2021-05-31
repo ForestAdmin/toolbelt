@@ -15,7 +15,8 @@ describe('login', () => {
   describe('with email in args', () => {
     describe('with bad token in args', () => {
       it('should display invalid token', () => testCli({
-        command: () => LoginCommand.run(['-e', 'smile@gmail.com', '-t', 'invalid_token']),
+        commandClass: LoginCommand,
+        commandArgs: ['-e', 'smile@gmail.com', '-t', 'invalid_token'],
         std: [
           { err: 'Invalid token. Please enter your authentication token.' },
         ],
@@ -25,7 +26,8 @@ describe('login', () => {
       const token = jwt.sign({}, 'key', { expiresIn: '1day' });
       it('should login successful', () => testCli({
         env: testEnv,
-        command: () => LoginCommand.run(['-e', 'smile@gmail.com', '-t', token]),
+        commandClass: LoginCommand,
+        commandArgs: [['-e', 'smile@gmail.com', '-t', token]],
         std: [
           { in: `${jwt.sign({}, 'key', { expiresIn: '1day' })}` },
           { out: 'Login successful' },
@@ -35,7 +37,8 @@ describe('login', () => {
 
     describe('with a valid password in args', () => {
       it('should login successfully', () => testCli({
-        command: () => LoginCommand.run(['-e', 'some@mail.com', '-P', 'valid_pwd']),
+        commandClass: LoginCommand,
+        commandArgs: ['-e', 'some@mail.com', '-P', 'valid_pwd'],
         env: testEnv,
         api: () => loginValid(),
         std: [
@@ -47,7 +50,8 @@ describe('login', () => {
     describe('with an invalid password in args', () => {
       it('should display incorrect password', () => testCli({
         env: testEnv,
-        command: () => LoginCommand.run(['-e', 'some@mail.com', '-P', 'pwd']),
+        commandClass: LoginCommand,
+        commandArgs: ['-e', 'some@mail.com', '-P', 'pwd'],
         api: () => loginInvalid(),
         std: [
           { err: 'Incorrect email or password.' },
@@ -60,7 +64,7 @@ describe('login', () => {
     describe('with a successful oidc authentication', () => {
       it('should login successful', () => testCli({
         env: testEnv,
-        command: () => LoginCommand.run([]),
+        commandClass: LoginCommand,
         api: () => loginValidOidc(),
         std: [
           { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
@@ -72,7 +76,7 @@ describe('login', () => {
     describe('with an failed oidc authentication', () => {
       it('should display the error message', () => testCli({
         env: testEnv,
-        command: () => LoginCommand.run([]),
+        commandClass: LoginCommand,
         api: () => loginInvalidOidc(),
         std: [
           { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
