@@ -20,8 +20,8 @@ const { testEnv: noKeyEnv, testEnv2, testEnvWithDatabaseUrl } = require('../fixt
 const { databaseDialog, enter } = require('../fixtures/std');
 
 describe('init command', () => {
-  describe.only('login', () => {
-    describe.only('when user is not logged in', () => {
+  describe('login', () => {
+    describe('when user is not logged in', () => {
       it('should prompt a login invitation and go to project selection on success', () => testCli({
         command: () => InitCommand.run([]),
         env: testEnv2,
