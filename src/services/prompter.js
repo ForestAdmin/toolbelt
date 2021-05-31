@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const inquirer = require('inquirer');
-const envConfig = require('../config');
+const context = require('@forestadmin/context');
 
 const promptEmail = {
   type: 'input',
@@ -23,6 +23,8 @@ const promptPassword = {
 };
 
 async function Prompter(requests) {
+  const { env } = context.inject();
+
   function isRequested(option) {
     return requests.indexOf(option) > -1;
   }
@@ -30,24 +32,20 @@ async function Prompter(requests) {
   const prompts = [];
 
   if (isRequested('email')) {
-    if (process.env.FOREST_EMAIL) {
-      envConfig.email = process.env.FOREST_EMAIL;
-    } else {
+    if (!env.FOREST_EMAIL) {
       prompts.push(promptEmail);
     }
   }
 
   if (isRequested('password')) {
-    if (process.env.FOREST_PASSWORD) {
-      envConfig.password = process.env.FOREST_PASSWORD;
-    } else {
+    if (!env.FOREST_PASSWORD) {
       prompts.push(promptPassword);
     }
   }
 
   const config = await inquirer.prompt(prompts);
 
-  return _.merge(config, envConfig);
+  return _.merge(config, env);
 }
 
 module.exports = Prompter;
