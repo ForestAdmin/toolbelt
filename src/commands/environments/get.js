@@ -1,15 +1,17 @@
 const { flags } = require('@oclif/command');
 const chalk = require('chalk');
+const context = require('@forestadmin/context');
 const EnvironmentManager = require('../../services/environment-manager');
 const Renderer = require('../../renderers/environment');
 const logger = require('../../services/logger');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
-const envConfig = require('../../config');
 
 class GetCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
+    const { env } = context.inject();
+
     const parsed = this.parse(GetCommand);
-    const config = { ...envConfig, ...parsed.flags, ...parsed.args };
+    const config = { ...env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
 
     try {

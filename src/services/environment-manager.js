@@ -5,17 +5,16 @@ const EnvironmentSerializer = require('../serializers/environment');
 const environmentDeserializer = require('../deserializers/environment');
 const DeploymentRequestSerializer = require('../serializers/deployment-request');
 const JobStateChecker = require('../services/job-state-checker');
-const { serverHost } = require('../config');
 
 function EnvironmentManager(config) {
-  const { assertPresent, authenticator } = context.inject();
-  assertPresent({ authenticator });
+  const { assertPresent, authenticator, env } = context.inject();
+  assertPresent({ authenticator, env });
 
   this.listEnvironments = async () => {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${serverHost()}/api/projects/${config.projectId}/environments`)
+      .get(`${env.FOREST_URL}/api/projects/${config.projectId}/environments`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
       .send()
@@ -26,7 +25,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${serverHost()}/api/environments/${environmentId}`)
+      .get(`${env.FOREST_URL}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-environment-id', environmentId)
       .send()
@@ -37,7 +36,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .post(`${serverHost()}/api/environments`)
+      .post(`${env.FOREST_URL}/api/environments`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
       .send(EnvironmentSerializer.serialize({
@@ -52,7 +51,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .post(`${serverHost()}/api/projects/${projectId}/development-environment-for-user`)
+      .post(`${env.FOREST_URL}/api/projects/${projectId}/development-environment-for-user`)
       .set('Authorization', `Bearer ${authToken}`)
       .send({ endpoint })
       .then((response) => environmentDeserializer.deserialize(response.body));
@@ -61,7 +60,7 @@ function EnvironmentManager(config) {
   this.updateEnvironment = async () => {
     const authToken = authenticator.getAuthToken();
     return agent
-      .put(`${serverHost()}/api/environments/${config.environmentId}`)
+      .put(`${env.FOREST_URL}/api/environments/${config.environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send(EnvironmentSerializer.serialize({
         name: config.name,
@@ -73,7 +72,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .del(`${serverHost()}/api/environments/${environmentId}`)
+      .del(`${env.FOREST_URL}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-environment-id', environmentId);
   };
@@ -90,7 +89,7 @@ function EnvironmentManager(config) {
     const jobStateChecker = new JobStateChecker('Copying layout', oclifExit);
 
     const deploymentRequestResponse = await agent
-      .post(`${serverHost()}/api/deployment-requests`)
+      .post(`${env.FOREST_URL}/api/deployment-requests`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
       .send(DeploymentRequestSerializer.serialize(deploymentRequest));
@@ -104,7 +103,6 @@ function EnvironmentManager(config) {
 
     const jobId = deploymentRequestResponse.body.meta.job_id;
 
-
     return jobStateChecker.check(jobId, config.projectId);
   };
 
@@ -116,7 +114,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .post(`${serverHost()}/api/environments/deploy`)
+      .post(`${env.FOREST_URL}/api/environments/deploy`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-secret-key', `${config.envSecret}`)
       .set('forest-environment-id', `${id}`)

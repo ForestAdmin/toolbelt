@@ -1,7 +1,6 @@
 const context = require('@forestadmin/context');
 const branchDeserializer = require('../deserializers/branch');
 const EnvironmentSerializer = require('../serializers/environment');
-const { serverHost } = require('../config');
 const { handleError } = require('../utils/error');
 
 const ERROR_MESSAGE_PROJECT_IN_V1 = '⚠️  This project does not support branches yet. Please migrate your environments from your Project settings first.';
@@ -18,11 +17,16 @@ const ERROR_MESSAGE_WRONG_ENVIRONMENT_TYPE = '❌ The environment on which you a
 const ERROR_MESSAGE_NO_DESTINATION_BRANCH = "❌ The environment on which you are trying to push your modifications doesn't have current branch.";
 
 function getBranches(envSecret) {
-  const { assertPresent, authenticator, superagent: agent } = context.inject();
-  assertPresent({ authenticator, superagent: agent });
+  const {
+    assertPresent,
+    authenticator,
+    env,
+    superagent: agent,
+  } = context.inject();
+  assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
   return agent
-    .get(`${serverHost()}/api/branches`)
+    .get(`${env.FOREST_URL}{/api/branches`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', envSecret)
     .send()
@@ -30,24 +34,34 @@ function getBranches(envSecret) {
 }
 
 function deleteBranch(branchName, environmentSecret) {
-  const { assertPresent, authenticator, superagent: agent } = context.inject();
-  assertPresent({ authenticator, superagent: agent });
+  const {
+    assertPresent,
+    authenticator,
+    env,
+    superagent: agent,
+  } = context.inject();
+  assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .del(`${serverHost()}/api/branches/${encodeURIComponent(branchName)}`)
+    .del(`${env.FOREST_URL}{/api/branches/${encodeURIComponent(branchName)}`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send();
 }
 
 function createBranch(branchName, environmentSecret) {
-  const { assertPresent, authenticator, superagent: agent } = context.inject();
-  assertPresent({ authenticator, superagent: agent });
+  const {
+    assertPresent,
+    authenticator,
+    env,
+    superagent: agent,
+  } = context.inject();
+  assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .post(`${serverHost()}/api/branches`)
+    .post(`${env.FOREST_URL}{/api/branches`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send({ branchName: encodeURIComponent(branchName) });
@@ -55,24 +69,34 @@ function createBranch(branchName, environmentSecret) {
 
 // TODO: DWO EP17 remove destinationEnvironmentName handle
 function pushBranch(destinationEnvironmentName, environmentSecret) {
-  const { assertPresent, authenticator, superagent: agent } = context.inject();
-  assertPresent({ authenticator, superagent: agent });
+  const {
+    assertPresent,
+    authenticator,
+    env,
+    superagent: agent,
+  } = context.inject();
+  assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .post(`${serverHost()}/api/branches/push`)
+    .post(`${env.FOREST_URL}{/api/branches/push`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send({ destinationEnvironmentName: encodeURIComponent(destinationEnvironmentName) });
 }
 
 function switchBranch({ id }, environmentSecret) {
-  const { assertPresent, authenticator, superagent: agent } = context.inject();
-  assertPresent({ authenticator, superagent: agent });
+  const {
+    assertPresent,
+    authenticator,
+    env,
+    superagent: agent,
+  } = context.inject();
+  assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .put(`${serverHost()}/api/environments`)
+    .put(`${env.FOREST_URL}{/api/environments`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send(EnvironmentSerializer.serialize({ currentBranchId: id }));

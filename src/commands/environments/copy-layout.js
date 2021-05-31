@@ -1,17 +1,19 @@
 const { flags } = require('@oclif/command');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
+const context = require('@forestadmin/context');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const EnvironmentManager = require('../../services/environment-manager');
 const withCurrentProject = require('../../services/with-current-project');
 const logger = require('../../services/logger');
-const envConfig = require('../../config');
 
 class CopyLayoutCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
+    const { env } = context.inject();
+
     const oclifExit = this.exit.bind(this);
     const parsed = this.parse(CopyLayoutCommand);
-    const config = await withCurrentProject({ ...envConfig, ...parsed.flags, ...parsed.args });
+    const config = await withCurrentProject({ ...env, ...parsed.flags, ...parsed.args });
     const manager = new EnvironmentManager(config);
 
     let fromEnvironment;
