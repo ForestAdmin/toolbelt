@@ -18,7 +18,6 @@ const {
   planifyInputs,
   rollbackStd,
 } = require('./test-cli-std');
-const { mockDependencies } = require('./test-cli-dependencies');
 
 function asArray(any) {
   if (!any) return [];
@@ -85,36 +84,34 @@ async function testCli({
 
   mockFile(file);
 
-  const commandPlan = prepareContextPlan({ commandLegacy });
-
-  commandPlan.step('env').replace('variables', (context) => context.addValue('env', {
-    // FIXME: Default values.
-    // APPLICATION_PORT: undefined,
-    // CORS_ORIGIN: undefined,
-    // DATABASE_REJECT_UNAUTHORIZED: undefined,
-    // DATABASE_SCHEMA: undefined,
-    // DATABASE_SSL: undefined,
-    // DATABASE_URL: undefined,
-    // FOREST_AUTH_SECRET: undefined,
-    // FOREST_EMAIL: undefined,
-    // FOREST_ENV_SECRET: undefined,
-    // FOREST_PASSWORD: undefined,
-    // FOREST_URL: undefined,
-    // NODE_ENV: undefined,
-    // PORT: undefined,
-    TOKEN_PATH: getTokenPath(),
-    // FIXME: Overrides for this test.
-    ...env,
-  }));
-
-  mockDependencies(commandPlan);
+  const commandPlan = prepareContextPlan({ commandLegacy })
+    .replace('env.variables', (context) => context.addValue('env', {
+      // FIXME: Default values.
+      // APPLICATION_PORT: undefined,
+      // CORS_ORIGIN: undefined,
+      // DATABASE_REJECT_UNAUTHORIZED: undefined,
+      // DATABASE_SCHEMA: undefined,
+      // DATABASE_SSL: undefined,
+      // DATABASE_URL: undefined,
+      // FOREST_AUTH_SECRET: undefined,
+      // FOREST_EMAIL: undefined,
+      // FOREST_ENV_SECRET: undefined,
+      // FOREST_PASSWORD: undefined,
+      // FOREST_URL: undefined,
+      // NODE_ENV: undefined,
+      // PORT: undefined,
+      TOKEN_PATH: getTokenPath(),
+      // FIXME: Overrides for this test.
+      ...env,
+    }))
+    .replace('dependencies.open',
+      (context) => context.addFunction('open', jest.fn()));
 
   const context = prepareContext({ commandLegacy, commandPlan });
 
   mockToken(tokenBehavior, context);
   const stdin = mockStd(outputs, errorOutputs, print);
   planifyInputs(inputs, stdin);
-  mockDependencies(context);
 
   const command = prepareCommand({
     commandArgs,

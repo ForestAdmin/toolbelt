@@ -110,25 +110,18 @@ const initEnv = newPlan()
 /**
  * @param {import('./application-context')} context
  */
-const initDependencies = (context) => context
-  .addInstance('chalk', chalk)
-  .addInstance('os', os)
-  .addInstance('fs', fs)
-  .addInstance('superagent', superagent)
-  .addInstance('inquirer', inquirer)
-  .addInstance('openIdClient', openIdClient)
-  .addInstance('jwtDecode', jwtDecode)
-  .addInstance('joi', joi)
-
-  // We need to change the behavior of the open function for tests
-  // because we don't want the tests to open a browser for real at each run
-  // as the dependencies are injected once in the constructor, we cannot just
-  // replace the reference of `open` by a mock (the service will still have
-  // the real open function in its properties).
-  // Instead, we change the value of `realOpen`, which will be accessed by
-  // the function open which is just here to keep a reference to the context.
-  .addInstance('realOpen', open)
-  .addFunction('open', (...args) => context.get().realOpen(...args));
+const initDependencies = newPlan()
+  .addStep('open', (context) => context
+    .addFunction('open', open))
+  .addStep('others', (context) => context
+    .addInstance('chalk', chalk)
+    .addInstance('os', os)
+    .addInstance('fs', fs)
+    .addInstance('superagent', superagent)
+    .addInstance('inquirer', inquirer)
+    .addInstance('openIdClient', openIdClient)
+    .addInstance('jwtDecode', jwtDecode)
+    .addInstance('joi', joi));
 
 /**
  * @param {import('./application-context')} context
