@@ -10,7 +10,7 @@ describe('environments:update', () => {
       token: 'any',
       command: () => UpdateCommand.run(['-e', '182', '-n', 'NewName']),
       api: [
-        updateEnvironmentName(),
+        () => updateEnvironmentName(),
       ],
       std: [
         { out: 'Environment updated' },
@@ -24,7 +24,7 @@ describe('environments:update', () => {
       token: 'any',
       command: () => UpdateCommand.run(['-e', '182', '-u', 'https://super.url.com']),
       api: [
-        updateEnvironmentEndpoint(),
+        () => updateEnvironmentEndpoint(),
       ],
       std: [
         { out: 'Environment updated' },

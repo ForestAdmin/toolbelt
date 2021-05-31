@@ -14,7 +14,7 @@ describe('environments:get', () => {
         token: 'any',
         command: () => GetCommand.run(['324']),
         api: [
-          getEnvironmentValid(),
+          () => getEnvironmentValid(),
         ],
         std: [
           { out: 'id                 324' },
@@ -34,7 +34,7 @@ describe('environments:get', () => {
         token: 'any',
         command: () => GetCommand.run(['324', '--format', 'json']),
         api: [
-          getEnvironmentValid(),
+          () => getEnvironmentValid(),
         ],
         std: [
           {
@@ -60,7 +60,7 @@ describe('environments:get', () => {
       token: 'any',
       command: () => GetCommand.run(['3947']),
       api: [
-        getEnvironmentNotFound(),
+        () => getEnvironmentNotFound(),
       ],
       std: [
         { err: 'Cannot find the environment 3947.' },
