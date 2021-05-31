@@ -1,6 +1,6 @@
 const P = require('bluebird');
 const agent = require('superagent-promise')(require('superagent'), P);
-const config = require('../config');
+const context = require('@forestadmin/context');
 const logger = require('../services/logger');
 
 /**
@@ -15,9 +15,11 @@ function SchemaSender(serializedSchema, secret, authenticationToken, oclifExit) 
    * @function
    * @returns {Promise<number | undefined>}
    */
-  this.perform = () =>
-    agent
-      .post(`${config.serverHost()}/forest/apimaps`)
+  this.perform = () => {
+    const { env } = context.inject();
+
+    return agent
+      .post(`${env.FOREST_URL}/forest/apimaps`)
       .set('forest-secret-key', secret)
       .set('Authorization', `Bearer ${authenticationToken}`)
       .send(serializedSchema)
@@ -48,6 +50,7 @@ function SchemaSender(serializedSchema, secret, authenticationToken, oclifExit) 
           oclifExit(6);
         }
       });
+  };
 }
 
 module.exports = SchemaSender;
