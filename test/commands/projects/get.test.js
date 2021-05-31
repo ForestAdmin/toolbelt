@@ -10,7 +10,7 @@ describe('projects:get', () => {
         env: testEnv,
         token: 'any',
         command: () => GetProjectCommand.run(['82']),
-        api: [getProjectValid()],
+        api: [() => getProjectValid()],
         std: [
           { out: 'PROJECT' },
           { out: 'id                   82' },
@@ -26,7 +26,7 @@ describe('projects:get', () => {
         env: testEnv,
         token: 'any',
         command: () => GetProjectCommand.run(['82', '--format', 'json']),
-        api: [getProjectValid()],
+        api: [() => getProjectValid()],
         std: [{
           out: {
             id: '82',

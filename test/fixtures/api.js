@@ -4,8 +4,6 @@ const ProjectSerializer = require('../../src/serializers/project');
 const EnvironmentSerializer = require('../../src/serializers/environment');
 const JobSerializer = require('../../src/serializers/job');
 
-nock.disableNetConnect();
-
 /**
  * @param {import('nock').Scope} nockScope
  */

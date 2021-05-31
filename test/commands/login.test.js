@@ -37,7 +37,7 @@ describe('login', () => {
       it('should login successfully', () => testCli({
         command: () => LoginCommand.run(['-e', 'some@mail.com', '-P', 'valid_pwd']),
         env: testEnv,
-        api: loginValid(),
+        api: () => loginValid(),
         std: [
           { out: 'Login successful' },
         ],
@@ -48,7 +48,7 @@ describe('login', () => {
       it('should display incorrect password', () => testCli({
         env: testEnv,
         command: () => LoginCommand.run(['-e', 'some@mail.com', '-P', 'pwd']),
-        api: loginInvalid(),
+        api: () => loginInvalid(),
         std: [
           { err: 'Incorrect email or password.' },
         ],
@@ -61,7 +61,7 @@ describe('login', () => {
       it('should login successful', () => testCli({
         env: testEnv,
         command: () => LoginCommand.run([]),
-        api: loginValidOidc(),
+        api: () => loginValidOidc(),
         std: [
           { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
           { out: 'Login successful' },
@@ -73,7 +73,7 @@ describe('login', () => {
       it('should display the error message', () => testCli({
         env: testEnv,
         command: () => LoginCommand.run([]),
-        api: loginInvalidOidc(),
+        api: () => loginInvalidOidc(),
         std: [
           { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
           { err: 'Error during the authentication: The authentication failed.' },

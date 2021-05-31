@@ -98,11 +98,10 @@ const initConstants = (context) => context
   });
 
 const initEnv = newPlan()
-  .addStep('variables', (context) => context
-    .addInstance('env', {
-      ...process.env,
-      FOREST_URL: process.env.FOREST_URL || DEFAULT_FOREST_URL,
-    }))
+  .addStep('variables', (context) => context.addValue('env', {
+    // ...process.env,
+    FOREST_URL: process.env.FOREST_URL || DEFAULT_FOREST_URL,
+  }))
   .addStep('other', (context) => context
     .addInstance('process', process)
     .addInstance('pkg', pkg)

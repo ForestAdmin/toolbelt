@@ -44,8 +44,8 @@ describe('schema:apply', () => {
       },
       env: testEnv2,
       api: [
-        loginValidOidc(),
-        postSchema(postSchemaMatch),
+        () => loginValidOidc(),
+        () => postSchema(postSchemaMatch),
       ],
       command: () => ApplySchemaCommand.run([]),
       std: [
@@ -88,7 +88,7 @@ describe('schema:apply', () => {
           token: 'any',
           env: testEnv2,
           command: () => ApplySchemaCommand.run([]),
-          api: [postSchema404()],
+          api: [() => postSchema404()],
           std: [{ err: 'Cannot find the project related to the environment secret you configured.' }],
           exitCode: 4,
         }));
@@ -101,7 +101,7 @@ describe('schema:apply', () => {
             content: forestadminSchema,
           },
           env: testEnv2,
-          api: [postSchema503()],
+          api: [() => postSchema503()],
           command: () => ApplySchemaCommand.run([]),
           std: [{ err: 'Forest is in maintenance for a few minutes. We are upgrading your experience in the forest. We just need a few more minutes to get it right.' }],
           exitCode: 5,
@@ -118,7 +118,7 @@ describe('schema:apply', () => {
             },
             env: testEnv2,
             token: 'any',
-            api: [postSchema(postSchemaMatch)],
+            api: [() => postSchema(postSchemaMatch)],
             command: () => ApplySchemaCommand.run([]),
             std: [
               { out: 'Reading "./.forestadmin-schema.json"...' },
@@ -139,7 +139,7 @@ describe('schema:apply', () => {
             },
             env: testEnv2,
             token: 'any',
-            api: [postSchema(postSchemaMatch)],
+            api: [() => postSchema(postSchemaMatch)],
             command: () => ApplySchemaCommand.run([]),
             std: [
               { out: 'Reading "./.forestadmin-schema.json"...' },
@@ -163,7 +163,7 @@ describe('schema:apply', () => {
       },
       env: testEnv2,
       token: 'any',
-      api: [postSchema500()],
+      api: [() => postSchema500()],
       command: () => ApplySchemaCommand.run([]),
       std: [{ err: 'An error occured with the schema sent to Forest. Please contact support@forestadmin.com for further investigations.' }],
       exitCode: 6,

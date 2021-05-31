@@ -26,7 +26,7 @@ describe('environments', () => {
       env: testEnv,
       token: 'any',
       api: [
-        getEnvironmentListValid2(),
+        () => getEnvironmentListValid2(),
       ],
       command: () => EnvironmentCommand.run(['-p', '82', '--format', 'json']),
       std: [{

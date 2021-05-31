@@ -10,6 +10,8 @@ module.exports = {
     const { chdir, name, content } = file;
     if (chdir) {
       fsExtra.mkdirsSync(chdir);
+      // FIXME: chdir should be reversed or not necessary,
+      //        test cli should move to dir by itself at start.
       process.chdir(chdir);
     }
     if (name) fsExtra.outputFileSync(name, content);

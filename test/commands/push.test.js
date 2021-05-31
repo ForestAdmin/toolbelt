@@ -19,10 +19,10 @@ const {
 const { testEnv, testEnv2 } = require('../fixtures/env');
 
 const getValidProjectEnvironementAndBranch = (projectId, envSecret) => [
-  getProjectByEnv(),
-  getInAppProjectForDevWorkflow(projectId),
-  getDevelopmentEnvironmentValid(projectId),
-  getBranchListValid(envSecret),
+  () => getProjectByEnv(),
+  () => getInAppProjectForDevWorkflow(projectId),
+  () => getDevelopmentEnvironmentValid(projectId),
+  () => getBranchListValid(envSecret),
 ];
 
 describe('push', () => {
@@ -37,12 +37,12 @@ describe('push', () => {
         token: 'any',
         command: () => PushCommand.run([]),
         api: [
-          getProjectListValid(),
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(),
-          getBranchListValid(envSecret),
-          getEnvironmentListValid(projectId),
-          pushBranchValid(envSecret),
+          () => getProjectListValid(),
+          () => getInAppProjectForDevWorkflow(projectId),
+          () => getDevelopmentEnvironmentValid(),
+          () => getBranchListValid(envSecret),
+          () => getEnvironmentListValid(projectId),
+          () => pushBranchValid(envSecret),
         ],
         std: [
           { out: 'Select your project' },
@@ -70,11 +70,11 @@ describe('push', () => {
         token: 'any',
         command: () => PushCommand.run(['--projectId', '82']),
         api: [
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(projectId),
-          getBranchListValid(envSecret),
-          getEnvironmentListValid(projectId),
-          pushBranchValid(envSecret),
+          () => getInAppProjectForDevWorkflow(projectId),
+          () => getDevelopmentEnvironmentValid(projectId),
+          () => getBranchListValid(envSecret),
+          () => getEnvironmentListValid(projectId),
+          () => pushBranchValid(envSecret),
         ],
         std: [
           { out: 'Select the remote environment you want to push onto' },
@@ -99,7 +99,7 @@ describe('push', () => {
         command: () => PushCommand.run(['-e', 'name1']),
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
-          pushBranchValid(envSecret),
+          () => pushBranchValid(envSecret),
         ],
         std: [
           { out: `Push branch ${branchName} onto ${environmentName}` },
@@ -121,7 +121,7 @@ describe('push', () => {
         command: () => PushCommand.run(['-e', 'name1', '--force']),
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
-          pushBranchValid(envSecret),
+          () => pushBranchValid(envSecret),
         ],
         std: [
           { out: `✅ Branch ${branchName} successfully pushed onto ${environmentName}.` },
@@ -157,10 +157,10 @@ describe('push', () => {
         token: 'any',
         command: () => PushCommand.run(['-e', 'name1']),
         api: [
-          getProjectByEnv(),
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(projectId),
-          getNoBranchListValid(envSecret),
+          () => getProjectByEnv(),
+          () => getInAppProjectForDevWorkflow(projectId),
+          () => getDevelopmentEnvironmentValid(projectId),
+          () => getNoBranchListValid(envSecret),
         ],
         exitCode: 2,
         exitMessage: "⚠️ You don't have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.",
@@ -175,10 +175,10 @@ describe('push', () => {
         token: 'any',
         command: () => PushCommand.run(['-e', 'name1']),
         api: [
-          getProjectByEnv(),
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(projectId),
-          getBranchListValid(envSecret, false),
+          () => getProjectByEnv(),
+          () => getInAppProjectForDevWorkflow(projectId),
+          () => getDevelopmentEnvironmentValid(projectId),
+          () => getBranchListValid(envSecret, false),
         ],
         exitCode: 2,
         exitMessage: "⚠️ You don't have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.",
@@ -194,7 +194,7 @@ describe('push', () => {
         command: () => PushCommand.run(['-e', 'notExist', '--force']),
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
-          pushBranchInvalidDestination(envSecret),
+          () => pushBranchInvalidDestination(envSecret),
         ],
         exitCode: 2,
         exitMessage: "❌ The environment provided doesn't exist.",
@@ -210,7 +210,7 @@ describe('push', () => {
         command: () => PushCommand.run(['-e', 'noRemote', '--force']),
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
-          pushBranchInvalidType(envSecret),
+          () => pushBranchInvalidType(envSecret),
         ],
         exitCode: 2,
         exitMessage: '❌ The environment on which you are trying to push your modifications is not a remote environment.',
@@ -226,7 +226,7 @@ describe('push', () => {
         command: () => PushCommand.run(['-e', 'noRemote', '--force']),
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
-          pushBranchInvalidDestinationBranch(envSecret),
+          () => pushBranchInvalidDestinationBranch(envSecret),
         ],
         exitCode: 2,
         exitMessage: "❌ The environment on which you are trying to push your modifications doesn't have current branch.",
@@ -242,7 +242,7 @@ describe('push', () => {
         command: () => PushCommand.run([]),
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
-          getNoEnvironmentListValid(projectId),
+          () => getNoEnvironmentListValid(projectId),
         ],
         exitCode: 2,
         exitMessage: '❌ You cannot run this command until this project has a remote non-production environment.',
@@ -256,8 +256,8 @@ describe('push', () => {
         token: 'any',
         command: () => PushCommand.run([]),
         api: [
-          getProjectByEnv(),
-          getV1ProjectForDevWorkflow(projectId),
+          () => getProjectByEnv(),
+          () => getV1ProjectForDevWorkflow(projectId),
         ],
         exitCode: 2,
         exitMessage: '⚠️  This project does not support branches yet. Please migrate your environments from your Project settings first.',

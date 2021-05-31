@@ -1,21 +1,22 @@
+const nock = require('nock');
+
 const {
   assertExitCode,
   assertExitMessage,
   assertNoErrorThrown,
 } = require('./test-cli-errors');
-// const { mockEnv, rollbackEnv } = require('./test-cli-env');
-const { prepareCommand } = require('./test-cli-command');
+const { prepareCommand, prepareContext, prepareContextPlan } = require('./test-cli-command');
 const { assertApi } = require('./test-cli-api');
 const { mockFile, cleanMockedFile, randomDirectoryName } = require('./test-cli-fs');
-const { mockToken, rollbackToken } = require('./test-cli-auth-token');
+const { getTokenPath, mockToken, rollbackToken } = require('./test-cli-auth-token');
 const { validateInput } = require('./test-cli-errors');
 const {
-  mockStd,
-  planifyInputs,
   assertOutputs,
-  rollbackStd,
   logStdErr,
   logStdOut,
+  mockStd,
+  planifyInputs,
+  rollbackStd,
 } = require('./test-cli-std');
 const { mockDependencies } = require('./test-cli-dependencies');
 
@@ -69,7 +70,11 @@ async function testCli({
     expectedExitMessage,
     rest,
   );
+
   const nocks = asArray(api);
+  nock.disableNetConnect();
+  nocks.forEach((nockFlow) => nockFlow());
+
   const inputs = stds ? stds.filter((type) => type.in).map((type) => type.in) : [];
   const outputs = stds ? stds.filter((type) => type.out).map((type) => type.out) : [];
   let errorOutputs;
@@ -82,14 +87,43 @@ async function testCli({
     errorOutputs = [];
   }
 
-  const { command, context } = prepareCommand({ commandLegacy, commandClass, commandArgs });
-
   mockFile(file);
-  // mockEnv(env);
+
+  const commandPlan = prepareContextPlan({ commandLegacy });
+
+  commandPlan.step('env').replace('variables', (context) => context.addValue('env', {
+    // FIXME: Default values.
+    // APPLICATION_PORT: undefined,
+    // CORS_ORIGIN: undefined,
+    // DATABASE_REJECT_UNAUTHORIZED: undefined,
+    // DATABASE_SCHEMA: undefined,
+    // DATABASE_SSL: undefined,
+    // DATABASE_URL: undefined,
+    // FOREST_AUTH_SECRET: undefined,
+    // FOREST_EMAIL: undefined,
+    // FOREST_ENV_SECRET: undefined,
+    // FOREST_PASSWORD: undefined,
+    // FOREST_URL: undefined,
+    // NODE_ENV: undefined,
+    // PORT: undefined,
+    TOKEN_PATH: getTokenPath(),
+    // FIXME: Overrides for this test.
+    ...env,
+  }));
+
+  const context = prepareContext({ commandLegacy, commandPlan });
+
   mockToken(tokenBehavior, context);
-  mockDependencies();
   const stdin = mockStd(outputs, errorOutputs, print);
   planifyInputs(inputs, stdin);
+  mockDependencies(context);
+
+  const command = prepareCommand({
+    commandArgs,
+    commandClass,
+    commandLegacy,
+    context,
+  });
 
   let actualError;
   try {
@@ -106,6 +140,7 @@ async function testCli({
   }
 
   cleanMockedFile(file);
+  rollbackToken(tokenBehavior, context);
 
   try {
     assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);
@@ -118,9 +153,6 @@ async function testCli({
     logStdOut();
     throw e;
   }
-
-  // rollbackEnv(env);
-  rollbackToken(tokenBehavior, context);
 }
 
 module.exports = testCli;

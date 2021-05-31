@@ -9,7 +9,7 @@ describe('projects', () => {
       env: testEnv,
       token: 'any',
       command: () => ListProjectCommand.run([]),
-      api: [getProjectDetailledList()],
+      api: [() => getProjectDetailledList()],
       std: [
         { out: 'PROJECTS' },
         { out: 'ID        NAME' },
@@ -23,7 +23,7 @@ describe('projects', () => {
       env: testEnv,
       token: 'any',
       command: () => ListProjectCommand.run(['--format', 'json']),
-      api: [getProjectDetailledList()],
+      api: [() => getProjectDetailledList()],
       std: [
         {
           out: [{
