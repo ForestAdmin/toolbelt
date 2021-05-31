@@ -11,7 +11,6 @@ const clearTokenPath = () => {
 
 module.exports = {
   storeToken: (fileName, expiresIn = '14 days') => {
-    console.log('storing token', { fileName, cwd: process.cwd()})
     const token = jwt.sign({}, fakeKey, { expiresIn });
     fsExtra.outputFileSync(`${getTokenPath()}/${fileName}`, token);
     return token;
