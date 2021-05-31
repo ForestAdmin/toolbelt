@@ -31,15 +31,15 @@ class InitCommand extends AbstractAuthenticatedCommand {
     this.environmentVariables = {};
 
     /** @type {import('../context/init').Context} */
-    const { config: envConfig, inquirer } = context.inject();
+    const { env, inquirer } = context.inject();
 
     /** @private @readonly */
-    this.envConfig = envConfig;
+    this.env = env;
 
     /** @private @readonly */
     this.inquirer = inquirer;
 
-    ['envConfig', 'inquirer'].forEach((name) => {
+    ['env', 'inquirer'].forEach((name) => {
       if (!this[name]) throw new Error(`Missing dependency ${name}`);
     });
   }
@@ -73,7 +73,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
   async projectSelection() {
     const parsed = this.parse(InitCommand);
     this.config = await withCurrentProject({
-      ...this.envConfig,
+      ...this.env,
       ...parsed.flags,
       includeLegacy: true,
     });
