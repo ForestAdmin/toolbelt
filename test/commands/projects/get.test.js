@@ -9,7 +9,8 @@ describe('projects:get', () => {
       it('should display the configuration of the Forest project', () => testCli({
         env: testEnv,
         token: 'any',
-        command: () => GetProjectCommand.run(['82']),
+        commandClass: GetProjectCommand,
+        commandArgs: ['82'],
         api: [() => getProjectValid()],
         std: [
           { out: 'PROJECT' },
@@ -25,7 +26,8 @@ describe('projects:get', () => {
       it('should display the configuration of the Forest project in JSON', () => testCli({
         env: testEnv,
         token: 'any',
-        command: () => GetProjectCommand.run(['82', '--format', 'json']),
+        commandClass: GetProjectCommand,
+        commandArgs: ['82', '--format', 'json'],
         api: [() => getProjectValid()],
         std: [{
           out: {

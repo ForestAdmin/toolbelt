@@ -18,7 +18,8 @@ describe('environments:create', () => {
       it('should returns the freshly created environment', () => testCli({
         env: testEnv,
         token: 'any',
-        command: () => EnvironmentCreateCommand.run(['-p', '2', '-n', 'Test', '-u', 'https://test.forestadmin.com']),
+        commandClass: EnvironmentCreateCommand,
+        commandArgs: ['-p', '2', '-n', 'Test', '-u', 'https://test.forestadmin.com'],
         api: [
           () => createEnvironmentValid(),
         ],
@@ -40,7 +41,8 @@ describe('environments:create', () => {
       it('should returns the freshly created environment in JSON', () => testCli({
         env: testEnv,
         token: 'any',
-        command: () => EnvironmentCreateCommand.run(['-p', '2', '-n', 'Test', '-u', 'https://test.forestadmin.com', '--format', 'json']),
+        commandClass: EnvironmentCreateCommand,
+        commandArgs: ['-p', '2', '-n', 'Test', '-u', 'https://test.forestadmin.com', '--format', 'json'],
         api: [
           () => createEnvironmentValid(),
         ],
@@ -60,7 +62,8 @@ describe('environments:create', () => {
   describe('without a logged-in user', () => {
     it('should returns the freshly created environment', () => testCli({
       env: testEnv,
-      command: () => EnvironmentCreateCommand.run(['-n', 'Test', '-u', 'https://test.forestadmin.com']),
+      commandClass: EnvironmentCreateCommand,
+      commandArgs: ['-n', 'Test', '-u', 'https://test.forestadmin.com'],
       api: [
         () => loginValidOidc(),
         () => getProjectListValid(),

@@ -1,16 +1,16 @@
-const { Command, flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
+const { flags } = require('@oclif/command');
+const Context = require('@forestadmin/context');
+const plan = require('../context/init');
+const AbstractCommand = require('../abstract-command');
 
-class LoginCommand extends Command {
-  constructor(...args) {
-    super(...args);
-    /** @type {import('../context/init').Context} */
-    const { authenticator } = context.inject();
+class LoginCommand extends AbstractCommand {
+  init(context) {
+    this.context = context || Context.execute(plan);
+    const { assertPresent, authenticator } = this.context;
+    assertPresent({ authenticator });
 
-    /** @private @readonly */
     this.authenticator = authenticator;
-
-    if (!this.authenticator) throw new Error('Missing dependency authenticator');
+    super.init();
   }
 
   async run() {

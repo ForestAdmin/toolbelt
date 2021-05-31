@@ -14,7 +14,8 @@ describe('environments:delete', () => {
       it('should display environment deleted', () => testCli({
         env: testEnv,
         token: 'any',
-        command: () => DeleteCommand.run(['324', '--force']),
+        commandClass: DeleteCommand,
+        commandArgs: ['324', '--force'],
         api: [
           () => getEnvironmentValid(),
           () => deleteEnvironment(),
@@ -29,7 +30,8 @@ describe('environments:delete', () => {
       it('should exit with status 1', () => testCli({
         env: testEnv,
         token: 'any',
-        command: () => DeleteCommand.run(['324', '--force']),
+        commandClass: DeleteCommand,
+        commandArgs: ['324', '--force'],
         api: [
           () => getEnvironmentValid(),
           () => deleteEnvironmentFailure(),
@@ -48,7 +50,8 @@ describe('environments:delete', () => {
         () => getEnvironmentNotFound(),
       ],
       std: [{ err: 'Cannot find the environment 3947.' }],
-      command: () => DeleteCommand.run(['3947', '--force']),
+      commandClass: DeleteCommand,
+      commandArgs: ['3947', '--force'],
       exitCode: 1,
     }));
   });

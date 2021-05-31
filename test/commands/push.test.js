@@ -35,7 +35,7 @@ describe('push', () => {
       it('should display the list of projects', () => testCli({
         env: testEnv,
         token: 'any',
-        command: () => PushCommand.run([]),
+        commandClass: PushCommand,
         api: [
           () => getProjectListValid(),
           () => getInAppProjectForDevWorkflow(projectId),
@@ -68,7 +68,8 @@ describe('push', () => {
       it('should not display the list of projects', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => PushCommand.run(['--projectId', '82']),
+        commandClass: PushCommand,
+        commandArgs: ['--projectId', '82'],
         api: [
           () => getInAppProjectForDevWorkflow(projectId),
           () => getDevelopmentEnvironmentValid(projectId),
@@ -96,7 +97,8 @@ describe('push', () => {
       it('should not display the list of environments', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'name1']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'name1'],
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           () => pushBranchValid(envSecret),
@@ -118,7 +120,8 @@ describe('push', () => {
       it('should not display the list of environments', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'name1', '--force']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'name1', '--force'],
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           () => pushBranchValid(envSecret),
@@ -137,7 +140,8 @@ describe('push', () => {
       it('should not push branch', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'name1']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'name1'],
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
         ],
@@ -155,7 +159,8 @@ describe('push', () => {
       it('should throw an error', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'name1']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'name1'],
         api: [
           () => getProjectByEnv(),
           () => getInAppProjectForDevWorkflow(projectId),
@@ -173,7 +178,8 @@ describe('push', () => {
       it('should throw an error', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'name1']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'name1'],
         api: [
           () => getProjectByEnv(),
           () => getInAppProjectForDevWorkflow(projectId),
@@ -191,7 +197,8 @@ describe('push', () => {
       it('should throw an error', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'notExist', '--force']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'notExist', '--force'],
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           () => pushBranchInvalidDestination(envSecret),
@@ -207,7 +214,8 @@ describe('push', () => {
       it('should throw an error', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'noRemote', '--force']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'noRemote', '--force'],
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           () => pushBranchInvalidType(envSecret),
@@ -223,7 +231,8 @@ describe('push', () => {
       it('should throw an error', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'noRemote', '--force']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'noRemote', '--force'],
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           () => pushBranchInvalidDestinationBranch(envSecret),
@@ -239,7 +248,7 @@ describe('push', () => {
       it('should throw an error', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => PushCommand.run([]),
+        commandClass: PushCommand,
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           () => getNoEnvironmentListValid(projectId),
@@ -254,7 +263,7 @@ describe('push', () => {
       it('should throw an error', () => testCli({
         env: testEnv2,
         token: 'any',
-        command: () => PushCommand.run([]),
+        commandClass: PushCommand,
         api: [
           () => getProjectByEnv(),
           () => getV1ProjectForDevWorkflow(projectId),

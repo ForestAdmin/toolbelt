@@ -8,7 +8,7 @@ describe('projects', () => {
     it('should return the list of projects', () => testCli({
       env: testEnv,
       token: 'any',
-      command: () => ListProjectCommand.run([]),
+      commandClass: ListProjectCommand,
       api: [() => getProjectDetailledList()],
       std: [
         { out: 'PROJECTS' },
@@ -22,7 +22,8 @@ describe('projects', () => {
     it('should return the list of projects in json format', () => testCli({
       env: testEnv,
       token: 'any',
-      command: () => ListProjectCommand.run(['--format', 'json']),
+      commandClass: ListProjectCommand,
+      commandArgs: ['--format', 'json'],
       api: [() => getProjectDetailledList()],
       std: [
         {

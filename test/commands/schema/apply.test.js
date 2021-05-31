@@ -72,7 +72,7 @@ describe('schema:apply', () => {
         () => loginValidOidc(),
         () => postSchema(postSchemaMatch),
       ],
-      command: () => ApplySchemaCommand.run([]),
+      commandClass: ApplySchemaCommand,
       std: [
         { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
         { out: 'Reading "./.forestadmin-schema.json"...' },
@@ -94,7 +94,7 @@ describe('schema:apply', () => {
         },
         env: testEnv,
         token: 'any',
-        command: () => ApplySchemaCommand.run([]),
+        commandClass: ApplySchemaCommand,
         std: [{
           err: 'Cannot find your forest environment secret in the environment variable "FOREST_ENV_SECRET".\n'
       + 'Please set the "FOREST_ENV_SECRET" variable or pass the secret in parameter using --secret.',
@@ -112,7 +112,7 @@ describe('schema:apply', () => {
           },
           token: 'any',
           env: testEnv2,
-          command: () => ApplySchemaCommand.run([]),
+          commandClass: ApplySchemaCommand,
           api: [() => postSchema404()],
           std: [{ err: 'Cannot find the project related to the environment secret you configured.' }],
           exitCode: 4,
@@ -127,7 +127,7 @@ describe('schema:apply', () => {
           },
           env: testEnv2,
           api: [() => postSchema503()],
-          command: () => ApplySchemaCommand.run([]),
+          commandClass: ApplySchemaCommand,
           std: [{ err: 'Forest is in maintenance for a few minutes. We are upgrading your experience in the forest. We just need a few more minutes to get it right.' }],
           exitCode: 5,
           token: 'any',
@@ -144,7 +144,7 @@ describe('schema:apply', () => {
             env: testEnv2,
             token: 'any',
             api: [() => postSchema(postSchemaMatch)],
-            command: () => ApplySchemaCommand.run([]),
+            commandClass: ApplySchemaCommand,
             std: [
               { out: 'Reading "./.forestadmin-schema.json"...' },
               {
@@ -165,7 +165,7 @@ describe('schema:apply', () => {
             env: testEnv2,
             token: 'any',
             api: [() => postSchema(postSchemaMatch)],
-            command: () => ApplySchemaCommand.run([]),
+            commandClass: ApplySchemaCommand,
             std: [
               { out: 'Reading "./.forestadmin-schema.json"...' },
               {
@@ -227,7 +227,7 @@ describe('schema:apply', () => {
       env: testEnv2,
       token: 'any',
       api: [() => postSchema500()],
-      command: () => ApplySchemaCommand.run([]),
+      commandClass: ApplySchemaCommand,
       std: [{ err: 'An error occured with the schema sent to Forest. Please contact support@forestadmin.com for further investigations.' }],
       exitCode: 6,
     }));
