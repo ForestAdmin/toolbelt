@@ -31,7 +31,7 @@ function Authenticator({
     }
   };
 
-  this.saveToken = (token, path = process.env.TOKEN_PATH || os.homedir()) => fs
+  this.saveToken = (token, path = env.TOKEN_PATH || os.homedir()) => fs
     .writeFileSync(`${path}/.forestrc`, token);
 
   this.verify = (token) => {
