@@ -9,11 +9,10 @@ const withCurrentProject = require('../services/with-current-project');
 class PushCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan || defaultPlan);
-    const { assertPresent, inquirer, config } = this.context;
-    assertPresent({ inquirer, config });
-
+    const { assertPresent, env, inquirer } = this.context;
+    assertPresent({ env, inquirer });
+    this.envConfig = env;
     this.inquirer = inquirer;
-    this.envConfig = config;
   }
 
   // TODO: DWO EP17 probably update this function to handle environment selection
