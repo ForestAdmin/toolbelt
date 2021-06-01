@@ -1,9 +1,10 @@
 const superagent = require('superagent');
 
-const FOREST_URL = process.env.FOREST_URL || 'https://forestadmin-server.herokuapp.com';
-
 class EventSender {
-  constructor() {
+  constructor({ assertPresent, env }) {
+    assertPresent({ env });
+    this.env = env;
+
     this.appName = null;
     this.command = null;
   }
@@ -12,7 +13,7 @@ class EventSender {
     if (!this.appName || !this.command) { return; }
 
     try {
-      await superagent.post(`${FOREST_URL}/api/lumber/error`, {
+      await superagent.post(`${this.env.FOREST_URL}/api/lumber/error`, {
         data: {
           type: 'events',
           attributes: {
@@ -34,7 +35,7 @@ class EventSender {
     if (!this.appName || !this.command) { return; }
 
     try {
-      await superagent.post(`${FOREST_URL}/api/lumber/success`, {
+      await superagent.post(`${this.env.FOREST_URL}/api/lumber/success`, {
         data: {
           type: 'events',
           attributes: {
