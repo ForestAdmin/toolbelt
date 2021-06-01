@@ -82,7 +82,7 @@ async function testCli({
 
   mockFile(file);
 
-  const commandPlan = prepareContextPlan()
+  let commandPlan = prepareContextPlan()
     .replace('env.variables', (context) => context.addValue('env', {
       // FIXME: Default values.
       // APPLICATION_PORT: undefined,
@@ -106,9 +106,12 @@ async function testCli({
       (context) => context.addFunction('open', jest.fn()));
 
   if (tokenBehavior != null) {
-    commandPlan.replace('services.authenticator',
+    commandPlan = commandPlan.replace('services.authenticator',
       (context) => context.addInstance('authenticator', {
         getAuthToken: () => tokenBehavior,
+        login: () => { },
+        logout: () => { },
+        tryLogin: () => { },
       }));
   }
 
