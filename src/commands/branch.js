@@ -1,29 +1,17 @@
 const { flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
+const defaultPlan = require('../context/init');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
 
 class BranchCommand extends AbstractAuthenticatedCommand {
-  constructor(...args) {
-    super(...args);
-
-    /** @type {import('../context/init').Context} */
-    const { inquirer, config } = context.inject();
-
-    /** @private @readonly */
+  init(plan) {
+    super.init(plan || defaultPlan);
+    const { assertPresent, inquirer, config } = this.context;
+    assertPresent({ inquirer, config });
     this.inquirer = inquirer;
     this.envConfig = config;
-
-    ['inquirer', 'envConfig'].forEach((name) => {
-      if (!this[name]) throw new Error(`Missing dependency ${name}`);
-    });
-  }
-
-  init(){
-    super.init();
-
   }
 
   async listBranches(envSecret) {

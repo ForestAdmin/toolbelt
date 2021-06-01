@@ -1,20 +1,17 @@
 const { flags } = require('@oclif/command');
 const chalk = require('chalk');
-const Context = require('@forestadmin/context');
-const plan = require('../../context/init');
+const defaultPlan = require('../../context/init');
 const EnvironmentManager = require('../../services/environment-manager');
 const Renderer = require('../../renderers/environment');
 const logger = require('../../services/logger');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class GetCommand extends AbstractAuthenticatedCommand {
-  init(context) {
-    this.context = context || Context.execute(plan);
+  init(plan) {
+    super.init(plan || defaultPlan);
     const { assertPresent, env } = this.context;
     assertPresent({ env });
     this.env = env;
-
-    super.init();
   }
 
   async runIfAuthenticated() {

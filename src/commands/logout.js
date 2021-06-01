@@ -1,15 +1,12 @@
-const Context = require('@forestadmin/context');
 const AbstractCommand = require('../abstract-command');
-const plan = require('../context/init');
+const defaultPlan = require('../context/init');
 
 class LogoutCommand extends AbstractCommand {
-  init(context) {
-    this.context = context || Context.execute(plan);
+  init(plan) {
+    super.init(plan || defaultPlan);
     const { assertPresent, authenticator } = this.context;
     assertPresent({ authenticator });
-
     this.authenticator = authenticator;
-    super.init();
   }
 
   async run() {

@@ -1,21 +1,19 @@
 const path = require('path');
 const { flags } = require('@oclif/command');
-const Context = require('@forestadmin/context');
-const plan = require('../../context/init');
+const defaultPlan = require('../../context/init');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
 const JobStateChecker = require('../../services/job-state-checker');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class ApplyCommand extends AbstractAuthenticatedCommand {
-  init(context) {
-    this.context = context || Context.execute(plan);
+  init(plan) {
+    super.init(plan || defaultPlan);
     const { assertPresent, fs, joi } = this.context;
     assertPresent({ fs, joi });
 
     this.fs = fs;
     this.joi = joi;
-    super.init();
   }
 
   async runIfAuthenticated() {
