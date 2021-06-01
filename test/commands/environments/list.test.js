@@ -9,7 +9,7 @@ describe('environments', () => {
       env: testEnv,
       token: 'any',
       api: [
-        getEnvironmentListValid2(),
+        () => getEnvironmentListValid2(),
       ],
       commandClass: EnvironmentCommand,
       commandArgs: ['-p', '82'],
