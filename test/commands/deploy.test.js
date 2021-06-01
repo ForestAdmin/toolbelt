@@ -41,10 +41,10 @@ describe('deploy', () => {
         token: 'any',
         commandClass: DeployCommand,
         api: [
-          getProjectListValid(),
-          getDevelopmentEnvironmentValid(1),
-          getEnvironmentListValid(1),
-          deployValid(validEnvSecret),
+          () => getProjectListValid(),
+          () => getDevelopmentEnvironmentValid(1),
+          () => getEnvironmentListValid(1),
+          () => deployValid(validEnvSecret),
         ],
         std: [
           { out: 'Select your project' },
@@ -67,8 +67,8 @@ describe('deploy', () => {
           commandClass: DeployCommand,
           commandArgs: ['-p', '82'],
           api: [
-            getEnvironmentListValid(projectId),
-            deployValid(),
+            () => getEnvironmentListValid(projectId),
+            () => deployValid(),
           ],
           std: [
             ...inOutSelectEnvironment(environmentName),
@@ -85,9 +85,9 @@ describe('deploy', () => {
           token: 'any',
           commandClass: DeployCommand,
           api: [
-            getProjectByEnv(),
-            getEnvironmentListValid(projectId),
-            deployValid(),
+            () => getProjectByEnv(),
+            () => getEnvironmentListValid(projectId),
+            () => deployValid(),
           ],
           std: [
             ...inOutSelectEnvironment(environmentName),
@@ -106,9 +106,9 @@ describe('deploy', () => {
         commandClass: DeployCommand,
         commandArgs: [environmentName],
         api: [
-          getProjectByEnv(),
-          getEnvironmentListValid(projectId),
-          deployValid(),
+          () => getProjectByEnv(),
+          () => getEnvironmentListValid(projectId),
+          () => deployValid(),
         ],
         std: inOutConfirmDeploy(environmentName),
       }));
@@ -123,9 +123,9 @@ describe('deploy', () => {
         commandClass: DeployCommand,
         commandArgs: [environmentName, '--force'],
         api: [
-          getProjectByEnv(),
-          getEnvironmentListValid(projectId),
-          deployValid(),
+          () => getProjectByEnv(),
+          () => getEnvironmentListValid(projectId),
+          () => deployValid(),
         ],
         std: [inOutDeploySuccessMessage(environmentName)],
       }));
@@ -140,8 +140,8 @@ describe('deploy', () => {
         commandClass: DeployCommand,
         commandArgs: [environmentName],
         api: [
-          getProjectByEnv(),
-          getEnvironmentListValid(projectId),
+          () => getProjectByEnv(),
+          () => getEnvironmentListValid(projectId),
         ],
         std: [
           { in: 'n' },
@@ -159,8 +159,8 @@ describe('deploy', () => {
         commandClass: DeployCommand,
         commandArgs: ['notExist'],
         api: [
-          getProjectByEnv(),
-          getEnvironmentListValid(projectId),
+          () => getProjectByEnv(),
+          () => getEnvironmentListValid(projectId),
         ],
         exitCode: 2,
         exitMessage: "❌ The environment provided doesn't exist.",
