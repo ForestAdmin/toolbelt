@@ -1,21 +1,18 @@
 const jwt = require('jsonwebtoken');
 const { Command } = require('@oclif/command');
-const context = require('@forestadmin/context');
+const defaultPlan = require('../context/init');
 
 class UserCommand extends Command {
-  constructor(...args) {
-    super(...args);
-
-    /** @type {import('../context/init').Context} */
-    const { chalk, logger, authenticator } = context.inject();
+  init(plan) {
+    super.init(plan || defaultPlan);
+    const {
+      assertPresent, chalk, logger, authenticator,
+    } = this.context;
+    assertPresent({ chalk, logger, authenticator });
 
     this.chalk = chalk;
     this.logger = logger;
     this.authenticator = authenticator;
-
-    ['chalk', 'logger', 'authenticator'].forEach((name) => {
-      if (!this[name]) throw new Error(`Missing dependency ${name}`);
-    });
   }
 
   async run() {
