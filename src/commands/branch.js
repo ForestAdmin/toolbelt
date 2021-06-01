@@ -68,7 +68,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
 
   async runIfAuthenticated() {
     const parsed = this.parse(BranchCommand);
-    const envSecret = process.env.FOREST_ENV_SECRET;
+    const envSecret = this.envConfig.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
     let config;
 
