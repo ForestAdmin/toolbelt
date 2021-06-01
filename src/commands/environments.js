@@ -8,9 +8,9 @@ const withCurrentProject = require('../services/with-current-project');
 class EnvironmentCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan || defaultPlan);
-    const { assertPresent, config } = this.context;
-    assertPresent({ config });
-    this.envConfig = config;
+    const { assertPresent, env } = this.context;
+    assertPresent({ env });
+    this.envConfig = env;
   }
 
   async runIfAuthenticated() {
