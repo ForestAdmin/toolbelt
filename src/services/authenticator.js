@@ -53,9 +53,10 @@ function Authenticator({
     || 'Invalid token. Please enter your authentication token.';
 
   this.logout = async (opts = {}) => {
-    const pathForestrc = `${os.homedir()}/.forestrc`;
+    const basePath = env.TOKEN_PATH || os.homedir();
+    const pathForestrc = `${basePath}/.forestrc`;
     const forestToken = this.getVerifiedToken(pathForestrc);
-    const pathLumberrc = `${os.homedir()}/.lumberrc`;
+    const pathLumberrc = `${basePath}/.lumberrc`;
     const isLumberLoggedIn = this.getVerifiedToken(pathLumberrc);
 
     if (forestToken) {
