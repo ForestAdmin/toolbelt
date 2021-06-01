@@ -19,26 +19,45 @@ class Authenticator {
    * @param {import('../context/init').Context} context
    */
   constructor({
-    logger, fs, os, chalk, api, terminator, authenticatorHelper,
-    inquirer, fsAsync, applicationTokenService,
+    api,
+    applicationTokenService,
+    assertPresent,
+    authenticatorHelper,
+    chalk,
+    env,
+    fs,
+    fsAsync,
+    inquirer,
+    logger,
+    os,
+    terminator,
   }) {
-    this.logger = logger;
+    assertPresent({
+      api,
+      applicationTokenService,
+      assertPresent,
+      authenticatorHelper,
+      chalk,
+      env,
+      fs,
+      fsAsync,
+      inquirer,
+      logger,
+      os,
+      terminator,
+    });
+
+    this.api = api;
+    this.applicationTokenService = applicationTokenService;
+    this.authenticatorHelper = authenticatorHelper;
+    this.chalk = chalk;
+    this.env = env;
     this.fs = fs;
     this.fsAsync = fsAsync;
-    this.os = os;
-    this.chalk = chalk;
-    this.api = api;
-    this.terminator = terminator;
-    this.authenticatorHelper = authenticatorHelper;
     this.inquirer = inquirer;
-    this.applicationTokenService = applicationTokenService;
-
-    ['logger', 'fs', 'os', 'chalk',
-      'api', 'terminator', 'authenticatorHelper',
-      'inquirer', 'fsAsync', 'applicationTokenService',
-    ].forEach((name) => {
-      if (!this[name]) throw new Error(`Missing dependency ${name}`);
-    });
+    this.logger = logger;
+    this.os = os;
+    this.terminator = terminator;
 
     this.pathToLumberrc = `${os.homedir()}/.lumberrc`;
   }
@@ -70,7 +89,7 @@ class Authenticator {
   }
 
   async loginWithGoogle(email) {
-    const endpoint = process.env.FOREST_URL && process.env.FOREST_URL.includes('localhost')
+    const endpoint = this.env.FOREST_URL && this.env.FOREST_URL.includes('localhost')
       ? 'http://localhost:4200' : 'https://app.forestadmin.com';
     const url = this.chalk.cyan.underline(`${endpoint}/authentication-token`);
     this.logger.info(`To authenticate with your Google account, please follow this link and copy the authentication token: ${url}`);
