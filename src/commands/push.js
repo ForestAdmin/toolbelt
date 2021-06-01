@@ -1,6 +1,5 @@
 const { flags } = require('@oclif/command');
-const Context = require('@forestadmin/context');
-const plan = require('../context/init');
+const defaultPlan = require('../context/init');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
@@ -8,14 +7,13 @@ const EnvironmentManager = require('../services/environment-manager');
 const withCurrentProject = require('../services/with-current-project');
 
 class PushCommand extends AbstractAuthenticatedCommand {
-  init(context) {
-    this.context = context || Context.execute(plan);
+  init(plan) {
+    super.init(plan || defaultPlan);
     const { assertPresent, inquirer, config } = this.context;
     assertPresent({ inquirer, config });
 
     this.inquirer = inquirer;
     this.envConfig = config;
-    super.init();
   }
 
   // TODO: DWO EP17 probably update this function to handle environment selection

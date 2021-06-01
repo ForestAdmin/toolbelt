@@ -1,13 +1,11 @@
-const Context = require('@forestadmin/context');
 const { flags } = require('@oclif/command');
 
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
-const initContext = require('../../context/init');
+const defaultPlan = require('../../context/init');
 
 class CreateCommand extends AbstractAuthenticatedCommand {
-  constructor(...args) {
-    super(...args);
-    this.plan = initContext;
+  init(plan) {
+    super.init(plan || defaultPlan);
     const {
       api,
       assertPresent,
@@ -23,7 +21,8 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       ProjectCreator,
       spinners,
       terminator,
-    } = this.getContext();
+    } = this.context;
+
     assertPresent({
       api,
       authenticator,
@@ -52,10 +51,6 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     this.ProjectCreator = ProjectCreator;
     this.spinners = spinners;
     this.terminator = terminator;
-  }
-
-  getContext() {
-    return Context.execute(this.plan);
   }
 
   async runIfAuthenticated() {
