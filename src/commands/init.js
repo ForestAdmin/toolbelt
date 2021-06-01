@@ -1,7 +1,6 @@
 const fs = require('fs');
 const { flags } = require('@oclif/command');
-const Context = require('@forestadmin/context');
-const plan = require('../context/init');
+const defaultPlan = require('../context/init');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const { buildDatabaseUrl } = require('../utils/database-url');
 const withCurrentProject = require('../services/with-current-project');
@@ -27,15 +26,14 @@ const PROMPT_MESSAGE_AUTO_CREATING_ENV_FILE = 'Do you want a new `.env` file (co
 
 const spinner = singletonGetter(Spinner);
 class InitCommand extends AbstractAuthenticatedCommand {
-  init(context) {
-    this.context = context || Context.execute(plan);
+  init(plan) {
+    super.init(plan || defaultPlan);
     const { assertPresent, inquirer, env } = this.context;
     assertPresent({ inquirer, env });
 
     this.environmentVariables = {};
     this.inquirer = inquirer;
     this.env = env;
-    super.init();
   }
 
   async runIfAuthenticated() {
