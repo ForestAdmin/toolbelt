@@ -4,7 +4,10 @@ const defaultPlan = require('./context/init');
 
 module.exports = class AbstractCommand extends Command {
   init(plan) {
-    this.context = Context.execute(plan || defaultPlan);
+    Context.init(plan || defaultPlan);
+    this.context = Context.inject();
+    // FIXME: Restore when no more Context.inject present in services.
+    // this.context = Context.execute(plan || defaultPlan);
     const { assertPresent, logger, chalk } = this.context;
     assertPresent({ logger, chalk });
 
