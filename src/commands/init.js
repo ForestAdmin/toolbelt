@@ -78,7 +78,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
 
   async handleDatabaseUrlConfiguration() {
     if (this.environmentVariables.projectOrigin !== 'In-app') {
-      const isDatabaseAlreadyConfigured = !!process.env.DATABASE_URL;
+      const isDatabaseAlreadyConfigured = !!this.env.DATABASE_URL;
 
       if (!isDatabaseAlreadyConfigured) {
         spinner.pause();
