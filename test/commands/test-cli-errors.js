@@ -1,4 +1,3 @@
-const _ = require('lodash');
 const AbstractCommand = require('../../src/abstract-command');
 
 function errorIfBadFile(file) {
@@ -39,18 +38,8 @@ function errorIfStdRest(stds) {
   }
 }
 
-function errorIfBadCommand({ commandLegacy, commandClass, commandArgs }) {
-  // FIXME: remove all "command" usages
-  if (commandLegacy) {
-    if (commandClass || commandArgs) {
-      throw new Error('Only "command" or "commandClass+commandArgs" should be defined');
-    }
-    if (!_.isFunction(commandLegacy)) {
-      throw new Error('testCli configuration error: "command" must be a function ex.'
-        + ' () => GetCommand.run([\'324\'])');
-    }
-    // command is valid
-  } else if (commandClass) {
+function errorIfBadCommand({ commandClass, commandArgs }) {
+  if (commandClass) {
     if (!(commandClass.prototype instanceof AbstractCommand)) {
       throw new Error('"commandClass" must inherit "AbstractCommand"');
     }

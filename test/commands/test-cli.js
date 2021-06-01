@@ -5,10 +5,10 @@ const {
   assertExitMessage,
   assertNoErrorThrown,
 } = require('./test-cli-errors');
-const { prepareCommand, prepareContext, prepareContextPlan } = require('./test-cli-command');
+const { prepareCommand, prepareContextPlan } = require('./test-cli-command');
 const { assertApi } = require('./test-cli-api');
 const { mockFile, cleanMockedFile, randomDirectoryName } = require('./test-cli-fs');
-const { getTokenPath, mockToken, rollbackToken } = require('./test-cli-auth-token');
+const { getTokenPath } = require('./test-cli-auth-token');
 const { validateInput } = require('./test-cli-errors');
 const {
   assertOutputs,
@@ -29,7 +29,6 @@ function asArray(any) {
  *  file?: any;
  *  api?: import('nock').Scope|Array<import('nock').Scope>,
  *  env?: any;
- *  command: () => PromiseLike<any>;
  *  exitCode?: number;
  *  exitMessage?: string;
  *  std?: Array<{in?: string; out?: string; err?: string; spinner?: string}>
@@ -42,7 +41,6 @@ async function testCli({
   file,
   api,
   env,
-  command: commandLegacy,
   commandClass,
   commandArgs,
   exitCode: expectedExitCode,
@@ -63,7 +61,7 @@ async function testCli({
 
   validateInput(
     file,
-    { commandLegacy, commandClass, commandArgs },
+    { commandClass, commandArgs },
     stds,
     expectedExitCode,
     expectedExitMessage,
@@ -84,7 +82,7 @@ async function testCli({
 
   mockFile(file);
 
-  const commandPlan = prepareContextPlan({ commandLegacy })
+  const commandPlan = prepareContextPlan()
     .replace('env.variables', (context) => context.addValue('env', {
       // FIXME: Default values.
       // APPLICATION_PORT: undefined,
@@ -107,17 +105,20 @@ async function testCli({
     .replace('dependencies.open',
       (context) => context.addFunction('open', jest.fn()));
 
-  const context = prepareContext({ commandLegacy, commandPlan });
+  if (tokenBehavior != null) {
+    commandPlan.replace('services.authenticator',
+      (context) => context.addInstance('authenticator', {
+        getAuthToken: () => tokenBehavior,
+      }));
+  }
 
-  mockToken(tokenBehavior, context);
   const stdin = mockStd(outputs, errorOutputs, print);
   planifyInputs(inputs, stdin);
 
   const command = prepareCommand({
     commandArgs,
     commandClass,
-    commandLegacy,
-    context,
+    commandPlan,
   });
 
   nock.disableNetConnect();
@@ -139,7 +140,6 @@ async function testCli({
   }
 
   cleanMockedFile(file);
-  rollbackToken(tokenBehavior, context);
 
   try {
     assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);

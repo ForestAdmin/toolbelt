@@ -1,38 +1,17 @@
-const Context = require('@forestadmin/context');
-const { init } = require('@forestadmin/context');
-
 const basePlan = require('../../src/context/init');
 
 const prepareCommand = ({
   commandArgs = [],
   commandClass: CommandClass,
-  commandLegacy,
-  context,
+  commandPlan,
 }) => {
-  if (commandLegacy) return commandLegacy;
-
   const instance = new CommandClass(commandArgs);
-  instance.init(context);
+  instance.init(commandPlan);
 
   return () => instance.run();
 };
 
-const prepareContext = ({ commandLegacy, commandPlan }) => {
-  if (commandLegacy) {
-    init(commandPlan);
+// FIXME: Need to override things here (fs...)
+const prepareContextPlan = () => basePlan;
 
-    return Context.inject();
-  }
-
-  return Context.execute(commandPlan);
-};
-
-const prepareContextPlan = ({ commandLegacy }) => {
-  // FIXME: This should disappear.
-  if (commandLegacy) return basePlan;
-
-  // FIXME: Need to override things here (fs...)
-  return basePlan;
-};
-
-module.exports = { prepareCommand, prepareContext, prepareContextPlan };
+module.exports = { prepareCommand, prepareContextPlan };
