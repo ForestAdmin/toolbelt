@@ -19,17 +19,4 @@ module.exports = {
   },
   getTokenPath,
   clearTokenPath,
-  mockToken: (behavior, { authenticator, env }) => {
-    if (behavior !== null) {
-      authenticator.getAuthTokenBack = authenticator.getAuthToken;
-      authenticator.getAuthToken = () => behavior;
-    }
-    clearTokenPath({ env });
-  },
-  rollbackToken: (behavior, { authenticator }) => {
-    if (behavior !== null) {
-      authenticator.getAuthToken = authenticator.getAuthTokenBack;
-      authenticator.getAuthTokenBack = null;
-    }
-  },
 };
