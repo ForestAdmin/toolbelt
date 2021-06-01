@@ -143,12 +143,14 @@ const initSerializers = (context) => context
 /**
  * @param {import('./application-context')} context
  */
-const initServices = (context) => context
-  .addInstance('logger', logger)
-  .addClass(Api)
-  .addClass(OidcAuthenticator)
-  .addClass(ApplicationTokenService)
-  .addClass(Authenticator);
+const initServices = newPlan()
+  .addStep('dependencies', (context) => context
+    .addInstance('logger', logger)
+    .addClass(Api)
+    .addClass(OidcAuthenticator)
+    .addClass(ApplicationTokenService))
+  .addStep('authenticator', (context) => context
+    .addClass(Authenticator));
 
 /**
  * @param {import('./application-context')} context
