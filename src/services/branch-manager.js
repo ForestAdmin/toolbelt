@@ -26,7 +26,7 @@ function getBranches(envSecret) {
   assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
   return agent
-    .get(`${env.FOREST_URL}{/api/branches`)
+    .get(`${env.FOREST_URL}/api/branches`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', envSecret)
     .send()
@@ -44,7 +44,7 @@ function deleteBranch(branchName, environmentSecret) {
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .del(`${env.FOREST_URL}{/api/branches/${encodeURIComponent(branchName)}`)
+    .del(`${env.FOREST_URL}/api/branches/${encodeURIComponent(branchName)}`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send();
@@ -61,7 +61,7 @@ function createBranch(branchName, environmentSecret) {
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .post(`${env.FOREST_URL}{/api/branches`)
+    .post(`${env.FOREST_URL}/api/branches`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send({ branchName: encodeURIComponent(branchName) });
@@ -79,7 +79,7 @@ function pushBranch(destinationEnvironmentName, environmentSecret) {
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .post(`${env.FOREST_URL}{/api/branches/push`)
+    .post(`${env.FOREST_URL}/api/branches/push`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send({ destinationEnvironmentName: encodeURIComponent(destinationEnvironmentName) });
@@ -96,7 +96,7 @@ function switchBranch({ id }, environmentSecret) {
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .put(`${env.FOREST_URL}{/api/environments`)
+    .put(`${env.FOREST_URL}/api/environments`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send(EnvironmentSerializer.serialize({ currentBranchId: id }));
