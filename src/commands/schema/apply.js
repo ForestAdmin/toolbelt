@@ -9,9 +9,14 @@ const AbstractAuthenticatedCommand = require('../../abstract-authenticated-comma
 class ApplyCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan || defaultPlan);
-    const { assertPresent, fs, joi } = this.context;
-    assertPresent({ fs, joi });
-
+    const {
+      assertPresent,
+      env,
+      fs,
+      joi,
+    } = this.context;
+    assertPresent({ env, fs, joi });
+    this.env = env;
     this.fs = fs;
     this.joi = joi;
   }
@@ -112,9 +117,9 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
 
     if (parsedFlags.secret) {
       secret = parsedFlags.secret;
-    } else if (process.env.FOREST_ENV_SECRET) {
+    } else if (this.env.FOREST_ENV_SECRET) {
       this.log('Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"');
-      secret = process.env.FOREST_ENV_SECRET;
+      secret = this.env.FOREST_ENV_SECRET;
     } else {
       this.logger.error('Cannot find your forest environment secret in the environment variable "FOREST_ENV_SECRET".\nPlease set the "FOREST_ENV_SECRET" variable or pass the secret in parameter using --secret.');
       this.exit(2);
