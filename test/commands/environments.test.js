@@ -17,9 +17,9 @@ describe('environments', () => {
     env: testEnv,
     commandClass: EnvironmentCommand,
     api: [
-      loginValidOidc(),
-      getProjectListValid(),
-      getEnvironmentListValid(),
+      () => loginValidOidc(),
+      () => getProjectListValid(),
+      () => getEnvironmentListValid(),
     ],
     std: [
       ...loginRequired,

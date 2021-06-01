@@ -18,9 +18,9 @@ describe('switch', () => {
           token: 'any',
           commandClass: SwitchCommand,
           api: [
-            getProjectByEnv(),
-            getBranchListValid(),
-            updateEnvironmentCurrentBranchId(),
+            () => getProjectByEnv(),
+            () => getBranchListValid(),
+            () => updateEnvironmentCurrentBranchId(),
           ],
           std: [
             { out: 'Select the branch you want to set current' },
@@ -41,9 +41,9 @@ describe('switch', () => {
           commandClass: SwitchCommand,
           commandArgs: ['feature/third'],
           api: [
-            getProjectByEnv(),
-            getBranchListValid(),
-            updateEnvironmentCurrentBranchId(),
+            () => getProjectByEnv(),
+            () => getBranchListValid(),
+            () => updateEnvironmentCurrentBranchId(),
           ],
           std: [
             { out: 'Switched to branch: feature/third' },
@@ -59,8 +59,8 @@ describe('switch', () => {
           commandClass: SwitchCommand,
           commandArgs: ['not-existing-branch'],
           api: [
-            getProjectByEnv(),
-            getBranchListValid(),
+            () => getProjectByEnv(),
+            () => getBranchListValid(),
           ],
           std: [
             { err: "❌ This branch doesn't exist." },
@@ -76,8 +76,8 @@ describe('switch', () => {
           commandClass: SwitchCommand,
           commandArgs: ['feature/second'],
           api: [
-            getProjectByEnv(),
-            getBranchListValid(),
+            () => getProjectByEnv(),
+            () => getBranchListValid(),
           ],
           std: [
             { out: 'ℹ️  feature/second is already your current branch.' },
@@ -92,8 +92,8 @@ describe('switch', () => {
         token: 'any',
         commandClass: SwitchCommand,
         api: [
-          getProjectByEnv(),
-          getNoBranchListValid(),
+          () => getProjectByEnv(),
+          () => getNoBranchListValid(),
         ],
         std: [
           { out: "⚠️  You don't have any branch to set as current. Use `forest branch <branch_name>` to create one." },
