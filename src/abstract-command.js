@@ -1,10 +1,10 @@
 const { Command } = require('@oclif/command');
 const Context = require('@forestadmin/context');
-const basePlan = require('./context/init');
+const defaultPlan = require('./context/init');
 
 module.exports = class AbstractCommand extends Command {
-  init(context) {
-    this.context = context || Context.execute(basePlan);
+  init(plan) {
+    this.context = Context.execute(plan || defaultPlan);
     const { assertPresent, logger, chalk } = this.context;
     assertPresent({ logger, chalk });
 
