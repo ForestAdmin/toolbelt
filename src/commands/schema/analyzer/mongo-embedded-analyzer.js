@@ -1,7 +1,7 @@
 const {
   getMongooseTypeFromValue,
   isOfMongooseType,
-} = require('../../utils/mongo-primitive-type');
+} = require('../../../../utils/mongo-primitive-type');
 
 /* eslint-disable vars-on-top, no-var, no-use-before-define, no-param-reassign */
 /* istanbul ignore next */

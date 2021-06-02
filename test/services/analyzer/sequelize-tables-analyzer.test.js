@@ -1,4 +1,4 @@
-const analyzeSequelizeTables = require('../../../services/analyzer/sequelize-tables-analyzer');
+const analyzeSequelizeTables = require('../../../src/commands/schema/analyzer/sequelize-tables-analyzer');
 const EmptyDatabaseError = require('../../../utils/errors/database/empty-database-error');
 
 describe('services > sequelizeTablesAnalyzer', () => {

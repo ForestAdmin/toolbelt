@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const SequelizeHelper = require('../../test-utils/sequelize-helper');
 const { describeSequelizeDatabases } = require('../../test-utils/multiple-database-version-helper');
-const TableConstraintsGetter = require('../../services/analyzer/sequelize-table-constraints-getter');
+const TableConstraintsGetter = require('../../src/commands/schema/analyzer/sequelize-table-constraints-getter');
 const expectedAddressesConstraints = require('../../test-expected/sequelize/constraints-getter-output/addresses.expected.js');
 const expectedCustomersConstraints = require('../../test-expected/sequelize/constraints-getter-output/customers.expected.js');
 const expectedReviewsConstraints = require('../../test-expected/sequelize/constraints-getter-output/reviews.expected.js');

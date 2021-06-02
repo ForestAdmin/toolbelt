@@ -1,5 +1,5 @@
 const chalk = require('chalk');
-const logger = require('../../src/utils/logger');
+const logger = require('../../../utils/logger');
 
 const DIALECT_MYSQL = 'mysql';
 const DIALECT_POSTGRES = 'postgres';

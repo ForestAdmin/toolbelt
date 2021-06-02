@@ -12,7 +12,7 @@ const {
   hasEmbeddedTypes,
   haveSameEmbeddedType,
   mergeAnalyzedSchemas,
-} = require('../../../services/analyzer/mongo-embedded-analyzer');
+} = require('../../../src/commands/schema/analyzer/mongo-embedded-analyzer');
 
 const MONGOOSE_SCHEMA_TYPE_OBJECTID = 'Mongoose.Schema.Types.ObjectId';
 
