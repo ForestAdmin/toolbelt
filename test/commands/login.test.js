@@ -23,11 +23,13 @@ describe('login', () => {
       }));
     });
     describe('with valid token in args', () => {
-      const token = jwt.sign({}, 'key', { expiresIn: '1day' });
       it('should login successful', () => testCli({
         env: testEnv,
         commandClass: LoginCommand,
-        commandArgs: [['-e', 'smile@gmail.com', '-t', token]],
+        commandArgs: [
+          '-e', 'smile@gmail.com',
+          '-t', jwt.sign({}, 'key', { expiresIn: '1day' }),
+        ],
         std: [
           { in: `${jwt.sign({}, 'key', { expiresIn: '1day' })}` },
           { out: 'Login successful' },
