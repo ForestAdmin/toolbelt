@@ -15,7 +15,8 @@ function errorIfBadFile(file) {
   if (name && directory) {
     throw new Error('define testCli.directory OR testCli.name');
   }
-  if ((!name && content) || (name && !content)) {
+  const missingContent = content === null || content === undefined;
+  if ((!name && content) || (name && missingContent)) {
     throw new Error('testCli.file name AND content must be defined');
   }
   if (temporaryDirectory !== undefined && typeof temporaryDirectory !== 'boolean') {
