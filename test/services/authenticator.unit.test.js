@@ -12,6 +12,9 @@ describe('services > authenticator', () => {
     const os = {
       homedir: jest.fn().mockReturnValue('sweet-home'),
     };
+    const env = {
+
+    };
 
     const fs = {
       unlinkSync: jest.fn(),
@@ -30,6 +33,7 @@ describe('services > authenticator', () => {
     const jwtDecode = jest.fn();
 
     const context = {
+      env,
       oidcAuthenticator,
       applicationTokenService,
       os,
