@@ -59,7 +59,7 @@ class Dumper {
   }
 
   copyTemplate(absoluteProjectPath, relativeFromPath, relativeToPath) {
-    const newFrom = `${__dirname}/../templates/app/${relativeFromPath}`;
+    const newFrom = `${__dirname}/templates/app/${relativeFromPath}`;
     this.writeFile(absoluteProjectPath, relativeToPath, this.fs.readFileSync(newFrom, 'utf-8'));
   }
 
@@ -70,7 +70,7 @@ class Dumper {
     context,
   }) {
     const handlebarsTemplate = (templatePath) => this.Handlebars.compile(
-      this.fs.readFileSync(`${__dirname}/../templates/${templatePath}`, 'utf-8'),
+      this.fs.readFileSync(`${__dirname}/templates/${templatePath}`, 'utf-8'),
       { noEscape: true },
     );
 
