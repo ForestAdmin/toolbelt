@@ -1,4 +1,4 @@
-const LumberError = require('../../lumber-error');
+const LumberError = require('../../../utils/lumber-error');
 
 class EmptyDatabase extends LumberError {}
 

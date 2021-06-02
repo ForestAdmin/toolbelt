@@ -1,6 +1,6 @@
 const P = require('bluebird');
 const logger = require('../../../../utils/logger');
-const EmptyDatabaseError = require('../../../../../utils/errors/database/empty-database-error');
+const EmptyDatabaseError = require('../../../../errors/database/empty-database-error');
 const { detectReferences, applyReferences } = require('./mongo-references-analyzer');
 const { detectHasMany, applyHasMany } = require('./mongo-hasmany-analyzer');
 const { isUnderscored } = require('../../../../../utils/fields');

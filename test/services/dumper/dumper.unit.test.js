@@ -1,7 +1,7 @@
 const chalk = require('chalk');
 const Dumper = require('../../../src/services/dumper/dumper');
-const InvalidLumberProjectStructureError = require('../../../utils/errors/dumper/invalid-lumber-project-structure-error');
-const IncompatibleLianaForUpdateError = require('../../../utils/errors/dumper/incompatible-liana-for-update-error');
+const InvalidLumberProjectStructureError = require('../../../src/errors/dumper/invalid-lumber-project-structure-error');
+const IncompatibleLianaForUpdateError = require('../../../src/errors/dumper/incompatible-liana-for-update-error');
 
 const SequelizeMock = {
   DataTypes: {},
