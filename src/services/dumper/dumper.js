@@ -4,7 +4,7 @@ const stringUtils = require('../../utils/strings');
 const toValidPackageName = require('../../utils/to-valid-package-name');
 const IncompatibleLianaForUpdateError = require('../../errors/dumper/incompatible-liana-for-update-error');
 const InvalidLumberProjectStructureError = require('../../errors/dumper/invalid-lumber-project-structure-error');
-require('../../../handlerbars/loader');
+require('./handlerbars/loader');
 
 const DEFAULT_PORT = 3310;
 class Dumper {
