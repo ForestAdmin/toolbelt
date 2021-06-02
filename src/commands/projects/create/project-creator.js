@@ -1,6 +1,6 @@
 const chalk = require('chalk');
 
-const KeyGenerator = require('../../../../services/key-generator');
+const { generateKey } = require('../../../utils/key-generator');
 const { terminate } = require('../../../../utils/terminator');
 const { ERROR_UNEXPECTED } = require('../../../../utils/messages');
 
@@ -11,7 +11,7 @@ class ProjectCreator {
 
       return {
         envSecret: newProject.defaultEnvironment.secretKey,
-        authSecret: await new KeyGenerator().generate(),
+        authSecret: generateKey(),
       };
     } catch (error) {
       let message;
