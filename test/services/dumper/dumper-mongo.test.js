@@ -14,7 +14,7 @@ const subDocumentsAmbiguousIds = require('../../../test-expected/mongo/db-analys
 const subDocumentsNotUsingIds = require('../../../test-expected/mongo/db-analysis-output/sub-documents-not-using-ids.expected');
 const subDocumentsUsingIds = require('../../../test-expected/mongo/db-analysis-output/sub-documents-using-ids.expected');
 const subDocumentUsingIds = require('../../../test-expected/mongo/db-analysis-output/sub-document-using-ids.expected');
-const Dumper = require('../../../src/commands/schema/update/dumper/dumper');
+const Dumper = require('../../../src/services/dumper/dumper');
 const initContext = require('../../../src/context/init');
 
 const context = Context.execute(initContext);
