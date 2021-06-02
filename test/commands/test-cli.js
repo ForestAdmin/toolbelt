@@ -7,7 +7,12 @@ const {
 } = require('./test-cli-errors');
 const { prepareCommand, prepareContextPlan } = require('./test-cli-command');
 const { assertApi } = require('./test-cli-api');
-const { mockFile, cleanMockedFile, randomDirectoryName } = require('./test-cli-fs');
+const {
+  makeTempDirectory,
+  mockFile,
+  cleanMockedFile,
+  randomDirectoryName,
+} = require('./test-cli-fs');
 const { getTokenPath } = require('./test-cli-auth-token');
 const { validateInput } = require('./test-cli-errors');
 const {
@@ -38,7 +43,7 @@ function asArray(any) {
  * }} params
  */
 async function testCli({
-  file,
+  files,
   api,
   env,
   commandClass,
@@ -51,16 +56,17 @@ async function testCli({
   token: tokenBehavior = null,
   ...rest
 }) {
-  // NOTICE: Ensure a unique temporary directory is created.
-  //         If a `file` is not given, or if no directory (`chdir`) is specified.
-  if (!file) file = {};
-  if (file && !file.chdir) {
-    file.chdir = randomDirectoryName();
-    file.temporaryDirectory = true;
-  }
+  if (!files) files = [];
+  const temporaryDirectory = randomDirectoryName();
+  files.forEach((file) => {
+    if (!file.chdir) {
+      file.chdir = temporaryDirectory;
+      file.temporaryDirectory = true;
+    }
+  });
 
   validateInput(
-    file,
+    files,
     { commandClass, commandArgs },
     stds,
     expectedExitCode,
@@ -80,7 +86,10 @@ async function testCli({
     errorOutputs = [];
   }
 
-  mockFile(file);
+  const oldcwd = process.cwd();
+  makeTempDirectory(temporaryDirectory);
+  process.chdir(temporaryDirectory);
+  files.forEach((file) => mockFile(file));
 
   let commandPlan = prepareContextPlan()
     .replace('env.variables', (context) => context.addValue('env', {
@@ -142,7 +151,10 @@ async function testCli({
     }
   }
 
-  cleanMockedFile(file);
+  if (!process.env.KEEP_TEMPORARY_FILES) {
+    files.forEach((file) => cleanMockedFile(file));
+  }
+  process.chdir(oldcwd);
 
   try {
     assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);
