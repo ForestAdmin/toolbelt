@@ -38,10 +38,10 @@ function postSchemaMatch(body) {
 describe('schema:apply', () => {
   describe('when the user is not logged in', () => {
     it('should login the user and then send the schema', () => testCli({
-      file: {
+      files: [{
         name: '.forestadmin-schema.json',
         content: forestadminSchema,
-      },
+      }],
       env: testEnv2,
       api: [
         () => loginValidOidc(),
@@ -63,10 +63,10 @@ describe('schema:apply', () => {
   describe('when the user is logged in', () => {
     describe('with no environment secret', () => {
       it('should exist with code 2', () => testCli({
-        file: {
+        files: [{
           name: '.forestadmin-schema.json',
           content: forestadminSchema,
-        },
+        }],
         env: testEnv,
         token: 'any',
         commandClass: ApplySchemaCommand,
@@ -81,10 +81,10 @@ describe('schema:apply', () => {
     describe('with an environment secret set in "FOREST_ENV_SECRET" environment variable', () => {
       describe('with forest server returning 404', () => {
         it('should exit with exit code 4', () => testCli({
-          file: {
+          files: [{
             name: '.forestadmin-schema.json',
             content: forestadminSchema,
-          },
+          }],
           token: 'any',
           env: testEnv2,
           commandClass: ApplySchemaCommand,
@@ -96,10 +96,10 @@ describe('schema:apply', () => {
 
       describe('with forest server returning 503', () => {
         it('should exit with exit code 5', () => testCli({
-          file: {
+          files: [{
             name: '.forestadmin-schema.json',
             content: forestadminSchema,
-          },
+          }],
           env: testEnv2,
           api: [() => postSchema503()],
           commandClass: ApplySchemaCommand,
@@ -112,10 +112,10 @@ describe('schema:apply', () => {
       describe('with forest server returning 200', () => {
         describe('with a schema with camelcased keys', () => {
           it('should send the schema', () => testCli({
-            file: {
+            files: [{
               name: '.forestadmin-schema.json',
               content: forestadminSchema,
-            },
+            }],
             env: testEnv2,
             token: 'any',
             api: [() => postSchema(postSchemaMatch)],
@@ -133,10 +133,10 @@ describe('schema:apply', () => {
 
         describe('with a schema with snakecased keys', () => {
           it('should send the schema', () => testCli({
-            file: {
+            files: [{
               name: '.forestadmin-schema.json',
               content: forestadminSchemaSnake,
-            },
+            }],
             env: testEnv2,
             token: 'any',
             api: [() => postSchema(postSchemaMatch)],
@@ -157,10 +157,10 @@ describe('schema:apply', () => {
 
   describe('with forest server returning nothing', () => {
     it('should exit with exit code 6', () => testCli({
-      file: {
+      files: [{
         name: '.forestadmin-schema.json',
         content: forestadminSchema,
-      },
+      }],
       env: testEnv2,
       token: 'any',
       api: [() => postSchema500()],
