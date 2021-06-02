@@ -1,4 +1,4 @@
-const CommandGenerateConfigGetter = require('../../services/command-generate-config-getter');
+const CommandGenerateConfigGetter = require('../../src/commands/projects/create/command-generate-config-getter');
 
 describe('services > command generate config getter', () => {
   describe('with a command with a "connectionUrl" option', () => {

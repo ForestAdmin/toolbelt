@@ -32,7 +32,7 @@ const environmentSerializer = require('../serializers/environment');
 const projectDeserializer = require('../deserializers/project');
 const projectSerializer = require('../serializers/project');
 
-const CommandGenerateConfigGetter = require('../../services/command-generate-config-getter');
+const CommandGenerateConfigGetter = require('../commands/projects/create/command-generate-config-getter');
 const Database = require('../../services/database');
 const DatabaseAnalyzer = require('../commands/schema/update/analyzer/database-analyzer');
 const Dumper = require('../commands/schema/update/dumper/dumper');
