@@ -3,14 +3,17 @@ const AbstractCommand = require('../../src/abstract-command');
 function errorIfBadFile(file) {
   if (!file) return;
   const {
-    chdir, name, content, temporaryDirectory, ...rest
+    chdir, directory, name, content, temporaryDirectory, ...rest
   } = file;
   if (Object.keys(rest).length > 0) {
     throw new Error(`Unknown testCli.file parameter(s): ${Object.keys(rest).join(', ')}.
     Valids are: chdir, name, content`);
   }
-  if (!chdir && !name && !content) {
+  if (!chdir && !name && !content && !directory) {
     throw new Error('testCli.file must contain at least chdir and/or name,content');
+  }
+  if (name && directory) {
+    throw new Error('define testCli.directory OR testCli.name');
   }
   if ((!name && content) || (name && !content)) {
     throw new Error('testCli.file name AND content must be defined');
@@ -18,6 +21,10 @@ function errorIfBadFile(file) {
   if (temporaryDirectory !== undefined && typeof temporaryDirectory !== 'boolean') {
     throw new Error('testCli.temporaryDirectory must be a boolean value if specified');
   }
+}
+
+function errorIfBadFiles(files) {
+  files.forEach((file) => errorIfBadFile(file));
 }
 
 function errorIfRest(rest) {
@@ -66,14 +73,14 @@ function errorIfNoStd(stds) {
 }
 
 function validateInput(
-  file,
+  files,
   { commandLegacy, commandClass, commandArgs },
   stds,
   expectedExitCode,
   expectedExitMessage,
   rest,
 ) {
-  errorIfBadFile(file);
+  errorIfBadFiles(files);
   errorIfRest(rest);
   errorIfBadCommand({ commandLegacy, commandClass, commandArgs });
   const noExitExpected = !expectedExitCode && !expectedExitMessage;

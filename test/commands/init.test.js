@@ -253,10 +253,10 @@ describe('init command', () => {
     describe('when the project has a lumber origin', () => {
       describe('when the project .env has a database url', () => {
         it('should continue executing', () => testCli({
-          file: {
+          files: [{
             name: '.env',
             content: 'SOMETHING=1',
-          },
+          }],
           commandClass: InitCommand,
           env: testEnvWithDatabaseUrl,
           token: 'any',
@@ -282,10 +282,10 @@ describe('init command', () => {
       describe('when the project .env file has no database url in it', () => {
         describe('when the user answer positively to specify its credentials', () => {
           it('should display a database detail input and prompt the database credentials as env variables', () => testCli({
-            file: {
+            files: [{
               name: '.env',
               content: 'SOMETHING=1',
-            },
+            }],
             commandClass: InitCommand,
             env: testEnv2,
             token: 'any',
@@ -313,10 +313,10 @@ describe('init command', () => {
 
         describe('when the user answer negatively to specify its credentials', () => {
           it('should go to the backend endpoint setup without database credentials as env variables', () => testCli({
-            file: {
+            files: [{
               name: '.env',
               content: 'SOMETHING=1',
-            },
+            }],
             commandClass: InitCommand,
             env: testEnv2,
             token: 'any',
@@ -394,10 +394,10 @@ describe('init command', () => {
   describe('environment variables', () => {
     describe('when the project is NOT flagged as in-app and has a .env file', () => {
       it('should copy the env variable in the .env file', () => testCli({
-        file: {
+        files: [{
           name: '.env',
           content: 'SOMETHING=1',
-        },
+        }],
         commandClass: InitCommand,
         env: testEnvWithDatabaseUrl,
         token: 'any',
