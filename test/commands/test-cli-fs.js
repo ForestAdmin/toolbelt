@@ -20,7 +20,7 @@ module.exports = {
 
     if (filePath) {
       if (chdir) filePath = path.join(chdir, filePath);
-      if (name) fsExtra.outputFileSync(name, content);
+      if (name) fsExtra.outputFileSync(filePath, content);
       else fsExtra.ensureDirSync(filePath);
     }
   },
