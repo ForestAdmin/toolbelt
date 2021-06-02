@@ -1,4 +1,4 @@
-const LumberError = require('../utils/lumber-error');
+const LumberError = require('../../utils/lumber-error');
 
 class ErrorHandler {
   /**
