@@ -1,4 +1,4 @@
-const logger = require('../services/logger');
+const logger = require('../src/utils/logger');
 const eventSender = require('../services/event-sender');
 
 /**

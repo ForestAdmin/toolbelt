@@ -1,5 +1,5 @@
 const P = require('bluebird');
-const logger = require('../logger');
+const logger = require('../../src/utils/logger');
 const EmptyDatabaseError = require('../../utils/errors/database/empty-database-error');
 const { detectReferences, applyReferences } = require('./mongo-references-analyzer');
 const { detectHasMany, applyHasMany } = require('./mongo-hasmany-analyzer');

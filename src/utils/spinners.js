@@ -1,5 +1,5 @@
 const Spinnies = require('spinnies');
-const logger = require('../../services/logger');
+const logger = require('./logger');
 
 const spinnies = new Spinnies({
   spinnerColor: 'blue',
