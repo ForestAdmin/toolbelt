@@ -33,7 +33,7 @@ UpdateCommand.description = 'Refresh your schema by generating files that do not
 UpdateCommand.flags = {
   config: flags.string({
     char: 'c',
-    default: path.join(process.cwd(), 'config/databases.js'),
+    default: () => path.join(process.cwd(), 'config/databases.js'),
     dependsOn: [],
     description: 'Database configuration file to use.',
     exclusive: [],
