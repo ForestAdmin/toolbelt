@@ -1,5 +1,5 @@
 const logger = require('../src/utils/logger');
-const eventSender = require('../services/event-sender');
+const eventSender = require('../src/utils/event-sender');
 
 /**
  * @typedef {{
