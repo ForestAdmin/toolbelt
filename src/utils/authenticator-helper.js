@@ -1,5 +1,5 @@
 const atob = require('atob');
-const logger = require('../src/utils/logger');
+const logger = require('./logger');
 
 function parseJwt(token) {
   if (!token || !token.includes('.')) { return null; }

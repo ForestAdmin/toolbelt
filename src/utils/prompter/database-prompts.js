@@ -1,6 +1,6 @@
 const AbstractPrompter = require('./abstract-prompter');
 const PrompterError = require('./prompter-error');
-const messages = require('../../../utils/messages');
+const messages = require('../messages');
 
 const MAPPING_DIALECT_TO_PORT = {
   postgres: '5432',

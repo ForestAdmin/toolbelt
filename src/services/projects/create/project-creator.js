@@ -1,8 +1,8 @@
 const chalk = require('chalk');
 
 const { generateKey } = require('../../../utils/key-generator');
-const { terminate } = require('../../../../utils/terminator-sender');
-const { ERROR_UNEXPECTED } = require('../../../../utils/messages');
+const { terminate } = require('../../../utils/terminator-sender');
+const { ERROR_UNEXPECTED } = require('../../../utils/messages');
 
 class ProjectCreator {
   static async create(sessionToken, api, projectName, config) {
