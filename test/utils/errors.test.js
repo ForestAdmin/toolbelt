@@ -1,4 +1,4 @@
-const LumberError = require('../../utils/lumber-error');
+const LumberError = require('../../src/errors/lumber-error');
 const EmptyDatabaseError = require('../../src/errors/database/empty-database-error');
 
 describe('utils > errors', () => {

@@ -1,4 +1,4 @@
-const LumberError = require('../../../utils/lumber-error');
+const LumberError = require('../lumber-error');
 
 class IncompatibleLianaForUpdateError extends LumberError {
   /**

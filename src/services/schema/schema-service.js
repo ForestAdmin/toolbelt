@@ -1,4 +1,4 @@
-const LumberError = require('../../../utils/lumber-error');
+const LumberError = require('../../errors/lumber-error');
 
 module.exports = class SchemaService {
   constructor({

@@ -1,4 +1,4 @@
-const LumberError = require('../../utils/lumber-error');
+const LumberError = require('../../src/errors/lumber-error');
 const ErrorHandler = require('../../src/utils/error-handler');
 
 describe('service > Oidc > ErrorHandler', () => {
