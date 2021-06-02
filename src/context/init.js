@@ -32,17 +32,17 @@ const environmentSerializer = require('../serializers/environment');
 const projectDeserializer = require('../deserializers/project');
 const projectSerializer = require('../serializers/project');
 
-const CommandGenerateConfigGetter = require('../commands/projects/create/command-generate-config-getter');
-const Database = require('../commands/schema/update/database');
-const DatabaseAnalyzer = require('../commands/schema/update/analyzer/database-analyzer');
+const CommandGenerateConfigGetter = require('../services/projects/create/command-generate-config-getter');
+const Database = require('../services/schema/update/database');
+const DatabaseAnalyzer = require('../services/schema/update/analyzer/database-analyzer');
 const Dumper = require('../services/dumper/dumper');
 const EventSender = require('../../services/event-sender');
 const spinners = require('../utils/spinners');
-const ProjectCreator = require('../commands/projects/create/project-creator');
+const ProjectCreator = require('../services/projects/create/project-creator');
 const ErrorHandler = require('../utils/error-handler');
-const mongoAnalyzer = require('../commands/schema/update/analyzer/mongo-collections-analyzer');
-const sequelizeAnalyzer = require('../commands/schema/update/analyzer/sequelize-tables-analyzer');
-const SchemaService = require('../commands/schema/schema-service');
+const mongoAnalyzer = require('../services/schema/update/analyzer/mongo-collections-analyzer');
+const sequelizeAnalyzer = require('../services/schema/update/analyzer/sequelize-tables-analyzer');
+const SchemaService = require('../services/schema/schema-service');
 
 const DEFAULT_FOREST_URL = 'https://api.forestadmin.com';
 

@@ -1,4 +1,4 @@
-const Database = require('../../src/commands/schema/update/database');
+const Database = require('../../src/services/schema/update/database');
 
 const setupDatabase = ({ Sequelize = {}, mongodb = {}, terminator = {} } = {}) =>
   new Database({
