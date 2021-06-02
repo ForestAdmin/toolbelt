@@ -89,7 +89,7 @@ module.exports = class SchemaService {
     return databasesSchema;
   }
 
-  async _dumpSchemas(databasesSchema, appName, isUpdate, useMultiDatabase){
+  async _dumpSchemas(databasesSchema, appName, isUpdate, useMultiDatabase) {
     const spinner = this.spinners.add('dumper', { text: 'Generating your files' });
 
     const dumperOptions = {
