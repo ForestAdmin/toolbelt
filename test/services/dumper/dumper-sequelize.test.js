@@ -16,7 +16,7 @@ const parenthesisColumnNameUnderscoredTrue = require('../../../test-expected/seq
 const initContext = require('../../../src/context/init');
 
 const context = Context.execute(initContext);
-const Dumper = require('../../../services/dumper');
+const Dumper = require('../../../src/commands/schema/dumper/dumper');
 
 function getDumper() {
   return new Dumper(context);
