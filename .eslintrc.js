@@ -13,6 +13,7 @@ module.exports = {
   },
   ignorePatterns: ["test-expected"],
   rules: {
+    'jest/no-disabled-tests': 0,
     'implicit-arrow-linebreak': 0,
     'no-underscore-dangle': 0,
     'import/no-extraneous-dependencies': [
