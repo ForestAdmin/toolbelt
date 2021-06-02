@@ -58,8 +58,12 @@ module.exports = class SchemaService {
   }
 
   async _connectToDatabases(databasesConfig) {
-    const spinner = this.spinners.add('databases-connection', { text: 'Connecting to your' +
-        ' database(s)' });
+    const spinner = this.spinners.add(
+      'databases-connection',
+      {
+        text: 'Connecting to your database(s)',
+      },
+    );
     const databasesConnection = await this.database.connectFromDatabasesConfig(databasesConfig);
     spinner.succeed();
     return databasesConnection;
