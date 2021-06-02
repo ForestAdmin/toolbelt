@@ -1,17 +1,17 @@
 const P = require('bluebird');
-const logger = require('../../../utils/logger');
-const EmptyDatabaseError = require('../../../../utils/errors/database/empty-database-error');
+const logger = require('../../../../utils/logger');
+const EmptyDatabaseError = require('../../../../../utils/errors/database/empty-database-error');
 const { detectReferences, applyReferences } = require('./mongo-references-analyzer');
 const { detectHasMany, applyHasMany } = require('./mongo-hasmany-analyzer');
-const { isUnderscored } = require('../../../../utils/fields');
+const { isUnderscored } = require('../../../../../utils/fields');
 const {
   getMongooseTypeFromValue,
   isOfMongooseType,
-} = require('../../../../utils/mongo-primitive-type');
+} = require('../../../../../utils/mongo-primitive-type');
 const {
   isSystemCollection,
   getCollectionName,
-} = require('../../../../utils/mongo-collections');
+} = require('../../../../../utils/mongo-collections');
 const {
   getMongooseArraySchema,
   getMongooseEmbeddedSchema,

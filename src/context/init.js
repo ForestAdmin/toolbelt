@@ -34,14 +34,14 @@ const projectSerializer = require('../serializers/project');
 
 const CommandGenerateConfigGetter = require('../../services/command-generate-config-getter');
 const Database = require('../../services/database');
-const DatabaseAnalyzer = require('../commands/schema/analyzer/database-analyzer');
-const Dumper = require('../commands/schema/dumper/dumper');
+const DatabaseAnalyzer = require('../commands/schema/update/analyzer/database-analyzer');
+const Dumper = require('../commands/schema/update/dumper/dumper');
 const EventSender = require('../../services/event-sender');
 const spinners = require('../utils/spinners');
 const ProjectCreator = require('../../services/project-creator');
 const ErrorHandler = require('../utils/error-handler');
-const mongoAnalyzer = require('../commands/schema/analyzer/mongo-collections-analyzer');
-const sequelizeAnalyzer = require('../commands/schema/analyzer/sequelize-tables-analyzer');
+const mongoAnalyzer = require('../commands/schema/update/analyzer/mongo-collections-analyzer');
+const sequelizeAnalyzer = require('../commands/schema/update/analyzer/sequelize-tables-analyzer');
 const SchemaService = require('../services/schema-service');
 
 const DEFAULT_FOREST_URL = 'https://api.forestadmin.com';

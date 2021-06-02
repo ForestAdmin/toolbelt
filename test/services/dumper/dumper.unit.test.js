@@ -1,5 +1,5 @@
 const chalk = require('chalk');
-const Dumper = require('../../../src/commands/schema/dumper/dumper');
+const Dumper = require('../../../src/commands/schema/update/dumper/dumper');
 const InvalidLumberProjectStructureError = require('../../../utils/errors/dumper/invalid-lumber-project-structure-error');
 const IncompatibleLianaForUpdateError = require('../../../utils/errors/dumper/incompatible-liana-for-update-error');
 

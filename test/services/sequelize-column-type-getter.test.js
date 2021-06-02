@@ -1,4 +1,4 @@
-const ColumnTypeGetter = require('../../src/commands/schema/analyzer/sequelize-column-type-getter');
+const ColumnTypeGetter = require('../../src/commands/schema/update/analyzer/sequelize-column-type-getter');
 const SequelizeHelper = require('../../test-utils/sequelize-helper');
 const {
   DATABASE_URL_MYSQL_MAX,

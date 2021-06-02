@@ -1,4 +1,4 @@
-const EmptyDatabaseError = require('../../../../utils/errors/database/empty-database-error');
+const EmptyDatabaseError = require('../../../../../utils/errors/database/empty-database-error');
 
 module.exports = class DatabaseAnalyzer {
   constructor({

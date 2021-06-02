@@ -3,7 +3,7 @@ const P = require('bluebird');
 const {
   findCollectionMatchingSamples,
   filterReferenceCollection,
-} = require('../../../../utils/mongo-collections');
+} = require('../../../../../utils/mongo-collections');
 
 const OBJECT_ID = 'Mongoose.Schema.Types.ObjectId';
 const SAMPLE_COUNT_TO_FETCH = 10;

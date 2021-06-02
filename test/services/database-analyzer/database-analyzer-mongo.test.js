@@ -1,7 +1,7 @@
 const MongoHelper = require('../../../test-utils/mongo-helper');
 const { DATABASE_URL_MONGODB_MAX } = require('../../../test-utils/database-urls');
 const { describeMongoDatabases } = require('../../../test-utils/multiple-database-version-helper');
-const DatabaseAnalyzer = require('../../../src/commands/schema/analyzer/database-analyzer');
+const DatabaseAnalyzer = require('../../../src/commands/schema/update/analyzer/database-analyzer');
 const simpleModel = require('../../../test-fixtures/mongo/simple-model');
 const hasManyModel = require('../../../test-fixtures/mongo/hasmany-model');
 const multipleReferencesModel = require('../../../test-fixtures/mongo/multiple-references-same-field-model');
@@ -33,7 +33,7 @@ const expectedSubDocumentsUsingIds = require('../../../test-expected/mongo/db-an
 const expectedSubDocumentsNotUsingIds = require('../../../test-expected/mongo/db-analysis-output/sub-documents-not-using-ids.expected');
 const expectedSubDocumentUsingIds = require('../../../test-expected/mongo/db-analysis-output/sub-document-using-ids.expected');
 const expectedComplexModelWithAView = require('../../../test-expected/mongo/db-analysis-output/complex-model-with-a-view.expected');
-const mongoAnalyzer = require('../../../src/commands/schema/analyzer/mongo-collections-analyzer');
+const mongoAnalyzer = require('../../../src/commands/schema/update/analyzer/mongo-collections-analyzer');
 
 const setupTest = () => ({
   assertPresent: jest.fn(),
