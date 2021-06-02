@@ -1,7 +1,7 @@
 const chalk = require('chalk');
 
 const { generateKey } = require('../../../utils/key-generator');
-const { terminate } = require('../../../../utils/terminator');
+const { terminate } = require('../../../../utils/terminator-sender');
 const { ERROR_UNEXPECTED } = require('../../../../utils/messages');
 
 class ProjectCreator {

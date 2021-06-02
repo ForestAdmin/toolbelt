@@ -1,7 +1,7 @@
 const sinon = require('sinon');
 const GeneralPrompter = require('../../../src/utils/prompter/general-prompter');
 const PrompterError = require('../../../src/utils/prompter/prompter-error');
-const Terminator = require('../../../utils/terminator');
+const Terminator = require('../../../utils/terminator-sender');
 
 describe('services > prompter > general prompter', () => {
   let requests = [];
