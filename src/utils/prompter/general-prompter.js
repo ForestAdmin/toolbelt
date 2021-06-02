@@ -5,7 +5,7 @@ const DatabasePrompt = require('./database-prompts');
 const ProjectPrompt = require('./project-prompts');
 const PromptError = require('./prompter-error');
 const UserPrompt = require('./user-prompts');
-const Terminator = require('../../utils/terminator');
+const Terminator = require('../../../utils/terminator');
 
 class GeneralPrompter {
   constructor(requests, program) {

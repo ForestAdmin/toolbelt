@@ -1,4 +1,4 @@
-const Prompter = require('./prompter/general-prompter');
+const Prompter = require('../src/utils/prompter/general-prompter');
 
 const OPTIONS_DATABASE_MANDATORY = [
   'dbDialect',
