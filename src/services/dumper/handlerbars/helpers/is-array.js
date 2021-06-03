@@ -1,5 +1,3 @@
 const Handlebars = require('handlebars');
 
-Handlebars.registerHelper('isArray', (value) => {
-  return Array.isArray(value);
-});
+Handlebars.registerHelper('isArray', (value) => Array.isArray(value));
