@@ -92,7 +92,7 @@ describe('services > dumper > SQL', () => {
       expect.assertions(1);
       await dump();
       const renderingsGeneratedFile = fs.readFileSync(`${appRoot}/test-output/postgres/models/renderings.js`, 'utf8');
-      const renderingsExpectedFile = fs.readFileSync(`${appRoot}/expected/sequelize/dumper-output/renderings.expected.js`, 'utf-8');
+      const renderingsExpectedFile = fs.readFileSync(`${__dirname}/expected/sequelize/dumper-output/renderings.expected.js`, 'utf-8');
       expect(renderingsGeneratedFile).toStrictEqual(renderingsExpectedFile);
     });
 
