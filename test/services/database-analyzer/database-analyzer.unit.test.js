@@ -1,4 +1,4 @@
-const DatabaseAnalyzer = require('../../../services/analyzer/database-analyzer');
+const DatabaseAnalyzer = require('../../../src/services/schema/update/analyzer/database-analyzer');
 
 const setupConstructorTest = () => ({
   assertPresent: jest.fn(),

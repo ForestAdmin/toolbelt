@@ -32,17 +32,17 @@ const environmentSerializer = require('../serializers/environment');
 const projectDeserializer = require('../deserializers/project');
 const projectSerializer = require('../serializers/project');
 
-const CommandGenerateConfigGetter = require('../../services/command-generate-config-getter');
-const Database = require('../../services/database');
-const DatabaseAnalyzer = require('../../services/analyzer/database-analyzer');
-const Dumper = require('../../services/dumper');
-const EventSender = require('../../services/event-sender');
-const spinners = require('../../services/spinners');
-const ProjectCreator = require('../../services/project-creator');
-const ErrorHandler = require('../../services/error-handler');
-const mongoAnalyzer = require('../../services/analyzer/mongo-collections-analyzer');
-const sequelizeAnalyzer = require('../../services/analyzer/sequelize-tables-analyzer');
-const SchemaService = require('../services/schema-service');
+const CommandGenerateConfigGetter = require('../services/projects/create/command-generate-config-getter');
+const Database = require('../services/schema/update/database');
+const DatabaseAnalyzer = require('../services/schema/update/analyzer/database-analyzer');
+const Dumper = require('../services/dumper/dumper');
+const EventSender = require('../utils/event-sender');
+const spinners = require('../utils/spinners');
+const ProjectCreator = require('../services/projects/create/project-creator');
+const ErrorHandler = require('../utils/error-handler');
+const mongoAnalyzer = require('../services/schema/update/analyzer/mongo-collections-analyzer');
+const sequelizeAnalyzer = require('../services/schema/update/analyzer/sequelize-tables-analyzer');
+const SchemaService = require('../services/schema/schema-service');
 
 const DEFAULT_FOREST_URL = 'https://api.forestadmin.com';
 

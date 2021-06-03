@@ -1,4 +1,4 @@
-const { isUnderscored } = require('../../utils/fields');
+const { isUnderscored } = require('../../src/utils/fields');
 
 describe('utils > fields', () => {
   describe('without wrong parameters', () => {
