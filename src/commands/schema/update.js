@@ -48,6 +48,6 @@ UpdateCommand.flags = {
   }),
 };
 
-UpdateCommand.args = [{}];
+UpdateCommand.args = [];
 
 module.exports = UpdateCommand;
