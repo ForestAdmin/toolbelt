@@ -1,4 +1,4 @@
-const toValidPackageName = require('../../utils/to-valid-package-name');
+const toValidPackageName = require('../../src/utils/to-valid-package-name');
 
 describe('utils > toValidPackageName', () => {
   it('should not convert valid package names', () => {

@@ -3,16 +3,12 @@ MongoDB-MIN:
   container_name : forestadmin_test_toolbelt_mongo_min
   ports:
     - "27015:27017"
-  volumes:
-    - ./data/mongodb/3.2:/var/lib/mongodb
 
 MongoDB-MAX:
   image: mongo:4.2
   container_name : forestadmin_test_toolbelt_mongo_max
   ports:
     - "27016:27017"
-  volumes:
-    - ./data/mongodb/4.2:/var/lib/mongodb
 
 PostgreSQL-MIN:
   image : postgres:9.4

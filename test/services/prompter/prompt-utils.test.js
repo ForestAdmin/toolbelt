@@ -1,4 +1,4 @@
-const AbstractPrompt = require('../../../services/prompter/abstract-prompter');
+const AbstractPrompt = require('../../../src/utils/prompter/abstract-prompter');
 
 describe('services > prompter > prompt utils', () => {
   const promptUtils = new AbstractPrompt(['requestedOption']);

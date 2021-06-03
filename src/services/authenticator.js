@@ -1,4 +1,4 @@
-const ApplicationError = require('../utils/application-error');
+const ApplicationError = require('../errors/application-error');
 const { ERROR_UNEXPECTED } = require('../utils/messages');
 
 /**

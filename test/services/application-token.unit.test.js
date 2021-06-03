@@ -1,5 +1,5 @@
 const ApplicationTokenService = require('../../src/services/application-token');
-const UnableToCreateApplicationTokenError = require('../../utils/errors/application-token/unable-to-create-application-token-error');
+const UnableToCreateApplicationTokenError = require('../../src/errors/application-token/unable-to-create-application-token-error');
 
 const SESSION_TOKEN = 'SESSION-TOKEN';
 
