@@ -1,9 +1,9 @@
 const AbstractPrompter = require('./abstract-prompter');
 
 class UserPrompts extends AbstractPrompter {
-  constructor(requests, envConfig, prompts, program) {
+  constructor(requests, env, prompts, program) {
     super(requests);
-    this.envConfig = envConfig;
+    this.env = env;
     this.prompts = prompts;
     this.program = program;
   }
@@ -16,9 +16,9 @@ class UserPrompts extends AbstractPrompter {
 
   handleEmail() {
     if (this.isOptionRequested('email')) {
-      this.envConfig.email = this.program.email;
+      this.env.email = this.program.email;
 
-      if (!this.envConfig.email) {
+      if (!this.env.email) {
         this.prompts.push({
           type: 'input',
           name: 'email',
@@ -33,11 +33,11 @@ class UserPrompts extends AbstractPrompter {
   }
 
   handlePassword() {
-    this.envConfig.password = this.program.password;
+    this.env.password = this.program.password;
   }
 
   handleToken() {
-    this.envConfig.token = this.program.token;
+    this.env.token = this.program.token;
   }
 }
 
