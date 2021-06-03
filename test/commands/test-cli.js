@@ -20,7 +20,6 @@ const {
   logStdErr,
   logStdOut,
   mockStd,
-  planifyInputs,
   rollbackStd,
 } = require('./test-cli-std');
 
@@ -91,6 +90,7 @@ async function testCli({
   process.chdir(temporaryDirectory);
   files.forEach((file) => mockFile(file));
 
+  throw new Error(`have this inputs: ${inputs}`);
   let commandPlan = prepareContextPlan()
     .replace('env.variables', (context) => context.addValue('env', {
       // FIXME: Default values.
@@ -124,8 +124,7 @@ async function testCli({
       }));
   }
 
-  const stdin = mockStd(outputs, errorOutputs, print);
-  planifyInputs(inputs, stdin);
+  mockStd(outputs, errorOutputs, print);
 
   const command = prepareCommand({
     commandArgs,
@@ -142,7 +141,7 @@ async function testCli({
     try {
       await command();
     } finally {
-      rollbackStd(stdin, inputs, outputs);
+      rollbackStd(outputs);
     }
   } catch (error) {
     actualError = error;

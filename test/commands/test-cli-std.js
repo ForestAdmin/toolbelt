@@ -1,8 +1,4 @@
-const mockStdin = require('mock-stdin');
 const { stdout, stderr } = require('stdout-stderr');
-
-const TIME_TO_LOAD_TEST = 2000;
-const TIME_TO_REACH_NEXT_PROMPT = 100;
 
 module.exports = {
   mockStd: (outputs, errorOutputs, print) => {
@@ -10,20 +6,8 @@ module.exports = {
     stderr.previousPrint = stderr.print;
     stdout.print = print;
     stderr.print = print;
-    const stdin = mockStdin.stdin();
     if (outputs.length) stdout.start();
     stderr.start();
-    return stdin;
-  },
-  /**
-   * @param {string[]} inputs
-   * @param {import('mock-stdin').MockSTDIN} stdin
-   */
-  planifyInputs: (inputs, stdin) => {
-    for (let i = 0; i < inputs.length; i += 1) {
-      // WARNING: Smelly code..., could break if the test pre-loading time increases.
-      setTimeout(() => stdin.send(`${inputs[i]}\n`), TIME_TO_LOAD_TEST + i * TIME_TO_REACH_NEXT_PROMPT);
-    }
   },
   assertOutputs: (outputs, errorOutputs, { assertNoStdError }) => {
     stdout.stop();
@@ -49,9 +33,7 @@ module.exports = {
       expect(stderr.output).toContain(errorOutputs[i]);
     }
   },
-  rollbackStd: (stdin, inputs, outputs) => {
-    if (inputs.length) stdin.end();
-    if (inputs.length) stdin.reset();
+  rollbackStd: (outputs) => {
     if (outputs.length) stdout.stop();
     stderr.stop();
 
