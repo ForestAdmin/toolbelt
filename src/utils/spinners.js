@@ -2,11 +2,13 @@ const Spinnies = require('spinnies');
 const logger = require('./logger');
 
 const spinnies = new Spinnies({
+  failPrefix: '❌',
   spinnerColor: 'blue',
   spinner: {
     interval: 80,
     frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
   },
+  succeedPrefix: '✅',
 });
 
 module.exports = {
