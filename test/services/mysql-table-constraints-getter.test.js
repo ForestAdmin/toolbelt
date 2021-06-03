@@ -1,4 +1,4 @@
-const MysqlTableConstraintsGetter = require('../../services/analyzer/mysql-table-constraints-getter');
+const MysqlTableConstraintsGetter = require('../../src/services/schema/update/analyzer/mysql-table-constraints-getter');
 
 const databaseConnectionMock = {
   getQueryInterface: () => {

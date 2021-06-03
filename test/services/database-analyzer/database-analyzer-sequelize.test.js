@@ -2,12 +2,12 @@ const _ = require('lodash');
 const Sequelize = require('sequelize');
 const SequelizeHelper = require('../../../test-utils/sequelize-helper');
 const { describeSequelizeDatabases } = require('../../../test-utils/multiple-database-version-helper');
-const DatabaseAnalyzer = require('../../../services/analyzer/database-analyzer');
+const DatabaseAnalyzer = require('../../../src/services/schema/update/analyzer/database-analyzer');
 const databaseUrls = require('../../../test-utils/database-urls');
 const expectedDefaultValuesPostgres = require('../../../test-expected/sequelize/db-analysis-output/default_values.postgres.expected');
 const expectedDefaultValuesMysql = require('../../../test-expected/sequelize/db-analysis-output/default_values.mysql.expected');
 const expectedDefaultValuesMssql = require('../../../test-expected/sequelize/db-analysis-output/default_values.mssql.expected');
-const sequelizeAnalyzer = require('../../../services/analyzer/sequelize-tables-analyzer');
+const sequelizeAnalyzer = require('../../../src/services/schema/update/analyzer/sequelize-tables-analyzer');
 
 const TIMEOUT = 30000;
 

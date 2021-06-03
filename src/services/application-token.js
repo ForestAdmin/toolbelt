@@ -1,4 +1,4 @@
-const UnableToCreateApplicationTokenError = require('../../utils/errors/application-token/unable-to-create-application-token-error');
+const UnableToCreateApplicationTokenError = require('../errors/application-token/unable-to-create-application-token-error');
 
 class ApplicationTokenService {
   /**

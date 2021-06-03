@@ -3,7 +3,7 @@ const fs = require('fs');
 const sinon = require('sinon');
 const os = require('os');
 const rimraf = require('rimraf');
-const Dumper = require('../../../services/dumper');
+const Dumper = require('../../../src/services/dumper/dumper');
 const initContext = require('../../../src/context/init');
 
 const injectedContext = Context.execute(initContext);

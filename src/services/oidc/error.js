@@ -1,5 +1,5 @@
 const openIdClient = require('openid-client');
-const ApplicationError = require('../../utils/application-error');
+const ApplicationError = require('../../errors/application-error');
 
 class OidcError extends ApplicationError {
   /**

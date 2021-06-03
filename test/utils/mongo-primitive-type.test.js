@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const { getMongooseTypeFromValue, isOfMongooseType } = require('../../utils/mongo-primitive-type');
+const { getMongooseTypeFromValue, isOfMongooseType } = require('../../src/utils/mongo-primitive-type');
 
 describe('utils > Mongo Primitive Type', () => {
   describe('get primitive type from value', () => {
