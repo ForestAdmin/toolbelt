@@ -1,6 +1,6 @@
-const MongoHelper = require('../../../test-utils/mongo-helper');
-const { DATABASE_URL_MONGODB_MAX } = require('../../../test-utils/database-urls');
-const { describeMongoDatabases } = require('../../../test-utils/multiple-database-version-helper');
+const MongoHelper = require('../../test-helpers/mongo-helper');
+const { DATABASE_URL_MONGODB_MAX } = require('../../test-helpers/database-urls');
+const { describeMongoDatabases } = require('../../test-helpers/multiple-database-version-helper');
 const DatabaseAnalyzer = require('../../../src/services/schema/update/analyzer/database-analyzer');
 const simpleModel = require('../../../test-fixtures/mongo/simple-model');
 const hasManyModel = require('../../../test-fixtures/mongo/hasmany-model');
