@@ -2,7 +2,7 @@ const appRoot = require('app-root-path');
 const rimraf = require('rimraf');
 const Context = require('@forestadmin/context');
 const fs = require('fs');
-const renderingModel = require('../../../test-expected/sequelize/db-analysis-output/renderings.expected.json');
+const renderingModel = require('./expected/sequelize/db-analysis-output/renderings.expected.json');
 const initContext = require('../../../src/context/init');
 
 const injectedContext = Context.execute(initContext);
@@ -92,7 +92,7 @@ describe('services > dumper > SQL', () => {
       expect.assertions(1);
       await dump();
       const renderingsGeneratedFile = fs.readFileSync(`${appRoot}/test-output/postgres/models/renderings.js`, 'utf8');
-      const renderingsExpectedFile = fs.readFileSync(`${appRoot}/test-expected/sequelize/dumper-output/renderings.expected.js`, 'utf-8');
+      const renderingsExpectedFile = fs.readFileSync(`${appRoot}/expected/sequelize/dumper-output/renderings.expected.js`, 'utf-8');
       expect(renderingsGeneratedFile).toStrictEqual(renderingsExpectedFile);
     });
 

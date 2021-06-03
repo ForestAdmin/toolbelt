@@ -41,7 +41,7 @@ class SequelizeHelper {
   }
 
   async given(tableName) {
-    const expectedFilename = path.join(__dirname, `../test-expected/sequelize/db-analysis-output/${tableName}.expected`);
+    const expectedFilename = path.join(__dirname, `../expected/sequelize/db-analysis-output/${tableName}.expected`);
 
     await this.dropAndCreate(tableName);
 
@@ -56,7 +56,7 @@ class SequelizeHelper {
 
   async dropAndCreate(tableName) {
     const dialect = this.sequelize.getDialect();
-    const fixtureFilename = path.join(__dirname, `../test-fixtures/${dialect}/${tableName}.sql`);
+    const fixtureFilename = path.join(__dirname, `../fixtures/${dialect}/${tableName}.sql`);
     const fixtureFileContent = await fs.readFileSync(fixtureFilename, 'utf8');
     await this.drop(tableName, dialect);
     return this.sequelize.query(fixtureFileContent);
