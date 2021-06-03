@@ -112,6 +112,9 @@ const initEnv = newPlan()
 const initDependencies = newPlan()
   .addStep('open', (context) => context
     .addFunction('open', open))
+  .addStep('std', (context) => context
+    .addInstance('stdout', process.stdout)
+    .addInstance('stderr', process.stderr))
   .addStep('others', (context) => context
     .addInstance('chalk', chalk)
     .addInstance('os', os)
