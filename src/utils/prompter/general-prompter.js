@@ -11,21 +11,21 @@ class GeneralPrompter {
   constructor(requests, program) {
     this.prompts = [];
     this.program = program;
-    this.envConfig = {};
+    this.env = {};
 
-    this.projectPrompt = new ProjectPrompt(requests, this.envConfig, program);
-    this.databasePrompt = new DatabasePrompt(requests, this.envConfig, this.prompts, program);
-    this.applicationPrompt = new ApplicationPrompt(requests, this.envConfig, this.prompts, program);
-    this.userPrompt = new UserPrompt(requests, this.envConfig, this.prompts, program);
+    this.projectPrompt = new ProjectPrompt(requests, this.env, program);
+    this.databasePrompt = new DatabasePrompt(requests, this.env, this.prompts, program);
+    this.applicationPrompt = new ApplicationPrompt(requests, this.env, this.prompts, program);
+    this.userPrompt = new UserPrompt(requests, this.env, this.prompts, program);
 
     this.initSourceDirectory();
   }
 
   initSourceDirectory() {
     if (this.program.sourceDirectory) {
-      this.envConfig.sourceDirectory = this.program.sourceDirectory;
+      this.env.sourceDirectory = this.program.sourceDirectory;
     } else {
-      this.envConfig.sourceDirectory = process.cwd();
+      this.env.sourceDirectory = process.cwd();
     }
   }
 
@@ -51,7 +51,7 @@ class GeneralPrompter {
 
     this.cleanConfigOptions();
 
-    return _.merge(this.config, this.envConfig);
+    return _.merge(this.config, this.env);
   }
 
   cleanConfigOptions() {

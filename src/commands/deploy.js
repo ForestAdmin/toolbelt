@@ -12,7 +12,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
     super.init(plan || defaultPlan);
     const { assertPresent, env, inquirer } = this.context;
     assertPresent({ env, inquirer });
-    this.envConfig = env;
+    this.env = env;
     this.inquirer = inquirer;
   }
 
@@ -56,10 +56,10 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * @returns {Object} The command configuration, including its envSecret correctly set.
    */
   async getConfig() {
-    const envSecret = this.envConfig.FOREST_ENV_SECRET;
+    const envSecret = this.env.FOREST_ENV_SECRET;
     const parsed = this.parse(DeployCommand);
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
-    const config = await withCurrentProject({ ...this.envConfig, ...commandOptions });
+    const config = await withCurrentProject({ ...this.env, ...commandOptions });
 
     if (!config.envSecret) {
       const environment = await new ProjectManager(config)

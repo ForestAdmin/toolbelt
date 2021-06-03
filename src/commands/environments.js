@@ -10,12 +10,12 @@ class EnvironmentCommand extends AbstractAuthenticatedCommand {
     super.init(plan || defaultPlan);
     const { assertPresent, env } = this.context;
     assertPresent({ env });
-    this.envConfig = env;
+    this.env = env;
   }
 
   async runIfAuthenticated() {
     const parsed = this.parse(EnvironmentCommand);
-    const config = await withCurrentProject({ ...this.envConfig, ...parsed.flags });
+    const config = await withCurrentProject({ ...this.env, ...parsed.flags });
     const manager = new EnvironmentManager(config);
     const environments = await manager.listEnvironments();
     new Renderer(config).render(environments);

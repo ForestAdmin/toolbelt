@@ -10,9 +10,9 @@ const MAPPING_DIALECT_TO_PORT = {
 };
 
 class DatabasePrompter extends AbstractPrompter {
-  constructor(requests, envConfig, prompts, program) {
+  constructor(requests, env, prompts, program) {
     super(requests);
-    this.envConfig = envConfig;
+    this.env = env;
     this.prompts = prompts;
     this.program = program;
   }
@@ -33,11 +33,11 @@ class DatabasePrompter extends AbstractPrompter {
   // NOTICE: This is not used but required to stay iso with lumber for now
   async handleConnectionUrl() {
     if (this.isOptionRequested('dbConnectionUrl')) {
-      this.envConfig.dbConnectionUrl = this.program.connectionUrl;
+      this.env.dbConnectionUrl = this.program.connectionUrl;
 
       try {
-        [, this.envConfig.dbDialect] = this.envConfig.dbConnectionUrl.match(/(.*):\/\//);
-        if (this.envConfig.dbDialect === 'mongodb+srv') { this.envConfig.dbDialect = 'mongodb'; }
+        [, this.env.dbDialect] = this.env.dbConnectionUrl.match(/(.*):\/\//);
+        if (this.env.dbDialect === 'mongodb+srv') { this.env.dbDialect = 'mongodb'; }
       } catch (error) {
         throw new PrompterError(
           messages.ERROR_NOT_PARSABLE_CONNECTION_URL,
@@ -84,8 +84,8 @@ class DatabasePrompter extends AbstractPrompter {
 
   handleSchema() {
     if (this.isOptionRequested('dbSchema')) {
-      this.envConfig.dbSchema = this.program.schema;
-      if (!this.envConfig.dbSchema) {
+      this.env.dbSchema = this.program.schema;
+      if (!this.env.dbSchema) {
         this.prompts.push({
           type: 'input',
           name: 'dbSchema',
@@ -94,7 +94,7 @@ class DatabasePrompter extends AbstractPrompter {
           when: (answers) => {
             // NOTICE: MongoDB and MySQL do not require a Schema.
             const skipDatabases = ['mongodb', 'mysql'];
-            return !skipDatabases.includes(answers.dbDialect || this.envConfig.dbDialect);
+            return !skipDatabases.includes(answers.dbDialect || this.env.dbDialect);
           },
           default: (args) => {
             if (args.dbDialect === 'postgres') { return 'public'; }
@@ -169,8 +169,8 @@ class DatabasePrompter extends AbstractPrompter {
       if (ssl) {
         try {
           // NOTICE: Parse from string (e.g "true" or "false") to boolean.
-          this.envConfig.ssl = JSON.parse(ssl.toLowerCase());
-          if (typeof this.envConfig.ssl !== 'boolean') {
+          this.env.ssl = JSON.parse(ssl.toLowerCase());
+          if (typeof this.env.ssl !== 'boolean') {
             throw new Error();
           }
         } catch (e) {

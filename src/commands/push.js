@@ -11,7 +11,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
     super.init(plan || defaultPlan);
     const { assertPresent, env, inquirer } = this.context;
     assertPresent({ env, inquirer });
-    this.envConfig = env;
+    this.env = env;
     this.inquirer = inquirer;
   }
 
@@ -37,7 +37,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
     const commandOptions = { ...parsed.flags, ...parsed.args };
 
     try {
-      const config = await withCurrentProject({ ...this.envConfig, ...commandOptions });
+      const config = await withCurrentProject({ ...this.env, ...commandOptions });
 
       const projectManager = new ProjectManager(config);
       const project = await projectManager.getProjectForDevWorkflow();
