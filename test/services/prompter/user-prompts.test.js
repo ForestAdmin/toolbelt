@@ -4,13 +4,13 @@ const UserPrompts = require('../../../src/utils/prompter/user-prompts');
 const EMAIL_FAKE = 'fake@email.com';
 
 describe('services > prompter > user prompts', () => {
-  let envConfig = {};
+  let env = {};
   let requests = [];
   let prompts = [];
   let program = {};
 
   function resetParams() {
-    envConfig = {};
+    env = {};
     requests = [];
     prompts = [];
     program = {};
@@ -19,7 +19,7 @@ describe('services > prompter > user prompts', () => {
   describe('handling user related prompts', () => {
     it('should handle the email', async () => {
       expect.assertions(1);
-      const userPrompts = new UserPrompts(requests, envConfig, prompts, program);
+      const userPrompts = new UserPrompts(requests, env, prompts, program);
       const emailHandlerStub = sinon.stub(userPrompts, 'handleEmail');
       await userPrompts.handlePrompts();
       expect(emailHandlerStub.calledOnce).toStrictEqual(true);
@@ -29,7 +29,7 @@ describe('services > prompter > user prompts', () => {
 
     it('should handle the password', async () => {
       expect.assertions(1);
-      const userPrompts = new UserPrompts(requests, envConfig, prompts, program);
+      const userPrompts = new UserPrompts(requests, env, prompts, program);
       const passwordHandlerStub = sinon.stub(userPrompts, 'handlePassword');
       await userPrompts.handlePrompts();
       expect(passwordHandlerStub.calledOnce).toStrictEqual(true);
@@ -39,7 +39,7 @@ describe('services > prompter > user prompts', () => {
 
     it('should handle the token', async () => {
       expect.assertions(1);
-      const userPrompts = new UserPrompts(requests, envConfig, prompts, program);
+      const userPrompts = new UserPrompts(requests, env, prompts, program);
       const tokenHandlerStub = sinon.stub(userPrompts, 'handleToken');
       await userPrompts.handlePrompts();
       expect(tokenHandlerStub.calledOnce).toStrictEqual(true);
@@ -54,7 +54,7 @@ describe('services > prompter > user prompts', () => {
         it('should add a prompt to ask for it', () => {
           expect.assertions(2);
           requests.push('email');
-          const userPrompts = new UserPrompts(requests, envConfig, prompts, program);
+          const userPrompts = new UserPrompts(requests, env, prompts, program);
 
           expect(prompts).toHaveLength(0);
           userPrompts.handleEmail();
@@ -65,7 +65,7 @@ describe('services > prompter > user prompts', () => {
         it('should add a prompt with the correct configuration', () => {
           expect.assertions(4);
           requests.push('email');
-          const userPrompts = new UserPrompts(requests, envConfig, prompts, program);
+          const userPrompts = new UserPrompts(requests, env, prompts, program);
           userPrompts.handleEmail();
 
           expect(prompts[0].type).toStrictEqual('input');
@@ -78,7 +78,7 @@ describe('services > prompter > user prompts', () => {
         it('should validate that the email has been field', () => {
           expect.assertions(2);
           requests.push('email');
-          const userPrompts = new UserPrompts(requests, envConfig, prompts, program);
+          const userPrompts = new UserPrompts(requests, env, prompts, program);
           userPrompts.handleEmail();
 
           expect(prompts[0].validate(EMAIL_FAKE)).toStrictEqual(true);
@@ -92,11 +92,11 @@ describe('services > prompter > user prompts', () => {
           expect.assertions(2);
           requests.push('email');
           program.email = EMAIL_FAKE;
-          const userPrompts = new UserPrompts(requests, envConfig, prompts, program);
+          const userPrompts = new UserPrompts(requests, env, prompts, program);
 
-          expect(envConfig.email).toBeUndefined();
+          expect(env.email).toBeUndefined();
           userPrompts.handleEmail();
-          expect(envConfig.email).toStrictEqual(EMAIL_FAKE);
+          expect(env.email).toStrictEqual(EMAIL_FAKE);
           resetParams();
         });
 
@@ -104,7 +104,7 @@ describe('services > prompter > user prompts', () => {
           expect.assertions(2);
           requests.push('email');
           program.email = EMAIL_FAKE;
-          const userPrompts = new UserPrompts(requests, envConfig, prompts, program);
+          const userPrompts = new UserPrompts(requests, env, prompts, program);
 
           expect(prompts).toHaveLength(0);
           userPrompts.handleEmail();
@@ -117,7 +117,7 @@ describe('services > prompter > user prompts', () => {
     describe('when the email option is not requested', () => {
       it('should not add an additional prompt', () => {
         expect.assertions(2);
-        const userPrompts = new UserPrompts(requests, envConfig, prompts, program);
+        const userPrompts = new UserPrompts(requests, env, prompts, program);
         expect(prompts).toHaveLength(0);
 
         userPrompts.handleEmail();
@@ -132,13 +132,13 @@ describe('services > prompter > user prompts', () => {
       it('should add the password to the configuration', () => {
         expect.assertions(3);
         program.password = 'password';
-        const userPrompts = new UserPrompts(requests, envConfig, prompts, program);
-        expect(envConfig.password).toBeUndefined();
+        const userPrompts = new UserPrompts(requests, env, prompts, program);
+        expect(env.password).toBeUndefined();
 
         userPrompts.handlePassword();
 
-        expect(envConfig.password).not.toBeUndefined();
-        expect(envConfig.password).toStrictEqual('password');
+        expect(env.password).not.toBeUndefined();
+        expect(env.password).toStrictEqual('password');
         resetParams();
       });
     });
@@ -146,12 +146,12 @@ describe('services > prompter > user prompts', () => {
     describe('when the password has not been passed in', () => {
       it('should not add the password to the configuration', () => {
         expect.assertions(2);
-        const userPrompts = new UserPrompts(requests, envConfig, prompts, program);
-        expect(envConfig.password).toBeUndefined();
+        const userPrompts = new UserPrompts(requests, env, prompts, program);
+        expect(env.password).toBeUndefined();
 
         userPrompts.handlePassword();
 
-        expect(envConfig.password).toBeUndefined();
+        expect(env.password).toBeUndefined();
         resetParams();
       });
     });
@@ -162,13 +162,13 @@ describe('services > prompter > user prompts', () => {
       it('should add the token to the configuration', () => {
         expect.assertions(3);
         program.token = 'fake token';
-        const userPrompts = new UserPrompts(requests, envConfig, prompts, program);
-        expect(envConfig.token).toBeUndefined();
+        const userPrompts = new UserPrompts(requests, env, prompts, program);
+        expect(env.token).toBeUndefined();
 
         userPrompts.handleToken();
 
-        expect(envConfig.token).not.toBeUndefined();
-        expect(envConfig.token).toStrictEqual('fake token');
+        expect(env.token).not.toBeUndefined();
+        expect(env.token).toStrictEqual('fake token');
         resetParams();
       });
     });
@@ -176,12 +176,12 @@ describe('services > prompter > user prompts', () => {
     describe('when the token has not been passed in', () => {
       it('should not add the token to the configuration', () => {
         expect.assertions(2);
-        const userPrompts = new UserPrompts(requests, envConfig, prompts, program);
-        expect(envConfig.token).toBeUndefined();
+        const userPrompts = new UserPrompts(requests, env, prompts, program);
+        expect(env.token).toBeUndefined();
 
         userPrompts.handleToken();
 
-        expect(envConfig.token).toBeUndefined();
+        expect(env.token).toBeUndefined();
         resetParams();
       });
     });

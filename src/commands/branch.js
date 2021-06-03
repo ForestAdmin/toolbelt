@@ -10,7 +10,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     super.init(plan || defaultPlan);
     const { assertPresent, env, inquirer } = this.context;
     assertPresent({ env, inquirer });
-    this.envConfig = env;
+    this.env = env;
     this.inquirer = inquirer;
   }
 
@@ -68,12 +68,12 @@ class BranchCommand extends AbstractAuthenticatedCommand {
 
   async runIfAuthenticated() {
     const parsed = this.parse(BranchCommand);
-    const envSecret = this.envConfig.FOREST_ENV_SECRET;
+    const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
     let config;
 
     try {
-      config = await withCurrentProject({ ...this.envConfig, ...commandOptions });
+      config = await withCurrentProject({ ...this.env, ...commandOptions });
 
       if (!config.envSecret) {
         const environment = await new ProjectManager(config)

@@ -8,14 +8,14 @@ const ProjectPrompts = require('../../../src/utils/prompter/project-prompts');
 const FAKE_PROJECT_NAME = 'fakeProject';
 
 describe('services > prompter > project prompts', () => {
-  let envConfig = {};
+  let env = {};
   let requests = [];
   let program = {
     args: [],
   };
 
   function resetParams() {
-    envConfig = {};
+    env = {};
     requests = [];
     program = {
       args: [],
@@ -26,7 +26,7 @@ describe('services > prompter > project prompts', () => {
     it('should handle the project name', async () => {
       expect.assertions(1);
       program.args = [FAKE_PROJECT_NAME];
-      const projectPrompts = new ProjectPrompts(requests, envConfig, program);
+      const projectPrompts = new ProjectPrompts(requests, env, program);
       const nameHandlerStub = sinon.stub(projectPrompts, 'handleName');
       await projectPrompts.handlePrompts();
 
@@ -41,7 +41,7 @@ describe('services > prompter > project prompts', () => {
         it('should throw a prompter error', async () => {
           expect.assertions(2);
           requests.push('appName');
-          const projectPrompts = new ProjectPrompts(requests, envConfig, program);
+          const projectPrompts = new ProjectPrompts(requests, env, program);
 
           const handleName = projectPrompts.handleName();
           await expect(handleName).rejects.toThrow(PrompterError);
@@ -52,7 +52,7 @@ describe('services > prompter > project prompts', () => {
       describe('and the projectName has already been passed in', () => {
         function getProjectPrompts() {
           program.appName = FAKE_PROJECT_NAME;
-          return new ProjectPrompts(requests, envConfig, program);
+          return new ProjectPrompts(requests, env, program);
         }
 
         describe('and the directory to write in is not available', () => {
@@ -75,10 +75,10 @@ describe('services > prompter > project prompts', () => {
             expect.assertions(2);
             requests.push('appName');
             const projectPrompts = getProjectPrompts();
-            expect(envConfig.appName).toBeUndefined();
+            expect(env.appName).toBeUndefined();
 
             await projectPrompts.handleName();
-            expect(envConfig.appName).toStrictEqual(FAKE_PROJECT_NAME);
+            expect(env.appName).toStrictEqual(FAKE_PROJECT_NAME);
           });
         });
       });
@@ -89,11 +89,11 @@ describe('services > prompter > project prompts', () => {
         expect.assertions(2);
         resetParams();
         program.args = [FAKE_PROJECT_NAME];
-        const projectPrompts = new ProjectPrompts(requests, envConfig, program);
-        expect(envConfig.appName).toBeUndefined();
+        const projectPrompts = new ProjectPrompts(requests, env, program);
+        expect(env.appName).toBeUndefined();
 
         await projectPrompts.handleName();
-        expect(envConfig.appName).toBeUndefined();
+        expect(env.appName).toBeUndefined();
       });
     });
   });

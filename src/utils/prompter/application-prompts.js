@@ -1,9 +1,9 @@
 const AbstractPrompter = require('./abstract-prompter');
 
 class ApplicationPrompts extends AbstractPrompter {
-  constructor(requests, envConfig, prompts, program) {
+  constructor(requests, env, prompts, program) {
     super(requests);
-    this.envConfig = envConfig;
+    this.env = env;
     this.prompts = prompts;
     this.program = program;
   }
@@ -15,8 +15,8 @@ class ApplicationPrompts extends AbstractPrompter {
 
   handleHostname() {
     if (this.isOptionRequested('appHostname')) {
-      this.envConfig.appHostname = this.program.applicationHost;
-      if (!this.envConfig.appHostname) {
+      this.env.appHostname = this.program.applicationHost;
+      if (!this.env.appHostname) {
         this.prompts.push({
           type: 'input',
           name: 'appHostname',
@@ -38,8 +38,8 @@ class ApplicationPrompts extends AbstractPrompter {
 
   handlePort() {
     if (this.isOptionRequested('appPort')) {
-      this.envConfig.appPort = this.program.applicationPort;
-      if (!this.envConfig.appPort) {
+      this.env.appPort = this.program.applicationPort;
+      if (!this.env.appPort) {
         this.prompts.push({
           type: 'input',
           name: 'appPort',

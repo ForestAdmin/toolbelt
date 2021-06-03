@@ -5,9 +5,9 @@ const PrompterError = require('./prompter-error');
 const messages = require('../messages');
 
 class ProjectPrompts extends AbstractPrompter {
-  constructor(requests, envConfig, program) {
+  constructor(requests, env, program) {
     super(requests);
-    this.envConfig = envConfig;
+    this.env = env;
     this.program = program;
   }
 
@@ -37,7 +37,7 @@ class ProjectPrompts extends AbstractPrompter {
           ],
         );
       } else {
-        this.envConfig.appName = projectName;
+        this.env.appName = projectName;
       }
     }
   }
