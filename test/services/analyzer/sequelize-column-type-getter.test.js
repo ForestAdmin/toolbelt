@@ -1,9 +1,9 @@
 const ColumnTypeGetter = require('../../../src/services/schema/update/analyzer/sequelize-column-type-getter');
-const SequelizeHelper = require('../../test-helpers/sequelize-helper');
+const SequelizeHelper = require('./helpers/sequelize-helper');
 const {
   DATABASE_URL_MYSQL_MAX,
   DATABASE_URL_POSTGRESQL_MAX,
-} = require('../../test-helpers/database-urls');
+} = require('./helpers/database-urls');
 
 describe('services > column type getter', () => {
   describe('handling `JSON` type', () => {
