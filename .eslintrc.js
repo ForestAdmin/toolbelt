@@ -11,7 +11,7 @@ module.exports = {
   env: {
     node: true,
   },
-  ignorePatterns: ["test-expected"],
+  ignorePatterns: ["expected"],
   rules: {
     'jest/no-disabled-tests': 0,
     'implicit-arrow-linebreak': 0,
