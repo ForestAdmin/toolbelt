@@ -1,5 +1,5 @@
-const analyzeMongoCollections = require('../../../services/analyzer/mongo-collections-analyzer');
-const EmptyDatabaseError = require('../../../utils/errors/database/empty-database-error');
+const analyzeMongoCollections = require('../../../src/services/schema/update/analyzer/mongo-collections-analyzer');
+const EmptyDatabaseError = require('../../../src/errors/database/empty-database-error');
 
 describe('services > mongoCollectionsAnalyzer', () => {
   describe('analyzeMongoCollections', () => {
