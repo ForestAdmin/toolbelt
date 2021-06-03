@@ -9,7 +9,7 @@ const { testEnv2 } = require('../../fixtures/env');
 describe('schema:update', () => {
   describe('login', () => {
     describe('when the user is not logged in', () => {
-      it('should login the user and then send the schema', () => testCli({
+      it.skip('should login the user and then send the schema', () => testCli({
         commandClass: UpdateCommand,
         env: testEnv2,
         api: [
