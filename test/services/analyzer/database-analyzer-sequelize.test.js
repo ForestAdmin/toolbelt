@@ -1,12 +1,12 @@
 const _ = require('lodash');
 const Sequelize = require('sequelize');
-const SequelizeHelper = require('../../test-helpers/sequelize-helper');
-const { describeSequelizeDatabases } = require('../../test-helpers/multiple-database-version-helper');
+const SequelizeHelper = require('./helpers/sequelize-helper');
+const { describeSequelizeDatabases } = require('./helpers/multiple-database-version-helper');
 const DatabaseAnalyzer = require('../../../src/services/schema/update/analyzer/database-analyzer');
-const databaseUrls = require('../../test-helpers/database-urls');
-const expectedDefaultValuesPostgres = require('../../../test-expected/sequelize/db-analysis-output/default_values.postgres.expected');
-const expectedDefaultValuesMysql = require('../../../test-expected/sequelize/db-analysis-output/default_values.mysql.expected');
-const expectedDefaultValuesMssql = require('../../../test-expected/sequelize/db-analysis-output/default_values.mssql.expected');
+const databaseUrls = require('./helpers/database-urls');
+const expectedDefaultValuesPostgres = require('./expected/sequelize/db-analysis-output/default_values.postgres.expected');
+const expectedDefaultValuesMysql = require('./expected/sequelize/db-analysis-output/default_values.mysql.expected');
+const expectedDefaultValuesMssql = require('./expected/sequelize/db-analysis-output/default_values.mssql.expected');
 const sequelizeAnalyzer = require('../../../src/services/schema/update/analyzer/sequelize-tables-analyzer');
 
 const TIMEOUT = 30000;
