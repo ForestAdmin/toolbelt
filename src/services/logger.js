@@ -1,16 +1,27 @@
 const chalk = require('chalk');
 
 class Logger {
-  constructor(silent) {
-    this.silent = silent;
+  constructor({
+    assertPresent,
+    env,
+    stderr,
+    stdout,
+  }) {
+    assertPresent({ env, stderr, stdout });
+    this.env = env;
+    this.stderr = stderr;
+    this.stdout = stdout;
+
+    // FIXME: Silent was not used before as no "silent" value was in context.
+    this.silent = !!this.env.SILENT && this.env.SILENT !== '0';
   }
 
   log(message, std) {
     if (!this.silent) {
       if (std === 'err') {
-        process.stderr.write(message);
+        this.stderr.write(message);
       } else {
-        process.stdout.write(message);
+        this.stdout.write(message);
       }
     }
   }
@@ -32,4 +43,4 @@ class Logger {
   error(...messages) { this.logLines('red', messages, 'err'); }
 }
 
-module.exports = new Logger();
+module.exports = Logger;

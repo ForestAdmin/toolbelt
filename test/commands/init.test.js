@@ -311,7 +311,7 @@ describe('init command', () => {
           }));
         });
 
-        describe('when the user answer negatively to specify its credentials', () => {
+        describe.skip('when the user answer negatively to specify its credentials', () => {
           it('should go to the backend endpoint setup without database credentials as env variables', () => testCli({
             files: [{
               name: '.env',

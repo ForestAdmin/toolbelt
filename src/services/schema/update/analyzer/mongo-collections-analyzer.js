@@ -1,5 +1,5 @@
 const P = require('bluebird');
-const logger = require('../../../../utils/logger');
+const Context = require('@forestadmin/context');
 const EmptyDatabaseError = require('../../../../errors/database/empty-database-error');
 const { detectReferences, applyReferences } = require('./mongo-references-analyzer');
 const { detectHasMany, applyHasMany } = require('./mongo-hasmany-analyzer');
@@ -99,6 +99,8 @@ function reduceCollection(key, analyses) {
 }
 
 const mapReduceErrors = (resolve, reject, collectionName) => (err, results) => {
+  const { logger } = Context.inject();
+
   /* eslint-enable */
   if (err) {
     if (err.message && err.message.startsWith('CMD_NOT_ALLOWED')) {

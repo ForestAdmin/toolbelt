@@ -2,7 +2,6 @@ const { flags } = require('@oclif/command');
 const _ = require('lodash');
 const defaultPlan = require('../../context/init');
 const EnvironmentManager = require('../../services/environment-manager');
-const logger = require('../../services/logger');
 const Prompter = require('../../services/prompter');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
@@ -22,9 +21,9 @@ class UpdateCommand extends AbstractAuthenticatedCommand {
     if (config.name || config.url) {
       const manager = new EnvironmentManager(config);
       await manager.updateEnvironment();
-      logger.info('Environment updated.');
+      this.logger.info('Environment updated.');
     } else {
-      logger.error('Please provide environment name and/or url');
+      this.logger.error('Please provide environment name and/or url');
     }
   }
 }

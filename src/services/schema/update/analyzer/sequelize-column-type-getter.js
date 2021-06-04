@@ -1,5 +1,5 @@
 const chalk = require('chalk');
-const logger = require('../../../../utils/logger');
+const Context = require('@forestadmin/context');
 
 const DIALECT_MYSQL = 'mysql';
 const DIALECT_POSTGRES = 'postgres';
@@ -77,6 +77,7 @@ function ColumnTypeGetter(databaseConnection, schema, allowWarning = true) {
   };
 
   this.perform = async (columnInfo, columnName, tableName) => {
+    const { logger } = Context.inject();
     const { type } = columnInfo;
 
     switch (type) {

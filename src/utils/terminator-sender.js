@@ -1,4 +1,4 @@
-const logger = require('./logger');
+const Context = require('@forestadmin/context');
 const eventSender = require('./event-sender');
 
 /**
@@ -21,6 +21,8 @@ module.exports = {
   async terminate(status, {
     errorCode, errorMessage, logs, context,
   }) {
+    const { logger } = Context.inject();
+
     if (status !== 0 && logger.spinner) {
       logger.spinner.fail();
     }

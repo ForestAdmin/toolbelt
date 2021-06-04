@@ -1,7 +1,6 @@
 const P = require('bluebird');
 const agent = require('superagent-promise')(require('superagent'), P);
-const context = require('@forestadmin/context');
-const logger = require('../services/logger');
+const Context = require('@forestadmin/context');
 
 /**
  * @class
@@ -16,7 +15,7 @@ function SchemaSender(serializedSchema, secret, authenticationToken, oclifExit) 
    * @returns {Promise<number | undefined>}
    */
   this.perform = () => {
-    const { env } = context.inject();
+    const { env, logger } = Context.inject();
 
     return agent
       .post(`${env.FOREST_URL}/forest/apimaps`)

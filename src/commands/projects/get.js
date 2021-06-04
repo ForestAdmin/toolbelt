@@ -5,7 +5,6 @@ const defaultPlan = require('../../context/init');
 const ProjectManager = require('../../services/project-manager');
 const Renderer = require('../../renderers/project');
 const Prompter = require('../../services/prompter');
-const logger = require('../../services/logger');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class GetCommand extends AbstractAuthenticatedCommand {
@@ -26,7 +25,7 @@ class GetCommand extends AbstractAuthenticatedCommand {
       const project = await manager.getProject(config);
       new Renderer(config).render(project);
     } catch (err) {
-      logger.error(`Cannot find the project ${chalk.bold(config.projectId)}.`);
+      this.logger.error(`Cannot find the project ${chalk.bold(config.projectId)}.`);
     }
   }
 }
