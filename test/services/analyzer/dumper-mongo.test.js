@@ -17,9 +17,11 @@ const subDocumentUsingIds = require('./expected/mongo/db-analysis-output/sub-doc
 const Dumper = require('../../../src/services/dumper/dumper');
 const makeDefaultPlan = require('../../../src/context/init');
 
-const context = Context.execute(makeDefaultPlan());
+function buildContext() {
+  return Context.execute(makeDefaultPlan());
+}
 
-function getDumper() {
+function getDumper(context) {
   return new Dumper(context);
 }
 
@@ -38,8 +40,8 @@ function cleanOutput() {
   rimraf.sync(`${appRoot}/test-output/mongo`);
 }
 
-async function getGeneratedFileFromPersonModel(model) {
-  const dumper = getDumper();
+async function getGeneratedFileFromPersonModel(model, context) {
+  const dumper = getDumper(context);
   await dumper.dump(model, CONFIG);
   return fs.readFileSync(`${appRoot}/test-output/mongo/models/persons.js`, 'utf8');
 }
@@ -50,7 +52,8 @@ const TEST_EXPECTED_MODEL_FILMS_PATH = `${__dirname}/expected/mongo/dumper-outpu
 describe('services > dumper > MongoDB', () => {
   it('should generate a simple model file', async () => {
     expect.assertions(1);
-    const dumper = getDumper();
+    const context = buildContext();
+    const dumper = getDumper(context);
     await dumper.dump(simpleModel, CONFIG);
     const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_FILMS_PATH, 'utf8');
     const expectedFile = fs.readFileSync(TEST_EXPECTED_MODEL_FILMS_PATH, 'utf8');
@@ -61,7 +64,8 @@ describe('services > dumper > MongoDB', () => {
 
   it('should generate a model file with hasMany', async () => {
     expect.assertions(1);
-    const dumper = getDumper();
+    const context = buildContext();
+    const dumper = getDumper(context);
     await dumper.dump(hasManyModel, CONFIG);
     const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_FILMS_PATH, 'utf8');
     const expectedFile = fs.readFileSync(`${__dirname}/expected/mongo/dumper-output/hasmany.expected.js`, 'utf-8');
@@ -73,7 +77,8 @@ describe('services > dumper > MongoDB', () => {
   describe('handling /models/index.js file', () => {
     it('should not force type casting', async () => {
       expect.assertions(1);
-      const dumper = await getDumper();
+      const context = buildContext();
+      const dumper = getDumper(context);
       await dumper.dump(simpleModel, CONFIG);
       const indexGeneratedFile = fs.readFileSync(`${appRoot}/test-output/mongo/models/index.js`, 'utf-8');
 
@@ -83,7 +88,8 @@ describe('services > dumper > MongoDB', () => {
 
     it('should generate a model/index.js file', async () => {
       expect.assertions(1);
-      const dumper = await getDumper();
+      const context = buildContext();
+      const dumper = getDumper(context);
       await dumper.dump(simpleModel, CONFIG);
       const indexGeneratedFile = fs.readFileSync(`${appRoot}/test-output/mongo/models/index.js`, 'utf-8');
       const expectedFile = fs.readFileSync(`${__dirname}/expected/mongo/dumper-output/index.expected.js`, 'utf-8');
@@ -94,7 +100,8 @@ describe('services > dumper > MongoDB', () => {
 
     it('should generate a config/databases.js file', async () => {
       expect.assertions(1);
-      const dumper = await getDumper();
+      const context = buildContext();
+      const dumper = getDumper(context);
       await dumper.dump(simpleModel, CONFIG);
       const indexGeneratedFile = fs.readFileSync(`${appRoot}/test-output/mongo/config/databases.js`, 'utf-8');
       const expectedFile = fs.readFileSync(`${__dirname}/expected/mongo/dumper-output/databases.config.expected.js`, 'utf-8');
@@ -106,7 +113,8 @@ describe('services > dumper > MongoDB', () => {
 
   it('generate a model file with a nested object', async () => {
     expect.assertions(1);
-    const generatedFile = await getGeneratedFileFromPersonModel(nestedObjectModel);
+    const context = buildContext();
+    const generatedFile = await getGeneratedFileFromPersonModel(nestedObjectModel, context);
     const expectedFile = fs.readFileSync(`${__dirname}/expected/mongo/dumper-output/nested-object.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
@@ -115,7 +123,8 @@ describe('services > dumper > MongoDB', () => {
 
   it('generate a model file with a nested array of numbers', async () => {
     expect.assertions(1);
-    const generatedFile = await getGeneratedFileFromPersonModel(nestedArrayOfNumbersModel);
+    const context = buildContext();
+    const generatedFile = await getGeneratedFileFromPersonModel(nestedArrayOfNumbersModel, context);
     const expectedFile = fs.readFileSync(`${__dirname}/expected/mongo/dumper-output/nested-array-of-numbers.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
@@ -124,7 +133,8 @@ describe('services > dumper > MongoDB', () => {
 
   it('generate a model file with a nested array of objects', async () => {
     expect.assertions(1);
-    const generatedFile = await getGeneratedFileFromPersonModel(nestedArrayOfObjectsModel);
+    const context = buildContext();
+    const generatedFile = await getGeneratedFileFromPersonModel(nestedArrayOfObjectsModel, context);
     const expectedFile = fs.readFileSync(`${__dirname}/expected/mongo/dumper-output/nested-array-of-objects.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
@@ -133,7 +143,8 @@ describe('services > dumper > MongoDB', () => {
 
   it('generate a model file with a deep nested objects/array', async () => {
     expect.assertions(1);
-    const generatedFile = await getGeneratedFileFromPersonModel(deepNestedModel);
+    const context = buildContext();
+    const generatedFile = await getGeneratedFileFromPersonModel(deepNestedModel, context);
     const expectedFile = fs.readFileSync(`${__dirname}/expected/mongo/dumper-output/deep-nested.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
@@ -142,7 +153,8 @@ describe('services > dumper > MongoDB', () => {
 
   it('generate a model file with subDocuments using _ids', async () => {
     expect.assertions(1);
-    const generatedFile = await getGeneratedFileFromPersonModel(subDocumentsUsingIds);
+    const context = buildContext();
+    const generatedFile = await getGeneratedFileFromPersonModel(subDocumentsUsingIds, context);
     const expectedFile = fs.readFileSync(`${__dirname}/expected/mongo/dumper-output/sub-documents-using-ids.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
@@ -151,7 +163,8 @@ describe('services > dumper > MongoDB', () => {
 
   it('generate a model file with subDocuments not using _ids', async () => {
     expect.assertions(1);
-    const generatedFile = await getGeneratedFileFromPersonModel(subDocumentsNotUsingIds);
+    const context = buildContext();
+    const generatedFile = await getGeneratedFileFromPersonModel(subDocumentsNotUsingIds, context);
     const expectedFile = fs.readFileSync(`${__dirname}/expected/mongo/dumper-output/sub-documents-not-using-ids.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
@@ -160,7 +173,8 @@ describe('services > dumper > MongoDB', () => {
 
   it('generate a model file with subDocuments with ambiguous _ids', async () => {
     expect.assertions(1);
-    const generatedFile = await getGeneratedFileFromPersonModel(subDocumentsAmbiguousIds);
+    const context = buildContext();
+    const generatedFile = await getGeneratedFileFromPersonModel(subDocumentsAmbiguousIds, context);
     const expectedFile = fs.readFileSync(`${__dirname}/expected/mongo/dumper-output/sub-documents-ambiguous-ids.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
@@ -169,7 +183,8 @@ describe('services > dumper > MongoDB', () => {
 
   it('generate a model file with subDocument using _ids', async () => {
     expect.assertions(1);
-    const generatedFile = await getGeneratedFileFromPersonModel(subDocumentUsingIds);
+    const context = buildContext();
+    const generatedFile = await getGeneratedFileFromPersonModel(subDocumentUsingIds, context);
     const expectedFile = fs.readFileSync(`${__dirname}/expected/mongo/dumper-output/sub-document-using-ids.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
@@ -178,7 +193,8 @@ describe('services > dumper > MongoDB', () => {
 
   it('generate a model file with subDocument not using _ids', async () => {
     expect.assertions(1);
-    const generatedFile = await getGeneratedFileFromPersonModel(subDocumentNotUsingIds);
+    const context = buildContext();
+    const generatedFile = await getGeneratedFileFromPersonModel(subDocumentNotUsingIds, context);
     const expectedFile = fs.readFileSync(`${__dirname}/expected/mongo/dumper-output/sub-document-not-using-ids.expected.js`, 'utf-8');
 
     expect(generatedFile).toStrictEqual(expectedFile);
@@ -189,8 +205,9 @@ describe('services > dumper > MongoDB', () => {
     it('should recreate files that have been deleted', async () => {
       expect.assertions(1);
 
+      const context = buildContext();
       // Setup test by dumping once to ensure all files exists, then remove a file
-      const dumper = getDumper();
+      const dumper = getDumper(context);
       await dumper.dump(simpleModel, CONFIG);
       fs.unlinkSync(TEST_OUTPUT_MODEL_FILMS_PATH);
 
