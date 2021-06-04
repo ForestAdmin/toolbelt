@@ -1,4 +1,4 @@
-const basePlan = require('../../src/context/init');
+const makeDefaultPlan = require('../../src/context/init');
 
 const prepareCommand = ({
   commandArgs = [],
@@ -12,6 +12,6 @@ const prepareCommand = ({
 };
 
 // FIXME: Need to override things here (fs...)
-const prepareContextPlan = () => basePlan;
+const prepareContextPlan = () => makeDefaultPlan();
 
 module.exports = { prepareCommand, prepareContextPlan };

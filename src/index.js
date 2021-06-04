@@ -1,6 +1,6 @@
 const { init } = require('@forestadmin/context');
-const plan = require('./context/init');
+const makeDefaultPlan = require('./context/init');
 
-init(plan);
+init(makeDefaultPlan());
 
 module.exports = require('@oclif/command');
