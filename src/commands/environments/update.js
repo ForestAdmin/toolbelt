@@ -1,13 +1,13 @@
 const { flags } = require('@oclif/command');
 const _ = require('lodash');
-const defaultPlan = require('../../context/init');
+const makeDefaultPlan = require('../../context/init');
 const EnvironmentManager = require('../../services/environment-manager');
 const Prompter = require('../../services/prompter');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class UpdateCommand extends AbstractAuthenticatedCommand {
   init(plan) {
-    super.init(plan || defaultPlan);
+    super.init(plan || makeDefaultPlan());
     const { assertPresent } = this.context;
     assertPresent({ });
   }

@@ -1,6 +1,6 @@
 const path = require('path');
 const { flags } = require('@oclif/command');
-const defaultPlan = require('../../context/init');
+const makeDefaultPlan = require('../../context/init');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
 const JobStateChecker = require('../../services/job-state-checker');
@@ -8,7 +8,7 @@ const AbstractAuthenticatedCommand = require('../../abstract-authenticated-comma
 
 class ApplyCommand extends AbstractAuthenticatedCommand {
   init(plan) {
-    super.init(plan || defaultPlan);
+    super.init(plan || makeDefaultPlan());
     const {
       assertPresent,
       env,

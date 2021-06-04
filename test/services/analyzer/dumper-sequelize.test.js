@@ -13,9 +13,9 @@ const defaultValuesModel = require('./expected/sequelize/db-analysis-output/defa
 const parenthesisColumnName = require('./expected/sequelize/db-analysis-output/parenthesis.expected.json');
 const parenthesisColumnNameUnderscored = require('./expected/sequelize/db-analysis-output/parenthesis_underscored.expected.json');
 const parenthesisColumnNameUnderscoredTrue = require('./expected/sequelize/db-analysis-output/parenthesis_underscored_true.expected.json');
-const initContext = require('../../../src/context/init');
+const makeDefaultPlan = require('../../../src/context/init');
 
-const context = Context.execute(initContext);
+const context = Context.execute(makeDefaultPlan());
 const Dumper = require('../../../src/services/dumper/dumper');
 
 function getDumper() {
