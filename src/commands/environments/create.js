@@ -4,7 +4,6 @@ const EnvironmentManager = require('../../services/environment-manager');
 const Renderer = require('../../renderers/environment');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const withCurrentProject = require('../../services/with-current-project');
-const logger = require('../../services/logger');
 
 class CreateCommand extends AbstractAuthenticatedCommand {
   init(plan) {
@@ -27,7 +26,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
         const errorData = JSON.parse(error.response.text);
         if (errorData && errorData.errors && errorData.errors.length
           && errorData.errors[0] && errorData.errors[0].detail) {
-          logger.error(errorData.errors[0].detail);
+          this.logger.error(errorData.errors[0].detail);
           this.exit(1);
         }
       }

@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const logger = require('./logger');
+const Context = require('@forestadmin/context');
 
 function ApimapSorter(apimap) {
   function sortArrayOfObjects(array) {
@@ -94,6 +94,7 @@ function ApimapSorter(apimap) {
 
       return apimap;
     } catch (error) {
+      const { logger } = Context.inject();
       logger.warn('An Apimap reordering issue occured:', error);
       return apimap;
     }

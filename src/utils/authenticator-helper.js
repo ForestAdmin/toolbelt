@@ -1,7 +1,9 @@
 const atob = require('atob');
-const logger = require('./logger');
+const Context = require('@forestadmin/context');
 
 function parseJwt(token) {
+  const { logger } = Context.inject();
+
   if (!token || !token.includes('.')) { return null; }
   try {
     const base64Url = token.split('.')[1];

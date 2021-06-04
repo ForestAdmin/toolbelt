@@ -3,7 +3,6 @@ const chalk = require('chalk');
 const defaultPlan = require('../../context/init');
 const EnvironmentManager = require('../../services/environment-manager');
 const Renderer = require('../../renderers/environment');
-const logger = require('../../services/logger');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class GetCommand extends AbstractAuthenticatedCommand {
@@ -23,7 +22,7 @@ class GetCommand extends AbstractAuthenticatedCommand {
       const environment = await manager.getEnvironment(config.environmentId);
       new Renderer(config).render(environment);
     } catch (err) {
-      logger.error(`Cannot find the environment ${chalk.bold(config.environmentId)}.`);
+      this.logger.error(`Cannot find the environment ${chalk.bold(config.environmentId)}.`);
     }
   }
 }

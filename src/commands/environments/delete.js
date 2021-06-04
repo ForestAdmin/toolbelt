@@ -3,7 +3,6 @@ const chalk = require('chalk');
 const inquirer = require('inquirer');
 const defaultPlan = require('../../context/init');
 const EnvironmentManager = require('../../services/environment-manager');
-const logger = require('../../services/logger');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class DeleteCommand extends AbstractAuthenticatedCommand {
@@ -38,19 +37,19 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
           await manager.deleteEnvironment(config.environmentId);
           return this.log(`Environment ${chalk.red(environment.name)} successfully deleted.`);
         } catch (error) {
-          logger.error('Oops, something went wrong.');
+          this.logger.error('Oops, something went wrong.');
           return this.exit(1);
         }
       }
-      logger.error(`Confirmation did not match ${chalk.red(environment.name)}. Aborted.`);
+      this.logger.error(`Confirmation did not match ${chalk.red(environment.name)}. Aborted.`);
       return this.exit(1);
     } catch (err) {
       if (err.status === 404) {
-        logger.error(`Cannot find the environment ${chalk.bold(config.environmentId)}.`);
+        this.logger.error(`Cannot find the environment ${chalk.bold(config.environmentId)}.`);
         return this.exit(1);
       }
       if (err.status === 403) {
-        logger.error(`You do not have the rights to delete environment ${chalk.bold(config.environmentId)}.`);
+        this.logger.error(`You do not have the rights to delete environment ${chalk.bold(config.environmentId)}.`);
         return this.exit(1);
       }
       throw err;

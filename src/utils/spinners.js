@@ -1,5 +1,5 @@
 const Spinnies = require('spinnies');
-const logger = require('./logger');
+const Context = require('@forestadmin/context');
 
 const spinnies = new Spinnies({
   failPrefix: '❌',
@@ -13,6 +13,8 @@ const spinnies = new Spinnies({
 
 module.exports = {
   add(key, options, promise = null) {
+    const { logger } = Context.inject();
+
     spinnies.add(key, options);
 
     const spinner = {
