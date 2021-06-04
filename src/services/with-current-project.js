@@ -1,4 +1,4 @@
-const inquirer = require('inquirer');
+const { inject } = require('@forestadmin/context');
 const ProjectManager = require('./project-manager');
 const singletonGetter = require('../services/singleton-getter');
 const Spinner = require('../services/spinner');
@@ -6,6 +6,9 @@ const Spinner = require('../services/spinner');
 const spinner = singletonGetter(Spinner);
 
 module.exports = async function withCurrentProject(config) {
+  const { assertPresent, inquirer } = inject();
+  assertPresent({ inquirer });
+
   if (config.projectId) { return config; }
 
   const projectManager = await new ProjectManager(config);
