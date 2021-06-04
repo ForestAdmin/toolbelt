@@ -14,6 +14,7 @@ const DEFAULT_FOREST_URL = 'https://api.someforesturl.com';
 
 function createDumper(contextOverride = {}) {
   return new Dumper({
+    assertPresent: jest.fn(),
     constants: {
       DEFAULT_FOREST_URL,
     },
