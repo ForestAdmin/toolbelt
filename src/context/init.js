@@ -38,6 +38,7 @@ const DatabaseAnalyzer = require('../services/schema/update/analyzer/database-an
 const Dumper = require('../services/dumper/dumper');
 const EventSender = require('../utils/event-sender');
 const spinners = require('../utils/spinners');
+const spinner = require('../services/spinner');
 const ProjectCreator = require('../services/projects/create/project-creator');
 const ErrorHandler = require('../utils/error-handler');
 const mongoAnalyzer = require('../services/schema/update/analyzer/mongo-collections-analyzer');
@@ -169,7 +170,8 @@ const initCommandProjectsCreate = (context) => context
   .addInstance('CommandGenerateConfigGetter', CommandGenerateConfigGetter)
   .addInstance('DatabaseAnalyzer', DatabaseAnalyzer)
   .addInstance('ProjectCreator', ProjectCreator)
-  .addInstance('spinners', spinners);
+  .addInstance('spinners', spinners)
+  .addInstance('spinner', spinner);
 
 const initCommandSchemaUpdate = (context) => context
   .addInstance('path', path)
