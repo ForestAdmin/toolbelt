@@ -1,6 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
 const Spinnies = require('spinnies');
-const singletonGetter = require('./singleton-getter');
 
 const spinniesConstructorParameters = {
   color: 'yellow',
@@ -9,18 +8,14 @@ const spinniesConstructorParameters = {
     interval: 80,
     frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
   },
+  succeedPrefix: '✅',
 };
 // NOTICE: Singleton used here to attach all generated spinner to the same spinnies instance.
-const spinniesInstance = singletonGetter(Spinnies, spinniesConstructorParameters);
+const spinniesInstance = new Spinnies(spinniesConstructorParameters);
 
-// NOTICE: Except if you need several spinner running at the same time,
-//         a `singleton-getter` usage should be prefered.
 /**
  * A single instance of spinner is intended to be used as follow:
  * @example
- * const singletonGetter = require('path/to/singleton-getter')
- * const spinner = singletonGetter(Spinner)
- *
  * // synchronously:
  * spinner.start({ text: 'my super text' })
  * // do something
