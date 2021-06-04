@@ -4,7 +4,7 @@ const ProjectManager = require('./project-manager');
 
 module.exports = async function withCurrentProject(config) {
   const { assertPresent, spinner } = Context.inject();
-  assertPresent(spinner);
+  assertPresent({ spinner });
 
   if (config.projectId) { return config; }
 
