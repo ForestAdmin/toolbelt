@@ -65,7 +65,7 @@ function handleInitError(rawError) {
 }
 
 async function handleDatabaseConfiguration() {
-  const { env } = context.inject();
+  const { env } = Context.inject();
 
   const response = await inquirer
     .prompt([{
