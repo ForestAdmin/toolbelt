@@ -1,4 +1,4 @@
-const context = require('@forestadmin/context');
+const Context = require('@forestadmin/context');
 const branchDeserializer = require('../deserializers/branch');
 const EnvironmentSerializer = require('../serializers/environment');
 const { handleError } = require('../utils/error');
@@ -22,7 +22,7 @@ function getBranches(envSecret) {
     authenticator,
     env,
     superagent: agent,
-  } = context.inject();
+  } = Context.inject();
   assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
   return agent
@@ -39,7 +39,7 @@ function deleteBranch(branchName, environmentSecret) {
     authenticator,
     env,
     superagent: agent,
-  } = context.inject();
+  } = Context.inject();
   assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
@@ -56,7 +56,7 @@ function createBranch(branchName, environmentSecret) {
     authenticator,
     env,
     superagent: agent,
-  } = context.inject();
+  } = Context.inject();
   assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
@@ -74,7 +74,7 @@ function pushBranch(destinationEnvironmentName, environmentSecret) {
     authenticator,
     env,
     superagent: agent,
-  } = context.inject();
+  } = Context.inject();
   assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
@@ -91,7 +91,7 @@ function switchBranch({ id }, environmentSecret) {
     authenticator,
     env,
     superagent: agent,
-  } = context.inject();
+  } = Context.inject();
   assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
 

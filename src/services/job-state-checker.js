@@ -2,7 +2,7 @@ const P = require('bluebird');
 const agent = require('superagent-promise')(require('superagent'), P);
 const ProgressBar = require('progress');
 const { promisify } = require('util');
-const context = require('@forestadmin/context');
+const Context = require('@forestadmin/context');
 const jobDeserializer = require('../deserializers/job');
 
 const setTimeoutAsync = promisify(setTimeout);
@@ -13,7 +13,7 @@ function JobStateChecker(message, oclifExit) {
     authenticator,
     env,
     logger,
-  } = context.inject();
+  } = Context.inject();
   assertPresent({ authenticator, env, logger });
 
   const bar = new ProgressBar(`${message} [:bar] :percent `, { total: 100 });
