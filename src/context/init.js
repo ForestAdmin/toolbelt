@@ -17,7 +17,7 @@ const mongodb = require('mongodb');
 
 require('../config');
 const pkg = require('../../package.json');
-const logger = require('../services/logger');
+const Logger = require('../services/logger');
 const Authenticator = require('../services/authenticator');
 const messages = require('../utils/messages');
 const terminator = require('../utils/terminator');
@@ -148,7 +148,7 @@ const initSerializers = (context) => context
  */
 const initServices = newPlan()
   .addStep('dependencies', (context) => context
-    .addInstance('logger', logger)
+    .addClass(Logger)
     .addClass(Api)
     .addClass(OidcAuthenticator)
     .addClass(ApplicationTokenService))

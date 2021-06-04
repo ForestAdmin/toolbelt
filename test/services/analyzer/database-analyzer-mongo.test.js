@@ -1,3 +1,4 @@
+const Context = require('@forestadmin/context');
 const MongoHelper = require('./helpers/mongo-helper');
 const { DATABASE_URL_MONGODB_MAX } = require('./helpers/database-urls');
 const { describeMongoDatabases } = require('./helpers/multiple-database-version-helper');
@@ -35,12 +36,17 @@ const expectedSubDocumentUsingIds = require('./expected/mongo/db-analysis-output
 const expectedComplexModelWithAView = require('./expected/mongo/db-analysis-output/complex-model-with-a-view.expected.json');
 const mongoAnalyzer = require('../../../src/services/schema/update/analyzer/mongo-collections-analyzer');
 
-const setupTest = () => ({
-  assertPresent: jest.fn(),
-  terminator: jest.fn(),
-  mongoAnalyzer,
-  sequelizeAnalyzer: jest.fn(),
-});
+const defaultPlan = require('../../../src/context/init');
+
+const setupTest = () => {
+  Context.init(defaultPlan);
+  return {
+    assertPresent: jest.fn(),
+    terminator: jest.fn(),
+    mongoAnalyzer,
+    sequelizeAnalyzer: jest.fn(),
+  };
+};
 
 function getMongoHelper(mongoUrl) {
   return new MongoHelper(mongoUrl);

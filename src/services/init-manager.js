@@ -3,8 +3,7 @@ const chalk = require('chalk');
 const clipboardy = require('clipboardy');
 const fs = require('fs');
 const { EOL } = require('os');
-const context = require('@forestadmin/context');
-const logger = require('../services/logger');
+const Context = require('@forestadmin/context');
 const { handleError } = require('../utils/error');
 const { generateKey } = require('../utils/key-generator');
 const DatabasePrompter = require('../services/prompter/database-prompter');
@@ -162,6 +161,7 @@ function createDotenvFile(environmentVariables) {
 }
 
 async function displayEnvironmentVariablesAndCopyToClipboard(environmentVariables) {
+  const { logger } = Context.inject();
   const variablesToDisplay = getContentToAddInDotenvFile(environmentVariables);
   logger.info(SUCCESS_MESSAGE_DISPLAY_ENV_VARIABLES + chalk.black.bgCyan(variablesToDisplay));
   await clipboardy.write(variablesToDisplay)
