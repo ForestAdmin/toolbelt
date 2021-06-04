@@ -1,6 +1,6 @@
 const fs = require('fs');
 const { flags } = require('@oclif/command');
-const defaultPlan = require('../context/init');
+const makeDefaultPlan = require('../context/init');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const { buildDatabaseUrl } = require('../utils/database-url');
 const withCurrentProject = require('../services/with-current-project');
@@ -24,8 +24,13 @@ const PROMPT_MESSAGE_AUTO_CREATING_ENV_FILE = 'Do you want a new `.env` file (co
 
 class InitCommand extends AbstractAuthenticatedCommand {
   init(plan) {
-    super.init(plan || defaultPlan);
-    const { assertPresent, inquirer, env, spinner } = this.context;
+    super.init(plan || makeDefaultPlan());
+    const {
+      assertPresent,
+      inquirer,
+      env,
+      spinner,
+    } = this.context;
     assertPresent({ inquirer, env, spinner });
 
     this.environmentVariables = {};

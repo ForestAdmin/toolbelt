@@ -10,7 +10,7 @@ const expectedDefaultValuesMysql = require('./expected/sequelize/db-analysis-out
 const expectedDefaultValuesMssql = require('./expected/sequelize/db-analysis-output/default_values.mssql.expected');
 const sequelizeAnalyzer = require('../../../src/services/schema/update/analyzer/sequelize-tables-analyzer');
 
-const defaultPlan = require('../../../src/context/init');
+const makeDefaultPlan = require('../../../src/context/init');
 
 const TIMEOUT = 30000;
 
@@ -31,7 +31,7 @@ defaultsValueExpected[databaseUrls.DATABASE_URL_POSTGRESQL_MIN]
   .fields[9].defaultValue.val = 'now()';
 
 const setupTest = () => {
-  Context.init(defaultPlan);
+  Context.init(makeDefaultPlan());
   return {
     assertPresent: jest.fn(),
     terminator: jest.fn(),

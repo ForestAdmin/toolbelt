@@ -1,13 +1,13 @@
 const { flags } = require('@oclif/command');
 const chalk = require('chalk');
-const defaultPlan = require('../../context/init');
+const makeDefaultPlan = require('../../context/init');
 const EnvironmentManager = require('../../services/environment-manager');
 const Renderer = require('../../renderers/environment');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class GetCommand extends AbstractAuthenticatedCommand {
   init(plan) {
-    super.init(plan || defaultPlan);
+    super.init(plan || makeDefaultPlan());
     const { assertPresent, env } = this.context;
     assertPresent({ env });
     this.env = env;

@@ -15,9 +15,9 @@ const subDocumentsNotUsingIds = require('./expected/mongo/db-analysis-output/sub
 const subDocumentsUsingIds = require('./expected/mongo/db-analysis-output/sub-documents-using-ids.expected.json');
 const subDocumentUsingIds = require('./expected/mongo/db-analysis-output/sub-document-using-ids.expected.json');
 const Dumper = require('../../../src/services/dumper/dumper');
-const initContext = require('../../../src/context/init');
+const makeDefaultPlan = require('../../../src/context/init');
 
-const context = Context.execute(initContext);
+const context = Context.execute(makeDefaultPlan());
 
 function getDumper() {
   return new Dumper(context);

@@ -4,9 +4,9 @@ const sinon = require('sinon');
 const os = require('os');
 const rimraf = require('rimraf');
 const Dumper = require('../../../src/services/dumper/dumper');
-const initContext = require('../../../src/context/init');
+const makeDefaultPlan = require('../../../src/context/init');
 
-const injectedContext = Context.execute(initContext);
+const injectedContext = Context.execute(makeDefaultPlan());
 
 const DOCKER_COMPOSE_FILE_LOCATION = './test-output/Linux/docker-compose.yml';
 const DOT_ENV_FILE_LOCATION = './test-output/Linux/.env';

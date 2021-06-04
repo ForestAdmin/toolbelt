@@ -181,7 +181,7 @@ const initCommandSchemaUpdate = (context) => context
   .addClass(DatabaseAnalyzer)
   .addClass(SchemaService);
 
-module.exports = newPlan()
+module.exports = () => newPlan()
   .addStep('constants', initConstants)
   .addStep('env', initEnv)
   .addStep('dependencies', initDependencies)

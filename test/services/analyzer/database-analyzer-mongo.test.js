@@ -36,10 +36,10 @@ const expectedSubDocumentUsingIds = require('./expected/mongo/db-analysis-output
 const expectedComplexModelWithAView = require('./expected/mongo/db-analysis-output/complex-model-with-a-view.expected.json');
 const mongoAnalyzer = require('../../../src/services/schema/update/analyzer/mongo-collections-analyzer');
 
-const defaultPlan = require('../../../src/context/init');
+const makeDefaultPlan = require('../../../src/context/init');
 
 const setupTest = () => {
-  Context.init(defaultPlan);
+  Context.init(makeDefaultPlan());
   return {
     assertPresent: jest.fn(),
     terminator: jest.fn(),
