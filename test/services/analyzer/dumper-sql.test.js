@@ -5,7 +5,6 @@ const fs = require('fs');
 const renderingModel = require('./expected/sequelize/db-analysis-output/renderings.expected.json');
 const makeDefaultPlan = require('../../../src/context/init');
 
-const injectedContext = Context.execute(makeDefaultPlan());
 const Dumper = require('../../../src/services/dumper/dumper');
 
 const TYPE_CAST = 'databaseOptions.dialectOptions.typeCast';
@@ -30,6 +29,7 @@ describe('services > dumper > SQL', () => {
         path: appRoot,
       };
 
+      const injectedContext = Context.execute(makeDefaultPlan());
       const dumper = new Dumper(injectedContext);
       await dumper.dump({}, config);
     }
@@ -57,6 +57,7 @@ describe('services > dumper > SQL', () => {
         path: appRoot,
       };
 
+      const injectedContext = Context.execute(makeDefaultPlan());
       const dumper = new Dumper(injectedContext);
       await dumper.dump({}, config);
     }
@@ -84,6 +85,7 @@ describe('services > dumper > SQL', () => {
         path: appRoot,
       };
 
+      const injectedContext = Context.execute(makeDefaultPlan());
       const dumper = new Dumper(injectedContext);
       await dumper.dump(renderingModel, config);
     }
