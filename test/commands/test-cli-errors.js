@@ -84,7 +84,8 @@ function validateInput(
   errorIfBadFiles(files);
   errorIfRest(rest);
   errorIfBadCommand({ commandLegacy, commandClass, commandArgs });
-  const noExitExpected = !expectedExitCode && !expectedExitMessage;
+  const noExitExpected = (expectedExitCode === null || expectedExitCode === undefined)
+    && !expectedExitMessage;
   if (stds || noExitExpected) {
     errorIfNoStd(stds);
     errorIfStdRest(stds);
