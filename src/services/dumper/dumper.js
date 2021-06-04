@@ -9,6 +9,7 @@ require('./handlerbars/loader');
 const DEFAULT_PORT = 3310;
 class Dumper {
   constructor({
+    assertPresent,
     fs,
     chalk,
     constants,
@@ -19,6 +20,17 @@ class Dumper {
     logger,
     mkdirp,
   }) {
+    assertPresent({
+      fs,
+      chalk,
+      constants,
+      env,
+      os,
+      Sequelize,
+      Handlebars,
+      logger,
+      mkdirp,
+    });
     this.fs = fs;
     this.chalk = chalk;
     this.constants = constants;
