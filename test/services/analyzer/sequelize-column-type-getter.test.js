@@ -1,3 +1,4 @@
+const Context = require('@forestadmin/context');
 const ColumnTypeGetter = require('../../../src/services/schema/update/analyzer/sequelize-column-type-getter');
 const SequelizeHelper = require('./helpers/sequelize-helper');
 const {
@@ -5,10 +6,13 @@ const {
   DATABASE_URL_POSTGRESQL_MAX,
 } = require('./helpers/database-urls');
 
+const defaultPlan = require('../../../src/context/init');
+
 describe('services > column type getter', () => {
   describe('handling `JSON` type', () => {
     it('should work for MySQL and PostgreSQL', async () => {
       expect.assertions(2);
+      Context.init(defaultPlan);
 
       async function getComputedType(databaseUrl, dialect) {
         const sequelizeHelper = new SequelizeHelper();
@@ -31,6 +35,8 @@ describe('services > column type getter', () => {
   describe('using mysql', () => {
     it('should handle BIT(1) as boolean type', async () => {
       expect.assertions(1);
+
+      Context.init(defaultPlan);
       const sequelizeHelper = new SequelizeHelper();
       const databaseConnection = await sequelizeHelper.connect(DATABASE_URL_MYSQL_MAX);
       await sequelizeHelper.dropAndCreate('customers');
@@ -47,6 +53,8 @@ describe('services > column type getter', () => {
   describe('using postgresql', () => {
     it('should not handle BIT(1)', async () => {
       expect.assertions(1);
+
+      Context.init(defaultPlan);
       const sequelizeHelper = new SequelizeHelper();
       const databaseConnection = await sequelizeHelper.connect(DATABASE_URL_POSTGRESQL_MAX);
       await sequelizeHelper.dropAndCreate('customers');
@@ -61,6 +69,8 @@ describe('services > column type getter', () => {
 
     it('should handle `integer ARRAY` as `ARRAY(DataTypes.INTEGER)`', async () => {
       expect.assertions(1);
+
+      Context.init(defaultPlan);
       const sequelizeHelper = new SequelizeHelper();
       const databaseConnection = await sequelizeHelper.connect(DATABASE_URL_POSTGRESQL_MAX);
       await sequelizeHelper.dropAndCreate('employees');

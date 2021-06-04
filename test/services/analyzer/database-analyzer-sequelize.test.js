@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const Sequelize = require('sequelize');
+const Context = require('@forestadmin/context');
 const SequelizeHelper = require('./helpers/sequelize-helper');
 const { describeSequelizeDatabases } = require('./helpers/multiple-database-version-helper');
 const DatabaseAnalyzer = require('../../../src/services/schema/update/analyzer/database-analyzer');
@@ -8,6 +9,8 @@ const expectedDefaultValuesPostgres = require('./expected/sequelize/db-analysis-
 const expectedDefaultValuesMysql = require('./expected/sequelize/db-analysis-output/default_values.mysql.expected');
 const expectedDefaultValuesMssql = require('./expected/sequelize/db-analysis-output/default_values.mssql.expected');
 const sequelizeAnalyzer = require('../../../src/services/schema/update/analyzer/sequelize-tables-analyzer');
+
+const defaultPlan = require('../../../src/context/init');
 
 const TIMEOUT = 30000;
 
@@ -27,12 +30,15 @@ defaultsValueExpected[databaseUrls.DATABASE_URL_POSTGRESQL_MIN]
   .default_values
   .fields[9].defaultValue.val = 'now()';
 
-const setupTest = () => ({
-  assertPresent: jest.fn(),
-  terminator: jest.fn(),
-  mongoAnalyzer: jest.fn(),
-  sequelizeAnalyzer,
-});
+const setupTest = () => {
+  Context.init(defaultPlan);
+  return {
+    assertPresent: jest.fn(),
+    terminator: jest.fn(),
+    mongoAnalyzer: jest.fn(),
+    sequelizeAnalyzer,
+  };
+};
 
 describe('services > database analyser > Sequelize', () => {
   describeSequelizeDatabases(({ connectionUrl, dialect }) => () => {

@@ -5,7 +5,6 @@ const defaultPlan = require('../../context/init');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const EnvironmentManager = require('../../services/environment-manager');
 const withCurrentProject = require('../../services/with-current-project');
-const logger = require('../../services/logger');
 
 class CopyLayoutCommand extends AbstractAuthenticatedCommand {
   init(plan) {
@@ -31,7 +30,7 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
       if (error.status !== 404) {
         throw error;
       }
-      logger.error(`Cannot find the source environment ${chalk.bold(config.fromEnvironment)} on the project ${chalk.bold(config.projectId)}.`);
+      this.logger.error(`Cannot find the source environment ${chalk.bold(config.fromEnvironment)} on the project ${chalk.bold(config.projectId)}.`);
       this.exit(3);
     }
 
@@ -41,7 +40,7 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
       if (error.status !== 404) {
         throw error;
       }
-      logger.error(`Cannot find the target environment ${chalk.bold(config.toEnvironment)} on the project ${chalk.bold(config.projectId)}.`);
+      this.logger.error(`Cannot find the target environment ${chalk.bold(config.toEnvironment)} on the project ${chalk.bold(config.projectId)}.`);
       this.exit(3);
     }
 
@@ -65,17 +64,17 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
         if (copyLayout) {
           return this.log(`Environment's layout ${chalk.red(fromEnvironment.name)} successfully copied to ${chalk.red(toEnvironment.name)}.`);
         }
-        logger.error('Oops, something went wrong.');
+        this.logger.error('Oops, something went wrong.');
         return this.exit(1);
       }
-      logger.error(`Confirmation did not match ${chalk.red(toEnvironment.name)}. Aborted.`);
+      this.logger.error(`Confirmation did not match ${chalk.red(toEnvironment.name)}. Aborted.`);
       return this.exit(2);
     } catch (error) {
       if (error.status === 403) {
-        logger.error(`You do not have the rights to copy the layout of the environment ${chalk.bold(fromEnvironment.name)} to ${chalk.bold(toEnvironment.name)}.`);
+        this.logger.error(`You do not have the rights to copy the layout of the environment ${chalk.bold(fromEnvironment.name)} to ${chalk.bold(toEnvironment.name)}.`);
         return this.exit(1);
       }
-      logger.error(error);
+      this.logger.error(error);
       return this.exit(1);
     }
   }
