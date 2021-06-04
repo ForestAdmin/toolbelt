@@ -1,13 +1,13 @@
 const P = require('bluebird');
 const agent = require('superagent-promise')(require('superagent'), P);
-const context = require('@forestadmin/context');
+const Context = require('@forestadmin/context');
 const EnvironmentSerializer = require('../serializers/environment');
 const environmentDeserializer = require('../deserializers/environment');
 const DeploymentRequestSerializer = require('../serializers/deployment-request');
 const JobStateChecker = require('../services/job-state-checker');
 
 function EnvironmentManager(config) {
-  const { assertPresent, authenticator, env } = context.inject();
+  const { assertPresent, authenticator, env } = Context.inject();
   assertPresent({ authenticator, env });
 
   this.listEnvironments = async () => {

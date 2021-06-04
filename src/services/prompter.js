@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const inquirer = require('inquirer');
-const context = require('@forestadmin/context');
+const Context = require('@forestadmin/context');
 
 const promptEmail = {
   type: 'input',
@@ -23,7 +23,7 @@ const promptPassword = {
 };
 
 async function Prompter(requests) {
-  const { env } = context.inject();
+  const { env } = Context.inject();
 
   function isRequested(option) {
     return requests.indexOf(option) > -1;
