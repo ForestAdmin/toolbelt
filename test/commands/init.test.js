@@ -33,9 +33,9 @@ describe('init command', () => {
         ],
         std: [
           { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
-          { spinner: 'Selecting your project' },
-          { spinner: 'Analyzing your setup' },
-          { spinner: 'Checking your database setup' },
+          { spinner: '✅ Selecting your project' },
+          { spinner: '✅ Analyzing your setup' },
+          { spinner: '✅ Checking your database setup' },
           { out: 'Here are the environment variables you need to copy in your configuration file' },
         ],
       }));
@@ -52,9 +52,9 @@ describe('init command', () => {
           () => getDevelopmentEnvironmentValid(82),
         ],
         std: [
-          { spinner: 'Selecting your project' },
-          { spinner: 'Analyzing your setup' },
-          { spinner: 'Checking your database setup' },
+          { spinner: '✅ Selecting your project' },
+          { spinner: '✅ Analyzing your setup' },
+          { spinner: '✅ Checking your database setup' },
           { out: 'Here are the environment variables you need to copy in your configuration file' },
         ],
       }));
@@ -73,9 +73,9 @@ describe('init command', () => {
           () => getDevelopmentEnvironmentValid(82),
         ],
         std: [
-          { spinner: 'Selecting your project' },
-          { spinner: 'Analyzing your setup' },
-          { spinner: 'Checking your database setup' },
+          { spinner: '✅ Selecting your project' },
+          { spinner: '✅ Analyzing your setup' },
+          { spinner: '✅ Checking your database setup' },
           { out: 'Here are the environment variables you need to copy in your configuration file' },
         ],
       }));
@@ -107,9 +107,9 @@ describe('init command', () => {
           () => getDevelopmentEnvironmentValid(1),
         ],
         std: [
-          { spinner: 'Selecting your project' },
-          { spinner: 'Analyzing your setup' },
-          { spinner: 'Checking your database setup' },
+          { spinner: '✅ Selecting your project' },
+          { spinner: '✅ Analyzing your setup' },
+          { spinner: '✅ Checking your database setup' },
           { out: 'Here are the environment variables you need to copy in your configuration file' },
         ],
       }));
@@ -146,9 +146,9 @@ describe('init command', () => {
           { out: 'project1' },
           { out: 'project2' },
           ...enter,
-          { spinner: 'Selecting your project' },
-          { spinner: 'Analyzing your setup' },
-          { spinner: 'Checking your database setup' },
+          { spinner: '✅ Selecting your project' },
+          { spinner: '✅ Analyzing your setup' },
+          { spinner: '✅ Checking your database setup' },
           { out: 'Here are the environment variables you need to copy in your configuration file' },
         ],
       }));
@@ -166,8 +166,8 @@ describe('init command', () => {
           () => getProjectForDevWorkflowUnallowed(82),
         ],
         std: [
-          { spinner: 'Selecting your project' },
-          { spinner: 'Analyzing your setup' },
+          { spinner: '✅ Selecting your project' },
+          { spinner: '❌ Analyzing your setup' },
           { err: 'You need the \'Admin\' role to create a development environment on this project.' },
         ],
         exitCode: 1,
@@ -184,8 +184,8 @@ describe('init command', () => {
           () => getV1ProjectForDevWorkflow(82),
         ],
         std: [
-          { spinner: 'Selecting your project' },
-          { spinner: 'Analyzing your setup' },
+          { spinner: '✅ Selecting your project' },
+          { spinner: '❌ Analyzing your setup' },
           { err: 'This project does not support branches yet. Please migrate your environments from your Project settings first.' },
         ],
         exitCode: 1,
@@ -202,8 +202,8 @@ describe('init command', () => {
           () => getNoProdProjectForDevWorkflow(82),
         ],
         std: [
-          { spinner: 'Selecting your project' },
-          { spinner: 'Analyzing your setup' },
+          { spinner: '✅ Selecting your project' },
+          { spinner: '❌ Analyzing your setup' },
           { err: 'You cannot create your development environment until this project has either a remote or a production environment.' },
         ],
         exitCode: 1,
@@ -221,9 +221,9 @@ describe('init command', () => {
           () => getDevelopmentEnvironmentValid(1),
         ],
         std: [
-          { spinner: 'Selecting your project' },
-          { spinner: 'Analyzing your setup' },
-          { spinner: 'Checking your database setup' },
+          { spinner: '✅ Selecting your project' },
+          { spinner: '✅ Analyzing your setup' },
+          { spinner: '✅ Checking your database setup' },
           { out: 'Here are the environment variables you need to copy in your configuration file' },
         ],
       }));
@@ -242,9 +242,9 @@ describe('init command', () => {
           () => getDevelopmentEnvironmentValid(82),
         ],
         std: [
-          { spinner: 'Selecting your project' },
-          { spinner: 'Analyzing your setup' },
-          { spinner: 'Checking your database setup' },
+          { spinner: '✅ Selecting your project' },
+          { spinner: '✅ Analyzing your setup' },
+          { spinner: '✅ Checking your database setup' },
           { out: 'Here are the environment variables you need to copy in your configuration file' },
         ],
       }));
@@ -266,10 +266,10 @@ describe('init command', () => {
             () => getDevelopmentEnvironmentValid(82),
           ],
           std: [
-            { spinner: 'Selecting your project' },
-            { spinner: 'Analyzing your setup' },
-            { spinner: 'Checking your database setup' },
-            { spinner: 'Setting up your development environment' },
+            { spinner: '✅ Selecting your project' },
+            { spinner: '✅ Analyzing your setup' },
+            { spinner: '✅ Checking your database setup' },
+            { spinner: '✅ Setting up your development environment' },
             // NOTICE: Trimed in order not to exceed the max length of a line
             //         (that differs between local and travis)
             { out: 'Do you want your current folder `.env` file to be completed automatically' },
@@ -295,9 +295,9 @@ describe('init command', () => {
               () => getDevelopmentEnvironmentValid(82),
             ],
             std: [
-              { spinner: 'Selecting your project' },
-              { spinner: 'Analyzing your setup' },
-              { spinner: 'Checking your database setup' },
+              { spinner: '✅ Selecting your project' },
+              { spinner: '✅ Analyzing your setup' },
+              { spinner: '✅ Checking your database setup' },
               ...databaseDialog('someDbName'),
               // NOTICE: Trimed in order not to exceed the max length of a line
               //         (that differs between local and travis)
@@ -326,9 +326,9 @@ describe('init command', () => {
               () => getDevelopmentEnvironmentValid(82),
             ],
             std: [
-              { spinner: 'Selecting your project' },
-              { spinner: 'Analyzing your setup' },
-              { spinner: 'Checking your database setup' },
+              { spinner: '✅ Selecting your project' },
+              { spinner: '✅ Analyzing your setup' },
+              { spinner: '✅ Checking your database setup' },
               { out: 'You don\'t have a DATABASE_URL yet. Do you need help setting it?' },
               { in: 'n' },
               // NOTICE: Trimed in order not to exceed the max length of a line
@@ -355,10 +355,10 @@ describe('init command', () => {
           () => getDevelopmentEnvironmentValid(82),
         ],
         std: [
-          { spinner: 'Selecting your project' },
-          { spinner: 'Analyzing your setup' },
-          { spinner: 'Checking your database setup' },
-          { spinner: 'Setting up your development environment' },
+          { spinner: '✅ Selecting your project' },
+          { spinner: '✅ Analyzing your setup' },
+          { spinner: '✅ Checking your database setup' },
+          { spinner: '✅ Setting up your development environment' },
           { out: 'Here are the environment variables you need to copy in your configuration file' },
         ],
       }));
@@ -377,10 +377,10 @@ describe('init command', () => {
             () => createDevelopmentEnvironment(82),
           ],
           std: [
-            { spinner: 'Selecting your project' },
-            { spinner: 'Analyzing your setup' },
-            { spinner: 'Checking your database setup' },
-            { spinner: 'Setting up your development environment' },
+            { spinner: '✅ Selecting your project' },
+            { spinner: '✅ Analyzing your setup' },
+            { spinner: '✅ Checking your database setup' },
+            { spinner: '✅ Setting up your development environment' },
             { out: 'Enter your local admin backend endpoint:' },
             ...enter,
             { out: 'Here are the environment variables you need to copy in your configuration file' },
@@ -408,15 +408,15 @@ describe('init command', () => {
           () => createDevelopmentEnvironment(82),
         ],
         std: [
-          { spinner: 'Selecting your project' },
-          { spinner: 'Analyzing your setup' },
-          { spinner: 'Checking your database setup' },
+          { spinner: '✅ Selecting your project' },
+          { spinner: '✅ Analyzing your setup' },
+          { spinner: '✅ Checking your database setup' },
           { out: 'Enter your local admin backend endpoint:' },
           ...enter,
           { out: 'Do you want your current folder `.env` file to be completed automatically' },
           ...enter,
-          { spinner: 'Copying the environment variables in your `.env` file' },
-          { spinner: 'You\'re now set up and ready to develop on Forest Admin' },
+          { spinner: '✅ Copying the environment variables in your `.env` file' },
+          { spinner: '✅ You\'re now set up and ready to develop on Forest Admin' },
           { out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/documentation/reference-guide/how-it-works/developing-on-forest-admin/forest-cli-commands.' },
         ],
       }));
@@ -435,9 +435,9 @@ describe('init command', () => {
           () => createDevelopmentEnvironment(82),
         ],
         std: [
-          { spinner: 'Selecting your project' },
-          { spinner: 'Analyzing your setup' },
-          { spinner: 'Checking your database setup' },
+          { spinner: '✅ Selecting your project' },
+          { spinner: '✅ Analyzing your setup' },
+          { spinner: '✅ Checking your database setup' },
           { out: 'Enter your local admin backend endpoint:' },
           ...enter,
           { out: 'Do you want a new `.env` file (containing your environment variables)' },
