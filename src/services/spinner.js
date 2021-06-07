@@ -3,6 +3,7 @@ const Spinnies = require('spinnies');
 
 const spinniesConstructorParameters = {
   color: 'yellow',
+  failPrefix: '❌',
   spinnerColor: 'yellow',
   spinner: {
     interval: 80,
