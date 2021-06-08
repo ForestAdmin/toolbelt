@@ -22,6 +22,7 @@ describe('switch', () => {
             () => getBranchListValid(),
             () => updateEnvironmentCurrentBranchId(),
           ],
+          prompCounts: [1],
           std: [
             { out: 'Select the branch you want to set current' },
             { out: 'feature/first' },
