@@ -1,5 +1,3 @@
-const makeDefaultPlan = require('../../src/context/init');
-
 const prepareCommand = ({
   commandArgs = [],
   commandClass: CommandClass,
@@ -8,10 +6,7 @@ const prepareCommand = ({
   const instance = new CommandClass(commandArgs);
   instance.init(commandPlan);
 
-  return () => instance.run();
+  return instance;
 };
 
-// FIXME: Need to override things here (fs...)
-const prepareContextPlan = () => makeDefaultPlan();
-
-module.exports = { prepareCommand, prepareContextPlan };
+module.exports = { prepareCommand };
