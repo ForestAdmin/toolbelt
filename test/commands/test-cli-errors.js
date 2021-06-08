@@ -124,9 +124,16 @@ function assertExitMessage(actualError, expectedExitMessage) {
   expect(actualMessage).toStrictEqual(`Error message: '${expectedExitMessage}'`);
 }
 
+function assertPromptCalled(prompts, lastPromptIndex) {
+  const expectedCurrentPrompt = ((prompts && prompts.length) || 0) - 1;
+
+  expect(lastPromptIndex).toBe(expectedCurrentPrompt);
+}
+
 module.exports = {
   validateInput,
   assertExitCode,
   assertExitMessage,
   assertNoErrorThrown,
+  assertPromptCalled,
 };
