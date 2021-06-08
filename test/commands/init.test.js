@@ -131,7 +131,7 @@ describe('init command', () => {
       }));
     });
 
-    describe('when the user has multiple project', () => {
+    describe('when the user has multiple projects', () => {
       it('should prompt a project selection input and go to project validation', () => testCli({
         commandClass: InitCommand,
         env: noKeyEnv,
@@ -141,6 +141,7 @@ describe('init command', () => {
           () => getInAppProjectForDevWorkflow(1),
           () => getDevelopmentEnvironmentValid(1),
         ],
+        promptCounts: [1],
         std: [
           { out: 'Select your project' },
           { out: 'project1' },
@@ -265,6 +266,7 @@ describe('init command', () => {
             () => getLumberProjectForDevWorkflow(82),
             () => getDevelopmentEnvironmentValid(82),
           ],
+          promptCounts: [1],
           std: [
             { spinner: '✅ Selecting your project' },
             { spinner: '✅ Analyzing your setup' },
@@ -294,6 +296,7 @@ describe('init command', () => {
               () => getLumberProjectForDevWorkflow(82),
               () => getDevelopmentEnvironmentValid(82),
             ],
+            promptCounts: [1, 8, 1],
             std: [
               { spinner: '✅ Selecting your project' },
               { spinner: '✅ Analyzing your setup' },
@@ -325,6 +328,7 @@ describe('init command', () => {
               () => getLumberProjectForDevWorkflow(82),
               () => getDevelopmentEnvironmentValid(82),
             ],
+            promptCounts: [1, 1],
             std: [
               { spinner: '✅ Selecting your project' },
               { spinner: '✅ Analyzing your setup' },
@@ -376,6 +380,7 @@ describe('init command', () => {
             () => getDevelopmentEnvironmentNotFound(82),
             () => createDevelopmentEnvironment(82),
           ],
+          promptCounts: [1],
           std: [
             { spinner: '✅ Selecting your project' },
             { spinner: '✅ Analyzing your setup' },
@@ -407,6 +412,7 @@ describe('init command', () => {
           () => getDevelopmentEnvironmentNotFound(82),
           () => createDevelopmentEnvironment(82),
         ],
+        promptCounts: [1, 1],
         std: [
           { spinner: '✅ Selecting your project' },
           { spinner: '✅ Analyzing your setup' },
@@ -434,6 +440,7 @@ describe('init command', () => {
           () => getDevelopmentEnvironmentNotFound(82),
           () => createDevelopmentEnvironment(82),
         ],
+        promptCounts: [1, 1],
         std: [
           { spinner: '✅ Selecting your project' },
           { spinner: '✅ Analyzing your setup' },
