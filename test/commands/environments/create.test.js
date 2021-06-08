@@ -2,7 +2,6 @@ const testCli = require('./../test-cli');
 const EnvironmentCreateCommand = require('../../../src/commands/environments/create');
 const {
   arrowDown,
-  enter,
   loginRequired,
 } = require('../../fixtures/std');
 const {
@@ -74,7 +73,6 @@ describe('environments:create', () => {
         ...loginRequired,
         { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
         ...arrowDown,
-        ...enter,
         { out: 'ENVIRONMENT' },
         { out: 'name               Test' },
         { out: 'url                https://test.forestadmin.com' },

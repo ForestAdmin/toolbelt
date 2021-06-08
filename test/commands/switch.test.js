@@ -1,6 +1,6 @@
 const testCli = require('./test-cli');
 const SwitchCommand = require('../../src/commands/switch');
-const { enter, arrowDown } = require('../fixtures/std');
+const { arrowDown } = require('../fixtures/std');
 const {
   getProjectByEnv,
   getBranchListValid,
@@ -29,7 +29,6 @@ describe('switch', () => {
             { out: 'feature/third' },
             { out: 'feature/second' },
             ...arrowDown,
-            ...enter,
             { out: 'Switched to branch: feature/third' },
           ],
         }));

@@ -67,15 +67,6 @@ async function testCli({
     }
   });
 
-  validateInput(
-    files,
-    { commandClass, commandArgs },
-    stds,
-    expectedExitCode,
-    expectedExitMessage,
-    rest,
-  );
-
   const inputs = stds ? stds.filter((type) => type.in !== undefined).map((type) => type.in) : [];
   const outputs = stds ? stds.filter((type) => type.out !== undefined).map((type) => type.out) : [];
   let errorOutputs;
@@ -87,6 +78,17 @@ async function testCli({
   } else {
     errorOutputs = [];
   }
+
+  validateInput(
+    files,
+    { commandClass, commandArgs },
+    stds,
+    inputs,
+    promptCounts,
+    expectedExitCode,
+    expectedExitMessage,
+    rest,
+  );
 
   const oldcwd = process.cwd();
   makeTempDirectory(temporaryDirectory);
@@ -131,7 +133,7 @@ async function testCli({
     if (currentPrompt > promptCounts.length) throw new Error('Calling inquirer prompt more than expected');
 
     const currentPromptCount = promptCounts[currentPrompt];
-    if (currentPromptCount > question.length) throw new Error('Expecting more prompts than actual inquirer question count');
+    if (currentPromptCount > question.length) throw new Error(`Expecting ${currentPromptCount} prompts when inquirer has ${question.length} question(s)`);
 
     for (let i = 0; i < currentPromptCount; i += 1) {
       const answer = `${inputs[inputIndex]}${eol}`;

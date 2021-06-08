@@ -55,7 +55,6 @@ describe('push', () => {
           ...enter,
           { out: `Push branch ${branchName} onto ${environmentName}` },
           { in: 'y' },
-          ...enter,
           { out: `✅ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
@@ -85,7 +84,6 @@ describe('push', () => {
           ...enter,
           { out: `Push branch ${branchName} onto ${environmentName}` },
           { in: 'y' },
-          ...enter,
           { out: `✅ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
@@ -109,7 +107,6 @@ describe('push', () => {
         std: [
           { out: `Push branch ${branchName} onto ${environmentName}` },
           { in: 'y' },
-          ...enter,
           { out: `✅ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
@@ -151,7 +148,6 @@ describe('push', () => {
         promptCounts: [1],
         std: [
           { in: 'n' },
-          ...enter,
           { out: `? Push branch ${branchName} onto ${environmentName} No` },
         ],
       }));

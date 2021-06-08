@@ -18,7 +18,6 @@ function inOutConfirmDeploy(environmentName) {
   return [
     { out: `Deploy ${environmentName} layout changes to reference?` },
     { in: 'y' },
-    ...enter,
     inOutDeploySuccessMessage(environmentName),
   ];
 }
@@ -152,7 +151,6 @@ describe('deploy', () => {
         promptCounts: [1],
         std: [
           { in: 'n' },
-          ...enter,
           { out: `? Deploy ${environmentName} layout changes to reference? No` },
         ],
       }));
