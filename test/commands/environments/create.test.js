@@ -69,6 +69,7 @@ describe('environments:create', () => {
         () => getProjectListValid(),
         () => createEnvironmentValid(),
       ],
+      promptCounts: [1],
       std: [
         ...loginRequired,
         { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },

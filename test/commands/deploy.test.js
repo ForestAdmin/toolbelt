@@ -46,6 +46,7 @@ describe('deploy', () => {
           () => getEnvironmentListValid(1),
           () => deployValid(validEnvSecret),
         ],
+        promptCounts: [1, 1, 1],
         std: [
           { out: 'Select your project' },
           { out: 'project1' },
@@ -70,6 +71,7 @@ describe('deploy', () => {
             () => getEnvironmentListValid(projectId),
             () => deployValid(),
           ],
+          promptCounts: [1, 1],
           std: [
             ...inOutSelectEnvironment(environmentName),
             ...inOutConfirmDeploy(environmentName),
@@ -89,6 +91,7 @@ describe('deploy', () => {
             () => getEnvironmentListValid(projectId),
             () => deployValid(),
           ],
+          promptCounts: [1, 1],
           std: [
             ...inOutSelectEnvironment(environmentName),
             ...inOutConfirmDeploy(environmentName),
@@ -110,6 +113,7 @@ describe('deploy', () => {
           () => getEnvironmentListValid(projectId),
           () => deployValid(),
         ],
+        promptCounts: [1],
         std: inOutConfirmDeploy(environmentName),
       }));
     });
@@ -127,7 +131,9 @@ describe('deploy', () => {
           () => getEnvironmentListValid(projectId),
           () => deployValid(),
         ],
-        std: [inOutDeploySuccessMessage(environmentName)],
+        std: [
+          inOutDeploySuccessMessage(environmentName),
+        ],
       }));
     });
 
@@ -143,6 +149,7 @@ describe('deploy', () => {
           () => getProjectByEnv(),
           () => getEnvironmentListValid(projectId),
         ],
+        promptCounts: [1],
         std: [
           { in: 'n' },
           ...enter,

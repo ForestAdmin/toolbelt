@@ -44,6 +44,7 @@ describe('push', () => {
           () => getEnvironmentListValid(projectId),
           () => pushBranchValid(envSecret),
         ],
+        promptCounts: [1, 1, 1],
         std: [
           { out: 'Select your project' },
           { out: 'project1' },
@@ -77,6 +78,7 @@ describe('push', () => {
           () => getEnvironmentListValid(projectId),
           () => pushBranchValid(envSecret),
         ],
+        promptCounts: [1, 1],
         std: [
           { out: 'Select the remote environment you want to push onto' },
           { out: 'name1' },
@@ -103,6 +105,7 @@ describe('push', () => {
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           () => pushBranchValid(envSecret),
         ],
+        promptCounts: [1],
         std: [
           { out: `Push branch ${branchName} onto ${environmentName}` },
           { in: 'y' },
@@ -145,6 +148,7 @@ describe('push', () => {
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
         ],
+        promptCounts: [1],
         std: [
           { in: 'n' },
           ...enter,
