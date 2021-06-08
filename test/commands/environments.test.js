@@ -2,7 +2,6 @@ const testCli = require('./test-cli');
 const EnvironmentCommand = require('../../src/commands/environments');
 const {
   loginRequired,
-  enter,
   arrowDown,
 } = require('../fixtures/std');
 const { testEnv } = require('../fixtures/env');
@@ -26,7 +25,6 @@ describe('environments', () => {
       ...loginRequired,
       { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
       ...arrowDown,
-      ...enter,
       { out: 'ENVIRONMENTS' },
       { out: 'ID        NAME                URL                                TYPE' },
       { out: '3         name1               http://localhost:1                 remote' },
