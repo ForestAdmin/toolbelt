@@ -10,6 +10,7 @@ describe('projects', () => {
       token: 'any',
       commandClass: ListProjectCommand,
       api: [() => getProjectDetailledList()],
+      promptCounts: [0],
       std: [
         { out: 'PROJECTS' },
         { out: 'ID        NAME' },
@@ -25,6 +26,7 @@ describe('projects', () => {
       commandClass: ListProjectCommand,
       commandArgs: ['--format', 'json'],
       api: [() => getProjectDetailledList()],
+      promptCounts: [0],
       std: [
         {
           out: [{

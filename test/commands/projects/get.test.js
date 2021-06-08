@@ -12,6 +12,7 @@ describe('projects:get', () => {
         commandClass: GetProjectCommand,
         commandArgs: ['82'],
         api: [() => getProjectValid()],
+        promptCounts: [0],
         std: [
           { out: 'PROJECT' },
           { out: 'id                   82' },
@@ -29,6 +30,7 @@ describe('projects:get', () => {
         commandClass: GetProjectCommand,
         commandArgs: ['82', '--format', 'json'],
         api: [() => getProjectValid()],
+        promptCounts: [0],
         std: [{
           out: {
             id: '82',
