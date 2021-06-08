@@ -30,6 +30,7 @@ describe('login', () => {
           '-e', 'smile@gmail.com',
           '-t', jwt.sign({}, 'key', { expiresIn: '1day' }),
         ],
+        promptCounts: null,
         std: [
           { in: `${jwt.sign({}, 'key', { expiresIn: '1day' })}` },
           { out: 'Login successful' },
