@@ -116,12 +116,13 @@ const initDependencies = newPlan()
   .addStep('std', (context) => context
     .addInstance('stdout', process.stdout)
     .addInstance('stderr', process.stderr))
+  .addStep('inquirer', (context) => context
+    .addInstance('inquirer', inquirer))
   .addStep('others', (context) => context
     .addInstance('chalk', chalk)
     .addInstance('os', os)
     .addInstance('fs', fs)
     .addInstance('superagent', superagent)
-    .addInstance('inquirer', inquirer)
     .addInstance('openIdClient', openIdClient)
     .addInstance('jwtDecode', jwtDecode)
     .addInstance('joi', joi));

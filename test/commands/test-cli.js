@@ -1,9 +1,11 @@
+const inquirer = require('inquirer');
 const nock = require('nock');
 
 const {
   assertExitCode,
   assertExitMessage,
   assertNoErrorThrown,
+  assertPromptCalled,
 } = require('./test-cli-errors');
 const { prepareCommand, prepareContextPlan } = require('./test-cli-command');
 const { assertApi } = require('./test-cli-api');
@@ -20,7 +22,6 @@ const {
   logStdErr,
   logStdOut,
   mockStd,
-  planifyInputs,
   rollbackStd,
 } = require('./test-cli-std');
 
@@ -50,6 +51,7 @@ async function testCli({
   commandArgs,
   exitCode: expectedExitCode,
   exitMessage: expectedExitMessage,
+  promptCounts,
   std: stds,
   assertNoStdError = true,
   print = false,
@@ -74,8 +76,8 @@ async function testCli({
     rest,
   );
 
-  const inputs = stds ? stds.filter((type) => type.in).map((type) => type.in) : [];
-  const outputs = stds ? stds.filter((type) => type.out).map((type) => type.out) : [];
+  const inputs = stds ? stds.filter((type) => type.in !== undefined).map((type) => type.in) : [];
+  const outputs = stds ? stds.filter((type) => type.out !== undefined).map((type) => type.out) : [];
   let errorOutputs;
   if (stds) {
     // NOTICE: spinnies outputs to std.err
@@ -114,6 +116,34 @@ async function testCli({
     .replace('dependencies.open',
       (context) => context.addFunction('open', jest.fn()));
 
+  const stdin = mockStd(outputs, errorOutputs, print);
+
+  // Mock part of module inquirer to handle stdin
+  let inputIndex = 0;
+  let currentPrompt = -1;
+  const eol = '\r\n';
+  const inquirerPrompt = inquirer.prompt;
+
+  inquirer.prompt = async (question, answers) => {
+    const inquirerPromise = inquirerPrompt(question, answers);
+
+    currentPrompt += 1;
+    if (currentPrompt > promptCounts.length) throw new Error('Calling inquirer prompt more than expected');
+
+    const currentPromptCount = promptCounts[currentPrompt];
+    if (currentPromptCount > question.length) throw new Error('Expecting more prompts than actual inquirer question count');
+
+    for (let i = 0; i < currentPromptCount; i += 1) {
+      const answer = `${inputs[inputIndex]}${eol}`;
+      setTimeout(() => inquirerPromise.ui.rl.input.send(answer), 0);
+      inputIndex += 1;
+    }
+
+    return inquirerPromise;
+  };
+  commandPlan.replace('dependencies.inquirer',
+    (context) => context.addInstance('requirer', inquirer));
+
   if (tokenBehavior != null) {
     commandPlan = commandPlan.replace('services.authenticator',
       (context) => context.addInstance('authenticator', {
@@ -123,9 +153,6 @@ async function testCli({
         tryLogin: () => { },
       }));
   }
-
-  const stdin = mockStd(outputs, errorOutputs, print);
-  planifyInputs(inputs, stdin);
 
   const command = prepareCommand({
     commandArgs,
@@ -156,11 +183,15 @@ async function testCli({
   }
   process.chdir(oldcwd);
 
+  // Restore inquirer.
+  inquirer.prompt = inquirerPrompt;
+
   try {
     assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);
     assertApi(nocks);
     assertExitCode(actualError, expectedExitCode);
     assertExitMessage(actualError, expectedExitMessage);
+    assertPromptCalled(promptCounts, currentPrompt);
     assertOutputs(outputs, errorOutputs, { assertNoStdError });
   } catch (e) {
     logStdErr();
