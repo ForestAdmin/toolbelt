@@ -144,6 +144,7 @@ describe('branch', () => {
             () => getProjectByEnv(),
             () => deleteUnknownBranch('unexistingbranch'),
           ],
+          promptCounts: [1],
           std: [
             { in: 'Y' },
             { err: "❌ This branch doesn't exist." },
@@ -162,6 +163,7 @@ describe('branch', () => {
             () => getProjectByEnv(),
             () => deleteBranchInvalid('brancherror'),
           ],
+          promptCounts: [1],
           std: [
             { in: 'Y' },
             { err: '❌ Failed to delete branch.' },
@@ -181,6 +183,7 @@ describe('branch', () => {
               () => getProjectByEnv(),
               () => deleteBranchValid('existingbranch'),
             ],
+            promptCounts: [1],
             std: [
               { in: 'Y' },
               { out: '✅ Branch existingbranch successfully deleted.' },
@@ -195,6 +198,7 @@ describe('branch', () => {
             api: [
               () => getProjectByEnv(),
             ],
+            promptCounts: [1],
             std: [
               { in: 'n' },
               { out: '' },
