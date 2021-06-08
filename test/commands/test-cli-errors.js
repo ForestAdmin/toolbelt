@@ -28,6 +28,20 @@ function errorIfBadFiles(files) {
   files.forEach((file) => errorIfBadFile(file));
 }
 
+function errorIfBadPromptCounts(promptCounts, inputs) {
+  if (promptCounts === null) return;
+  if (promptCounts !== undefined && !Array.isArray(promptCounts)) {
+    throw new Error('"promptCounts" not defined as an array');
+  }
+  let expectedPromptCount = 0;
+  if (promptCounts) {
+    expectedPromptCount = promptCounts.reduce((prev, cur) => prev + cur, 0);
+  }
+  if (expectedPromptCount !== inputs.length) {
+    throw new Error(`got ${inputs.length} input string for an expected total of ${expectedPromptCount}`);
+  }
+}
+
 function errorIfRest(rest) {
   if (Object.keys(rest).length > 0) {
     throw new Error(`Unknown testCli parameter(s): ${Object.keys(rest).join(', ')}.
@@ -77,11 +91,14 @@ function validateInput(
   files,
   { commandLegacy, commandClass, commandArgs },
   stds,
+  inputs,
+  promptCounts,
   expectedExitCode,
   expectedExitMessage,
   rest,
 ) {
   errorIfBadFiles(files);
+  errorIfBadPromptCounts(promptCounts, inputs);
   errorIfRest(rest);
   errorIfBadCommand({ commandLegacy, commandClass, commandArgs });
   const noExitExpected = (expectedExitCode === null || expectedExitCode === undefined)
