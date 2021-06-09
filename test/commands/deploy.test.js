@@ -11,7 +11,7 @@ const {
 const { testEnv, testEnv2 } = require('../fixtures/env');
 
 function inOutDeploySuccessMessage(environmentName) {
-  return { out: `✅ Deployed ${environmentName} layout changes to reference environment.` };
+  return { out: `✓ Deployed ${environmentName} layout changes to reference environment.` };
 }
 
 function inOutConfirmDeploy(environmentName) {
@@ -158,6 +158,7 @@ describe('deploy', () => {
 
     describe('when environment doesn\'t exist', () => {
       const projectId = 82;
+
       it('should throw an error', () => testCli({
         env: testEnv2,
         token: 'any',
@@ -167,8 +168,10 @@ describe('deploy', () => {
           () => getProjectByEnv(),
           () => getEnvironmentListValid(projectId),
         ],
+        std: [
+          { err: '× The environment provided doesn\'t exist.' },
+        ],
         exitCode: 2,
-        exitMessage: "❌ The environment provided doesn't exist.",
       }));
     });
   });

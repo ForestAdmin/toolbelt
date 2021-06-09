@@ -55,7 +55,7 @@ describe('push', () => {
           ...enter,
           { out: `Push branch ${branchName} onto ${environmentName}` },
           { in: 'y' },
-          { out: `✅ Branch ${branchName} successfully pushed onto ${environmentName}.` },
+          { out: `✓ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
     });
@@ -84,7 +84,7 @@ describe('push', () => {
           ...enter,
           { out: `Push branch ${branchName} onto ${environmentName}` },
           { in: 'y' },
-          { out: `✅ Branch ${branchName} successfully pushed onto ${environmentName}.` },
+          { out: `✓ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
     });
@@ -107,7 +107,7 @@ describe('push', () => {
         std: [
           { out: `Push branch ${branchName} onto ${environmentName}` },
           { in: 'y' },
-          { out: `✅ Branch ${branchName} successfully pushed onto ${environmentName}.` },
+          { out: `✓ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
     });
@@ -127,7 +127,7 @@ describe('push', () => {
           () => pushBranchValid(envSecret),
         ],
         std: [
-          { out: `✅ Branch ${branchName} successfully pushed onto ${environmentName}.` },
+          { out: `✓ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
     });
@@ -167,8 +167,10 @@ describe('push', () => {
           () => getDevelopmentEnvironmentValid(projectId),
           () => getNoBranchListValid(envSecret),
         ],
+        std: [
+          { err: '× You don\'t have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.' },
+        ],
         exitCode: 2,
-        exitMessage: "⚠️ You don't have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.",
       }));
     });
 
@@ -186,8 +188,10 @@ describe('push', () => {
           () => getDevelopmentEnvironmentValid(projectId),
           () => getBranchListValid(envSecret, false),
         ],
+        std: [
+          { err: '× You don\'t have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.' },
+        ],
         exitCode: 2,
-        exitMessage: "⚠️ You don't have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.",
       }));
     });
 
@@ -203,8 +207,10 @@ describe('push', () => {
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           () => pushBranchInvalidDestination(envSecret),
         ],
+        std: [
+          { err: '× The environment provided doesn\'t exist.' },
+        ],
         exitCode: 2,
-        exitMessage: "❌ The environment provided doesn't exist.",
       }));
     });
 
@@ -220,8 +226,10 @@ describe('push', () => {
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           () => pushBranchInvalidType(envSecret),
         ],
+        std: [
+          { err: '× The environment on which you are trying to push your modifications is not a remote environment.' },
+        ],
         exitCode: 2,
-        exitMessage: '❌ The environment on which you are trying to push your modifications is not a remote environment.',
       }));
     });
 
@@ -237,8 +245,10 @@ describe('push', () => {
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           () => pushBranchInvalidDestinationBranch(envSecret),
         ],
+        std: [
+          { err: '× The environment on which you are trying to push your modifications doesn\'t have current branch.' },
+        ],
         exitCode: 2,
-        exitMessage: "❌ The environment on which you are trying to push your modifications doesn't have current branch.",
       }));
     });
 
@@ -253,8 +263,10 @@ describe('push', () => {
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           () => getNoEnvironmentListValid(projectId),
         ],
+        std: [
+          { err: '× You cannot run this command until this project has a remote non-production environment.' },
+        ],
         exitCode: 2,
-        exitMessage: '❌ You cannot run this command until this project has a remote non-production environment.',
       }));
     });
 
@@ -268,8 +280,10 @@ describe('push', () => {
           () => getProjectByEnv(),
           () => getV1ProjectForDevWorkflow(projectId),
         ],
+        std: [
+          { err: '× This project does not support branches yet. Please migrate your environments from your Project settings first.' },
+        ],
         exitCode: 2,
-        exitMessage: '⚠️  This project does not support branches yet. Please migrate your environments from your Project settings first.',
       }));
     });
   });

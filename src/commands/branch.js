@@ -18,10 +18,10 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     try {
       const branches = await BranchManager.getBranches(envSecret);
       if (!branches || branches.length === 0) {
-        return this.log("⚠️ You don't have any branch yet. Use `forest branch <branch_name>` to create one.");
+        return this.logger.warn('You don\'t have any branch yet. Use `forest branch <branch_name>` to create one.');
       }
       branches.forEach((branch) => {
-        this.log(`${branch.name} ${branch.isCurrent ? '< current branch' : ''}`);
+        this.logger.log(`${branch.name} ${branch.isCurrent ? '< current branch' : ''}`);
       });
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
@@ -36,7 +36,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     try {
       await BranchManager.createBranch(branchName, environmentSecret);
 
-      return this.log(`✅ Switched to new branch: ${branchName}.`);
+      return this.logger.success(`Switched to new branch: ${branchName}.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
@@ -57,7 +57,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     }
     try {
       await BranchManager.deleteBranch(branchName, envSecret);
-      return this.log(`✅ Branch ${branchName} successfully deleted.`);
+      return this.logger.success(`Branch ${branchName} successfully deleted.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 

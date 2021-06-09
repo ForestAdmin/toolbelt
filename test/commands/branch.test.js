@@ -47,7 +47,7 @@ describe('branch', () => {
           () => getNoBranchListValid(),
         ],
         std: [
-          { out: "⚠️ You don't have any branch yet. Use `forest branch <branch_name>` to create one." },
+          { out: 'Δ You don\'t have any branch yet. Use `forest branch <branch_name>` to create one.' },
         ],
       }));
     });
@@ -63,7 +63,7 @@ describe('branch', () => {
           () => postBranchValid('some/randombranchename'),
         ],
         std: [
-          { out: '✅ Switched to new branch: some/randombranchename.' },
+          { out: '✓ Switched to new branch: some/randombranchename.' },
         ],
       }));
 
@@ -77,7 +77,7 @@ describe('branch', () => {
           () => postBranchValid('$0m3/$7r4ng38r4nChn4m3!'),
         ],
         std: [
-          { out: '✅ Switched to new branch: $0m3/$7r4ng38r4nChn4m3!.' },
+          { out: '✓ Switched to new branch: $0m3/$7r4ng38r4nChn4m3!.' },
         ],
       }));
 
@@ -92,7 +92,7 @@ describe('branch', () => {
             () => postBranchInvalid(),
           ],
           std: [
-            { err: '❌ This branch already exists.' },
+            { err: '× This branch already exists.' },
           ],
           exitCode: 2,
         }));
@@ -126,7 +126,7 @@ describe('branch', () => {
               () => postBranchValidOnSpecificEnv('watabranch', '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125'),
             ],
             std: [
-              { out: '✅ Switched to new branch: watabranch.' },
+              { out: '✓ Switched to new branch: watabranch.' },
             ],
           }));
         });
@@ -147,7 +147,7 @@ describe('branch', () => {
           promptCounts: [1],
           std: [
             { in: 'Y' },
-            { err: "❌ This branch doesn't exist." },
+            { err: '× This branch doesn\'t exist.' },
           ],
           exitCode: 2,
         }));
@@ -166,7 +166,7 @@ describe('branch', () => {
           promptCounts: [1],
           std: [
             { in: 'Y' },
-            { err: '❌ Failed to delete branch.' },
+            { err: '× Failed to delete branch.' },
           ],
           exitCode: 2,
         }));
@@ -186,7 +186,7 @@ describe('branch', () => {
             promptCounts: [1],
             std: [
               { in: 'Y' },
-              { out: '✅ Branch existingbranch successfully deleted.' },
+              { out: '✓ Branch existingbranch successfully deleted.' },
             ],
           }));
 
@@ -216,7 +216,7 @@ describe('branch', () => {
                 () => deleteBranchValid('existingbranch'),
               ],
               std: [
-                { out: '✅ Branch existingbranch successfully deleted.' },
+                { out: '✓ Branch existingbranch successfully deleted.' },
               ],
             }));
           });
@@ -235,7 +235,7 @@ describe('branch', () => {
             () => getBranchInvalidEnvironmentV1(),
           ],
           std: [
-            { err: '⚠️  This project does not support branches yet. Please migrate your environments from your Project settings first.' },
+            { err: '× This project does not support branches yet. Please migrate your environments from your Project settings first.' },
           ],
           exitCode: 2,
         }));
@@ -251,7 +251,7 @@ describe('branch', () => {
             () => getBranchInvalidNotDevEnv(),
           ],
           std: [
-            { err: '⚠️  Your development environment is not properly set up. Please run `forest init` first and retry.' },
+            { err: '× Your development environment is not properly set up. Please run `forest init` first and retry.' },
           ],
           exitCode: 2,
         }));
@@ -267,7 +267,7 @@ describe('branch', () => {
             () => getBranchInvalidEnvironmentNoRemote(),
           ],
           std: [
-            { err: '❌ You cannot run branch commands until this project has either a remote or a production environment.' },
+            { err: '× You cannot run branch commands until this project has either a remote or a production environment.' },
           ],
           exitCode: 2,
         }));

@@ -1,14 +1,15 @@
+const chalk = require('chalk');
 const Spinnies = require('spinnies');
 const Context = require('@forestadmin/context');
 
 const spinnies = new Spinnies({
-  failPrefix: '\u274c', // '❌'
+  failPrefix: `${chalk.bold.red('×')}`,
   spinnerColor: 'blue',
   spinner: {
     interval: 80,
     frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
   },
-  succeedPrefix: '\u2705', // '✅'
+  succeedPrefix: `${chalk.bold.green('✓')}`,
 });
 
 module.exports = {
