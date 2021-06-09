@@ -40,7 +40,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
     try {
       await BranchManager.switchBranch(selectedBranch, environmentSecret);
 
-      return this.log(`✅ Switched to branch: ${selectedBranch.name}.`);
+      return this.logger.success(`Switched to branch: ${selectedBranch.name}.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
@@ -71,7 +71,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
       const branches = await BranchManager.getBranches(config.envSecret) || [];
 
       if (branches.length === 0) {
-        return this.log("⚠️  You don't have any branch to set as current. Use `forest branch <branch_name>` to create one.");
+        return this.logger.warn('You don\'t have any branch to set as current. Use `forest branch <branch_name>` to create one.');
       }
 
       const selectedBranchName = config.BRANCH_NAME || await this.selectBranch(branches);
@@ -82,7 +82,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
         throw new Error('Branch does not exist.');
       }
       if (currentBranch && currentBranch.name === selectedBranchName) {
-        return this.log(`ℹ️  ${selectedBranchName} is already your current branch.`);
+        return this.logger.info(`${selectedBranchName} is already your current branch.`);
       }
 
       return this.switchTo(selectedBranch, config.envSecret);
