@@ -28,7 +28,7 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
     const secret = this.getEnvironmentSecret(parsedFlags);
     const authenticationToken = this.authenticator.getAuthToken();
 
-    this.log('Sending "./.forestadmin-schema.json"...');
+    this.logger.log('Sending "./.forestadmin-schema.json"...');
     const jobId = await new SchemaSender(
       serializedSchema,
       secret,
@@ -38,16 +38,16 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
 
     if (jobId) {
       await new JobStateChecker('Processing schema', oclifExit).check(jobId);
-      this.log('Schema successfully sent to forest.');
+      this.logger.log('Schema successfully sent to forest.');
     } else {
-      this.log('The schema is the same as before, nothing changed.');
+      this.logger.log('The schema is the same as before, nothing changed.');
     }
 
     return null;
   }
 
   readSchema() {
-    this.log('Reading "./.forestadmin-schema.json"...');
+    this.logger.log('Reading "./.forestadmin-schema.json"...');
     const filename = path.resolve('./.forestadmin-schema.json');
 
     if (!this.fs.existsSync(filename)) {
@@ -95,7 +95,7 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
     if (parsedFlags.secret) {
       secret = parsedFlags.secret;
     } else if (this.env.FOREST_ENV_SECRET) {
-      this.log('Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"');
+      this.logger.log('Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"');
       secret = this.env.FOREST_ENV_SECRET;
     } else {
       this.logger.error('Cannot find your forest environment secret in the environment variable "FOREST_ENV_SECRET".\nPlease set the "FOREST_ENV_SECRET" variable or pass the secret in parameter using --secret.');

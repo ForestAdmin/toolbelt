@@ -48,7 +48,7 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
       answers = await inquirer
         .prompt([{
           type: 'input',
-          prefix: '⚠️  WARNING \t',
+          prefix: 'Δ WARNING \t',
           name: 'confirm',
           message: `This will copy the environment's layout from ${chalk.red(fromEnvironment.name)} to ${chalk.red(toEnvironment.name)} and override the whole previous configuration.\nTo proceed, type ${chalk.red(toEnvironment.name)} or re-run this command with --force : `,
         }]);
@@ -62,7 +62,7 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
           oclifExit,
         );
         if (copyLayout) {
-          return this.log(`Environment's layout ${chalk.red(fromEnvironment.name)} successfully copied to ${chalk.red(toEnvironment.name)}.`);
+          return this.logger.log(`Environment's layout ${chalk.red(fromEnvironment.name)} successfully copied to ${chalk.red(toEnvironment.name)}.`);
         }
         this.logger.error('Oops, something went wrong.');
         return this.exit(1);

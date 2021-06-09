@@ -26,7 +26,7 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
         answers = await inquirer
           .prompt([{
             type: 'input',
-            prefix: '⚠️  WARNING \t',
+            prefix: 'Δ WARNING \t',
             name: 'confirm',
             message: `This will delete the environment ${chalk.red(environment.name)}.\nTo proceed, type ${chalk.red(environment.name)} or re-run this command with --force : `,
           }]);
@@ -35,7 +35,7 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
       if (!answers || answers.confirm === environment.name) {
         try {
           await manager.deleteEnvironment(config.environmentId);
-          return this.log(`Environment ${chalk.red(environment.name)} successfully deleted.`);
+          return this.logger.log(`Environment ${chalk.red(environment.name)} successfully deleted.`);
         } catch (error) {
           this.logger.error('Oops, something went wrong.');
           return this.exit(1);
