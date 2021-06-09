@@ -11,7 +11,7 @@ const {
 const { testEnv, testEnv2 } = require('../fixtures/env');
 
 function inOutDeploySuccessMessage(environmentName) {
-  return { out: `✓ Deployed ${environmentName} layout changes to reference environment.` };
+  return { out: `√ Deployed ${environmentName} layout changes to reference environment.` };
 }
 
 function inOutConfirmDeploy(environmentName) {
