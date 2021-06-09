@@ -71,9 +71,11 @@ async function testCli({
   let errorOutputs;
   if (stds) {
     // NOTICE: spinnies outputs to std.err
-    errorOutputs = stds
-      .filter((type) => type.err || type.spinner)
-      .map((type) => type.err || type.spinner);
+    const spinnerOutputs = stds
+      .filter((type) => type.spinner)
+      // NOTICE: Spinnies uses '-' as prefix when in CI mode.
+      .map((type) => (process.env.CI ? `-${type.spinner.slice(1)}` : type.spinner));
+    errorOutputs = [...stds.filter((type) => type.err).map((type) => type.err), ...spinnerOutputs];
   } else {
     errorOutputs = [];
   }
