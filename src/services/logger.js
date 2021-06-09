@@ -49,7 +49,7 @@ class Logger {
 
   log(...messages) { this._logLines(messages); }
 
-  success(...messages) { this._logLines(messages, { color: 'green', prefix: '✓' }); }
+  success(...messages) { this._logLines(messages, { color: 'green', prefix: '√' }); }
 
   warn(...messages) { this._logLines(messages, { color: 'yellow', prefix: 'Δ' }); }
 }

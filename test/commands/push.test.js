@@ -55,7 +55,7 @@ describe('push', () => {
           ...enter,
           { out: `Push branch ${branchName} onto ${environmentName}` },
           { in: 'y' },
-          { out: `✓ Branch ${branchName} successfully pushed onto ${environmentName}.` },
+          { out: `√ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
     });
@@ -84,7 +84,7 @@ describe('push', () => {
           ...enter,
           { out: `Push branch ${branchName} onto ${environmentName}` },
           { in: 'y' },
-          { out: `✓ Branch ${branchName} successfully pushed onto ${environmentName}.` },
+          { out: `√ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
     });
@@ -107,7 +107,7 @@ describe('push', () => {
         std: [
           { out: `Push branch ${branchName} onto ${environmentName}` },
           { in: 'y' },
-          { out: `✓ Branch ${branchName} successfully pushed onto ${environmentName}.` },
+          { out: `√ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
     });
@@ -127,7 +127,7 @@ describe('push', () => {
           () => pushBranchValid(envSecret),
         ],
         std: [
-          { out: `✓ Branch ${branchName} successfully pushed onto ${environmentName}.` },
+          { out: `√ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
     });

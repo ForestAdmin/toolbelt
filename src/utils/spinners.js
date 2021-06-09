@@ -9,7 +9,7 @@ const spinnies = new Spinnies({
     interval: 80,
     frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
   },
-  succeedPrefix: `${chalk.bold.green('✓')}`,
+  succeedPrefix: `${chalk.bold.green('√')}`,
 });
 
 module.exports = {
