@@ -2,13 +2,13 @@ const Spinnies = require('spinnies');
 const Context = require('@forestadmin/context');
 
 const spinnies = new Spinnies({
-  // failPrefix: '❌',
+  failPrefix: '\u274c', // '❌'
   spinnerColor: 'blue',
   spinner: {
     interval: 80,
     frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
   },
-  // succeedPrefix: '✅',
+  succeedPrefix: '\u2705', // '✅'
 });
 
 module.exports = {
