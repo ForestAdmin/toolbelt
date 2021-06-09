@@ -63,7 +63,7 @@ describe('branch', () => {
           () => postBranchValid('some/randombranchename'),
         ],
         std: [
-          { out: '✓ Switched to new branch: some/randombranchename.' },
+          { out: '√ Switched to new branch: some/randombranchename.' },
         ],
       }));
 
@@ -77,7 +77,7 @@ describe('branch', () => {
           () => postBranchValid('$0m3/$7r4ng38r4nChn4m3!'),
         ],
         std: [
-          { out: '✓ Switched to new branch: $0m3/$7r4ng38r4nChn4m3!.' },
+          { out: '√ Switched to new branch: $0m3/$7r4ng38r4nChn4m3!.' },
         ],
       }));
 
@@ -126,7 +126,7 @@ describe('branch', () => {
               () => postBranchValidOnSpecificEnv('watabranch', '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125'),
             ],
             std: [
-              { out: '✓ Switched to new branch: watabranch.' },
+              { out: '√ Switched to new branch: watabranch.' },
             ],
           }));
         });
@@ -186,7 +186,7 @@ describe('branch', () => {
             promptCounts: [1],
             std: [
               { in: 'Y' },
-              { out: '✓ Branch existingbranch successfully deleted.' },
+              { out: '√ Branch existingbranch successfully deleted.' },
             ],
           }));
 
@@ -216,7 +216,7 @@ describe('branch', () => {
                 () => deleteBranchValid('existingbranch'),
               ],
               std: [
-                { out: '✓ Branch existingbranch successfully deleted.' },
+                { out: '√ Branch existingbranch successfully deleted.' },
               ],
             }));
           });
