@@ -26,7 +26,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
   async getEnvironment(config) {
     const environments = await new EnvironmentManager(config).listEnvironments();
 
-    if (environments.length === 0) throw new Error('❌ No environment found.');
+    if (environments.length === 0) throw new Error('No environment found.');
 
     const environmentName = config.ENVIRONMENT_NAME || await this.selectEnvironment(environments);
     return environments.find((environment) => environment.name === environmentName);
@@ -99,9 +99,10 @@ class DeployCommand extends AbstractAuthenticatedCommand {
 
       await new EnvironmentManager(config).deploy(environment);
 
-      return this.log(`✅ Deployed ${environment.name} layout changes to reference environment.`);
+      return this.logger.success(`Deployed ${environment.name} layout changes to reference environment.`);
     } catch (error) {
-      return this.error(handleBranchError(error));
+      this.logger.error(handleBranchError(error));
+      return this.exit(2);
     }
   }
 }

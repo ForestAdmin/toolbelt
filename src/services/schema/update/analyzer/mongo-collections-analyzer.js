@@ -104,7 +104,7 @@ const mapReduceErrors = (resolve, reject, collectionName) => (err, results) => {
   /* eslint-enable */
   if (err) {
     if (err.message && err.message.startsWith('CMD_NOT_ALLOWED')) {
-      logger.warn(`⚠️  [${collectionName}] CMD_NOT_ALLOWED: mapReduce. Please, write manually the Mongoose fields on this collection.  ⚠️`);
+      logger.warn(`Δ [${collectionName}] CMD_NOT_ALLOWED: mapReduce. Please, write manually the Mongoose fields on this collection.  Δ`);
       logger.warn('If your database is hosted on MongoDB Atlas, it\'s probably due to the Free tier limitations. More info here: https://docs.atlas.mongodb.com/unsupported-commands\n');
       return resolve([]);
     }

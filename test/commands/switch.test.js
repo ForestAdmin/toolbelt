@@ -63,7 +63,7 @@ describe('switch', () => {
             () => getBranchListValid(),
           ],
           std: [
-            { err: "❌ This branch doesn't exist." },
+            { err: '× This branch doesn\'t exist.' },
           ],
           exitCode: 2,
         }));
@@ -80,7 +80,7 @@ describe('switch', () => {
             () => getBranchListValid(),
           ],
           std: [
-            { out: 'ℹ️  feature/second is already your current branch.' },
+            { out: '> feature/second is already your current branch.' },
           ],
         }));
       });
@@ -96,7 +96,7 @@ describe('switch', () => {
           () => getNoBranchListValid(),
         ],
         std: [
-          { out: "⚠️  You don't have any branch to set as current. Use `forest branch <branch_name>` to create one." },
+          { out: 'Δ You don\'t have any branch to set as current. Use `forest branch <branch_name>` to create one.' },
         ],
       }));
     });
