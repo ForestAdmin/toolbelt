@@ -3,13 +3,13 @@ const Spinnies = require('spinnies');
 
 const spinniesConstructorParameters = {
   color: 'yellow',
-  failPrefix: '❌',
+  // failPrefix: '❌',
   spinnerColor: 'yellow',
   spinner: {
     interval: 80,
     frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
   },
-  succeedPrefix: '✅',
+  // succeedPrefix: '✅',
 };
 // NOTICE: Singleton used here to attach all generated spinner to the same spinnies instance.
 const spinniesInstance = new Spinnies(spinniesConstructorParameters);
