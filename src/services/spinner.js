@@ -10,7 +10,7 @@ const spinniesConstructorParameters = {
     interval: 80,
     frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
   },
-  succeedPrefix: `${chalk.bold.green('✓')}`,
+  succeedPrefix: `${chalk.bold.green('√')}`,
 };
 // NOTICE: Singleton used here to attach all generated spinner to the same spinnies instance.
 const spinniesInstance = new Spinnies(spinniesConstructorParameters);
