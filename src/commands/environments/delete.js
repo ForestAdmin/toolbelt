@@ -1,6 +1,5 @@
 const { flags } = require('@oclif/command');
 const chalk = require('chalk');
-const inquirer = require('inquirer');
 const makeDefaultPlan = require('../../context/init');
 const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
@@ -8,9 +7,10 @@ const AbstractAuthenticatedCommand = require('../../abstract-authenticated-comma
 class DeleteCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan || makeDefaultPlan());
-    const { assertPresent, env } = this.context;
-    assertPresent({ env });
+    const { assertPresent, env, inquirer } = this.context;
+    assertPresent({ env, inquirer });
     this.env = env;
+    this.inquirer = inquirer;
   }
 
   async runIfAuthenticated() {
@@ -23,7 +23,7 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
       let answers;
 
       if (!config.force) {
-        answers = await inquirer
+        answers = await this.inquirer
           .prompt([{
             type: 'input',
             prefix: 'Δ WARNING \t',
