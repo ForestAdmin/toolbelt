@@ -51,6 +51,8 @@ const replaceInquirer = ({ inputs, plan, promptCounts }) => {
 
   inquirer.prompt = async (question, answers) => {
     const inquirerPromise = inquirerPrompt(question, answers);
+    // Keep `input.send` reference to prevent rare issue with test killed early.
+    const sendInput = inquirerPromise.ui.rl.input.send.bind(inquirerPromise.ui.rl.input);
 
     currentPrompt += 1;
     if (currentPrompt > promptCounts.length) throw new Error('Calling inquirer prompt more than expected');
@@ -60,7 +62,7 @@ const replaceInquirer = ({ inputs, plan, promptCounts }) => {
 
     for (let i = 0; i < currentPromptCount; i += 1) {
       const answer = `${inputs[inputIndex]}${eol}`;
-      setTimeout(() => inquirerPromise.ui.rl.input.send(answer), 0);
+      setTimeout(() => sendInput(answer), 0);
       inputIndex += 1;
     }
 
