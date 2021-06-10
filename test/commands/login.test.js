@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const testCli = require('./test-cli');
+const testCli = require('./test-cli-helper/test-cli');
 const LoginCommand = require('../../src/commands/login');
 
 const {

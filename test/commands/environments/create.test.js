@@ -1,4 +1,4 @@
-const testCli = require('./../test-cli');
+const testCli = require('../test-cli-helper/test-cli');
 const EnvironmentCreateCommand = require('../../../src/commands/environments/create');
 const {
   arrowDown,
