@@ -138,12 +138,12 @@ async function testCli({
   const currentPrompt = getInquirerCurrentPrompt();
 
   try {
-    assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);
-    assertApi(nocks);
     assertExitCode(actualError, expectedExitCode);
     assertExitMessage(actualError, expectedExitMessage);
+    assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);
     assertPromptCalled(promptCounts, currentPrompt);
     assertOutputs(outputs, errorOutputs, { assertNoStdError });
+    assertApi(nocks);
   } catch (e) {
     logStdErr();
     logStdOut();
