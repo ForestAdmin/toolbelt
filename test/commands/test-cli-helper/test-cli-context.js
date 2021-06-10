@@ -2,7 +2,7 @@ const inquirer = require('inquirer');
 
 const { getTokenPath } = require('./test-cli-auth-token');
 
-const makeDefaultPlan = require('../../src/context/init');
+const makeDefaultPlan = require('../../../src/context/init');
 
 // FIXME: Need to override things here (fs...)
 const initialContextPlan = () => makeDefaultPlan();

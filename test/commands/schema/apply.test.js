@@ -1,4 +1,4 @@
-const testCli = require('./../test-cli');
+const testCli = require('../test-cli-helper/test-cli');
 const ApplySchemaCommand = require('../../../src/commands/schema/apply');
 const { testEnv, testEnv2 } = require('../../fixtures/env');
 const {
