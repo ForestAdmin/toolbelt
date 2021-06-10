@@ -25,9 +25,9 @@ const getValidProjectEnvironementAndBranch = (projectId, envSecret) => [
   () => getBranchListValid(envSecret),
 ];
 
-describe('push', () => {
-  describe('when the user is logged in', () => {
-    describe('when no project was provided', () => {
+describe.only('push', () => {
+  describe.only('when the user is logged in', () => {
+    describe.only('when no project was provided', () => {
       const projectId = 1;
       const envSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
       const branchName = 'feature/second';
@@ -44,17 +44,42 @@ describe('push', () => {
           () => getEnvironmentListValid(projectId),
           () => pushBranchValid(envSecret),
         ],
-        promptCounts: [1, 1, 1],
+        prompts: [
+          {
+            in: [{
+              name: 'project',
+              message: 'Select your project',
+              type: 'list',
+              choices: [
+                { name: 'project1', value: 1 },
+                { name: 'project2', value: 2 },
+              ],
+            }],
+            out: { project: 1 },
+          },
+          {
+            in: [{
+              name: 'environment',
+              message: 'Select the remote environment you want to push onto',
+              type: 'list',
+              choices: ['name1'],
+            }],
+            out: {
+              environment: 'name1',
+            },
+          },
+          {
+            in: [{
+              type: 'confirm',
+              name: 'confirm',
+              message: 'Push branch feature/second onto name1',
+            }],
+            out: {
+              confirm: true,
+            },
+          },
+        ],
         std: [
-          { out: 'Select your project' },
-          { out: 'project1' },
-          { out: 'project2' },
-          ...enter,
-          { out: 'Select the remote environment you want to push onto' },
-          { out: 'name1' },
-          ...enter,
-          { out: `Push branch ${branchName} onto ${environmentName}` },
-          { in: 'y' },
           { out: `√ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
