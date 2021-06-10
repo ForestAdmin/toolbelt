@@ -206,7 +206,6 @@ describe('schema:apply', () => {
             },
             env: testEnv2,
             token: 'any',
-            // api: [postSchema(postSchemaNewMetaFormatMatch)],
             command: () => ApplySchemaCommand.run([]),
             std: [{
               err: '> Cannot properly read the ".forestadmin-schema.json" file:\n'
