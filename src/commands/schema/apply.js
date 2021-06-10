@@ -70,12 +70,20 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
       orm_version: this.joi.string().required(),
       database_type: this.joi.string().required(),
       framework_version: this.joi.string().allow(null),
+      engine: this.joi.string().allow(null),
+      engine_version: this.joi.string().allow(null),
     });
 
-    const validateWIthStackPresence = this.joi.when('stack', {
+    const validateRequiredWithStackPresence = this.joi.when('stack', {
       is: this.joi.object().required(),
       then: this.joi.forbidden(),
       otherwise: this.joi.string().required(),
+    });
+
+    const allowNullWithStackPresence = this.joi.when('stack', {
+      is: this.joi.object().required(),
+      then: this.joi.forbidden(),
+      otherwise: this.joi.string().allow(null),
     });
 
     const { error } = this.joi.validate(schema, this.joi.object().keys({
@@ -84,13 +92,11 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
         liana: this.joi.string().required(),
         liana_version: this.joi.string().required(),
         stack: stack.optional(),
-        orm_version: validateWIthStackPresence,
-        database_type: validateWIthStackPresence,
-        framework_version: this.joi.when('stack', {
-          is: this.joi.object().required(),
-          then: this.joi.forbidden(),
-          otherwise: this.joi.string().allow(null),
-        }),
+        orm_version: validateRequiredWithStackPresence,
+        database_type: validateRequiredWithStackPresence,
+        framework_version: allowNullWithStackPresence,
+        engine: allowNullWithStackPresence,
+        engine_version: allowNullWithStackPresence,
       }).unknown().required(),
     }), { convert: false });
 
