@@ -1,4 +1,4 @@
-const testCli = require('./test-cli');
+const testCli = require('./test-cli-helper/test-cli');
 const PushCommand = require('../../src/commands/push');
 const { enter } = require('../fixtures/std');
 const {

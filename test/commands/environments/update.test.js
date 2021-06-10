@@ -1,4 +1,4 @@
-const testCli = require('./../test-cli');
+const testCli = require('../test-cli-helper/test-cli');
 const { testEnv } = require('../../fixtures/env');
 const { updateEnvironmentName, updateEnvironmentEndpoint } = require('../../fixtures/api');
 const UpdateCommand = require('../../../src/commands/environments/update');
