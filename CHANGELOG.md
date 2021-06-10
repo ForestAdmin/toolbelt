@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/ForestAdmin/toolbelt/compare/v2.1.0...v2.1.1) (2021-06-10)
+
+
+### Bug Fixes
+
+* accept new meta key format for forestadmin schema ([#182](https://github.com/ForestAdmin/toolbelt/issues/182)) ([360b1a7](https://github.com/ForestAdmin/toolbelt/commit/360b1a7e908706b2b8cf1bb43918e4a199aeade3))
+
 # [2.1.0](https://github.com/ForestAdmin/toolbelt/compare/v2.0.8...v2.1.0) (2021-05-26)
 
 
