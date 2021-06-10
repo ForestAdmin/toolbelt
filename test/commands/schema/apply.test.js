@@ -42,6 +42,10 @@ function postSchemaNewMetaFormatMatch(body) {
     meta: {
       liana: 'forest-express-sequelize',
       liana_version: '2.16.9',
+      stack: {
+        orm_version: '3.24.8',
+        database_type: 'postgres',
+      },
     },
     data: [
       {
