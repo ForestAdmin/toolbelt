@@ -1,4 +1,4 @@
-const testCli = require('./../test-cli');
+const testCli = require('../test-cli-helper/test-cli');
 const GetProjectCommand = require('../../../src/commands/projects/get');
 const { testEnv } = require('../../fixtures/env');
 const { getProjectValid } = require('../../fixtures/api');

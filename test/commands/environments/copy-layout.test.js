@@ -1,4 +1,4 @@
-const testCli = require('./../test-cli');
+const testCli = require('../test-cli-helper/test-cli');
 const CopyLayoutCommand = require('../../../src/commands/environments/copy-layout');
 const { testEnv } = require('../../fixtures/env');
 const {
