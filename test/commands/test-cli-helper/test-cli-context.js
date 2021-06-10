@@ -51,7 +51,8 @@ const replaceInquirer = ({ inputs, plan, promptCounts }) => {
 
   inquirer.prompt = async (question, answers) => {
     const inquirerPromise = inquirerPrompt(question, answers);
-    // Keep `input.send` reference to prevent rare issue with test killed early.
+    // In case test finishes early and stdin is closed.
+    if (!inquirerPromise || !inquirerPromise.ui) return inquirerPromise;
     const sendInput = inquirerPromise.ui.rl.input.send.bind(inquirerPromise.ui.rl.input);
 
     currentPrompt += 1;
