@@ -1,4 +1,3 @@
-const inquirer = require('inquirer');
 const chalk = require('chalk');
 const clipboardy = require('clipboardy');
 const fs = require('fs');
@@ -61,7 +60,7 @@ function handleInitError(rawError) {
 }
 
 async function handleDatabaseConfiguration() {
-  const { env } = Context.inject();
+  const { env, inquirer } = Context.inject();
 
   const response = await inquirer
     .prompt([{
