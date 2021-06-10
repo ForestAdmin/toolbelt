@@ -1,4 +1,4 @@
-const testCli = require('./test-cli');
+const testCli = require('./test-cli-helper/test-cli');
 const LogoutCommand = require('../../src/commands/logout');
 
 describe('logout', () => {

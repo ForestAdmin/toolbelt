@@ -5,7 +5,7 @@ const {
   deleteEnvironment,
   deleteEnvironmentFailure,
 } = require('../../fixtures/api');
-const testCli = require('./../test-cli');
+const testCli = require('../test-cli-helper/test-cli');
 const DeleteCommand = require('../../../src/commands/environments/delete');
 
 describe('environments:delete', () => {

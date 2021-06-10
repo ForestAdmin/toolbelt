@@ -1,4 +1,4 @@
-const testCli = require('./test-cli');
+const testCli = require('./test-cli-helper/test-cli');
 const SwitchCommand = require('../../src/commands/switch');
 const { arrowDown } = require('../fixtures/std');
 const {
