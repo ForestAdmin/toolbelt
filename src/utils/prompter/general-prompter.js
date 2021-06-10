@@ -1,5 +1,5 @@
-const inquirer = require('inquirer');
 const _ = require('lodash');
+const Context = require('@forestadmin/context');
 const ApplicationPrompt = require('./application-prompts');
 const DatabasePrompt = require('./database-prompts');
 const ProjectPrompt = require('./project-prompts');
@@ -30,6 +30,8 @@ class GeneralPrompter {
   }
 
   async getConfig() {
+    const { inquirer } = Context.inject();
+
     try {
       await this.projectPrompt.handlePrompts();
       await this.databasePrompt.handlePrompts();

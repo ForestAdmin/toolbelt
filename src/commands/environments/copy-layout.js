@@ -1,6 +1,5 @@
 const { flags } = require('@oclif/command');
 const chalk = require('chalk');
-const inquirer = require('inquirer');
 const makeDefaultPlan = require('../../context/init');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const EnvironmentManager = require('../../services/environment-manager');
@@ -9,9 +8,10 @@ const withCurrentProject = require('../../services/with-current-project');
 class CopyLayoutCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan || makeDefaultPlan());
-    const { assertPresent, env } = this.context;
-    assertPresent({ env });
+    const { assertPresent, env, inquirer } = this.context;
+    assertPresent({ env, inquirer });
     this.env = env;
+    this.inquirer = inquirer;
   }
 
   async runIfAuthenticated() {
@@ -45,7 +45,7 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
     }
 
     if (!config.force) {
-      answers = await inquirer
+      answers = await this.inquirer
         .prompt([{
           type: 'input',
           prefix: 'Δ WARNING \t',
