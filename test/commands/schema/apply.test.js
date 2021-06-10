@@ -12,6 +12,8 @@ const {
 const {
   forestadminSchema,
   forestadminSchemaSnake,
+  forestadminNewMetaFormat,
+  forestadminWrongMetaFormat,
 } = require('../../fixtures/files');
 
 function postSchemaMatch(body) {
@@ -20,6 +22,25 @@ function postSchemaMatch(body) {
       liana: 'forest-express-sequelize',
       orm_version: '3.24.8',
       database_type: 'postgres',
+      liana_version: '2.16.9',
+    },
+    data: [
+      {
+        type: 'collections',
+        id: 'Users',
+        attributes: {
+          name: 'Users',
+        },
+      },
+    ],
+  });
+  return true;
+}
+
+function postSchemaNewMetaFormatMatch(body) {
+  expect(body).toMatchObject({
+    meta: {
+      liana: 'forest-express-sequelize',
       liana_version: '2.16.9',
     },
     data: [
@@ -149,6 +170,45 @@ describe('schema:apply', () => {
               { out: 'Sending "./.forestadmin-schema.json"...' },
               { out: 'The schema is the same as before, nothing changed.' },
             ],
+          }));
+        });
+
+        describe('with a schema with new meta format keys', () => {
+          it('should send the schema', () => testCli({
+            file: {
+              name: '.forestadmin-schema.json',
+              content: forestadminNewMetaFormat,
+            },
+            env: testEnv2,
+            token: 'any',
+            api: [postSchema(postSchemaNewMetaFormatMatch)],
+            command: () => ApplySchemaCommand.run([]),
+            std: [
+              { out: 'Reading "./.forestadmin-schema.json"...' },
+              {
+                out: 'Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"',
+              },
+              { out: 'Sending "./.forestadmin-schema.json"...' },
+              { out: 'The schema is the same as before, nothing changed.' },
+            ],
+          }));
+        });
+
+        describe('with a schema with new and old meta format keys', () => {
+          it('should exit with code 20', () => testCli({
+            file: {
+              name: '.forestadmin-schema.json',
+              content: forestadminWrongMetaFormat,
+            },
+            env: testEnv2,
+            token: 'any',
+            // api: [postSchema(postSchemaNewMetaFormatMatch)],
+            command: () => ApplySchemaCommand.run([]),
+            std: [{
+              err: '> Cannot properly read the ".forestadmin-schema.json" file:\n'
+                + ' - "orm_version" is not allowed \n',
+            }],
+            exitCode: 20,
           }));
         });
       });
