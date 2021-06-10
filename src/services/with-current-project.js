@@ -1,10 +1,9 @@
 const Context = require('@forestadmin/context');
-const inquirer = require('inquirer');
 const ProjectManager = require('./project-manager');
 
 module.exports = async function withCurrentProject(config) {
-  const { assertPresent, spinner } = Context.inject();
-  assertPresent({ spinner });
+  const { assertPresent, inquirer, spinner } = Context.inject();
+  assertPresent({ inquirer, spinner });
 
   if (config.projectId) { return config; }
 
