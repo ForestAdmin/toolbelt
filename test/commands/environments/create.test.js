@@ -1,10 +1,6 @@
 const testCli = require('../test-cli-helper/test-cli');
 const EnvironmentCreateCommand = require('../../../src/commands/environments/create');
 const {
-  arrowDown,
-  loginRequired,
-} = require('../../fixtures/std');
-const {
   getProjectListValid,
   createEnvironmentValid,
   loginValidOidc,
@@ -68,11 +64,23 @@ describe('environments:create', () => {
         () => getProjectListValid(),
         () => createEnvironmentValid(),
       ],
-      promptCounts: [1],
+      prompts: [{
+        in: [{
+          name: 'project',
+          message: 'Select your project',
+          type: 'list',
+          choices: [
+            { name: 'project1', value: 1 },
+            { name: 'project2', value: 2 },
+          ],
+        }],
+        out: { project: 2 },
+      }],
       std: [
-        ...loginRequired,
-        { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
-        ...arrowDown,
+        { out: '> Login required.' },
+        { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check' },
+        { out: 'Your confirmation code: USER-CODE' },
+        { out: '> Login successful' },
         { out: 'ENVIRONMENT' },
         { out: 'name               Test' },
         { out: 'url                https://test.forestadmin.com' },

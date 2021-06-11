@@ -1,5 +1,3 @@
-const inquirer = require('inquirer');
-
 const { getTokenPath } = require('./test-cli-auth-token');
 
 const makeDefaultPlan = require('../../../src/context/init');
@@ -43,38 +41,16 @@ const replaceAuthenticator = ({ plan, tokenBehavior }) => {
     }));
 };
 
-const replaceInquirer = ({ inputs, plan, promptCounts }) => {
-  const eol = '\r\n';
-  const inquirerPrompt = inquirer.prompt;
-  let inputIndex = 0;
-  let currentPrompt = -1;
-
-  inquirer.prompt = async (question, answers) => {
-    const inquirerPromise = inquirerPrompt(question, answers);
-    // In case test finishes early and stdin is closed.
-    if (!inquirerPromise || !inquirerPromise.ui) return inquirerPromise;
-    const sendInput = inquirerPromise.ui.rl.input.send.bind(inquirerPromise.ui.rl.input);
-
-    currentPrompt += 1;
-    if (currentPrompt > promptCounts.length) throw new Error('Calling inquirer prompt more than expected');
-
-    const currentPromptCount = promptCounts[currentPrompt];
-    if (currentPromptCount > question.length) throw new Error(`Expecting ${currentPromptCount} prompts when inquirer has ${question.length} question(s)`);
-
-    for (let i = 0; i < currentPromptCount; i += 1) {
-      const answer = `${inputs[inputIndex]}${eol}`;
-      setTimeout(() => sendInput(answer), 0);
-      inputIndex += 1;
-    }
-
-    return inquirerPromise;
+const replaceInquirer = ({ plan, prompts }) => {
+  const dummyPrompt = jest.fn();
+  prompts.forEach((prompt) => dummyPrompt.mockReturnValueOnce(prompt.out));
+  const dummyInquirer = {
+    prompt: dummyPrompt,
   };
 
   return plan.replace('dependencies.inquirer',
     (context) => context
-      .addInstance('inquirer', inquirer)
-      .addFunction('restoreInquirer', () => { inquirer.prompt = inquirerPrompt; })
-      .addFunction('getInquirerCurrentPrompt', () => currentPrompt));
+      .addInstance('inquirer', dummyInquirer));
 };
 
 const prepareContextPlan = (parameters) => [
@@ -84,14 +60,4 @@ const prepareContextPlan = (parameters) => [
   replaceInquirer,
 ].reduce((plan, next) => next({ ...parameters, plan }), initialContextPlan());
 
-const restoreFromContext = (context) => {
-  const { restoreInquirer, getInquirerCurrentPrompt } = context;
-
-  restoreInquirer();
-
-  return {
-    getInquirerCurrentPrompt,
-  };
-};
-
-module.exports = { prepareContextPlan, restoreFromContext };
+module.exports = { prepareContextPlan };

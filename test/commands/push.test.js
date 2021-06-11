@@ -1,6 +1,5 @@
 const testCli = require('./test-cli-helper/test-cli');
 const PushCommand = require('../../src/commands/push');
-const { enter } = require('../fixtures/std');
 const {
   getBranchListValid,
   getDevelopmentEnvironmentValid,
@@ -44,17 +43,42 @@ describe('push', () => {
           () => getEnvironmentListValid(projectId),
           () => pushBranchValid(envSecret),
         ],
-        promptCounts: [1, 1, 1],
+        prompts: [
+          {
+            in: [{
+              name: 'project',
+              message: 'Select your project',
+              type: 'list',
+              choices: [
+                { name: 'project1', value: 1 },
+                { name: 'project2', value: 2 },
+              ],
+            }],
+            out: { project: 1 },
+          },
+          {
+            in: [{
+              name: 'environment',
+              message: 'Select the remote environment you want to push onto',
+              type: 'list',
+              choices: ['name1'],
+            }],
+            out: {
+              environment: 'name1',
+            },
+          },
+          {
+            in: [{
+              name: 'confirm',
+              message: 'Push branch feature/second onto name1',
+              type: 'confirm',
+            }],
+            out: {
+              confirm: true,
+            },
+          },
+        ],
         std: [
-          { out: 'Select your project' },
-          { out: 'project1' },
-          { out: 'project2' },
-          ...enter,
-          { out: 'Select the remote environment you want to push onto' },
-          { out: 'name1' },
-          ...enter,
-          { out: `Push branch ${branchName} onto ${environmentName}` },
-          { in: 'y' },
           { out: `√ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
@@ -77,13 +101,29 @@ describe('push', () => {
           () => getEnvironmentListValid(projectId),
           () => pushBranchValid(envSecret),
         ],
-        promptCounts: [1, 1],
+        prompts: [
+          {
+            in: [{
+              name: 'environment',
+              message: 'Select the remote environment you want to push onto',
+              type: 'list',
+              choices: ['name1'],
+            }],
+            out: {
+              environment: environmentName,
+            },
+          }, {
+            in: [{
+              name: 'confirm',
+              message: `Push branch ${branchName} onto ${environmentName}`,
+              type: 'confirm',
+            }],
+            out: {
+              confirm: true,
+            },
+          },
+        ],
         std: [
-          { out: 'Select the remote environment you want to push onto' },
-          { out: 'name1' },
-          ...enter,
-          { out: `Push branch ${branchName} onto ${environmentName}` },
-          { in: 'y' },
           { out: `√ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
@@ -103,10 +143,19 @@ describe('push', () => {
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
           () => pushBranchValid(envSecret),
         ],
-        promptCounts: [1],
+        prompts: [
+          {
+            in: [{
+              name: 'confirm',
+              message: `Push branch ${branchName} onto ${environmentName}`,
+              type: 'confirm',
+            }],
+            out: {
+              confirm: true,
+            },
+          },
+        ],
         std: [
-          { out: `Push branch ${branchName} onto ${environmentName}` },
-          { in: 'y' },
           { out: `√ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
@@ -145,11 +194,17 @@ describe('push', () => {
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
         ],
-        promptCounts: [1],
-        std: [
-          { in: 'n' },
-          { out: `? Push branch ${branchName} onto ${environmentName} No` },
+        prompts: [
+          {
+            in: [{
+              name: 'confirm',
+              message: `Push branch ${branchName} onto ${environmentName}`,
+              type: 'confirm',
+            }],
+            out: { confirm: false },
+          },
         ],
+        exitCode: 0,
       }));
     });
 

@@ -1,22 +1,19 @@
 const { flags } = require('@oclif/command');
-const _ = require('lodash');
 const makeDefaultPlan = require('../../context/init');
 const EnvironmentManager = require('../../services/environment-manager');
-const Prompter = require('../../services/prompter');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class UpdateCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan || makeDefaultPlan());
-    const { assertPresent } = this.context;
-    assertPresent({ });
+    const { assertPresent, env } = this.context;
+    assertPresent({ env });
+    this.env = env;
   }
 
   async runIfAuthenticated() {
     const parsed = this.parse(UpdateCommand);
-
-    let config = await Prompter([]);
-    config = _.merge(config, parsed.flags);
+    const config = { ...this.env, ...parsed.flags };
 
     if (config.name || config.url) {
       const manager = new EnvironmentManager(config);

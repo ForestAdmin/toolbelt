@@ -1,26 +1,23 @@
 const { flags } = require('@oclif/command');
-const _ = require('lodash');
 const makeDefaultPlan = require('../context/init');
 const ProjectManager = require('../services/project-manager');
 const Renderer = require('../renderers/projects');
-const Prompter = require('../services/prompter');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 
 class ProjectCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan || makeDefaultPlan());
-    const { assertPresent } = this.context;
-    assertPresent({ });
+    const { assertPresent, env } = this.context;
+    assertPresent({ env });
+    this.env = env;
   }
 
   async runIfAuthenticated() {
     const parsed = this.parse(ProjectCommand);
-
-    let config = await Prompter([]);
-    config = _.merge(config, parsed.flags);
-
+    const config = { ...this.env, ...parsed.flags };
     const manager = new ProjectManager(config);
     const projects = await manager.listProjects();
+
     new Renderer(config).render(projects);
   }
 }
