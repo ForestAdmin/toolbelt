@@ -84,6 +84,7 @@ async function testCli({
     files,
     { commandClass, commandArgs },
     stds,
+    prompts,
     expectedExitCode,
     expectedExitMessage,
     rest,

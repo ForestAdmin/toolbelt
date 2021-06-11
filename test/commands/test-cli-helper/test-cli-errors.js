@@ -28,6 +28,19 @@ function errorIfBadFiles(files) {
   files.forEach((file) => errorIfBadFile(file));
 }
 
+function errorIfBadPrompts(prompts) {
+  prompts.forEach((prompt) => {
+    if (!Array.isArray(prompt.in) || prompt.in.length === 0) {
+      throw new Error('Prompt input undefined or empty');
+    }
+    prompt.in.forEach((input) => {
+      if (['confirm', 'input', 'list', 'password'].indexOf(input.type) === -1) {
+        throw new Error(`Invalid prompt type "${input.type}"`);
+      }
+    });
+  });
+}
+
 function errorIfRest(rest) {
   if (Object.keys(rest).length > 0) {
     throw new Error(`Unknown testCli parameter(s): ${Object.keys(rest).join(', ')}.
@@ -77,11 +90,13 @@ function validateInput(
   files,
   { commandLegacy, commandClass, commandArgs },
   stds,
+  prompts,
   expectedExitCode,
   expectedExitMessage,
   rest,
 ) {
   errorIfBadFiles(files);
+  errorIfBadPrompts(prompts);
   errorIfRest(rest);
   errorIfBadCommand({ commandLegacy, commandClass, commandArgs });
   const noExitExpected = (expectedExitCode === null || expectedExitCode === undefined)
