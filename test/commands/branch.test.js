@@ -135,18 +135,29 @@ describe('branch', () => {
 
     describe('when deleting branches', () => {
       describe('when removing a branch that does not exist', () => {
+        const branchName = 'unexistingbranch';
         it('should display an error message', () => testCli({
           env: testEnv2,
           token: 'any',
           commandClass: BranchCommand,
-          commandArgs: ['-d', 'unexistingbranch'],
+          commandArgs: ['-d', branchName],
           api: [
             () => getProjectByEnv(),
-            () => deleteUnknownBranch('unexistingbranch'),
+            () => deleteUnknownBranch(branchName),
           ],
-          promptCounts: [1],
+          prompts: [
+            {
+              in: [{
+                name: 'confirm',
+                message: `Delete branch ${branchName}`,
+                type: 'confirm',
+              }],
+              out: {
+                confirm: true,
+              },
+            },
+          ],
           std: [
-            { in: 'Y' },
             { err: '× This branch doesn\'t exist.' },
           ],
           exitCode: 2,
@@ -154,18 +165,29 @@ describe('branch', () => {
       });
 
       describe('when removing a branch failed', () => {
+        const branchName = 'brancherror';
         it('should display an error message', () => testCli({
           env: testEnv2,
           token: 'any',
           commandClass: BranchCommand,
-          commandArgs: ['-d', 'brancherror'],
+          commandArgs: ['-d', branchName],
           api: [
             () => getProjectByEnv(),
-            () => deleteBranchInvalid('brancherror'),
+            () => deleteBranchInvalid(branchName),
           ],
-          promptCounts: [1],
+          prompts: [
+            {
+              in: [{
+                name: 'confirm',
+                message: `Delete branch ${branchName}`,
+                type: 'confirm',
+              }],
+              out: {
+                confirm: true,
+              },
+            },
+          ],
           std: [
-            { in: 'Y' },
             { err: '× Failed to delete branch.' },
           ],
           exitCode: 2,
@@ -174,35 +196,54 @@ describe('branch', () => {
 
       describe('when the branch exist', () => {
         describe('when the branch in not the current branch of the environment', () => {
-          it('should prompt for confirmation, then remove the branch', () => testCli({
+          const branchName = 'existingbranch';
+          it('should prompt for confirmation, then remove the branch if confirmed', () => testCli({
             env: testEnv2,
             token: 'any',
             commandClass: BranchCommand,
-            commandArgs: ['-d', 'existingbranch'],
+            commandArgs: ['-d', branchName],
             api: [
               () => getProjectByEnv(),
-              () => deleteBranchValid('existingbranch'),
+              () => deleteBranchValid(branchName),
             ],
-            promptCounts: [1],
+            prompts: [
+              {
+                in: [{
+                  name: 'confirm',
+                  message: `Delete branch ${branchName}`,
+                  type: 'confirm',
+                }],
+                out: {
+                  confirm: true,
+                },
+              },
+            ],
             std: [
-              { in: 'Y' },
               { out: '√ Branch existingbranch successfully deleted.' },
             ],
           }));
 
-          it('should prompt for confirmation, then do nothing', () => testCli({
+          it('should prompt for confirmation, then do nothing if not confirmed', () => testCli({
             env: testEnv2,
             token: 'any',
             commandClass: BranchCommand,
-            commandArgs: ['-d', 'existingbranch'],
+            commandArgs: ['-d', branchName],
             api: [
               () => getProjectByEnv(),
             ],
-            promptCounts: [1],
-            std: [
-              { in: 'n' },
-              { out: '' },
+            prompts: [
+              {
+                in: [{
+                  name: 'confirm',
+                  message: `Delete branch ${branchName}`,
+                  type: 'confirm',
+                }],
+                out: {
+                  confirm: false,
+                },
+              },
             ],
+            exitCode: 0,
           }));
 
           describe('using `--force` option', () => {
@@ -210,10 +251,10 @@ describe('branch', () => {
               env: testEnv2,
               token: 'any',
               commandClass: BranchCommand,
-              commandArgs: ['-d', 'existingbranch', '--force'],
+              commandArgs: ['-d', branchName, '--force'],
               api: [
                 () => getProjectByEnv(),
-                () => deleteBranchValid('existingbranch'),
+                () => deleteBranchValid(branchName),
               ],
               std: [
                 { out: '√ Branch existingbranch successfully deleted.' },

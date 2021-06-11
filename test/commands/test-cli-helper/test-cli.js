@@ -7,7 +7,7 @@ const {
   assertPromptCalled,
 } = require('./test-cli-errors');
 const { prepareCommand } = require('./test-cli-command');
-const { prepareContextPlan, restoreFromContext } = require('./test-cli-context');
+const { prepareContextPlan } = require('./test-cli-context');
 const { assertApi } = require('./test-cli-api');
 const {
   makeTempDirectory,
@@ -50,7 +50,7 @@ async function testCli({
   commandArgs,
   exitCode: expectedExitCode,
   exitMessage: expectedExitMessage,
-  promptCounts,
+  prompts = [],
   std: stds,
   assertNoStdError = true,
   print = false,
@@ -84,8 +84,7 @@ async function testCli({
     files,
     { commandClass, commandArgs },
     stds,
-    inputs,
-    promptCounts,
+    prompts,
     expectedExitCode,
     expectedExitMessage,
     rest,
@@ -99,7 +98,7 @@ async function testCli({
   const commandPlan = prepareContextPlan({
     env,
     inputs,
-    promptCounts,
+    prompts,
     tokenBehavior,
   });
 
@@ -134,14 +133,11 @@ async function testCli({
   }
   process.chdir(oldcwd);
 
-  const { getInquirerCurrentPrompt } = restoreFromContext(command.context);
-  const currentPrompt = getInquirerCurrentPrompt();
-
   try {
     assertExitCode(actualError, expectedExitCode);
     assertExitMessage(actualError, expectedExitMessage);
     assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);
-    assertPromptCalled(promptCounts, currentPrompt);
+    assertPromptCalled(prompts, command.context.inquirer);
     assertOutputs(outputs, errorOutputs, { assertNoStdError });
     assertApi(nocks);
   } catch (e) {

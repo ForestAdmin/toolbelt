@@ -28,18 +28,17 @@ function errorIfBadFiles(files) {
   files.forEach((file) => errorIfBadFile(file));
 }
 
-function errorIfBadPromptCounts(promptCounts, inputs) {
-  if (promptCounts === null) return;
-  if (promptCounts !== undefined && !Array.isArray(promptCounts)) {
-    throw new Error('"promptCounts" not defined as an array');
-  }
-  let expectedPromptCount = 0;
-  if (promptCounts) {
-    expectedPromptCount = promptCounts.reduce((prev, cur) => prev + cur, 0);
-  }
-  if (expectedPromptCount !== inputs.length) {
-    throw new Error(`got ${inputs.length} input string for an expected total of ${expectedPromptCount}`);
-  }
+function errorIfBadPrompts(prompts) {
+  prompts.forEach((prompt) => {
+    if (!Array.isArray(prompt.in) || prompt.in.length === 0) {
+      throw new Error('Prompt input undefined or empty');
+    }
+    prompt.in.forEach((input) => {
+      if (['confirm', 'input', 'list', 'password'].indexOf(input.type) === -1) {
+        throw new Error(`Invalid prompt type "${input.type}"`);
+      }
+    });
+  });
 }
 
 function errorIfRest(rest) {
@@ -91,14 +90,13 @@ function validateInput(
   files,
   { commandLegacy, commandClass, commandArgs },
   stds,
-  inputs,
-  promptCounts,
+  prompts,
   expectedExitCode,
   expectedExitMessage,
   rest,
 ) {
   errorIfBadFiles(files);
-  errorIfBadPromptCounts(promptCounts, inputs);
+  errorIfBadPrompts(prompts);
   errorIfRest(rest);
   errorIfBadCommand({ commandLegacy, commandClass, commandArgs });
   const noExitExpected = (expectedExitCode === null || expectedExitCode === undefined)
@@ -141,10 +139,12 @@ function assertExitMessage(actualError, expectedExitMessage) {
   expect(actualMessage).toStrictEqual(`Error message: '${expectedExitMessage}'`);
 }
 
-function assertPromptCalled(prompts, lastPromptIndex) {
-  const expectedCurrentPrompt = ((prompts && prompts.length) || 0) - 1;
+function assertPromptCalled(prompts, inquirer) {
+  expect(inquirer.prompt).toHaveBeenCalledTimes(prompts.length);
 
-  expect(lastPromptIndex).toBe(expectedCurrentPrompt);
+  for (let i = 0; i < prompts.length; i += 1) {
+    expect(inquirer.prompt).toHaveBeenNthCalledWith(i + 1, prompts[i].in);
+  }
 }
 
 module.exports = {

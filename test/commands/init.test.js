@@ -1,5 +1,6 @@
 const testCli = require('./test-cli-helper/test-cli');
 const InitCommand = require('../../src/commands/init');
+const { validateEndpoint } = require('../../src/services/init-manager');
 const {
   getProjectByEnvIncludeLegacy,
   getInAppProjectForDevWorkflow,
@@ -17,7 +18,6 @@ const {
   loginValidOidc,
 } = require('../fixtures/api');
 const { testEnv: noKeyEnv, testEnv2, testEnvWithDatabaseUrl } = require('../fixtures/env');
-const { databaseDialog, enter } = require('../fixtures/std');
 
 describe('init command', () => {
   describe('login', () => {
@@ -141,12 +141,19 @@ describe('init command', () => {
           () => getInAppProjectForDevWorkflow(1),
           () => getDevelopmentEnvironmentValid(1),
         ],
-        promptCounts: [1],
+        prompts: [{
+          in: [{
+            name: 'project',
+            message: 'Select your project',
+            type: 'list',
+            choices: [
+              { name: 'project1', value: 1 },
+              { name: 'project2', value: 2 },
+            ],
+          }],
+          out: { project: 1 },
+        }],
         std: [
-          { out: 'Select your project' },
-          { out: 'project1' },
-          { out: 'project2' },
-          ...enter,
           { spinner: '√ Selecting your project' },
           { spinner: '√ Analyzing your setup' },
           { spinner: '√ Checking your database setup' },
@@ -266,16 +273,21 @@ describe('init command', () => {
             () => getLumberProjectForDevWorkflow(82),
             () => getDevelopmentEnvironmentValid(82),
           ],
-          promptCounts: [1],
+          prompts: [{
+            in: [{
+              name: 'autoFillOrCreationConfirmation',
+              message: 'Do you want your current folder `.env` file to be completed automatically with your environment variables?',
+              type: 'confirm',
+            }],
+            out: {
+              confirm: false,
+            },
+          }],
           std: [
             { spinner: '√ Selecting your project' },
             { spinner: '√ Analyzing your setup' },
             { spinner: '√ Checking your database setup' },
             { spinner: '√ Setting up your development environment' },
-            // NOTICE: Trimed in order not to exceed the max length of a line
-            //         (that differs between local and travis)
-            { out: 'Do you want your current folder `.env` file to be completed automatically' },
-            { in: 'n' },
             { out: 'Here are the environment variables you need to copy in your configuration file' },
           ],
         }));
@@ -296,16 +308,105 @@ describe('init command', () => {
               () => getLumberProjectForDevWorkflow(82),
               () => getDevelopmentEnvironmentValid(82),
             ],
-            promptCounts: [1, 8, 1],
+            prompts: [
+              {
+                in: [{
+                  name: 'confirm',
+                  message: 'You don\'t have a DATABASE_URL yet. Do you need help setting it?',
+                  type: 'confirm',
+                }],
+                out: {
+                  confirm: true,
+                },
+              }, {
+                in: [{
+                  name: 'dbDialect',
+                  message: 'What\'s the database type? ',
+                  type: 'list',
+                  choices: [
+                    'postgres',
+                    'mysql',
+                    'mssql',
+                    'mongodb',
+                  ],
+                },
+                {
+                  name: 'dbName',
+                  type: 'input',
+                  message: 'What\'s the database name?',
+                  validate: expect.any(Function),
+                },
+                {
+                  name: 'dbSchema',
+                  type: 'input',
+                  message: 'What\'s the database schema? [optional]',
+                  description: 'Leave blank by default',
+                  default: expect.any(Function),
+                  when: expect.any(Function),
+                },
+                {
+                  name: 'dbHostname',
+                  message: 'What\'s the database hostname?',
+                  type: 'input',
+                  default: 'localhost',
+                },
+                {
+                  name: 'dbPort',
+                  type: 'input',
+                  message: 'What\'s the database port?',
+                  default: expect.any(Function),
+                  validate: expect.any(Function),
+                },
+                {
+                  name: 'dbUser',
+                  message: 'What\'s the database user?',
+                  default: expect.any(Function),
+                  type: 'input',
+                },
+                {
+                  name: 'dbPassword',
+                  message: 'What\'s the database password? [optional]',
+                  type: 'password',
+                },
+                {
+                  name: 'ssl',
+                  message: 'Does your database require a SSL connection? ',
+                  type: 'confirm',
+                  default: false,
+                },
+                {
+                  name: 'mongodbSrv',
+                  message: 'Use a SRV connection string? ',
+                  type: 'confirm',
+                  default: false,
+                  when: expect.any(Function),
+                }],
+                out: {
+                  confirm: true,
+                  dbDialect: 'postgres',
+                  dbName: 'someDbName',
+                  dbSchema: 'public',
+                  dbHostname: 'localhost',
+                  dbPort: 5432,
+                  dbUser: 'root',
+                  dbPassword: '',
+                  ssl: false,
+                },
+              }, {
+                in: [{
+                  name: 'autoFillOrCreationConfirmation',
+                  message: 'Do you want your current folder `.env` file to be completed automatically with your environment variables?',
+                  type: 'confirm',
+                }],
+                out: {
+                  autoFillOrCreationConfirmation: false,
+                },
+              },
+            ],
             std: [
               { spinner: '√ Selecting your project' },
               { spinner: '√ Analyzing your setup' },
               { spinner: '√ Checking your database setup' },
-              ...databaseDialog('someDbName'),
-              // NOTICE: Trimed in order not to exceed the max length of a line
-              //         (that differs between local and travis)
-              { out: 'Do you want your current folder `.env` file to be completed automatically' },
-              { in: 'n' },
               { out: 'Here are the environment variables you need to copy in your configuration file' },
               { out: 'DATABASE_URL=postgres://root@localhost:5432/someDbName' },
               { out: 'DATABASE_SCHEMA=public' },
@@ -328,17 +429,31 @@ describe('init command', () => {
               () => getLumberProjectForDevWorkflow(82),
               () => getDevelopmentEnvironmentValid(82),
             ],
-            promptCounts: [1, 1],
+            prompts: [
+              {
+                in: [{
+                  name: 'confirm',
+                  message: 'You don\'t have a DATABASE_URL yet. Do you need help setting it?',
+                  type: 'confirm',
+                }],
+                out: {
+                  confirm: false,
+                },
+              }, {
+                in: [{
+                  name: 'autoFillOrCreationConfirmation',
+                  message: 'Do you want your current folder `.env` file to be completed automatically with your environment variables?',
+                  type: 'confirm',
+                }],
+                out: {
+                  autoFillOrCreationConfirmation: false,
+                },
+              },
+            ],
             std: [
               { spinner: '√ Selecting your project' },
               { spinner: '√ Analyzing your setup' },
               { spinner: '√ Checking your database setup' },
-              { out: 'You don\'t have a DATABASE_URL yet. Do you need help setting it?' },
-              { in: 'n' },
-              // NOTICE: Trimed in order not to exceed the max length of a line
-              //         (that differs between local and travis)
-              { out: 'Do you want your current folder `.env` file to be completed automatically' },
-              { in: 'n' },
               { out: 'Here are the environment variables you need to copy in your configuration file' },
             ],
           }));
@@ -380,14 +495,25 @@ describe('init command', () => {
             () => getDevelopmentEnvironmentNotFound(82),
             () => createDevelopmentEnvironment(82),
           ],
-          promptCounts: [1],
+          prompts: [
+            {
+              in: [{
+                name: 'endpoint',
+                message: 'Enter your local admin backend endpoint:',
+                type: 'input',
+                default: 'http://localhost:3310',
+                validate: validateEndpoint,
+              }],
+              out: {
+                endpoint: 'http://localhost:3310',
+              },
+            },
+          ],
           std: [
             { spinner: '√ Selecting your project' },
             { spinner: '√ Analyzing your setup' },
             { spinner: '√ Checking your database setup' },
             { spinner: '√ Setting up your development environment' },
-            { out: 'Enter your local admin backend endpoint:' },
-            ...enter,
             { out: 'Here are the environment variables you need to copy in your configuration file' },
             { out: 'APPLICATION_PORT=3310' },
           ],
@@ -412,16 +538,33 @@ describe('init command', () => {
           () => getDevelopmentEnvironmentNotFound(82),
           () => createDevelopmentEnvironment(82),
         ],
-        promptCounts: [1, 1],
+        prompts: [{
+          in: [{
+            name: 'endpoint',
+            message: 'Enter your local admin backend endpoint:',
+            type: 'input',
+            default: 'http://localhost:3310',
+            validate: validateEndpoint,
+          }],
+          out: {
+            endpoint: 'http://localhost:3310',
+          },
+        }, {
+          in: [{
+            name: 'autoFillOrCreationConfirmation',
+            message: 'Do you want your current folder `.env` file to be completed automatically with your environment variables?',
+            type: 'confirm',
+          }],
+          out: {
+            autoFillOrCreationConfirmation: true,
+          },
+        }],
         std: [
           { spinner: '√ Selecting your project' },
           { spinner: '√ Analyzing your setup' },
           { spinner: '√ Checking your database setup' },
-          { out: 'Enter your local admin backend endpoint:' },
-          ...enter,
-          { out: 'Do you want your current folder `.env` file to be completed automatically' },
-          ...enter,
           { spinner: '√ Copying the environment variables in your `.env` file' },
+          // FIXME: Need to assert that env file was amended. In other cases too.
           { spinner: '√ You\'re now set up and ready to develop on Forest Admin' },
           { out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/documentation/reference-guide/how-it-works/developing-on-forest-admin/forest-cli-commands.' },
         ],
@@ -440,15 +583,31 @@ describe('init command', () => {
           () => getDevelopmentEnvironmentNotFound(82),
           () => createDevelopmentEnvironment(82),
         ],
-        promptCounts: [1, 1],
+        prompts: [{
+          in: [{
+            name: 'endpoint',
+            message: 'Enter your local admin backend endpoint:',
+            type: 'input',
+            default: 'http://localhost:3310',
+            validate: validateEndpoint,
+          }],
+          out: {
+            endpoint: 'http://localhost:3310',
+          },
+        }, {
+          in: [{
+            name: 'autoFillOrCreationConfirmation',
+            message: 'Do you want a new `.env` file (containing your environment variables) to be automatically created in your current folder?',
+            type: 'confirm',
+          }],
+          out: {
+            autoFillOrCreationConfirmation: false,
+          },
+        }],
         std: [
           { spinner: '√ Selecting your project' },
           { spinner: '√ Analyzing your setup' },
           { spinner: '√ Checking your database setup' },
-          { out: 'Enter your local admin backend endpoint:' },
-          ...enter,
-          { out: 'Do you want a new `.env` file (containing your environment variables)' },
-          { in: 'n' },
           { out: 'Here are the environment variables you need to copy in your configuration file' },
           { out: 'APPLICATION_PORT=3310' },
           { out: 'FOREST_AUTH_SECRET=' },

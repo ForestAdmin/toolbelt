@@ -1,6 +1,5 @@
 const testCli = require('./test-cli-helper/test-cli');
 const SwitchCommand = require('../../src/commands/switch');
-const { arrowDown } = require('../fixtures/std');
 const {
   getProjectByEnv,
   getBranchListValid,
@@ -22,14 +21,23 @@ describe('switch', () => {
             () => getBranchListValid(),
             () => updateEnvironmentCurrentBranchId(),
           ],
-          promptCounts: [1],
+          prompts: [{
+            in: [{
+              name: 'branch',
+              message: 'Select the branch you want to set current',
+              type: 'list',
+              choices: [
+                'feature/first',
+                'feature/third',
+                'feature/second',
+              ],
+            }],
+            out: {
+              branch: 'feature/third',
+            },
+          }],
           std: [
-            { out: 'Select the branch you want to set current' },
-            { out: 'feature/first' },
-            { out: 'feature/third' },
-            { out: 'feature/second' },
-            ...arrowDown,
-            { out: 'Switched to branch: feature/third' },
+            { out: '√ Switched to branch: feature/third' },
           ],
         }));
       });
