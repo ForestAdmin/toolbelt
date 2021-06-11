@@ -1,6 +1,5 @@
 const testCli = require('./test-cli-helper/test-cli');
 const DeployCommand = require('../../src/commands/deploy');
-const { enter } = require('../fixtures/std');
 const {
   getDevelopmentEnvironmentValid,
   getEnvironmentListValid,
@@ -9,26 +8,6 @@ const {
   deployValid,
 } = require('../fixtures/api');
 const { testEnv, testEnv2 } = require('../fixtures/env');
-
-function inOutDeploySuccessMessage(environmentName) {
-  return { out: `√ Deployed ${environmentName} layout changes to reference environment.` };
-}
-
-function inOutConfirmDeploy(environmentName) {
-  return [
-    { out: `Deploy ${environmentName} layout changes to reference?` },
-    { in: 'y' },
-    inOutDeploySuccessMessage(environmentName),
-  ];
-}
-
-function inOutSelectEnvironment(environmentName) {
-  return [
-    { out: 'Select the environment containing the layout changes you want to deploy' },
-    { out: environmentName },
-    ...enter,
-  ];
-}
 
 describe('deploy', () => {
   describe('when the user is logged in', () => {
@@ -45,14 +24,41 @@ describe('deploy', () => {
           () => getEnvironmentListValid(1),
           () => deployValid(validEnvSecret),
         ],
-        promptCounts: [1, 1, 1],
+        prompts: [
+          {
+            in: [{
+              name: 'project',
+              message: 'Select your project',
+              type: 'list',
+              choices: [
+                { name: 'project1', value: 1 },
+                { name: 'project2', value: 2 },
+              ],
+            }],
+            out: { project: 1 },
+          }, {
+            in: [{
+              name: 'environment',
+              message: 'Select the environment containing the layout changes you want to deploy to the reference environment',
+              type: 'list',
+              choices: ['name1'],
+            }],
+            out: {
+              environment: environmentName,
+            },
+          }, {
+            in: [{
+              name: 'confirm',
+              message: `Deploy ${environmentName} layout changes to reference?`,
+              type: 'confirm',
+            }],
+            out: {
+              confirm: true,
+            },
+          },
+        ],
         std: [
-          { out: 'Select your project' },
-          { out: 'project1' },
-          { out: 'project2' },
-          ...enter,
-          ...inOutSelectEnvironment(environmentName),
-          ...inOutConfirmDeploy(environmentName),
+          { out: `√ Deployed ${environmentName} layout changes to reference environment.` },
         ],
       }));
     });
@@ -70,10 +76,30 @@ describe('deploy', () => {
             () => getEnvironmentListValid(projectId),
             () => deployValid(),
           ],
-          promptCounts: [1, 1],
+          prompts: [
+            {
+              in: [{
+                name: 'environment',
+                message: 'Select the environment containing the layout changes you want to deploy to the reference environment',
+                type: 'list',
+                choices: ['name1'],
+              }],
+              out: {
+                environment: environmentName,
+              },
+            }, {
+              in: [{
+                name: 'confirm',
+                message: `Deploy ${environmentName} layout changes to reference?`,
+                type: 'confirm',
+              }],
+              out: {
+                confirm: true,
+              },
+            },
+          ],
           std: [
-            ...inOutSelectEnvironment(environmentName),
-            ...inOutConfirmDeploy(environmentName),
+            { out: `√ Deployed ${environmentName} layout changes to reference environment.` },
           ],
         }));
       });
@@ -90,10 +116,31 @@ describe('deploy', () => {
             () => getEnvironmentListValid(projectId),
             () => deployValid(),
           ],
-          promptCounts: [1, 1],
+          prompts: [
+            {
+              in: [{
+                name: 'environment',
+                message: 'Select the environment containing the layout changes you want to deploy to the reference environment',
+                type: 'list',
+                choices: ['name1'],
+              }],
+              out: {
+                environment: environmentName,
+              },
+            },
+            {
+              in: [{
+                name: 'confirm',
+                message: `Deploy ${environmentName} layout changes to reference?`,
+                type: 'confirm',
+              }],
+              out: {
+                confirm: true,
+              },
+            },
+          ],
           std: [
-            ...inOutSelectEnvironment(environmentName),
-            ...inOutConfirmDeploy(environmentName),
+            { out: `√ Deployed ${environmentName} layout changes to reference environment.` },
           ],
         }));
       });
@@ -112,8 +159,21 @@ describe('deploy', () => {
           () => getEnvironmentListValid(projectId),
           () => deployValid(),
         ],
-        promptCounts: [1],
-        std: inOutConfirmDeploy(environmentName),
+        prompts: [
+          {
+            in: [{
+              name: 'confirm',
+              message: `Deploy ${environmentName} layout changes to reference?`,
+              type: 'confirm',
+            }],
+            out: {
+              confirm: true,
+            },
+          },
+        ],
+        std: [
+          { out: `√ Deployed ${environmentName} layout changes to reference environment.` },
+        ],
       }));
     });
 
@@ -131,7 +191,7 @@ describe('deploy', () => {
           () => deployValid(),
         ],
         std: [
-          inOutDeploySuccessMessage(environmentName),
+          { out: `√ Deployed ${environmentName} layout changes to reference environment.` },
         ],
       }));
     });
@@ -148,11 +208,19 @@ describe('deploy', () => {
           () => getProjectByEnv(),
           () => getEnvironmentListValid(projectId),
         ],
-        promptCounts: [1],
-        std: [
-          { in: 'n' },
-          { out: `? Deploy ${environmentName} layout changes to reference? No` },
+        prompts: [
+          {
+            in: [{
+              name: 'confirm',
+              message: `Deploy ${environmentName} layout changes to reference?`,
+              type: 'confirm',
+            }],
+            out: {
+              confirm: false,
+            },
+          },
         ],
+        exitCode: 0,
       }));
     });
 

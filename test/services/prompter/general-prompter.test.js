@@ -1,7 +1,15 @@
 const sinon = require('sinon');
+const Context = require('@forestadmin/context');
+
 const GeneralPrompter = require('../../../src/utils/prompter/general-prompter');
 const PrompterError = require('../../../src/utils/prompter/prompter-error');
 const Terminator = require('../../../src/utils/terminator-sender');
+
+const makeDefaultPlan = require('../../../src/context/init');
+
+const setupTest = () => {
+  Context.init(makeDefaultPlan());
+};
 
 describe('services > prompter > general prompter', () => {
   let requests = [];
@@ -16,6 +24,9 @@ describe('services > prompter > general prompter', () => {
     describe('when a PromptError is thrown', () => {
       it('should terminate the process', async () => {
         expect.assertions(5);
+
+        setupTest();
+
         const promptError = new PrompterError('error message', ['logs']);
 
         const generalPrompter = new GeneralPrompter(requests, program);
