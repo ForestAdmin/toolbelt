@@ -13,7 +13,6 @@ describe('environments:update', () => {
       api: [
         () => updateEnvironmentName(),
       ],
-      promptCounts: [0],
       std: [
         { out: 'Environment updated' },
       ],
@@ -29,7 +28,6 @@ describe('environments:update', () => {
       api: [
         () => updateEnvironmentEndpoint(),
       ],
-      promptCounts: [0],
       std: [
         { out: 'Environment updated' },
       ],
@@ -42,7 +40,6 @@ describe('environments:update', () => {
       token: 'any',
       commandClass: UpdateCommand,
       commandArgs: ['-e', '182'],
-      promptCounts: [0],
       std: [
         { err: 'Please provide environment name and/or url' },
       ],

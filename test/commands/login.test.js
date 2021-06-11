@@ -30,10 +30,9 @@ describe('login', () => {
           '-e', 'smile@gmail.com',
           '-t', jwt.sign({}, 'key', { expiresIn: '1day' }),
         ],
-        promptCounts: null,
         std: [
           { in: `${jwt.sign({}, 'key', { expiresIn: '1day' })}` },
-          { out: 'Login successful' },
+          { out: '> Login successful' },
         ],
       }));
     });
@@ -45,7 +44,7 @@ describe('login', () => {
         env: testEnv,
         api: () => loginValid(),
         std: [
-          { out: 'Login successful' },
+          { out: '> Login successful' },
         ],
       }));
     });
@@ -71,7 +70,7 @@ describe('login', () => {
         api: () => loginValidOidc(),
         std: [
           { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
-          { out: 'Login successful' },
+          { out: '> Login successful' },
         ],
       }));
     });
