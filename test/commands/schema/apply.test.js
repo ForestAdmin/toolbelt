@@ -75,11 +75,11 @@ describe('schema:apply', () => {
       commandClass: ApplySchemaCommand,
       std: [
         { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
-        { out: 'Reading "./.forestadmin-schema.json"...' },
+        { out: 'Reading ".forestadmin-schema.json" from current directory...' },
         {
           out: 'Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"',
         },
-        { out: 'Sending "./.forestadmin-schema.json"...' },
+        { out: 'Sending ".forestadmin-schema.json"...' },
         { out: 'The schema is the same as before, nothing changed.' },
       ],
     }));
@@ -146,11 +146,11 @@ describe('schema:apply', () => {
             api: [() => postSchema(postSchemaMatch)],
             commandClass: ApplySchemaCommand,
             std: [
-              { out: 'Reading "./.forestadmin-schema.json"...' },
+              { out: 'Reading ".forestadmin-schema.json" from current directory...' },
               {
                 out: 'Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"',
               },
-              { out: 'Sending "./.forestadmin-schema.json"...' },
+              { out: 'Sending ".forestadmin-schema.json"...' },
               { out: 'The schema is the same as before, nothing changed.' },
             ],
           }));
@@ -167,11 +167,11 @@ describe('schema:apply', () => {
             api: [() => postSchema(postSchemaMatch)],
             commandClass: ApplySchemaCommand,
             std: [
-              { out: 'Reading "./.forestadmin-schema.json"...' },
+              { out: 'Reading ".forestadmin-schema.json" from current directory...' },
               {
                 out: 'Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"',
               },
-              { out: 'Sending "./.forestadmin-schema.json"...' },
+              { out: 'Sending ".forestadmin-schema.json"...' },
               { out: 'The schema is the same as before, nothing changed.' },
             ],
           }));
