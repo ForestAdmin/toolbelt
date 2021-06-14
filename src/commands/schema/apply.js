@@ -28,7 +28,7 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
     const secret = this.getEnvironmentSecret(parsedFlags);
     const authenticationToken = this.authenticator.getAuthToken();
 
-    this.logger.log('Sending "./.forestadmin-schema.json"...');
+    this.logger.log('Sending ".forestadmin-schema.json"...');
     const jobId = await new SchemaSender(
       serializedSchema,
       secret,
@@ -47,8 +47,8 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
   }
 
   readSchema() {
-    this.logger.log('Reading "./.forestadmin-schema.json"...');
-    const filename = path.resolve('./.forestadmin-schema.json');
+    this.logger.log('Reading ".forestadmin-schema.json" from current directory...');
+    const filename = path.resolve(process.cwd(), '.forestadmin-schema.json');
 
     if (!this.fs.existsSync(filename)) {
       this.logger.error('Cannot find the file ".forestadmin-schema.json" in this directory. Please be sure to run this command inside your project directory.');
