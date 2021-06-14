@@ -1,5 +1,5 @@
 const { flags } = require('@oclif/command');
-const makeDefaultPlan = require('../context/init');
+const makeDefaultPlan = require('../context/plan');
 const ProjectManager = require('../services/project-manager');
 const Renderer = require('../renderers/projects');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');

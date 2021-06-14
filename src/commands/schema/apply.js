@@ -1,6 +1,6 @@
 const path = require('path');
 const { flags } = require('@oclif/command');
-const makeDefaultPlan = require('../../context/init');
+const makeDefaultPlan = require('../../context/plan');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
 const JobStateChecker = require('../../services/job-state-checker');

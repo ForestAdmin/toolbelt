@@ -1,6 +1,6 @@
 const { Command } = require('@oclif/command');
 const Context = require('@forestadmin/context');
-const makeDefaultPlan = require('./context/init');
+const makeDefaultPlan = require('./context/plan');
 
 module.exports = class AbstractCommand extends Command {
   init(plan) {

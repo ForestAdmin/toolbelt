@@ -1,5 +1,5 @@
 const AbstractCommand = require('./abstract-command');
-const makeDefaultPlan = require('./context/init');
+const makeDefaultPlan = require('./context/plan');
 
 class AbstractAuthenticatedCommand extends AbstractCommand {
   init(plan) {

@@ -1,5 +1,5 @@
 const { init } = require('@forestadmin/context');
-const makeDefaultPlan = require('./context/init');
+const makeDefaultPlan = require('./context/plan');
 
 init(makeDefaultPlan());
 

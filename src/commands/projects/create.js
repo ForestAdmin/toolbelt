@@ -3,7 +3,7 @@ const { flags } = require('@oclif/command');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const { dbDialectOptions } = require('../../services/prompter/database-prompts');
 
-const makeDefaultPlan = require('../../context/init');
+const makeDefaultPlan = require('../../context/plan');
 
 class CreateCommand extends AbstractAuthenticatedCommand {
   init(plan) {

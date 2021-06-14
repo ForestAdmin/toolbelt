@@ -1,7 +1,7 @@
 const path = require('path');
 const { flags } = require('@oclif/command');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
-const makeDefaultPlan = require('../../context/init');
+const makeDefaultPlan = require('../../context/plan');
 
 class UpdateCommand extends AbstractAuthenticatedCommand {
   init(plan) {

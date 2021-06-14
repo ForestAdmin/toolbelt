@@ -1,5 +1,5 @@
 const { flags } = require('@oclif/command');
-const makeDefaultPlan = require('../context/init');
+const makeDefaultPlan = require('../context/plan');
 const AbstractCommand = require('../abstract-command');
 
 class LoginCommand extends AbstractCommand {

@@ -2,7 +2,7 @@ const UnableToCreateApplicationTokenError = require('../errors/application-token
 
 class ApplicationTokenService {
   /**
-   * @param {import("../context/init").Context} context
+   * @param {import("../context/plan").Context} context
    */
   constructor({ api, os }) {
     /** @private @readonly */

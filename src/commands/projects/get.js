@@ -1,6 +1,6 @@
 const { flags } = require('@oclif/command');
 const chalk = require('chalk');
-const makeDefaultPlan = require('../../context/init');
+const makeDefaultPlan = require('../../context/plan');
 const ProjectManager = require('../../services/project-manager');
 const Renderer = require('../../renderers/project');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');

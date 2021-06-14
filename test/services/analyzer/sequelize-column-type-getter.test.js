@@ -6,7 +6,7 @@ const {
   DATABASE_URL_POSTGRESQL_MAX,
 } = require('./helpers/database-urls');
 
-const makeDefaultPlan = require('../../../src/context/init');
+const makeDefaultPlan = require('../../../src/context/plan');
 
 describe('services > column type getter', () => {
   describe('handling `JSON` type', () => {

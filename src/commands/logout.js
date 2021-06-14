@@ -1,5 +1,5 @@
 const AbstractCommand = require('../abstract-command');
-const makeDefaultPlan = require('../context/init');
+const makeDefaultPlan = require('../context/plan');
 
 class LogoutCommand extends AbstractCommand {
   init(plan) {

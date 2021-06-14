@@ -3,7 +3,7 @@ const rimraf = require('rimraf');
 const Context = require('@forestadmin/context');
 const fs = require('fs');
 const renderingModel = require('./expected/sequelize/db-analysis-output/renderings.expected.json');
-const makeDefaultPlan = require('../../../src/context/init');
+const makeDefaultPlan = require('../../../src/context/plan');
 
 const Dumper = require('../../../src/services/dumper/dumper');
 
