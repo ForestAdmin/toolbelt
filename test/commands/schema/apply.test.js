@@ -113,7 +113,9 @@ describe('schema:apply', () => {
           token: 'any',
           env: testEnv2,
           commandClass: ApplySchemaCommand,
-          api: [() => postSchema404()],
+          api: [
+            () => postSchema404(),
+          ],
           std: [{ err: 'Cannot find the project related to the environment secret you configured.' }],
           exitCode: 4,
         }));
@@ -126,7 +128,9 @@ describe('schema:apply', () => {
             content: forestadminSchema,
           }],
           env: testEnv2,
-          api: [() => postSchema503()],
+          api: [
+            () => postSchema503(),
+          ],
           commandClass: ApplySchemaCommand,
           std: [{ err: 'Forest is in maintenance for a few minutes. We are upgrading your experience in the forest. We just need a few more minutes to get it right.' }],
           exitCode: 5,
@@ -143,7 +147,9 @@ describe('schema:apply', () => {
             }],
             env: testEnv2,
             token: 'any',
-            api: [() => postSchema(postSchemaMatch)],
+            api: [
+              () => postSchema(postSchemaMatch),
+            ],
             commandClass: ApplySchemaCommand,
             std: [
               { out: 'Reading ".forestadmin-schema.json" from current directory...' },
@@ -164,7 +170,9 @@ describe('schema:apply', () => {
             }],
             env: testEnv2,
             token: 'any',
-            api: [() => postSchema(postSchemaMatch)],
+            api: [
+              () => postSchema(postSchemaMatch),
+            ],
             commandClass: ApplySchemaCommand,
             std: [
               { out: 'Reading ".forestadmin-schema.json" from current directory...' },
@@ -179,20 +187,22 @@ describe('schema:apply', () => {
 
         describe('with a schema with new meta format keys', () => {
           it('should send the schema', () => testCli({
-            file: {
+            files: [{
               name: '.forestadmin-schema.json',
               content: forestadminNewMetaFormat,
-            },
+            }],
             env: testEnv2,
             token: 'any',
-            api: [postSchema(postSchemaNewMetaFormatMatch)],
-            command: () => ApplySchemaCommand.run([]),
+            api: [
+              () => postSchema(postSchemaNewMetaFormatMatch),
+            ],
+            commandClass: ApplySchemaCommand,
             std: [
-              { out: 'Reading "./.forestadmin-schema.json"...' },
+              { out: 'Reading ".forestadmin-schema.json" from current directory...' },
               {
                 out: 'Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"',
               },
-              { out: 'Sending "./.forestadmin-schema.json"...' },
+              { out: 'Sending ".forestadmin-schema.json"...' },
               { out: 'The schema is the same as before, nothing changed.' },
             ],
           }));
@@ -200,17 +210,17 @@ describe('schema:apply', () => {
 
         describe('with a schema with new and old meta format keys', () => {
           it('should exit with code 20', () => testCli({
-            file: {
+            files: [{
               name: '.forestadmin-schema.json',
               content: forestadminWrongMetaFormat,
-            },
+            }],
             env: testEnv2,
             token: 'any',
-            command: () => ApplySchemaCommand.run([]),
-            std: [{
-              err: '> Cannot properly read the ".forestadmin-schema.json" file:\n'
-                + ' - "orm_version" is not allowed \n',
-            }],
+            commandClass: ApplySchemaCommand,
+            std: [
+              { err: '× Cannot properly read the ".forestadmin-schema.json" file:' },
+              { err: ' - "orm_version" is not allowed' },
+            ],
             exitCode: 20,
           }));
         });
@@ -226,7 +236,9 @@ describe('schema:apply', () => {
       }],
       env: testEnv2,
       token: 'any',
-      api: [() => postSchema500()],
+      api: [
+        () => postSchema500(),
+      ],
       commandClass: ApplySchemaCommand,
       std: [{ err: 'An error occured with the schema sent to Forest. Please contact support@forestadmin.com for further investigations.' }],
       exitCode: 6,
