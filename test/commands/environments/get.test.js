@@ -66,7 +66,7 @@ describe('environments:get', () => {
         () => getEnvironmentNotFound(),
       ],
       std: [
-        { err: 'Cannot find the environment 3947.' },
+        { err: '× Cannot find the environment 3947.' },
       ],
     }));
   });
