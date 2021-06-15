@@ -321,7 +321,7 @@ describe('init command', () => {
               }, {
                 in: [{
                   name: 'dbDialect',
-                  message: 'What\'s the database type? ',
+                  message: 'What\'s the database type?',
                   type: 'list',
                   choices: [
                     'postgres',
@@ -370,13 +370,13 @@ describe('init command', () => {
                 },
                 {
                   name: 'ssl',
-                  message: 'Does your database require a SSL connection? ',
+                  message: 'Does your database require a SSL connection?',
                   type: 'confirm',
                   default: false,
                 },
                 {
                   name: 'mongodbSrv',
-                  message: 'Use a SRV connection string? ',
+                  message: 'Use a SRV connection string?',
                   type: 'confirm',
                   default: false,
                   when: expect.any(Function),

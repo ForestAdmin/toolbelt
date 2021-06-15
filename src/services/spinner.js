@@ -12,8 +12,13 @@ const spinniesConstructorParameters = {
   },
   succeedPrefix: `${chalk.bold.green('√')}`,
 };
+
 // NOTICE: Singleton used here to attach all generated spinner to the same spinnies instance.
-const spinniesInstance = new Spinnies(spinniesConstructorParameters);
+let spinniesInstance;
+function getSpinniesInstance() {
+  if (!spinniesInstance) spinniesInstance = new Spinnies(spinniesConstructorParameters);
+  return spinniesInstance;
+}
 
 /**
  * A single instance of spinner is intended to be used as follow:
@@ -36,7 +41,7 @@ const spinniesInstance = new Spinnies(spinniesConstructorParameters);
  */
 class Spinner {
   constructor() {
-    this.spinnies = spinniesInstance;
+    this.spinnies = getSpinniesInstance();
     this.currentSpinnerOptions = null;
   }
 

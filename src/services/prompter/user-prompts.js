@@ -22,7 +22,7 @@ class UserPrompts extends AbstractPrompter {
         this.prompts.push({
           type: 'input',
           name: 'email',
-          message: 'What\'s your email address? ',
+          message: 'What\'s your email address?',
           validate: (email) => {
             if (email) { return true; }
             return 'Please enter your email address.';

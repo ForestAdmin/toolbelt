@@ -55,7 +55,7 @@ describe('services > prompter > application prompts', () => {
           expect.assertions(4);
           expect(prompts[0].type).toStrictEqual('input');
           expect(prompts[0].name).toStrictEqual('appHostname');
-          expect(prompts[0].message).toStrictEqual('What\'s the IP/hostname on which your application will be running? ');
+          expect(prompts[0].message).toStrictEqual('What\'s the IP/hostname on which your application will be running?');
           expect(prompts[0].default).toStrictEqual('http://localhost');
         });
 
@@ -120,7 +120,7 @@ describe('services > prompter > application prompts', () => {
           expect.assertions(5);
           expect(prompts[0].type).toStrictEqual('input');
           expect(prompts[0].name).toStrictEqual('appPort');
-          expect(prompts[0].message).toStrictEqual('What\'s the port on which your application will be running? ');
+          expect(prompts[0].message).toStrictEqual('What\'s the port on which your application will be running?');
           expect(prompts[0].default).toStrictEqual('3310');
           expect(prompts[0].validate).toBeInstanceOf(Function);
         });

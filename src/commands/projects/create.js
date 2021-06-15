@@ -19,7 +19,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       logger,
       messages,
       ProjectCreator,
-      spinners,
+      spinner,
       terminator,
     } = this.context;
 
@@ -35,7 +35,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       logger,
       messages,
       ProjectCreator,
-      spinners,
+      spinner,
       terminator,
     });
     this.api = api;
@@ -49,7 +49,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     this.logger = logger;
     this.messages = messages;
     this.ProjectCreator = ProjectCreator;
-    this.spinners = spinners;
+    this.spinner = spinner;
     this.terminator = terminator;
   }
 
@@ -68,27 +68,32 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 
     let schema = {};
 
+    this.spinner.start({ text: 'Connecting to your database' });
     const connectionPromise = this.database.connect(config);
-    this.spinners.add('database-connection', { text: 'Connecting to your database' }, connectionPromise);
+    this.spinner.attachToPromise(connectionPromise);
+
     const connection = await connectionPromise;
 
+    this.spinner.start({ text: 'Analyzing the database' });
     const schemaPromise = this.databaseAnalyzer.analyze(connection, config, true);
-    this.spinners.add('database-analysis', { text: 'Analyzing the database' }, schemaPromise);
+    this.spinner.attachToPromise(schemaPromise);
+
     schema = await schemaPromise;
 
+    this.spinner.start({ text: 'Creating your project on Forest Admin' });
     const projectCreationPromise = this.ProjectCreator.create(
       authenticationToken, this.api, config.appName, config,
     );
-    this.spinners.add('project-creation', { text: 'Creating your project on Forest Admin' }, projectCreationPromise);
+    this.spinner.attachToPromise(projectCreationPromise);
 
     const { envSecret, authSecret } = await projectCreationPromise;
     config.forestEnvSecret = envSecret;
     config.forestAuthSecret = authSecret;
 
-    const spinner = this.spinners.add('dumper', { text: 'Creating your project files' });
-    this.logger.spinner = spinner;
-    await this.dumper.dump(schema, config);
-    spinner.succeed();
+    this.spinner.start({ text: 'Creating your project files' });
+    const dumpPromise = this.dumper.dump(schema, config);
+    this.spinner.attachToPromise(dumpPromise);
+    await dumpPromise;
 
     this.logger.success(`Hooray, ${this.chalk.green('installation success')}!`);
     await this.eventSender.notifySuccess();
