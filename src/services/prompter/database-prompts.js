@@ -53,7 +53,7 @@ class DatabasePrompts extends AbstractPrompter {
       const prompt = {
         type: 'list',
         name: 'dbDialect',
-        message: 'What\'s the database type? ',
+        message: 'What\'s the database type?',
         choices: ['postgres', 'mysql', 'mssql', 'mongodb'],
       };
 
@@ -185,7 +185,7 @@ class DatabasePrompts extends AbstractPrompter {
         this.prompts.push({
           type: 'confirm',
           name: 'ssl',
-          message: 'Does your database require a SSL connection? ',
+          message: 'Does your database require a SSL connection?',
           default: false,
         });
       }
@@ -197,7 +197,7 @@ class DatabasePrompts extends AbstractPrompter {
       this.prompts.push({
         type: 'confirm',
         name: 'mongodbSrv',
-        message: 'Use a SRV connection string? ',
+        message: 'Use a SRV connection string?',
         when: (answers) => answers.dbDialect === 'mongodb',
         default: false,
       });
