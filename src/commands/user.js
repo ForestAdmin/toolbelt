@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
-const { Command } = require('@oclif/command');
 const makeDefaultPlan = require('../context/init');
+const AbstractCommand = require('../abstract-command');
 
-class UserCommand extends Command {
+class UserCommand extends AbstractCommand {
   init(plan) {
     super.init(plan || makeDefaultPlan());
     const {
