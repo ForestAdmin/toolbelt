@@ -206,7 +206,7 @@ describe('services > prompter > database prompts', () => {
           initTestWithDatabaseDialect();
           expect(prompts[0].type).toStrictEqual('list');
           expect(prompts[0].name).toStrictEqual('dbDialect');
-          expect(prompts[0].message).toStrictEqual('What\'s the database type? ');
+          expect(prompts[0].message).toStrictEqual('What\'s the database type?');
           expect(prompts[0].choices).toStrictEqual(['postgres', 'mysql', 'mssql', 'mongodb']);
           resetParams();
         });
@@ -631,7 +631,7 @@ describe('services > prompter > database prompts', () => {
           initTestWithSSL();
           expect(prompts[0].type).toStrictEqual('confirm');
           expect(prompts[0].name).toStrictEqual('ssl');
-          expect(prompts[0].message).toStrictEqual('Does your database require a SSL connection? ');
+          expect(prompts[0].message).toStrictEqual('Does your database require a SSL connection?');
           expect(prompts[0].default).toStrictEqual(false);
           resetParams();
         });
@@ -674,7 +674,7 @@ describe('services > prompter > database prompts', () => {
         initTestWithMongoSrv();
         expect(prompts[0].type).toStrictEqual('confirm');
         expect(prompts[0].name).toStrictEqual('mongodbSrv');
-        expect(prompts[0].message).toStrictEqual('Use a SRV connection string? ');
+        expect(prompts[0].message).toStrictEqual('Use a SRV connection string?');
         expect(prompts[0].default).toStrictEqual(false);
         expect(prompts[0].when).toBeInstanceOf(Function);
         resetParams();

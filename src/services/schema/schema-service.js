@@ -11,7 +11,7 @@ module.exports = class SchemaService {
     fs,
     logger,
     path,
-    spinners,
+    spinner,
   }) {
     assertPresent({
       database,
@@ -22,7 +22,7 @@ module.exports = class SchemaService {
       fs,
       logger,
       path,
-      spinners,
+      spinner,
     });
     this.database = database;
     this.databaseAnalyzer = databaseAnalyzer;
@@ -32,7 +32,7 @@ module.exports = class SchemaService {
     this.fs = fs;
     this.logger = logger;
     this.path = path;
-    this.spinners = spinners;
+    this.spinner = spinner;
   }
 
   _assertOutputDirectory(outputDirectory) {
@@ -58,20 +58,16 @@ module.exports = class SchemaService {
   }
 
   async _connectToDatabases(databasesConfig) {
-    const spinner = this.spinners.add(
-      'databases-connection',
-      {
-        text: 'Connecting to your database(s)',
-      },
-    );
-    const databasesConnection = await this.database.connectFromDatabasesConfig(databasesConfig);
-    spinner.succeed();
-    return databasesConnection;
+    this.spinner.start({ text: 'Connecting to your database(s)' });
+    const databasesConnectionPromise = this.database.connectFromDatabasesConfig(databasesConfig);
+    this.spinner.attachToPromise(databasesConnectionPromise);
+
+    return databasesConnectionPromise;
   }
 
   async _analyzeDatabases(databasesConnection, dbSchema) {
-    const spinner = this.spinners.add('analyze-databases', { text: 'Analyzing the database(s)' });
-    const databasesSchema = await Promise.all(
+    this.spinner.start({ text: 'Analyzing the database(s)' });
+    const databasesSchemaPromise = Promise.all(
       databasesConnection
         .map(async (databaseConnection) => {
           const analyzerOptions = {
@@ -89,12 +85,12 @@ module.exports = class SchemaService {
           };
         }),
     );
-    spinner.succeed();
-    return databasesSchema;
+    this.spinner.attachToPromise(databasesSchemaPromise);
+    return databasesSchemaPromise;
   }
 
   async _dumpSchemas(databasesSchema, appName, isUpdate, useMultiDatabase) {
-    const spinner = this.spinners.add('dumper', { text: 'Generating your files' });
+    this.spinner.start({ text: 'Generating your files' });
 
     const dumperOptions = {
       appName,
@@ -105,15 +101,16 @@ module.exports = class SchemaService {
       dbSchema: null, // Value is defined below, it's coming from each analyzerOptions
     };
 
-    await Promise.all(databasesSchema.map((databaseSchema) =>
+    const dumpPromise = Promise.all(databasesSchema.map((databaseSchema) =>
       this.dumper.dump(databaseSchema.schema, {
         ...dumperOptions,
         modelsExportPath: this.path.relative('models', databaseSchema.modelsDir),
         dbDialect: databaseSchema.analyzerOptions.dbDialect,
         dbSchema: databaseSchema.analyzerOptions.dbSchema,
       })));
+    this.spinner.attachToPromise(dumpPromise);
 
-    spinner.succeed();
+    return dumpPromise;
   }
 
   _warnIfSingleToMulti(outputDirectory, useMultiDatabase) {
