@@ -70,7 +70,7 @@ describe('services > prompter > user prompts', () => {
 
           expect(prompts[0].type).toStrictEqual('input');
           expect(prompts[0].name).toStrictEqual('email');
-          expect(prompts[0].message).toStrictEqual('What\'s your email address? ');
+          expect(prompts[0].message).toStrictEqual('What\'s your email address?');
           expect(prompts[0].validate).toBeInstanceOf(Function);
           resetParams();
         });
