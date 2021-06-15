@@ -43,7 +43,9 @@ describe('environments:copy-layout', () => {
           () => postCopyLayout(),
           () => getJobFailed(),
         ],
-        std: [{ err: 'Oops, something went wrong.' }],
+        std: [
+          { err: '× Oops, something went wrong.' },
+        ],
         exitCode: 1,
       }));
     });
@@ -59,7 +61,9 @@ describe('environments:copy-layout', () => {
         () => getEnvironmentNotFound(324),
         () => getEnvironmentValid2(),
       ],
-      std: [{ err: 'Cannot find the target environment 324 on the project 82' }],
+      std: [
+        { err: '× Cannot find the target environment 324 on the project 82' },
+      ],
       exitCode: 3,
     }));
   });

@@ -18,7 +18,7 @@ describe('login', () => {
         commandClass: LoginCommand,
         commandArgs: ['-e', 'smile@gmail.com', '-t', 'invalid_token'],
         std: [
-          { err: 'Invalid token. Please enter your authentication token.' },
+          { err: '× Invalid token. Please enter your authentication token.' },
         ],
       }));
     });
@@ -56,7 +56,7 @@ describe('login', () => {
         commandArgs: ['-e', 'some@mail.com', '-P', 'pwd'],
         api: () => loginInvalid(),
         std: [
-          { err: 'Incorrect email or password.' },
+          { err: '× Incorrect email or password.' },
         ],
       }));
     });
@@ -82,7 +82,7 @@ describe('login', () => {
         api: () => loginInvalidOidc(),
         std: [
           { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
-          { err: 'Error during the authentication: The authentication failed.' },
+          { err: '× Error during the authentication: The authentication failed.' },
         ],
       }));
     });
