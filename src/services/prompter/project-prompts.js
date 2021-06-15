@@ -1,8 +1,8 @@
 const chalk = require('chalk');
-const DirectoryExistenceChecker = require('../directory-existence-checker');
+const DirectoryExistenceChecker = require('../../utils/directory-existence-checker');
 const AbstractPrompter = require('./abstract-prompter');
 const PrompterError = require('./prompter-error');
-const messages = require('../messages');
+const messages = require('../../utils/messages');
 
 class ProjectPrompts extends AbstractPrompter {
   constructor(requests, env, program) {
