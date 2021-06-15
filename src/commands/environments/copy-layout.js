@@ -14,16 +14,9 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
     this.inquirer = inquirer;
   }
 
-  async runIfAuthenticated() {
-    const oclifExit = this.exit.bind(this);
-    const parsed = this.parse(CopyLayoutCommand);
-    const config = await withCurrentProject({ ...this.env, ...parsed.flags, ...parsed.args });
-    const manager = new EnvironmentManager(config);
-
+  async _getEnvironments(manager, config) {
     let fromEnvironment;
     let toEnvironment;
-    let answers;
-
     try {
       fromEnvironment = await manager.getEnvironment(config.fromEnvironment);
     } catch (error) {
@@ -44,6 +37,18 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
       this.exit(3);
     }
 
+    return { fromEnvironment, toEnvironment };
+  }
+
+  async runIfAuthenticated() {
+    const oclifExit = this.exit.bind(this);
+    const parsed = this.parse(CopyLayoutCommand);
+    const config = await withCurrentProject({ ...this.env, ...parsed.flags, ...parsed.args });
+    const manager = new EnvironmentManager(config);
+
+    const { fromEnvironment, toEnvironment } = await this._getEnvironments(manager, config);
+    let answers;
+
     if (!config.force) {
       answers = await this.inquirer
         .prompt([{
@@ -62,20 +67,22 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
           oclifExit,
         );
         if (copyLayout) {
-          return this.logger.log(`Environment's layout ${chalk.red(fromEnvironment.name)} successfully copied to ${chalk.red(toEnvironment.name)}.`);
+          this.logger.log(`Environment's layout ${chalk.red(fromEnvironment.name)} successfully copied to ${chalk.red(toEnvironment.name)}.`);
+        } else {
+          this.logger.error('Oops, something went wrong.');
+          this.exit(1);
         }
-        this.logger.error('Oops, something went wrong.');
-        return this.exit(1);
+      } else {
+        this.logger.error(`Confirmation did not match ${chalk.red(toEnvironment.name)}. Aborted.`);
+        this.exit(2);
       }
-      this.logger.error(`Confirmation did not match ${chalk.red(toEnvironment.name)}. Aborted.`);
-      return this.exit(2);
     } catch (error) {
       if (error.status === 403) {
         this.logger.error(`You do not have the rights to copy the layout of the environment ${chalk.bold(fromEnvironment.name)} to ${chalk.bold(toEnvironment.name)}.`);
-        return this.exit(1);
+      } else {
+        this.logger.error(error);
       }
-      this.logger.error(error);
-      return this.exit(1);
+      this.exit(1);
     }
   }
 }

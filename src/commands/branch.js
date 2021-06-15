@@ -18,30 +18,30 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     try {
       const branches = await BranchManager.getBranches(envSecret);
       if (!branches || branches.length === 0) {
-        return this.logger.warn('You don\'t have any branch yet. Use `forest branch <branch_name>` to create one.');
+        this.logger.warn('You don\'t have any branch yet. Use `forest branch <branch_name>` to create one.');
+      } else {
+        branches.forEach((branch) => {
+          this.logger.log(`${branch.name} ${branch.isCurrent ? '< current branch' : ''}`);
+        });
       }
-      branches.forEach((branch) => {
-        this.logger.log(`${branch.name} ${branch.isCurrent ? '< current branch' : ''}`);
-      });
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
       this.logger.error(customError);
-      return this.exit(2);
+      this.exit(2);
     }
-    return null;
   }
 
   async createBranch(branchName, environmentSecret) {
     try {
       await BranchManager.createBranch(branchName, environmentSecret);
 
-      return this.logger.success(`Switched to new branch: ${branchName}.`);
+      this.logger.success(`Switched to new branch: ${branchName}.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
       this.logger.error(customError);
-      return this.exit(2);
+      this.exit(2);
     }
   }
 
@@ -53,16 +53,16 @@ class BranchCommand extends AbstractAuthenticatedCommand {
           name: 'confirm',
           message: `Delete branch ${branchName}`,
         }]);
-      if (!response.confirm) return null;
+      if (!response.confirm) return;
     }
     try {
       await BranchManager.deleteBranch(branchName, envSecret);
-      return this.logger.success(`Branch ${branchName} successfully deleted.`);
+      this.logger.success(`Branch ${branchName} successfully deleted.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
       this.logger.error(customError);
-      return this.exit(2);
+      this.exit(2);
     }
   }
 
@@ -83,7 +83,8 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
       this.logger.error(customError);
-      return this.exit(2);
+      this.exit(2);
+      return null;
     }
 
     if (config.BRANCH_NAME) {

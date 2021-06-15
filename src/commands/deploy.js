@@ -95,14 +95,15 @@ class DeployCommand extends AbstractAuthenticatedCommand {
       const environment = await this.getEnvironment(config);
 
       if (environment === undefined) throw new Error('Environment not found.');
-      if (!config.force && !(await this.confirm(environment))) return null;
+
+      if (!config.force && !(await this.confirm(environment))) return;
 
       await new EnvironmentManager(config).deploy(environment);
 
-      return this.logger.success(`Deployed ${environment.name} layout changes to reference environment.`);
+      this.logger.success(`Deployed ${environment.name} layout changes to reference environment.`);
     } catch (error) {
       this.logger.error(handleBranchError(error));
-      return this.exit(2);
+      this.exit(2);
     }
   }
 }

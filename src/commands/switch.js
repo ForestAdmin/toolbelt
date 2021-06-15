@@ -32,7 +32,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
       const customError = BranchManager.handleBranchError(error);
 
       this.logger.error(customError);
-      return this.exit(2);
+      return null;
     }
   }
 
@@ -40,12 +40,12 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
     try {
       await BranchManager.switchBranch(selectedBranch, environmentSecret);
 
-      return this.logger.success(`Switched to branch: ${selectedBranch.name}.`);
+      this.logger.success(`Switched to branch: ${selectedBranch.name}.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
       this.logger.error(customError);
-      return this.exit(2);
+      this.exit(2);
     }
   }
 
@@ -71,25 +71,31 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
       const branches = await BranchManager.getBranches(config.envSecret) || [];
 
       if (branches.length === 0) {
-        return this.logger.warn('You don\'t have any branch to set as current. Use `forest branch <branch_name>` to create one.');
+        this.logger.warn('You don\'t have any branch to set as current. Use `forest branch <branch_name>` to create one.');
+        return;
       }
 
       const selectedBranchName = config.BRANCH_NAME || await this.selectBranch(branches);
+      if (!selectedBranchName) {
+        this.exit(2);
+      }
+
       const selectedBranch = branches.find((branch) => branch.name === selectedBranchName);
       const currentBranch = branches.find((branch) => branch.isCurrent);
 
       if (selectedBranch === undefined) {
         throw new Error('Branch does not exist.');
       }
-      if (currentBranch && currentBranch.name === selectedBranchName) {
-        return this.logger.info(`${selectedBranchName} is already your current branch.`);
-      }
 
-      return this.switchTo(selectedBranch, config.envSecret);
+      if (currentBranch && currentBranch.name === selectedBranchName) {
+        this.logger.info(`${selectedBranchName} is already your current branch.`);
+      } else {
+        await this.switchTo(selectedBranch, config.envSecret);
+      }
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
       this.logger.error(customError);
-      return this.exit(2);
+      this.exit(2);
     }
   }
 }
