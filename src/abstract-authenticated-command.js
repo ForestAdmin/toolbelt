@@ -15,7 +15,9 @@ class AbstractAuthenticatedCommand extends AbstractCommand {
     if (!this.authenticator.getAuthToken()) {
       this.logger.info('Login required.');
       await this.authenticator.tryLogin({});
-      if (!this.authenticator.getAuthToken()) this.exit(10);
+      if (!this.authenticator.getAuthToken()) {
+        this.exit(10);
+      }
     }
 
     try {
@@ -24,12 +26,13 @@ class AbstractAuthenticatedCommand extends AbstractCommand {
       // NOTICE: Due to ip-whitelist, 404 will never be thrown for a project
       if (error.status === 403) {
         this.logger.error('You do not have the right to execute this action on this project');
-        return this.exit(2);
+        this.exit(2);
       }
 
       if (error.status === 401) {
         await this.authenticator.logout();
-        return this.displayLoginMessageAndQuit();
+        this.logger.error(`Please use ${this.chalk.bold('forest login')} to sign in to your Forest account.`);
+        this.exit(10);
       }
 
       throw error;
@@ -38,11 +41,6 @@ class AbstractAuthenticatedCommand extends AbstractCommand {
 
   async runIfAuthenticated() {
     throw new Error(`'runIfAuthenticated' is not implemented on ${this.constructor.name}`);
-  }
-
-  displayLoginMessageAndQuit() {
-    this.logger.error(`Please use ${this.chalk.bold('forest login')} to sign in to your Forest account.`);
-    this.exit(10);
   }
 }
 
