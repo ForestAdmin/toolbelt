@@ -103,9 +103,10 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
     }), { convert: false });
 
     if (error) {
-      let message = 'Cannot properly read the ".forestadmin-schema.json" file:\n - ';
-      message += error.details.map((detail) => detail.message).join('\n - ');
-      this.logger.error(message);
+      this.logger.error('Cannot properly read the ".forestadmin-schema.json" file:');
+      error.details.forEach(
+        (detail) => this.logger.error(`| ${detail.message}`),
+      );
       this.exit(20);
     }
 
