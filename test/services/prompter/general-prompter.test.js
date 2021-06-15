@@ -1,8 +1,8 @@
 const sinon = require('sinon');
 const Context = require('@forestadmin/context');
 
-const GeneralPrompter = require('../../../src/utils/prompter/general-prompter');
-const PrompterError = require('../../../src/utils/prompter/prompter-error');
+const GeneralPrompter = require('../../../src/services/prompter/general-prompter');
+const PrompterError = require('../../../src/services/prompter/prompter-error');
 const Terminator = require('../../../src/utils/terminator-sender');
 
 const makeDefaultPlan = require('../../../src/context/init');

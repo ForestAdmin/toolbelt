@@ -1,5 +1,5 @@
 const sinon = require('sinon');
-const ApplicationPrompts = require('../../../src/utils/prompter/application-prompts');
+const ApplicationPrompts = require('../../../src/services/prompter/application-prompts');
 
 const FAKE_APP_HOST = 'fakeApplicationHost';
 const FAKE_APP_PORT = '1234';

@@ -1,9 +1,9 @@
 const chalk = require('chalk');
 const sinon = require('sinon');
 const fs = require('fs');
-const PrompterError = require('../../../src/utils/prompter/prompter-error');
+const PrompterError = require('../../../src/services/prompter/prompter-error');
 const messages = require('../../../src/utils/messages');
-const ProjectPrompts = require('../../../src/utils/prompter/project-prompts');
+const ProjectPrompts = require('../../../src/services/prompter/project-prompts');
 
 const FAKE_PROJECT_NAME = 'fakeProject';
 

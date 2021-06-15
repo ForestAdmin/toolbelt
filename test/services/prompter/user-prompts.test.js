@@ -1,5 +1,5 @@
 const sinon = require('sinon');
-const UserPrompts = require('../../../src/utils/prompter/user-prompts');
+const UserPrompts = require('../../../src/services/prompter/user-prompts');
 
 const EMAIL_FAKE = 'fake@email.com';
 
