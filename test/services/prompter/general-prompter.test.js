@@ -30,7 +30,6 @@ describe('services > prompter > general prompter', () => {
         const promptError = new PrompterError('error message', ['logs']);
 
         const generalPrompter = new GeneralPrompter(requests, program);
-        const userPromptsStub = sinon.stub(generalPrompter.userPrompt, 'handlePrompts').rejects(promptError);
         const applicationPromptsStub = sinon.stub(generalPrompter.applicationPrompt, 'handlePrompts').rejects(promptError);
         const projectPromptsStub = sinon.stub(generalPrompter.projectPrompt, 'handlePrompts').rejects(promptError);
         const databasePromptsStub = sinon.stub(generalPrompter.databasePrompt, 'handlePrompts').rejects(promptError);
@@ -53,7 +52,6 @@ describe('services > prompter > general prompter', () => {
         expect(context).toBeUndefined();
 
         resetParams();
-        userPromptsStub.restore();
         applicationPromptsStub.restore();
         projectPromptsStub.restore();
         databasePromptsStub.restore();

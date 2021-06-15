@@ -4,7 +4,6 @@ const ApplicationPrompt = require('./application-prompts');
 const DatabasePrompt = require('./database-prompts');
 const ProjectPrompt = require('./project-prompts');
 const PromptError = require('./prompter-error');
-const UserPrompt = require('./user-prompts');
 const Terminator = require('../../utils/terminator-sender');
 
 class GeneralPrompter {
@@ -16,7 +15,6 @@ class GeneralPrompter {
     this.projectPrompt = new ProjectPrompt(requests, this.env, program);
     this.databasePrompt = new DatabasePrompt(requests, this.env, this.prompts, program);
     this.applicationPrompt = new ApplicationPrompt(requests, this.env, this.prompts, program);
-    this.userPrompt = new UserPrompt(requests, this.env, this.prompts, program);
 
     this.initSourceDirectory();
   }
@@ -36,7 +34,6 @@ class GeneralPrompter {
       await this.projectPrompt.handlePrompts();
       await this.databasePrompt.handlePrompts();
       await this.applicationPrompt.handlePrompts();
-      await this.userPrompt.handlePrompts();
     } catch (error) {
       if (error instanceof PromptError) {
         await Terminator.terminate(1, {

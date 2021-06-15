@@ -14,7 +14,6 @@ describe('services > command generate config getter', () => {
         'appName',
         'appHostname',
         'appPort',
-        'email',
       ]);
     });
   });
@@ -36,7 +35,6 @@ describe('services > command generate config getter', () => {
         'appName',
         'appHostname',
         'appPort',
-        'email',
       ]);
     });
   });
