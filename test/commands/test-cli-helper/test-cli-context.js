@@ -1,10 +1,9 @@
 const { getTokenPath } = require('./test-cli-auth-token');
 
-const makeDefaultPlan = require('../../../src/context/init');
+const defaultPlan = require('../../../src/context/plan');
 const { makeAuthenticatorPlanMock } = require('./mocks/plan-mocks');
 
 // FIXME: Need to override things here (fs...)
-const initialContextPlan = () => makeDefaultPlan();
 
 const replaceProcessFunctions = ({ plan }) => plan
   .replace('process.exit', (context) => context.addFunction('exitProcess',
@@ -18,7 +17,7 @@ const replaceProcessFunctions = ({ plan }) => plan
       throw error;
     }));
 
-const replaceEnvironmentVariables = ({ plan, env }) => plan
+const replaceEnvironmentVariables = (env) => (plan) => plan
   .replace('env.variables', (context) => context.addValue('env', {
     // FIXME: Default values.
     // APPLICATION_PORT: undefined,
@@ -39,11 +38,11 @@ const replaceEnvironmentVariables = ({ plan, env }) => plan
     ...env,
   }));
 
-const replaceDependencies = ({ plan }) => plan
+const replaceDependencies = () => (plan) => plan
   .replace('dependencies.open',
     (context) => context.addFunction('open', jest.fn()));
 
-const replaceAuthenticator = ({ plan, tokenBehavior }) => {
+const replaceAuthenticator = (tokenBehavior) => (plan) => {
   if (tokenBehavior === null) return plan;
   return plan.replace(
     'services.authenticator',
@@ -51,7 +50,7 @@ const replaceAuthenticator = ({ plan, tokenBehavior }) => {
   );
 };
 
-const replaceInquirer = ({ plan, prompts }) => {
+const replaceInquirer = (prompts) => (plan) => {
   const dummyPrompt = jest.fn();
   prompts.forEach((prompt) => dummyPrompt.mockReturnValueOnce(prompt.out));
   const dummyInquirer = {
@@ -63,12 +62,17 @@ const replaceInquirer = ({ plan, prompts }) => {
       .addInstance('inquirer', dummyInquirer));
 };
 
-const prepareContextPlan = (parameters) => [
+const prepareContextPlan = ({
+  env,
+  prompts,
+  tokenBehavior,
+}) => ([
+  defaultPlan,
   replaceProcessFunctions,
-  replaceEnvironmentVariables,
-  replaceDependencies,
-  replaceAuthenticator,
-  replaceInquirer,
-].reduce((plan, next) => next({ ...parameters, plan }), initialContextPlan());
+  replaceEnvironmentVariables(env),
+  replaceDependencies(),
+  replaceInquirer(prompts),
+  replaceAuthenticator(tokenBehavior),
+]);
 
 module.exports = { prepareContextPlan };
