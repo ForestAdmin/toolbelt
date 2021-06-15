@@ -1,4 +1,3 @@
-const { newPlan } = require('@forestadmin/context');
 const constantsPlan = require('./constants-plan');
 const envPlan = require('./env-plan');
 const dependenciesPlan = require('./dependancies-plan');
@@ -10,7 +9,7 @@ const commandSchemaUpdatePlan = require('./command-schema-update-command-plan');
 
 require('../config');
 
-module.exports = newPlan()
+module.exports = (plan) => plan
   .addStep('constants', constantsPlan)
   .addStep('env', envPlan)
   .addStep('dependencies', dependenciesPlan)

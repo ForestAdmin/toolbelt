@@ -62,6 +62,22 @@ const replaceInquirer = (prompts) => (plan) => {
       .addInstance('inquirer', dummyInquirer));
 };
 
+const makeInquirerMock = (prompts) => {
+  const dummyPrompt = jest.fn();
+  prompts.forEach((prompt) => dummyPrompt.mockReturnValueOnce(prompt.out));
+  return { prompt: dummyPrompt };
+};
+
+const makeReplaceInquirer = (dummyInquirer) => (plan) => plan
+  .replace('dependencies.inquirer', (context) => context
+    .addInstance('inquirer', dummyInquirer));
+
+const mockInquirer = (prompts, plan) => {
+  const inquirerMock = makeInquirerMock(prompts);
+  plan.push(makeReplaceInquirer(inquirerMock));
+  return inquirerMock;
+};
+
 const prepareContextPlan = ({
   env,
   prompts,
