@@ -95,10 +95,10 @@ describe('schema:apply', () => {
         env: testEnv,
         token: 'any',
         commandClass: ApplySchemaCommand,
-        std: [{
-          err: 'Cannot find your forest environment secret in the environment variable "FOREST_ENV_SECRET".\n'
-      + 'Please set the "FOREST_ENV_SECRET" variable or pass the secret in parameter using --secret.',
-        }],
+        std: [
+          { err: '× Cannot find your forest environment secret in the environment variable "FOREST_ENV_SECRET".' },
+          { err: 'Please set the "FOREST_ENV_SECRET" variable or pass the secret in parameter using --secret.' },
+        ],
         exitCode: 2,
       }));
     });
@@ -116,7 +116,9 @@ describe('schema:apply', () => {
           api: [
             () => postSchema404(),
           ],
-          std: [{ err: 'Cannot find the project related to the environment secret you configured.' }],
+          std: [
+            { err: '× Cannot find the project related to the environment secret you configured.' },
+          ],
           exitCode: 4,
         }));
       });
@@ -132,7 +134,9 @@ describe('schema:apply', () => {
             () => postSchema503(),
           ],
           commandClass: ApplySchemaCommand,
-          std: [{ err: 'Forest is in maintenance for a few minutes. We are upgrading your experience in the forest. We just need a few more minutes to get it right.' }],
+          std: [
+            { err: '× Forest is in maintenance for a few minutes. We are upgrading your experience in the forest. We just need a few more minutes to get it right.' },
+          ],
           exitCode: 5,
           token: 'any',
         }));
@@ -240,7 +244,9 @@ describe('schema:apply', () => {
         () => postSchema500(),
       ],
       commandClass: ApplySchemaCommand,
-      std: [{ err: 'An error occured with the schema sent to Forest. Please contact support@forestadmin.com for further investigations.' }],
+      std: [
+        { err: '× An error occured with the schema sent to Forest. Please contact support@forestadmin.com for further investigations.' },
+      ],
       exitCode: 6,
     }));
   });

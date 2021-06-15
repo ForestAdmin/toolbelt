@@ -41,7 +41,7 @@ describe('environments:update', () => {
       commandClass: UpdateCommand,
       commandArgs: ['-e', '182'],
       std: [
-        { err: 'Please provide environment name and/or url' },
+        { err: '× Please provide environment name and/or url' },
       ],
     }));
   });

@@ -36,7 +36,9 @@ describe('environments:delete', () => {
           () => getEnvironmentValid(),
           () => deleteEnvironmentFailure(),
         ],
-        std: [{ err: 'Oops, something went wrong.' }],
+        std: [
+          { err: '× Oops, something went wrong.' },
+        ],
         exitCode: 1,
       }));
     });
@@ -49,7 +51,9 @@ describe('environments:delete', () => {
       api: [
         () => getEnvironmentNotFound(),
       ],
-      std: [{ err: 'Cannot find the environment 3947.' }],
+      std: [
+        { err: '× Cannot find the environment 3947.' },
+      ],
       commandClass: DeleteCommand,
       commandArgs: ['3947', '--force'],
       exitCode: 1,

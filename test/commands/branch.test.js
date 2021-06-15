@@ -109,7 +109,7 @@ describe('branch', () => {
               () => getDevelopmentEnvironmentNotFound(),
             ],
             std: [
-              { err: 'Development environment not found.' },
+              { err: '× Development environment not found.' },
             ],
             exitCode: 2,
           }));

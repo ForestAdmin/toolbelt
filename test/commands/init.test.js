@@ -90,7 +90,7 @@ describe('init command', () => {
           () => getProjectListEmpty(),
         ],
         std: [
-          { err: 'You don\'t have any project yet.' },
+          { err: '× You don\'t have any project yet.' },
         ],
         exitCode: 1,
       }));
@@ -125,7 +125,7 @@ describe('init command', () => {
           () => getProjectNotFoundForDevWorkflow(),
         ],
         std: [
-          { err: 'The project you specified does not exist.' },
+          { err: '× The project you specified does not exist.' },
         ],
         exitCode: 1,
       }));
@@ -176,7 +176,7 @@ describe('init command', () => {
         std: [
           { spinner: '√ Selecting your project' },
           { spinner: '× Analyzing your setup' },
-          { err: 'You need the \'Admin\' role to create a development environment on this project.' },
+          { err: '× You need the \'Admin\' role to create a development environment on this project.' },
         ],
         exitCode: 1,
       }));
@@ -194,7 +194,7 @@ describe('init command', () => {
         std: [
           { spinner: '√ Selecting your project' },
           { spinner: '× Analyzing your setup' },
-          { err: 'This project does not support branches yet. Please migrate your environments from your Project settings first.' },
+          { err: '× This project does not support branches yet. Please migrate your environments from your Project settings first.' },
         ],
         exitCode: 1,
       }));
@@ -212,7 +212,7 @@ describe('init command', () => {
         std: [
           { spinner: '√ Selecting your project' },
           { spinner: '× Analyzing your setup' },
-          { err: 'You cannot create your development environment until this project has either a remote or a production environment.' },
+          { err: '× You cannot create your development environment until this project has either a remote or a production environment.' },
         ],
         exitCode: 1,
       }));
