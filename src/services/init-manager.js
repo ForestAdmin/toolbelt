@@ -5,7 +5,7 @@ const { EOL } = require('os');
 const Context = require('@forestadmin/context');
 const { handleError } = require('../utils/error');
 const { generateKey } = require('../utils/key-generator');
-const DatabasePrompter = require('../services/prompter/database-prompter');
+const DatabasePrompts = require('../services/prompter/database-prompts');
 
 const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE = 'Copying the environment variables in your `.env` file';
 const SUCCESS_MESSAGE_ENV_FILE_CREATED_AND_FILLED = 'Creating a new `.env` file containing your environment variables';
@@ -72,7 +72,7 @@ async function handleDatabaseConfiguration() {
   if (!response.confirm) return null;
 
   const promptContent = [];
-  await new DatabasePrompter(OPTIONS_DATABASE, env, promptContent, { }).handlePrompts();
+  await new DatabasePrompts(OPTIONS_DATABASE, env, promptContent, { }).handlePrompts();
   return inquirer.prompt(promptContent);
 }
 
