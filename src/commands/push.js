@@ -65,15 +65,15 @@ class PushCommand extends AbstractAuthenticatedCommand {
             name: 'confirm',
             message: `Push branch ${currentBranch.name} onto ${config.environment}`,
           }]);
-        if (!response.confirm) return null;
+        if (!response.confirm) return;
       }
 
       await BranchManager.pushBranch(config.environment, config.envSecret);
-      return this.logger.success(`Branch ${currentBranch.name} successfully pushed onto ${config.environment}.`);
+      this.logger.success(`Branch ${currentBranch.name} successfully pushed onto ${config.environment}.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
       this.logger.error(customError);
-      return this.exit(2);
+      this.exit(2);
     }
   }
 }

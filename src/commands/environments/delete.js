@@ -35,24 +35,25 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
       if (!answers || answers.confirm === environment.name) {
         try {
           await manager.deleteEnvironment(config.environmentId);
-          return this.logger.log(`Environment ${chalk.red(environment.name)} successfully deleted.`);
+          this.logger.log(`Environment ${chalk.red(environment.name)} successfully deleted.`);
         } catch (error) {
           this.logger.error('Oops, something went wrong.');
-          return this.exit(1);
+          this.exit(1);
         }
+      } else {
+        this.logger.error(`Confirmation did not match ${chalk.red(environment.name)}. Aborted.`);
+        this.exit(1);
       }
-      this.logger.error(`Confirmation did not match ${chalk.red(environment.name)}. Aborted.`);
-      return this.exit(1);
     } catch (err) {
       if (err.status === 404) {
         this.logger.error(`Cannot find the environment ${chalk.bold(config.environmentId)}.`);
-        return this.exit(1);
-      }
-      if (err.status === 403) {
+        this.exit(1);
+      } else if (err.status === 403) {
         this.logger.error(`You do not have the rights to delete environment ${chalk.bold(config.environmentId)}.`);
-        return this.exit(1);
+        this.exit(1);
+      } else {
+        throw err;
       }
-      throw err;
     }
   }
 }
