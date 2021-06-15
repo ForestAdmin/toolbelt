@@ -88,7 +88,7 @@ function errorIfNoStd(stds) {
 
 function validateInput(
   files,
-  { commandLegacy, commandClass, commandArgs },
+  { commandClass, commandArgs },
   stds,
   prompts,
   expectedExitCode,
@@ -98,7 +98,7 @@ function validateInput(
   errorIfBadFiles(files);
   errorIfBadPrompts(prompts);
   errorIfRest(rest);
-  errorIfBadCommand({ commandLegacy, commandClass, commandArgs });
+  errorIfBadCommand({ commandClass, commandArgs });
   const noExitExpected = (expectedExitCode === null || expectedExitCode === undefined)
     && !expectedExitMessage;
   if (stds || noExitExpected) {
