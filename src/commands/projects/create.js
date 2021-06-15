@@ -136,20 +136,6 @@ CreateCommand.flags = {
     exclusive: ['ssl'],
     required: false,
   }),
-  email: flags.string({
-    char: 'e',
-    dependsOn: [],
-    description: 'Your Forest Admin account email.',
-    exclusive: [],
-    required: false,
-  }),
-  password: flags.string({
-    char: 'P',
-    dependsOn: ['email'],
-    description: 'Your Forest Admin account password.',
-    exclusive: ['token'],
-    required: false,
-  }),
   schema: flags.string({
     char: 's',
     dependsOn: [],
@@ -164,13 +150,6 @@ CreateCommand.flags = {
     description: 'Use SSL for database connection.',
     exclusive: ['connection-url'],
     required: true,
-  }),
-  token: flags.string({
-    char: 't',
-    dependsOn: ['email'],
-    description: 'Your Forest Admin account token.',
-    exclusive: ['password'],
-    required: false,
   }),
 };
 

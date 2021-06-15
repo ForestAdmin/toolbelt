@@ -17,7 +17,6 @@ const OPTIONS_APPLICATION = [
   'appName',
   'appHostname',
   'appPort',
-  'email',
 ];
 
 const OPTIONS = {
