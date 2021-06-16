@@ -1,13 +1,13 @@
 const { Command } = require('@oclif/command');
 const Context = require('@forestadmin/context');
-const makeDefaultPlan = require('./context/plan');
+const defaultPlan = require('./context/plan');
 
 module.exports = class AbstractCommand extends Command {
   init(plan) {
-    Context.init(plan || makeDefaultPlan());
+    Context.init(plan || defaultPlan);
     this.context = Context.inject();
     // FIXME: Restore when no more Context.inject present in services.
-    // this.context = Context.execute(plan || makeDefaultPlan());
+    // this.context = Context.execute(plan || defaultPlan);
     const { assertPresent, logger, chalk } = this.context;
     assertPresent({ logger, chalk });
 

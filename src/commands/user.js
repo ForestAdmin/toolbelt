@@ -1,10 +1,10 @@
 const jwt = require('jsonwebtoken');
-const makeDefaultPlan = require('../context/init');
+const defaultPlan = require('../context/init');
 const AbstractCommand = require('../abstract-command');
 
 class UserCommand extends AbstractCommand {
   init(plan) {
-    super.init(plan || makeDefaultPlan());
+    super.init(plan || defaultPlan);
     const {
       assertPresent, chalk, logger, authenticator,
     } = this.context;

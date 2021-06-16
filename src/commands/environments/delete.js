@@ -1,12 +1,12 @@
 const { flags } = require('@oclif/command');
 const chalk = require('chalk');
-const makeDefaultPlan = require('../../context/plan');
+const defaultPlan = require('../../context/plan');
 const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class DeleteCommand extends AbstractAuthenticatedCommand {
   init(plan) {
-    super.init(plan || makeDefaultPlan());
+    super.init(plan || defaultPlan);
     const { assertPresent, env, inquirer } = this.context;
     assertPresent({ env, inquirer });
     this.env = env;

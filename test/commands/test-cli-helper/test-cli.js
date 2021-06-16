@@ -7,7 +7,7 @@ const {
   assertPromptCalled,
 } = require('./test-cli-errors');
 const { prepareCommand } = require('./test-cli-command');
-const { prepareContextPlan } = require('./test-cli-context');
+const { preparePlan } = require('./test-cli-context');
 const { assertApi } = require('./test-cli-api');
 const {
   makeTempDirectory,
@@ -101,7 +101,7 @@ async function testCli({
   process.chdir(temporaryDirectory);
   files.forEach((file) => mockFile(file));
 
-  const commandPlan = testCommandPlan || prepareContextPlan({
+  const commandPlan = testCommandPlan || preparePlan({
     env,
     inputs,
     prompts,

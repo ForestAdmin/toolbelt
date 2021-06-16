@@ -1,10 +1,10 @@
 const { flags } = require('@oclif/command');
-const makeDefaultPlan = require('../context/plan');
+const defaultPlan = require('../context/plan');
 const AbstractCommand = require('../abstract-command');
 
 class LoginCommand extends AbstractCommand {
   init(plan) {
-    super.init(plan || makeDefaultPlan());
+    super.init(plan || defaultPlan);
     const { assertPresent, authenticator } = this.context;
     assertPresent({ authenticator });
     this.authenticator = authenticator;

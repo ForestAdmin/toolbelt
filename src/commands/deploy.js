@@ -1,5 +1,5 @@
 const { flags } = require('@oclif/command');
-const makeDefaultPlan = require('../context/plan');
+const defaultPlan = require('../context/plan');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const EnvironmentManager = require('../services/environment-manager');
 const ProjectManager = require('../services/project-manager');
@@ -9,7 +9,7 @@ const withCurrentProject = require('../services/with-current-project');
 /** Deploy layout changes of an environment to the reference one. */
 class DeployCommand extends AbstractAuthenticatedCommand {
   init(plan) {
-    super.init(plan || makeDefaultPlan());
+    super.init(plan || defaultPlan);
     const { assertPresent, env, inquirer } = this.context;
     assertPresent({ env, inquirer });
     this.env = env;

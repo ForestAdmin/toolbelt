@@ -1,11 +1,11 @@
 const { flags } = require('@oclif/command');
-const makeDefaultPlan = require('../../context/plan');
+const defaultPlan = require('../../context/plan');
 const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class UpdateCommand extends AbstractAuthenticatedCommand {
   init(plan) {
-    super.init(plan || makeDefaultPlan());
+    super.init(plan || defaultPlan);
     const { assertPresent, env } = this.context;
     assertPresent({ env });
     this.env = env;

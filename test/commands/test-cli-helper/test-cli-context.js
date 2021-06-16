@@ -17,7 +17,7 @@ const replaceProcessFunctions = ({ plan }) => plan
       throw error;
     }));
 
-const replaceEnvironmentVariables = (env) => (plan) => plan
+const makeEnvironmentVariablesReplacement = (env) => (plan) => plan
   .replace('env.variables', (context) => context.addValue('env', {
     // FIXME: Default values.
     // APPLICATION_PORT: undefined,
@@ -38,11 +38,11 @@ const replaceEnvironmentVariables = (env) => (plan) => plan
     ...env,
   }));
 
-const replaceDependencies = () => (plan) => plan
+const makeDependenciesReplacement = () => (plan) => plan
   .replace('dependencies.open',
     (context) => context.addFunction('open', jest.fn()));
 
-const replaceAuthenticator = (tokenBehavior) => (plan) => {
+const makeAuthenticatorReplacement = (tokenBehavior) => (plan) => {
   if (tokenBehavior === null) return plan;
   return plan.replace(
     'services.authenticator',
@@ -68,27 +68,34 @@ const makeInquirerMock = (prompts) => {
   return { prompt: dummyPrompt };
 };
 
-const makeReplaceInquirer = (dummyInquirer) => (plan) => plan
+const makeInquirerReplacement = (dummyInquirer) => (plan) => plan
   .replace('dependencies.inquirer', (context) => context
     .addInstance('inquirer', dummyInquirer));
 
-const mockInquirer = (prompts, plan) => {
-  const inquirerMock = makeInquirerMock(prompts);
-  plan.push(makeReplaceInquirer(inquirerMock));
-  return inquirerMock;
-};
-
-const prepareContextPlan = ({
+const preparePlan = ({
   env,
   prompts,
   tokenBehavior,
-}) => ([
-  defaultPlan,
-  replaceProcessFunctions,
-  replaceEnvironmentVariables(env),
-  replaceDependencies(),
-  replaceInquirer(prompts),
-  replaceAuthenticator(tokenBehavior),
-]);
+}) => {
+  const environmentVariablesPlan = makeEnvironmentVariablesReplacement(env);
+  const dependenciesPlan = makeDependenciesReplacement();
+  const inquirerMock = makeInquirerMock(prompts);
+  const inquirerPlan = makeInquirerReplacement(inquirerMock);
+  const authenticatorPlan = makeAuthenticatorReplacement(tokenBehavior);
 
-module.exports = { prepareContextPlan };
+  return {
+    mock: {
+      inquirer: inquirerMock,
+    },
+    plan: [
+      defaultPlan,
+      replaceProcessFunctions,
+      environmentVariablesPlan,
+      dependenciesPlan,
+      inquirerPlan,
+      authenticatorPlan,
+    ],
+  };
+};
+
+module.exports = { preparePlan };
