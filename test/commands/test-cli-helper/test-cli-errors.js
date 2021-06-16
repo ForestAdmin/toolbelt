@@ -110,13 +110,12 @@ function validateInput(
 // NOTICE: Assert that command did not throw an error if there is no expected error.
 function assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage) {
   if (expectedExitCode || expectedExitMessage) return;
-
-  // eslint-disable-next-line no-multi-str
-  const noErrorMessage = 'Unexpected error thrown by command.\n \
-   No "exitCode" and/or "exitMessage" is specified, so this error should not be thrown.';
-  // FIXME: show the error stack
-  const message = actualError || noErrorMessage;
-  expect(message).toStrictEqual(noErrorMessage);
+  if (actualError) {
+    actualError.message = `The following error was thrown by command.
+    \n   Since no "exitCode" and/or "exitMessage" is specified, no error should not be thrown.
+    \n ${actualError.message}`;
+    throw actualError;
+  }
 }
 
 function assertExitCode(actualError, expectedExitCode) {
