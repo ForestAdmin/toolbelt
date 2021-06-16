@@ -1,6 +1,6 @@
-const Prompter = require('../../prompter/general-prompter');
+const GeneralPrompter = require('../../prompter/general-prompter');
 
-const OPTIONS_DATABASE_MANDATORY = [
+const REQUESTS_DATABASE_MANDATORY = [
   'dbDialect',
   'dbName',
   'dbHostname',
@@ -8,41 +8,44 @@ const OPTIONS_DATABASE_MANDATORY = [
   'dbUser',
   'dbPassword',
 ];
-const OPTIONS_DATABASE_OPTIONAL = [
+const REQUESTS_DATABASE_OPTIONAL = [
   'dbSchema',
   'ssl',
   'mongodbSrv',
 ];
-const OPTIONS_APPLICATION = [
+const REQUESTS_APPLICATION = [
   'applicationName',
   'appHostname',
   'appPort',
 ];
 
-const OPTIONS = {
+const REQUESTS = {
   forConnectionUrl: [
+    // FIXME: remove this one? it is known in this case
     'dbConnectionUrl',
-    ...OPTIONS_DATABASE_OPTIONAL,
-    ...OPTIONS_APPLICATION,
+    ...REQUESTS_DATABASE_OPTIONAL,
+    ...REQUESTS_APPLICATION,
   ],
   forFullPrompt: [
-    ...OPTIONS_DATABASE_MANDATORY,
-    ...OPTIONS_DATABASE_OPTIONAL,
-    ...OPTIONS_APPLICATION,
+    ...REQUESTS_DATABASE_MANDATORY,
+    ...REQUESTS_DATABASE_OPTIONAL,
+    ...REQUESTS_APPLICATION,
   ],
 };
 
 class CommandGenerateConfigGetter {
-  static getOptions(args) {
-    if (args.connectionUrl) {
-      return OPTIONS.forConnectionUrl;
+  static getRequestList(programArguments) {
+    if (programArguments.databaseConnectionURL) {
+      return REQUESTS.forConnectionUrl;
     }
-    return OPTIONS.forFullPrompt;
+    return REQUESTS.forFullPrompt;
   }
 
-  static get(args) {
-    return new Prompter(
-      CommandGenerateConfigGetter.getOptions(args), args,
+  static get(programArguments) {
+    const requests = CommandGenerateConfigGetter.getRequestList(programArguments);
+    return new GeneralPrompter(
+      requests,
+      programArguments,
     ).getConfig();
   }
 }

@@ -9,12 +9,19 @@ const MAPPING_DIALECT_TO_PORT = {
   mongodb: '27017',
 };
 
+const dbDialectOptions = [
+  'mongodb',
+  'mssql',
+  'mysql',
+  'postgres',
+];
+
 class DatabasePrompts extends AbstractPrompter {
-  constructor(requests, env, prompts, program) {
+  constructor(requests, knownAnswers, prompts, programArguments) {
     super(requests);
-    this.env = env;
+    this.knownAnswers = knownAnswers;
     this.prompts = prompts;
-    this.program = program;
+    this.programArguments = programArguments;
   }
 
   async handlePrompts() {
@@ -32,11 +39,11 @@ class DatabasePrompts extends AbstractPrompter {
 
   async handleConnectionUrl() {
     if (this.isOptionRequested('dbConnectionUrl')) {
-      this.env.dbConnectionUrl = this.program.connectionUrl;
+      this.knownAnswers.databaseConnectionURL = this.programArguments.databaseConnectionURL;
 
       try {
-        [, this.env.dbDialect] = this.env.dbConnectionUrl.match(/(.*):\/\//);
-        if (this.env.dbDialect === 'mongodb+srv') { this.env.dbDialect = 'mongodb'; }
+        [, this.knownAnswers.databaseDialect] = this.knownAnswers.databaseConnectionURL.match(/(.*):\/\//);
+        if (this.knownAnswers.databaseDialect === 'mongodb+srv') { this.knownAnswers.databaseDialect = 'mongodb'; }
       } catch (error) {
         throw new PrompterError(
           messages.ERROR_NOT_PARSABLE_CONNECTION_URL,
@@ -49,12 +56,12 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handleDialect() {
-    if (this.isOptionRequested('dbDialect')) {
+    if (this.isOptionRequested('dbDialect') && this.programArguments.databaseDialect === undefined) {
       const prompt = {
         type: 'list',
-        name: 'dbDialect',
+        name: 'databaseDialect',
         message: 'What\'s the database type?',
-        choices: ['postgres', 'mysql', 'mssql', 'mongodb'],
+        choices: dbDialectOptions,
       };
 
       // NOTICE: use a rawlist on Windows because of this issue:
@@ -68,10 +75,10 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handleName() {
-    if (this.isOptionRequested('dbName')) {
+    if (this.isOptionRequested('dbName') && this.programArguments.databaseName === undefined) {
       this.prompts.push({
         type: 'input',
-        name: 'dbName',
+        name: 'databaseName',
         message: 'What\'s the database name?',
         validate: (dbName) => {
           if (dbName) { return true; }
@@ -82,21 +89,23 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handleSchema() {
-    if (this.isOptionRequested('dbSchema')) {
-      this.env.dbSchema = this.program.schema;
-      if (!this.env.dbSchema) {
+    if (this.isOptionRequested('dbSchema') && this.programArguments.databaseSchema === undefined) {
+      this.knownAnswers.databaseSchema = this.programArguments.databaseSchema;
+      if (!this.knownAnswers.databaseSchema) {
         this.prompts.push({
           type: 'input',
-          name: 'dbSchema',
+          name: 'databaseSchema',
           message: 'What\'s the database schema? [optional]',
           description: 'Leave blank by default',
           when: (answers) => {
             // NOTICE: MongoDB and MySQL do not require a Schema.
             const skipDatabases = ['mongodb', 'mysql'];
-            return !skipDatabases.includes(answers.dbDialect || this.env.dbDialect);
+            return !skipDatabases.includes(
+              answers.databaseDialect || this.knownAnswers.databaseDialect,
+            );
           },
           default: (args) => {
-            if (args.dbDialect === 'postgres') { return 'public'; }
+            if (args.databaseDialect === 'postgres') { return 'public'; }
             return '';
           },
         });
@@ -105,10 +114,10 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handleHostname() {
-    if (this.isOptionRequested('dbHostname')) {
+    if (this.isOptionRequested('dbHostname') && this.programArguments.databaseHost === undefined) {
       this.prompts.push({
         type: 'input',
-        name: 'dbHostname',
+        name: 'databaseHost',
         message: 'What\'s the database hostname?',
         default: 'localhost',
       });
@@ -116,10 +125,10 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handlePort() {
-    if (this.isOptionRequested('dbPort')) {
+    if (this.isOptionRequested('dbPort') && this.programArguments.databasePort === undefined) {
       this.prompts.push({
         type: 'input',
-        name: 'dbPort',
+        name: 'databasePort',
         message: 'What\'s the database port?',
         default: (args) => MAPPING_DIALECT_TO_PORT[args.dbDialect],
         validate: (port) => {
@@ -136,16 +145,15 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handleUser() {
-    if (this.isOptionRequested('dbUser')) {
+    if (this.isOptionRequested('dbUser') && this.programArguments.databaseUser === undefined) {
       this.prompts.push({
         type: 'input',
-        name: 'dbUser',
+        name: 'databaseUser',
         message: 'What\'s the database user?',
         default: (args) => {
           if (args.dbDialect === 'mongodb') {
             return undefined;
           }
-
           return 'root';
         },
       });
@@ -153,27 +161,27 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handlePassword() {
-    if (this.isOptionRequested('dbPassword')) {
+    if (this.isOptionRequested('dbPassword') && this.programArguments.databasePassword === undefined) {
       this.prompts.push({
         type: 'password',
-        name: 'dbPassword',
+        name: 'databasePassword',
         message: 'What\'s the database password? [optional]',
       });
     }
   }
 
   handleSsl() {
-    if (this.isOptionRequested('ssl')) {
-      const { ssl } = this.program;
-      if (ssl) {
+    if (this.isOptionRequested('ssl') && this.programArguments.databaseSSL === undefined) {
+      const { databaseSSL } = this.programArguments;
+      if (databaseSSL) {
         try {
           // NOTICE: Parse from string (e.g "true" or "false") to boolean.
-          this.env.ssl = JSON.parse(ssl.toLowerCase());
-          if (typeof this.env.ssl !== 'boolean') {
+          this.knownAnswers.databaseSSL = JSON.parse(databaseSSL.toLowerCase());
+          if (typeof this.knownAnswers.databaseSSL !== 'boolean') {
             throw new Error();
           }
         } catch (e) {
-          const message = `Database SSL value must be either "true" or "false" ("${ssl}" given).`;
+          const message = `Database SSL value must be either "true" or "false" ("${databaseSSL}" given).`;
           throw new PrompterError(
             message,
             [
@@ -184,7 +192,7 @@ class DatabasePrompts extends AbstractPrompter {
       } else {
         this.prompts.push({
           type: 'confirm',
-          name: 'ssl',
+          name: 'databaseSSL',
           message: 'Does your database require a SSL connection?',
           default: false,
         });
@@ -193,10 +201,10 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handleMongodbSrv() {
-    if (this.isOptionRequested('mongodbSrv')) {
+    if (this.isOptionRequested('mongodbSrv') && this.programArguments.mongoDBSRV === undefined) {
       this.prompts.push({
         type: 'confirm',
-        name: 'mongodbSrv',
+        name: 'mongoDBSRV',
         message: 'Use a SRV connection string?',
         when: (answers) => answers.dbDialect === 'mongodb',
         default: false,
@@ -205,4 +213,7 @@ class DatabasePrompts extends AbstractPrompter {
   }
 }
 
-module.exports = DatabasePrompts;
+module.exports = {
+  DatabasePrompts,
+  dbDialectOptions,
+};

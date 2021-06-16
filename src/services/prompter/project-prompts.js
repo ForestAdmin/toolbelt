@@ -5,10 +5,11 @@ const PrompterError = require('./prompter-error');
 const messages = require('../../utils/messages');
 
 class ProjectPrompts extends AbstractPrompter {
-  constructor(requests, env, program) {
+  constructor(requests, knownAnswers, prompts, programArguments) {
     super(requests);
-    this.env = env;
-    this.program = program;
+    this.knownAnswers = knownAnswers;
+    this.prompts = prompts;
+    this.programArguments = programArguments;
   }
 
   async handlePrompts() {
@@ -17,7 +18,7 @@ class ProjectPrompts extends AbstractPrompter {
 
   async handleName() {
     if (this.isOptionRequested('applicationName')) {
-      const projectName = this.program.applicationName;
+      const projectName = this.programArguments.applicationName;
 
       if (!projectName) {
         throw new PrompterError(
@@ -37,7 +38,7 @@ class ProjectPrompts extends AbstractPrompter {
           ],
         );
       } else {
-        this.env.applicationName = projectName;
+        this.knownAnswers.applicationName = projectName;
       }
     }
   }

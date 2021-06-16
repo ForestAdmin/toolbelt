@@ -1,11 +1,11 @@
 const AbstractPrompter = require('./abstract-prompter');
 
 class ApplicationPrompts extends AbstractPrompter {
-  constructor(requests, env, prompts, program) {
+  constructor(requests, knownAnswers, prompts, programArguments) {
     super(requests);
-    this.env = env;
+    this.knownAnswers = knownAnswers;
     this.prompts = prompts;
-    this.program = program;
+    this.programArguments = programArguments;
   }
 
   async handlePrompts() {
@@ -15,11 +15,11 @@ class ApplicationPrompts extends AbstractPrompter {
 
   handleHostname() {
     if (this.isOptionRequested('appHostname')) {
-      this.env.appHostname = this.program.applicationHost;
-      if (!this.env.appHostname) {
+      this.knownAnswers.applicationHost = this.programArguments.applicationHost;
+      if (!this.knownAnswers.applicationHost) {
         this.prompts.push({
           type: 'input',
-          name: 'appHostname',
+          name: 'applicationHost',
           message: 'What\'s the IP/hostname on which your application will be running?',
           default: 'http://localhost',
           validate: (hostname) => {
@@ -38,11 +38,11 @@ class ApplicationPrompts extends AbstractPrompter {
 
   handlePort() {
     if (this.isOptionRequested('appPort')) {
-      this.env.appPort = this.program.applicationPort;
-      if (!this.env.appPort) {
+      this.knownAnswers.applicationPort = this.programArguments.applicationPort;
+      if (!this.knownAnswers.applicationPort) {
         this.prompts.push({
           type: 'input',
-          name: 'appPort',
+          name: 'applicationPort',
           message: 'What\'s the port on which your application will be running?',
           default: '3310',
           validate: (port) => {

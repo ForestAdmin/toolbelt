@@ -1,6 +1,6 @@
 const sinon = require('sinon');
 const PrompterError = require('../../../src/services/prompter/prompter-error');
-const DatabasePrompts = require('../../../src/services/prompter/database-prompts');
+const { DatabasePrompts } = require('../../../src/services/prompter/database-prompts');
 const messages = require('../../../src/utils/messages');
 
 const CONNECTION_URL_POSTGRES = 'postgres://username:password@host:port/database';
