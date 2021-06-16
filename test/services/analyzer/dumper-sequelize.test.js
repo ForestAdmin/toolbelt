@@ -26,7 +26,7 @@ function getDumper(context) {
 }
 
 const CONFIG = {
-  appName: 'test-output/sequelize',
+  applicationName: 'test-output/sequelize',
   dbDialect: 'postgres',
   dbConnectionUrl: 'postgres://localhost:27017',
   ssl: false,

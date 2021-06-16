@@ -5,12 +5,12 @@ class EventSender {
     assertPresent({ env });
     this.env = env;
 
-    this.appName = null;
+    this.applicationName = null;
     this.command = null;
   }
 
   async notifyError(code = 'unknown_error', message = null, context = undefined) {
-    if (!this.appName || !this.command) { return; }
+    if (!this.applicationName || !this.command) { return; }
 
     try {
       await superagent.post(`${this.env.FOREST_URL}/api/lumber/error`, {
@@ -19,7 +19,7 @@ class EventSender {
           attributes: {
             code,
             message,
-            project_name: this.appName,
+            project_name: this.applicationName,
             command: this.command,
             context,
           },
@@ -32,7 +32,7 @@ class EventSender {
   }
 
   async notifySuccess() {
-    if (!this.appName || !this.command) { return; }
+    if (!this.applicationName || !this.command) { return; }
 
     try {
       await superagent.post(`${this.env.FOREST_URL}/api/lumber/success`, {
@@ -40,7 +40,7 @@ class EventSender {
           type: 'events',
           attributes: {
             command: this.command,
-            project_name: this.appName,
+            project_name: this.applicationName,
           },
         },
       });

@@ -62,7 +62,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     this.config = { ...this.args, ...this.flags };
 
     this.eventSender.command = 'projects:create';
-    this.eventSender.appName = this.args.appName;
+    this.eventSender.applicationName = this.args.applicationName;
 
     const config = await this.CommandGenerateConfigGetter.get(this.config);
 
@@ -82,7 +82,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 
     this.spinner.start({ text: 'Creating your project on Forest Admin' });
     const projectCreationPromise = this.ProjectCreator.create(
-      authenticationToken, this.api, config.appName, config,
+      authenticationToken, this.api, config.applicationName, config,
     );
     this.spinner.attachToPromise(projectCreationPromise);
 
@@ -115,21 +115,21 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 CreateCommand.description = 'Create a Forest API.';
 
 CreateCommand.flags = {
-  'application-host': flags.string({
+  applicationHost: flags.string({
     char: 'H',
     dependsOn: [],
     description: 'Hostname of your admin backend application.',
     exclusive: ['application-port'],
     required: false,
   }),
-  'application-port': flags.string({
+  applicationPort: flags.string({
     char: 'p',
     dependsOn: [],
     description: 'Port of your admin backend application.',
     exclusive: ['application-host'],
     required: false,
   }),
-  'connection-url': flags.string({
+  connectionURL: flags.string({
     char: 'c',
     dependsOn: [],
     description: 'Enter the database credentials with a connection URL.',
@@ -155,7 +155,7 @@ CreateCommand.flags = {
 
 CreateCommand.args = [
   {
-    name: 'appName',
+    name: 'applicationName',
     required: true,
     description: 'Name of the project to create.',
   },

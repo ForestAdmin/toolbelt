@@ -36,11 +36,11 @@ describe('services > prompter > project prompts', () => {
   });
 
   describe('handling project name prompt', () => {
-    describe('when the appName option is requested', () => {
+    describe('when the applicationName option is requested', () => {
       describe('and the projectName has not been passed in', () => {
         it('should throw a prompter error', async () => {
           expect.assertions(2);
-          requests.push('appName');
+          requests.push('applicationName');
           const projectPrompts = new ProjectPrompts(requests, env, program);
 
           const handleName = projectPrompts.handleName();
@@ -51,18 +51,18 @@ describe('services > prompter > project prompts', () => {
 
       describe('and the projectName has already been passed in', () => {
         function getProjectPrompts() {
-          program.appName = FAKE_PROJECT_NAME;
+          program.applicationName = FAKE_PROJECT_NAME;
           return new ProjectPrompts(requests, env, program);
         }
 
         describe('and the directory to write in is not available', () => {
           it('should throw a prompter error', async () => {
             expect.assertions(2);
-            requests.push('appName');
+            requests.push('applicationName');
             const projectPrompts = getProjectPrompts();
             fs.mkdirSync(`${process.cwd()}/${FAKE_PROJECT_NAME}`);
 
-            const message = `The directory ${chalk.red(`${process.cwd()}/${program.appName}`)} already exists.`;
+            const message = `The directory ${chalk.red(`${process.cwd()}/${program.applicationName}`)} already exists.`;
             const handleName = projectPrompts.handleName();
             await expect(handleName).rejects.toThrow(PrompterError);
             await expect(handleName).rejects.toThrow(message);
@@ -71,29 +71,29 @@ describe('services > prompter > project prompts', () => {
         });
 
         describe('and the directory to write in is available', () => {
-          it('should add the appName to the configuration', async () => {
+          it('should add the applicationName to the configuration', async () => {
             expect.assertions(2);
-            requests.push('appName');
+            requests.push('applicationName');
             const projectPrompts = getProjectPrompts();
-            expect(env.appName).toBeUndefined();
+            expect(env.applicationName).toBeUndefined();
 
             await projectPrompts.handleName();
-            expect(env.appName).toStrictEqual(FAKE_PROJECT_NAME);
+            expect(env.applicationName).toStrictEqual(FAKE_PROJECT_NAME);
           });
         });
       });
     });
 
-    describe('when the appName option is not requested', () => {
+    describe('when the applicationName option is not requested', () => {
       it('should not do anything', async () => {
         expect.assertions(2);
         resetParams();
         program.args = [FAKE_PROJECT_NAME];
         const projectPrompts = new ProjectPrompts(requests, env, program);
-        expect(env.appName).toBeUndefined();
+        expect(env.applicationName).toBeUndefined();
 
         await projectPrompts.handleName();
-        expect(env.appName).toBeUndefined();
+        expect(env.applicationName).toBeUndefined();
       });
     });
   });

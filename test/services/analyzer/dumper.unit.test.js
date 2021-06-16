@@ -170,7 +170,7 @@ describe('services > dumper (unit)', () => {
       const writeFileSpy = jest.spyOn(dumper, 'writeFile').mockImplementation(() => {});
       dumper.writePackageJson(ABSOLUTE_PROJECT_PATH, {
         dbDialect: 'none',
-        appName: 'test',
+        applicationName: 'test',
       });
 
       const fileContent = writeFileSpy.mock.calls[0][2];
@@ -191,7 +191,7 @@ describe('services > dumper (unit)', () => {
         const writeFileSpy = jest.spyOn(dumper, 'writeFile').mockImplementation(() => {});
         dumper.writePackageJson(ABSOLUTE_PROJECT_PATH, {
           dbDialect,
-          appName: 'test',
+          applicationName: 'test',
         });
 
         return writeFileSpy.mock.calls[0][2];
@@ -550,7 +550,7 @@ describe('services > dumper (unit)', () => {
         testModel: { fields: {}, references: [], options: {} },
       };
       const config = {
-        appName: 'test-output/unit-test-dumper',
+        applicationName: 'test-output/unit-test-dumper',
       };
       await dumper.dump(schema, config);
 
