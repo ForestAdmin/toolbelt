@@ -1,6 +1,8 @@
 const { flags } = require('@oclif/command');
 
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const { dbDialectOptions } = require('../../services/prompter/database-prompts');
+
 const makeDefaultPlan = require('../../context/init');
 
 class CreateCommand extends AbstractAuthenticatedCommand {
@@ -59,39 +61,68 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 
     this.args = parsedArgs;
     this.flags = parsedFlags;
-    this.config = { ...this.args, ...this.flags };
 
+    // FIXME: Works as only one instance at execution time. Not ideal.
     this.eventSender.command = 'projects:create';
     this.eventSender.applicationName = this.args.applicationName;
 
-    const config = await this.CommandGenerateConfigGetter.get(this.config);
+    const programArguments = { ...this.args, ...this.flags };
+    const config = await this.CommandGenerateConfigGetter.get(programArguments);
+
+    const appConfig = {
+      applicationName: config.applicationName,
+      appHostname: config.applicationHost,
+      appPort: config.applicationPort,
+    };
+    const dbConfig = {
+      dbConnectionUrl: config.databaseConnectionURL,
+      dbDialect: config.databaseDialect,
+      dbHostname: config.databaseHost,
+      dbPort: config.databasePort,
+      dbName: config.databaseName,
+      dbUser: config.databaseUser,
+      dbPassword: config.databasePassword,
+      ssl: config.databaseSSL,
+      mongodbSrv: config.mongoDBSRV,
+    };
+
+    if (!config.databaseDialect) {
+      this.logger.error('Missing database dialect option value');
+      this.exit(1);
+    }
 
     let schema = {};
 
     this.spinner.start({ text: 'Connecting to your database' });
-    const connectionPromise = this.database.connect(config);
+    const connectionPromise = this.database.connect(dbConfig);
     this.spinner.attachToPromise(connectionPromise);
 
     const connection = await connectionPromise;
 
     this.spinner.start({ text: 'Analyzing the database' });
-    const schemaPromise = this.databaseAnalyzer.analyze(connection, config, true);
+    const schemaPromise = this.databaseAnalyzer.analyze(connection, dbConfig, true);
     this.spinner.attachToPromise(schemaPromise);
 
     schema = await schemaPromise;
 
     this.spinner.start({ text: 'Creating your project on Forest Admin' });
     const projectCreationPromise = this.ProjectCreator.create(
-      authenticationToken, this.api, config.applicationName, config,
+      authenticationToken, this.api, config.applicationName, appConfig,
     );
     this.spinner.attachToPromise(projectCreationPromise);
 
     const { envSecret, authSecret } = await projectCreationPromise;
-    config.forestEnvSecret = envSecret;
     config.forestAuthSecret = authSecret;
+    config.forestEnvSecret = envSecret;
 
     this.spinner.start({ text: 'Creating your project files' });
-    const dumpPromise = this.dumper.dump(schema, config);
+    const dumperConfig = {
+      ...dbConfig,
+      ...appConfig,
+      forestAuthSecret: config.forestAuthSecret,
+      forestEnvSecret: config.forestEnvSecret,
+    };
+    const dumpPromise = this.dumper.dump(schema, dumperConfig);
     this.spinner.attachToPromise(dumpPromise);
     await dumpPromise;
 
@@ -123,33 +154,79 @@ CreateCommand.flags = {
     required: false,
   }),
   applicationPort: flags.string({
-    char: 'p',
+    char: 'P',
     dependsOn: [],
     description: 'Port of your admin backend application.',
     exclusive: ['application-host'],
     required: false,
   }),
-  connectionURL: flags.string({
+  databaseConnectionURL: flags.string({
     char: 'c',
     dependsOn: [],
     description: 'Enter the database credentials with a connection URL.',
     exclusive: ['ssl'],
     required: false,
   }),
-  schema: flags.string({
+  databaseDialect: flags.string({
+    char: 'd',
+    dependsOn: [],
+    description: 'Enter your database dialect.',
+    exclusive: ['databaseConnectionURL'],
+    options: dbDialectOptions,
+    required: false,
+  }),
+  databaseName: flags.string({
+    char: 'n',
+    dependsOn: [],
+    description: 'Enter your database name.',
+    exclusive: ['databaseConnectionURL'],
+    required: false,
+  }),
+  databaseHost: flags.string({
+    char: 'h',
+    dependsOn: [],
+    description: 'Enter your database host.',
+    exclusive: ['databaseConnectionURL'],
+    required: false,
+  }),
+  databasePort: flags.string({
+    char: 'p',
+    dependsOn: [],
+    description: 'Enter your database port.',
+    exclusive: ['databaseConnectionURL'],
+    required: false,
+  }),
+  databaseUser: flags.string({
+    char: 'u',
+    dependsOn: [],
+    description: 'Enter your database user.',
+    exclusive: ['databaseConnectionURL'],
+    required: false,
+  }),
+  databasePassword: flags.string({
+    dependsOn: [],
+    description: 'Enter your database password.',
+    exclusive: ['databaseConnectionURL'],
+    required: false,
+  }),
+  databaseSchema: flags.string({
     char: 's',
     dependsOn: [],
     description: 'Enter your database schema.',
-    exclusive: [],
+    exclusive: ['databaseConnectionURL'],
     required: false,
   }),
-  ssl: flags.boolean({
-    char: 'S',
-    default: false,
+  databaseSSL: flags.boolean({
     dependsOn: [],
     description: 'Use SSL for database connection.',
-    exclusive: ['connection-url'],
-    required: true,
+    exclusive: ['databaseConnectionURL'],
+    required: false,
+  }),
+  mongoDBSRV: flags.boolean({
+    dependsOn: [],
+    description: 'Use SRV DNS record for mongoDB connection.',
+    exclusive: ['databaseConnectionURL'],
+    required: false,
   }),
 };
 
