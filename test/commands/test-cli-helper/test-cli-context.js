@@ -84,7 +84,7 @@ const preparePlan = ({
   const authenticatorPlan = makeAuthenticatorReplacement(tokenBehavior);
 
   return {
-    mock: {
+    mocks: {
       inquirer: inquirerMock,
     },
     plan: [
