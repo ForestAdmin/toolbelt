@@ -19,7 +19,7 @@ class UpdateCommand extends AbstractAuthenticatedCommand {
 
     const options = {
       isUpdate: true,
-      outputDirectory: commandOptions.outputDirectory,
+      outputDirectory: commandOptions['output-directory'],
       dbSchema: this.env.DATABASE_SCHEMA,
       dbConfigPath: commandOptions.config,
     };
