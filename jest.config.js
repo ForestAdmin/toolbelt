@@ -20,6 +20,8 @@ module.exports = {
     '/test/',
     '/test-.*',
     '/.*.config.js',
+    '/.*rc.js',
+    '/.dependency-cruiser.js',
   ],
 
   testEnvironment: 'node',
