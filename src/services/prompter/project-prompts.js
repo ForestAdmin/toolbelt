@@ -16,8 +16,8 @@ class ProjectPrompts extends AbstractPrompter {
   }
 
   async handleName() {
-    if (this.isOptionRequested('appName')) {
-      const projectName = this.program.appName;
+    if (this.isOptionRequested('applicationName')) {
+      const projectName = this.program.applicationName;
 
       if (!projectName) {
         throw new PrompterError(
@@ -37,7 +37,7 @@ class ProjectPrompts extends AbstractPrompter {
           ],
         );
       } else {
-        this.env.appName = projectName;
+        this.env.applicationName = projectName;
       }
     }
   }

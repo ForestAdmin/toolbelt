@@ -93,7 +93,7 @@ class Dumper {
     this.writeFile(projectPath, target, handlebarsTemplate(source)(context));
   }
 
-  writePackageJson(projectPath, { dbDialect, appName }) {
+  writePackageJson(projectPath, { dbDialect, applicationName }) {
     const orm = dbDialect === 'mongodb' ? 'mongoose' : 'sequelize';
     const dependencies = {
       'body-parser': '1.19.0',
@@ -124,7 +124,7 @@ class Dumper {
     }
 
     const pkg = {
-      name: toValidPackageName(appName),
+      name: toValidPackageName(applicationName),
       version: '0.0.1',
       private: true,
       scripts: { start: 'node ./server.js' },
@@ -362,7 +362,7 @@ class Dumper {
       source: 'app/docker-compose.hbs',
       target: 'docker-compose.yml',
       context: {
-        containerName: _.snakeCase(config.appName),
+        containerName: _.snakeCase(config.applicationName),
         databaseUrl,
         dbSchema: config.dbSchema,
         forestUrl,
@@ -383,7 +383,7 @@ class Dumper {
   // NOTICE: Generate files in alphabetical order to ensure a nice generation console logs display.
   async dump(schema, config) {
     const cwd = config.path || process.cwd();
-    const projectPath = config.appName ? `${cwd}/${config.appName}` : cwd;
+    const projectPath = config.applicationName ? `${cwd}/${config.applicationName}` : cwd;
     const { isUpdate, useMultiDatabase, modelsExportPath } = config;
 
     await this.mkdirp(projectPath);

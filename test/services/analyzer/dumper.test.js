@@ -22,7 +22,7 @@ function cleanOutput() {
  */
 async function createLinuxDump(optionsOverrides = {}, injectedContextOverrides = {}) {
   const config = {
-    appName: 'test-output/Linux',
+    applicationName: 'test-output/Linux',
     dbDialect: 'mysql',
     dbConnectionUrl: 'mysql://localhost:8999',
     ssl: false,

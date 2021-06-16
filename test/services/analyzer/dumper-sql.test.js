@@ -19,7 +19,7 @@ describe('services > dumper > SQL', () => {
   describe('database MySQL', () => {
     async function dump() {
       const config = {
-        appName: 'test-output/mysql',
+        applicationName: 'test-output/mysql',
         dbDialect: 'mysql',
         dbConnectionUrl: 'mysql://localhost:8999',
         ssl: false,
@@ -47,7 +47,7 @@ describe('services > dumper > SQL', () => {
   describe('database MSSQL', () => {
     async function dump() {
       const config = {
-        appName: 'test-output/mssql',
+        applicationName: 'test-output/mssql',
         dbDialect: 'mssql',
         dbConnectionUrl: 'mssql://localhost:1432',
         ssl: false,
@@ -75,7 +75,7 @@ describe('services > dumper > SQL', () => {
   describe('database postgreSQL', () => {
     async function dump() {
       const config = {
-        appName: 'test-output/postgres',
+        applicationName: 'test-output/postgres',
         dbDialect: 'postgres',
         dbConnectionUrl: 'postgres://localhost:54369',
         ssl: false,

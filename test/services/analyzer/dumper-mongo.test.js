@@ -26,7 +26,7 @@ function getDumper(context) {
 }
 
 const CONFIG = {
-  appName: 'test-output/mongo',
+  applicationName: 'test-output/mongo',
   dbDialect: 'mongodb',
   dbConnectionUrl: 'mongodb://localhost:27017',
   ssl: false,

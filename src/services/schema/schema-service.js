@@ -89,11 +89,11 @@ module.exports = class SchemaService {
     return databasesSchemaPromise;
   }
 
-  async _dumpSchemas(databasesSchema, appName, isUpdate, useMultiDatabase) {
+  async _dumpSchemas(databasesSchema, applicationName, isUpdate, useMultiDatabase) {
     this.spinner.start({ text: 'Generating your files' });
 
     const dumperOptions = {
-      appName,
+      applicationName,
       isUpdate,
       useMultiDatabase,
       modelsExportPath: '', // Value is defined below, it's different for each schema

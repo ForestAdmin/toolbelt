@@ -14,7 +14,7 @@ const OPTIONS_DATABASE_OPTIONAL = [
   'mongodbSrv',
 ];
 const OPTIONS_APPLICATION = [
-  'appName',
+  'applicationName',
   'appHostname',
   'appPort',
 ];
