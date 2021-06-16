@@ -124,20 +124,24 @@ module.exports = class SchemaService {
     }
   }
 
-  async update({
+  async _update({
     isUpdate, outputDirectory, dbSchema, dbConfigPath,
   }) {
+    this.dumper.checkLianaCompatiblityForUpdate();
+    this._assertOutputDirectory(outputDirectory);
+    const databasesConfig = this._getDatabasesConfig(dbConfigPath);
+    const databasesConnection = await this._connectToDatabases(databasesConfig);
+    const databasesSchema = await this._analyzeDatabases(databasesConnection, dbSchema);
+    const useMultiDatabase = databasesSchema.length > 1;
+
+    await this._dumpSchemas(databasesSchema, outputDirectory, isUpdate, useMultiDatabase);
+
+    this._warnIfSingleToMulti(outputDirectory, useMultiDatabase);
+  }
+
+  async update(options) {
     try {
-      this.dumper.checkLianaCompatiblityForUpdate();
-      this._assertOutputDirectory(outputDirectory);
-      const databasesConfig = this._getDatabasesConfig(dbConfigPath);
-      const databasesConnection = await this._connectToDatabases(databasesConfig);
-      const databasesSchema = await this._analyzeDatabases(databasesConnection, dbSchema);
-      const useMultiDatabase = databasesSchema.length > 1;
-
-      await this._dumpSchemas(databasesSchema, outputDirectory, isUpdate, useMultiDatabase);
-
-      this._warnIfSingleToMulti();
+      await this._update(options);
     } catch (error) {
       await this.errorHandler.handle(error);
     }
