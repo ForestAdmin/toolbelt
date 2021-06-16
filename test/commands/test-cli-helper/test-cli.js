@@ -29,6 +29,23 @@ function asArray(any) {
   return Array.isArray(any) ? any : [any];
 }
 
+function filterStds(stds) {
+  const inputs = stds ? stds.filter((type) => type.in !== undefined).map((type) => type.in) : [];
+  const outputs = stds ? stds.filter((type) => type.out !== undefined).map((type) => type.out) : [];
+  let errorOutputs;
+  if (stds) {
+    // NOTICE: spinnies outputs to std.err
+    const spinnerOutputs = stds
+      .filter((type) => type.spinner)
+      // NOTICE: Spinnies uses '-' as prefix when in CI mode.
+      .map((type) => ((process.env.CI || (process.stderr && !process.stderr.isTTY)) ? `-${type.spinner.slice(1)}` : type.spinner));
+    errorOutputs = [...stds.filter((type) => type.err).map((type) => type.err), ...spinnerOutputs];
+  } else {
+    errorOutputs = [];
+  }
+  return { inputs, outputs, errorOutputs };
+}
+
 /**
  * @param {{
  *  file?: any;
@@ -66,19 +83,7 @@ async function testCli({
     }
   });
 
-  const inputs = stds ? stds.filter((type) => type.in !== undefined).map((type) => type.in) : [];
-  const outputs = stds ? stds.filter((type) => type.out !== undefined).map((type) => type.out) : [];
-  let errorOutputs;
-  if (stds) {
-    // NOTICE: spinnies outputs to std.err
-    const spinnerOutputs = stds
-      .filter((type) => type.spinner)
-      // NOTICE: Spinnies uses '-' as prefix when in CI mode.
-      .map((type) => ((process.env.CI || (process.stderr && !process.stderr.isTTY)) ? `-${type.spinner.slice(1)}` : type.spinner));
-    errorOutputs = [...stds.filter((type) => type.err).map((type) => type.err), ...spinnerOutputs];
-  } else {
-    errorOutputs = [];
-  }
+  const { inputs, outputs, errorOutputs } = filterStds(stds);
 
   validateInput(
     files,
