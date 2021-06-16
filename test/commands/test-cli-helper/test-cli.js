@@ -74,7 +74,7 @@ async function testCli({
     const spinnerOutputs = stds
       .filter((type) => type.spinner)
       // NOTICE: Spinnies uses '-' as prefix when in CI mode.
-      .map((type) => (process.env.CI ? `-${type.spinner.slice(1)}` : type.spinner));
+      .map((type) => ((process.env.CI || (process.stderr && !process.stderr.isTTY)) ? `-${type.spinner.slice(1)}` : type.spinner));
     errorOutputs = [...stds.filter((type) => type.err).map((type) => type.err), ...spinnerOutputs];
   } else {
     errorOutputs = [];
