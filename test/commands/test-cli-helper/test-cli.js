@@ -65,6 +65,7 @@ async function testCli({
   env,
   commandClass,
   commandArgs,
+  commandPlan: testCommandPlan,
   exitCode: expectedExitCode,
   exitMessage: expectedExitMessage,
   prompts = [],
@@ -87,7 +88,7 @@ async function testCli({
 
   validateInput(
     files,
-    { commandClass, commandArgs },
+    { commandClass, commandArgs, commandPlan: testCommandPlan },
     stds,
     prompts,
     expectedExitCode,
@@ -100,7 +101,7 @@ async function testCli({
   process.chdir(temporaryDirectory);
   files.forEach((file) => mockFile(file));
 
-  const commandPlan = prepareContextPlan({
+  const commandPlan = testCommandPlan || prepareContextPlan({
     env,
     inputs,
     prompts,
@@ -142,7 +143,7 @@ async function testCli({
     assertExitCode(actualError, expectedExitCode);
     assertExitMessage(actualError, expectedExitMessage);
     assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);
-    assertPromptCalled(prompts, command.context.inquirer);
+    if (!testCommandPlan) assertPromptCalled(prompts, command.context.inquirer);
     assertOutputs(outputs, errorOutputs, { assertNoStdError });
     assertApi(nocks);
   } catch (e) {

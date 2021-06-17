@@ -59,7 +59,7 @@ function errorIfStdRest(stds) {
   }
 }
 
-function errorIfBadCommand({ commandClass, commandArgs }) {
+function errorIfBadCommand({ commandClass, commandArgs, commandPlan }) {
   if (commandClass) {
     if (!(commandClass.prototype instanceof AbstractCommand)) {
       throw new Error('"commandClass" must inherit "AbstractCommand"');
@@ -68,7 +68,7 @@ function errorIfBadCommand({ commandClass, commandArgs }) {
       throw new Error('"commandArgs" must be an array');
     }
     // commandClass+commandArgs are valid
-  } else {
+  } else if (!commandPlan) {
     throw new Error('commandClass must defined');
   }
 }
@@ -88,7 +88,7 @@ function errorIfNoStd(stds) {
 
 function validateInput(
   files,
-  { commandClass, commandArgs },
+  { commandClass, commandArgs, commandPlan },
   stds,
   prompts,
   expectedExitCode,
@@ -98,7 +98,7 @@ function validateInput(
   errorIfBadFiles(files);
   errorIfBadPrompts(prompts);
   errorIfRest(rest);
-  errorIfBadCommand({ commandClass, commandArgs });
+  errorIfBadCommand({ commandClass, commandArgs, commandPlan });
   const noExitExpected = (expectedExitCode === null || expectedExitCode === undefined)
     && !expectedExitMessage;
   if (stds || noExitExpected) {
