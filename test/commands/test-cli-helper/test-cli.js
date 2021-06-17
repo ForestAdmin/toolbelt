@@ -7,11 +7,7 @@ const {
   assertPromptCalled,
 } = require('./test-cli-errors');
 const { prepareCommand } = require('./test-cli-command');
-const {
-  mockProcess,
-  prepareContextPlan,
-  restoreProcess,
-} = require('./test-cli-context');
+const { prepareContextPlan } = require('./test-cli-context');
 const { assertApi } = require('./test-cli-api');
 const {
   makeTempDirectory,
@@ -127,11 +123,9 @@ async function testCli({
   let actualError;
   try {
     try {
-      mockProcess();
       await command.run();
     } finally {
       rollbackStd(stdin, inputs, outputs);
-      restoreProcess();
     }
   } catch (error) {
     actualError = error;
