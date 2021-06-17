@@ -1,5 +1,6 @@
 const testCli = require('../test-cli-helper/test-cli');
 const UpdateCommand = require('../../../src/commands/schema/update');
+const basePlanMock = require('../test-cli-helper/mocks/base-plan-mock');
 
 const {
   loginValidOidc,
@@ -7,6 +8,35 @@ const {
 const { testEnv2 } = require('../../fixtures/env');
 
 describe('schema:update', () => {
+  it('should pass all short options', async () => {
+    expect.assertions(2);
+    const databaseSchema = Symbol('database schema');
+    const outputDirectory = '/output/directory';
+    const dbConfigPath = 'db/config/path';
+    const schemaServiceUpdate = jest.fn().mockResolvedValue(null);
+    const planMock = [
+      basePlanMock,
+      (plan) => plan
+        .addValue('env', { DATABASE_SCHEMA: databaseSchema })
+        .addInstance('schemaService', { update: schemaServiceUpdate }),
+    ];
+
+    await testCli({
+      commandClass: UpdateCommand,
+      commandPlan: planMock,
+      commandArgs: ['-c', dbConfigPath, '-o', outputDirectory],
+      std: [{ out: '' }],
+    });
+
+    expect(schemaServiceUpdate)
+      .toHaveBeenCalledWith({
+        isUpdate: true,
+        outputDirectory,
+        dbSchema: databaseSchema,
+        dbConfigPath,
+      });
+  });
+
   describe('login', () => {
     describe('when the user is not logged in', () => {
       it('should login the user and then send the schema', () => testCli({

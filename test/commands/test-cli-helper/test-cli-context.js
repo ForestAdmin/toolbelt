@@ -1,6 +1,7 @@
 const { getTokenPath } = require('./test-cli-auth-token');
 
 const makeDefaultPlan = require('../../../src/context/init');
+const makeAuthenticatorPlanMock = require('./mocks/make-authenticator-plan-mock');
 
 // FIXME: Need to override things here (fs...)
 const initialContextPlan = () => makeDefaultPlan();
@@ -32,13 +33,10 @@ const replaceDependencies = ({ plan }) => plan
 
 const replaceAuthenticator = ({ plan, tokenBehavior }) => {
   if (tokenBehavior === null) return plan;
-  return plan.replace('services.authenticator',
-    (context) => context.addInstance('authenticator', {
-      getAuthToken: () => tokenBehavior,
-      login: () => { },
-      logout: () => { },
-      tryLogin: () => { },
-    }));
+  return plan.replace(
+    'services.authenticator',
+    makeAuthenticatorPlanMock(tokenBehavior),
+  );
 };
 
 const replaceInquirer = ({ plan, prompts }) => {
