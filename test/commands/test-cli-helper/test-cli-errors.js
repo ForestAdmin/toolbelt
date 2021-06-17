@@ -121,8 +121,9 @@ function assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage)
 function assertExitCode(actualError, expectedExitCode) {
   if (!expectedExitCode) return;
 
+  const actualExitCode = (actualError && actualError.oclif && actualError.oclif.exit) || -1;
   const actualMessage = actualError
-    ? `Exit code: '${actualError.oclif.exit}'`
+    ? `Exit code: '${actualExitCode}'`
     : 'No exit code.';
 
   expect(actualMessage).toStrictEqual(`Exit code: '${expectedExitCode}'`);

@@ -58,4 +58,18 @@ const prepareContextPlan = (parameters) => [
   replaceInquirer,
 ].reduce((plan, next) => next({ ...parameters, plan }), initialContextPlan());
 
-module.exports = { prepareContextPlan };
+const mockProcess = () => {
+  process._mocked_exit = process.exit;
+  process.exit = (exitCode) => { throw new Error(`Unwanted "process.exit" call with exit code ${exitCode}`); };
+};
+
+const restoreProcess = () => {
+  process.exit = process._mocked_exit;
+  delete process._mocked_exit;
+};
+
+module.exports = {
+  mockProcess,
+  prepareContextPlan,
+  restoreProcess,
+};
