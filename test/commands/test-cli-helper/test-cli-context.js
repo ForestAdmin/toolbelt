@@ -18,7 +18,7 @@ const replaceProcessFunctions = ({ plan }) => plan
     }));
 
 const makeEnvironmentVariablesReplacement = (env) => (plan) => plan
-  .replace('env.variables', (context) => context.addValue('env', {
+  .replace('env/variables/env', {
     // FIXME: Default values.
     // APPLICATION_PORT: undefined,
     // CORS_ORIGIN: undefined,
@@ -36,16 +36,15 @@ const makeEnvironmentVariablesReplacement = (env) => (plan) => plan
     TOKEN_PATH: getTokenPath(),
     // FIXME: Overrides for this test.
     ...env,
-  }));
+  });
 
 const makeDependenciesReplacement = () => (plan) => plan
-  .replace('dependencies.open',
-    (context) => context.addFunction('open', jest.fn()));
+  .replace('dependencies/open/open', jest.fn());
 
 const makeAuthenticatorReplacement = (tokenBehavior) => (plan) => {
   if (tokenBehavior === null) return plan;
   return plan.replace(
-    'services.authenticator',
+    'services/authenticator',
     makeAuthenticatorPlanMock(tokenBehavior),
   );
 };
@@ -57,8 +56,7 @@ const makeInquirerMock = (prompts) => {
 };
 
 const makeInquirerReplacement = (dummyInquirer) => (plan) => plan
-  .replace('dependencies.inquirer', (context) => context
-    .addInstance('inquirer', dummyInquirer));
+  .replace('dependencies/inquirer/inquirer', dummyInquirer);
 
 const preparePlan = ({
   env,
