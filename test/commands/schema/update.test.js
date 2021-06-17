@@ -1,6 +1,6 @@
 const testCli = require('../test-cli-helper/test-cli');
 const UpdateCommand = require('../../../src/commands/schema/update');
-const basePlanMock = require('../test-cli-helper/mocks/base-plan-mock');
+const { baseAuthenticatedPlanMock } = require('../test-cli-helper/mocks/plan-mocks');
 
 const {
   loginValidOidc,
@@ -15,7 +15,7 @@ describe('schema:update', () => {
     const dbConfigPath = 'db/config/path';
     const schemaServiceUpdate = jest.fn().mockResolvedValue(null);
     const planMock = [
-      basePlanMock,
+      baseAuthenticatedPlanMock,
       (plan) => plan
         .addValue('env', { DATABASE_SCHEMA: databaseSchema })
         .addInstance('schemaService', { update: schemaServiceUpdate }),

@@ -1,7 +1,7 @@
 const { getTokenPath } = require('./test-cli-auth-token');
 
 const makeDefaultPlan = require('../../../src/context/init');
-const makeAuthenticatorPlanMock = require('./mocks/make-authenticator-plan-mock');
+const { makeAuthenticatorPlanMock } = require('./mocks/plan-mocks');
 
 // FIXME: Need to override things here (fs...)
 const initialContextPlan = () => makeDefaultPlan();
