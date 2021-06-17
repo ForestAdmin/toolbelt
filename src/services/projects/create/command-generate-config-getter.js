@@ -21,7 +21,6 @@ const REQUESTS_APPLICATION = [
 
 const REQUESTS = {
   forConnectionUrl: [
-    // FIXME: remove this one? it is known in this case
     'dbConnectionUrl',
     ...REQUESTS_DATABASE_OPTIONAL,
     ...REQUESTS_APPLICATION,
