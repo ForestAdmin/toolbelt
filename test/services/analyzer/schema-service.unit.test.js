@@ -1,4 +1,5 @@
 const SchemaService = require('../../../src/services/schema/schema-service');
+const LumberError = require('../../../src/errors/lumber-error');
 
 const makeContext = () => ({
   assertPresent: jest.fn(),
@@ -6,14 +7,19 @@ const makeContext = () => ({
   databaseAnalyzer: {},
   dumper: {
     checkLianaCompatiblityForUpdate: jest.fn(),
+    checkLumberProjectStructure: jest.fn(),
   },
   env: {},
   errorHandler: {
     handle: jest.fn(),
   },
-  fs: {},
+  fs: {
+    existsSync: jest.fn(),
+  },
   logger: {},
-  path: {},
+  path: {
+    resolve: jest.fn(),
+  },
   spinner: {},
 });
 
@@ -89,4 +95,56 @@ describe('schemaService', () => {
         .toHaveBeenCalledWith(outputDirectory, useMultiDatabase);
     });
   });
+  describe('_assertOutputDirectory', () => {
+    describe('without output directory', () => {
+      it('should check project structure', () => {
+        expect.assertions(2);
+        const outputDirectory = null;
+        const context = makeContext();
+
+        const schemaService = new SchemaService(context);
+
+        const { dumper, fs } = context;
+        schemaService._assertOutputDirectory(outputDirectory);
+
+        expect(dumper.checkLumberProjectStructure).toHaveBeenCalledWith();
+        expect(fs.existsSync).not.toHaveBeenCalled();
+      });
+    });
+    describe('with output directory', () => {
+      it('should check output directory', () => {
+        expect.assertions(2);
+        const outputDirectory = Symbol('output directory');
+        const context = makeContext();
+
+        const schemaService = new SchemaService(context);
+
+        const { dumper, fs } = context;
+        schemaService._assertOutputDirectory(outputDirectory);
+
+        expect(dumper.checkLumberProjectStructure).not.toHaveBeenCalled();
+        expect(fs.existsSync).toHaveBeenCalledWith(outputDirectory);
+      });
+    });
+  });
+  describe('_getDatabasesConfig', () => {
+    describe('when path does not exists', () => {
+      it('should throw', () => {
+        expect.assertions(2);
+        const thePath = Symbol('thePath');
+        const configPath = '/config/path';
+        const context = makeContext();
+        const { path, fs } = context;
+        path.resolve.mockReturnValue(configPath);
+        fs.existsSync.mockReturnValue(false);
+
+        const schemaService = new SchemaService(context);
+
+        const expectation = expect(() => schemaService._getDatabasesConfig(thePath));
+        expectation.toThrow(LumberError);
+        expectation.toThrow('The configuration file "/config/path" does not exist.');
+      });
+    });
+  });
+  // FIXME continue
 });
