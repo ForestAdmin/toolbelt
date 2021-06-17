@@ -1,7 +1,7 @@
 const { getTokenPath } = require('./test-cli-auth-token');
 
 const defaultPlan = require('../../../src/context/plan');
-const { makeAuthenticatorPlanMock } = require('./mocks/plan-mocks');
+const { makeAuthenticatorMock } = require('./mocks/plan-mocks');
 
 // FIXME: Need to override things here (fs...)
 
@@ -41,11 +41,11 @@ const makeEnvironmentVariablesReplacement = (env) => (plan) => plan
 const makeDependenciesReplacement = () => (plan) => plan
   .replace('dependencies/open/open', jest.fn());
 
-const makeAuthenticatorReplacement = (tokenBehavior) => (plan) => {
-  if (tokenBehavior === null) return plan;
-  return plan.replace(
-    'services/authenticator',
-    makeAuthenticatorPlanMock(tokenBehavior),
+const makeAuthenticatorReplacement = (tokenBehavior) => {
+  if (tokenBehavior === null) return (plan) => plan;
+  return (plan) => plan.replace(
+    'services/authenticator/authenticator',
+    makeAuthenticatorMock(tokenBehavior),
   );
 };
 

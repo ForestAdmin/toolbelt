@@ -1,25 +1,25 @@
-const abstractPlanMock = (plan) => plan
-  .addInstance('logger', {})
-  .addInstance('chalk', {});
+const abstractCommandPlanMock = {
+  logger: {},
+  chalk: {},
+};
 
-const makeAuthenticatorPlanMock = (tokenBehavior) => (plan) => plan
-  .addInstance('authenticator', {
-    getAuthToken: () => tokenBehavior,
-    login: () => { },
-    logout: () => { },
-    tryLogin: () => { },
-  });
+const makeAuthenticatorMock = (tokenBehavior) => ({
+  getAuthToken: () => tokenBehavior,
+  login: () => { },
+  logout: () => { },
+  tryLogin: () => { },
+});
 
-const abstractAuthenticatedPlanMock = makeAuthenticatorPlanMock('valid-token');
-const abstractNonAuthenticatedPlanMock = makeAuthenticatorPlanMock(null);
+const abstractAuthenticatedPlanMock = makeAuthenticatorMock('valid-token');
+const abstractNonAuthenticatedPlanMock = makeAuthenticatorMock(null);
 
 module.exports = {
-  abstractPlanMock,
+  abstractPlanMock: abstractCommandPlanMock,
   abstractAuthenticatedPlanMock,
   abstractNonAuthenticatedPlanMock,
-  makeAuthenticatorPlanMock,
+  makeAuthenticatorMock,
   baseAuthenticatedPlanMock: [
-    abstractPlanMock,
+    abstractCommandPlanMock,
     abstractAuthenticatedPlanMock,
   ],
 };
