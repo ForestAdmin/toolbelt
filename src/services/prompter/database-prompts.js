@@ -40,7 +40,6 @@ class DatabasePrompts extends AbstractPrompter {
   async handleConnectionUrl() {
     if (this.isOptionRequested('dbConnectionUrl')) {
       this.knownAnswers.databaseConnectionURL = this.programArguments.databaseConnectionURL;
-
       try {
         [, this.knownAnswers.databaseDialect] = this.knownAnswers.databaseConnectionURL.match(/(.*):\/\//);
         if (this.knownAnswers.databaseDialect === 'mongodb+srv') { this.knownAnswers.databaseDialect = 'mongodb'; }
@@ -56,6 +55,7 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handleDialect() {
+    this.knownAnswers.databaseDialect = this.programArguments.databaseDialect;
     if (this.isOptionRequested('dbDialect') && this.programArguments.databaseDialect === undefined) {
       const prompt = {
         type: 'list',
@@ -104,8 +104,10 @@ class DatabasePrompts extends AbstractPrompter {
               answers.databaseDialect || this.knownAnswers.databaseDialect,
             );
           },
-          default: (args) => {
-            if (args.databaseDialect === 'postgres') { return 'public'; }
+          default: (answers) => {
+            if (answers.databaseDialect === 'postgres' || this.knownAnswers.databaseDialect === 'postgres') {
+              return 'public';
+            }
             return '';
           },
         });
