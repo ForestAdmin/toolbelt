@@ -64,7 +64,7 @@ class Database {
       .catch((error) => this.handleAuthenticationError(error));
   }
 
-  connnectToSequelize(databaseDialect, options, isSSL) {
+  connectToSequelize(databaseDialect, options, isSSL) {
     let connectionOptionsSequelize = options.connectionOptions;
     if (!connectionOptionsSequelize) {
       connectionOptionsSequelize = {};
@@ -106,7 +106,7 @@ class Database {
       return this.connectToMongodb(options, isSSL);
     }
 
-    return this.connnectToSequelize(databaseDialect, options, isSSL);
+    return this.connectToSequelize(databaseDialect, options, isSSL);
   }
 
   connectFromDatabasesConfig(databasesConfig) {
