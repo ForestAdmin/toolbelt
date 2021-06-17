@@ -101,7 +101,7 @@ async function testCli({
   process.chdir(temporaryDirectory);
   files.forEach((file) => mockFile(file));
 
-  const commandPlan = testCommandPlan || preparePlan({
+  const { plan: commandPlan, mocks } = testCommandPlan || preparePlan({
     env,
     inputs,
     prompts,
@@ -144,7 +144,7 @@ async function testCli({
     assertExitCode(actualError, expectedExitCode);
     assertExitMessage(actualError, expectedExitMessage);
     assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);
-    if (!testCommandPlan) assertPromptCalled(prompts, command.context.inquirer);
+    if (!testCommandPlan) assertPromptCalled(prompts, mocks.inquirer);
     assertOutputs(outputs, errorOutputs, { assertNoStdError });
     assertApi(nocks);
   } catch (e) {
