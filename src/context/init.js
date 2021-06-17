@@ -92,6 +92,10 @@ const DEFAULT_FOREST_URL = 'https://api.forestadmin.com';
  * @typedef {EnvPart & Dependencies & Utils & Services & Serializers} Context
  */
 
+const initProcess = newPlan()
+  .addStep('exit', (context) => context
+    .addFunction('exitProcess', (exitCode) => process.exit(exitCode)));
+
 const initConstants = (context) => context
   .addInstance('constants', {
     DEFAULT_FOREST_URL,
@@ -181,6 +185,7 @@ const initCommandSchemaUpdate = (context) => context
   .addClass(SchemaService);
 
 module.exports = () => newPlan()
+  .addStep('process', initProcess)
   .addStep('constants', initConstants)
   .addStep('env', initEnv)
   .addStep('dependencies', initDependencies)

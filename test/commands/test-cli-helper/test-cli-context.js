@@ -6,6 +6,18 @@ const { makeAuthenticatorPlanMock } = require('./mocks/plan-mocks');
 // FIXME: Need to override things here (fs...)
 const initialContextPlan = () => makeDefaultPlan();
 
+const replaceProcessFunctions = ({ plan }) => plan
+  .replace('process.exit', (context) => context.addFunction('exitProcess',
+    (exitCode) => {
+      const error = {
+        message: `Unwanted "process.exit" call with exit code ${exitCode}`,
+        oclif: {
+          exit: exitCode,
+        },
+      };
+      throw error;
+    }));
+
 const replaceEnvironmentVariables = ({ plan, env }) => plan
   .replace('env.variables', (context) => context.addValue('env', {
     // FIXME: Default values.
@@ -52,24 +64,11 @@ const replaceInquirer = ({ plan, prompts }) => {
 };
 
 const prepareContextPlan = (parameters) => [
+  replaceProcessFunctions,
   replaceEnvironmentVariables,
   replaceDependencies,
   replaceAuthenticator,
   replaceInquirer,
 ].reduce((plan, next) => next({ ...parameters, plan }), initialContextPlan());
 
-const mockProcess = () => {
-  process._mocked_exit = process.exit;
-  process.exit = (exitCode) => { throw new Error(`Unwanted "process.exit" call with exit code ${exitCode}`); };
-};
-
-const restoreProcess = () => {
-  process.exit = process._mocked_exit;
-  delete process._mocked_exit;
-};
-
-module.exports = {
-  mockProcess,
-  prepareContextPlan,
-  restoreProcess,
-};
+module.exports = { prepareContextPlan };

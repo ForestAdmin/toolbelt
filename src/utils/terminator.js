@@ -4,10 +4,12 @@ module.exports = {
   terminate(status, {
     logs,
   }) {
+    const { exitProcess, logger } = Context.inject();
+
     if (logs.length) {
-      const { logger } = Context.inject();
       logger.error(...logs);
     }
-    process.exit(status);
+
+    exitProcess(status);
   },
 };
