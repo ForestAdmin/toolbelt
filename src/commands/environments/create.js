@@ -32,7 +32,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 CreateCommand.description = 'Create a new environment.';
 
 CreateCommand.flags = {
-  projectId: flags.string({
+  projectId: flags.integer({
     char: 'p',
     description: 'Forest project ID.',
     default: null,

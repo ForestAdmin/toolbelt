@@ -77,7 +77,7 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
 CopyLayoutCommand.description = 'Copy the layout from one environment to another.';
 
 CopyLayoutCommand.flags = {
-  projectId: flags.string({
+  projectId: flags.integer({
     char: 'p',
     description: 'Forest project ID.',
     default: null,

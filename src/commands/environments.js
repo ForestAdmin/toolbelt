@@ -28,7 +28,7 @@ class EnvironmentCommand extends AbstractAuthenticatedCommand {
 EnvironmentCommand.description = 'Manage environments.';
 
 EnvironmentCommand.flags = {
-  projectId: flags.string({
+  projectId: flags.integer({
     char: 'p',
     description: 'Forest project ID.',
     default: null,

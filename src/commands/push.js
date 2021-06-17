@@ -98,7 +98,7 @@ PushCommand.flags = {
   help: flags.boolean({
     description: 'Display usage information.',
   }),
-  projectId: flags.string({
+  projectId: flags.integer({
     char: 'p',
     description: 'The id of the project to work on.',
     default: null,
