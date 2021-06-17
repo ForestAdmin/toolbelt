@@ -92,23 +92,18 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 
     this.spinner.start({ text: 'Connecting to your database' });
     const connectionPromise = this.database.connect(dbConfig);
-    this.spinner.attachToPromise(connectionPromise);
-
-    const connection = await connectionPromise;
+    const connection = await this.spinner.attachToPromise(connectionPromise);
 
     this.spinner.start({ text: 'Analyzing the database' });
     const schemaPromise = this.databaseAnalyzer.analyze(connection, dbConfig, true);
-    this.spinner.attachToPromise(schemaPromise);
-
-    schema = await schemaPromise;
+    schema = await this.spinner.attachToPromise(schemaPromise);
 
     this.spinner.start({ text: 'Creating your project on Forest Admin' });
     const projectCreationPromise = this.ProjectCreator.create(
       authenticationToken, this.api, config.applicationName, appConfig,
     );
-    this.spinner.attachToPromise(projectCreationPromise);
 
-    const { envSecret, authSecret } = await projectCreationPromise;
+    const { envSecret, authSecret } = await this.spinner.attachToPromise(projectCreationPromise);
     config.forestAuthSecret = authSecret;
     config.forestEnvSecret = envSecret;
 
@@ -120,8 +115,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       forestEnvSecret: config.forestEnvSecret,
     };
     const dumpPromise = this.dumper.dump(schema, dumperConfig);
-    this.spinner.attachToPromise(dumpPromise);
-    await dumpPromise;
+    await this.spinner.attachToPromise(dumpPromise);
 
     this.logger.success(`Hooray, ${this.chalk.green('installation success')}!`);
     await this.eventSender.notifySuccess();
