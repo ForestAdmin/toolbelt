@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/ForestAdmin/toolbelt/compare/v2.1.1...v2.1.2) (2021-06-17)
+
+
+### Bug Fixes
+
+* validate that project id is an integer instead of a string ([#194](https://github.com/ForestAdmin/toolbelt/issues/194)) ([dd1eac3](https://github.com/ForestAdmin/toolbelt/commit/dd1eac335a86dc6c4f2b38bff98192bfb579b938))
+
 ## [2.1.1](https://github.com/ForestAdmin/toolbelt/compare/v2.1.0...v2.1.1) (2021-06-10)
 
 
