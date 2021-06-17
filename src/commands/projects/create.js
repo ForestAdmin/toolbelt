@@ -22,7 +22,6 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       messages,
       ProjectCreator,
       spinner,
-      terminator,
     } = this.context;
 
     assertPresent({
@@ -38,7 +37,6 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       messages,
       ProjectCreator,
       spinner,
-      terminator,
     });
     this.api = api;
     this.authenticator = authenticator;
@@ -52,7 +50,6 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     this.messages = messages;
     this.ProjectCreator = ProjectCreator;
     this.spinner = spinner;
-    this.terminator = terminator;
   }
 
   async runIfAuthenticated() {
@@ -132,14 +129,12 @@ class CreateCommand extends AbstractAuthenticatedCommand {
   }
 
   async catch(error) {
-    const logs = [
+    this.logger.error([
       'Cannot generate your project.',
-      `${this.messages.ERROR_UNEXPECTED} ${this.chalk.red(error)}`,
-    ];
-
-    await this.terminator.terminate(1, {
-      logs,
-    });
+      `${this.messages.ERROR_UNEXPECTED}`,
+    ]);
+    this.logger.log(`${this.chalk.red(error)}`);
+    this.exit(1);
   }
 }
 
