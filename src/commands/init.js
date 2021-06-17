@@ -158,7 +158,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
 InitCommand.description = 'Set up your development environment in your current folder.';
 
 InitCommand.flags = {
-  projectId: flags.string({
+  projectId: flags.integer({
     char: 'p',
     description: 'The id of the project you want to init.',
   }),

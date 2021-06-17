@@ -125,7 +125,7 @@ DeployCommand.flags = {
     char: 'f',
     description: 'Skip deploy confirmation.',
   }),
-  projectId: flags.string({
+  projectId: flags.integer({
     char: 'p',
     description: 'The id of the project you want to deploy.',
     default: null,
