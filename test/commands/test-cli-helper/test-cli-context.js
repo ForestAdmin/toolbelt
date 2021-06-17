@@ -50,18 +50,6 @@ const makeAuthenticatorReplacement = (tokenBehavior) => (plan) => {
   );
 };
 
-const replaceInquirer = (prompts) => (plan) => {
-  const dummyPrompt = jest.fn();
-  prompts.forEach((prompt) => dummyPrompt.mockReturnValueOnce(prompt.out));
-  const dummyInquirer = {
-    prompt: dummyPrompt,
-  };
-
-  return plan.replace('dependencies.inquirer',
-    (context) => context
-      .addInstance('inquirer', dummyInquirer));
-};
-
 const makeInquirerMock = (prompts) => {
   const dummyPrompt = jest.fn();
   prompts.forEach((prompt) => dummyPrompt.mockReturnValueOnce(prompt.out));
