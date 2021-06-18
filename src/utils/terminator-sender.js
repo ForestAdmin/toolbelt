@@ -1,5 +1,4 @@
 const Context = require('@forestadmin/context');
-const eventSender = require('./event-sender');
 
 /**
  * @typedef {{
@@ -21,7 +20,7 @@ module.exports = {
   async terminate(status, {
     errorCode, errorMessage, logs, context,
   }) {
-    const { logger } = Context.inject();
+    const { eventSender, exitProcess, logger } = Context.inject();
 
     if (status !== 0 && logger.spinner) {
       logger.spinner.fail();
@@ -35,6 +34,6 @@ module.exports = {
       await eventSender.notifyError();
     }
 
-    process.exit(status);
+    exitProcess(status);
   },
 };
