@@ -26,7 +26,7 @@ describe('services > prompter > project prompts', () => {
     it('should handle the project name', async () => {
       expect.assertions(1);
       program.args = [FAKE_PROJECT_NAME];
-      const projectPrompts = new ProjectPrompts(requests, env, program);
+      const projectPrompts = new ProjectPrompts(requests, env, {}, program);
       const nameHandlerStub = sinon.stub(projectPrompts, 'handleName');
       await projectPrompts.handlePrompts();
 
@@ -41,7 +41,7 @@ describe('services > prompter > project prompts', () => {
         it('should throw a prompter error', async () => {
           expect.assertions(2);
           requests.push('applicationName');
-          const projectPrompts = new ProjectPrompts(requests, env, program);
+          const projectPrompts = new ProjectPrompts(requests, env, {}, program);
 
           const handleName = projectPrompts.handleName();
           await expect(handleName).rejects.toThrow(PrompterError);
@@ -52,7 +52,7 @@ describe('services > prompter > project prompts', () => {
       describe('and the projectName has already been passed in', () => {
         function getProjectPrompts() {
           program.applicationName = FAKE_PROJECT_NAME;
-          return new ProjectPrompts(requests, env, program);
+          return new ProjectPrompts(requests, env, {}, program);
         }
 
         describe('and the directory to write in is not available', () => {
@@ -89,7 +89,7 @@ describe('services > prompter > project prompts', () => {
         expect.assertions(2);
         resetParams();
         program.args = [FAKE_PROJECT_NAME];
-        const projectPrompts = new ProjectPrompts(requests, env, program);
+        const projectPrompts = new ProjectPrompts(requests, env, {}, program);
         expect(env.applicationName).toBeUndefined();
 
         await projectPrompts.handleName();

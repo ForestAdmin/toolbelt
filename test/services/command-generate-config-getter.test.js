@@ -5,7 +5,7 @@ describe('services > command generate config getter', () => {
     it('should require [dbConnectionUrl, dbSchema, ssl, mongodbSrv, applicationName, appHostname, appPort]', () => {
       expect.assertions(1);
       const options = CommandGenerateConfigGetter
-        .getRequestList({ connectionUrl: 'postgres://forest:secret@localhost:5435/forest' });
+        .getRequestList({ databaseConnectionURL: 'postgres://forest:secret@localhost:5435/forest' });
       expect(options).toStrictEqual([
         'dbConnectionUrl',
         'dbSchema',

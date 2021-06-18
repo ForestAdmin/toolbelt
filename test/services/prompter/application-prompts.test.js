@@ -54,14 +54,14 @@ describe('services > prompter > application prompts', () => {
         it('should add a prompt with the correct configuration', () => {
           expect.assertions(4);
           expect(prompts[0].type).toStrictEqual('input');
-          expect(prompts[0].name).toStrictEqual('appHostname');
+          expect(prompts[0].name).toStrictEqual('applicationHost');
           expect(prompts[0].message).toStrictEqual('What\'s the IP/hostname on which your application will be running?');
           expect(prompts[0].default).toStrictEqual('http://localhost');
         });
 
         it('should not change the configuration', () => {
           expect.assertions(1);
-          expect(env.appHostname).toBeUndefined();
+          expect(env.applicationHost).toBeUndefined();
           resetParams();
         });
       });
@@ -79,7 +79,7 @@ describe('services > prompter > application prompts', () => {
 
         it('should add the appHostname to the configuration', () => {
           expect.assertions(1);
-          expect(env.appHostname).toStrictEqual(FAKE_APP_HOST);
+          expect(env.applicationHost).toStrictEqual(FAKE_APP_HOST);
           resetParams();
         });
       });
@@ -91,13 +91,13 @@ describe('services > prompter > application prompts', () => {
         program.applicationHost = 'Hostname';
         const applicationPrompts = new ApplicationPrompts(requests, env, prompts, program);
 
-        expect(env.appHostname).toBeUndefined();
+        expect(env.applicationHost).toBeUndefined();
         expect(prompts).toHaveLength(0);
 
         applicationPrompts.handleHostname();
 
-        expect(env.appHostname).toBeUndefined();
-        expect(env.appHostname).not.toStrictEqual(program.applicationHost);
+        expect(env.applicationHost).toBeUndefined();
+        expect(env.applicationHost).not.toStrictEqual(program.applicationHost);
         expect(prompts).toHaveLength(0);
         resetParams();
       });
@@ -119,7 +119,7 @@ describe('services > prompter > application prompts', () => {
         it('should add a prompt with the correct configuration', () => {
           expect.assertions(5);
           expect(prompts[0].type).toStrictEqual('input');
-          expect(prompts[0].name).toStrictEqual('appPort');
+          expect(prompts[0].name).toStrictEqual('applicationPort');
           expect(prompts[0].message).toStrictEqual('What\'s the port on which your application will be running?');
           expect(prompts[0].default).toStrictEqual('3310');
           expect(prompts[0].validate).toBeInstanceOf(Function);
@@ -134,7 +134,7 @@ describe('services > prompter > application prompts', () => {
 
         it('should not change the configuration', () => {
           expect.assertions(1);
-          expect(env.appPort).toBeUndefined();
+          expect(env.applicationPort).toBeUndefined();
           resetParams();
         });
       });
@@ -152,7 +152,7 @@ describe('services > prompter > application prompts', () => {
 
         it('should add the appPort to the configuration', () => {
           expect.assertions(1);
-          expect(env.appPort).toStrictEqual(FAKE_APP_PORT);
+          expect(env.applicationPort).toStrictEqual(FAKE_APP_PORT);
           resetParams();
         });
       });
@@ -166,13 +166,13 @@ describe('services > prompter > application prompts', () => {
         program.applicationPort = FAKE_APP_PORT;
         applicationPrompts = new ApplicationPrompts(requests, env, prompts, program);
 
-        expect(env.appPort).toBeUndefined();
+        expect(env.applicationPort).toBeUndefined();
         expect(prompts).toHaveLength(0);
 
         applicationPrompts.handlePort();
 
-        expect(env.appPort).toBeUndefined();
-        expect(env.appPort).not.toStrictEqual(FAKE_APP_PORT);
+        expect(env.applicationPort).toBeUndefined();
+        expect(env.applicationPort).not.toStrictEqual(FAKE_APP_PORT);
         expect(prompts).toHaveLength(0);
       });
     });

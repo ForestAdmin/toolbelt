@@ -16,7 +16,7 @@ class ApplicationPrompts extends AbstractPrompter {
   handleHostname() {
     if (this.isOptionRequested('appHostname')) {
       this.knownAnswers.applicationHost = this.programArguments.applicationHost;
-      if (!this.knownAnswers.applicationHost) {
+      if (!this.programArguments.applicationHost && !this.knownAnswers.applicationHost) {
         this.prompts.push({
           type: 'input',
           name: 'applicationHost',
@@ -39,7 +39,7 @@ class ApplicationPrompts extends AbstractPrompter {
   handlePort() {
     if (this.isOptionRequested('appPort')) {
       this.knownAnswers.applicationPort = this.programArguments.applicationPort;
-      if (!this.knownAnswers.applicationPort) {
+      if (!this.programArguments.applicationPort && !this.knownAnswers.applicationPort) {
         this.prompts.push({
           type: 'input',
           name: 'applicationPort',

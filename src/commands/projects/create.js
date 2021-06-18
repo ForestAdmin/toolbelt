@@ -83,7 +83,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       mongodbSrv: config.mongoDBSRV,
     };
 
-    if (!config.databaseDialect) {
+    if (!config.databaseDialect && !!config.databaseConnectionURL) {
       this.logger.error('Missing database dialect option value');
       this.exit(1);
     }
