@@ -114,7 +114,7 @@ describe('projects:create', () => {
         std: [
           { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
           { out: '> Login successful' },
-          { err: '× Connecting to your database' },
+          { spinner: '× Connecting to your database' },
         ],
         // This only validates login, options are missing thus the error.
         exitCode: 1,
@@ -144,7 +144,7 @@ describe('projects:create', () => {
           },
         ],
         std: [
-          { err: '× Connecting to your database' },
+          { spinner: '× Connecting to your database' },
         ],
         // This only validates login, options are missing thus the error.
         exitCode: 1,
@@ -187,7 +187,7 @@ describe('projects:create', () => {
             },
           ],
           std: [
-            { err: '× Connecting to your database' },
+            { spinner: '× Connecting to your database' },
           ],
           // This only validates login, options are missing thus the error.
           exitCode: 1,
@@ -238,7 +238,7 @@ describe('projects:create', () => {
             },
           ],
           std: [
-            { err: '× Connecting to your database' },
+            { spinner: '× Connecting to your database' },
           ],
           // This only validates login, options are missing thus the error.
           exitCode: 1,
@@ -270,7 +270,7 @@ describe('projects:create', () => {
             },
           ],
           std: [
-            { err: '× Connecting to your database' },
+            { spinner: '× Connecting to your database' },
           ],
           // This only validates login, options are missing thus the error.
           exitCode: 1,
@@ -302,7 +302,7 @@ describe('projects:create', () => {
             },
           ],
           std: [
-            { err: '× Connecting to your database' },
+            { spinner: '× Connecting to your database' },
           ],
           // This only validates login, options are missing thus the error.
           exitCode: 1,
@@ -338,10 +338,10 @@ describe('projects:create', () => {
           },
         ],
         std: [
-          { err: '√ Connecting to your database' },
-          { err: '√ Analyzing the database' },
-          { err: '√ Creating your project on Forest Admin' },
-          { err: '√ Creating your project files' },
+          { spinner: '√ Connecting to your database' },
+          { spinner: '√ Analyzing the database' },
+          { spinner: '√ Creating your project on Forest Admin' },
+          { spinner: '√ Creating your project files' },
           { out: '√ Hooray, installation success!' },
         ],
         exitCode: 0,
