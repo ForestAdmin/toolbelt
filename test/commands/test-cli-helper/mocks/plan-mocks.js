@@ -1,7 +1,6 @@
-const abstractCommandPlanMock = {
-  logger: {},
-  chalk: {},
-};
+const abstractCommandPlanMock = (plan) => plan
+  .addInstance('logger', {})
+  .addInstance('chalk', {});
 
 const makeAuthenticatorMock = (tokenBehavior) => ({
   getAuthToken: () => tokenBehavior,
@@ -10,13 +9,10 @@ const makeAuthenticatorMock = (tokenBehavior) => ({
   tryLogin: () => { },
 });
 
-const abstractAuthenticatedPlanMock = makeAuthenticatorMock('valid-token');
-const abstractNonAuthenticatedPlanMock = makeAuthenticatorMock(null);
+const abstractAuthenticatedPlanMock = (plan) => plan
+  .addInstance('authenticator', makeAuthenticatorMock('valid-token'));
 
 module.exports = {
-  abstractPlanMock: abstractCommandPlanMock,
-  abstractAuthenticatedPlanMock,
-  abstractNonAuthenticatedPlanMock,
   makeAuthenticatorMock,
   baseAuthenticatedPlanMock: [
     abstractCommandPlanMock,

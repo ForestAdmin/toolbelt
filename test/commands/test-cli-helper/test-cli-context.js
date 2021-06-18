@@ -59,10 +59,12 @@ const makeInquirerReplacement = (dummyInquirer) => (plan) => plan
   .replace('dependencies/inquirer/inquirer', dummyInquirer);
 
 const preparePlan = ({
+  testCommandPlan,
   env,
   prompts,
   tokenBehavior,
 }) => {
+  if (testCommandPlan) return { plan: testCommandPlan };
   const environmentVariablesPlan = makeEnvironmentVariablesReplacement(env);
   const dependenciesPlan = makeDependenciesReplacement();
   const inquirerMock = makeInquirerMock(prompts);
