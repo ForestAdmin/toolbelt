@@ -136,6 +136,7 @@ async function testCli({
 
   if (!process.env.KEEP_TEMPORARY_FILES) {
     files.forEach((file) => cleanMockedFile(file));
+    cleanMockedFile({ directory: temporaryDirectory });
   }
   process.chdir(oldcwd);
 
