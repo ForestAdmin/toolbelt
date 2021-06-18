@@ -127,6 +127,11 @@ class Database {
     );
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  async disconnect(connection) {
+    return connection.close();
+  }
+
   areAllDatabasesOfTheSameType(databasesConfig) {
     const databasesDialect = databasesConfig.map(
       (databaseConfig) => this.getDialect(databaseConfig.connection.url),

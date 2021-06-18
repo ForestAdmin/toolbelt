@@ -98,6 +98,8 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     const schemaPromise = this.databaseAnalyzer.analyze(connection, dbConfig, true);
     schema = await this.spinner.attachToPromise(schemaPromise);
 
+    await this.database.disconnect(connection);
+
     this.spinner.start({ text: 'Creating your project on Forest Admin' });
     const projectCreationPromise = this.ProjectCreator.create(
       authenticationToken, this.api, config.applicationName, appConfig,
