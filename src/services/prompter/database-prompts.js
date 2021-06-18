@@ -25,7 +25,7 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   async handlePrompts() {
-    await this.handleConnectionUrl();
+    this.handleConnectionUrl();
     this.handleDialect();
     this.handleName();
     this.handleSchema();
@@ -89,8 +89,8 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handleSchema() {
+    this.knownAnswers.databaseSchema = this.programArguments.databaseSchema;
     if (this.isOptionRequested('dbSchema') && this.programArguments.databaseSchema === undefined) {
-      this.knownAnswers.databaseSchema = this.programArguments.databaseSchema;
       if (!this.knownAnswers.databaseSchema) {
         this.prompts.push({
           type: 'input',
@@ -132,7 +132,7 @@ class DatabasePrompts extends AbstractPrompter {
         type: 'input',
         name: 'databasePort',
         message: 'What\'s the database port?',
-        default: (args) => MAPPING_DIALECT_TO_PORT[args.dbDialect],
+        default: (args) => MAPPING_DIALECT_TO_PORT[args.databaseDialect],
         validate: (port) => {
           if (!/^\d+$/.test(port)) {
             return 'The port must be a number.';
@@ -153,7 +153,7 @@ class DatabasePrompts extends AbstractPrompter {
         name: 'databaseUser',
         message: 'What\'s the database user?',
         default: (args) => {
-          if (args.dbDialect === 'mongodb') {
+          if (args.databaseDialect === 'mongodb') {
             return undefined;
           }
           return 'root';
@@ -173,32 +173,14 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handleSsl() {
+    this.knownAnswers.databaseSSL = this.programArguments.databaseSSL;
     if (this.isOptionRequested('ssl') && this.programArguments.databaseSSL === undefined) {
-      const { databaseSSL } = this.programArguments;
-      if (databaseSSL) {
-        try {
-          // NOTICE: Parse from string (e.g "true" or "false") to boolean.
-          this.knownAnswers.databaseSSL = JSON.parse(databaseSSL.toLowerCase());
-          if (typeof this.knownAnswers.databaseSSL !== 'boolean') {
-            throw new Error();
-          }
-        } catch (e) {
-          const message = `Database SSL value must be either "true" or "false" ("${databaseSSL}" given).`;
-          throw new PrompterError(
-            message,
-            [
-              message,
-            ],
-          );
-        }
-      } else {
-        this.prompts.push({
-          type: 'confirm',
-          name: 'databaseSSL',
-          message: 'Does your database require a SSL connection?',
-          default: false,
-        });
-      }
+      this.prompts.push({
+        type: 'confirm',
+        name: 'databaseSSL',
+        message: 'Does your database require a SSL connection?',
+        default: false,
+      });
     }
   }
 
@@ -208,7 +190,7 @@ class DatabasePrompts extends AbstractPrompter {
         type: 'confirm',
         name: 'mongoDBSRV',
         message: 'Use a SRV connection string?',
-        when: (answers) => answers.dbDialect === 'mongodb',
+        when: (answers) => answers.databaseDialect === 'mongodb',
         default: false,
       });
     }
