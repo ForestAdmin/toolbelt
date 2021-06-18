@@ -83,7 +83,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       mongodbSrv: config.mongoDBSRV,
     };
 
-    if (!config.databaseDialect && !!config.databaseConnectionURL) {
+    if (!config.databaseDialect && !config.databaseConnectionURL) {
       this.logger.error('Missing database dialect option value');
       this.exit(1);
     }
@@ -123,6 +123,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     await this.eventSender.notifySuccess();
   }
 
+  // FIXME: Not properly called/tested by testCli helper.
   async catch(error) {
     this.logger.error([
       'Cannot generate your project.',
@@ -135,6 +136,8 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 
 CreateCommand.description = 'Create a Forest API.';
 
+// FIXME: Currently, defaults are set on inquirer prompts, factor in config
+//        and use in both?
 CreateCommand.flags = {
   applicationHost: flags.string({
     char: 'H',
