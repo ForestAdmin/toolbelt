@@ -195,6 +195,57 @@ describe('projects:create', () => {
       });
     });
 
+    describe('when "databaseDialect"', () => {
+      describe('is missing', () => {
+        it('should fail', () => testCli({
+          commandClass: CreateProjectCommand,
+          commandArgs: ['name'],
+          env: testEnv2,
+          token: 'any',
+          prompts: [
+            {
+              in: makePromptInputList(),
+              out: {},
+            },
+          ],
+          std: [
+            { err: '× Missing database dialect option value' },
+          ],
+          exitCode: 1,
+        }));
+      });
+
+      describe('is provided', () => {
+        it('should execute command', () => testCli({
+          commandClass: CreateProjectCommand,
+          commandArgs: ['name'],
+          env: testEnv2,
+          token: 'any',
+          prompts: [
+            {
+              in: makePromptInputList(),
+              out: {
+                confirm: true,
+                databaseDialect: 'postgres',
+                databaseName: 'unknown_db',
+                databaseSchema: 'public',
+                databaseHost: 'unknown_host',
+                databasePort: 424242,
+                databaseUser: 'no_such_user',
+                databasePassword: 'wrong_password',
+                databaseSSL: false,
+              },
+            },
+          ],
+          std: [
+            { err: '× Connecting to your database' },
+          ],
+          // This only validates login, options are missing thus the error.
+          exitCode: 1,
+        }));
+      });
+    });
+
     describe('when "databaseConnectionURL"', () => {
       describe('is missing', () => {
         it('should require database flags via prompts', () => testCli({
@@ -295,6 +346,36 @@ describe('projects:create', () => {
         ],
         exitCode: 0,
       }));
+    });
+  });
+
+  describe('catch', () => {
+    it('should log error and throw', async () => {
+      expect.assertions(5);
+
+      const errorParameter = Symbol('catch error message');
+      const unexpectedError = Symbol('unexpected error message');
+
+      const command = new CreateProjectCommand();
+      command.logger = {
+        error: jest.fn(),
+        log: jest.fn(),
+      };
+      // For simplicity. Normally passed via context in `.init` call.
+      command.chalk = {
+        red: (msg) => msg,
+      };
+      const messages = {
+        ERROR_UNEXPECTED: unexpectedError.description,
+      };
+      command.messages = messages;
+
+      await expect(() => command.catch(errorParameter.description))
+        .rejects.toThrow('EEXIT: 1');
+      expect(command.logger.error).toHaveBeenCalledTimes(1);
+      expect(command.logger.error).toHaveBeenCalledWith(['Cannot generate your project.', unexpectedError.description]);
+      expect(command.logger.log).toHaveBeenCalledTimes(1);
+      expect(command.logger.log).toHaveBeenCalledWith(errorParameter.description);
     });
   });
 });
