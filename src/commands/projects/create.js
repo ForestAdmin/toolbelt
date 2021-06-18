@@ -119,7 +119,6 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 
     this.logger.success(`Hooray, ${this.chalk.green('installation success')}!`);
     await this.eventSender.notifySuccess();
-    process.exit(0);
   }
 
   async catch(error) {
