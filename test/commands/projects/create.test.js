@@ -324,8 +324,7 @@ describe('projects:create', () => {
         await sequelizeHelper.close();
       });
 
-      // eslint-disable-next-line jest/no-focused-tests
-      it.only('should generate a project', () => testCli({
+      it('should generate a project', () => testCli({
         commandClass: CreateProjectCommand,
         commandArgs: ['name'],
         env: testEnv2,
