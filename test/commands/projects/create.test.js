@@ -384,9 +384,9 @@ describe('projects:create', () => {
       await expect(() => command.catch(errorParameter.description))
         .rejects.toThrow('EEXIT: 1');
       expect(command.logger.error).toHaveBeenCalledTimes(1);
-      expect(command.logger.error).toHaveBeenCalledWith(['Cannot generate your project.', unexpectedError.description]);
+      expect(command.logger.error).toHaveBeenCalledWith(['Cannot generate your project.', `${unexpectedError.description}`]);
       expect(command.logger.log).toHaveBeenCalledTimes(1);
-      expect(command.logger.log).toHaveBeenCalledWith(errorParameter.description);
+      expect(command.logger.log).toHaveBeenCalledWith(`${errorParameter.description}`);
     });
   });
 });
