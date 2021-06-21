@@ -313,7 +313,8 @@ describe('projects:create', () => {
 
   describe('execution', () => {
     describe('with an existing database', () => {
-      it('should generate a project', () => testCli({
+      // eslint-disable-next-line jest/no-focused-tests
+      it.only('should generate a project', () => testCli({
         commandClass: CreateProjectCommand,
         commandArgs: ['name'],
         env: testEnv2,
