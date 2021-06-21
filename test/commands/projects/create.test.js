@@ -7,6 +7,9 @@ const {
   updateNewEnvironmentEndpoint,
 } = require('../../fixtures/api');
 
+const SequelizeHelper = require('../../services/analyzer/helpers/sequelize-helper');
+const { DATABASE_URL_POSTGRESQL_MAX } = require('../../services/analyzer/helpers/database-urls');
+
 const makePromptInputList = ({ except = null, only = null } = {}) => {
   const allPromptInputs = [
     {
@@ -313,6 +316,14 @@ describe('projects:create', () => {
 
   describe('execution', () => {
     describe('with an existing database', () => {
+      // eslint-disable-next-line jest/no-hooks
+      beforeAll(async () => {
+        const sequelizeHelper = new SequelizeHelper();
+        await sequelizeHelper.connect(DATABASE_URL_POSTGRESQL_MAX);
+        await sequelizeHelper.given('customers');
+        await sequelizeHelper.close();
+      });
+
       // eslint-disable-next-line jest/no-focused-tests
       it.only('should generate a project', () => testCli({
         commandClass: CreateProjectCommand,
