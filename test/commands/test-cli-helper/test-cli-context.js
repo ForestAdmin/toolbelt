@@ -9,6 +9,8 @@ const initialContextPlan = () => makeDefaultPlan();
 const replaceProcessFunctions = ({ plan }) => plan
   .replace('process.exit', (context) => context.addFunction('exitProcess',
     (exitCode) => {
+      console.error('exitProcess');
+      console.trace();
       const error = {
         message: `Unwanted "process.exit" call with exit code ${exitCode}`,
         oclif: {
