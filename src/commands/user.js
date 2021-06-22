@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const defaultPlan = require('../context/init');
+const defaultPlan = require('../context/plan');
 const AbstractCommand = require('../abstract-command');
 
 class UserCommand extends AbstractCommand {
