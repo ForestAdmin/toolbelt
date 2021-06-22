@@ -22,9 +22,6 @@ module.exports = {
   }) {
     const { eventSender, exitProcess, logger } = Context.inject();
 
-    if (status !== 0 && logger.spinner) {
-      logger.spinner.fail();
-    }
     if (logs.length) {
       logger.error(...logs);
     }
