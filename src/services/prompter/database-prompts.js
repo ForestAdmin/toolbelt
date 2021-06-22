@@ -55,7 +55,9 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handleDialect() {
-    this.knownAnswers.databaseDialect = this.programArguments.databaseDialect;
+    if (!this.knownAnswers.databaseDialect) {
+      this.knownAnswers.databaseDialect = this.programArguments.databaseDialect;
+    }
     if (this.isOptionRequested('dbDialect') && this.programArguments.databaseDialect === undefined) {
       const prompt = {
         type: 'list',
@@ -89,7 +91,9 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handleSchema() {
-    this.knownAnswers.databaseSchema = this.programArguments.databaseSchema;
+    if (!this.knownAnswers.databaseSchema) {
+      this.knownAnswers.databaseSchema = this.programArguments.databaseSchema;
+    }
     if (this.isOptionRequested('dbSchema') && this.programArguments.databaseSchema === undefined) {
       if (!this.knownAnswers.databaseSchema) {
         this.prompts.push({
