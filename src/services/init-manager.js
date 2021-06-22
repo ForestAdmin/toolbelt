@@ -4,7 +4,6 @@ const fs = require('fs');
 const { EOL } = require('os');
 const Context = require('@forestadmin/context');
 const { handleError } = require('../utils/error');
-const { generateKey } = require('../utils/key-generator');
 const { DatabasePrompts } = require('../services/prompter/database-prompts');
 
 const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE = 'Copying the environment variables in your `.env` file';
@@ -91,7 +90,9 @@ function getApplicationPortFromCompleteEndpoint(endpoint) {
 }
 
 function getContentToAddInDotenvFile(environmentVariables) {
-  const authSecret = generateKey();
+  const { keyGenerator } = Context.inject();
+
+  const authSecret = keyGenerator.generate();
   let contentToAddInDotenvFile = '';
 
   if (environmentVariables.applicationPort) {
