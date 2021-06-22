@@ -2,8 +2,9 @@ const Database = require('../../src/services/schema/update/database');
 
 const setupDatabase = ({ Sequelize = {}, mongodb = {}, terminator = {} } = {}) =>
   new Database({
-    Sequelize,
+    assertPresent: () => true,
     mongodb,
+    Sequelize,
     terminator,
   });
 

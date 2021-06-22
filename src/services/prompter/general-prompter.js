@@ -3,7 +3,6 @@ const ApplicationPrompts = require('./application-prompts');
 const { DatabasePrompts } = require('./database-prompts');
 const ProjectPrompts = require('./project-prompts');
 const PromptError = require('./prompter-error');
-const Terminator = require('../../utils/terminator-sender');
 
 class GeneralPrompter {
   constructor(requests, programArguments) {
@@ -23,7 +22,7 @@ class GeneralPrompter {
   }
 
   async getConfig() {
-    const { inquirer } = Context.inject();
+    const { inquirer, terminator } = Context.inject();
 
     try {
       await this.projectPrompt.handlePrompts();
@@ -31,7 +30,7 @@ class GeneralPrompter {
       await this.applicationPrompt.handlePrompts();
     } catch (error) {
       if (error instanceof PromptError) {
-        await Terminator.terminate(1, {
+        await terminator.terminate(1, {
           errorCode: error.errorCode,
           errorMessage: error.errorMessage,
           logs: error.logs,
