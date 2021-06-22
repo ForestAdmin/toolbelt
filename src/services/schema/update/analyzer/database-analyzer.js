@@ -3,18 +3,18 @@ const EmptyDatabaseError = require('../../../../errors/database/empty-database-e
 module.exports = class DatabaseAnalyzer {
   constructor({
     assertPresent,
-    terminator,
     mongoAnalyzer,
     sequelizeAnalyzer,
+    terminator,
   }) {
     assertPresent({
-      terminator,
       mongoAnalyzer,
       sequelizeAnalyzer,
+      terminator,
     });
-    this.terminator = terminator;
     this.mongoAnalyzer = mongoAnalyzer;
     this.sequelizeAnalyzer = sequelizeAnalyzer;
+    this.terminator = terminator;
   }
 
   async reportEmptyDatabase(orm, dialect) {

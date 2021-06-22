@@ -25,7 +25,6 @@ const Authenticator = require('../services/authenticator');
 const KeyGenerator = require('../utils/key-generator');
 const messages = require('../utils/messages');
 const terminator = require('../utils/terminator');
-const terminatorSender = require('../utils/terminator-sender');
 const OidcAuthenticator = require('../services/oidc/authenticator');
 const ApplicationTokenService = require('../services/application-token');
 const Api = require('../services/api');
@@ -143,7 +142,6 @@ const initDependencies = newPlan()
 const initUtils = (context) => context
   .addClass(KeyGenerator)
   .addInstance('terminator', terminator)
-  .addInstance('terminatorSender', terminatorSender)
   .addValue('messages', messages);
 
 /**

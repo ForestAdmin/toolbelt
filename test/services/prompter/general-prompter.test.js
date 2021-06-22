@@ -3,7 +3,7 @@ const Context = require('@forestadmin/context');
 
 const GeneralPrompter = require('../../../src/services/prompter/general-prompter');
 const PrompterError = require('../../../src/services/prompter/prompter-error');
-const Terminator = require('../../../src/utils/terminator-sender');
+const Terminator = require('../../../src/utils/terminator');
 
 const makeDefaultPlan = require('../../../src/context/init');
 

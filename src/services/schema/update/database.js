@@ -1,10 +1,18 @@
 class Database {
-  constructor({ Sequelize, mongodb, terminator }) {
-    if (!Sequelize) throw new Error('Missing dependency Sequelize');
-    if (!mongodb) throw new Error('Missing dependency mongodb');
-    if (!terminator) throw new Error('Missing dependency terminator');
-    this.Sequelize = Sequelize;
+  constructor({
+    assertPresent,
+    mongodb,
+    Sequelize,
+    terminator,
+  }) {
+    assertPresent({
+      assertPresent,
+      mongodb,
+      Sequelize,
+      terminator,
+    });
     this.mongodb = mongodb;
+    this.Sequelize = Sequelize;
     this.terminator = terminator;
   }
 

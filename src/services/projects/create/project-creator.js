@@ -5,20 +5,20 @@ class ProjectCreator {
     chalk,
     keyGenerator,
     messages,
-    terminatorSender,
+    terminator,
   }) {
     assertPresent({
       api,
       chalk,
       keyGenerator,
       messages,
-      terminatorSender,
+      terminator,
     });
     this.api = api;
     this.chalk = chalk;
     this.keyGenerator = keyGenerator;
     this.messages = messages;
-    this.terminatorSender = terminatorSender;
+    this.terminator = terminator;
   }
 
   async create(sessionToken, config) {
@@ -40,7 +40,7 @@ class ProjectCreator {
         message = `${this.messages.ERROR_UNEXPECTED} ${this.chalk.red(error)}`;
       }
 
-      return this.terminatorSender.terminate(1, {
+      return this.terminator.terminate(1, {
         logs: [message],
       });
     }

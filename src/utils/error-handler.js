@@ -4,17 +4,23 @@ class ErrorHandler {
   /**
    * @param {import('../context/init').Context} context
    */
-  constructor(context) {
-    /** @private @readonly */
-    this.terminator = context.terminator;
-    /** @private @readonly */
-    this.chalk = context.chalk;
-    /** @private @readonly */
-    this.messages = context.messages;
-
-    ['terminator', 'chalk', 'messages'].forEach((name) => {
-      if (!this[name]) throw new Error(`Missing dependency ${name}`);
+  constructor({
+    assertPresent,
+    chalk,
+    messages,
+    terminator,
+  }) {
+    assertPresent({
+      chalk,
+      messages,
+      terminator,
     });
+    /** @private @readonly */
+    this.terminator = terminator;
+    /** @private @readonly */
+    this.chalk = chalk;
+    /** @private @readonly */
+    this.messages = messages;
   }
 
   /**

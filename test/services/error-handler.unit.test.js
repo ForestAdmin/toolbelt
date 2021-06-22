@@ -4,6 +4,7 @@ const ErrorHandler = require('../../src/utils/error-handler');
 describe('service > Oidc > ErrorHandler', () => {
   function setupTest() {
     const context = {
+      assertPresent: () => true,
       terminator: {
         terminate: jest.fn(),
       },
