@@ -1,26 +1,31 @@
 const { newPlan } = require('@forestadmin/context');
-const chalk = require('chalk');
-const os = require('os');
-const superagent = require('superagent');
-const inquirer = require('inquirer');
-const openIdClient = require('openid-client');
-const open = require('open');
-const jwtDecode = require('jwt-decode');
-const fs = require('fs');
-const joi = require('joi');
-const mkdirp = require('mkdirp');
-const Handlebars = require('handlebars');
-const path = require('path');
 
-const Sequelize = require('sequelize');
+const chalk = require('chalk');
+const crypto = require('crypto');
+const fs = require('fs');
+const Handlebars = require('handlebars');
+const inquirer = require('inquirer');
+const joi = require('joi');
+const jwtDecode = require('jwt-decode');
+const mkdirp = require('mkdirp');
+const open = require('open');
+const openIdClient = require('openid-client');
+const os = require('os');
+const path = require('path');
+const superagent = require('superagent');
+
 const mongodb = require('mongodb');
+const Sequelize = require('sequelize');
 
 require('../config');
+
 const pkg = require('../../package.json');
 const Logger = require('../services/logger');
 const Authenticator = require('../services/authenticator');
+const KeyGenerator = require('../utils/key-generator');
 const messages = require('../utils/messages');
 const terminator = require('../utils/terminator');
+const terminatorSender = require('../utils/terminator-sender');
 const OidcAuthenticator = require('../services/oidc/authenticator');
 const ApplicationTokenService = require('../services/application-token');
 const Api = require('../services/api');
@@ -124,6 +129,7 @@ const initDependencies = newPlan()
     .addInstance('inquirer', inquirer))
   .addStep('others', (context) => context
     .addModule('chalk', chalk)
+    .addModule('crypto', crypto)
     .addModule('os', os)
     .addModule('fs', fs)
     .addModule('superagent', superagent)
@@ -135,7 +141,9 @@ const initDependencies = newPlan()
  * @param {import('./application-context')} context
  */
 const initUtils = (context) => context
+  .addClass(KeyGenerator)
   .addInstance('terminator', terminator)
+  .addInstance('terminatorSender', terminatorSender)
   .addValue('messages', messages);
 
 /**
@@ -176,7 +184,7 @@ const initCommandProjectsCreate = (context) => context
   .addClass(EventSender)
   .addValue('GeneralPrompter', GeneralPrompter)
   .addClass(CommandGenerateConfigGetter)
-  .addInstance('ProjectCreator', ProjectCreator)
+  .addClass(ProjectCreator)
   .addClass(Spinner);
 
 const initCommandSchemaUpdate = (context) => context

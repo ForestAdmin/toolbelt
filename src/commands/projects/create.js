@@ -9,7 +9,6 @@ class CreateCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan || makeDefaultPlan());
     const {
-      api,
       assertPresent,
       authenticator,
       chalk,
@@ -20,12 +19,11 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       eventSender,
       logger,
       messages,
-      ProjectCreator,
+      projectCreator,
       spinner,
     } = this.context;
 
     assertPresent({
-      api,
       authenticator,
       chalk,
       commandGenerateConfigGetter,
@@ -35,10 +33,9 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       eventSender,
       logger,
       messages,
-      ProjectCreator,
+      projectCreator,
       spinner,
     });
-    this.api = api;
     this.authenticator = authenticator;
     this.chalk = chalk;
     this.commandGenerateConfigGetter = commandGenerateConfigGetter;
@@ -48,7 +45,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     this.eventSender = eventSender;
     this.logger = logger;
     this.messages = messages;
-    this.ProjectCreator = ProjectCreator;
+    this.projectCreator = projectCreator;
     this.spinner = spinner;
   }
 
@@ -101,8 +98,8 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     await this.database.disconnect(connection);
 
     this.spinner.start({ text: 'Creating your project on Forest Admin' });
-    const projectCreationPromise = this.ProjectCreator.create(
-      authenticationToken, this.api, config.applicationName, appConfig,
+    const projectCreationPromise = this.projectCreator.create(
+      authenticationToken, appConfig,
     );
 
     const { envSecret, authSecret } = await this.spinner.attachToPromise(projectCreationPromise);
