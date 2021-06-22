@@ -3,7 +3,7 @@ const rimraf = require('rimraf');
 const Context = require('@forestadmin/context');
 const fs = require('fs');
 const renderingModel = require('./expected/sequelize/db-analysis-output/renderings.expected.json');
-const makeDefaultPlan = require('../../../src/context/init');
+const defaultPlan = require('../../../src/context/plan');
 
 const Dumper = require('../../../src/services/dumper/dumper');
 
@@ -29,7 +29,7 @@ describe('services > dumper > SQL', () => {
         path: appRoot,
       };
 
-      const injectedContext = Context.execute(makeDefaultPlan());
+      const injectedContext = Context.execute(defaultPlan);
       const dumper = new Dumper(injectedContext);
       await dumper.dump({}, config);
     }
@@ -57,7 +57,7 @@ describe('services > dumper > SQL', () => {
         path: appRoot,
       };
 
-      const injectedContext = Context.execute(makeDefaultPlan());
+      const injectedContext = Context.execute(defaultPlan);
       const dumper = new Dumper(injectedContext);
       await dumper.dump({}, config);
     }
@@ -85,7 +85,7 @@ describe('services > dumper > SQL', () => {
         path: appRoot,
       };
 
-      const injectedContext = Context.execute(makeDefaultPlan());
+      const injectedContext = Context.execute(defaultPlan);
       const dumper = new Dumper(injectedContext);
       await dumper.dump(renderingModel, config);
     }

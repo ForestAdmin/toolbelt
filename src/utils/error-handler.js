@@ -2,7 +2,7 @@ const LumberError = require('../errors/lumber-error');
 
 class ErrorHandler {
   /**
-   * @param {import('../context/init').Context} context
+   * @param {import('../context/plan').Context} context
    */
   constructor({
     assertPresent,

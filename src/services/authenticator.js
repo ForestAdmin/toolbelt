@@ -3,7 +3,7 @@ const { ERROR_UNEXPECTED } = require('../utils/messages');
 
 /**
  * @class
- * @param {import('../context/init').Context} context
+ * @param {import('../context/plan').Context} context
  */
 function Authenticator({
   logger, api, chalk, inquirer, os, jwtDecode, fs, joi, env,

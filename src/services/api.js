@@ -5,7 +5,7 @@ const HEADER_USER_AGENT = 'User-Agent';
 
 /**
  * @class
- * @param {import('../context/init').Context} context
+ * @param {import('../context/plan').Context} context
  */
 function Api({
   pkg,

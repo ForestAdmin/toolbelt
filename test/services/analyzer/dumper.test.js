@@ -4,7 +4,7 @@ const sinon = require('sinon');
 const os = require('os');
 const rimraf = require('rimraf');
 const Dumper = require('../../../src/services/dumper/dumper');
-const makeDefaultPlan = require('../../../src/context/init');
+const defaultPlan = require('../../../src/context/plan');
 
 const DOCKER_COMPOSE_FILE_LOCATION = './test-output/Linux/docker-compose.yml';
 const DOT_ENV_FILE_LOCATION = './test-output/Linux/.env';
@@ -32,7 +32,7 @@ async function createLinuxDump(optionsOverrides = {}, injectedContextOverrides =
     ...optionsOverrides,
   };
 
-  const injectedContext = Context.execute(makeDefaultPlan());
+  const injectedContext = Context.execute(defaultPlan);
   const dumper = new Dumper({ ...injectedContext, ...injectedContextOverrides });
   await dumper.dump({}, config);
 }
