@@ -1,5 +1,3 @@
-const GeneralPrompter = require('../../prompter/general-prompter');
-
 const REQUESTS_DATABASE_MANDATORY = [
   'dbDialect',
   'dbName',
@@ -33,16 +31,27 @@ const REQUESTS = {
 };
 
 class CommandGenerateConfigGetter {
-  static getRequestList(programArguments) {
-    if (programArguments.databaseConnectionURL) {
-      return REQUESTS.forConnectionUrl;
-    }
-    return REQUESTS.forFullPrompt;
+  constructor({
+    assertPresent,
+    GeneralPrompter,
+  }) {
+    assertPresent({
+      GeneralPrompter,
+    });
+    this.GeneralPrompter = GeneralPrompter;
+    this.AVAILABLE_REQUESTS = REQUESTS;
   }
 
-  static get(programArguments) {
-    const requests = CommandGenerateConfigGetter.getRequestList(programArguments);
-    return new GeneralPrompter(
+  getRequestList(programArguments) {
+    if (programArguments.databaseConnectionURL) {
+      return this.AVAILABLE_REQUESTS.forConnectionUrl;
+    }
+    return this.AVAILABLE_REQUESTS.forFullPrompt;
+  }
+
+  get(programArguments) {
+    const requests = this.getRequestList(programArguments);
+    return new this.GeneralPrompter(
       requests,
       programArguments,
     ).getConfig();

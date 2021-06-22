@@ -32,6 +32,7 @@ const environmentSerializer = require('../serializers/environment');
 const projectDeserializer = require('../deserializers/project');
 const projectSerializer = require('../serializers/project');
 
+const GeneralPrompter = require('../services/prompter/general-prompter');
 const CommandGenerateConfigGetter = require('../services/projects/create/command-generate-config-getter');
 const Database = require('../services/schema/update/database');
 const DatabaseAnalyzer = require('../services/schema/update/analyzer/database-analyzer');
@@ -97,7 +98,7 @@ const initProcess = newPlan()
     .addFunction('exitProcess', (exitCode) => process.exit(exitCode)));
 
 const initConstants = (context) => context
-  .addInstance('constants', {
+  .addValue('constants', {
     DEFAULT_FOREST_URL,
   });
 
@@ -107,8 +108,8 @@ const initEnv = newPlan()
     FOREST_URL: process.env.FOREST_URL || DEFAULT_FOREST_URL,
   }))
   .addStep('others', (context) => context
-    .addInstance('process', process)
-    .addInstance('pkg', pkg));
+    .addModule('process', process)
+    .addModule('pkg', pkg));
 
 /**
  * @param {import('./application-context')} context
@@ -117,25 +118,25 @@ const initDependencies = newPlan()
   .addStep('open', (context) => context
     .addFunction('open', open))
   .addStep('std', (context) => context
-    .addInstance('stdout', process.stdout)
-    .addInstance('stderr', process.stderr))
+    .addFunction('stdout', process.stdout)
+    .addFunction('stderr', process.stderr))
   .addStep('inquirer', (context) => context
     .addInstance('inquirer', inquirer))
   .addStep('others', (context) => context
-    .addInstance('chalk', chalk)
-    .addInstance('os', os)
-    .addInstance('fs', fs)
-    .addInstance('superagent', superagent)
-    .addInstance('openIdClient', openIdClient)
-    .addInstance('jwtDecode', jwtDecode)
-    .addInstance('joi', joi));
+    .addModule('chalk', chalk)
+    .addModule('os', os)
+    .addModule('fs', fs)
+    .addModule('superagent', superagent)
+    .addModule('openIdClient', openIdClient)
+    .addModule('jwtDecode', jwtDecode)
+    .addModule('joi', joi));
 
 /**
  * @param {import('./application-context')} context
  */
 const initUtils = (context) => context
   .addInstance('terminator', terminator)
-  .addInstance('messages', messages);
+  .addValue('messages', messages);
 
 /**
  * @param {import('./application-context')} context
@@ -160,28 +161,27 @@ const initServices = newPlan()
   .addStep('authenticator', (context) => context
     .addClass(Authenticator));
 
-/**
- * @param {import('./application-context')} context
- */
+const initCommandProjectsCommon = (context) => context
+  .addFunction('mongoAnalyzer', mongoAnalyzer)
+  .addFunction('sequelizeAnalyzer', sequelizeAnalyzer)
+  .addClass(DatabaseAnalyzer);
+
 const initCommandProjectsCreate = (context) => context
-  .addInstance('Sequelize', Sequelize)
-  .addInstance('mongodb', mongodb)
-  .addInstance('mkdirp', mkdirp)
-  .addInstance('Handlebars', Handlebars)
+  .addModule('Sequelize', Sequelize)
+  .addModule('mongodb', mongodb)
+  .addModule('mkdirp', mkdirp)
+  .addModule('Handlebars', Handlebars)
   .addClass(Database)
   .addClass(Dumper)
   .addClass(EventSender)
-  .addInstance('CommandGenerateConfigGetter', CommandGenerateConfigGetter)
-  .addInstance('DatabaseAnalyzer', DatabaseAnalyzer)
+  .addValue('GeneralPrompter', GeneralPrompter)
+  .addClass(CommandGenerateConfigGetter)
   .addInstance('ProjectCreator', ProjectCreator)
   .addClass(Spinner);
 
 const initCommandSchemaUpdate = (context) => context
-  .addInstance('path', path)
+  .addModule('path', path)
   .addClass(ErrorHandler)
-  .addFunction('mongoAnalyzer', mongoAnalyzer)
-  .addFunction('sequelizeAnalyzer', sequelizeAnalyzer)
-  .addClass(DatabaseAnalyzer)
   .addClass(SchemaService);
 
 module.exports = () => newPlan()
@@ -192,5 +192,6 @@ module.exports = () => newPlan()
   .addStep('utils', initUtils)
   .addStep('serializers', initSerializers)
   .addStep('services', initServices)
+  .addStep('commandProjectCommon', initCommandProjectsCommon)
   .addStep('commandProjectCreate', initCommandProjectsCreate)
   .addStep('commandProjectUpdate', initCommandSchemaUpdate);
