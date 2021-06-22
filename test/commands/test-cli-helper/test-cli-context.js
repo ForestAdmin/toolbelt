@@ -64,9 +64,10 @@ const preparePlan = ({
   tokenBehavior,
 }) => {
   if (testCommandPlan) return { plan: testCommandPlan };
+  const inquirerMock = makeInquirerMock(prompts);
+
   const environmentVariablesPlan = makeEnvironmentVariablesReplacement(env);
   const dependenciesPlan = makeDependenciesReplacement();
-  const inquirerMock = makeInquirerMock(prompts);
   const inquirerPlan = makeInquirerReplacement(inquirerMock);
   const authenticatorPlan = makeAuthenticatorReplacement(tokenBehavior);
 
