@@ -60,9 +60,7 @@ module.exports = class SchemaService {
   async _connectToDatabases(databasesConfig) {
     this.spinner.start({ text: 'Connecting to your database(s)' });
     const databasesConnectionPromise = this.database.connectFromDatabasesConfig(databasesConfig);
-    this.spinner.attachToPromise(databasesConnectionPromise);
-
-    return databasesConnectionPromise;
+    return this.spinner.attachToPromise(databasesConnectionPromise);
   }
 
   async _analyzeDatabases(databasesConnection, dbSchema) {
@@ -85,8 +83,7 @@ module.exports = class SchemaService {
           };
         }),
     );
-    this.spinner.attachToPromise(databasesSchemaPromise);
-    return databasesSchemaPromise;
+    return this.spinner.attachToPromise(databasesSchemaPromise);
   }
 
   async _dumpSchemas(databasesSchema, applicationName, isUpdate, useMultiDatabase) {
@@ -108,9 +105,7 @@ module.exports = class SchemaService {
         dbDialect: databaseSchema.analyzerOptions.dbDialect,
         dbSchema: databaseSchema.analyzerOptions.dbSchema,
       })));
-    this.spinner.attachToPromise(dumpPromise);
-
-    return dumpPromise;
+    return this.spinner.attachToPromise(dumpPromise);
   }
 
   _warnIfSingleToMulti(outputDirectory, useMultiDatabase) {
