@@ -5,17 +5,16 @@ const { makeAuthenticatorMock } = require('./mocks/plan-mocks');
 
 // FIXME: Need to override things here (fs...)
 
-const replaceProcessFunctions = ({ plan }) => plan
-  .replace('process.exit', (context) => context.addFunction('exitProcess',
-    (exitCode) => {
-      const error = {
-        message: `Unwanted "process.exit" call with exit code ${exitCode}`,
-        oclif: {
-          exit: exitCode,
-        },
-      };
-      throw error;
-    }));
+const replaceProcessFunctions = (plan) => plan
+  .replace('process/exit/exitProcess', (exitCode) => {
+    const error = {
+      message: `Unwanted "process.exit" call with exit code ${exitCode}`,
+      oclif: {
+        exit: exitCode,
+      },
+    };
+    throw error;
+  });
 
 const makeEnvironmentVariablesReplacement = (env) => (plan) => plan
   .replace('env/variables/env', {

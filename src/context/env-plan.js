@@ -8,5 +8,5 @@ module.exports = (plan) => plan
     FOREST_URL: process.env.FOREST_URL || DEFAULT_FOREST_URL,
   }))
   .addStep('others', (planOthers) => planOthers
-    .addInstance('process', process)
-    .addInstance('pkg', pkg));
+    .addModule('process', process)
+    .addModule('pkg', pkg));

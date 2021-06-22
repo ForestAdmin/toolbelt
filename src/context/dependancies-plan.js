@@ -1,4 +1,5 @@
 const chalk = require('chalk');
+const crypto = require('crypto');
 const os = require('os');
 const superagent = require('superagent');
 const inquirer = require('inquirer');
@@ -12,15 +13,16 @@ module.exports = (plan) => plan
   .addStep('open', (planOpen) => planOpen
     .addFunction('open', open))
   .addStep('std', (planStd) => planStd
-    .addInstance('stdout', process.stdout)
-    .addInstance('stderr', process.stderr))
+    .addFunction('stdout', process.stdout)
+    .addFunction('stderr', process.stderr))
   .addStep('inquirer', (planInquirer) => planInquirer
     .addInstance('inquirer', inquirer))
   .addStep('others', (planOthers) => planOthers
-    .addInstance('chalk', chalk)
-    .addInstance('os', os)
-    .addInstance('fs', fs)
-    .addInstance('superagent', superagent)
-    .addInstance('openIdClient', openIdClient)
-    .addInstance('jwtDecode', jwtDecode)
-    .addInstance('joi', joi));
+    .addModule('chalk', chalk)
+    .addModule('crypto', crypto)
+    .addModule('os', os)
+    .addModule('fs', fs)
+    .addModule('superagent', superagent)
+    .addModule('openIdClient', openIdClient)
+    .addModule('jwtDecode', jwtDecode)
+    .addModule('joi', joi));
