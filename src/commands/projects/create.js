@@ -13,7 +13,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       assertPresent,
       authenticator,
       chalk,
-      CommandGenerateConfigGetter,
+      commandGenerateConfigGetter,
       database,
       databaseAnalyzer,
       dumper,
@@ -28,7 +28,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       api,
       authenticator,
       chalk,
-      CommandGenerateConfigGetter,
+      commandGenerateConfigGetter,
       database,
       databaseAnalyzer,
       dumper,
@@ -41,7 +41,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     this.api = api;
     this.authenticator = authenticator;
     this.chalk = chalk;
-    this.CommandGenerateConfigGetter = CommandGenerateConfigGetter;
+    this.commandGenerateConfigGetter = commandGenerateConfigGetter;
     this.database = database;
     this.databaseAnalyzer = databaseAnalyzer;
     this.dumper = dumper;
@@ -64,7 +64,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     this.eventSender.applicationName = this.args.applicationName;
 
     const programArguments = { ...this.args, ...this.flags };
-    const config = await this.CommandGenerateConfigGetter.get(programArguments);
+    const config = await this.commandGenerateConfigGetter.get(programArguments);
 
     const appConfig = {
       applicationName: config.applicationName,
