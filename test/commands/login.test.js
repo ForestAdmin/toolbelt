@@ -31,7 +31,6 @@ describe('login', () => {
           '-t', jwt.sign({}, 'key', { expiresIn: '1day' }),
         ],
         std: [
-          { in: `${jwt.sign({}, 'key', { expiresIn: '1day' })}` },
           { out: '> Login successful' },
         ],
       }));
