@@ -1,6 +1,6 @@
 const pkg = require('../../package.json');
 
-const DEFAULT_FOREST_URL = 'https://api.forestadmin.com';
+const { DEFAULT_FOREST_URL } = require('./constants');
 
 module.exports = (plan) => plan
   .addStep('variables', (planVariables) => planVariables.addValue('env', {
