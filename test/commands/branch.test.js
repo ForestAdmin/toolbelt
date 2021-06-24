@@ -16,13 +16,13 @@ const {
   getDevelopmentEnvironmentNotFound,
   postBranchValidOnSpecificEnv,
 } = require('../fixtures/api');
-const { testEnv: noKeyEnv, testEnv2 } = require('../fixtures/env');
+const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
 
 describe('branch', () => {
   describe('when the user is logged in', () => {
     describe('when environment have branches', () => {
       it('should display a list of branches', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         commandClass: BranchCommand,
         api: [
@@ -39,7 +39,7 @@ describe('branch', () => {
 
     describe('when environment does not have branches', () => {
       it('should display a warning message', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         commandClass: BranchCommand,
         api: [
@@ -54,7 +54,7 @@ describe('branch', () => {
 
     describe('when creating new branches', () => {
       it('should display a switch to new branch message', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         commandClass: BranchCommand,
         commandArgs: ['some/randombranchename'],
@@ -68,7 +68,7 @@ describe('branch', () => {
       }));
 
       it('should display a switch to new branch message with a complex branch name', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         commandClass: BranchCommand,
         commandArgs: ['$0m3/$7r4ng38r4nChn4m3!'],
@@ -83,7 +83,7 @@ describe('branch', () => {
 
       describe('when the branch name already exist', () => {
         it('should display an error message', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           commandClass: BranchCommand,
           commandArgs: ['already/existingbranch'],
@@ -101,7 +101,7 @@ describe('branch', () => {
       describe('when no available envSecret', () => {
         describe('when an invalid projectId is provided', () => {
           it('should display an error message', () => testCli({
-            env: noKeyEnv,
+            env: testEnvWithoutSecret,
             token: 'any',
             commandClass: BranchCommand,
             commandArgs: ['--projectId', '1', 'watabranch'],
@@ -117,7 +117,7 @@ describe('branch', () => {
 
         describe('with a valid projectId', () => {
           it('should display a switch to new branch message', () => testCli({
-            env: noKeyEnv,
+            env: testEnvWithoutSecret,
             token: 'any',
             commandClass: BranchCommand,
             commandArgs: ['--projectId', '1', 'watabranch'],
@@ -137,7 +137,7 @@ describe('branch', () => {
       describe('when removing a branch that does not exist', () => {
         const branchName = 'unexistingbranch';
         it('should display an error message', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           commandClass: BranchCommand,
           commandArgs: ['-d', branchName],
@@ -167,7 +167,7 @@ describe('branch', () => {
       describe('when removing a branch failed', () => {
         const branchName = 'brancherror';
         it('should display an error message', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           commandClass: BranchCommand,
           commandArgs: ['-d', branchName],
@@ -198,7 +198,7 @@ describe('branch', () => {
         describe('when the branch in not the current branch of the environment', () => {
           const branchName = 'existingbranch';
           it('should prompt for confirmation, then remove the branch if confirmed', () => testCli({
-            env: testEnv2,
+            env: testEnvWithSecret,
             token: 'any',
             commandClass: BranchCommand,
             commandArgs: ['-d', branchName],
@@ -224,7 +224,7 @@ describe('branch', () => {
           }));
 
           it('should prompt for confirmation, then do nothing if not confirmed', () => testCli({
-            env: testEnv2,
+            env: testEnvWithSecret,
             token: 'any',
             commandClass: BranchCommand,
             commandArgs: ['-d', branchName],
@@ -248,7 +248,7 @@ describe('branch', () => {
 
           describe('using `--force` option', () => {
             it('should display a success branch deleted message', () => testCli({
-              env: testEnv2,
+              env: testEnvWithSecret,
               token: 'any',
               commandClass: BranchCommand,
               commandArgs: ['-d', branchName, '--force'],
@@ -268,7 +268,7 @@ describe('branch', () => {
     describe('with errors', () => {
       describe('when environment is not compatible with the dev workflow', () => {
         it('should display an error message', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           commandClass: BranchCommand,
           api: [
@@ -284,7 +284,7 @@ describe('branch', () => {
 
       describe('when not running on a development environment', () => {
         it('should display an error message', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           commandClass: BranchCommand,
           api: [
@@ -300,7 +300,7 @@ describe('branch', () => {
 
       describe('when there is no remote/production environment', () => {
         it('should display an error message', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           commandClass: BranchCommand,
           api: [

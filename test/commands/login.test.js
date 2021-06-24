@@ -9,7 +9,7 @@ const {
   loginInvalidOidc,
   loginValidOidc,
 } = require('../fixtures/api');
-const { testEnv } = require('../fixtures/env');
+const { testEnvWithoutSecret } = require('../fixtures/env');
 
 describe('login', () => {
   describe('with email in args', () => {
@@ -24,7 +24,7 @@ describe('login', () => {
     });
     describe('with valid token in args', () => {
       it('should login successful', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         commandClass: LoginCommand,
         commandArgs: [
           '-e', 'smile@gmail.com',
@@ -40,7 +40,7 @@ describe('login', () => {
       it('should login successfully', () => testCli({
         commandClass: LoginCommand,
         commandArgs: ['-e', 'some@mail.com', '-P', 'valid_pwd'],
-        env: testEnv,
+        env: testEnvWithoutSecret,
         api: () => loginValid(),
         std: [
           { out: '> Login successful' },
@@ -50,7 +50,7 @@ describe('login', () => {
 
     describe('with an invalid password in args', () => {
       it('should display incorrect password', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         commandClass: LoginCommand,
         commandArgs: ['-e', 'some@mail.com', '-P', 'pwd'],
         api: () => loginInvalid(),
@@ -64,7 +64,7 @@ describe('login', () => {
   describe('with the oidc authentication', () => {
     describe('with a successful oidc authentication', () => {
       it('should login successful', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         commandClass: LoginCommand,
         api: () => loginValidOidc(),
         std: [
@@ -76,7 +76,7 @@ describe('login', () => {
 
     describe('with an failed oidc authentication', () => {
       it('should display the error message', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         commandClass: LoginCommand,
         api: () => loginInvalidOidc(),
         std: [

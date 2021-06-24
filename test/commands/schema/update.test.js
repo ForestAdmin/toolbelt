@@ -5,7 +5,7 @@ const { baseAuthenticatedPlanMock } = require('../test-cli-helper/mocks/plan-moc
 const {
   loginValidOidc,
 } = require('../../fixtures/api');
-const { testEnv2 } = require('../../fixtures/env');
+const { testEnvWithSecret } = require('../../fixtures/env');
 
 describe('schema:update', () => {
   it('should pass all short options', async () => {
@@ -41,7 +41,7 @@ describe('schema:update', () => {
     describe('when the user is not logged in', () => {
       it('should login the user and then send the schema', () => testCli({
         commandClass: UpdateCommand,
-        env: testEnv2,
+        env: testEnvWithSecret,
         api: [
           () => loginValidOidc(),
         ],
@@ -70,7 +70,7 @@ describe('schema:update', () => {
     describe('when the user is logged in', () => {
       it('should send the schema', () => testCli({
         commandClass: UpdateCommand,
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         api: [],
         files: [{

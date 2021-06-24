@@ -1,6 +1,6 @@
 const testCli = require('./test-cli-helper/test-cli');
 const EnvironmentCommand = require('../../src/commands/environments');
-const { testEnv } = require('../fixtures/env');
+const { testEnvWithoutSecret } = require('../fixtures/env');
 const {
   getProjectListValid,
   getEnvironmentListValid,
@@ -9,7 +9,7 @@ const {
 
 describe('environments', () => {
   it('should display environment list', () => testCli({
-    env: testEnv,
+    env: testEnvWithoutSecret,
     commandClass: EnvironmentCommand,
     api: [
       () => loginValidOidc(),

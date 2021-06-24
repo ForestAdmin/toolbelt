@@ -3,14 +3,14 @@ const {
   getEnvironmentValid,
   getEnvironmentNotFound,
 } = require('../../fixtures/api');
-const { testEnv } = require('../../fixtures/env');
+const { testEnvWithoutSecret } = require('../../fixtures/env');
 const GetCommand = require('../../../src/commands/environments/get');
 
 describe('environments:get', () => {
   describe('on an existing environment', () => {
     describe('without JSON format option', () => {
       it('should display the configuration of the Staging environment', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
         commandClass: GetCommand,
         commandArgs: ['324'],
@@ -31,7 +31,7 @@ describe('environments:get', () => {
     });
     describe('with JSON format option', () => {
       it('should display the configuration of the Staging environment', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
         commandClass: GetCommand,
         commandArgs: ['324', '--format', 'json'],
@@ -58,7 +58,7 @@ describe('environments:get', () => {
 
   describe('on an unknown environment', () => {
     it('should display a NotFound error', () => testCli({
-      env: testEnv,
+      env: testEnvWithoutSecret,
       token: 'any',
       commandClass: GetCommand,
       commandArgs: ['3947'],

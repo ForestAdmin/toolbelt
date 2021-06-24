@@ -6,14 +6,14 @@ const {
   getNoBranchListValid,
   updateEnvironmentCurrentBranchId,
 } = require('../fixtures/api');
-const { testEnv2 } = require('../fixtures/env');
+const { testEnvWithSecret } = require('../fixtures/env');
 
 describe('switch', () => {
   describe('when the user is logged in', () => {
     describe('when environment have branches', () => {
       describe('when no branch is specified as an argument', () => {
         it('should display a list of branches then switch to selected branch', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           commandClass: SwitchCommand,
           api: [
@@ -44,7 +44,7 @@ describe('switch', () => {
 
       describe('when a valid branch is specified as an argument', () => {
         it('should switch to selected branch', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           commandClass: SwitchCommand,
           commandArgs: ['feature/third'],
@@ -61,7 +61,7 @@ describe('switch', () => {
 
       describe('when an invalid branch is specified as an argument', () => {
         it('should display a list of branches then switch to selected branch', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           print: true,
           token: 'any',
           commandClass: SwitchCommand,
@@ -79,7 +79,7 @@ describe('switch', () => {
 
       describe('when current branch is specified as an argument', () => {
         it('should display an info message', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           commandClass: SwitchCommand,
           commandArgs: ['feature/second'],
@@ -96,7 +96,7 @@ describe('switch', () => {
 
     describe('when environment have no branches', () => {
       it('should display a warning message', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         commandClass: SwitchCommand,
         api: [

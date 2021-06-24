@@ -1,12 +1,12 @@
 const testCli = require('../test-cli-helper/test-cli');
 const ListProjectCommand = require('../../../src/commands/projects');
-const { testEnv } = require('../../fixtures/env');
+const { testEnvWithoutSecret } = require('../../fixtures/env');
 const { getProjectDetailledList } = require('../../fixtures/api');
 
 describe('projects', () => {
   describe('without json option', () => {
     it('should return the list of projects', () => testCli({
-      env: testEnv,
+      env: testEnvWithoutSecret,
       token: 'any',
       commandClass: ListProjectCommand,
       api: [() => getProjectDetailledList()],
@@ -20,7 +20,7 @@ describe('projects', () => {
   });
   describe('with json option', () => {
     it('should return the list of projects in json format', () => testCli({
-      env: testEnv,
+      env: testEnvWithoutSecret,
       token: 'any',
       commandClass: ListProjectCommand,
       commandArgs: ['--format', 'json'],

@@ -1,4 +1,4 @@
-const { testEnv } = require('../../fixtures/env');
+const { testEnvWithoutSecret } = require('../../fixtures/env');
 const {
   getEnvironmentNotFound,
   getEnvironmentValid,
@@ -12,7 +12,7 @@ describe('environments:delete', () => {
   describe('on an existing environment', () => {
     describe('on a succcesful removal', () => {
       it('should display environment deleted', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
         commandClass: DeleteCommand,
         commandArgs: ['324', '--force'],
@@ -28,7 +28,7 @@ describe('environments:delete', () => {
 
     describe('on a failed removal', () => {
       it('should exit with status 1', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
         commandClass: DeleteCommand,
         commandArgs: ['324', '--force'],
@@ -47,7 +47,7 @@ describe('environments:delete', () => {
   describe('on an unexisting environment', () => {
     it('exit with status 1', () => testCli({
       token: 'any',
-      env: testEnv,
+      env: testEnvWithoutSecret,
       api: [
         () => getEnvironmentNotFound(),
       ],

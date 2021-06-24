@@ -1,6 +1,6 @@
 const testCli = require('../test-cli-helper/test-cli');
 const ApplySchemaCommand = require('../../../src/commands/schema/apply');
-const { testEnv, testEnv2 } = require('../../fixtures/env');
+const { testEnvWithoutSecret, testEnvWithSecret } = require('../../fixtures/env');
 const {
   postSchema,
   postSchema404,
@@ -67,7 +67,7 @@ describe('schema:apply', () => {
         name: '.forestadmin-schema.json',
         content: forestadminSchema,
       }],
-      env: testEnv2,
+      env: testEnvWithSecret,
       api: [
         () => loginValidOidc(),
         () => postSchema(postSchemaMatch),
@@ -92,7 +92,7 @@ describe('schema:apply', () => {
           name: '.forestadmin-schema.json',
           content: forestadminSchema,
         }],
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
         commandClass: ApplySchemaCommand,
         std: [
@@ -111,7 +111,7 @@ describe('schema:apply', () => {
             content: forestadminSchema,
           }],
           token: 'any',
-          env: testEnv2,
+          env: testEnvWithSecret,
           commandClass: ApplySchemaCommand,
           api: [
             () => postSchema404(),
@@ -129,7 +129,7 @@ describe('schema:apply', () => {
             name: '.forestadmin-schema.json',
             content: forestadminSchema,
           }],
-          env: testEnv2,
+          env: testEnvWithSecret,
           api: [
             () => postSchema503(),
           ],
@@ -149,7 +149,7 @@ describe('schema:apply', () => {
               name: '.forestadmin-schema.json',
               content: forestadminSchema,
             }],
-            env: testEnv2,
+            env: testEnvWithSecret,
             token: 'any',
             api: [
               () => postSchema(postSchemaMatch),
@@ -172,7 +172,7 @@ describe('schema:apply', () => {
               name: '.forestadmin-schema.json',
               content: forestadminSchemaSnake,
             }],
-            env: testEnv2,
+            env: testEnvWithSecret,
             token: 'any',
             api: [
               () => postSchema(postSchemaMatch),
@@ -195,7 +195,7 @@ describe('schema:apply', () => {
               name: '.forestadmin-schema.json',
               content: forestadminNewMetaFormat,
             }],
-            env: testEnv2,
+            env: testEnvWithSecret,
             token: 'any',
             api: [
               () => postSchema(postSchemaNewMetaFormatMatch),
@@ -218,7 +218,7 @@ describe('schema:apply', () => {
               name: '.forestadmin-schema.json',
               content: forestadminWrongMetaFormat,
             }],
-            env: testEnv2,
+            env: testEnvWithSecret,
             token: 'any',
             commandClass: ApplySchemaCommand,
             std: [
@@ -238,7 +238,7 @@ describe('schema:apply', () => {
         name: '.forestadmin-schema.json',
         content: forestadminSchema,
       }],
-      env: testEnv2,
+      env: testEnvWithSecret,
       token: 'any',
       api: [
         () => postSchema500(),

@@ -7,7 +7,7 @@ const {
   getProjectListValid,
   deployValid,
 } = require('../fixtures/api');
-const { testEnv, testEnv2 } = require('../fixtures/env');
+const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
 
 describe('deploy', () => {
   describe('when the user is logged in', () => {
@@ -15,7 +15,7 @@ describe('deploy', () => {
       const validEnvSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
       const environmentName = 'name1';
       it('should display the list of projects', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
         commandClass: DeployCommand,
         api: [
@@ -68,7 +68,7 @@ describe('deploy', () => {
         const projectId = 82;
         const environmentName = 'name1';
         it('should not display the list of projects', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           commandClass: DeployCommand,
           commandArgs: ['-p', '82'],
@@ -108,7 +108,7 @@ describe('deploy', () => {
         const projectId = 82;
         const environmentName = 'name1';
         it('should not display the list of projects', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           commandClass: DeployCommand,
           api: [
@@ -150,7 +150,7 @@ describe('deploy', () => {
       const projectId = 82;
       const environmentName = 'name1';
       it('should not display the list of environments', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         commandClass: DeployCommand,
         commandArgs: [environmentName],
@@ -181,7 +181,7 @@ describe('deploy', () => {
       const projectId = 82;
       const environmentName = 'name1';
       it('should not display the list of environments', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         commandClass: DeployCommand,
         commandArgs: [environmentName, '--force'],
@@ -200,7 +200,7 @@ describe('deploy', () => {
       const projectId = 82;
       const environmentName = 'name1';
       it('should not push branch', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         commandClass: DeployCommand,
         commandArgs: [environmentName],
@@ -228,7 +228,7 @@ describe('deploy', () => {
       const projectId = 82;
 
       it('should throw an error', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         commandClass: DeployCommand,
         commandArgs: ['notExist'],

@@ -1,6 +1,6 @@
 const testCli = require('../test-cli-helper/test-cli');
 const CreateProjectCommand = require('../../../src/commands/projects/create');
-const { testEnv, testEnv2 } = require('../../fixtures/env');
+const { testEnvWithoutSecret, testEnvWithSecret } = require('../../fixtures/env');
 const {
   createProject,
   loginValidOidc,
@@ -95,7 +95,7 @@ describe('projects:create', () => {
       it('should login', () => testCli({
         commandClass: CreateProjectCommand,
         commandArgs: ['name'],
-        env: testEnv,
+        env: testEnvWithoutSecret,
         api: [
           () => loginValidOidc(),
         ],
@@ -128,7 +128,7 @@ describe('projects:create', () => {
       it('should execute command', () => testCli({
         commandClass: CreateProjectCommand,
         commandArgs: ['name'],
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         prompts: [
           {
@@ -160,7 +160,7 @@ describe('projects:create', () => {
       describe('is missing', () => {
         it('should fail', () => testCli({
           commandClass: CreateProjectCommand,
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           // FIXME: CreateProjectCommand.catch not called in this case, enhance testCli.
           exitCode: 2,
@@ -171,7 +171,7 @@ describe('projects:create', () => {
         it('should execute command', () => testCli({
           commandClass: CreateProjectCommand,
           commandArgs: ['name'],
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           prompts: [
             {
@@ -203,7 +203,7 @@ describe('projects:create', () => {
         it('should fail', () => testCli({
           commandClass: CreateProjectCommand,
           commandArgs: ['name'],
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           prompts: [
             {
@@ -222,7 +222,7 @@ describe('projects:create', () => {
         it('should execute command', () => testCli({
           commandClass: CreateProjectCommand,
           commandArgs: ['name'],
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           prompts: [
             {
@@ -254,7 +254,7 @@ describe('projects:create', () => {
         it('should require database flags via prompts', () => testCli({
           commandClass: CreateProjectCommand,
           commandArgs: ['name'],
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           prompts: [
             {
@@ -284,7 +284,7 @@ describe('projects:create', () => {
         it('should not require database flags via prompts', () => testCli({
           commandClass: CreateProjectCommand,
           commandArgs: ['name', '--databaseConnectionURL', 'postgres://dummy'],
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
           prompts: [
             {
@@ -327,7 +327,7 @@ describe('projects:create', () => {
       it('should generate a project', () => testCli({
         commandClass: CreateProjectCommand,
         commandArgs: ['name'],
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         api: [
           () => createProject(),

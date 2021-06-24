@@ -1,6 +1,6 @@
 const testCli = require('../test-cli-helper/test-cli');
 const CopyLayoutCommand = require('../../../src/commands/environments/copy-layout');
-const { testEnv } = require('../../fixtures/env');
+const { testEnvWithoutSecret } = require('../../fixtures/env');
 const {
   getEnvironmentValid,
   getEnvironmentValid2,
@@ -14,7 +14,7 @@ describe('environments:copy-layout', () => {
   describe('on an existing destination environment', () => {
     describe('on a completed job', () => {
       it('should copy the layout', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
         commandClass: CopyLayoutCommand,
         commandArgs: ['325', '324', '-p', '82', '--force'],
@@ -33,7 +33,7 @@ describe('environments:copy-layout', () => {
 
     describe('on a failed job', () => {
       it('should exit with status 1', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
         commandClass: CopyLayoutCommand,
         commandArgs: ['325', '324', '-p', '82', '--force'],
@@ -53,7 +53,7 @@ describe('environments:copy-layout', () => {
 
   describe('on an unexisting destination environment', () => {
     it('should exit with status 3', () => testCli({
-      env: testEnv,
+      env: testEnvWithoutSecret,
       token: 'any',
       commandClass: CopyLayoutCommand,
       commandArgs: ['325', '324', '-p', '82', '--force'],

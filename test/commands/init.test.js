@@ -17,14 +17,14 @@ const {
   createDevelopmentEnvironment,
   loginValidOidc,
 } = require('../fixtures/api');
-const { testEnv: noKeyEnv, testEnv2, testEnvWithDatabaseUrl } = require('../fixtures/env');
+const { testEnvWithoutSecret: noKeyEnv, testEnvWithSecret, testEnvWithSecretAndDatabaseURL } = require('../fixtures/env');
 
 describe('init command', () => {
   describe('login', () => {
     describe('when user is not logged in', () => {
       it('should prompt a login invitation and go to project selection on success', () => testCli({
         commandClass: InitCommand,
-        env: testEnv2,
+        env: testEnvWithSecret,
         api: [
           () => loginValidOidc(),
           () => getProjectByEnvIncludeLegacy(),
@@ -44,7 +44,7 @@ describe('init command', () => {
     describe('when user is already logged in', () => {
       it('should prompt the project selection', () => testCli({
         commandClass: InitCommand,
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         api: [
           () => getProjectByEnvIncludeLegacy(),
@@ -65,7 +65,7 @@ describe('init command', () => {
     describe('when the project already has an environment secret', () => {
       it('should go to project validation', () => testCli({
         commandClass: InitCommand,
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         api: [
           () => getProjectByEnvIncludeLegacy(),
@@ -167,7 +167,7 @@ describe('init command', () => {
     describe('when the user has no admin rights on the given project', () => {
       it('should stop executing with a custom error message', () => testCli({
         commandClass: InitCommand,
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         api: [
           () => getProjectByEnvIncludeLegacy(),
@@ -185,7 +185,7 @@ describe('init command', () => {
     describe('when the project is still flagged as v1', () => {
       it('should stop executing with a custom error message', () => testCli({
         commandClass: InitCommand,
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         api: [
           () => getProjectByEnvIncludeLegacy(),
@@ -203,7 +203,7 @@ describe('init command', () => {
     describe('when the project has no prod or remote', () => {
       it('should stop executing with a custom error message', () => testCli({
         commandClass: InitCommand,
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         api: [
           () => getProjectByEnvIncludeLegacy(),
@@ -242,7 +242,7 @@ describe('init command', () => {
     describe('when the project has an in-app origin', () => {
       it('should go to backend endpoint setup', () => testCli({
         commandClass: InitCommand,
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
         api: [
           () => getProjectByEnvIncludeLegacy(),
@@ -266,7 +266,7 @@ describe('init command', () => {
             content: 'SOMETHING=1',
           }],
           commandClass: InitCommand,
-          env: testEnvWithDatabaseUrl,
+          env: testEnvWithSecretAndDatabaseURL,
           token: 'any',
           api: [
             () => getProjectByEnvIncludeLegacy(),
@@ -301,7 +301,7 @@ describe('init command', () => {
               content: 'SOMETHING=1',
             }],
             commandClass: InitCommand,
-            env: testEnv2,
+            env: testEnvWithSecret,
             token: 'any',
             api: [
               () => getProjectByEnvIncludeLegacy(),
@@ -422,7 +422,7 @@ describe('init command', () => {
               content: 'SOMETHING=1',
             }],
             commandClass: InitCommand,
-            env: testEnv2,
+            env: testEnvWithSecret,
             token: 'any',
             api: [
               () => getProjectByEnvIncludeLegacy(),
@@ -466,7 +466,7 @@ describe('init command', () => {
     describe('when the user already have an existing development environment', () => {
       it('should go to the environment variables step', () => testCli({
         commandClass: InitCommand,
-        env: testEnvWithDatabaseUrl,
+        env: testEnvWithSecretAndDatabaseURL,
         token: 'any',
         api: [
           () => getProjectByEnvIncludeLegacy(),
@@ -487,7 +487,7 @@ describe('init command', () => {
       describe('when the user enters a correct endpoint', () => {
         it('should display a green mark with a relevant message', () => testCli({
           commandClass: InitCommand,
-          env: testEnvWithDatabaseUrl,
+          env: testEnvWithSecretAndDatabaseURL,
           token: 'any',
           api: [
             () => getProjectByEnvIncludeLegacy(),
@@ -530,7 +530,7 @@ describe('init command', () => {
           content: 'SOMETHING=1',
         }],
         commandClass: InitCommand,
-        env: testEnvWithDatabaseUrl,
+        env: testEnvWithSecretAndDatabaseURL,
         token: 'any',
         api: [
           () => getProjectByEnvIncludeLegacy(),
@@ -574,7 +574,7 @@ describe('init command', () => {
     describe('when the project is NOT flagged as in-app and does not have a .env file', () => {
       it('should ask if the user wants to create an env file and if not, displays the environment variables', () => testCli({
         commandClass: InitCommand,
-        env: testEnvWithDatabaseUrl,
+        env: testEnvWithSecretAndDatabaseURL,
         token: 'any',
         print: true,
         api: [

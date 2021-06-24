@@ -1,12 +1,12 @@
 const testCli = require('../test-cli-helper/test-cli');
 const EnvironmentCommand = require('../../../src/commands/environments');
 const { getEnvironmentListValid2 } = require('../../fixtures/api');
-const { testEnv } = require('../../fixtures/env');
+const { testEnvWithoutSecret } = require('../../fixtures/env');
 
 describe('environments', () => {
   describe('without JSON format option', () => {
     it('should return the list of environments', () => testCli({
-      env: testEnv,
+      env: testEnvWithoutSecret,
       token: 'any',
       api: [
         () => getEnvironmentListValid2(),
@@ -24,7 +24,7 @@ describe('environments', () => {
 
   describe('with JSON format option', () => {
     it('should return the list of environments in JSON', () => testCli({
-      env: testEnv,
+      env: testEnvWithoutSecret,
       token: 'any',
       api: [
         () => getEnvironmentListValid2(),

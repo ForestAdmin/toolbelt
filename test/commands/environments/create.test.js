@@ -5,13 +5,13 @@ const {
   createEnvironmentValid,
   loginValidOidc,
 } = require('../../fixtures/api');
-const { testEnv } = require('../../fixtures/env');
+const { testEnvWithoutSecret } = require('../../fixtures/env');
 
 describe('environments:create', () => {
   describe('with a logged-in user', () => {
     describe('without JSON format option', () => {
       it('should returns the freshly created environment', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
         commandClass: EnvironmentCreateCommand,
         commandArgs: ['-p', '2', '-n', 'Test', '-u', 'https://test.forestadmin.com'],
@@ -34,7 +34,7 @@ describe('environments:create', () => {
 
     describe('with JSON format option', () => {
       it('should returns the freshly created environment in JSON', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
         commandClass: EnvironmentCreateCommand,
         commandArgs: ['-p', '2', '-n', 'Test', '-u', 'https://test.forestadmin.com', '--format', 'json'],
@@ -56,7 +56,7 @@ describe('environments:create', () => {
 
   describe('without a logged-in user', () => {
     it('should returns the freshly created environment', () => testCli({
-      env: testEnv,
+      env: testEnvWithoutSecret,
       commandClass: EnvironmentCreateCommand,
       commandArgs: ['-n', 'Test', '-u', 'https://test.forestadmin.com'],
       api: [
