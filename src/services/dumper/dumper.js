@@ -382,7 +382,7 @@ class Dumper {
 
   // NOTICE: Generate files in alphabetical order to ensure a nice generation console logs display.
   async dump(schema, config) {
-    const cwd = config.path || process.cwd();
+    const cwd = config.path || this.constants.CURRENT_WORKING_DIRECTORY;
     const projectPath = config.applicationName ? `${cwd}/${config.applicationName}` : cwd;
     const { isUpdate, useMultiDatabase, modelsExportPath } = config;
 
@@ -446,19 +446,18 @@ class Dumper {
   }
 
   checkLumberProjectStructure() {
-    const currentPath = process.cwd();
     try {
-      if (!this.fs.existsSync(`${currentPath}/routes`)) throw new Error('No "routes" directory.');
-      if (!this.fs.existsSync(`${currentPath}/forest`)) throw new Error('No "forest" directory.');
-      if (!this.fs.existsSync(`${currentPath}/models`)) throw new Error('No "models“ directory.');
+      if (!this.fs.existsSync('routes')) throw new Error('No "routes" directory.');
+      if (!this.fs.existsSync('forest')) throw new Error('No "forest" directory.');
+      if (!this.fs.existsSync('models')) throw new Error('No "models“ directory.');
     } catch (error) {
-      throw new InvalidLumberProjectStructureError(currentPath, error);
+      throw new InvalidLumberProjectStructureError(this.constants.CURRENT_WORKING_DIRECTORY, error);
     }
   }
 
   checkLianaCompatiblityForUpdate() {
-    const packagePath = `${process.cwd()}/package.json`;
-    if (!this.fs.existsSync(packagePath)) throw new IncompatibleLianaForUpdateError(`"${packagePath}" not found.`);
+    const packagePath = 'package.json';
+    if (!this.fs.existsSync(packagePath)) throw new IncompatibleLianaForUpdateError(`"${packagePath}" not found in current directory.`);
 
     const file = this.fs.readFileSync(packagePath, 'utf8');
     const match = /forest-express-.*((\d).\d.\d)/g.exec(file);
@@ -475,7 +474,7 @@ class Dumper {
   }
 
   hasMultipleDatabaseStructure() {
-    const files = this.fs.readdirSync(`${process.cwd()}/models`, { withFileTypes: true });
+    const files = this.fs.readdirSync('models', { withFileTypes: true });
     return !files.some((file) => file.isFile() && file.name !== 'index.js');
   }
 }

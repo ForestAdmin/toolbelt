@@ -1,8 +1,10 @@
 const fs = require('fs');
+const path = require('path');
 
-function DirectoryExistenceChecker(path, directory) {
+function DirectoryExistenceChecker(directory, basePath = undefined) {
   this.perform = () => {
-    const directoryToCheck = `${path}/${directory}`;
+    let directoryToCheck = directory;
+    if (basePath) directoryToCheck = path.resolve(basePath, directory);
     try {
       fs.accessSync(directoryToCheck, fs.F_OK);
       return true;

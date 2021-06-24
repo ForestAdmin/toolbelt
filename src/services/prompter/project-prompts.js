@@ -28,8 +28,8 @@ class ProjectPrompts extends AbstractPrompter {
             messages.HINT_MISSING_PROJECT_NAME,
           ],
         );
-      } else if (new DirectoryExistenceChecker(process.cwd(), projectName).perform()) {
-        const message = `The directory ${chalk.red(`${process.cwd()}/${projectName}`)} already exists.`;
+      } else if (new DirectoryExistenceChecker(projectName).perform()) {
+        const message = `File or directory "${chalk.red(`${projectName}`)}" already exists.`;
         throw new PrompterError(
           message,
           [

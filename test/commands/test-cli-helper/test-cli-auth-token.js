@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 
 const fakeKey = 'test-token-key';
 
-const getTokenPath = () => process.env.TOKEN_PATH || process.cwd();
+const getTokenPath = () => process.env.TOKEN_PATH || '.';
 
 const clearTokenPath = ({ env }) => {
   fsExtra.removeSync(env.TOKEN_PATH);

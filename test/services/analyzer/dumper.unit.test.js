@@ -1,4 +1,6 @@
 const chalk = require('chalk');
+const appRoot = require('app-root-path');
+
 const Dumper = require('../../../src/services/dumper/dumper');
 const InvalidLumberProjectStructureError = require('../../../src/errors/dumper/invalid-lumber-project-structure-error');
 const IncompatibleLianaForUpdateError = require('../../../src/errors/dumper/incompatible-liana-for-update-error');
@@ -53,20 +55,22 @@ describe('services > dumper (unit)', () => {
   });
 
   describe('writeFile', () => {
-    describe('when file does not exists', () => {
-      const context = {
-        logger: {
-          log: jest.fn(),
-        },
-        fs: {
-          writeFileSync: jest.fn(),
-          existsSync: jest.fn().mockReturnValue(false),
-        },
-      };
-      createDumper(context).writeFile(ABSOLUTE_PROJECT_PATH, RELATIVE_FILE_PATH, 'content');
+    const makeContextOverrides = ({ existsSync }) => ({
+      logger: {
+        log: jest.fn(),
+      },
+      fs: {
+        writeFileSync: jest.fn(),
+        existsSync: jest.fn().mockReturnValue(existsSync),
+      },
+    });
 
+    describe('when file does not exists', () => {
       it('should call writeFileSync to write the file', () => {
         expect.assertions(2);
+
+        const context = makeContextOverrides({ existsSync: false });
+        createDumper(context).writeFile(ABSOLUTE_PROJECT_PATH, RELATIVE_FILE_PATH, 'content');
 
         expect(context.fs.writeFileSync).toHaveBeenCalledTimes(1);
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(`${ABSOLUTE_PROJECT_PATH}/${RELATIVE_FILE_PATH}`, 'content');
@@ -75,31 +79,29 @@ describe('services > dumper (unit)', () => {
       it('should call the logger to display a create log message', () => {
         expect.assertions(2);
 
+        const context = makeContextOverrides({ existsSync: false });
+        createDumper(context).writeFile(ABSOLUTE_PROJECT_PATH, RELATIVE_FILE_PATH, 'content');
+
         expect(context.logger.log).toHaveBeenCalledTimes(1);
         expect(context.logger.log).toHaveBeenCalledWith(`  ${chalk.green('create')} ${RELATIVE_FILE_PATH}`);
       });
     });
 
     describe('when file exists', () => {
-      const context = {
-        logger: {
-          log: jest.fn(),
-        },
-        fs: {
-          writeFileSync: jest.fn(),
-          existsSync: jest.fn().mockReturnValue(true),
-        },
-      };
-      createDumper(context).writeFile(ABSOLUTE_PROJECT_PATH, RELATIVE_FILE_PATH, 'content');
-
       it('should not write the file', () => {
         expect.assertions(1);
+
+        const context = makeContextOverrides({ existsSync: true });
+        createDumper(context).writeFile(ABSOLUTE_PROJECT_PATH, RELATIVE_FILE_PATH, 'content');
 
         expect(context.fs.writeFileSync).not.toHaveBeenCalled();
       });
 
       it('should call the logger to display a skip log message', () => {
         expect.assertions(2);
+
+        const context = makeContextOverrides({ existsSync: true });
+        createDumper(context).writeFile(ABSOLUTE_PROJECT_PATH, RELATIVE_FILE_PATH, 'content');
 
         expect(context.logger.log).toHaveBeenCalledTimes(1);
         expect(context.logger.log).toHaveBeenCalledWith(`  ${chalk.yellow('skip')} ${RELATIVE_FILE_PATH} - already exist.`);
@@ -108,14 +110,17 @@ describe('services > dumper (unit)', () => {
   });
 
   describe('copyTemplate', () => {
+    const makeContextOverrides = () => ({
+      fs: {
+        readFileSync: jest.fn().mockReturnValue('content'),
+      },
+    });
+
     it('should call writeFile with computed parameters', () => {
       expect.assertions(2);
 
-      const dumper = createDumper({
-        fs: {
-          readFileSync: jest.fn().mockReturnValue('content'),
-        },
-      });
+      const context = makeContextOverrides();
+      const dumper = createDumper(context);
       const writeFileSpy = jest.spyOn(dumper, 'writeFile').mockImplementation(() => {});
       dumper.copyTemplate(ABSOLUTE_PROJECT_PATH, 'from.js', 'to.js');
 
@@ -125,19 +130,21 @@ describe('services > dumper (unit)', () => {
   });
 
   describe('copyHandleBarsTemplate', () => {
-    const context = {
+    const makeContextOverrides = () => ({
       Handlebars: {
         compile: () => jest.fn().mockReturnValue('content'),
       },
       fs: {
         readFileSync: jest.fn(),
       },
-    };
-    const dumper = createDumper(context);
+    });
 
     describe('with missing parameters', () => {
       it('should throw an error', () => {
         expect.assertions(1);
+
+        const context = makeContextOverrides();
+        const dumper = createDumper(context);
 
         expect(() => dumper.copyHandleBarsTemplate({}))
           .toThrow('Missing argument (projectPath, source, target or context).');
@@ -148,6 +155,8 @@ describe('services > dumper (unit)', () => {
       it('should call writeFile with computed parameters', () => {
         expect.assertions(2);
 
+        const context = makeContextOverrides();
+        const dumper = createDumper(context);
         const writeFileSpy = jest.spyOn(dumper, 'writeFile').mockImplementation(() => {});
         dumper.copyHandleBarsTemplate({
           projectPath: ABSOLUTE_PROJECT_PATH,
@@ -551,10 +560,11 @@ describe('services > dumper (unit)', () => {
       };
       const config = {
         applicationName: 'test-output/unit-test-dumper',
+        path: appRoot,
       };
       await dumper.dump(schema, config);
 
-      const projectPath = `${process.cwd()}/test-output/unit-test-dumper`;
+      const projectPath = `${appRoot}/test-output/unit-test-dumper`;
 
       expect(mkdirpMock).toHaveBeenCalledTimes(8);
       expect(mkdirpMock).toHaveBeenCalledWith(projectPath);
@@ -618,13 +628,15 @@ describe('services > dumper (unit)', () => {
         testModel: { fields: {}, references: [], options: {} },
       };
       const config = {
+        applicationName: 'test-output/unit-test-dumper',
         isUpdate: true,
-        useMultiDatabase: true,
         modelsExportPath: 'test',
+        path: appRoot,
+        useMultiDatabase: true,
       };
       await dumper.dump(schema, config);
 
-      const projectPath = process.cwd();
+      const projectPath = `${appRoot}/test-output/unit-test-dumper`;
 
       expect(mkdirpMock).toHaveBeenCalledTimes(5);
       expect(mkdirpMock).toHaveBeenCalledWith(projectPath);
@@ -720,8 +732,8 @@ describe('services > dumper (unit)', () => {
       expect(() => dumper.checkLianaCompatiblityForUpdate()).not.toThrow();
     });
 
-    it('should throw an error when package.json does not exist', () => {
-      expect.assertions(1);
+    it('should throw an error when package.json does not exist', async () => {
+      expect.assertions(3);
 
       const dumper = createDumper({
         fs: {
@@ -729,9 +741,16 @@ describe('services > dumper (unit)', () => {
         },
       });
 
-      const packagePath = `${process.cwd()}/package.json`;
-      expect(() => dumper.checkLianaCompatiblityForUpdate())
-        .toThrow(new IncompatibleLianaForUpdateError(`"${packagePath}" not found.`));
+      let dumperError;
+      try {
+        dumper.checkLianaCompatiblityForUpdate();
+      } catch (error) {
+        dumperError = error;
+      }
+      expect(dumperError).toBeInstanceOf(IncompatibleLianaForUpdateError);
+      expect(dumperError).toHaveProperty('message', 'The liana is incompatible for update');
+      const packagePath = 'package.json';
+      expect(dumperError).toHaveProperty('reason', `"${packagePath}" not found in current directory.`);
     });
 
     it('should throw an error when liana version is less than 7', () => {

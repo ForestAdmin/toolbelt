@@ -1,4 +1,3 @@
-const path = require('path');
 const { flags } = require('@oclif/command');
 const defaultPlan = require('../../context/plan');
 const SchemaSerializer = require('../../serializers/schema');
@@ -48,7 +47,7 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
 
   readSchema() {
     this.logger.log('Reading ".forestadmin-schema.json" from current directory...');
-    const filename = path.resolve(process.cwd(), '.forestadmin-schema.json');
+    const filename = '.forestadmin-schema.json';
 
     if (!this.fs.existsSync(filename)) {
       this.logger.error('Cannot find the file ".forestadmin-schema.json" in this directory. Please be sure to run this command inside your project directory.');

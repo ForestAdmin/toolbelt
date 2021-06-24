@@ -98,6 +98,7 @@ async function testCli({
 
   const oldcwd = process.cwd();
   makeTempDirectory(temporaryDirectory);
+  // WARNING: Keep this BEFORE context construction. Current directory will be included.
   process.chdir(temporaryDirectory);
   files.forEach((file) => mockFile(file));
 
