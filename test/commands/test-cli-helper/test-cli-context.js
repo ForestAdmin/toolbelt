@@ -1,7 +1,6 @@
-const { getTokenPath } = require('./test-cli-auth-token');
+const { makeAuthenticatorMock } = require('./mocks/plan-mocks');
 
 const defaultPlan = require('../../../src/context/plan');
-const { makeAuthenticatorMock } = require('./mocks/plan-mocks');
 
 // FIXME: Need to override things here (fs...)
 
@@ -32,7 +31,9 @@ const makeEnvironmentVariablesReplacement = (env) => (plan) => plan
     // FOREST_URL: undefined,
     // NODE_ENV: undefined,
     // PORT: undefined,
-    TOKEN_PATH: getTokenPath(),
+    // TOKEN_PATH: undefined,
+    // NOTICE: Makes test runner look for token in test temporary directory.
+    TOKEN_PATH: process.env.TOKEN_PATH || '.',
     // FIXME: Overrides for this test.
     ...env,
   });
