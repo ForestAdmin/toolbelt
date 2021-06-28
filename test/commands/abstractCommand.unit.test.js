@@ -19,5 +19,16 @@ describe('abstract command', () => {
       expect(abstractCommand.chalk).toBe(chalk);
       expect(abstractCommand.logger).toBe(logger);
     });
+
+    it('should run with default context plan', async () => {
+      expect.assertions(3);
+
+      const abstractCommand = new AbstractCommand();
+      abstractCommand.init();
+
+      expect(abstractCommand).toBeInstanceOf(AbstractCommand);
+      expect(abstractCommand.chalk).toBeDefined();
+      expect(abstractCommand.logger).toBeDefined();
+    });
   });
 });
