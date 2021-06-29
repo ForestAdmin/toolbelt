@@ -38,8 +38,11 @@ const makeEnvironmentVariablesReplacement = (env) => (plan) => plan
     ...env,
   });
 
+const jwtDecodeMock = jest.fn().mockImplementation((token) => token);
+
 const makeDependenciesReplacement = () => (plan) => plan
-  .replace('dependencies/open/open', jest.fn());
+  .replace('dependencies/open/open', jest.fn())
+  .replace('dependencies/jwtDecode/jwtDecode', jwtDecodeMock);
 
 const makeAuthenticatorReplacement = (tokenBehavior) => {
   if (tokenBehavior === null) return (plan) => plan;
@@ -67,14 +70,15 @@ const preparePlan = ({
   if (testCommandPlan) return { plan: testCommandPlan };
   const inquirerMock = makeInquirerMock(prompts);
 
-  const environmentVariablesPlan = makeEnvironmentVariablesReplacement(env);
-  const dependenciesPlan = makeDependenciesReplacement();
-  const inquirerPlan = makeInquirerReplacement(inquirerMock);
   const authenticatorPlan = makeAuthenticatorReplacement(tokenBehavior);
+  const dependenciesPlan = makeDependenciesReplacement();
+  const environmentVariablesPlan = makeEnvironmentVariablesReplacement(env);
+  const inquirerPlan = makeInquirerReplacement(inquirerMock);
 
   return {
     mocks: {
       inquirer: inquirerMock,
+      jwtDecode: jwtDecodeMock,
     },
     plan: [
       defaultPlan,

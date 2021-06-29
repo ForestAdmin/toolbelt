@@ -17,6 +17,8 @@ module.exports = (plan) => plan
     .addFunction('stderr', process.stderr))
   .addStep('inquirer', (planInquirer) => planInquirer
     .addInstance('inquirer', inquirer))
+  .addStep('jwtDecode', (planJWTDecode) => planJWTDecode
+    .addInstance('jwtDecode', jwtDecode))
   .addStep('others', (planOthers) => planOthers
     .addModule('chalk', chalk)
     .addModule('crypto', crypto)
@@ -24,5 +26,4 @@ module.exports = (plan) => plan
     .addModule('fs', fs)
     .addModule('superagent', superagent)
     .addModule('openIdClient', openIdClient)
-    .addModule('jwtDecode', jwtDecode)
     .addModule('joi', joi));

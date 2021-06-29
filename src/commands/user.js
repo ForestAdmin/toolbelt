@@ -1,4 +1,3 @@
-const jwt = require('jsonwebtoken');
 const defaultPlan = require('../context/plan');
 const AbstractCommand = require('../abstract-command');
 
@@ -6,22 +5,36 @@ class UserCommand extends AbstractCommand {
   init(plan) {
     super.init(plan || defaultPlan);
     const {
-      assertPresent, chalk, logger, authenticator,
+      assertPresent,
+      authenticator,
+      chalk,
+      jwtDecode,
+      logger,
+      terminator,
     } = this.context;
-    assertPresent({ chalk, logger, authenticator });
+    assertPresent({
+      authenticator,
+      chalk,
+      jwtDecode,
+      logger,
+      terminator,
+    });
 
-    this.chalk = chalk;
-    this.logger = logger;
     this.authenticator = authenticator;
+    this.chalk = chalk;
+    this.jwtDecode = jwtDecode;
+    this.logger = logger;
+    this.terminator = terminator;
   }
 
   async run() {
     const token = this.authenticator.getAuthToken();
     if (token) {
-      const decoded = jwt.decode(token);
-      console.log(this.chalk.bold('Email: ') + this.chalk.cyan(decoded.data.data.attributes.email));
+      const decoded = this.jwtDecode(token);
+      const { email } = decoded.data.data.attributes;
+      this.logger.info(`${this.chalk.bold('Email:')} ${this.chalk.cyan(email)}`);
     } else {
-      this.logger.error('You are not logged.');
+      this.terminator.terminate(1, { logs: ['You are not logged.'] });
     }
   }
 }
