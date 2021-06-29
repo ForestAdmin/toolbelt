@@ -31,6 +31,6 @@ module.exports = {
       await eventSender.notifyError();
     }
 
-    exitProcess(status);
+    return exitProcess(status);
   },
 };

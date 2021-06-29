@@ -34,8 +34,9 @@ class UserCommand extends AbstractCommand {
       const { email } = decoded.data.data.attributes;
       this.logger.info(`${this.chalk.bold('Email:')} ${this.chalk.cyan(email)}`);
     } else {
-      this.terminator.terminate(1, { logs: ['You are not logged.'] });
+      return this.terminator.terminate(1, { logs: ['You are not logged.'] });
     }
+    return Promise.resolve();
   }
 }
 
