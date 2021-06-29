@@ -306,6 +306,14 @@ module.exports = {
       secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
     })),
 
+  createEnvironmentForbidden: () => nock('http://localhost:3001')
+    .post('/api/environments')
+    .reply(403),
+
+  createEnvironmentDetailedError: () => nock('http://localhost:3001')
+    .post('/api/environments')
+    .reply(422, { errors: [{ detail: 'dummy test error' }] }),
+
   getEnvironmentNotFound: (id = '3947') => nock('http://localhost:3001')
     .matchHeader('forest-environment-id', id)
     .get(`/api/environments/${id}`)

@@ -3,6 +3,8 @@ const EnvironmentCreateCommand = require('../../../src/commands/environments/cre
 const {
   getProjectListValid,
   createEnvironmentValid,
+  createEnvironmentForbidden,
+  createEnvironmentDetailedError,
   loginValidOidc,
 } = require('../../fixtures/api');
 const { testEnvWithoutSecret } = require('../../fixtures/env');
@@ -87,5 +89,39 @@ describe('environments:create', () => {
         { out: 'FOREST_ENV_SECRET  2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125' },
       ],
     }));
+  });
+
+  describe('when creation fails', () => {
+    describe('with a 403 error', () => {
+      it('should rethrow', () => testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: EnvironmentCreateCommand,
+        commandArgs: ['-p', '2', '-n', 'Test', '-u', 'https://test.forestadmin.com', '--format', 'json'],
+        api: [
+          () => createEnvironmentForbidden(),
+        ],
+        std: [
+          { err: '× You do not have the right to execute this action on this project' },
+        ],
+        exitCode: 2,
+      }));
+    });
+
+    describe('with another error having details', () => {
+      it('should log error and exit 1', () => testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: EnvironmentCreateCommand,
+        commandArgs: ['-p', '2', '-n', 'Test', '-u', 'https://test.forestadmin.com', '--format', 'json'],
+        api: [
+          () => createEnvironmentDetailedError(),
+        ],
+        std: [
+          { err: '× dummy test error' },
+        ],
+        exitCode: 1,
+      }));
+    });
   });
 });
