@@ -112,11 +112,17 @@ async function testCli({
     tokenBehavior,
   });
 
-  const command = prepareCommand({
-    commandArgs,
-    commandClass,
-    commandPlan,
-  });
+  let command;
+  try {
+    command = prepareCommand({
+      commandArgs,
+      commandClass,
+      commandPlan,
+    });
+  } catch (error) {
+    rollbackStd(stdin, inputs, outputs);
+    throw error;
+  }
 
   nock.disableNetConnect();
   const nocksToStart = asArray(api);
