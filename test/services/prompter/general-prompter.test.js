@@ -1,4 +1,3 @@
-const sinon = require('sinon');
 const Context = require('@forestadmin/context');
 
 const GeneralPrompter = require('../../../src/services/prompter/general-prompter');
@@ -30,20 +29,20 @@ describe('services > prompter > general prompter', () => {
         const promptError = new PrompterError('error message', ['logs']);
 
         const generalPrompter = new GeneralPrompter(requests, program);
-        const applicationPromptsStub = sinon.stub(generalPrompter.applicationPrompt, 'handlePrompts').rejects(promptError);
-        const projectPromptsStub = sinon.stub(generalPrompter.projectPrompt, 'handlePrompts').rejects(promptError);
-        const databasePromptsStub = sinon.stub(generalPrompter.databasePrompt, 'handlePrompts').rejects(promptError);
-        const terminateStub = sinon.stub(Terminator, 'terminate').resolves(true);
+        const applicationPromptsStub = jest.spyOn(generalPrompter.applicationPrompt, 'handlePrompts').mockRejectedValue(promptError);
+        const projectPromptsStub = jest.spyOn(generalPrompter.projectPrompt, 'handlePrompts').mockRejectedValue(promptError);
+        const databasePromptsStub = jest.spyOn(generalPrompter.databasePrompt, 'handlePrompts').mockRejectedValue(promptError);
+        const terminateStub = jest.spyOn(Terminator, 'terminate').mockResolvedValue(true);
 
         await generalPrompter.getConfig();
 
-        const status = terminateStub.getCall(0).args[0];
+        const status = terminateStub.mock.calls[0][0];
         const {
           errorCode,
           errorMessage,
           logs,
           context,
-        } = terminateStub.getCall(0).args[1];
+        } = terminateStub.mock.calls[0][1];
 
         expect(status).toStrictEqual(1);
         expect(errorCode).toStrictEqual('unexpected_error');
@@ -52,10 +51,10 @@ describe('services > prompter > general prompter', () => {
         expect(context).toBeUndefined();
 
         resetParams();
-        applicationPromptsStub.restore();
-        projectPromptsStub.restore();
-        databasePromptsStub.restore();
-        terminateStub.restore();
+        applicationPromptsStub.mockRestore();
+        projectPromptsStub.mockRestore();
+        databasePromptsStub.mockRestore();
+        terminateStub.mockRestore();
       });
     });
   });

@@ -1,6 +1,5 @@
 const Context = require('@forestadmin/context');
 const fs = require('fs');
-const sinon = require('sinon');
 const os = require('os');
 const rimraf = require('rimraf');
 const Dumper = require('../../../src/services/dumper/dumper');
@@ -44,13 +43,12 @@ describe('services > dumper', () => {
 
       // eslint-disable-next-line jest/no-hooks
       beforeAll(() => {
-        osStub = sinon.stub(os, 'platform');
-        osStub.returns('linux');
+        osStub = jest.spyOn(os, 'platform').mockReturnValue('linux');
       });
 
       // eslint-disable-next-line jest/no-hooks
       afterAll(() => {
-        osStub.restore();
+        osStub.mockRestore();
       });
 
       it('should not make use of `host.docker.internal`', async () => {

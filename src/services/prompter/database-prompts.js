@@ -1,3 +1,4 @@
+const os = require('os');
 const AbstractPrompter = require('./abstract-prompter');
 const PrompterError = require('./prompter-error');
 const messages = require('../../utils/messages');
@@ -68,7 +69,7 @@ class DatabasePrompts extends AbstractPrompter {
 
       // NOTICE: use a rawlist on Windows because of this issue:
       // https://github.com/SBoudrias/Inquirer.js/issues/303
-      if (/^win/.test(process.platform)) {
+      if (/^win/.test(os.platform())) {
         prompt.type = 'rawlist';
       }
 

@@ -1,6 +1,5 @@
 const chalk = require('chalk');
 const path = require('path');
-const sinon = require('sinon');
 
 const PrompterError = require('../../../src/services/prompter/prompter-error');
 const messages = require('../../../src/utils/messages');
@@ -28,10 +27,10 @@ describe('services > prompter > project prompts', () => {
       program.args = [NO_SUCH_PROJECT_NAME];
 
       const projectPrompts = new ProjectPrompts(requests, env, {}, program);
-      const nameHandlerStub = sinon.stub(projectPrompts, 'handleName');
+      const nameHandlerStub = jest.spyOn(projectPrompts, 'handleName');
       await projectPrompts.handlePrompts();
 
-      expect(nameHandlerStub.calledOnce).toStrictEqual(true);
+      expect(nameHandlerStub).toHaveBeenCalledTimes(1);
     });
   });
 

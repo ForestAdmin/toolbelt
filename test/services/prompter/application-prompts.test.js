@@ -1,4 +1,3 @@
-const sinon = require('sinon');
 const ApplicationPrompts = require('../../../src/services/prompter/application-prompts');
 
 const FAKE_APP_HOST = 'fakeApplicationHost';
@@ -25,17 +24,17 @@ describe('services > prompter > application prompts', () => {
     it('should handle the host name', async () => {
       expect.assertions(1);
       applicationPrompts = new ApplicationPrompts(requests, env, prompts, program);
-      hostnameHandlerStub = sinon.stub(applicationPrompts, 'handleHostname');
-      portHandlerStub = sinon.stub(applicationPrompts, 'handlePort');
+      hostnameHandlerStub = jest.spyOn(applicationPrompts, 'handleHostname');
+      portHandlerStub = jest.spyOn(applicationPrompts, 'handlePort');
       await applicationPrompts.handlePrompts();
-      expect(hostnameHandlerStub.calledOnce).toStrictEqual(true);
+      expect(hostnameHandlerStub).toHaveBeenCalledTimes(1);
     });
 
     it('should handle the port', () => {
       expect.assertions(1);
-      expect(portHandlerStub.calledOnce).toStrictEqual(true);
-      hostnameHandlerStub.restore();
-      portHandlerStub.restore();
+      expect(portHandlerStub).toHaveBeenCalledTimes(1);
+      hostnameHandlerStub.mockRestore();
+      portHandlerStub.mockRestore();
       resetParams();
     });
   });

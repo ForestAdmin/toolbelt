@@ -1,4 +1,4 @@
-const sinon = require('sinon');
+const os = require('os');
 const PrompterError = require('../../../src/services/prompter/prompter-error');
 const { DatabasePrompts } = require('../../../src/services/prompter/database-prompts');
 const messages = require('../../../src/utils/messages');
@@ -34,77 +34,77 @@ describe('services > prompter > database prompts', () => {
     // eslint-disable-next-line jest/no-hooks
     beforeAll(async () => {
       databasePrompts = new DatabasePrompts(requests, env, prompts, program);
-      connectionUrlHandlerStub = sinon.stub(databasePrompts, 'handleConnectionUrl');
-      dialectHandlerStub = sinon.stub(databasePrompts, 'handleDialect');
-      nameHandlerStub = sinon.stub(databasePrompts, 'handleName');
-      schemaHandlerStub = sinon.stub(databasePrompts, 'handleSchema');
-      hostNameHandlerStub = sinon.stub(databasePrompts, 'handleHostname');
-      portHandlerStub = sinon.stub(databasePrompts, 'handlePort');
-      userHandlerStub = sinon.stub(databasePrompts, 'handleUser');
-      passwordHandlerStub = sinon.stub(databasePrompts, 'handlePassword');
-      sslHandlerStub = sinon.stub(databasePrompts, 'handleSsl');
-      mongoSrvHandlerStub = sinon.stub(databasePrompts, 'handleMongodbSrv');
+      connectionUrlHandlerStub = jest.spyOn(databasePrompts, 'handleConnectionUrl');
+      dialectHandlerStub = jest.spyOn(databasePrompts, 'handleDialect');
+      nameHandlerStub = jest.spyOn(databasePrompts, 'handleName');
+      schemaHandlerStub = jest.spyOn(databasePrompts, 'handleSchema');
+      hostNameHandlerStub = jest.spyOn(databasePrompts, 'handleHostname');
+      portHandlerStub = jest.spyOn(databasePrompts, 'handlePort');
+      userHandlerStub = jest.spyOn(databasePrompts, 'handleUser');
+      passwordHandlerStub = jest.spyOn(databasePrompts, 'handlePassword');
+      sslHandlerStub = jest.spyOn(databasePrompts, 'handleSsl');
+      mongoSrvHandlerStub = jest.spyOn(databasePrompts, 'handleMongodbSrv');
       await databasePrompts.handlePrompts();
     });
 
     // eslint-disable-next-line jest/no-hooks
     afterAll(() => {
-      connectionUrlHandlerStub.restore();
-      dialectHandlerStub.restore();
-      nameHandlerStub.restore();
-      schemaHandlerStub.restore();
-      hostNameHandlerStub.restore();
-      portHandlerStub.restore();
-      userHandlerStub.restore();
-      passwordHandlerStub.restore();
-      sslHandlerStub.restore();
-      mongoSrvHandlerStub.restore();
+      connectionUrlHandlerStub.mockRestore();
+      dialectHandlerStub.mockRestore();
+      nameHandlerStub.mockRestore();
+      schemaHandlerStub.mockRestore();
+      hostNameHandlerStub.mockRestore();
+      portHandlerStub.mockRestore();
+      userHandlerStub.mockRestore();
+      passwordHandlerStub.mockRestore();
+      sslHandlerStub.mockRestore();
+      mongoSrvHandlerStub.mockRestore();
       resetParams();
     });
 
     it('should handle the connection url', () => {
       expect.assertions(1);
-      expect(connectionUrlHandlerStub.calledOnce).toStrictEqual(true);
+      expect(connectionUrlHandlerStub).toHaveBeenCalledTimes(1);
     });
 
     it('should handle the dialect', () => {
       expect.assertions(1);
-      expect(dialectHandlerStub.calledOnce).toStrictEqual(true);
+      expect(dialectHandlerStub).toHaveBeenCalledTimes(1);
     });
 
     it('should handle the name', () => {
       expect.assertions(1);
-      expect(nameHandlerStub.calledOnce).toStrictEqual(true);
+      expect(nameHandlerStub).toHaveBeenCalledTimes(1);
     });
 
     it('should handle the schema', () => {
       expect.assertions(1);
-      expect(schemaHandlerStub.calledOnce).toStrictEqual(true);
+      expect(schemaHandlerStub).toHaveBeenCalledTimes(1);
     });
 
     it('should handle the port', () => {
       expect.assertions(1);
-      expect(portHandlerStub.calledOnce).toStrictEqual(true);
+      expect(portHandlerStub).toHaveBeenCalledTimes(1);
     });
 
     it('should handle the user', () => {
       expect.assertions(1);
-      expect(userHandlerStub.calledOnce).toStrictEqual(true);
+      expect(userHandlerStub).toHaveBeenCalledTimes(1);
     });
 
     it('should handle the password', () => {
       expect.assertions(1);
-      expect(passwordHandlerStub.calledOnce).toStrictEqual(true);
+      expect(passwordHandlerStub).toHaveBeenCalledTimes(1);
     });
 
     it('should handle ssl usage', () => {
       expect.assertions(1);
-      expect(sslHandlerStub.calledOnce).toStrictEqual(true);
+      expect(sslHandlerStub).toHaveBeenCalledTimes(1);
     });
 
     it('should handle mongodb srv usage', () => {
       expect.assertions(1);
-      expect(mongoSrvHandlerStub.calledOnce).toStrictEqual(true);
+      expect(mongoSrvHandlerStub).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -224,11 +224,11 @@ describe('services > prompter > database prompts', () => {
           expect.assertions(1);
           requests.push('dbDialect');
           const databasePrompts = new DatabasePrompts(requests, env, prompts, program);
-          const platformStub = sinon.stub(process, 'platform').value('win32');
+          const platformStub = jest.spyOn(os, 'platform').mockReturnValue('win32');
           databasePrompts.handleDialect();
           expect(prompts[0].type).toStrictEqual('rawlist');
           resetParams();
-          platformStub.restore();
+          platformStub.mockRestore();
         });
       });
     });
