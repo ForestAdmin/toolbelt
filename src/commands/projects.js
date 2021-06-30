@@ -1,15 +1,15 @@
 const { flags } = require('@oclif/command');
 const defaultPlan = require('../context/plan');
 const ProjectManager = require('../services/project-manager');
-const Renderer = require('../renderers/projects');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 
 class ProjectCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan || defaultPlan);
-    const { assertPresent, env } = this.context;
-    assertPresent({ env });
+    const { assertPresent, env, projectsRenderer } = this.context;
+    assertPresent({ env, projectsRenderer });
     this.env = env;
+    this.projectsRenderer = projectsRenderer;
   }
 
   async runIfAuthenticated() {
@@ -18,7 +18,7 @@ class ProjectCommand extends AbstractAuthenticatedCommand {
     const manager = new ProjectManager(config);
     const projects = await manager.listProjects();
 
-    new Renderer(config).render(projects);
+    this.projectsRenderer.render(projects, config);
   }
 }
 

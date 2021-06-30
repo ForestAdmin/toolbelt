@@ -2,15 +2,15 @@ const { flags } = require('@oclif/command');
 const chalk = require('chalk');
 const defaultPlan = require('../../context/plan');
 const EnvironmentManager = require('../../services/environment-manager');
-const Renderer = require('../../renderers/environment');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class GetCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan || defaultPlan());
-    const { assertPresent, env } = this.context;
+    const { assertPresent, env, environmentRenderer } = this.context;
     assertPresent({ env });
     this.env = env;
+    this.environmentRenderer = environmentRenderer;
   }
 
   async runIfAuthenticated() {
@@ -20,7 +20,7 @@ class GetCommand extends AbstractAuthenticatedCommand {
 
     try {
       const environment = await manager.getEnvironment(config.environmentId);
-      new Renderer(config).render(environment);
+      this.environmentRenderer.render(environment, config);
     } catch (err) {
       this.logger.error(`Cannot find the environment ${chalk.bold(config.environmentId)}.`);
     }

@@ -1,13 +1,14 @@
 const chalk = require('chalk');
 const crypto = require('crypto');
+const fs = require('fs');
+const inquirer = require('inquirer');
+const joi = require('joi');
+const jwtDecode = require('jwt-decode');
+const open = require('open');
+const openIdClient = require('openid-client');
 const os = require('os');
 const superagent = require('superagent');
-const inquirer = require('inquirer');
-const openIdClient = require('openid-client');
-const open = require('open');
-const jwtDecode = require('jwt-decode');
-const fs = require('fs');
-const joi = require('joi');
+const Table = require('cli-table');
 
 module.exports = (plan) => plan
   .addStep('open', (planOpen) => planOpen
@@ -20,6 +21,7 @@ module.exports = (plan) => plan
   .addStep('jwtDecode', (planJWTDecode) => planJWTDecode
     .addInstance('jwtDecode', jwtDecode))
   .addStep('others', (planOthers) => planOthers
+    .addInstance('Table', Table)
     .addModule('chalk', chalk)
     .addModule('crypto', crypto)
     .addModule('os', os)

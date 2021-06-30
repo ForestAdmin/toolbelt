@@ -3,6 +3,7 @@ const constantsPlan = require('./constants-plan');
 const envPlan = require('./env-plan');
 const dependenciesPlan = require('./dependencies-plan');
 const utilsPlan = require('./utils-plan');
+const renderersPlan = require('./renderers-plan');
 const serializersPlan = require('./serializers-plan');
 const servicesPlan = require('./services-plan');
 const commandProjectCommonPlan = require('./command-projects-common-plan');
@@ -19,6 +20,7 @@ module.exports = (plan) => plan
   .addStep('utils', utilsPlan)
   .addStep('serializers', serializersPlan)
   .addStep('services', servicesPlan)
+  .addStep('renderers', renderersPlan)
   .addStep('commandProjectCommon', commandProjectCommonPlan)
   .addStep('commandProjectCreate', commandProjectCreatePlan)
   .addStep('commandProjectUpdate', commandSchemaUpdatePlan);

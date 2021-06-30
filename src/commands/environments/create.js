@@ -1,16 +1,16 @@
 const { flags } = require('@oclif/command');
 const defaultPlan = require('../../context/plan');
 const EnvironmentManager = require('../../services/environment-manager');
-const Renderer = require('../../renderers/environment');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const withCurrentProject = require('../../services/with-current-project');
 
 class CreateCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan || defaultPlan);
-    const { assertPresent, env } = this.context;
-    assertPresent({ env });
+    const { assertPresent, env, environmentRenderer } = this.context;
+    assertPresent({ env, environmentRenderer });
     this.env = env;
+    this.environmentRenderer = environmentRenderer;
   }
 
   async runIfAuthenticated() {
@@ -20,7 +20,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 
     try {
       const environment = await manager.createEnvironment();
-      new Renderer(config).render(environment);
+      this.environmentRenderer.render(environment, config);
     } catch (error) {
       if (error.response && error.status !== 403) {
         const errorData = JSON.parse(error.response.text);

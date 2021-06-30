@@ -2,15 +2,15 @@ const { flags } = require('@oclif/command');
 const chalk = require('chalk');
 const defaultPlan = require('../../context/plan');
 const ProjectManager = require('../../services/project-manager');
-const Renderer = require('../../renderers/project');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class GetCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan || defaultPlan);
-    const { assertPresent, env } = this.context;
-    assertPresent({ env });
+    const { assertPresent, env, projectRenderer } = this.context;
+    assertPresent({ env, projectRenderer });
     this.env = env;
+    this.projectRenderer = projectRenderer;
   }
 
   async runIfAuthenticated() {
@@ -21,7 +21,7 @@ class GetCommand extends AbstractAuthenticatedCommand {
     const manager = new ProjectManager(config);
     try {
       const project = await manager.getProject(config);
-      new Renderer(config).render(project);
+      this.projectRenderer.render(project, config);
     } catch (err) {
       this.logger.error(`Cannot find the project ${chalk.bold(config.projectId)}.`);
     }
