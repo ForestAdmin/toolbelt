@@ -608,10 +608,54 @@ describe('init command', () => {
           { spinner: '√ Selecting your project' },
           { spinner: '√ Analyzing your setup' },
           { spinner: '√ Checking your database setup' },
+          { spinner: '√ Setting up your development environment' },
           { out: 'Here are the environment variables you need to copy in your configuration file' },
           { out: 'APPLICATION_PORT=3310' },
           { out: 'FOREST_AUTH_SECRET=' },
           { out: 'FOREST_ENV_SECRET=2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125' },
+          { out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/documentation/reference-guide/how-it-works/developing-on-forest-admin/forest-cli-commands.' },
+        ],
+      }));
+
+      it('should ask if the user wants to create an env file and if yes, create it', () => testCli({
+        commandClass: InitCommand,
+        env: testEnvWithSecretAndDatabaseURL,
+        token: 'any',
+        print: true,
+        api: [
+          () => getProjectByEnvIncludeLegacy(),
+          () => getLumberProjectForDevWorkflow(82),
+          () => getDevelopmentEnvironmentNotFound(82),
+          () => createDevelopmentEnvironment(82),
+        ],
+        prompts: [{
+          in: [{
+            name: 'endpoint',
+            message: 'Enter your local admin backend endpoint:',
+            type: 'input',
+            default: 'http://localhost:3310',
+            validate: validateEndpoint,
+          }],
+          out: {
+            endpoint: 'http://localhost:3310',
+          },
+        }, {
+          in: [{
+            name: 'autoFillOrCreationConfirmation',
+            message: 'Do you want a new `.env` file (containing your environment variables) to be automatically created in your current folder?',
+            type: 'confirm',
+          }],
+          out: {
+            autoFillOrCreationConfirmation: true,
+          },
+        }],
+        std: [
+          { spinner: '√ Selecting your project' },
+          { spinner: '√ Analyzing your setup' },
+          { spinner: '√ Checking your database setup' },
+          { spinner: '√ Setting up your development environment' },
+          { spinner: '√ Creating a new `.env` file containing your environment variables' },
+          { spinner: '√ You\'re now set up and ready to develop on Forest Admin' },
           { out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/documentation/reference-guide/how-it-works/developing-on-forest-admin/forest-cli-commands.' },
         ],
       }));
