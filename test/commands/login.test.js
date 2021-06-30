@@ -16,7 +16,7 @@ describe('login', () => {
     describe('with bad token in args', () => {
       it('should display invalid token', () => testCli({
         commandClass: LoginCommand,
-        commandArgs: ['-e', 'smile@gmail.com', '-t', 'invalid_token'],
+        commandArgs: ['-e', 'smile@gmail.com', '-t', '__invalid_token__'],
         std: [
           { err: '× Invalid token. Please enter your authentication token.' },
         ],

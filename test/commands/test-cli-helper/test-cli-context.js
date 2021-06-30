@@ -38,7 +38,12 @@ const makeEnvironmentVariablesReplacement = (env) => (plan) => plan
     ...env,
   });
 
-const jwtDecodeMock = jest.fn().mockImplementation((token) => token);
+const jwtDecodeMock = jest.fn().mockImplementation(
+  (token) => {
+    if (token === '__invalid_token__') throw new Error('Invalid token');
+    return token;
+  },
+);
 
 const makeDependenciesReplacement = () => (plan) => plan
   .replace('dependencies/open/open', jest.fn())
