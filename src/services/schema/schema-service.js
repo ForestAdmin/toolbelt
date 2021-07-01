@@ -63,6 +63,12 @@ module.exports = class SchemaService {
     return this.spinner.attachToPromise(databasesConnectionPromise);
   }
 
+  async _disconnectFromDatabases(databaseConnections) {
+    this.spinner.start({ text: 'Disconnecting from your database(s)' });
+    const databasesConnectionPromise = this.database.disconnectFromDatabases(databaseConnections);
+    return this.spinner.attachToPromise(databasesConnectionPromise);
+  }
+
   async _analyzeDatabases(databasesConnection, dbSchema) {
     this.spinner.start({ text: 'Analyzing the database(s)' });
     const databasesSchemaPromise = Promise.all(
@@ -127,6 +133,7 @@ module.exports = class SchemaService {
     const databasesConfig = this._getDatabasesConfig(dbConfigPath);
     const databasesConnection = await this._connectToDatabases(databasesConfig);
     const databasesSchema = await this._analyzeDatabases(databasesConnection, dbSchema);
+    await this._disconnectFromDatabases(databasesConnection);
     const useMultiDatabase = databasesSchema.length > 1;
 
     await this._dumpSchemas(databasesSchema, outputDirectory, isUpdate, useMultiDatabase);

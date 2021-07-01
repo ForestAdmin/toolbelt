@@ -136,6 +136,13 @@ class Database {
   }
 
   // eslint-disable-next-line class-methods-use-this
+  disconnectFromDatabases(databaseConnections) {
+    return Promise.all(
+      databaseConnections.map((connection) => this.disconnect(connection.connectionInstance)),
+    );
+  }
+
+  // eslint-disable-next-line class-methods-use-this
   async disconnect(connection) {
     return connection.close();
   }
