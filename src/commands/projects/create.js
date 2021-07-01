@@ -209,9 +209,10 @@ CreateCommand.flags = {
     required: false,
   }),
   databaseSSL: flags.boolean({
+    default: false,
     dependsOn: [],
     description: 'Use SSL for database connection.',
-    exclusive: ['databaseConnectionURL'],
+    exclusive: [],
     required: false,
   }),
   mongoDBSRV: flags.boolean({
