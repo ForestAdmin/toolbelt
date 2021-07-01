@@ -20,7 +20,9 @@ const makeContext = () => ({
   path: {
     resolve: jest.fn(),
   },
-  spinner: {},
+  spinner: {
+    start: jest.fn(),
+  },
 });
 
 describe('schemaService', () => {
