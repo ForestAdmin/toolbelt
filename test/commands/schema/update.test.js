@@ -2,9 +2,6 @@ const testCli = require('../test-cli-helper/test-cli');
 const UpdateCommand = require('../../../src/commands/schema/update');
 const { baseAuthenticatedPlanMock } = require('../test-cli-helper/mocks/plan-mocks');
 
-const {
-  loginValidOidc,
-} = require('../../fixtures/api');
 const { testEnvWithSecret } = require('../../fixtures/env');
 
 describe('schema:update', () => {
@@ -37,37 +34,9 @@ describe('schema:update', () => {
       });
   });
 
-  describe('login', () => {
-    describe('when the user is not logged in', () => {
-      it('should login the user and then send the schema', () => testCli({
-        commandClass: UpdateCommand,
-        env: testEnvWithSecret,
-        api: [
-          () => loginValidOidc(),
-        ],
-        files: [{
-          name: 'package.json',
-          content: '{ "dependencies": { "forest-express-sequelize": "7.0.0" } }',
-        }, {
-          name: 'config/databases.js',
-          content: 'module.exports = [];',
-        }, {
-          directory: 'forest',
-        }, {
-          directory: 'models',
-        }, {
-          directory: 'routes',
-        }],
-        std: [
-          { spinner: '√ Connecting to your database(s)' },
-          { spinner: '√ Analyzing the database(s)' },
-          { spinner: '√ Generating your files' },
-        ],
-      }));
-    });
-
-    describe('when the user is logged in', () => {
-      it('should send the schema', () => testCli({
+  describe('schema:update', () => {
+    describe('when run within a properly defined project', () => {
+      it('should re-generate files', () => testCli({
         commandClass: UpdateCommand,
         env: testEnvWithSecret,
         token: 'any',
