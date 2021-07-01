@@ -19,7 +19,7 @@ class UpdateCommand extends AbstractAuthenticatedCommand {
 
     const options = {
       isUpdate: true,
-      outputDirectory: commandOptions['output-directory'],
+      outputDirectory: commandOptions.outputDirectory,
       dbSchema: this.env.DATABASE_SCHEMA,
       dbConfigPath: commandOptions.config,
     };
@@ -39,7 +39,7 @@ UpdateCommand.flags = {
     exclusive: [],
     required: false,
   }),
-  'output-directory': flags.string({
+  outputDirectory: flags.string({
     char: 'o',
     dependsOn: [],
     description: 'Output directory where to generate new files.',
