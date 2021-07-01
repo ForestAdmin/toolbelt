@@ -55,11 +55,6 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
       message: 'What\'s the database password? [optional]',
       type: 'password',
     }, {
-      name: 'databaseSSL',
-      message: 'Does your database require a SSL connection?',
-      type: 'confirm',
-      default: false,
-    }, {
       name: 'mongoDBSRV',
       message: 'Use a SRV connection string?',
       type: 'confirm',

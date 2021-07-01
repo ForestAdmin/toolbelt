@@ -3,6 +3,9 @@ const LumberError = require('../../../src/errors/lumber-error');
 
 const makeContext = () => ({
   assertPresent: jest.fn(),
+  constants: {
+    CURRENT_WORKING_DIRECTORY: '.',
+  },
   database: {},
   databaseAnalyzer: {},
   dumper: {
@@ -78,6 +81,7 @@ describe('schemaService', () => {
       jest.spyOn(schemaService, '_assertOutputDirectory').mockImplementation(() => {});
       jest.spyOn(schemaService, '_getDatabasesConfig').mockReturnValue(databasesConfig);
       jest.spyOn(schemaService, '_connectToDatabases').mockResolvedValue(databasesConnection);
+      jest.spyOn(schemaService, '_disconnectFromDatabases').mockResolvedValue(null);
       jest.spyOn(schemaService, '_analyzeDatabases').mockResolvedValue(databasesSchema);
       jest.spyOn(schemaService, '_dumpSchemas').mockImplementation(async () => {});
       jest.spyOn(schemaService, '_warnIfSingleToMulti').mockImplementation(() => {});
