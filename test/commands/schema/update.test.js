@@ -59,7 +59,6 @@ describe('schema:update', () => {
           directory: 'routes',
         }],
         std: [
-          { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
           { spinner: '√ Connecting to your database(s)' },
           { spinner: '√ Analyzing the database(s)' },
           { spinner: '√ Generating your files' },
