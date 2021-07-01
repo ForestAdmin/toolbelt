@@ -1,9 +1,9 @@
 const path = require('path');
 const { flags } = require('@oclif/command');
-const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const AbstractCommand = require('../../abstract-command');
 const defaultPlan = require('../../context/plan');
 
-class UpdateCommand extends AbstractAuthenticatedCommand {
+class UpdateCommand extends AbstractCommand {
   init(plan) {
     super.init(plan || defaultPlan);
     const { assertPresent, env, schemaService } = this.context;
@@ -13,7 +13,7 @@ class UpdateCommand extends AbstractAuthenticatedCommand {
     this.schemaService = schemaService;
   }
 
-  async runIfAuthenticated() {
+  async run() {
     const parsed = this.parse(UpdateCommand);
     const commandOptions = { ...parsed.flags, ...parsed.args };
 
