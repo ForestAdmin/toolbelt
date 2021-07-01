@@ -3,6 +3,7 @@ const LumberError = require('../../errors/lumber-error');
 module.exports = class SchemaService {
   constructor({
     assertPresent,
+    constants,
     database,
     databaseAnalyzer,
     dumper,
@@ -14,6 +15,7 @@ module.exports = class SchemaService {
     spinner,
   }) {
     assertPresent({
+      constants,
       database,
       databaseAnalyzer,
       dumper,
@@ -24,6 +26,7 @@ module.exports = class SchemaService {
       path,
       spinner,
     });
+    this.constants = constants;
     this.database = database;
     this.databaseAnalyzer = databaseAnalyzer;
     this.dumper = dumper;
@@ -44,7 +47,7 @@ module.exports = class SchemaService {
   }
 
   _getDatabasesConfig(path) {
-    const configPath = this.path.resolve(path);
+    const configPath = this.path.resolve(this.constants.CURRENT_WORKING_DIRECTORY, path);
     if (!this.fs.existsSync(configPath)) {
       throw new LumberError(`The configuration file "${configPath}" does not exist.`);
     }
