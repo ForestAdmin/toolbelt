@@ -140,14 +140,14 @@ CreateCommand.flags = {
     char: 'H',
     dependsOn: [],
     description: 'Hostname of your admin backend application.',
-    exclusive: ['application-port'],
+    exclusive: [],
     required: false,
   }),
   applicationPort: flags.string({
     char: 'P',
     dependsOn: [],
     description: 'Port of your admin backend application.',
-    exclusive: ['application-host'],
+    exclusive: [],
     required: false,
   }),
   databaseConnectionURL: flags.string({
@@ -203,7 +203,7 @@ CreateCommand.flags = {
     char: 's',
     dependsOn: [],
     description: 'Enter your database schema.',
-    exclusive: ['databaseConnectionURL'],
+    exclusive: [],
     required: false,
   }),
   databaseSSL: flags.boolean({
