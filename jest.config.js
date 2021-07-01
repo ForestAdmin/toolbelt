@@ -1,3 +1,5 @@
+const appRoot = require('app-root-path');
+
 module.exports = {
   coverageReporters: [
     [
@@ -5,7 +7,7 @@ module.exports = {
       {
         // Prevents unwanted sketchy `../../` prefix in lcov report.
         // This lead to error when sharing coverage with CodeClimate.
-        projectRoot: process.cwd(),
+        projectRoot: appRoot,
       }],
   ],
 
