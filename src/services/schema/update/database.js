@@ -81,7 +81,7 @@ class Database {
         connectionOptionsSequelize.dialectOptions = { options: { encrypt: isSSL } };
       } else if (isSSL) {
         // Add SSL options only if the user selected SSL mode.
-        // SSL Cerificate is always trusted during `lumber generate` command
+        // SSL Cerificate is always trusted during `forest projects:create` command
         // to ease their onboarding.
         connectionOptionsSequelize.dialectOptions = { ssl: { rejectUnauthorized: false } };
       }

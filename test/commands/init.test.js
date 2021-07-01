@@ -12,7 +12,7 @@ const {
   getNoProdProjectForDevWorkflow,
   getProjectNotFoundForDevWorkflow,
   getProjectForDevWorkflowUnallowed,
-  getLumberProjectForDevWorkflow,
+  getForestCLIProjectForDevWorkflow,
   getDevelopmentEnvironmentNotFound,
   createDevelopmentEnvironment,
   loginValidOidc,
@@ -258,7 +258,7 @@ describe('init command', () => {
       }));
     });
 
-    describe('when the project has a lumber origin', () => {
+    describe('when the project has a ForestCLI (Lumber) origin', () => {
       describe('when the project .env has a database url', () => {
         it('should continue executing', () => testCli({
           files: [{
@@ -270,7 +270,7 @@ describe('init command', () => {
           token: 'any',
           api: [
             () => getProjectByEnvIncludeLegacy(),
-            () => getLumberProjectForDevWorkflow(82),
+            () => getForestCLIProjectForDevWorkflow(82),
             () => getDevelopmentEnvironmentValid(82),
           ],
           prompts: [{
@@ -305,7 +305,7 @@ describe('init command', () => {
             token: 'any',
             api: [
               () => getProjectByEnvIncludeLegacy(),
-              () => getLumberProjectForDevWorkflow(82),
+              () => getForestCLIProjectForDevWorkflow(82),
               () => getDevelopmentEnvironmentValid(82),
             ],
             prompts: [
@@ -426,7 +426,7 @@ describe('init command', () => {
             token: 'any',
             api: [
               () => getProjectByEnvIncludeLegacy(),
-              () => getLumberProjectForDevWorkflow(82),
+              () => getForestCLIProjectForDevWorkflow(82),
               () => getDevelopmentEnvironmentValid(82),
             ],
             prompts: [
@@ -534,7 +534,7 @@ describe('init command', () => {
         token: 'any',
         api: [
           () => getProjectByEnvIncludeLegacy(),
-          () => getLumberProjectForDevWorkflow(82),
+          () => getForestCLIProjectForDevWorkflow(82),
           () => getDevelopmentEnvironmentNotFound(82),
           () => createDevelopmentEnvironment(82),
         ],
@@ -579,7 +579,7 @@ describe('init command', () => {
         print: true,
         api: [
           () => getProjectByEnvIncludeLegacy(),
-          () => getLumberProjectForDevWorkflow(82),
+          () => getForestCLIProjectForDevWorkflow(82),
           () => getDevelopmentEnvironmentNotFound(82),
           () => createDevelopmentEnvironment(82),
         ],
@@ -624,7 +624,7 @@ describe('init command', () => {
         print: true,
         api: [
           () => getProjectByEnvIncludeLegacy(),
-          () => getLumberProjectForDevWorkflow(82),
+          () => getForestCLIProjectForDevWorkflow(82),
           () => getDevelopmentEnvironmentNotFound(82),
           () => createDevelopmentEnvironment(82),
         ],

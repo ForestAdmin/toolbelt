@@ -633,7 +633,7 @@ module.exports = {
     .get(`/api/projects/${projectId}/dev-workflow`)
     .reply(200, ProjectSerializer.serialize({ id: `${projectId}`, name: 'Forest', origin: 'In-app' })),
 
-  getLumberProjectForDevWorkflow: (projectId) => nock('http://localhost:3001')
+  getForestCLIProjectForDevWorkflow: (projectId) => nock('http://localhost:3001')
     .get(`/api/projects/${projectId}/dev-workflow`)
     .reply(200, ProjectSerializer.serialize({ id: `${projectId}`, name: 'Forest', origin: 'Lumber' })),
 

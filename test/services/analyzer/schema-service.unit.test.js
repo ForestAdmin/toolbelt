@@ -1,5 +1,5 @@
 const SchemaService = require('../../../src/services/schema/schema-service');
-const LumberError = require('../../../src/errors/lumber-error');
+const ForestCLIError = require('../../../src/errors/forest-cli-error');
 
 const makeContext = () => ({
   assertPresent: jest.fn(),
@@ -10,7 +10,7 @@ const makeContext = () => ({
   databaseAnalyzer: {},
   dumper: {
     checkLianaCompatiblityForUpdate: jest.fn(),
-    checkLumberProjectStructure: jest.fn(),
+    checkForestCLIProjectStructure: jest.fn(),
   },
   env: {},
   errorHandler: {
@@ -113,7 +113,7 @@ describe('schemaService', () => {
         const { dumper, fs } = context;
         schemaService._assertOutputDirectory(outputDirectory);
 
-        expect(dumper.checkLumberProjectStructure).toHaveBeenCalledWith();
+        expect(dumper.checkForestCLIProjectStructure).toHaveBeenCalledWith();
         expect(fs.existsSync).not.toHaveBeenCalled();
       });
     });
@@ -128,7 +128,7 @@ describe('schemaService', () => {
         const { dumper, fs } = context;
         schemaService._assertOutputDirectory(outputDirectory);
 
-        expect(dumper.checkLumberProjectStructure).not.toHaveBeenCalled();
+        expect(dumper.checkForestCLIProjectStructure).not.toHaveBeenCalled();
         expect(fs.existsSync).toHaveBeenCalledWith(outputDirectory);
       });
     });
@@ -147,7 +147,7 @@ describe('schemaService', () => {
         const schemaService = new SchemaService(context);
 
         const expectation = expect(() => schemaService._getDatabasesConfig(thePath));
-        expectation.toThrow(LumberError);
+        expectation.toThrow(ForestCLIError);
         expectation.toThrow('The configuration file "/config/path" does not exist.');
       });
     });

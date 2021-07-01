@@ -1,4 +1,4 @@
-const LumberError = require('../../src/errors/lumber-error');
+const ForestCLIError = require('../../src/errors/forest-cli-error');
 const ErrorHandler = require('../../src/utils/error-handler');
 
 describe('service > Oidc > ErrorHandler', () => {
@@ -44,7 +44,7 @@ describe('service > Oidc > ErrorHandler', () => {
 
         const { errorHandler, terminator } = setupTest();
 
-        errorHandler.handle(new LumberError('The error', undefined, { reason: 'The inner error' }));
+        errorHandler.handle(new ForestCLIError('The error', undefined, { reason: 'The inner error' }));
 
         expect(terminator.terminate).toHaveBeenCalledWith(
           1,
@@ -57,7 +57,7 @@ describe('service > Oidc > ErrorHandler', () => {
 
         const { errorHandler, terminator } = setupTest();
 
-        errorHandler.handle(new LumberError('The error', undefined, { possibleSolution: 'possible solution' }));
+        errorHandler.handle(new ForestCLIError('The error', undefined, { possibleSolution: 'possible solution' }));
 
         expect(terminator.terminate).toHaveBeenCalledWith(
           1,

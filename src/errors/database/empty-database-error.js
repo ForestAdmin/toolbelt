@@ -1,5 +1,5 @@
-const LumberError = require('../lumber-error');
+const ForestCLIError = require('../forest-cli-error');
 
-class EmptyDatabase extends LumberError {}
+class EmptyDatabase extends ForestCLIError {}
 
 module.exports = EmptyDatabase;

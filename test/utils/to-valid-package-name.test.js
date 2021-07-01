@@ -27,8 +27,8 @@ describe('utils > toValidPackageName', () => {
       { original: '  with many   space   ', expected: 'with-many-space' },
       { original: 'SHOULD BE LOWER CASE', expected: 'should-be-lower-case' },
       { original: '--a¨*£%¨*+/.?:=›Îﬂ---z-', expected: 'a-z' },
-      { original: '∆™Ÿª', expected: 'lumber-project' },
-      { original: '', expected: 'lumber-project' },
+      { original: '∆™Ÿª', expected: 'forest-cli-project' },
+      { original: '', expected: 'forest-cli-project' },
     ];
 
     names.forEach((name) => {

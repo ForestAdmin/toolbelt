@@ -1,6 +1,6 @@
-const LumberError = require('../lumber-error');
+const ForestCLIError = require('../forest-cli-error');
 
-class UnableToCreateApplicationTokenError extends LumberError {
+class UnableToCreateApplicationTokenError extends ForestCLIError {
   /**
    * @param {{
    *  reason?: string;

@@ -16,8 +16,8 @@ module.exports = function toValidPackageName(packageName) {
       // Remove leading and trailing hyphen.
       .replace(/^-|-$/g, '');
 
-    // NOTICE: Return 'lumber-project' if sanitized package name is still not valid.
-    return isValid(validPackageName) ? validPackageName : 'lumber-project';
+    // NOTICE: Return 'forest-cli-project' if sanitized package name is still not valid.
+    return isValid(validPackageName) ? validPackageName : 'forest-cli-project';
   }
 
   return packageName;

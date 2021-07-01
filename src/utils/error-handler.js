@@ -1,4 +1,4 @@
-const LumberError = require('../errors/lumber-error');
+const ForestCLIError = require('../errors/forest-cli-error');
 
 class ErrorHandler {
   /**
@@ -25,7 +25,7 @@ class ErrorHandler {
 
   /**
    * @private
-   * @param {LumberError} error
+   * @param {ForestCLIError} error
    * @returns {string[]}
    */
   getMessages(error) {
@@ -47,7 +47,7 @@ class ErrorHandler {
    * @param {Error} error
    */
   async handle(error) {
-    if (error instanceof LumberError) {
+    if (error instanceof ForestCLIError) {
       await this.terminator.terminate(1, {
         logs: this.getMessages(error),
       });

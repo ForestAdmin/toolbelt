@@ -1,6 +1,6 @@
-const LumberError = require('../lumber-error');
+const ForestCLIError = require('../forest-cli-error');
 
-class IncompatibleLianaForUpdateError extends LumberError {
+class IncompatibleLianaForUpdateError extends ForestCLIError {
   /**
    * @param {{
    *  reason?: string;

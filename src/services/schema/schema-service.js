@@ -1,4 +1,4 @@
-const LumberError = require('../../errors/lumber-error');
+const ForestCLIError = require('../../errors/forest-cli-error');
 
 module.exports = class SchemaService {
   constructor({
@@ -40,22 +40,22 @@ module.exports = class SchemaService {
 
   _assertOutputDirectory(outputDirectory) {
     if (!outputDirectory) {
-      this.dumper.checkLumberProjectStructure();
+      this.dumper.checkForestCLIProjectStructure();
     } else if (this.fs.existsSync(outputDirectory)) {
-      throw new LumberError(`The output directory "${outputDirectory}" already exists.`);
+      throw new ForestCLIError(`The output directory "${outputDirectory}" already exists.`);
     }
   }
 
   _getDatabasesConfig(path) {
     const configPath = this.path.resolve(this.constants.CURRENT_WORKING_DIRECTORY, path);
     if (!this.fs.existsSync(configPath)) {
-      throw new LumberError(`The configuration file "${configPath}" does not exist.`);
+      throw new ForestCLIError(`The configuration file "${configPath}" does not exist.`);
     }
 
     // eslint-disable-next-line global-require, import/no-dynamic-require
     const databasesConfig = require(configPath);
     if (!this.database.areAllDatabasesOfTheSameType(databasesConfig)) {
-      throw new LumberError(`The "${configPath}" file contains different databases types.`);
+      throw new ForestCLIError(`The "${configPath}" file contains different databases types.`);
     }
     return databasesConfig;
   }

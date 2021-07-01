@@ -2,7 +2,7 @@ const chalk = require('chalk');
 const appRoot = require('app-root-path');
 
 const Dumper = require('../../../src/services/dumper/dumper');
-const InvalidLumberProjectStructureError = require('../../../src/errors/dumper/invalid-lumber-project-structure-error');
+const InvalidForestCLIProjectStructureError = require('../../../src/errors/dumper/invalid-forest-cli-project-structure-error');
 const IncompatibleLianaForUpdateError = require('../../../src/errors/dumper/incompatible-liana-for-update-error');
 
 const SequelizeMock = {
@@ -665,7 +665,7 @@ describe('services > dumper (unit)', () => {
     });
   });
 
-  describe('checkLumberProjectStructure', () => {
+  describe('checkForestCLIProjectStructure', () => {
     it('should not throw an error when structure is correct', () => {
       expect.assertions(1);
 
@@ -675,7 +675,7 @@ describe('services > dumper (unit)', () => {
         },
       });
 
-      expect(() => dumper.checkLumberProjectStructure()).not.toThrow();
+      expect(() => dumper.checkForestCLIProjectStructure()).not.toThrow();
     });
 
     it('should throw an error when missing routes folder', () => {
@@ -687,8 +687,8 @@ describe('services > dumper (unit)', () => {
         },
       });
 
-      expect(() => dumper.checkLumberProjectStructure())
-        .toThrow(InvalidLumberProjectStructureError);
+      expect(() => dumper.checkForestCLIProjectStructure())
+        .toThrow(InvalidForestCLIProjectStructureError);
     });
 
     it('should throw an error when missing forest folder', () => {
@@ -700,8 +700,8 @@ describe('services > dumper (unit)', () => {
         },
       });
 
-      expect(() => dumper.checkLumberProjectStructure())
-        .toThrow(InvalidLumberProjectStructureError);
+      expect(() => dumper.checkForestCLIProjectStructure())
+        .toThrow(InvalidForestCLIProjectStructureError);
     });
 
     it('should throw an error when missing models folder', () => {
@@ -713,8 +713,8 @@ describe('services > dumper (unit)', () => {
         },
       });
 
-      expect(() => dumper.checkLumberProjectStructure())
-        .toThrow(InvalidLumberProjectStructureError);
+      expect(() => dumper.checkForestCLIProjectStructure())
+        .toThrow(InvalidForestCLIProjectStructureError);
     });
   });
 
@@ -765,7 +765,7 @@ describe('services > dumper (unit)', () => {
 
       expect(() => dumper.checkLianaCompatiblityForUpdate())
         .toThrow(new IncompatibleLianaForUpdateError(
-          'Your project is not compatible with the `lumber update` command. You need to use an agent version greater than 7.0.0.',
+          'Your project is not compatible with the `lforest schema:update` command. You need to use an agent version greater than 7.0.0.',
         ));
     });
 
@@ -781,7 +781,7 @@ describe('services > dumper (unit)', () => {
 
       expect(() => dumper.checkLianaCompatiblityForUpdate())
         .toThrow(new IncompatibleLianaForUpdateError(
-          'Your project is not compatible with the `lumber update` command. You need to use an agent version greater than 7.0.0.',
+          'Your project is not compatible with the `lforest schema:update` command. You need to use an agent version greater than 7.0.0.',
         ));
     });
   });

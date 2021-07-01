@@ -1,4 +1,4 @@
-class LumberError extends Error {
+class ForestCLIError extends Error {
   /**
    * @param {string} message
    * @param {any} [details]
@@ -11,7 +11,7 @@ class LumberError extends Error {
     super(message);
 
     /** @public @readonly */
-    this.name = 'LumberError';
+    this.name = 'ForestCLIError';
 
     /** @public @readonly */
     this.userMessage = message;
@@ -29,4 +29,4 @@ class LumberError extends Error {
   }
 }
 
-module.exports = LumberError;
+module.exports = ForestCLIError;

@@ -3,7 +3,7 @@ const { plural, singular } = require('pluralize');
 const stringUtils = require('../../utils/strings');
 const toValidPackageName = require('../../utils/to-valid-package-name');
 const IncompatibleLianaForUpdateError = require('../../errors/dumper/incompatible-liana-for-update-error');
-const InvalidLumberProjectStructureError = require('../../errors/dumper/invalid-lumber-project-structure-error');
+const InvalidForestCLIProjectStructureError = require('../../errors/dumper/invalid-forest-cli-project-structure-error');
 require('./handlerbars/loader');
 
 const DEFAULT_PORT = 3310;
@@ -445,13 +445,16 @@ class Dumper {
     }
   }
 
-  checkLumberProjectStructure() {
+  checkForestCLIProjectStructure() {
     try {
       if (!this.fs.existsSync('routes')) throw new Error('No "routes" directory.');
       if (!this.fs.existsSync('forest')) throw new Error('No "forest" directory.');
       if (!this.fs.existsSync('models')) throw new Error('No "models“ directory.');
     } catch (error) {
-      throw new InvalidLumberProjectStructureError(this.constants.CURRENT_WORKING_DIRECTORY, error);
+      throw new InvalidForestCLIProjectStructureError(
+        this.constants.CURRENT_WORKING_DIRECTORY,
+        error,
+      );
     }
   }
 
@@ -468,7 +471,7 @@ class Dumper {
     }
     if (Number(lianaMajorVersion) < 7) {
       throw new IncompatibleLianaForUpdateError(
-        'Your project is not compatible with the `lumber update` command. You need to use an agent version greater than 7.0.0.',
+        'Your project is not compatible with the `lforest schema:update` command. You need to use an agent version greater than 7.0.0.',
       );
     }
   }

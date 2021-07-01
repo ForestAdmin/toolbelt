@@ -35,7 +35,7 @@ describe('project creator', () => {
       expect(context.terminator.terminate).toHaveBeenNthCalledWith(
         1,
         1,
-        { logs: ['Your session has expired. Please log back in with the command lumber login.'] },
+        { logs: ['Your session has expired. Please log back in with the command `forest login`.'] },
       );
     });
 
