@@ -104,7 +104,7 @@ describe('services > dumper (unit)', () => {
         createDumper(context).writeFile(ABSOLUTE_PROJECT_PATH, RELATIVE_FILE_PATH, 'content');
 
         expect(context.logger.log).toHaveBeenCalledTimes(1);
-        expect(context.logger.log).toHaveBeenCalledWith(`  ${chalk.yellow('skip')} ${RELATIVE_FILE_PATH} - already exist.`);
+        expect(context.logger.log).toHaveBeenCalledWith(`  ${chalk.yellow('skip')} ${RELATIVE_FILE_PATH} - already exists.`);
       });
     });
   });

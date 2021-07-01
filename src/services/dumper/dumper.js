@@ -62,7 +62,7 @@ class Dumper {
     const fileName = `${absoluteProjectPath}/${relativeFilePath}`;
 
     if (this.fs.existsSync(fileName)) {
-      this.logger.log(`  ${this.chalk.yellow('skip')} ${relativeFilePath} - already exist.`);
+      this.logger.log(`  ${this.chalk.yellow('skip')} ${relativeFilePath} - already exists.`);
       return;
     }
 

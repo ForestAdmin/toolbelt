@@ -39,7 +39,7 @@ module.exports = class SchemaService {
     if (!outputDirectory) {
       this.dumper.checkLumberProjectStructure();
     } else if (this.fs.existsSync(outputDirectory)) {
-      throw new LumberError(`The output directory "${outputDirectory}" already exist.`);
+      throw new LumberError(`The output directory "${outputDirectory}" already exists.`);
     }
   }
 
