@@ -106,7 +106,7 @@ class Database {
     return this.sequelizeAuthenticate(connection);
   }
 
-  connect(options) {
+  async connect(options) {
     const isSSL = options.dbSSL || options.ssl;
     const databaseDialect = this.getDialect(options.dbConnectionUrl, options.dbDialect);
 
