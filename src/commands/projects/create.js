@@ -145,7 +145,7 @@ CreateCommand.flags = {
     exclusive: [],
     required: false,
   }),
-  applicationPort: flags.string({
+  applicationPort: flags.integer({
     char: 'P',
     dependsOn: [],
     description: 'Port of your admin backend application.',
@@ -181,7 +181,7 @@ CreateCommand.flags = {
     exclusive: ['databaseConnectionURL'],
     required: false,
   }),
-  databasePort: flags.string({
+  databasePort: flags.integer({
     char: 'p',
     dependsOn: [],
     description: 'Enter your database port.',

@@ -28,7 +28,7 @@ class UpdateCommand extends AbstractAuthenticatedCommand {
 UpdateCommand.description = 'Update an environment.';
 
 UpdateCommand.flags = {
-  environmentId: flags.string({
+  environmentId: flags.integer({
     char: 'e',
     description: 'The forest environment ID to update.',
     required: true,
