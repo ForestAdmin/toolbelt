@@ -100,6 +100,8 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
   }
 }
 
+SwitchCommand.aliases = ['branches:switch'];
+
 SwitchCommand.description = 'Switch to another branch in your local development environment.';
 
 SwitchCommand.flags = {

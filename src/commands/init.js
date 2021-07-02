@@ -150,6 +150,8 @@ class InitCommand extends AbstractAuthenticatedCommand {
   }
 }
 
+InitCommand.aliases = ['environments:init'];
+
 InitCommand.description = 'Set up your development environment in your current folder.';
 
 InitCommand.flags = {

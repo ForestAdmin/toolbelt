@@ -22,6 +22,8 @@ class ProjectCommand extends AbstractAuthenticatedCommand {
   }
 }
 
+ProjectCommand.aliases = ['projects:list'];
+
 ProjectCommand.description = 'Manage projects.';
 
 ProjectCommand.flags = {

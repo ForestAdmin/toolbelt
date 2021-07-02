@@ -108,6 +108,8 @@ class DeployCommand extends AbstractAuthenticatedCommand {
   }
 }
 
+DeployCommand.aliases = ['environments:deploy'];
+
 DeployCommand.description = 'Deploy layout changes of an environment to the reference one.';
 
 DeployCommand.flags = {

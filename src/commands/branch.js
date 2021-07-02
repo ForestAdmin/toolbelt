@@ -97,6 +97,8 @@ class BranchCommand extends AbstractAuthenticatedCommand {
   }
 }
 
+BranchCommand.aliases = ['branches'];
+
 BranchCommand.description = 'Create a new branch or list your existing branches.';
 
 BranchCommand.flags = {

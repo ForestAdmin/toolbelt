@@ -22,6 +22,8 @@ class EnvironmentCommand extends AbstractAuthenticatedCommand {
   }
 }
 
+EnvironmentCommand.aliases = ['environments:list'];
+
 EnvironmentCommand.description = 'Manage environments.';
 
 EnvironmentCommand.flags = {

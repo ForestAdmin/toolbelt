@@ -78,6 +78,8 @@ class PushCommand extends AbstractAuthenticatedCommand {
   }
 }
 
+PushCommand.aliases = ['branches:push'];
+
 PushCommand.description = 'Push layout changes of your current branch to a remote environment.';
 
 PushCommand.flags = {
