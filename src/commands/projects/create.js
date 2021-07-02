@@ -1,11 +1,9 @@
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const { dbDialectOptions } = require('../../services/prompter/database-prompts');
 
-const defaultPlan = require('../../context/plan');
-
 class CreateCommand extends AbstractAuthenticatedCommand {
   init(plan) {
-    super.init(plan || defaultPlan);
+    super.init(plan);
     const {
       assertPresent,
       authenticator,

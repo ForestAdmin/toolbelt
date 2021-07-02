@@ -1,9 +1,8 @@
-const defaultPlan = require('../context/plan');
 const AbstractCommand = require('../abstract-command');
 
 class LoginCommand extends AbstractCommand {
   init(plan) {
-    super.init(plan || defaultPlan);
+    super.init(plan);
     const { assertPresent, authenticator } = this.context;
     assertPresent({ authenticator });
     this.authenticator = authenticator;

@@ -1,11 +1,10 @@
-const defaultPlan = require('../../context/plan');
 const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const withCurrentProject = require('../../services/with-current-project');
 
 class CreateCommand extends AbstractAuthenticatedCommand {
   init(plan) {
-    super.init(plan || defaultPlan);
+    super.init(plan);
     const { assertPresent, env, environmentRenderer } = this.context;
     assertPresent({ env, environmentRenderer });
     this.env = env;

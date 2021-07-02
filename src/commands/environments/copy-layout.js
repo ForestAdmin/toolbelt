@@ -1,11 +1,10 @@
-const defaultPlan = require('../../context/plan');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const EnvironmentManager = require('../../services/environment-manager');
 const withCurrentProject = require('../../services/with-current-project');
 
 class CopyLayoutCommand extends AbstractAuthenticatedCommand {
   init(plan) {
-    super.init(plan || defaultPlan);
+    super.init(plan);
     const {
       assertPresent,
       chalk,
