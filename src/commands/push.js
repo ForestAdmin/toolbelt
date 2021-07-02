@@ -1,4 +1,3 @@
-const { flags } = require('@oclif/command');
 const defaultPlan = require('../context/plan');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
@@ -84,17 +83,17 @@ PushCommand.description = 'Push layout changes of your current branch to a remot
 
 PushCommand.flags = {
   // TODO: DWO EP17 remove environment option
-  environment: flags.string({
+  environment: AbstractAuthenticatedCommand.flags.string({
     char: 'e',
     description: 'The remote environment name to push onto.',
   }),
-  force: flags.boolean({
+  force: AbstractAuthenticatedCommand.flags.boolean({
     description: 'Skip push changes confirmation.',
   }),
-  help: flags.boolean({
+  help: AbstractAuthenticatedCommand.flags.boolean({
     description: 'Display usage information.',
   }),
-  projectId: flags.integer({
+  projectId: AbstractAuthenticatedCommand.flags.integer({
     char: 'p',
     description: 'The id of the project to work on.',
     default: null,

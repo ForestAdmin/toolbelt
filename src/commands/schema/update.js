@@ -1,15 +1,24 @@
-const path = require('path');
-const { flags } = require('@oclif/command');
+const Context = require('@forestadmin/context');
+
 const AbstractCommand = require('../../abstract-command');
 const defaultPlan = require('../../context/plan');
 
 class UpdateCommand extends AbstractCommand {
   init(plan) {
     super.init(plan || defaultPlan);
-    const { assertPresent, env, schemaService } = this.context;
-    assertPresent({ env, schemaService });
-
+    const {
+      assertPresent,
+      env,
+      path,
+      schemaService,
+    } = this.context;
+    assertPresent({
+      env,
+      path,
+      schemaService,
+    });
     this.env = env;
+    this.path = path;
     this.schemaService = schemaService;
   }
 
@@ -31,15 +40,15 @@ class UpdateCommand extends AbstractCommand {
 UpdateCommand.description = 'Refresh your schema by generating files that do not currently exist.';
 
 UpdateCommand.flags = {
-  config: flags.string({
+  config: AbstractCommand.flags.string({
     char: 'c',
-    default: () => path.join('config', 'databases.js'),
+    default: () => Context.inject().path.join('config', 'databases.js'),
     dependsOn: [],
     description: 'Database configuration file to use.',
     exclusive: [],
     required: false,
   }),
-  outputDirectory: flags.string({
+  outputDirectory: AbstractCommand.flags.string({
     char: 'o',
     dependsOn: [],
     description: 'Output directory where to generate new files.',

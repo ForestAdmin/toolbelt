@@ -1,4 +1,5 @@
 const Context = require('@forestadmin/context');
+
 const ApplicationPrompts = require('./application-prompts');
 const { DatabasePrompts } = require('./database-prompts');
 const ProjectPrompts = require('./project-prompts');

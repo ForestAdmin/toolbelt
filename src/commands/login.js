@@ -1,4 +1,3 @@
-const { flags } = require('@oclif/command');
 const defaultPlan = require('../context/plan');
 const AbstractCommand = require('../abstract-command');
 
@@ -19,15 +18,15 @@ class LoginCommand extends AbstractCommand {
 LoginCommand.description = 'Sign in with an existing account.';
 
 LoginCommand.flags = {
-  email: flags.string({
+  email: AbstractCommand.flags.string({
     char: 'e',
     description: 'Your Forest Admin account email.',
   }),
-  password: flags.string({
+  password: AbstractCommand.flags.string({
     char: 'P',
     description: 'Your Forest Admin account password (ignored if token is set).',
   }),
-  token: flags.string({
+  token: AbstractCommand.flags.string({
     char: 't',
     description: 'Your Forest Admin account token (replaces password).',
   }),

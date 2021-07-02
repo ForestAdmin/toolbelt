@@ -3,6 +3,7 @@ const clipboardy = require('clipboardy');
 const fs = require('fs');
 const { EOL } = require('os');
 const Context = require('@forestadmin/context');
+
 const { handleError } = require('../utils/error');
 const { DatabasePrompts } = require('../services/prompter/database-prompts');
 

@@ -1,4 +1,3 @@
-const { flags } = require('@oclif/command');
 const defaultPlan = require('../context/plan');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const EnvironmentManager = require('../services/environment-manager');
@@ -113,14 +112,14 @@ DeployCommand.aliases = ['environments:deploy'];
 DeployCommand.description = 'Deploy layout changes of an environment to the reference one.';
 
 DeployCommand.flags = {
-  help: flags.boolean({
+  help: AbstractAuthenticatedCommand.flags.boolean({
     description: 'Display usage information.',
   }),
-  force: flags.boolean({
+  force: AbstractAuthenticatedCommand.flags.boolean({
     char: 'f',
     description: 'Skip deploy confirmation.',
   }),
-  projectId: flags.integer({
+  projectId: AbstractAuthenticatedCommand.flags.integer({
     char: 'p',
     description: 'The id of the project you want to deploy.',
     default: null,

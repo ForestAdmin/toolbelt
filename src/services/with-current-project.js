@@ -1,4 +1,5 @@
 const Context = require('@forestadmin/context');
+
 const ProjectManager = require('./project-manager');
 
 module.exports = async function withCurrentProject(config) {

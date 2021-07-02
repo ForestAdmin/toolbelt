@@ -1,3 +1,5 @@
+const path = require('path');
+
 const testCli = require('../test-cli-helper/test-cli');
 const UpdateCommand = require('../../../src/commands/schema/update');
 const { baseAuthenticatedPlanMock } = require('../test-cli-helper/mocks/plan-mocks');
@@ -14,6 +16,7 @@ describe('schema:update', () => {
     const planMock = [
       baseAuthenticatedPlanMock,
       (plan) => plan
+        .addModule('path', path)
         .addValue('env', { DATABASE_SCHEMA: databaseSchema })
         .addInstance('schemaService', { update: schemaServiceUpdate }),
     ];

@@ -3,6 +3,7 @@ const agent = require('superagent-promise')(require('superagent'), P);
 const ProgressBar = require('progress');
 const { promisify } = require('util');
 const Context = require('@forestadmin/context');
+
 const jobDeserializer = require('../deserializers/job');
 
 const setTimeoutAsync = promisify(setTimeout);

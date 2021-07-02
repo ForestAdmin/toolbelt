@@ -1,5 +1,3 @@
-const fs = require('fs');
-const { flags } = require('@oclif/command');
 const defaultPlan = require('../context/plan');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const { buildDatabaseUrl } = require('../utils/database-url');
@@ -27,16 +25,24 @@ class InitCommand extends AbstractAuthenticatedCommand {
     super.init(plan || defaultPlan);
     const {
       assertPresent,
-      inquirer,
       env,
+      fs,
+      inquirer,
       spinner,
     } = this.context;
-    assertPresent({ inquirer, env, spinner });
+    assertPresent({
+      env,
+      fs,
+      inquirer,
+      spinner,
+    });
+
+    this.env = env;
+    this.fs = fs;
+    this.inquirer = inquirer;
+    this.spinner = spinner;
 
     this.environmentVariables = {};
-    this.inquirer = inquirer;
-    this.env = env;
-    this.spinner = spinner;
   }
 
   async runIfAuthenticated() {
@@ -127,7 +133,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
 
   async environmentVariablesAutoFilling() {
     if (this.environmentVariables.projectOrigin !== 'In-app') {
-      const existingEnvFile = fs.existsSync('.env');
+      const existingEnvFile = this.fs.existsSync('.env');
       const response = await this.inquirer
         .prompt([{
           type: 'confirm',
@@ -155,7 +161,7 @@ InitCommand.aliases = ['environments:init'];
 InitCommand.description = 'Set up your development environment in your current folder.';
 
 InitCommand.flags = {
-  projectId: flags.integer({
+  projectId: AbstractAuthenticatedCommand.flags.integer({
     char: 'p',
     description: 'The id of the project you want to init.',
   }),

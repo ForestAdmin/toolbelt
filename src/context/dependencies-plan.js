@@ -24,8 +24,8 @@ module.exports = (plan) => plan
     .addInstance('Table', Table)
     .addModule('chalk', chalk)
     .addModule('crypto', crypto)
-    .addModule('os', os)
     .addModule('fs', fs)
-    .addModule('superagent', superagent)
+    .addModule('joi', joi)
     .addModule('openIdClient', openIdClient)
-    .addModule('joi', joi));
+    .addModule('os', os)
+    .addModule('superagent', superagent));

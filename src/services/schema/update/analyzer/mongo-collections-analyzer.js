@@ -1,5 +1,6 @@
 const P = require('bluebird');
 const Context = require('@forestadmin/context');
+
 const EmptyDatabaseError = require('../../../../errors/database/empty-database-error');
 const { detectReferences, applyReferences } = require('./mongo-references-analyzer');
 const { detectHasMany, applyHasMany } = require('./mongo-hasmany-analyzer');

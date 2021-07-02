@@ -1,4 +1,3 @@
-const { flags } = require('@oclif/command');
 const defaultPlan = require('../../context/plan');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
@@ -132,7 +131,7 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
 ApplyCommand.description = 'Apply the current schema of your repository to the specified environment (using your ".forestadmin-schema.json" file).';
 
 ApplyCommand.flags = {
-  secret: flags.string({
+  secret: AbstractAuthenticatedCommand.flags.string({
     char: 's',
     description: 'Environment secret of the project (FOREST_ENV_SECRET).',
     required: false,
