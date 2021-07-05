@@ -1,5 +1,5 @@
 const { flags } = require('@oclif/command');
-const context = require('../context');
+const context = require('@forestadmin/context');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
@@ -98,7 +98,7 @@ PushCommand.flags = {
   help: flags.boolean({
     description: 'Display usage information.',
   }),
-  projectId: flags.string({
+  projectId: flags.integer({
     char: 'p',
     description: 'The id of the project to work on.',
     default: null,

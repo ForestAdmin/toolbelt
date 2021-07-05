@@ -1,15 +1,16 @@
 const _ = require('lodash');
 const P = require('bluebird');
 const agent = require('superagent-promise')(require('superagent'), P);
-const context = require('../context');
+const context = require('@forestadmin/context');
 const ProjectSerializer = require('../serializers/project');
 const ProjectDeserializer = require('../deserializers/project');
 const EnvironmentDeserializer = require('../deserializers/environment');
 const { serverHost } = require('../config');
 
-const { authenticator } = context.inject();
-
 function ProjectManager(config) {
+  const { assertPresent, authenticator } = context.inject();
+  assertPresent({ authenticator });
+
   function deserialize(response) {
     const attrs = _.clone(ProjectSerializer.opts.attributes);
     attrs.push('id');

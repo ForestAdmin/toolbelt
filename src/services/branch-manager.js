@@ -1,16 +1,14 @@
-const context = require('../context');
+const context = require('@forestadmin/context');
 const branchDeserializer = require('../deserializers/branch');
 const EnvironmentSerializer = require('../serializers/environment');
 const { serverHost } = require('../config');
 const { handleError } = require('../utils/error');
 
-const { authenticator, superagent: agent } = context.inject();
-
 const ERROR_MESSAGE_PROJECT_IN_V1 = '⚠️  This project does not support branches yet. Please migrate your environments from your Project settings first.';
 const ERROR_MESSAGE_ENV_SECRET_ISSUE = '⚠️  Your development environment is not properly set up. Please run `forest init` first and retry.';
 const ERROR_MESSAGE_BRANCH_ALREADY_EXISTS = '❌ This branch already exists.';
 const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT = '❌ You cannot run branch commands until this project has either a remote or a production environment.';
-const ERROR_MESSAGE_NO_REMOTE_ENVIRONMENT = '❌ You cannot run branch commands until this project has a remote environment.';
+const ERROR_MESSAGE_NO_REMOTE_ENVIRONMENT = '❌ You cannot run this command until this project has a remote non-production environment.';
 const ERROR_MESSAGE_BRANCH_DOES_NOT_EXIST = "❌ This branch doesn't exist.";
 const ERROR_MESSAGE_REMOVE_BRANCH_FAILED = '❌ Failed to delete branch.';
 const ERROR_MESSAGE_NOT_ADMIN_USER = "❌ You need the 'Admin' role on this project to use branches.";
@@ -20,6 +18,8 @@ const ERROR_MESSAGE_WRONG_ENVIRONMENT_TYPE = '❌ The environment on which you a
 const ERROR_MESSAGE_NO_DESTINATION_BRANCH = "❌ The environment on which you are trying to push your modifications doesn't have current branch.";
 
 function getBranches(envSecret) {
+  const { assertPresent, authenticator, superagent: agent } = context.inject();
+  assertPresent({ authenticator, superagent: agent });
   const authToken = authenticator.getAuthToken();
   return agent
     .get(`${serverHost()}/api/branches`)
@@ -30,6 +30,8 @@ function getBranches(envSecret) {
 }
 
 function deleteBranch(branchName, environmentSecret) {
+  const { assertPresent, authenticator, superagent: agent } = context.inject();
+  assertPresent({ authenticator, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
   return agent
@@ -40,6 +42,8 @@ function deleteBranch(branchName, environmentSecret) {
 }
 
 function createBranch(branchName, environmentSecret) {
+  const { assertPresent, authenticator, superagent: agent } = context.inject();
+  assertPresent({ authenticator, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
   return agent
@@ -51,6 +55,8 @@ function createBranch(branchName, environmentSecret) {
 
 // TODO: DWO EP17 remove destinationEnvironmentName handle
 function pushBranch(destinationEnvironmentName, environmentSecret) {
+  const { assertPresent, authenticator, superagent: agent } = context.inject();
+  assertPresent({ authenticator, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
   return agent
@@ -61,6 +67,8 @@ function pushBranch(destinationEnvironmentName, environmentSecret) {
 }
 
 function switchBranch({ id }, environmentSecret) {
+  const { assertPresent, authenticator, superagent: agent } = context.inject();
+  assertPresent({ authenticator, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
   return agent

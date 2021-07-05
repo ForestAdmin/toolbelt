@@ -1,5 +1,5 @@
 const { flags } = require('@oclif/command');
-const context = require('../context');
+const context = require('@forestadmin/context');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
@@ -106,7 +106,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
 BranchCommand.description = 'Create a new branch or list your existing branches.';
 
 BranchCommand.flags = {
-  projectId: flags.string({
+  projectId: flags.integer({
     description: 'The id of the project to create a branch in.',
   }),
   delete: flags.boolean({

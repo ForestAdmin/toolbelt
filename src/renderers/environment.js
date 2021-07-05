@@ -35,14 +35,14 @@ class EnvironmentRenderer {
         console.log(`${chalk.bold('ENVIRONMENT')}`);
 
         table.push(
-          { id: environment.id },
-          { name: environment.name },
-          { url: environment.apiEndpoint },
-          { active: environment.isActive },
-          { type: environment.type },
-          { liana: environment.lianaName },
-          { version: environment.lianaVersion },
-          { FOREST_ENV_SECRET: environment.secretKey },
+          { id: environment.id || '' },
+          { name: environment.name || '' },
+          { url: environment.apiEndpoint || '' },
+          { active: environment.isActive || '' },
+          { type: environment.type || '' },
+          { liana: environment.lianaName || '' },
+          { version: environment.lianaVersion || '' },
+          { FOREST_ENV_SECRET: environment.secretKey || '' },
         );
 
         console.log(table.toString());

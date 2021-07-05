@@ -30,6 +30,7 @@ function SchemaSerializer() {
         'enums',
         'integration',
         'isFilterable',
+        'isPrimaryKey',
         'isReadOnly',
         'isRequired',
         'isSortable',
@@ -39,6 +40,7 @@ function SchemaSerializer() {
         'relationship',
         'widget',
         'validations',
+        'foreignAndPrimaryKey',
       ],
     },
     validations: {
@@ -68,6 +70,7 @@ function SchemaSerializer() {
           'defaultValue',
           'enums',
           'isRequired',
+          'isReadOnly',
           'reference',
           'description',
           'position',

@@ -1,7 +1,7 @@
 {
   "name": "forest-cli",
   "description": "The Lumberjacks' toolbelt is the Forest CLI which makes easy to manage your back office application directly from the terminal.",
-  "version": "2.0.0-beta.3",
+  "version": "2.1.2",
   "author": "Sandro Munda",
   "contributors": [
     "Arnaud Valensi <arnaud.valensi@gmail.com>",
@@ -15,6 +15,7 @@
   },
   "bugs": "https://github.com/ForestAdmin/toolbelt/issues",
   "dependencies": {
+    "@forestadmin/context": "1.3.0",
     "@oclif/command": "1.5.4",
     "@oclif/config": "1.8.8",
     "@oclif/errors": "1.2.2",
@@ -23,7 +24,7 @@
     "@oclif/plugin-warn-if-update-available": "1.7.0",
     "bluebird": "3.5.2",
     "chalk": "4.0.0",
-    "cli-table": "github:Automattic/cli-table#7b14232ba779929e1859b267bf753c150d90a618",
+    "cli-table": "0.3.6",
     "clipboardy": "2.3.0",
     "dotenv": "8.2.0",
     "inquirer": "6.2.0",
@@ -58,7 +59,7 @@
     "jest": "24.9.0",
     "mock-stdin": "1.0.0",
     "nock": "13.0.4",
-    "semantic-release": "17.3.0",
+    "semantic-release": "17.4.2",
     "semantic-release-slack-bot": "1.6.2",
     "simple-git": "1.65.0",
     "stdout-stderr": "0.1.13"

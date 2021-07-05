@@ -1,5 +1,5 @@
 const { flags } = require('@oclif/command');
-const context = require('../context');
+const context = require('@forestadmin/context');
 const EnvironmentManager = require('../services/environment-manager');
 const Renderer = require('../renderers/environments');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
@@ -28,7 +28,7 @@ class EnvironmentCommand extends AbstractAuthenticatedCommand {
 EnvironmentCommand.description = 'Manage environments.';
 
 EnvironmentCommand.flags = {
-  projectId: flags.string({
+  projectId: flags.integer({
     char: 'p',
     description: 'Forest project ID.',
     default: null,

@@ -1,3 +1,92 @@
+## [2.1.2](https://github.com/ForestAdmin/toolbelt/compare/v2.1.1...v2.1.2) (2021-06-17)
+
+
+### Bug Fixes
+
+* validate that project id is an integer instead of a string ([#194](https://github.com/ForestAdmin/toolbelt/issues/194)) ([dd1eac3](https://github.com/ForestAdmin/toolbelt/commit/dd1eac335a86dc6c4f2b38bff98192bfb579b938))
+
+## [2.1.1](https://github.com/ForestAdmin/toolbelt/compare/v2.1.0...v2.1.1) (2021-06-10)
+
+
+### Bug Fixes
+
+* accept new meta key format for forestadmin schema ([#182](https://github.com/ForestAdmin/toolbelt/issues/182)) ([360b1a7](https://github.com/ForestAdmin/toolbelt/commit/360b1a7e908706b2b8cf1bb43918e4a199aeade3))
+
+# [2.1.0](https://github.com/ForestAdmin/toolbelt/compare/v2.0.8...v2.1.0) (2021-05-26)
+
+
+### Features
+
+* **switch-command:** add branch:switch alias ([#170](https://github.com/ForestAdmin/toolbelt/issues/170)) ([a4ab481](https://github.com/ForestAdmin/toolbelt/commit/a4ab48143ad70a949126d43b9a3e550dc4482b88))
+
+## [2.0.8](https://github.com/ForestAdmin/toolbelt/compare/v2.0.7...v2.0.8) (2021-05-25)
+
+## [2.0.7](https://github.com/ForestAdmin/toolbelt/compare/v2.0.6...v2.0.7) (2021-05-25)
+
+
+### Bug Fixes
+
+* update cli-table dependency ([28638b2](https://github.com/ForestAdmin/toolbelt/commit/28638b26bf846109ed179fd0d6b122249983dc61))
+
+## [2.0.6](https://github.com/ForestAdmin/toolbelt/compare/v2.0.5...v2.0.6) (2021-04-29)
+
+
+### Bug Fixes
+
+* add missing keys isReadOnly for actions fields, isPrimaryKey and foreignAndPrimaryKey for fields ([5c031cc](https://github.com/ForestAdmin/toolbelt/commit/5c031cc79b018bf84c1a3b36e734f5edfbdee447))
+
+## [2.0.5](https://github.com/ForestAdmin/toolbelt/compare/v2.0.4...v2.0.5) (2021-04-09)
+
+
+### Bug Fixes
+
+* **dwo:** allow to deploy on remote non production reference environment ([d68c52a](https://github.com/ForestAdmin/toolbelt/commit/d68c52affb2169df23236b14a37db66f8054827d))
+
+## [2.0.4](https://github.com/ForestAdmin/toolbelt/compare/v2.0.3...v2.0.4) (2021-04-06)
+
+
+### Bug Fixes
+
+* **security:** patch marked dependency vulnerabilities ([#157](https://github.com/ForestAdmin/toolbelt/issues/157)) ([f99829b](https://github.com/ForestAdmin/toolbelt/commit/f99829bc124ef81ae025d78c16c993500db25766))
+
+## [2.0.3](https://github.com/ForestAdmin/toolbelt/compare/v2.0.2...v2.0.3) (2021-04-06)
+
+
+### Bug Fixes
+
+* **security:** patch ini dependency vulnerabilities ([#156](https://github.com/ForestAdmin/toolbelt/issues/156)) ([6e2f979](https://github.com/ForestAdmin/toolbelt/commit/6e2f979f7b1495d199ee26c3e21628a9b26ef6e8))
+
+## [2.0.2](https://github.com/ForestAdmin/toolbelt/compare/v2.0.1...v2.0.2) (2021-04-06)
+
+
+### Bug Fixes
+
+* **security:** patch y18n dependency vulnerabilities ([#155](https://github.com/ForestAdmin/toolbelt/issues/155)) ([2786cd1](https://github.com/ForestAdmin/toolbelt/commit/2786cd178a7c0c9b64ad0366f3749e24ccd29257))
+
+## [2.0.1](https://github.com/ForestAdmin/toolbelt/compare/v2.0.0...v2.0.1) (2021-03-19)
+
+
+### Bug Fixes
+
+* **logout:** logout command now works as expected ([#153](https://github.com/ForestAdmin/toolbelt/issues/153)) ([c289d7f](https://github.com/ForestAdmin/toolbelt/commit/c289d7f9f1d26ca625b050957a390b51a04591df))
+
+# [2.0.0](https://github.com/ForestAdmin/toolbelt/compare/v1.7.6...v2.0.0) (2021-02-23)
+
+
+### Bug Fixes
+
+* error when preparing the release ([#137](https://github.com/ForestAdmin/toolbelt/issues/137)) ([79eb5b8](https://github.com/ForestAdmin/toolbelt/commit/79eb5b828f00b86faf6691400bd00642344b59e4))
+
+
+### Features
+
+* login without entering a password, and use application tokens ([#136](https://github.com/ForestAdmin/toolbelt/issues/136)) ([6bc64e8](https://github.com/ForestAdmin/toolbelt/commit/6bc64e86e88409fef08644d9c1822dd36e10ae69))
+
+
+### BREAKING CHANGES
+
+* the default login method now require to validate a temporary code on Forest Admin
+
 # [2.0.0-beta.3](https://github.com/ForestAdmin/toolbelt/compare/v2.0.0-beta.2...v2.0.0-beta.3) (2021-02-22)
 
 

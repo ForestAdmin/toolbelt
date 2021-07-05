@@ -1,5 +1,5 @@
 const { flags } = require('@oclif/command');
-const context = require('../context');
+const context = require('@forestadmin/context');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
@@ -111,5 +111,7 @@ SwitchCommand.flags = {
 SwitchCommand.args = [{
   name: 'BRANCH_NAME', required: false, description: 'The name of the local branch to set as current.',
 }];
+
+SwitchCommand.aliases = ['branch:switch'];
 
 module.exports = SwitchCommand;

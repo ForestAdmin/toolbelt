@@ -1,5 +1,5 @@
 const { Command } = require('@oclif/command');
-const context = require('../context');
+const context = require('@forestadmin/context');
 
 class LogoutCommand extends Command {
   constructor(...args) {
@@ -13,7 +13,7 @@ class LogoutCommand extends Command {
     if (!this.authenticator) throw new Error('Missing dependency authenticator');
   }
 
-  static async run() {
+  async run() {
     await this.authenticator.logout({ log: true });
   }
 }

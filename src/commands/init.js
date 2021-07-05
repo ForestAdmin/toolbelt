@@ -1,6 +1,6 @@
 const fs = require('fs');
 const { flags } = require('@oclif/command');
-const context = require('../context');
+const context = require('@forestadmin/context');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const { buildDatabaseUrl } = require('../utils/database-url');
 const withCurrentProject = require('../services/with-current-project');
@@ -158,7 +158,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
 InitCommand.description = 'Set up your development environment in your current folder.';
 
 InitCommand.flags = {
-  projectId: flags.string({
+  projectId: flags.integer({
     char: 'p',
     description: 'The id of the project you want to init.',
   }),
