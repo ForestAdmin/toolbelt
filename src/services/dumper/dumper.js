@@ -355,10 +355,8 @@ class Dumper {
   }
 
   writeDockerCompose(projectPath, config) {
-    const isDefaultForestUrl = this.env.FOREST_URL === this.constants.DEFAULT_FOREST_URL;
     const databaseUrl = `\${${this.isLinuxBasedOs() ? 'DATABASE_URL' : 'DOCKER_DATABASE_URL'}}`;
-    const forestUrl = isDefaultForestUrl ? false : `\${FOREST_URL-${this.env.FOREST_URL}}`;
-    const extraHost = isDefaultForestUrl ? false : this.env.FOREST_URL.replace(/https*:\/\//, '');
+    const forestUrl = this.env.FOREST_URL !== this.constants.DEFAULT_FOREST_URL ? `\${FOREST_URL-${this.env.FOREST_URL}}` : false;
     this.copyHandleBarsTemplate({
       projectPath,
       source: 'app/docker-compose.hbs',
@@ -369,7 +367,6 @@ class Dumper {
         dbSchema: config.dbSchema,
         forestUrl,
         network: (this.isLinuxBasedOs() && Dumper.isDatabaseLocal(config)) ? 'host' : null,
-        extraHost,
       },
     });
   }

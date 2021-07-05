@@ -26,7 +26,3 @@ services:
       - "${APPLICATION_PORT}:${APPLICATION_PORT}"
     volumes:
       - ./:/usr/src/app
-{{#if extraHost }}
-    extra_hosts:
-      - {{ extraHost }}:host-gateway
-{{/if}}
