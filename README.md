@@ -66,31 +66,18 @@ Manage Forest Admin schema.
 
 - `DATABASE_SCHEMA` the schema used by the database. (not for all commands)
 - `DATABASE_URL` the connection string. (not fot all commands)
-- `FOREST_ENV_SECRET` the env secret token used to recognize your environment you working on.
-- `FOREST_URL` the URL of forestadmin-server.
+- `FOREST_ENV_SECRET` the env secret token used to access your Forest Admin environment.
 - `SILENT` used to not log commands results. (optional)
-- `TOKEN_PATH` path where store the session token. (need to be "/usr/src/app" to work with the docker image)
+- `TOKEN_PATH` path where store the session token. (need to be "/usr/src/cli" to work with the docker image)
 
 If you have an `.env` file in you current folder docker should take it to run commands. So you can define the missing ENV variable inside.
 Otherwise you should pass all env variable you need in the `docker run` command, eg: `-e TOKEN_PATH="/usr/src/app"`.
 
-### Commands
-#### Using ForestAdmin in production
-- `FOREST_URL`="https://api.forestadmin.com"
-- `TOKEN_PATH`="/usr/src/app"
+### Using Forest Admin CLI
+- `TOKEN_PATH`="/usr/src/cli"
 
 ```bash
-docker run --rm --init -it -v `pwd`:/usr/src/app forestadmin/toolbelt:latest [command]
-```
-
-#### Using ForestAdmin in development
-
-- `FOREST_URL`="https://api.development.forestadmin.com"
-- `TOKEN_PATH`="/usr/src/app"
-- `NODE_TLS_REJECT_UNAUTHORIZED`=0
-
-```bash
-docker run --rm --init -it -v `pwd`:/usr/src/app --add-host=api.development.forestadmin.com:host-gateway forestadmin/toolbelt:latest [command]
+docker run --rm --init -it -v `pwd`:/usr/src/app -v ~/.forestrc:/usr/src/cli/.forestrc forestadmin/toolbelt:latest [command]
 ```
 
 ## Community
