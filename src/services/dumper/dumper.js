@@ -4,7 +4,7 @@ const stringUtils = require('../../utils/strings');
 const toValidPackageName = require('../../utils/to-valid-package-name');
 const IncompatibleLianaForUpdateError = require('../../errors/dumper/incompatible-liana-for-update-error');
 const InvalidForestCLIProjectStructureError = require('../../errors/dumper/invalid-forest-cli-project-structure-error');
-require('./handlerbars/loader');
+require('./handlebars/loader');
 
 const DEFAULT_PORT = 3310;
 class Dumper {
