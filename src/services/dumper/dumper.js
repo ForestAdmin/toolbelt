@@ -463,7 +463,7 @@ class Dumper {
     if (!this.fs.existsSync(packagePath)) throw new IncompatibleLianaForUpdateError(`"${packagePath}" not found in current directory.`);
 
     const file = this.fs.readFileSync(packagePath, 'utf8');
-    const match = /forest-express-.*((\d).\d.\d)/g.exec(file);
+    const match = /forest-express-\D*((\d+).\d+.\d+)/g.exec(file);
 
     let lianaMajorVersion = 0;
     if (match) {
