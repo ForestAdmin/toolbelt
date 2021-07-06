@@ -1,16 +1,17 @@
-const testCli = require('./../test-cli');
+const testCli = require('../test-cli-helper/test-cli');
 const GetProjectCommand = require('../../../src/commands/projects/get');
-const { testEnv } = require('../../fixtures/env');
+const { testEnvWithoutSecret } = require('../../fixtures/env');
 const { getProjectValid } = require('../../fixtures/api');
 
 describe('projects:get', () => {
   describe('on an existing project', () => {
     describe('without json option', () => {
       it('should display the configuration of the Forest project', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
-        command: () => GetProjectCommand.run(['82']),
-        api: [getProjectValid()],
+        commandClass: GetProjectCommand,
+        commandArgs: ['82'],
+        api: [() => getProjectValid()],
         std: [
           { out: 'PROJECT' },
           { out: 'id                   82' },
@@ -23,10 +24,11 @@ describe('projects:get', () => {
 
     describe('with json option', () => {
       it('should display the configuration of the Forest project in JSON', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
-        command: () => GetProjectCommand.run(['82', '--format', 'json']),
-        api: [getProjectValid()],
+        commandClass: GetProjectCommand,
+        commandArgs: ['82', '--format', 'json'],
+        api: [() => getProjectValid()],
         std: [{
           out: {
             id: '82',

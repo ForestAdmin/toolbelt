@@ -1,6 +1,5 @@
-const testCli = require('./test-cli');
+const testCli = require('./test-cli-helper/test-cli');
 const DeployCommand = require('../../src/commands/deploy');
-const { enter } = require('../fixtures/std');
 const {
   getDevelopmentEnvironmentValid,
   getEnvironmentListValid,
@@ -8,28 +7,7 @@ const {
   getProjectListValid,
   deployValid,
 } = require('../fixtures/api');
-const { testEnv, testEnv2 } = require('../fixtures/env');
-
-function inOutDeploySuccessMessage(environmentName) {
-  return { out: `✅ Deployed ${environmentName} layout changes to reference environment.` };
-}
-
-function inOutConfirmDeploy(environmentName) {
-  return [
-    { out: `Deploy ${environmentName} layout changes to reference?` },
-    { in: 'y' },
-    ...enter,
-    inOutDeploySuccessMessage(environmentName),
-  ];
-}
-
-function inOutSelectEnvironment(environmentName) {
-  return [
-    { out: 'Select the environment containing the layout changes you want to deploy' },
-    { out: environmentName },
-    ...enter,
-  ];
-}
+const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
 
 describe('deploy', () => {
   describe('when the user is logged in', () => {
@@ -37,22 +15,50 @@ describe('deploy', () => {
       const validEnvSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
       const environmentName = 'name1';
       it('should display the list of projects', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
-        command: () => DeployCommand.run([]),
+        commandClass: DeployCommand,
         api: [
-          getProjectListValid(),
-          getDevelopmentEnvironmentValid(1),
-          getEnvironmentListValid(1),
-          deployValid(validEnvSecret),
+          () => getProjectListValid(),
+          () => getDevelopmentEnvironmentValid(1),
+          () => getEnvironmentListValid(1),
+          () => deployValid(validEnvSecret),
+        ],
+        prompts: [
+          {
+            in: [{
+              name: 'project',
+              message: 'Select your project',
+              type: 'list',
+              choices: [
+                { name: 'project1', value: 1 },
+                { name: 'project2', value: 2 },
+              ],
+            }],
+            out: { project: 1 },
+          }, {
+            in: [{
+              name: 'environment',
+              message: 'Select the environment containing the layout changes you want to deploy to the reference environment',
+              type: 'list',
+              choices: ['name1'],
+            }],
+            out: {
+              environment: environmentName,
+            },
+          }, {
+            in: [{
+              name: 'confirm',
+              message: `Deploy ${environmentName} layout changes to reference?`,
+              type: 'confirm',
+            }],
+            out: {
+              confirm: true,
+            },
+          },
         ],
         std: [
-          { out: 'Select your project' },
-          { out: 'project1' },
-          { out: 'project2' },
-          ...enter,
-          ...inOutSelectEnvironment(environmentName),
-          ...inOutConfirmDeploy(environmentName),
+          { out: `√ Deployed ${environmentName} layout changes to reference environment.` },
         ],
       }));
     });
@@ -62,16 +68,38 @@ describe('deploy', () => {
         const projectId = 82;
         const environmentName = 'name1';
         it('should not display the list of projects', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
-          command: () => DeployCommand.run(['-p', '82']),
+          commandClass: DeployCommand,
+          commandArgs: ['-p', '82'],
           api: [
-            getEnvironmentListValid(projectId),
-            deployValid(),
+            () => getEnvironmentListValid(projectId),
+            () => deployValid(),
+          ],
+          prompts: [
+            {
+              in: [{
+                name: 'environment',
+                message: 'Select the environment containing the layout changes you want to deploy to the reference environment',
+                type: 'list',
+                choices: ['name1'],
+              }],
+              out: {
+                environment: environmentName,
+              },
+            }, {
+              in: [{
+                name: 'confirm',
+                message: `Deploy ${environmentName} layout changes to reference?`,
+                type: 'confirm',
+              }],
+              out: {
+                confirm: true,
+              },
+            },
           ],
           std: [
-            ...inOutSelectEnvironment(environmentName),
-            ...inOutConfirmDeploy(environmentName),
+            { out: `√ Deployed ${environmentName} layout changes to reference environment.` },
           ],
         }));
       });
@@ -80,17 +108,39 @@ describe('deploy', () => {
         const projectId = 82;
         const environmentName = 'name1';
         it('should not display the list of projects', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
-          command: () => DeployCommand.run([]),
+          commandClass: DeployCommand,
           api: [
-            getProjectByEnv(),
-            getEnvironmentListValid(projectId),
-            deployValid(),
+            () => getProjectByEnv(),
+            () => getEnvironmentListValid(projectId),
+            () => deployValid(),
+          ],
+          prompts: [
+            {
+              in: [{
+                name: 'environment',
+                message: 'Select the environment containing the layout changes you want to deploy to the reference environment',
+                type: 'list',
+                choices: ['name1'],
+              }],
+              out: {
+                environment: environmentName,
+              },
+            },
+            {
+              in: [{
+                name: 'confirm',
+                message: `Deploy ${environmentName} layout changes to reference?`,
+                type: 'confirm',
+              }],
+              out: {
+                confirm: true,
+              },
+            },
           ],
           std: [
-            ...inOutSelectEnvironment(environmentName),
-            ...inOutConfirmDeploy(environmentName),
+            { out: `√ Deployed ${environmentName} layout changes to reference environment.` },
           ],
         }));
       });
@@ -100,15 +150,30 @@ describe('deploy', () => {
       const projectId = 82;
       const environmentName = 'name1';
       it('should not display the list of environments', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => DeployCommand.run([environmentName]),
+        commandClass: DeployCommand,
+        commandArgs: [environmentName],
         api: [
-          getProjectByEnv(),
-          getEnvironmentListValid(projectId),
-          deployValid(),
+          () => getProjectByEnv(),
+          () => getEnvironmentListValid(projectId),
+          () => deployValid(),
         ],
-        std: inOutConfirmDeploy(environmentName),
+        prompts: [
+          {
+            in: [{
+              name: 'confirm',
+              message: `Deploy ${environmentName} layout changes to reference?`,
+              type: 'confirm',
+            }],
+            out: {
+              confirm: true,
+            },
+          },
+        ],
+        std: [
+          { out: `√ Deployed ${environmentName} layout changes to reference environment.` },
+        ],
       }));
     });
 
@@ -116,15 +181,18 @@ describe('deploy', () => {
       const projectId = 82;
       const environmentName = 'name1';
       it('should not display the list of environments', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => DeployCommand.run([environmentName, '--force']),
+        commandClass: DeployCommand,
+        commandArgs: [environmentName, '--force'],
         api: [
-          getProjectByEnv(),
-          getEnvironmentListValid(projectId),
-          deployValid(),
+          () => getProjectByEnv(),
+          () => getEnvironmentListValid(projectId),
+          () => deployValid(),
         ],
-        std: [inOutDeploySuccessMessage(environmentName)],
+        std: [
+          { out: `√ Deployed ${environmentName} layout changes to reference environment.` },
+        ],
       }));
     });
 
@@ -132,33 +200,46 @@ describe('deploy', () => {
       const projectId = 82;
       const environmentName = 'name1';
       it('should not push branch', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => DeployCommand.run([environmentName]),
+        commandClass: DeployCommand,
+        commandArgs: [environmentName],
         api: [
-          getProjectByEnv(),
-          getEnvironmentListValid(projectId),
+          () => getProjectByEnv(),
+          () => getEnvironmentListValid(projectId),
         ],
-        std: [
-          { in: 'n' },
-          ...enter,
-          { out: `? Deploy ${environmentName} layout changes to reference? No` },
+        prompts: [
+          {
+            in: [{
+              name: 'confirm',
+              message: `Deploy ${environmentName} layout changes to reference?`,
+              type: 'confirm',
+            }],
+            out: {
+              confirm: false,
+            },
+          },
         ],
+        exitCode: 0,
       }));
     });
 
     describe('when environment doesn\'t exist', () => {
       const projectId = 82;
+
       it('should throw an error', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => DeployCommand.run(['notExist']),
+        commandClass: DeployCommand,
+        commandArgs: ['notExist'],
         api: [
-          getProjectByEnv(),
-          getEnvironmentListValid(projectId),
+          () => getProjectByEnv(),
+          () => getEnvironmentListValid(projectId),
+        ],
+        std: [
+          { err: '× The environment provided doesn\'t exist.' },
         ],
         exitCode: 2,
-        exitMessage: "❌ The environment provided doesn't exist.",
       }));
     });
   });

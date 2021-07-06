@@ -1,16 +1,11 @@
-const { Command, flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
+const AbstractCommand = require('../abstract-command');
 
-class LoginCommand extends Command {
-  constructor(...args) {
-    super(...args);
-    /** @type {import('../context/init').Context} */
-    const { authenticator } = context.inject();
-
-    /** @private @readonly */
+class LoginCommand extends AbstractCommand {
+  init(plan) {
+    super.init(plan);
+    const { assertPresent, authenticator } = this.context;
+    assertPresent({ authenticator });
     this.authenticator = authenticator;
-
-    if (!this.authenticator) throw new Error('Missing dependency authenticator');
   }
 
   async run() {
@@ -22,15 +17,15 @@ class LoginCommand extends Command {
 LoginCommand.description = 'Sign in with an existing account.';
 
 LoginCommand.flags = {
-  email: flags.string({
+  email: AbstractCommand.flags.string({
     char: 'e',
     description: 'Your Forest Admin account email.',
   }),
-  password: flags.string({
+  password: AbstractCommand.flags.string({
     char: 'P',
     description: 'Your Forest Admin account password (ignored if token is set).',
   }),
-  token: flags.string({
+  token: AbstractCommand.flags.string({
     char: 't',
     description: 'Your Forest Admin account token (replaces password).',
   }),

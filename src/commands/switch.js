@@ -1,23 +1,15 @@
-const { flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
 
 class SwitchCommand extends AbstractAuthenticatedCommand {
-  constructor(...args) {
-    super(...args);
-
-    /** @type {import('../context/init').Context} */
-    const { inquirer, config: envConfig } = context.inject();
-
+  init(plan) {
+    super.init(plan);
+    const { assertPresent, env, inquirer } = this.context;
+    assertPresent({ env, inquirer });
+    this.env = env;
     this.inquirer = inquirer;
-    this.envConfig = envConfig;
-
-    ['inquirer', 'envConfig'].forEach((name) => {
-      if (!this[name]) throw new Error(`Missing dependency ${name}`);
-    });
   }
 
   async selectBranch(branches) {
@@ -38,7 +30,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
       const customError = BranchManager.handleBranchError(error);
 
       this.logger.error(customError);
-      return this.exit(2);
+      return null;
     }
   }
 
@@ -46,21 +38,21 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
     try {
       await BranchManager.switchBranch(selectedBranch, environmentSecret);
 
-      return this.log(`✅ Switched to branch: ${selectedBranch.name}.`);
+      this.logger.success(`Switched to branch: ${selectedBranch.name}.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
       this.logger.error(customError);
-      return this.exit(2);
+      this.exit(2);
     }
   }
 
   async getConfig() {
-    const envSecret = process.env.FOREST_ENV_SECRET;
+    const envSecret = this.env.FOREST_ENV_SECRET;
     const parsed = this.parse(SwitchCommand);
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
 
-    const config = await withCurrentProject({ ...this.envConfig, ...commandOptions });
+    const config = await withCurrentProject({ ...this.env, ...commandOptions });
 
     if (!config.envSecret) {
       const environment = await new ProjectManager(config)
@@ -77,33 +69,41 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
       const branches = await BranchManager.getBranches(config.envSecret) || [];
 
       if (branches.length === 0) {
-        return this.log("⚠️  You don't have any branch to set as current. Use `forest branch <branch_name>` to create one.");
+        this.logger.warn('You don\'t have any branch to set as current. Use `forest branch <branch_name>` to create one.');
+        return;
       }
 
       const selectedBranchName = config.BRANCH_NAME || await this.selectBranch(branches);
+      if (!selectedBranchName) {
+        this.exit(2);
+      }
+
       const selectedBranch = branches.find((branch) => branch.name === selectedBranchName);
       const currentBranch = branches.find((branch) => branch.isCurrent);
 
       if (selectedBranch === undefined) {
         throw new Error('Branch does not exist.');
       }
-      if (currentBranch && currentBranch.name === selectedBranchName) {
-        return this.log(`ℹ️  ${selectedBranchName} is already your current branch.`);
-      }
 
-      return this.switchTo(selectedBranch, config.envSecret);
+      if (currentBranch && currentBranch.name === selectedBranchName) {
+        this.logger.info(`${selectedBranchName} is already your current branch.`);
+      } else {
+        await this.switchTo(selectedBranch, config.envSecret);
+      }
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
       this.logger.error(customError);
-      return this.exit(2);
+      this.exit(2);
     }
   }
 }
 
+SwitchCommand.aliases = ['branches:switch'];
+
 SwitchCommand.description = 'Switch to another branch in your local development environment.';
 
 SwitchCommand.flags = {
-  help: flags.boolean({
+  help: AbstractAuthenticatedCommand.flags.boolean({
     description: 'Display usage information.',
   }),
 };

@@ -1,20 +1,21 @@
-const testCli = require('./../test-cli');
+const testCli = require('../test-cli-helper/test-cli');
 const {
   getEnvironmentValid,
   getEnvironmentNotFound,
 } = require('../../fixtures/api');
-const { testEnv } = require('../../fixtures/env');
+const { testEnvWithoutSecret } = require('../../fixtures/env');
 const GetCommand = require('../../../src/commands/environments/get');
 
 describe('environments:get', () => {
   describe('on an existing environment', () => {
     describe('without JSON format option', () => {
       it('should display the configuration of the Staging environment', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
-        command: () => GetCommand.run(['324']),
+        commandClass: GetCommand,
+        commandArgs: ['324'],
         api: [
-          getEnvironmentValid(),
+          () => getEnvironmentValid(),
         ],
         std: [
           { out: 'id                 324' },
@@ -30,11 +31,12 @@ describe('environments:get', () => {
     });
     describe('with JSON format option', () => {
       it('should display the configuration of the Staging environment', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
-        command: () => GetCommand.run(['324', '--format', 'json']),
+        commandClass: GetCommand,
+        commandArgs: ['324', '--format', 'json'],
         api: [
-          getEnvironmentValid(),
+          () => getEnvironmentValid(),
         ],
         std: [
           {
@@ -56,14 +58,15 @@ describe('environments:get', () => {
 
   describe('on an unknown environment', () => {
     it('should display a NotFound error', () => testCli({
-      env: testEnv,
+      env: testEnvWithoutSecret,
       token: 'any',
-      command: () => GetCommand.run(['3947']),
+      commandClass: GetCommand,
+      commandArgs: ['3947'],
       api: [
-        getEnvironmentNotFound(),
+        () => getEnvironmentNotFound(),
       ],
       std: [
-        { err: 'Cannot find the environment 3947.' },
+        { err: '× Cannot find the environment 3947.' },
       ],
     }));
   });

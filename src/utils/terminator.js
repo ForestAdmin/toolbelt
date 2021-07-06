@@ -1,12 +1,36 @@
-const logger = require('../services/logger');
+const Context = require('@forestadmin/context');
+
+/**
+ * @typedef {{
+ *  errorCode: string;
+ *  errorMessage: string;
+ *  context: any;
+ * }} DetailedLog
+ *
+ * @typedef {{
+ *  logs: string[]
+ * }} MultipleMessages
+ */
 
 module.exports = {
-  terminate(status, {
-    logs,
+  /**
+   * @param {number} status
+   * @param {DetailedLog | MultipleMessages | DetailedLog & MultipleMessages} log
+   */
+  async terminate(status, {
+    errorCode, errorMessage, logs, context,
   }) {
+    const { eventSender, exitProcess, logger } = Context.inject();
+
     if (logs.length) {
       logger.error(...logs);
     }
-    process.exit(status);
+    if (errorCode) {
+      await eventSender.notifyError(errorCode, errorMessage, context);
+    } else {
+      await eventSender.notifyError();
+    }
+
+    return exitProcess(status);
   },
 };

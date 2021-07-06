@@ -1,23 +1,24 @@
-const { flags } = require('@oclif/command');
-const _ = require('lodash');
 const EnvironmentManager = require('../../services/environment-manager');
-const logger = require('../../services/logger');
-const Prompter = require('../../services/prompter');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class UpdateCommand extends AbstractAuthenticatedCommand {
+  init(plan) {
+    super.init(plan);
+    const { assertPresent, env } = this.context;
+    assertPresent({ env });
+    this.env = env;
+  }
+
   async runIfAuthenticated() {
     const parsed = this.parse(UpdateCommand);
-
-    let config = await Prompter([]);
-    config = _.merge(config, parsed.flags);
+    const config = { ...this.env, ...parsed.flags };
 
     if (config.name || config.url) {
       const manager = new EnvironmentManager(config);
       await manager.updateEnvironment();
-      logger.info('Environment updated.');
+      this.logger.info('Environment updated.');
     } else {
-      logger.error('Please provide environment name and/or url');
+      this.logger.error('Please provide environment name and/or url');
     }
   }
 }
@@ -25,17 +26,17 @@ class UpdateCommand extends AbstractAuthenticatedCommand {
 UpdateCommand.description = 'Update an environment.';
 
 UpdateCommand.flags = {
-  environmentId: flags.string({
+  environmentId: AbstractAuthenticatedCommand.flags.integer({
     char: 'e',
     description: 'The forest environment ID to update.',
     required: true,
   }),
-  name: flags.string({
+  name: AbstractAuthenticatedCommand.flags.string({
     char: 'n',
     description: 'To update the environment name.',
     required: false,
   }),
-  url: flags.string({
+  url: AbstractAuthenticatedCommand.flags.string({
     char: 'u',
     description: 'To update the application URL.',
     required: false,

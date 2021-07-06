@@ -1,9 +1,9 @@
-const ApplicationError = require('../utils/application-error');
+const ApplicationError = require('../errors/application-error');
 const { ERROR_UNEXPECTED } = require('../utils/messages');
 
 /**
  * @class
- * @param {import('../context/init').Context} context
+ * @param {import('../context/plan').Context} context
  */
 function Authenticator({
   logger, api, chalk, inquirer, os, jwtDecode, fs, joi, env,
@@ -31,7 +31,7 @@ function Authenticator({
     }
   };
 
-  this.saveToken = (token, path = process.env.TOKEN_PATH || os.homedir()) => fs
+  this.saveToken = (token, path = env.TOKEN_PATH || os.homedir()) => fs
     .writeFileSync(`${path}/.forestrc`, token);
 
   this.verify = (token) => {
@@ -53,9 +53,10 @@ function Authenticator({
     || 'Invalid token. Please enter your authentication token.';
 
   this.logout = async (opts = {}) => {
-    const pathForestrc = `${os.homedir()}/.forestrc`;
+    const basePath = env.TOKEN_PATH || os.homedir();
+    const pathForestrc = `${basePath}/.forestrc`;
     const forestToken = this.getVerifiedToken(pathForestrc);
-    const pathLumberrc = `${os.homedir()}/.lumberrc`;
+    const pathLumberrc = `${basePath}/.lumberrc`;
     const isLumberLoggedIn = this.getVerifiedToken(pathLumberrc);
 
     if (forestToken) {
@@ -128,7 +129,6 @@ function Authenticator({
     }
     return token;
   };
-
 
   this.validateEmail = (input) => {
     if (!joi.string().email().validate(input).error) {

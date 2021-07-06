@@ -1,26 +1,28 @@
 const { v4: uuidv4 } = require('uuid');
+const chalk = require('chalk');
 const Spinnies = require('spinnies');
-const singletonGetter = require('./singleton-getter');
 
 const spinniesConstructorParameters = {
   color: 'yellow',
+  failPrefix: `${chalk.bold.red('×')}`,
   spinnerColor: 'yellow',
   spinner: {
     interval: 80,
     frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
   },
+  succeedPrefix: `${chalk.bold.green('√')}`,
 };
-// NOTICE: Singleton used here to attach all generated spinner to the same spinnies instance.
-const spinniesInstance = singletonGetter(Spinnies, spinniesConstructorParameters);
 
-// NOTICE: Except if you need several spinner running at the same time,
-//         a `singleton-getter` usage should be prefered.
+// NOTICE: Singleton used here to attach all generated spinner to the same spinnies instance.
+let spinniesInstance;
+function getSpinniesInstance() {
+  if (!spinniesInstance) spinniesInstance = new Spinnies(spinniesConstructorParameters);
+  return spinniesInstance;
+}
+
 /**
  * A single instance of spinner is intended to be used as follow:
  * @example
- * const singletonGetter = require('path/to/singleton-getter')
- * const spinner = singletonGetter(Spinner)
- *
  * // synchronously:
  * spinner.start({ text: 'my super text' })
  * // do something
@@ -39,7 +41,7 @@ const spinniesInstance = singletonGetter(Spinnies, spinniesConstructorParameters
  */
 class Spinner {
   constructor() {
-    this.spinnies = spinniesInstance;
+    this.spinnies = getSpinniesInstance();
     this.currentSpinnerOptions = null;
   }
 

@@ -9,9 +9,11 @@ describe('services > authenticator', () => {
       generateApplicationToken: jest.fn(),
       deleteApplicationToken: jest.fn(),
     };
-
     const os = {
       homedir: jest.fn().mockReturnValue('sweet-home'),
+    };
+    const env = {
+
     };
 
     const fs = {
@@ -19,7 +21,6 @@ describe('services > authenticator', () => {
       readFileSync: jest.fn(),
       writeFileSync: jest.fn(),
     };
-
     const chalk = {
       red: jest.fn().mockImplementation((value) => `[red]${value}[/red]`),
       green: jest.fn().mockImplementation((value) => `[green]${value}[/green]`),
@@ -29,10 +30,10 @@ describe('services > authenticator', () => {
       error: jest.fn(),
       info: jest.fn(),
     };
-
     const jwtDecode = jest.fn();
 
     const context = {
+      env,
       oidcAuthenticator,
       applicationTokenService,
       os,
@@ -43,10 +44,189 @@ describe('services > authenticator', () => {
       FOREST_PATH: 'sweet-home/.forestrc',
       LUMBER_PATH: 'sweet-home/.lumberrc',
     };
+
     const authenticator = new Authenticator(context);
 
     return { ...context, authenticator };
   }
+
+  describe('getAuthToken', () => {
+    describe('when .forestrc found', () => {
+      it('should return .forestrc token', () => {
+        expect.assertions(3);
+        const { authenticator, os } = setup();
+        jest
+          .spyOn(authenticator, 'getVerifiedToken')
+          .mockReturnValue(null);
+
+        const result = authenticator.getAuthToken();
+
+        expect(os.homedir).toHaveBeenCalledWith();
+        expect(authenticator.getVerifiedToken).toHaveBeenCalledWith('sweet-home/.forestrc');
+        expect(result).toBeNull();
+      });
+    });
+    describe('when .forestrc is not found', () => {
+      describe('when .lumberrc is found', () => {
+        it('should return .lumberrc token', () => {
+          expect.assertions(3);
+          const { authenticator, os } = setup();
+          const lumberToken = Symbol('lumberToken');
+          jest
+            .spyOn(authenticator, 'getVerifiedToken')
+            .mockReturnValueOnce(null)
+            .mockReturnValueOnce(lumberToken);
+
+          const result = authenticator.getAuthToken();
+
+          expect(os.homedir).toHaveBeenCalledWith();
+          expect(authenticator.getVerifiedToken)
+            .toHaveBeenNthCalledWith(2, 'sweet-home/.lumberrc');
+          expect(result).toBe(lumberToken);
+        });
+      });
+      describe('when .lumberrc is not found', () => {
+        it('should return null', () => {
+          expect.assertions(4);
+          const { authenticator, os } = setup();
+          jest
+            .spyOn(authenticator, 'getVerifiedToken')
+            .mockReturnValue(null);
+
+          const result = authenticator.getAuthToken();
+
+          expect(os.homedir).toHaveBeenCalledWith();
+          expect(authenticator.getVerifiedToken)
+            .toHaveBeenNthCalledWith(1, 'sweet-home/.forestrc');
+          expect(authenticator.getVerifiedToken)
+            .toHaveBeenNthCalledWith(2, 'sweet-home/.lumberrc');
+          expect(result).toBeNull();
+        });
+      });
+    });
+  });
+
+  describe('getVerifiedToken', () => {
+    describe('when token is not found', () => {
+      it('should return null', () => {
+        expect.assertions(2);
+        const { authenticator } = setup();
+        jest
+          .spyOn(authenticator, 'readAuthTokenFrom')
+          .mockReturnValue(null);
+
+        const path = Symbol('path');
+        const result = authenticator.getVerifiedToken(path);
+
+        expect(authenticator.readAuthTokenFrom).toHaveBeenCalledWith(path);
+        expect(result).toBeNull();
+      });
+    });
+    describe('when token is found', () => {
+      it('should return the token', () => {
+        expect.assertions(3);
+        const { authenticator } = setup();
+        const token = Symbol('token');
+        jest
+          .spyOn(authenticator, 'readAuthTokenFrom')
+          .mockReturnValue(token);
+        jest
+          .spyOn(authenticator, 'verify')
+          .mockReturnValue(token);
+
+        const path = Symbol('path');
+        const result = authenticator.getVerifiedToken(path);
+
+        expect(authenticator.readAuthTokenFrom).toHaveBeenCalledWith(path);
+        expect(authenticator.verify).toHaveBeenCalledWith(token);
+        expect(result).toBe(token);
+      });
+    });
+  });
+
+  describe('readAuthTokenFrom', () => {
+    describe('when read fails', () => {
+      it('should return the file', () => {
+        expect.assertions(2);
+        const { authenticator, fs } = setup();
+
+        fs.readFileSync.mockImplementation(() => { throw new Error(); });
+        const path = Symbol('path');
+        const result = authenticator.readAuthTokenFrom(path);
+
+        expect(fs.readFileSync).toHaveBeenCalledWith(path, 'utf8');
+        expect(result).toBeNull();
+      });
+    });
+    describe('when read works', () => {
+      it('should return the token', () => {
+        expect.assertions(2);
+        const { authenticator, fs } = setup();
+
+        const token = Symbol('token');
+        fs.readFileSync.mockReturnValue(token);
+        const path = Symbol('path');
+        const result = authenticator.readAuthTokenFrom(path);
+
+        expect(fs.readFileSync).toHaveBeenCalledWith(path, 'utf8');
+        expect(result).toBe(token);
+      });
+    });
+  });
+
+  describe('verify', () => {
+    describe('when token is null', () => {
+      it('should not validate', () => {
+        expect.assertions(1);
+        const { authenticator } = setup();
+        expect(authenticator.verify(null)).toBeNull();
+      });
+    });
+    describe('when jwtDecode throws', () => {
+      it('should not validate', () => {
+        expect.assertions(2);
+        const { authenticator, jwtDecode } = setup();
+
+        jwtDecode.mockImplementation(() => { throw new Error(); });
+
+        const token = Symbol('token');
+        const result = authenticator.verify(token);
+
+        expect(jwtDecode).toHaveBeenCalledWith(token);
+        expect(result).toBeNull();
+      });
+    });
+    describe('when jwtDecode decodes a invalid token', () => {
+      it('should not validate', () => {
+        expect.assertions(2);
+        const { authenticator, jwtDecode } = setup();
+
+        const decodedToken = { exp: (Date.now().valueOf() / 1000) - 100000 }; // far in the past
+        jwtDecode.mockReturnValue(decodedToken);
+
+        const token = Symbol('token');
+        const result = authenticator.verify(token);
+
+        expect(jwtDecode).toHaveBeenCalledWith(token);
+        expect(result).toBeNull();
+      });
+    });
+    describe('when jwtDecode decodes a valid token', () => {
+      it('should validate', () => {
+        expect.assertions(2);
+        const { authenticator, jwtDecode } = setup();
+
+        const decodedToken = { exp: (Date.now().valueOf() / 1000) + 100000 }; // far in the future
+        jwtDecode.mockReturnValue(decodedToken);
+
+        const token = Symbol('token');
+        const result = authenticator.verify(token);
+
+        expect(jwtDecode).toHaveBeenCalledWith(token);
+        expect(result).toStrictEqual(token);
+      });
+    });
+  });
 
   describe('tryLogin', () => {
     describe('when the password and token are not provided', () => {

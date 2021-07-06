@@ -1,48 +1,42 @@
-const chalk = require('chalk');
-const Table = require('cli-table');
+const { chars } = require('./defaults');
 
 class EnvironmentsRenderer {
-  constructor(config) {
-    this.config = config;
+  constructor({
+    assertPresent,
+    chalk,
+    logger,
+    Table,
+  }) {
+    assertPresent({
+      chalk,
+      logger,
+      Table,
+    });
+    this.chalk = chalk;
+    this.logger = logger;
+    this.Table = Table;
   }
 
-  render(environments) {
-    const table = new Table({
+  render(environments, config) {
+    const table = new this.Table({
       head: ['ID', 'NAME', 'URL', 'TYPE'],
       colWidths: [10, 20, 35, 15],
-      chars: {
-        top: '',
-        'top-mid': '',
-        'top-left': '',
-        'top-right': '',
-        bottom: '',
-        'bottom-mid': '',
-        'bottom-left': '',
-        'bottom-right': '',
-        left: '',
-        'left-mid': '',
-        mid: '',
-        'mid-mid': '',
-        right: '',
-        'right-mid': '',
-        middle: '',
-      },
+      chars,
     });
 
-    switch (this.config.format) {
+    switch (config.format) {
       case 'json':
-        console.log(JSON.stringify(environments, null, 2));
+        this.logger.log(JSON.stringify(environments, null, 2));
         break;
       case 'table':
-        console.log(`${chalk.bold('ENVIRONMENTS')}`);
-
         environments.forEach((environment) => {
           table.push([environment.id, environment.name, environment.apiEndpoint,
             environment.type]);
         });
-
-        console.log(table.toString());
-        console.log('\n');
+        this.logger.log(
+          `${this.chalk.bold('ENVIRONMENTS')}`,
+          ...table.toString().split('\n'),
+        );
         break;
       default:
     }

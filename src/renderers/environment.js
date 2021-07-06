@@ -1,39 +1,32 @@
-const chalk = require('chalk');
-const Table = require('cli-table');
+const { chars } = require('./defaults');
 
 class EnvironmentRenderer {
-  constructor(config) {
-    this.config = config;
+  constructor({
+    assertPresent,
+    chalk,
+    logger,
+    Table,
+  }) {
+    assertPresent({
+      chalk,
+      logger,
+      Table,
+    });
+    this.chalk = chalk;
+    this.logger = logger;
+    this.Table = Table;
   }
 
-  render(environment) {
-    const table = new Table({
-      chars: {
-        top: '',
-        'top-mid': '',
-        'top-left': '',
-        'top-right': '',
-        bottom: '',
-        'bottom-mid': '',
-        'bottom-left': '',
-        'bottom-right': '',
-        left: '',
-        'left-mid': '',
-        mid: '',
-        'mid-mid': '',
-        right: '',
-        'right-mid': '',
-        middle: '',
-      },
+  render(environment, config) {
+    const table = new this.Table({
+      chars,
     });
 
-    switch (this.config.format) {
+    switch (config.format) {
       case 'json':
-        console.log(JSON.stringify(environment, null, 2));
+        this.logger.log(JSON.stringify(environment, null, 2));
         break;
       case 'table':
-        console.log(`${chalk.bold('ENVIRONMENT')}`);
-
         table.push(
           { id: environment.id || '' },
           { name: environment.name || '' },
@@ -44,8 +37,10 @@ class EnvironmentRenderer {
           { version: environment.lianaVersion || '' },
           { FOREST_ENV_SECRET: environment.secretKey || '' },
         );
-
-        console.log(table.toString());
+        this.logger.log(
+          `${this.chalk.bold('ENVIRONMENT')}`,
+          ...table.toString().split('\n'),
+        );
         break;
       default:
     }

@@ -1,47 +1,41 @@
-const chalk = require('chalk');
-const Table = require('cli-table');
+const { chars } = require('./defaults');
 
 class ProjectsRenderer {
-  constructor(config) {
-    this.config = config;
+  constructor({
+    assertPresent,
+    chalk,
+    logger,
+    Table,
+  }) {
+    assertPresent({
+      chalk,
+      logger,
+      Table,
+    });
+    this.chalk = chalk;
+    this.logger = logger;
+    this.Table = Table;
   }
 
-  render(projects) {
-    const table = new Table({
+  render(projects, config) {
+    const table = new this.Table({
       head: ['ID', 'NAME'],
       colWidths: [10, 20],
-      chars: {
-        top: '',
-        'top-mid': '',
-        'top-left': '',
-        'top-right': '',
-        bottom: '',
-        'bottom-mid': '',
-        'bottom-left': '',
-        'bottom-right': '',
-        left: '',
-        'left-mid': '',
-        mid: '',
-        'mid-mid': '',
-        right: '',
-        'right-mid': '',
-        middle: '',
-      },
+      chars,
     });
 
-    switch (this.config.format) {
+    switch (config.format) {
       case 'json':
-        console.log(JSON.stringify(projects, null, 2));
+        this.logger.log(JSON.stringify(projects, null, 2));
         break;
       case 'table':
-        console.log(`${chalk.bold('PROJECTS')}`);
-
         projects.forEach((project) => {
           table.push([project.id, project.name]);
         });
-
-        console.log(table.toString());
-        console.log('\n');
+        this.logger.log(
+          `${this.chalk.bold('PROJECTS')}`,
+          ...table.toString().split('\n'),
+        );
         break;
       default:
     }

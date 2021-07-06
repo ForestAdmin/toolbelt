@@ -1,25 +1,36 @@
-const { flags } = require('@oclif/command');
-const _ = require('lodash');
-const chalk = require('chalk');
 const ProjectManager = require('../../services/project-manager');
-const Renderer = require('../../renderers/project');
-const Prompter = require('../../services/prompter');
-const logger = require('../../services/logger');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class GetCommand extends AbstractAuthenticatedCommand {
+  init(plan) {
+    super.init(plan);
+    const {
+      assertPresent,
+      chalk,
+      env,
+      projectRenderer,
+    } = this.context;
+    assertPresent({
+      chalk,
+      env,
+      projectRenderer,
+    });
+    this.chalk = chalk;
+    this.env = env;
+    this.projectRenderer = projectRenderer;
+  }
+
   async runIfAuthenticated() {
     const parsed = this.parse(GetCommand);
 
-    let config = await Prompter([]);
-    config = _.merge(config, parsed.flags, parsed.args);
+    const config = { ...this.env, ...parsed.flags, ...parsed.args };
 
     const manager = new ProjectManager(config);
     try {
       const project = await manager.getProject(config);
-      new Renderer(config).render(project);
+      this.projectRenderer.render(project, config);
     } catch (err) {
-      logger.error(`Cannot find the project ${chalk.bold(config.projectId)}.`);
+      this.logger.error(`Cannot find the project ${this.chalk.bold(config.projectId)}.`);
     }
   }
 }
@@ -27,7 +38,7 @@ class GetCommand extends AbstractAuthenticatedCommand {
 GetCommand.description = 'Get the configuration of a project.';
 
 GetCommand.flags = {
-  format: flags.string({
+  format: AbstractAuthenticatedCommand.flags.string({
     char: 'format',
     description: 'Ouput format.',
     options: ['table', 'json'],

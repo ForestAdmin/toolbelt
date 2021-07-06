@@ -1,22 +1,21 @@
-const path = require('path');
-const { flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
 const JobStateChecker = require('../../services/job-state-checker');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class ApplyCommand extends AbstractAuthenticatedCommand {
-  constructor(...args) {
-    super(...args);
-    /** @type {import('../../context/init').Context} */
-    const { fs, joi } = context.inject();
-
+  init(plan) {
+    super.init(plan);
+    const {
+      assertPresent,
+      env,
+      fs,
+      joi,
+    } = this.context;
+    assertPresent({ env, fs, joi });
+    this.env = env;
     this.fs = fs;
     this.joi = joi;
-    ['fs', 'joi'].forEach((name) => {
-      if (!this[name]) throw new Error(`Missing dependency ${name}`);
-    });
   }
 
   async runIfAuthenticated() {
@@ -26,7 +25,7 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
     const secret = this.getEnvironmentSecret(parsedFlags);
     const authenticationToken = this.authenticator.getAuthToken();
 
-    this.log('Sending "./.forestadmin-schema.json"...');
+    this.logger.log('Sending ".forestadmin-schema.json"...');
     const jobId = await new SchemaSender(
       serializedSchema,
       secret,
@@ -36,17 +35,17 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
 
     if (jobId) {
       await new JobStateChecker('Processing schema', oclifExit).check(jobId);
-      this.log('Schema successfully sent to forest.');
+      this.logger.log('Schema successfully sent to forest.');
     } else {
-      this.log('The schema is the same as before, nothing changed.');
+      this.logger.log('The schema is the same as before, nothing changed.');
     }
 
     return null;
   }
 
   readSchema() {
-    this.log('Reading "./.forestadmin-schema.json"...');
-    const filename = path.resolve('./.forestadmin-schema.json');
+    this.logger.log('Reading ".forestadmin-schema.json" from current directory...');
+    const filename = '.forestadmin-schema.json';
 
     if (!this.fs.existsSync(filename)) {
       this.logger.error('Cannot find the file ".forestadmin-schema.json" in this directory. Please be sure to run this command inside your project directory.');
@@ -101,9 +100,10 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
     }), { convert: false });
 
     if (error) {
-      let message = 'Cannot properly read the ".forestadmin-schema.json" file:\n - ';
-      message += error.details.map((detail) => detail.message).join('\n - ');
-      this.logger.error(message);
+      this.logger.error('Cannot properly read the ".forestadmin-schema.json" file:');
+      error.details.forEach(
+        (detail) => this.logger.error(`| ${detail.message}`),
+      );
       this.exit(20);
     }
 
@@ -115,9 +115,9 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
 
     if (parsedFlags.secret) {
       secret = parsedFlags.secret;
-    } else if (process.env.FOREST_ENV_SECRET) {
-      this.log('Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"');
-      secret = process.env.FOREST_ENV_SECRET;
+    } else if (this.env.FOREST_ENV_SECRET) {
+      this.logger.log('Using the forest environment secret found in the environment variable "FOREST_ENV_SECRET"');
+      secret = this.env.FOREST_ENV_SECRET;
     } else {
       this.logger.error('Cannot find your forest environment secret in the environment variable "FOREST_ENV_SECRET".\nPlease set the "FOREST_ENV_SECRET" variable or pass the secret in parameter using --secret.');
       this.exit(2);
@@ -130,7 +130,7 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
 ApplyCommand.description = 'Apply the current schema of your repository to the specified environment (using your ".forestadmin-schema.json" file).';
 
 ApplyCommand.flags = {
-  secret: flags.string({
+  secret: AbstractAuthenticatedCommand.flags.string({
     char: 's',
     description: 'Environment secret of the project (FOREST_ENV_SECRET).',
     required: false,

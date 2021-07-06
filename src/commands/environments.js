@@ -1,39 +1,36 @@
-const { flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
 const EnvironmentManager = require('../services/environment-manager');
-const Renderer = require('../renderers/environments');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const withCurrentProject = require('../services/with-current-project');
 
 class EnvironmentCommand extends AbstractAuthenticatedCommand {
-  constructor(...args) {
-    super(...args);
-
-    const { config } = context.inject();
-
-    this.envConfig = config;
-
-    if (!this.envConfig) throw new Error('Missing dependency envConfig');
+  init(plan) {
+    super.init(plan);
+    const { assertPresent, env, environmentsRenderer } = this.context;
+    assertPresent({ env, environmentsRenderer });
+    this.env = env;
+    this.environmentsRenderer = environmentsRenderer;
   }
 
   async runIfAuthenticated() {
     const parsed = this.parse(EnvironmentCommand);
-    const config = await withCurrentProject({ ...this.envConfig, ...parsed.flags });
+    const config = await withCurrentProject({ ...this.env, ...parsed.flags });
     const manager = new EnvironmentManager(config);
     const environments = await manager.listEnvironments();
-    new Renderer(config).render(environments);
+    this.environmentsRenderer.render(environments, config);
   }
 }
+
+EnvironmentCommand.aliases = ['environments:list'];
 
 EnvironmentCommand.description = 'Manage environments.';
 
 EnvironmentCommand.flags = {
-  projectId: flags.integer({
+  projectId: AbstractAuthenticatedCommand.flags.integer({
     char: 'p',
     description: 'Forest project ID.',
     default: null,
   }),
-  format: flags.string({
+  format: AbstractAuthenticatedCommand.flags.string({
     char: 'format',
     description: 'Ouput format.',
     options: ['table', 'json'],

@@ -1,16 +1,13 @@
 module.exports = {
-  testEnv: {
+  testEnvWithoutSecret: {
     FOREST_URL: 'http://localhost:3001',
-    TOKEN_PATH: './test/services/tokens',
   },
-  testEnv2: {
+  testEnvWithSecret: {
     FOREST_URL: 'http://localhost:3001',
-    TOKEN_PATH: './test/services/tokens',
     FOREST_ENV_SECRET: 'forestEnvSecret',
   },
-  testEnvWithDatabaseUrl: {
+  testEnvWithSecretAndDatabaseURL: {
     FOREST_URL: 'http://localhost:3001',
-    TOKEN_PATH: './test/services/tokens',
     FOREST_ENV_SECRET: 'forestEnvSecret',
     DATABASE_URL: 'postgres://some:cred@localhost:5435/ma-db',
   },

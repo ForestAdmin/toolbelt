@@ -1,46 +1,41 @@
-const chalk = require('chalk');
-const Table = require('cli-table');
+const { chars } = require('./defaults');
 
 class ProjectRenderer {
-  constructor(config) {
-    this.config = config;
+  constructor({
+    assertPresent,
+    chalk,
+    logger,
+    Table,
+  }) {
+    assertPresent({
+      chalk,
+      logger,
+      Table,
+    });
+    this.chalk = chalk;
+    this.logger = logger;
+    this.Table = Table;
   }
 
-  render(project) {
-    const table = new Table({
-      chars: {
-        top: '',
-        'top-mid': '',
-        'top-left': '',
-        'top-right': '',
-        bottom: '',
-        'bottom-mid': '',
-        'bottom-left': '',
-        'bottom-right': '',
-        left: '',
-        'left-mid': '',
-        mid: '',
-        'mid-mid': '',
-        right: '',
-        'right-mid': '',
-        middle: '',
-      },
+  render(project, config) {
+    const table = new this.Table({
+      chars,
     });
 
-    switch (this.config.format) {
+    switch (config.format) {
       case 'json':
-        console.log(JSON.stringify(project, null, 2));
+        this.logger.log(JSON.stringify(project, null, 2));
         break;
       case 'table':
-        console.log(`${chalk.bold('PROJECT')}`);
-
         table.push(
           { id: project.id || '' },
           { name: project.name || '' },
           { 'default environment': project.defaultEnvironment.type || '' },
         );
-
-        console.log(table.toString());
+        this.logger.log(
+          `${this.chalk.bold('PROJECT')}`,
+          ...table.toString().split('\n'),
+        );
         break;
       default:
     }

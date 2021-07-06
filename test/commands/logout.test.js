@@ -1,9 +1,9 @@
-const testCli = require('./test-cli');
+const testCli = require('./test-cli-helper/test-cli');
 const LogoutCommand = require('../../src/commands/logout');
 
 describe('logout', () => {
   it('should logout successfully', () => testCli({
-    command: () => LogoutCommand.run([]),
+    commandClass: LogoutCommand,
     std: [
       { out: '> You are logged out.' },
     ],

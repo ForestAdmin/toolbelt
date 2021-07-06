@@ -1,4 +1,4 @@
-const testCli = require('./test-cli');
+const testCli = require('./test-cli-helper/test-cli');
 const BranchCommand = require('../../src/commands/branch');
 const {
   getProjectByEnv,
@@ -16,18 +16,18 @@ const {
   getDevelopmentEnvironmentNotFound,
   postBranchValidOnSpecificEnv,
 } = require('../fixtures/api');
-const { testEnv: noKeyEnv, testEnv2 } = require('../fixtures/env');
+const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
 
 describe('branch', () => {
   describe('when the user is logged in', () => {
     describe('when environment have branches', () => {
       it('should display a list of branches', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => BranchCommand.run([]),
+        commandClass: BranchCommand,
         api: [
-          getProjectByEnv(),
-          getBranchListValid(),
+          () => getProjectByEnv(),
+          () => getBranchListValid(),
         ],
         std: [
           { out: 'feature/first' },
@@ -39,57 +39,60 @@ describe('branch', () => {
 
     describe('when environment does not have branches', () => {
       it('should display a warning message', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => BranchCommand.run([]),
+        commandClass: BranchCommand,
         api: [
-          getProjectByEnv(),
-          getNoBranchListValid(),
+          () => getProjectByEnv(),
+          () => getNoBranchListValid(),
         ],
         std: [
-          { out: "⚠️ You don't have any branch yet. Use `forest branch <branch_name>` to create one." },
+          { out: 'Δ You don\'t have any branch yet. Use `forest branch <branch_name>` to create one.' },
         ],
       }));
     });
 
     describe('when creating new branches', () => {
       it('should display a switch to new branch message', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => BranchCommand.run(['some/randombranchename']),
+        commandClass: BranchCommand,
+        commandArgs: ['some/randombranchename'],
         api: [
-          getProjectByEnv(),
-          postBranchValid('some/randombranchename'),
+          () => getProjectByEnv(),
+          () => postBranchValid('some/randombranchename'),
         ],
         std: [
-          { out: '✅ Switched to new branch: some/randombranchename.' },
+          { out: '√ Switched to new branch: some/randombranchename.' },
         ],
       }));
 
       it('should display a switch to new branch message with a complex branch name', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => BranchCommand.run(['$0m3/$7r4ng38r4nChn4m3!']),
+        commandClass: BranchCommand,
+        commandArgs: ['$0m3/$7r4ng38r4nChn4m3!'],
         api: [
-          getProjectByEnv(),
-          postBranchValid('$0m3/$7r4ng38r4nChn4m3!'),
+          () => getProjectByEnv(),
+          () => postBranchValid('$0m3/$7r4ng38r4nChn4m3!'),
         ],
         std: [
-          { out: '✅ Switched to new branch: $0m3/$7r4ng38r4nChn4m3!.' },
+          { out: '√ Switched to new branch: $0m3/$7r4ng38r4nChn4m3!.' },
         ],
       }));
 
       describe('when the branch name already exist', () => {
         it('should display an error message', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
-          command: () => BranchCommand.run(['already/existingbranch']),
+          commandClass: BranchCommand,
+          commandArgs: ['already/existingbranch'],
           api: [
-            getProjectByEnv(),
-            postBranchInvalid(),
+            () => getProjectByEnv(),
+            () => postBranchInvalid(),
           ],
           std: [
-            { err: '❌ This branch already exists.' },
+            { err: '× This branch already exists.' },
           ],
           exitCode: 2,
         }));
@@ -98,14 +101,15 @@ describe('branch', () => {
       describe('when no available envSecret', () => {
         describe('when an invalid projectId is provided', () => {
           it('should display an error message', () => testCli({
-            env: noKeyEnv,
+            env: testEnvWithoutSecret,
             token: 'any',
-            command: () => BranchCommand.run(['--projectId', '1', 'watabranch']),
+            commandClass: BranchCommand,
+            commandArgs: ['--projectId', '1', 'watabranch'],
             api: [
-              getDevelopmentEnvironmentNotFound(),
+              () => getDevelopmentEnvironmentNotFound(),
             ],
             std: [
-              { err: 'Development environment not found.' },
+              { err: '× Development environment not found.' },
             ],
             exitCode: 2,
           }));
@@ -113,15 +117,16 @@ describe('branch', () => {
 
         describe('with a valid projectId', () => {
           it('should display a switch to new branch message', () => testCli({
-            env: noKeyEnv,
+            env: testEnvWithoutSecret,
             token: 'any',
-            command: () => BranchCommand.run(['--projectId', '1', 'watabranch']),
+            commandClass: BranchCommand,
+            commandArgs: ['--projectId', '1', 'watabranch'],
             api: [
-              getDevelopmentEnvironmentValid(),
-              postBranchValidOnSpecificEnv('watabranch', '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125'),
+              () => getDevelopmentEnvironmentValid(),
+              () => postBranchValidOnSpecificEnv('watabranch', '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125'),
             ],
             std: [
-              { out: '✅ Switched to new branch: watabranch.' },
+              { out: '√ Switched to new branch: watabranch.' },
             ],
           }));
         });
@@ -130,34 +135,60 @@ describe('branch', () => {
 
     describe('when deleting branches', () => {
       describe('when removing a branch that does not exist', () => {
+        const branchName = 'unexistingbranch';
         it('should display an error message', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
-          command: () => BranchCommand.run(['-d', 'unexistingbranch']),
+          commandClass: BranchCommand,
+          commandArgs: ['-d', branchName],
           api: [
-            getProjectByEnv(),
-            deleteUnknownBranch('unexistingbranch'),
+            () => getProjectByEnv(),
+            () => deleteUnknownBranch(branchName),
+          ],
+          prompts: [
+            {
+              in: [{
+                name: 'confirm',
+                message: `Delete branch ${branchName}`,
+                type: 'confirm',
+              }],
+              out: {
+                confirm: true,
+              },
+            },
           ],
           std: [
-            { in: 'Y' },
-            { err: "❌ This branch doesn't exist." },
+            { err: '× This branch doesn\'t exist.' },
           ],
           exitCode: 2,
         }));
       });
 
       describe('when removing a branch failed', () => {
+        const branchName = 'brancherror';
         it('should display an error message', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
-          command: () => BranchCommand.run(['-d', 'brancherror']),
+          commandClass: BranchCommand,
+          commandArgs: ['-d', branchName],
           api: [
-            getProjectByEnv(),
-            deleteBranchInvalid('brancherror'),
+            () => getProjectByEnv(),
+            () => deleteBranchInvalid(branchName),
+          ],
+          prompts: [
+            {
+              in: [{
+                name: 'confirm',
+                message: `Delete branch ${branchName}`,
+                type: 'confirm',
+              }],
+              out: {
+                confirm: true,
+              },
+            },
           ],
           std: [
-            { in: 'Y' },
-            { err: '❌ Failed to delete branch.' },
+            { err: '× Failed to delete branch.' },
           ],
           exitCode: 2,
         }));
@@ -165,44 +196,68 @@ describe('branch', () => {
 
       describe('when the branch exist', () => {
         describe('when the branch in not the current branch of the environment', () => {
-          it('should prompt for confirmation, then remove the branch', () => testCli({
-            env: testEnv2,
+          const branchName = 'existingbranch';
+          it('should prompt for confirmation, then remove the branch if confirmed', () => testCli({
+            env: testEnvWithSecret,
             token: 'any',
-            command: () => BranchCommand.run(['-d', 'existingbranch']),
+            commandClass: BranchCommand,
+            commandArgs: ['-d', branchName],
             api: [
-              getProjectByEnv(),
-              deleteBranchValid('existingbranch'),
+              () => getProjectByEnv(),
+              () => deleteBranchValid(branchName),
+            ],
+            prompts: [
+              {
+                in: [{
+                  name: 'confirm',
+                  message: `Delete branch ${branchName}`,
+                  type: 'confirm',
+                }],
+                out: {
+                  confirm: true,
+                },
+              },
             ],
             std: [
-              { in: 'Y' },
-              { out: '✅ Branch existingbranch successfully deleted.' },
+              { out: '√ Branch existingbranch successfully deleted.' },
             ],
           }));
 
-          it('should prompt for confirmation, then do nothing', () => testCli({
-            env: testEnv2,
+          it('should prompt for confirmation, then do nothing if not confirmed', () => testCli({
+            env: testEnvWithSecret,
             token: 'any',
-            command: () => BranchCommand.run(['-d', 'existingbranch']),
+            commandClass: BranchCommand,
+            commandArgs: ['-d', branchName],
             api: [
-              getProjectByEnv(),
+              () => getProjectByEnv(),
             ],
-            std: [
-              { in: 'n' },
-              { out: '' },
+            prompts: [
+              {
+                in: [{
+                  name: 'confirm',
+                  message: `Delete branch ${branchName}`,
+                  type: 'confirm',
+                }],
+                out: {
+                  confirm: false,
+                },
+              },
             ],
+            exitCode: 0,
           }));
 
           describe('using `--force` option', () => {
             it('should display a success branch deleted message', () => testCli({
-              env: testEnv2,
+              env: testEnvWithSecret,
               token: 'any',
-              command: () => BranchCommand.run(['-d', 'existingbranch', '--force']),
+              commandClass: BranchCommand,
+              commandArgs: ['-d', branchName, '--force'],
               api: [
-                getProjectByEnv(),
-                deleteBranchValid('existingbranch'),
+                () => getProjectByEnv(),
+                () => deleteBranchValid(branchName),
               ],
               std: [
-                { out: '✅ Branch existingbranch successfully deleted.' },
+                { out: '√ Branch existingbranch successfully deleted.' },
               ],
             }));
           });
@@ -213,15 +268,15 @@ describe('branch', () => {
     describe('with errors', () => {
       describe('when environment is not compatible with the dev workflow', () => {
         it('should display an error message', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
-          command: () => BranchCommand.run([]),
+          commandClass: BranchCommand,
           api: [
-            getProjectByEnv(),
-            getBranchInvalidEnvironmentV1(),
+            () => getProjectByEnv(),
+            () => getBranchInvalidEnvironmentV1(),
           ],
           std: [
-            { err: '⚠️  This project does not support branches yet. Please migrate your environments from your Project settings first.' },
+            { err: '× This project does not support branches yet. Please migrate your environments from your Project settings first.' },
           ],
           exitCode: 2,
         }));
@@ -229,15 +284,15 @@ describe('branch', () => {
 
       describe('when not running on a development environment', () => {
         it('should display an error message', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
-          command: () => BranchCommand.run([]),
+          commandClass: BranchCommand,
           api: [
-            getProjectByEnv(),
-            getBranchInvalidNotDevEnv(),
+            () => getProjectByEnv(),
+            () => getBranchInvalidNotDevEnv(),
           ],
           std: [
-            { err: '⚠️  Your development environment is not properly set up. Please run `forest init` first and retry.' },
+            { err: '× Your development environment is not properly set up. Please run `forest init` first and retry.' },
           ],
           exitCode: 2,
         }));
@@ -245,15 +300,15 @@ describe('branch', () => {
 
       describe('when there is no remote/production environment', () => {
         it('should display an error message', () => testCli({
-          env: testEnv2,
+          env: testEnvWithSecret,
           token: 'any',
-          command: () => BranchCommand.run([]),
+          commandClass: BranchCommand,
           api: [
-            getProjectByEnv(),
-            getBranchInvalidEnvironmentNoRemote(),
+            () => getProjectByEnv(),
+            () => getBranchInvalidEnvironmentNoRemote(),
           ],
           std: [
-            { err: '❌ You cannot run branch commands until this project has either a remote or a production environment.' },
+            { err: '× You cannot run branch commands until this project has either a remote or a production environment.' },
           ],
           exitCode: 2,
         }));
