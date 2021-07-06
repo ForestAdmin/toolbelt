@@ -40,7 +40,7 @@ describe('services > API', () => {
 
   describe('createApplicationToken', () => {
     it('should send a query with the serialized token', async () => {
-      expect.assertions(7);
+      expect.assertions(8);
 
       const {
         superagent, api, applicationTokenSerializer, applicationTokenDeserializer,
