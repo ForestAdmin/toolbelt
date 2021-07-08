@@ -11,11 +11,19 @@ function Authenticator({
 }) {
   /**
    * @param {string?} path
-   * @returns {string}
+   * @returns {string|null}
    */
   this.getAuthToken = (path = env.TOKEN_PATH || os.homedir()) => {
-    const forestrcToken = this.getVerifiedToken(`${path}/.forestrc`);
-    return forestrcToken || this.getVerifiedToken(`${path}/.lumberrc`);
+    const paths = [
+      `${path}/.forest.d/.forestrc`,
+      `${path}/.forestrc`,
+      `${path}/.lumberrc`,
+    ];
+    for (let i = 0; i < paths.length; i += 1) {
+      const token = this.getVerifiedToken(paths[i]);
+      if (token) return token;
+    }
+    return null;
   };
 
   this.getVerifiedToken = (path) => {

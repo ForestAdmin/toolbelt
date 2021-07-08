@@ -51,19 +51,38 @@ describe('services > authenticator', () => {
   }
 
   describe('getAuthToken', () => {
-    describe('when .forestrc found', () => {
-      it('should return .forestrc token', () => {
+    describe('when .forest.d/.forestrc found', () => {
+      it('should return .forest.d/.forestrc token', () => {
         expect.assertions(3);
         const { authenticator, os } = setup();
+        const token = Symbol('token');
         jest
           .spyOn(authenticator, 'getVerifiedToken')
-          .mockReturnValue(null);
+          .mockReturnValue(token);
 
         const result = authenticator.getAuthToken();
 
         expect(os.homedir).toHaveBeenCalledWith();
-        expect(authenticator.getVerifiedToken).toHaveBeenCalledWith('sweet-home/.forestrc');
-        expect(result).toBeNull();
+        expect(authenticator.getVerifiedToken)
+          .toHaveBeenCalledWith('sweet-home/.forest.d/.forestrc');
+        expect(result).toBe(token);
+      });
+    });
+    describe('when .forestrc found', () => {
+      it('should return .forestrc token', () => {
+        expect.assertions(3);
+        const { authenticator, os } = setup();
+        const token = Symbol('token');
+        jest
+          .spyOn(authenticator, 'getVerifiedToken')
+          .mockReturnValueOnce(null)
+          .mockReturnValueOnce(token);
+
+        const result = authenticator.getAuthToken();
+
+        expect(os.homedir).toHaveBeenCalledWith();
+        expect(authenticator.getVerifiedToken).toHaveBeenNthCalledWith(2, 'sweet-home/.forestrc');
+        expect(result).toBe(token);
       });
     });
     describe('when .forestrc is not found', () => {
@@ -75,19 +94,20 @@ describe('services > authenticator', () => {
           jest
             .spyOn(authenticator, 'getVerifiedToken')
             .mockReturnValueOnce(null)
+            .mockReturnValueOnce(null)
             .mockReturnValueOnce(lumberToken);
 
           const result = authenticator.getAuthToken();
 
           expect(os.homedir).toHaveBeenCalledWith();
           expect(authenticator.getVerifiedToken)
-            .toHaveBeenNthCalledWith(2, 'sweet-home/.lumberrc');
+            .toHaveBeenNthCalledWith(3, 'sweet-home/.lumberrc');
           expect(result).toBe(lumberToken);
         });
       });
       describe('when .lumberrc is not found', () => {
         it('should return null', () => {
-          expect.assertions(4);
+          expect.assertions(3);
           const { authenticator, os } = setup();
           jest
             .spyOn(authenticator, 'getVerifiedToken')
@@ -97,9 +117,7 @@ describe('services > authenticator', () => {
 
           expect(os.homedir).toHaveBeenCalledWith();
           expect(authenticator.getVerifiedToken)
-            .toHaveBeenNthCalledWith(1, 'sweet-home/.forestrc');
-          expect(authenticator.getVerifiedToken)
-            .toHaveBeenNthCalledWith(2, 'sweet-home/.lumberrc');
+            .toHaveBeenNthCalledWith(3, 'sweet-home/.lumberrc');
           expect(result).toBeNull();
         });
       });
