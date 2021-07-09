@@ -10,8 +10,8 @@ const commandProjectCreatePlan = require('./command-project-create-plan');
 const commandSchemaUpdatePlan = require('./command-schema-update-command-plan');
 
 module.exports = (plan) => plan
-  .addStep('env', envPlan)
   .addStep('dependencies', dependenciesPlan)
+  .addStep('env', envPlan)
   .addStep('process', processPlan)
   .addStep('utils', utilsPlan)
   .addStep('serializers', serializersPlan)
