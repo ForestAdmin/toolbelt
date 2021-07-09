@@ -684,10 +684,10 @@
   resolved "https://registry.yarnpkg.com/@commitlint/types/-/types-11.0.0.tgz#719cf05fcc1abb6533610a2e0f5dd1e61eac14fe"
   integrity sha512-VoNqai1vR5anRF5Tuh/+SWDFk7xi7oMwHrHrbm1BprYXjB2RJsWLhUrStMssDxEl5lW/z3EUdg8RvH/IUBccSQ==
 
-"@forestadmin/context@1.12.0":
-  version "1.12.0"
-  resolved "https://registry.yarnpkg.com/@forestadmin/context/-/context-1.12.0.tgz#ff3564b79829d02f4f4ccaec8ab73fc75859ed85"
-  integrity sha512-7kHLK+caFfTj+hzluTNz8Xt76ktTIJQJC2kc2fU9GaaaixV+IRJ71xdXsW7wzL7jr0fgj00Osp9Sd7E7tJ8rXw==
+"@forestadmin/context@1.14.0":
+  version "1.14.0"
+  resolved "https://registry.yarnpkg.com/@forestadmin/context/-/context-1.14.0.tgz#ee90e03359e6ad376e68c666af342d6f1984f474"
+  integrity sha512-iqY/4Ny2Gd+TYRKFe9SgcTkHxsTbcvGO2YCSmDGYSTO43XwiR5HUtWJGzpOCjMb+P04ntjjqkUko/l9X1gpmHw==
 
 "@iarna/cli@^1.2.0":
   version "1.2.0"

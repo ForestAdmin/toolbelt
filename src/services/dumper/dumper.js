@@ -356,7 +356,7 @@ class Dumper {
 
   writeDockerCompose(projectPath, config) {
     const databaseUrl = `\${${this.isLinuxBasedOs() ? 'DATABASE_URL' : 'DOCKER_DATABASE_URL'}}`;
-    const forestUrl = this.env.FOREST_URL !== this.constants.DEFAULT_FOREST_URL ? `\${FOREST_URL-${this.env.FOREST_URL}}` : false;
+    const forestUrl = this.env.FOREST_URL_IS_DEFAULT ? false : `\${FOREST_URL-${this.env.FOREST_URL}}`;
     this.copyHandleBarsTemplate({
       projectPath,
       source: 'app/docker-compose.hbs',

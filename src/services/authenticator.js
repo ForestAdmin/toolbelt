@@ -7,7 +7,7 @@ const { ERROR_UNEXPECTED } = require('../utils/messages');
  */
 function Authenticator({
   logger, api, chalk, inquirer, os, jwtDecode, fs, joi, env,
-  oidcAuthenticator, applicationTokenService,
+  oidcAuthenticator, applicationTokenService, mkdirp,
 }) {
   /**
    * @param {string?} path
@@ -39,8 +39,10 @@ function Authenticator({
     }
   };
 
-  this.saveToken = (token, path = env.TOKEN_PATH || os.homedir()) => fs
-    .writeFileSync(`${path}/.forestrc`, token);
+  this.saveToken = (token, path = env.TOKEN_PATH) => {
+    mkdirp(path);
+    fs.writeFileSync(`${path}/.forestrc`, token);
+  };
 
   this.verify = (token) => {
     if (!token) return null;

@@ -1,20 +1,24 @@
 const pkg = require('../../package.json');
 
-const {
-  DEFAULT_FOREST_URL,
-  DEFAULT_TOKEN_PATH,
-} = require('./constants');
-
 module.exports = (plan) => plan
-  .addStep('variables', (planVariables) => planVariables.addValue('env', {
-    // ...process.env,
-    DATABASE_SCHEMA: process.env.DATABASE_SCHEMA,
-    DATABASE_URL: process.env.DATABASE_URL,
-    FOREST_ENV_SECRET: process.env.FOREST_ENV_SECRET,
-    FOREST_URL: process.env.FOREST_URL || DEFAULT_FOREST_URL,
-    SILENT: process.env.SILENT,
-    TOKEN_PATH: process.env.TOKEN_PATH || DEFAULT_TOKEN_PATH,
-  }))
+  .addValue('constants', {
+    CURRENT_WORKING_DIRECTORY: process.cwd(),
+  })
+  .addStep('variables', (planVariables) => planVariables
+    .addUsingFunction('env', ({ assertPresent, os }) => {
+      assertPresent({ os });
+      const FOREST_URL = process.env.FOREST_URL || 'https://api.forestadmin.com';
+      const FOREST_URL_IS_DEFAULT = FOREST_URL === process.env.FOREST_URL;
+      return {
+        DATABASE_SCHEMA: process.env.DATABASE_SCHEMA,
+        DATABASE_URL: process.env.DATABASE_URL,
+        FOREST_ENV_SECRET: process.env.FOREST_ENV_SECRET,
+        FOREST_URL,
+        FOREST_URL_IS_DEFAULT,
+        SILENT: process.env.SILENT,
+        TOKEN_PATH: process.env.TOKEN_PATH || os.homedir(),
+      };
+    }))
   .addStep('others', (planOthers) => planOthers
     .addModule('process', process)
     .addModule('pkg', pkg));

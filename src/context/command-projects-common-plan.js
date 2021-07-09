@@ -8,4 +8,4 @@ module.exports = (plan) => plan
   .addModule('path', path)
   .addFunction('mongoAnalyzer', mongoAnalyzer)
   .addFunction('sequelizeAnalyzer', sequelizeAnalyzer)
-  .addClass(DatabaseAnalyzer);
+  .addUsingClass('databaseAnalyzer', DatabaseAnalyzer);
