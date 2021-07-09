@@ -9,12 +9,10 @@ const commandProjectCommonPlan = require('./command-projects-common-plan');
 const commandProjectCreatePlan = require('./command-project-create-plan');
 const commandSchemaUpdatePlan = require('./command-schema-update-command-plan');
 
-require('../config');
-
 module.exports = (plan) => plan
+  .addStep('env', envPlan)
   .addStep('dependencies', dependenciesPlan)
   .addStep('process', processPlan)
-  .addStep('env', envPlan)
   .addStep('utils', utilsPlan)
   .addStep('serializers', serializersPlan)
   .addStep('services', servicesPlan)
