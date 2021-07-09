@@ -11,7 +11,7 @@ module.exports = (plan) => plan
     .addInstance('jwtDecode', () => require('jwt-decode')))
   .addStep('others', (planOthers) => planOthers
     .addModule('mkdirp', () => require('mkdirp'))
-    .addInstance('Table', () => require('cli-table'))
+    .addInstance('Table', require('cli-table'))
     .addModule('chalk', () => require('chalk'))
     .addModule('crypto', () => require('crypto'))
     .addModule('fs', () => require('fs'))
