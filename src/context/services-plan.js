@@ -1,14 +1,9 @@
-const Logger = require('../services/logger');
-const Authenticator = require('../services/authenticator');
-const OidcAuthenticator = require('../services/oidc/authenticator');
-const ApplicationTokenService = require('../services/application-token');
-const Api = require('../services/api');
-
+/* eslint-disable global-require */
 module.exports = (plan) => plan
   .addStep('dependencies', (planDependencies) => planDependencies
-    .addClass(Logger)
-    .addClass(Api)
-    .addClass(OidcAuthenticator)
-    .addClass(ApplicationTokenService))
+    .addUsingClass('logger', () => require('../services/logger'))
+    .addUsingClass('api', () => require('../services/api'))
+    .addUsingClass('oidcAuthenticator', () => require('../services/oidc/authenticator'))
+    .addUsingClass('applicationTokenService', () => require('../services/application-token')))
   .addStep('authenticator', (planAuthenticator) => planAuthenticator
-    .addClass(Authenticator));
+    .addUsingClass('authenticator', () => require('../services/authenticator')));
