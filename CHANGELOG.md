@@ -1,3 +1,11 @@
+# [2.2.0-beta.1](https://github.com/ForestAdmin/toolbelt/compare/v2.1.2...v2.2.0-beta.1) (2021-07-09)
+
+
+### Features
+
+* get token from forest folder ([#199](https://github.com/ForestAdmin/toolbelt/issues/199)) ([e6ac1e6](https://github.com/ForestAdmin/toolbelt/commit/e6ac1e60ee283e0d82ef8df47a6d8a2e791d3f58))
+* merge lumber commands into toolbelt ([#198](https://github.com/ForestAdmin/toolbelt/issues/198)) ([e647b6b](https://github.com/ForestAdmin/toolbelt/commit/e647b6b64ff64530035658f05743d34ed9bf2584))
+
 ## [2.1.2](https://github.com/ForestAdmin/toolbelt/compare/v2.1.1...v2.1.2) (2021-06-17)
 
 
