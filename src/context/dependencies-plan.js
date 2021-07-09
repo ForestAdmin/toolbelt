@@ -1,14 +1,14 @@
 /* eslint-disable global-require */
 module.exports = (plan) => plan
   .addStep('open', (planOpen) => planOpen
-    .addFunction('open', () => require('open')))
+    .addFunction('open', require('open')))
   .addStep('std', (planStd) => planStd
     .addFunction('stdout', process.stdout)
     .addFunction('stderr', process.stderr))
   .addStep('inquirer', (planInquirer) => planInquirer
-    .addInstance('inquirer', () => require('inquirer')))
+    .addInstance('inquirer', require('inquirer')))
   .addStep('jwtDecode', (planJWTDecode) => planJWTDecode
-    .addInstance('jwtDecode', () => require('jwt-decode')))
+    .addInstance('jwtDecode', require('jwt-decode')))
   .addStep('others', (planOthers) => planOthers
     .addModule('mkdirp', () => require('mkdirp'))
     .addInstance('Table', require('cli-table'))
