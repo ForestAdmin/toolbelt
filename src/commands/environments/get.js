@@ -35,7 +35,7 @@ GetCommand.description = 'Get the configuration of an environment.';
 GetCommand.flags = {
   format: AbstractAuthenticatedCommand.flags.string({
     char: 'format',
-    description: 'Ouput format.',
+    description: 'Output format.',
     options: ['table', 'json'],
     default: 'table',
   }),

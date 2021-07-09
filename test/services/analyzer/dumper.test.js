@@ -195,7 +195,9 @@ describe('services > dumper', () => {
           expect.assertions(1);
 
           try {
-            const dockerComposeFile = await generateDockerComposeFile();
+            const dockerComposeFile = await generateDockerComposeFile({
+              env: { FOREST_URL_IS_DEFAULT: true },
+            });
 
             expect(dockerComposeFile).not.toContain('FOREST_URL');
           } finally {

@@ -7,15 +7,23 @@ const { ERROR_UNEXPECTED } = require('../utils/messages');
  */
 function Authenticator({
   logger, api, chalk, inquirer, os, jwtDecode, fs, joi, env,
-  oidcAuthenticator, applicationTokenService,
+  oidcAuthenticator, applicationTokenService, mkdirp,
 }) {
   /**
    * @param {string?} path
-   * @returns {string}
+   * @returns {string|null}
    */
   this.getAuthToken = (path = env.TOKEN_PATH || os.homedir()) => {
-    const forestrcToken = this.getVerifiedToken(`${path}/.forestrc`);
-    return forestrcToken || this.getVerifiedToken(`${path}/.lumberrc`);
+    const paths = [
+      `${path}/.forest.d/.forestrc`,
+      `${path}/.forestrc`,
+      `${path}/.lumberrc`,
+    ];
+    for (let i = 0; i < paths.length; i += 1) {
+      const token = this.getVerifiedToken(paths[i]);
+      if (token) return token;
+    }
+    return null;
   };
 
   this.getVerifiedToken = (path) => {
@@ -31,8 +39,10 @@ function Authenticator({
     }
   };
 
-  this.saveToken = (token, path = env.TOKEN_PATH || os.homedir()) => fs
-    .writeFileSync(`${path}/.forestrc`, token);
+  this.saveToken = (token, path = env.TOKEN_PATH) => {
+    mkdirp(path);
+    fs.writeFileSync(`${path}/.forestrc`, token);
+  };
 
   this.verify = (token) => {
     if (!token) return null;

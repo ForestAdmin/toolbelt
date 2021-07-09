@@ -12,14 +12,10 @@ const SequelizeMock = {
 const ABSOLUTE_PROJECT_PATH = '/absolute/project/path';
 const RELATIVE_FILE_PATH = 'some/folder/relative-file.js';
 
-const DEFAULT_FOREST_URL = 'https://api.someforesturl.com';
-
 function createDumper(contextOverride = {}) {
   return new Dumper({
     assertPresent: jest.fn(),
-    constants: {
-      DEFAULT_FOREST_URL,
-    },
+    constants: {},
     Sequelize: SequelizeMock,
     chalk,
     mkdirp: () => {},
@@ -463,6 +459,7 @@ describe('services > dumper (unit)', () => {
 
         const dumper = createDumper({
           env: {
+            FOREST_URL_IS_DEFAULT: false,
             FOREST_URL: 'https://something.com',
           },
         });
@@ -482,7 +479,8 @@ describe('services > dumper (unit)', () => {
 
         const dumper = createDumper({
           env: {
-            FOREST_URL: DEFAULT_FOREST_URL,
+            FOREST_URL_IS_DEFAULT: true,
+            FOREST_URL: 'DEFAULT_FOREST_URL',
           },
         });
         jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(true);

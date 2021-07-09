@@ -1,24 +1,12 @@
-const mkdirp = require('mkdirp');
-const Handlebars = require('handlebars');
-const Sequelize = require('sequelize');
-const mongodb = require('mongodb');
-const GeneralPrompter = require('../services/prompter/general-prompter');
-const CommandGenerateConfigGetter = require('../services/projects/create/command-generate-config-getter');
-const Database = require('../services/schema/update/database');
-const Dumper = require('../services/dumper/dumper');
-const EventSender = require('../utils/event-sender');
-const Spinner = require('../services/spinner');
-const ProjectCreator = require('../services/projects/create/project-creator');
-
+/* eslint-disable global-require */
 module.exports = (plan) => plan
-  .addModule('Sequelize', Sequelize)
-  .addModule('mongodb', mongodb)
-  .addModule('mkdirp', mkdirp)
-  .addModule('Handlebars', Handlebars)
-  .addClass(Database)
-  .addClass(Dumper)
-  .addClass(EventSender)
-  .addValue('GeneralPrompter', GeneralPrompter)
-  .addClass(CommandGenerateConfigGetter)
-  .addClass(ProjectCreator)
-  .addClass(Spinner);
+  .addModule('Sequelize', () => require('sequelize'))
+  .addModule('mongodb', () => require('mongodb'))
+  .addModule('Handlebars', () => require('handlebars'))
+  .addUsingClass('database', () => require('../services/schema/update/database'))
+  .addUsingClass('dumper', () => require('../services/dumper/dumper'))
+  .addUsingClass('eventSender', () => require('../utils/event-sender'))
+  .addValue('GeneralPrompter', require('../services/prompter/general-prompter'))
+  .addUsingClass('commandGenerateConfigGetter', () => require('../services/projects/create/command-generate-config-getter'))
+  .addUsingClass('projectCreator', () => require('../services/projects/create/project-creator'))
+  .addUsingClass('spinner', () => require('../services/spinner'));
