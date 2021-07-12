@@ -1,3 +1,10 @@
+# [2.2.0-beta.2](https://github.com/ForestAdmin/toolbelt/compare/v2.2.0-beta.1...v2.2.0-beta.2) (2021-07-12)
+
+
+### Bug Fixes
+
+* save token in forest.d folder ([#201](https://github.com/ForestAdmin/toolbelt/issues/201)) ([d560d45](https://github.com/ForestAdmin/toolbelt/commit/d560d456992ce5f089fbe2e9c52531414c188f64))
+
 # [2.2.0-beta.1](https://github.com/ForestAdmin/toolbelt/compare/v2.1.2...v2.2.0-beta.1) (2021-07-09)
 
 
