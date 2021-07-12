@@ -39,8 +39,9 @@ function Authenticator({
     }
   };
 
-  this.saveToken = (token, path = env.TOKEN_PATH) => {
-    mkdirp(path);
+  this.saveToken = async (token) => {
+    const path = `${env.TOKEN_PATH}/.forest.d`;
+    await mkdirp(path);
     fs.writeFileSync(`${path}/.forestrc`, token);
   };
 
@@ -86,7 +87,7 @@ function Authenticator({
     await this.logout({ log: false });
     try {
       const token = await this.login(config);
-      this.saveToken(token);
+      await this.saveToken(token);
       logger.info('Login successful');
     } catch (error) {
       const message = error instanceof ApplicationError
