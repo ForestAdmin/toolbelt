@@ -245,7 +245,37 @@ describe('services > authenticator', () => {
     });
   });
 
+  describe('saveToken', () => {
+    it('creates path and token file', async () => {
+      expect.assertions(2);
+      const { authenticator, mkdirp, fs } = setup();
+      const token = Symbol('token');
+
+      await authenticator.saveToken(token);
+
+      expect(mkdirp).toHaveBeenCalledWith('sweet-home/.forest.d');
+      expect(fs.writeFileSync).toHaveBeenCalledWith('sweet-home/.forest.d/.forestrc', token);
+    });
+  });
+
   describe('tryLogin', () => {
+    describe('when it succeeds to login', () => {
+      it('saves the token', async () => {
+        expect.assertions(1);
+        const { authenticator } = setup();
+
+        jest.spyOn(authenticator, 'logout');
+        const token = Symbol('token');
+        jest.spyOn(authenticator, 'login').mockResolvedValue(token);
+        jest.spyOn(authenticator, 'saveToken');
+
+        const config = Symbol('config');
+        await authenticator.tryLogin(config);
+
+        expect(authenticator.saveToken).toHaveBeenCalledWith(token);
+      });
+    });
+
     describe('when the password and token are not provided', () => {
       it('should authenticate with oidc, generate an application token and return it', async () => {
         expect.assertions(4);
