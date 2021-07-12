@@ -318,7 +318,7 @@ describe('services > authenticator', () => {
             logger,
             jwtDecode,
             FOREST_PATH,
-            LUMBER_PATH,
+            FOREST_D_PATH,
           } = setup();
 
           oidcAuthenticator.authenticate.mockResolvedValue('SESSION-TOKEN');
@@ -332,8 +332,8 @@ describe('services > authenticator', () => {
           await authenticator.tryLogin({});
 
           expect(logger.error).not.toHaveBeenCalled();
-          expect(fs.readFileSync).toHaveBeenCalledWith(FOREST_PATH, 'utf8');
-          expect(fs.readFileSync).toHaveBeenCalledWith(LUMBER_PATH, 'utf8');
+          expect(fs.readFileSync).toHaveBeenNthCalledWith(1, FOREST_PATH, 'utf8');
+          expect(fs.readFileSync).toHaveBeenNthCalledWith(2, FOREST_D_PATH, 'utf8');
           expect(jwtDecode).toHaveBeenCalledWith('PREVIOUS-TOKEN');
           expect(fs.unlinkSync).toHaveBeenCalledWith(FOREST_PATH);
         });
@@ -380,7 +380,25 @@ describe('services > authenticator', () => {
       };
     }
 
-    describe('when called without options', () => {
+    describe('a forest forest token is found', () => {
+      it('removes the ~/.forest.d/.forestrc file and call the api to invalidate the token', () => {
+        expect.assertions(2);
+
+        const { authenticator, fs, applicationTokenService } = setup();
+        const forestForestToken = Symbol('forestForestToken');
+        jest.spyOn(authenticator, 'getVerifiedToken')
+          .mockReturnValueOnce(null)
+          .mockReturnValueOnce(forestForestToken);
+
+        authenticator.logout();
+
+        expect(fs.unlinkSync).toHaveBeenCalledWith('sweet-home/.forest.d/.forestrc');
+        expect(applicationTokenService.deleteApplicationToken)
+          .toHaveBeenCalledWith(forestForestToken);
+      });
+    });
+
+    describe('a forest token is found', () => {
       it('should delete the .forestrc file and call the api to invalidate the token', async () => {
         expect.assertions(5);
         const {
@@ -402,9 +420,11 @@ describe('services > authenticator', () => {
         expect(applicationTokenService.deleteApplicationToken).toHaveBeenCalledWith('THE TOKEN');
         expect(logger.info).not.toHaveBeenCalled();
       });
+    });
 
-      it('should do nothing if the token is in the lumberrc file', async () => {
-        expect.assertions(4);
+    describe('only a lumber token is found', () => {
+      it('should do nothing', async () => {
+        expect.assertions(3);
         const {
           authenticator, fs, jwtDecode, applicationTokenService,
           LUMBER_PATH, logger,
@@ -416,7 +436,6 @@ describe('services > authenticator', () => {
 
         await authenticator.logout();
 
-        expect(fs.readFileSync).toHaveBeenCalledWith(LUMBER_PATH, 'utf8');
         expect(fs.unlinkSync).not.toHaveBeenCalled();
         expect(applicationTokenService.deleteApplicationToken).not.toHaveBeenCalled();
         expect(logger.info).not.toHaveBeenCalled();

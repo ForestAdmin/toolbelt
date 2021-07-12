@@ -65,16 +65,24 @@ function Authenticator({
 
   this.logout = async (opts = {}) => {
     const basePath = env.TOKEN_PATH || os.homedir();
+
     const pathForestrc = `${basePath}/.forestrc`;
     const forestToken = this.getVerifiedToken(pathForestrc);
-    const pathLumberrc = `${basePath}/.lumberrc`;
-    const isLumberLoggedIn = this.getVerifiedToken(pathLumberrc);
-
     if (forestToken) {
       fs.unlinkSync(pathForestrc);
       await applicationTokenService.deleteApplicationToken(forestToken);
     }
+
+    const pathForestForestrc = `${basePath}/.forest.d/.forestrc`;
+    const forestForestToken = this.getVerifiedToken(pathForestForestrc);
+    if (forestForestToken) {
+      fs.unlinkSync(pathForestForestrc);
+      await applicationTokenService.deleteApplicationToken(forestForestToken);
+    }
+
     if (opts.log) {
+      const pathLumberrc = `${basePath}/.lumberrc`;
+      const isLumberLoggedIn = this.getVerifiedToken(pathLumberrc);
       if (isLumberLoggedIn) {
         logger.info('You cannot be logged out with this command. Please use "lumber logout" command.');
       } else {
