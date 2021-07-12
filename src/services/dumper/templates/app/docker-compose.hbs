@@ -21,6 +21,8 @@ services:
 {{#if forestUrl }}
       - NODE_TLS_REJECT_UNAUTHORIZED=0
       - FOREST_URL={{ forestUrl }}
+    extra_hosts:
+      - api.development.forestadmin.com:host-gateway
 {{/if}}
     ports:
       - "${APPLICATION_PORT}:${APPLICATION_PORT}"
