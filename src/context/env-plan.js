@@ -1,6 +1,8 @@
-const pkg = require('../../package.json');
-
+/* eslint-disable global-require */
 module.exports = (plan) => plan
+  .addStep('dotenv', (planDotenv) => planDotenv
+    .addModule('dotenv', () => require('dotenv'), { private: true })
+    .with('dotenv', (dotenv) => dotenv.config()))
   .addValue('constants', {
     CURRENT_WORKING_DIRECTORY: process.cwd(),
   })
@@ -20,5 +22,5 @@ module.exports = (plan) => plan
       };
     }))
   .addStep('others', (planOthers) => planOthers
-    .addModule('process', process)
-    .addModule('pkg', pkg));
+    .addValue('process', process)
+    .addModule('pkg', () => require('../../package.json')));
