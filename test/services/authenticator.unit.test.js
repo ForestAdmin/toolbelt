@@ -45,6 +45,7 @@ describe('services > authenticator', () => {
       jwtDecode,
       mkdirp,
       FOREST_PATH: 'sweet-home/.forestrc',
+      FOREST_D_PATH: 'sweet-home/.forest.d/.forestrc',
       LUMBER_PATH: 'sweet-home/.lumberrc',
     };
 
@@ -286,7 +287,7 @@ describe('services > authenticator', () => {
           applicationTokenService,
           fs,
           logger,
-          FOREST_PATH,
+          FOREST_D_PATH,
         } = setup();
 
         oidcAuthenticator.authenticate.mockResolvedValue('SESSION-TOKEN');
@@ -298,7 +299,7 @@ describe('services > authenticator', () => {
         expect(oidcAuthenticator.authenticate).toHaveBeenCalledWith();
         expect(applicationTokenService.generateApplicationToken).toHaveBeenCalledWith('SESSION-TOKEN');
         expect(fs.writeFileSync).toHaveBeenCalledWith(
-          FOREST_PATH,
+          `${FOREST_D_PATH}`,
           'APP-TOKEN',
         );
       });
