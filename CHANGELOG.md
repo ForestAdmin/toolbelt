@@ -1,3 +1,10 @@
+# [2.2.0-beta.3](https://github.com/ForestAdmin/toolbelt/compare/v2.2.0-beta.2...v2.2.0-beta.3) (2021-07-12)
+
+
+### Bug Fixes
+
+* logout also logout from forest.d folder ([#202](https://github.com/ForestAdmin/toolbelt/issues/202)) ([4adb531](https://github.com/ForestAdmin/toolbelt/commit/4adb5317c3e03e5b7603505189c9b4c572247dab))
+
 # [2.2.0-beta.2](https://github.com/ForestAdmin/toolbelt/compare/v2.2.0-beta.1...v2.2.0-beta.2) (2021-07-12)
 
 
