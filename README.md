@@ -59,7 +59,6 @@ Manage Forest Admin schema.
 - `schema:apply` apply the current schema of your repository to the specified environment (using your `.forestadmin-schema.json` file).
 - `schema:update` refresh your schema by generating files that do not currently exist.
 
-
 ## Docker
 
 ### ENV variables
@@ -77,7 +76,7 @@ Otherwise you should pass all env variable you need in the `docker run` command,
 - `TOKEN_PATH`="/usr/src/cli"
 
 ```bash
-docker run --rm --init -it -v `pwd`:/usr/src/app -v ~/.forestrc:/usr/src/cli/.forestrc forestadmin/toolbelt:latest [command]
+docker run --rm --init -it -v `pwd`:/usr/src/app -v ~/.forest.d:/usr/src/cli/.forest.d -e TOKEN_PATH="/usr/src/cli" forestadmin/toolbelt:latest [command]
 ```
 
 ## Community
