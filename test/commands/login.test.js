@@ -68,7 +68,7 @@ describe('login', () => {
         commandClass: LoginCommand,
         api: () => loginValidOidc(),
         std: [
-          { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
+          { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check?code=ABCD\nYour confirmation code: USER-CODE' },
           { out: '> Login successful' },
         ],
       }));
@@ -80,7 +80,7 @@ describe('login', () => {
         commandClass: LoginCommand,
         api: () => loginInvalidOidc(),
         std: [
-          { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
+          { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check?code=ABCD\nYour confirmation code: USER-CODE' },
           { err: '× Error during the authentication: The authentication failed.' },
         ],
       }));

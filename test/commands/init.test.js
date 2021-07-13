@@ -32,7 +32,7 @@ describe('init command', () => {
           () => getDevelopmentEnvironmentValid(82),
         ],
         std: [
-          { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check\nYour confirmation code: USER-CODE' },
+          { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check?code=ABCD\nYour confirmation code: USER-CODE' },
           { spinner: '√ Selecting your project' },
           { spinner: '√ Analyzing your setup' },
           { spinner: '√ Checking your database setup' },

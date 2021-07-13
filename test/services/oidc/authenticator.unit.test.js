@@ -96,7 +96,7 @@ describe('services > Oidc > Authenticator', () => {
       expect(client.deviceAuthorization).toHaveBeenCalledWith({
         scopes: ['openid', 'email', 'profile'],
       });
-      expect(process.stdout.write).toHaveBeenNthCalledWith(1, 'Click on "Log in" on the browser tab which opened automatically or open this link: https://verification.forest\n');
+      expect(process.stdout.write).toHaveBeenNthCalledWith(1, 'Click on "Log in" on the browser tab which opened automatically or open this link: https://verification.forest?user_code=ABCD\n');
       expect(process.stdout.write).toHaveBeenNthCalledWith(2, 'Your confirmation code: ABC\n');
       expect(open).toHaveBeenCalledWith('https://verification.forest?user_code=ABCD');
     });
