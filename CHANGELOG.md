@@ -1,3 +1,5 @@
+# [2.2.0-beta.4](https://github.com/ForestAdmin/toolbelt/compare/v2.2.0-beta.3...v2.2.0-beta.4) (2021-07-13)
+
 # [2.2.0-beta.3](https://github.com/ForestAdmin/toolbelt/compare/v2.2.0-beta.2...v2.2.0-beta.3) (2021-07-12)
 
 
