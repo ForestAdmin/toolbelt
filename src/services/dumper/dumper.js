@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const { URL } = require('url');
 const { plural, singular } = require('pluralize');
 const stringUtils = require('../../utils/strings');
 const toValidPackageName = require('../../utils/to-valid-package-name');
@@ -357,6 +358,15 @@ class Dumper {
   writeDockerCompose(projectPath, config) {
     const databaseUrl = `\${${this.isLinuxBasedOs() ? 'DATABASE_URL' : 'DOCKER_DATABASE_URL'}}`;
     const forestUrl = this.env.FOREST_URL_IS_DEFAULT ? false : `\${FOREST_URL-${this.env.FOREST_URL}}`;
+    let forestExtraHost = false;
+    if (forestUrl) {
+      try {
+        const parsedForestUrl = new URL(this.env.FOREST_URL);
+        forestExtraHost = parsedForestUrl.hostname;
+      } catch (error) {
+        throw new Error(`Invalid value for FOREST_URL: "${this.env.FOREST_URL}"`);
+      }
+    }
     this.copyHandleBarsTemplate({
       projectPath,
       source: 'app/docker-compose.hbs',
@@ -365,6 +375,7 @@ class Dumper {
         containerName: _.snakeCase(config.applicationName),
         databaseUrl,
         dbSchema: config.dbSchema,
+        forestExtraHost,
         forestUrl,
         network: (this.isLinuxBasedOs() && Dumper.isDatabaseLocal(config)) ? 'host' : null,
       },

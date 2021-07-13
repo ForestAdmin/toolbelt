@@ -59,6 +59,26 @@ Manage Forest Admin schema.
 - `schema:apply` apply the current schema of your repository to the specified environment (using your `.forestadmin-schema.json` file).
 - `schema:update` refresh your schema by generating files that do not currently exist.
 
+## Docker
+
+### ENV variables
+
+- `DATABASE_SCHEMA` the schema used by the database. (not for all commands)
+- `DATABASE_URL` the connection string. (not fot all commands)
+- `FOREST_ENV_SECRET` the env secret token used to access your Forest Admin environment.
+- `SILENT` used to not log commands results. (optional)
+- `TOKEN_PATH` path where store the session token. (need to be "/usr/src/cli" to work with the docker image)
+
+If you have an `.env` file in you current folder docker should take it to run commands. So you can define the missing ENV variable inside.
+Otherwise you should pass all env variable you need in the `docker run` command, eg: `-e TOKEN_PATH="/usr/src/app"`.
+
+### Using Forest Admin CLI
+- `TOKEN_PATH`="/usr/src/cli"
+
+```bash
+docker run --rm --init -it -v `pwd`:/usr/src/app -v ~/.forest.d:/usr/src/cli/.forest.d -e TOKEN_PATH="/usr/src/cli" forestadmin/toolbelt:latest [command]
+```
+
 ## Community
 
 👇 Join our Developers community for support and more

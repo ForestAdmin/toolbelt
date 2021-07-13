@@ -21,6 +21,10 @@ services:
 {{#if forestUrl }}
       - NODE_TLS_REJECT_UNAUTHORIZED=0
       - FOREST_URL={{ forestUrl }}
+{{#if forestExtraHost}}
+    extra_hosts:
+      - {{forestExtraHost}}:host-gateway
+{{/if}}
 {{/if}}
     ports:
       - "${APPLICATION_PORT}:${APPLICATION_PORT}"
