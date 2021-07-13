@@ -9,8 +9,9 @@ module.exports = (plan) => plan
   .addStep('variables', (planVariables) => planVariables
     .addUsingFunction('env', ({ assertPresent, os }) => {
       assertPresent({ os });
-      const FOREST_URL = process.env.FOREST_URL || 'https://api.forestadmin.com';
-      const FOREST_URL_IS_DEFAULT = FOREST_URL === process.env.FOREST_URL;
+      const DEFAULT_FOREST_URL = 'https://api.forestadmin.com';
+      const FOREST_URL = process.env.FOREST_URL || DEFAULT_FOREST_URL;
+      const FOREST_URL_IS_DEFAULT = FOREST_URL === DEFAULT_FOREST_URL;
       return {
         DATABASE_SCHEMA: process.env.DATABASE_SCHEMA,
         DATABASE_URL: process.env.DATABASE_URL,
