@@ -1,4 +1,4 @@
-const Context = require('@forestadmin/context');
+const { execute } = require('@forestadmin/context');
 const rimraf = require('rimraf');
 const fs = require('fs');
 const appRoot = require('app-root-path');
@@ -16,10 +16,6 @@ const parenthesisColumnNameUnderscoredTrue = require('./expected/sequelize/db-an
 const defaultPlan = require('../../../src/context/plan');
 
 const Dumper = require('../../../src/services/dumper/dumper');
-
-function buildContext() {
-  return Context.execute(defaultPlan);
-}
 
 function getDumper(context) {
   return new Dumper(context);
@@ -46,7 +42,7 @@ const TEST_OUTPUT_MODEL_CUSTOMERS_PATH = `${appRoot}/test-output/sequelize/model
 describe('services > dumper > sequelize', () => {
   it('should generate a simple model file', async () => {
     expect.assertions(1);
-    const context = buildContext();
+    const context = execute(defaultPlan);
     const dumper = getDumper(context);
     await dumper.dump(simpleModel, CONFIG);
     const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_CUSTOMERS_PATH, 'utf8');
@@ -58,7 +54,7 @@ describe('services > dumper > sequelize', () => {
 
   it('should generate a model file with belongsTo associations', async () => {
     expect.assertions(1);
-    const context = buildContext();
+    const context = execute(defaultPlan);
     const dumper = getDumper(context);
     await dumper.dump(belongsToModel, CONFIG);
     const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/addresses.js`, 'utf8');
@@ -70,7 +66,7 @@ describe('services > dumper > sequelize', () => {
 
   it('should generate a model file with belongsTo associations and sourceKey/targetKey', async () => {
     expect.assertions(2);
-    const context = buildContext();
+    const context = execute(defaultPlan);
     const dumper = getDumper(context);
     await dumper.dump({ ...simpleModelNonPrimary, ...belongsToModelNonPrimary }, CONFIG);
 
@@ -86,7 +82,7 @@ describe('services > dumper > sequelize', () => {
 
   it('should generate a model file with correct parenthesis field', async () => {
     expect.assertions(1);
-    const context = buildContext();
+    const context = execute(defaultPlan);
     const dumper = getDumper(context);
     await dumper.dump(parenthesisColumnName, CONFIG);
     const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/parenthesis.js`, 'utf8');
@@ -98,7 +94,7 @@ describe('services > dumper > sequelize', () => {
 
   it('should generate a model file with correct parenthesis field and correct underscored fields', async () => {
     expect.assertions(1);
-    const context = buildContext();
+    const context = execute(defaultPlan);
     const dumper = getDumper(context);
     await dumper.dump(parenthesisColumnNameUnderscored, CONFIG);
     const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/parenthesis-underscored.js`, 'utf8');
@@ -110,7 +106,7 @@ describe('services > dumper > sequelize', () => {
 
   it('should generate a model file with correct parenthesis field and underscored true', async () => {
     expect.assertions(1);
-    const context = buildContext();
+    const context = execute(defaultPlan);
     const dumper = getDumper(context);
     await dumper.dump(parenthesisColumnNameUnderscoredTrue, CONFIG);
     const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/parenthesis-underscored-true.js`, 'utf8');
@@ -122,7 +118,7 @@ describe('services > dumper > sequelize', () => {
 
   it('should generate a model file with hasMany, hasOne and belongsToMany', async () => {
     expect.assertions(1);
-    const context = buildContext();
+    const context = execute(defaultPlan);
     const dumper = getDumper(context);
     await dumper.dump(otherAssociationsModel, CONFIG);
     const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/users.js`, 'utf8');
@@ -134,7 +130,7 @@ describe('services > dumper > sequelize', () => {
 
   it('should still generate a model file when reserved word is used', async () => {
     expect.assertions(2);
-    const context = buildContext();
+    const context = execute(defaultPlan);
     const dumper = getDumper(context);
     await dumper.dump(exportModel, CONFIG);
     const generatedModelFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/export.js`, 'utf8');
@@ -149,7 +145,7 @@ describe('services > dumper > sequelize', () => {
 
   it('should generate a model with default values', async () => {
     expect.assertions(1);
-    const context = buildContext();
+    const context = execute(defaultPlan);
     const dumper = getDumper(context);
     await dumper.dump(defaultValuesModel, CONFIG);
     const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/default-values.js`, 'utf8');
@@ -161,7 +157,7 @@ describe('services > dumper > sequelize', () => {
 
   it('should generate the model index file', async () => {
     expect.assertions(1);
-    const context = buildContext();
+    const context = execute(defaultPlan);
     const dumper = getDumper(context);
     await dumper.dump(simpleModel, CONFIG);
     const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/index.js`, 'utf8');
@@ -173,7 +169,7 @@ describe('services > dumper > sequelize', () => {
 
   it('should generate a config/databases.js file', async () => {
     expect.assertions(1);
-    const context = buildContext();
+    const context = execute(defaultPlan);
     const dumper = await getDumper(context);
     await dumper.dump(simpleModel, CONFIG);
     const indexGeneratedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/config/databases.js`, 'utf-8');
@@ -187,7 +183,7 @@ describe('services > dumper > sequelize', () => {
     it('should generate the env file on Linux', async () => {
       expect.assertions(1);
 
-      const context = buildContext();
+      const context = execute(defaultPlan);
       const dumper = getDumper(context);
       jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(true);
       await dumper.dump(simpleModel, CONFIG);
@@ -202,7 +198,7 @@ describe('services > dumper > sequelize', () => {
     it('should generate the env file on macOS', async () => {
       expect.assertions(1);
 
-      const context = buildContext();
+      const context = execute(defaultPlan);
       const dumper = getDumper(context);
       jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(false);
       await dumper.dump(simpleModel, CONFIG);
@@ -217,7 +213,7 @@ describe('services > dumper > sequelize', () => {
 
   it('should generate an id column on join tables with id primary key', async () => {
     expect.assertions(1);
-    const context = buildContext();
+    const context = execute(defaultPlan);
     const dumper = await getDumper(context);
     await dumper.dump(joinTableWithIdKey, CONFIG);
     const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/models/only-foreign-keys-and-id.js`, 'utf8');
@@ -232,7 +228,7 @@ describe('services > dumper > sequelize', () => {
       expect.assertions(1);
 
       // Setup test by dumping once to ensure all files exists, then remove a file
-      const context = buildContext();
+      const context = execute(defaultPlan);
       const dumper = getDumper(context);
       await dumper.dump(simpleModel, CONFIG);
       fs.unlinkSync(TEST_OUTPUT_MODEL_CUSTOMERS_PATH);
