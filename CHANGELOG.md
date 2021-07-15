@@ -1,3 +1,17 @@
+# [2.2.0](https://github.com/ForestAdmin/toolbelt/compare/v2.1.2...v2.2.0) (2021-07-15)
+
+
+### Bug Fixes
+
+* logout also logout from forest.d folder ([#202](https://github.com/ForestAdmin/toolbelt/issues/202)) ([4adb531](https://github.com/ForestAdmin/toolbelt/commit/4adb5317c3e03e5b7603505189c9b4c572247dab))
+* save token in forest.d folder ([#201](https://github.com/ForestAdmin/toolbelt/issues/201)) ([d560d45](https://github.com/ForestAdmin/toolbelt/commit/d560d456992ce5f089fbe2e9c52531414c188f64))
+
+
+### Features
+
+* get token from forest folder ([#199](https://github.com/ForestAdmin/toolbelt/issues/199)) ([e6ac1e6](https://github.com/ForestAdmin/toolbelt/commit/e6ac1e60ee283e0d82ef8df47a6d8a2e791d3f58))
+* merge lumber commands into toolbelt ([#198](https://github.com/ForestAdmin/toolbelt/issues/198)) ([e647b6b](https://github.com/ForestAdmin/toolbelt/commit/e647b6b64ff64530035658f05743d34ed9bf2584))
+
 # [2.2.0-beta.4](https://github.com/ForestAdmin/toolbelt/compare/v2.2.0-beta.3...v2.2.0-beta.4) (2021-07-13)
 
 # [2.2.0-beta.3](https://github.com/ForestAdmin/toolbelt/compare/v2.2.0-beta.2...v2.2.0-beta.3) (2021-07-12)
