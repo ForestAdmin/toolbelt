@@ -1,22 +1,31 @@
-const { flags } = require('@oclif/command');
-const chalk = require('chalk');
 const EnvironmentManager = require('../../services/environment-manager');
-const Renderer = require('../../renderers/environment');
-const logger = require('../../services/logger');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
-const envConfig = require('../../config');
 
 class GetCommand extends AbstractAuthenticatedCommand {
+  init(plan) {
+    super.init(plan);
+    const {
+      assertPresent,
+      chalk,
+      env,
+      environmentRenderer,
+    } = this.context;
+    assertPresent({ chalk, env });
+    this.chalk = chalk;
+    this.env = env;
+    this.environmentRenderer = environmentRenderer;
+  }
+
   async runIfAuthenticated() {
     const parsed = this.parse(GetCommand);
-    const config = { ...envConfig, ...parsed.flags, ...parsed.args };
+    const config = { ...this.env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
 
     try {
       const environment = await manager.getEnvironment(config.environmentId);
-      new Renderer(config).render(environment);
+      this.environmentRenderer.render(environment, config);
     } catch (err) {
-      logger.error(`Cannot find the environment ${chalk.bold(config.environmentId)}.`);
+      this.logger.error(`Cannot find the environment ${this.chalk.bold(config.environmentId)}.`);
     }
   }
 }
@@ -24,9 +33,9 @@ class GetCommand extends AbstractAuthenticatedCommand {
 GetCommand.description = 'Get the configuration of an environment.';
 
 GetCommand.flags = {
-  format: flags.string({
+  format: AbstractAuthenticatedCommand.flags.string({
     char: 'format',
-    description: 'Ouput format.',
+    description: 'Output format.',
     options: ['table', 'json'],
     default: 'table',
   }),

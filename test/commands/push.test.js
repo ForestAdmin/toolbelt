@@ -1,6 +1,5 @@
-const testCli = require('./test-cli');
+const testCli = require('./test-cli-helper/test-cli');
 const PushCommand = require('../../src/commands/push');
-const { enter } = require('../fixtures/std');
 const {
   getBranchListValid,
   getDevelopmentEnvironmentValid,
@@ -16,13 +15,13 @@ const {
   pushBranchInvalidType,
   pushBranchValid,
 } = require('../fixtures/api');
-const { testEnv, testEnv2 } = require('../fixtures/env');
+const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
 
 const getValidProjectEnvironementAndBranch = (projectId, envSecret) => [
-  getProjectByEnv(),
-  getInAppProjectForDevWorkflow(projectId),
-  getDevelopmentEnvironmentValid(projectId),
-  getBranchListValid(envSecret),
+  () => getProjectByEnv(),
+  () => getInAppProjectForDevWorkflow(projectId),
+  () => getDevelopmentEnvironmentValid(projectId),
+  () => getBranchListValid(envSecret),
 ];
 
 describe('push', () => {
@@ -33,29 +32,54 @@ describe('push', () => {
       const branchName = 'feature/second';
       const environmentName = 'name1';
       it('should display the list of projects', () => testCli({
-        env: testEnv,
+        env: testEnvWithoutSecret,
         token: 'any',
-        command: () => PushCommand.run([]),
+        commandClass: PushCommand,
         api: [
-          getProjectListValid(),
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(),
-          getBranchListValid(envSecret),
-          getEnvironmentListValid(projectId),
-          pushBranchValid(envSecret),
+          () => getProjectListValid(),
+          () => getInAppProjectForDevWorkflow(projectId),
+          () => getDevelopmentEnvironmentValid(),
+          () => getBranchListValid(envSecret),
+          () => getEnvironmentListValid(projectId),
+          () => pushBranchValid(envSecret),
+        ],
+        prompts: [
+          {
+            in: [{
+              name: 'project',
+              message: 'Select your project',
+              type: 'list',
+              choices: [
+                { name: 'project1', value: 1 },
+                { name: 'project2', value: 2 },
+              ],
+            }],
+            out: { project: 1 },
+          },
+          {
+            in: [{
+              name: 'environment',
+              message: 'Select the remote environment you want to push onto',
+              type: 'list',
+              choices: ['name1'],
+            }],
+            out: {
+              environment: 'name1',
+            },
+          },
+          {
+            in: [{
+              name: 'confirm',
+              message: 'Push branch feature/second onto name1',
+              type: 'confirm',
+            }],
+            out: {
+              confirm: true,
+            },
+          },
         ],
         std: [
-          { out: 'Select your project' },
-          { out: 'project1' },
-          { out: 'project2' },
-          ...enter,
-          { out: 'Select the remote environment you want to push onto' },
-          { out: 'name1' },
-          ...enter,
-          { out: `Push branch ${branchName} onto ${environmentName}` },
-          { in: 'y' },
-          ...enter,
-          { out: `✅ Branch ${branchName} successfully pushed onto ${environmentName}.` },
+          { out: `√ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
     });
@@ -66,24 +90,41 @@ describe('push', () => {
       const branchName = 'feature/second';
       const environmentName = 'name1';
       it('should not display the list of projects', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => PushCommand.run(['--projectId', '82']),
+        commandClass: PushCommand,
+        commandArgs: ['--projectId', '82'],
         api: [
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(projectId),
-          getBranchListValid(envSecret),
-          getEnvironmentListValid(projectId),
-          pushBranchValid(envSecret),
+          () => getInAppProjectForDevWorkflow(projectId),
+          () => getDevelopmentEnvironmentValid(projectId),
+          () => getBranchListValid(envSecret),
+          () => getEnvironmentListValid(projectId),
+          () => pushBranchValid(envSecret),
+        ],
+        prompts: [
+          {
+            in: [{
+              name: 'environment',
+              message: 'Select the remote environment you want to push onto',
+              type: 'list',
+              choices: ['name1'],
+            }],
+            out: {
+              environment: environmentName,
+            },
+          }, {
+            in: [{
+              name: 'confirm',
+              message: `Push branch ${branchName} onto ${environmentName}`,
+              type: 'confirm',
+            }],
+            out: {
+              confirm: true,
+            },
+          },
         ],
         std: [
-          { out: 'Select the remote environment you want to push onto' },
-          { out: 'name1' },
-          ...enter,
-          { out: `Push branch ${branchName} onto ${environmentName}` },
-          { in: 'y' },
-          ...enter,
-          { out: `✅ Branch ${branchName} successfully pushed onto ${environmentName}.` },
+          { out: `√ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
     });
@@ -94,18 +135,28 @@ describe('push', () => {
       const branchName = 'feature/second';
       const environmentName = 'name1';
       it('should not display the list of environments', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'name1']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'name1'],
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
-          pushBranchValid(envSecret),
+          () => pushBranchValid(envSecret),
+        ],
+        prompts: [
+          {
+            in: [{
+              name: 'confirm',
+              message: `Push branch ${branchName} onto ${environmentName}`,
+              type: 'confirm',
+            }],
+            out: {
+              confirm: true,
+            },
+          },
         ],
         std: [
-          { out: `Push branch ${branchName} onto ${environmentName}` },
-          { in: 'y' },
-          ...enter,
-          { out: `✅ Branch ${branchName} successfully pushed onto ${environmentName}.` },
+          { out: `√ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
     });
@@ -116,15 +167,16 @@ describe('push', () => {
       const branchName = 'feature/second';
       const environmentName = 'name1';
       it('should not display the list of environments', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'name1', '--force']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'name1', '--force'],
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
-          pushBranchValid(envSecret),
+          () => pushBranchValid(envSecret),
         ],
         std: [
-          { out: `✅ Branch ${branchName} successfully pushed onto ${environmentName}.` },
+          { out: `√ Branch ${branchName} successfully pushed onto ${environmentName}.` },
         ],
       }));
     });
@@ -135,17 +187,24 @@ describe('push', () => {
       const branchName = 'feature/second';
       const environmentName = 'name1';
       it('should not push branch', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'name1']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'name1'],
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
         ],
-        std: [
-          { in: 'n' },
-          ...enter,
-          { out: `? Push branch ${branchName} onto ${environmentName} No` },
+        prompts: [
+          {
+            in: [{
+              name: 'confirm',
+              message: `Push branch ${branchName} onto ${environmentName}`,
+              type: 'confirm',
+            }],
+            out: { confirm: false },
+          },
         ],
+        exitCode: 0,
       }));
     });
 
@@ -153,17 +212,20 @@ describe('push', () => {
       const projectId = 82;
       const envSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
       it('should throw an error', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'name1']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'name1'],
         api: [
-          getProjectByEnv(),
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(projectId),
-          getNoBranchListValid(envSecret),
+          () => getProjectByEnv(),
+          () => getInAppProjectForDevWorkflow(projectId),
+          () => getDevelopmentEnvironmentValid(projectId),
+          () => getNoBranchListValid(envSecret),
+        ],
+        std: [
+          { err: '× You don\'t have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.' },
         ],
         exitCode: 2,
-        exitMessage: "⚠️ You don't have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.",
       }));
     });
 
@@ -171,17 +233,20 @@ describe('push', () => {
       const projectId = 82;
       const envSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
       it('should throw an error', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'name1']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'name1'],
         api: [
-          getProjectByEnv(),
-          getInAppProjectForDevWorkflow(projectId),
-          getDevelopmentEnvironmentValid(projectId),
-          getBranchListValid(envSecret, false),
+          () => getProjectByEnv(),
+          () => getInAppProjectForDevWorkflow(projectId),
+          () => getDevelopmentEnvironmentValid(projectId),
+          () => getBranchListValid(envSecret, false),
+        ],
+        std: [
+          { err: '× You don\'t have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.' },
         ],
         exitCode: 2,
-        exitMessage: "⚠️ You don't have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.",
       }));
     });
 
@@ -189,15 +254,18 @@ describe('push', () => {
       const projectId = 82;
       const envSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
       it('should throw an error', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'notExist', '--force']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'notExist', '--force'],
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
-          pushBranchInvalidDestination(envSecret),
+          () => pushBranchInvalidDestination(envSecret),
+        ],
+        std: [
+          { err: '× The environment provided doesn\'t exist.' },
         ],
         exitCode: 2,
-        exitMessage: "❌ The environment provided doesn't exist.",
       }));
     });
 
@@ -205,15 +273,18 @@ describe('push', () => {
       const projectId = 82;
       const envSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
       it('should throw an error', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'noRemote', '--force']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'noRemote', '--force'],
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
-          pushBranchInvalidType(envSecret),
+          () => pushBranchInvalidType(envSecret),
+        ],
+        std: [
+          { err: '× The environment on which you are trying to push your modifications is not a remote environment.' },
         ],
         exitCode: 2,
-        exitMessage: '❌ The environment on which you are trying to push your modifications is not a remote environment.',
       }));
     });
 
@@ -221,15 +292,18 @@ describe('push', () => {
       const projectId = 82;
       const envSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
       it('should throw an error', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => PushCommand.run(['-e', 'noRemote', '--force']),
+        commandClass: PushCommand,
+        commandArgs: ['-e', 'noRemote', '--force'],
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
-          pushBranchInvalidDestinationBranch(envSecret),
+          () => pushBranchInvalidDestinationBranch(envSecret),
+        ],
+        std: [
+          { err: '× The environment on which you are trying to push your modifications doesn\'t have current branch.' },
         ],
         exitCode: 2,
-        exitMessage: "❌ The environment on which you are trying to push your modifications doesn't have current branch.",
       }));
     });
 
@@ -237,30 +311,34 @@ describe('push', () => {
       const projectId = 82;
       const envSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
       it('should throw an error', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => PushCommand.run([]),
+        commandClass: PushCommand,
         api: [
           ...getValidProjectEnvironementAndBranch(projectId, envSecret),
-          getNoEnvironmentListValid(projectId),
+          () => getNoEnvironmentListValid(projectId),
+        ],
+        std: [
+          { err: '× You cannot run this command until this project has a remote non-production environment.' },
         ],
         exitCode: 2,
-        exitMessage: '❌ You cannot run this command until this project has a remote non-production environment.',
       }));
     });
 
     describe('when project is version 1', () => {
       const projectId = 82;
       it('should throw an error', () => testCli({
-        env: testEnv2,
+        env: testEnvWithSecret,
         token: 'any',
-        command: () => PushCommand.run([]),
+        commandClass: PushCommand,
         api: [
-          getProjectByEnv(),
-          getV1ProjectForDevWorkflow(projectId),
+          () => getProjectByEnv(),
+          () => getV1ProjectForDevWorkflow(projectId),
+        ],
+        std: [
+          { err: '× This project does not support branches yet. Please migrate your environments from your Project settings first.' },
         ],
         exitCode: 2,
-        exitMessage: '⚠️  This project does not support branches yet. Please migrate your environments from your Project settings first.',
       }));
     });
   });

@@ -2,15 +2,20 @@ const P = require('bluebird');
 const agent = require('superagent-promise')(require('superagent'), P);
 const ProgressBar = require('progress');
 const { promisify } = require('util');
-const context = require('@forestadmin/context');
+const Context = require('@forestadmin/context');
+
 const jobDeserializer = require('../deserializers/job');
-const config = require('../config');
 
 const setTimeoutAsync = promisify(setTimeout);
 
 function JobStateChecker(message, oclifExit) {
-  const { assertPresent, authenticator, logger } = context.inject();
-  assertPresent({ authenticator, logger });
+  const {
+    assertPresent,
+    authenticator,
+    env,
+    logger,
+  } = Context.inject();
+  assertPresent({ authenticator, env, logger });
 
   const bar = new ProgressBar(`${message} [:bar] :percent `, { total: 100 });
   bar.update(0);
@@ -18,7 +23,7 @@ function JobStateChecker(message, oclifExit) {
   this.check = async (jobId) => {
     try {
       const jobResponse = await agent
-        .get(`${config.serverHost()}/api/jobs/${jobId}`)
+        .get(`${env.FOREST_URL}/api/jobs/${jobId}`)
         .set('Authorization', `Bearer ${authenticator.getAuthToken()}`)
         .then((response) => jobDeserializer.deserialize(response.body));
 

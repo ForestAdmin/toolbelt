@@ -1,54 +1,45 @@
-const { flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
 
 class BranchCommand extends AbstractAuthenticatedCommand {
-  constructor(...args) {
-    super(...args);
-
-    /** @type {import('../context/init').Context} */
-    const { inquirer, config } = context.inject();
-
-    /** @private @readonly */
+  init(plan) {
+    super.init(plan);
+    const { assertPresent, env, inquirer } = this.context;
+    assertPresent({ env, inquirer });
+    this.env = env;
     this.inquirer = inquirer;
-    this.envConfig = config;
-
-    ['inquirer', 'envConfig'].forEach((name) => {
-      if (!this[name]) throw new Error(`Missing dependency ${name}`);
-    });
   }
 
   async listBranches(envSecret) {
     try {
       const branches = await BranchManager.getBranches(envSecret);
       if (!branches || branches.length === 0) {
-        return this.log("⚠️ You don't have any branch yet. Use `forest branch <branch_name>` to create one.");
+        this.logger.warn('You don\'t have any branch yet. Use `forest branch <branch_name>` to create one.');
+      } else {
+        branches.forEach((branch) => {
+          this.logger.log(`${branch.name} ${branch.isCurrent ? '< current branch' : ''}`);
+        });
       }
-      branches.forEach((branch) => {
-        this.log(`${branch.name} ${branch.isCurrent ? '< current branch' : ''}`);
-      });
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
       this.logger.error(customError);
-      return this.exit(2);
+      this.exit(2);
     }
-    return null;
   }
 
   async createBranch(branchName, environmentSecret) {
     try {
       await BranchManager.createBranch(branchName, environmentSecret);
 
-      return this.log(`✅ Switched to new branch: ${branchName}.`);
+      this.logger.success(`Switched to new branch: ${branchName}.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
       this.logger.error(customError);
-      return this.exit(2);
+      this.exit(2);
     }
   }
 
@@ -60,27 +51,27 @@ class BranchCommand extends AbstractAuthenticatedCommand {
           name: 'confirm',
           message: `Delete branch ${branchName}`,
         }]);
-      if (!response.confirm) return null;
+      if (!response.confirm) return;
     }
     try {
       await BranchManager.deleteBranch(branchName, envSecret);
-      return this.log(`✅ Branch ${branchName} successfully deleted.`);
+      this.logger.success(`Branch ${branchName} successfully deleted.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
 
       this.logger.error(customError);
-      return this.exit(2);
+      this.exit(2);
     }
   }
 
   async runIfAuthenticated() {
     const parsed = this.parse(BranchCommand);
-    const envSecret = process.env.FOREST_ENV_SECRET;
+    const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
     let config;
 
     try {
-      config = await withCurrentProject({ ...this.envConfig, ...commandOptions });
+      config = await withCurrentProject({ ...this.env, ...commandOptions });
 
       if (!config.envSecret) {
         const environment = await new ProjectManager(config)
@@ -90,7 +81,8 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
       this.logger.error(customError);
-      return this.exit(2);
+      this.exit(2);
+      return null;
     }
 
     if (config.BRANCH_NAME) {
@@ -103,20 +95,22 @@ class BranchCommand extends AbstractAuthenticatedCommand {
   }
 }
 
+BranchCommand.aliases = ['branches'];
+
 BranchCommand.description = 'Create a new branch or list your existing branches.';
 
 BranchCommand.flags = {
-  projectId: flags.integer({
+  projectId: AbstractAuthenticatedCommand.flags.integer({
     description: 'The id of the project to create a branch in.',
   }),
-  delete: flags.boolean({
+  delete: AbstractAuthenticatedCommand.flags.boolean({
     char: 'd',
     description: 'Delete the branch.',
   }),
-  force: flags.boolean({
+  force: AbstractAuthenticatedCommand.flags.boolean({
     description: 'When deleting a branch, skip confirmation.',
   }),
-  help: flags.boolean({
+  help: AbstractAuthenticatedCommand.flags.boolean({
     description: 'Display usage information.',
   }),
 };

@@ -1,11 +1,6 @@
-const fs = require('fs');
-const { flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const { buildDatabaseUrl } = require('../utils/database-url');
 const withCurrentProject = require('../services/with-current-project');
-const singletonGetter = require('../services/singleton-getter');
-const Spinner = require('../services/spinner');
 const ProjectManager = require('../services/project-manager');
 const EnvironmentManager = require('../services/environment-manager');
 const {
@@ -24,44 +19,49 @@ const SUCCESS_MESSAGE_LEARN_MORE_ON_CLI_USAGE = 'To learn more about the recomme
 const PROMPT_MESSAGE_AUTO_FILLING_ENV_FILE = 'Do you want your current folder `.env` file to be completed automatically with your environment variables?';
 const PROMPT_MESSAGE_AUTO_CREATING_ENV_FILE = 'Do you want a new `.env` file (containing your environment variables) to be automatically created in your current folder?';
 
-const spinner = singletonGetter(Spinner);
 class InitCommand extends AbstractAuthenticatedCommand {
-  constructor(...args) {
-    super(...args);
-    this.environmentVariables = {};
-
-    /** @type {import('../context/init').Context} */
-    const { config: envConfig, inquirer } = context.inject();
-
-    /** @private @readonly */
-    this.envConfig = envConfig;
-
-    /** @private @readonly */
-    this.inquirer = inquirer;
-
-    ['envConfig', 'inquirer'].forEach((name) => {
-      if (!this[name]) throw new Error(`Missing dependency ${name}`);
+  init(plan) {
+    super.init(plan);
+    const {
+      assertPresent,
+      env,
+      fs,
+      inquirer,
+      spinner,
+    } = this.context;
+    assertPresent({
+      env,
+      fs,
+      inquirer,
+      spinner,
     });
+
+    this.env = env;
+    this.fs = fs;
+    this.inquirer = inquirer;
+    this.spinner = spinner;
+
+    this.environmentVariables = {};
   }
 
   async runIfAuthenticated() {
     try {
-      spinner.start({ text: 'Selecting your project' });
-      await spinner.attachToPromise(this.projectSelection());
+      this.spinner.start({ text: 'Selecting your project' });
+      await this.spinner.attachToPromise(this.projectSelection());
 
-      spinner.start({ text: 'Analyzing your setup' });
-      await spinner.attachToPromise(this.projectValidation());
+      this.spinner.start({ text: 'Analyzing your setup' });
+      await this.spinner.attachToPromise(this.projectValidation());
 
-      spinner.start({ text: 'Checking your database setup' });
-      await spinner.attachToPromise(this.handleDatabaseUrlConfiguration());
+      this.spinner.start({ text: 'Checking your database setup' });
+      await this.spinner.attachToPromise(this.handleDatabaseUrlConfiguration());
 
-      spinner.start({ text: 'Setting up your development environment' });
-      await spinner.attachToPromise(this.developmentEnvironmentCreation());
+      this.spinner.start({ text: 'Setting up your development environment' });
+      await this.spinner.attachToPromise(this.developmentEnvironmentCreation());
 
       await this.environmentVariablesAutoFilling();
 
-      spinner.start({ text: SUCCESS_MESSAGE_ALL_SET_AND_READY });
-      spinner.success();
+      this.spinner.start({ text: SUCCESS_MESSAGE_ALL_SET_AND_READY });
+      this.spinner.success();
       this.logger.info(SUCCESS_MESSAGE_LEARN_MORE_ON_CLI_USAGE);
     } catch (error) {
       const exitMessage = handleInitError(error);
@@ -73,7 +73,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
   async projectSelection() {
     const parsed = this.parse(InitCommand);
     this.config = await withCurrentProject({
-      ...this.envConfig,
+      ...this.env,
       ...parsed.flags,
       includeLegacy: true,
     });
@@ -86,12 +86,12 @@ class InitCommand extends AbstractAuthenticatedCommand {
 
   async handleDatabaseUrlConfiguration() {
     if (this.environmentVariables.projectOrigin !== 'In-app') {
-      const isDatabaseAlreadyConfigured = !!process.env.DATABASE_URL;
+      const isDatabaseAlreadyConfigured = !!this.env.DATABASE_URL;
 
       if (!isDatabaseAlreadyConfigured) {
-        spinner.pause();
+        this.spinner.pause();
         const databaseConfiguration = await handleDatabaseConfiguration();
-        spinner.continue();
+        this.spinner.continue();
         if (databaseConfiguration) {
           this.environmentVariables.databaseUrl = buildDatabaseUrl(databaseConfiguration);
           this.environmentVariables.databaseSchema = databaseConfiguration.dbSchema;
@@ -111,7 +111,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
     }
 
     if (!developmentEnvironment) {
-      spinner.pause();
+      this.spinner.pause();
       const prompter = await this.inquirer.prompt([{
         name: 'endpoint',
         message: 'Enter your local admin backend endpoint:',
@@ -119,7 +119,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
         default: 'http://localhost:3310',
         validate: validateEndpoint,
       }]);
-      spinner.continue();
+      this.spinner.continue();
 
       developmentEnvironment = await new EnvironmentManager(this.config)
         .createDevelopmentEnvironment(this.config.projectId, prompter.endpoint);
@@ -132,7 +132,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
 
   async environmentVariablesAutoFilling() {
     if (this.environmentVariables.projectOrigin !== 'In-app') {
-      const existingEnvFile = fs.existsSync('.env');
+      const existingEnvFile = this.fs.existsSync('.env');
       const response = await this.inquirer
         .prompt([{
           type: 'confirm',
@@ -155,10 +155,12 @@ class InitCommand extends AbstractAuthenticatedCommand {
   }
 }
 
+InitCommand.aliases = ['environments:init'];
+
 InitCommand.description = 'Set up your development environment in your current folder.';
 
 InitCommand.flags = {
-  projectId: flags.integer({
+  projectId: AbstractAuthenticatedCommand.flags.integer({
     char: 'p',
     description: 'The id of the project you want to init.',
   }),

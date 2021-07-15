@@ -1,17 +1,18 @@
-const testCli = require('./../test-cli');
+const testCli = require('../test-cli-helper/test-cli');
 const EnvironmentCommand = require('../../../src/commands/environments');
 const { getEnvironmentListValid2 } = require('../../fixtures/api');
-const { testEnv } = require('../../fixtures/env');
+const { testEnvWithoutSecret } = require('../../fixtures/env');
 
 describe('environments', () => {
   describe('without JSON format option', () => {
     it('should return the list of environments', () => testCli({
-      env: testEnv,
+      env: testEnvWithoutSecret,
       token: 'any',
       api: [
-        getEnvironmentListValid2(),
+        () => getEnvironmentListValid2(),
       ],
-      command: () => EnvironmentCommand.run(['-p', '82']),
+      commandClass: EnvironmentCommand,
+      commandArgs: ['-p', '82'],
       std: [
         { out: 'ENVIRONMENTS' },
         { out: 'ID        NAME                URL                                TYPE' },
@@ -23,12 +24,13 @@ describe('environments', () => {
 
   describe('with JSON format option', () => {
     it('should return the list of environments in JSON', () => testCli({
-      env: testEnv,
+      env: testEnvWithoutSecret,
       token: 'any',
       api: [
-        getEnvironmentListValid2(),
+        () => getEnvironmentListValid2(),
       ],
-      command: () => EnvironmentCommand.run(['-p', '82', '--format', 'json']),
+      commandClass: EnvironmentCommand,
+      commandArgs: ['-p', '82', '--format', 'json'],
       std: [{
         out: [
           {

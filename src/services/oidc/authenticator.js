@@ -2,7 +2,7 @@ const OidcError = require('./error');
 
 class OidcAuthenticator {
   /**
-   * @param {import('../../context/init').Context} context
+   * @param {import('../../context/plan').Context} context
    */
   constructor({
     assertPresent, openIdClient, env, process, open,
@@ -70,7 +70,7 @@ class OidcAuthenticator {
   async waitForAuthentication(flow) {
     const expiresIn = flow.expires_in;
     try {
-      this.process.stdout.write(`Click on "Log in" on the browser tab which opened automatically or open this link: ${flow.verification_uri}\n`);
+      this.process.stdout.write(`Click on "Log in" on the browser tab which opened automatically or open this link: ${flow.verification_uri_complete}\n`);
       this.process.stdout.write(`Your confirmation code: ${flow.user_code}\n`);
 
       await this.open(flow.verification_uri_complete);

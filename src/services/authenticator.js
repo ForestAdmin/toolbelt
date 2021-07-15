@@ -1,21 +1,29 @@
-const ApplicationError = require('../utils/application-error');
+const ApplicationError = require('../errors/application-error');
 const { ERROR_UNEXPECTED } = require('../utils/messages');
 
 /**
  * @class
- * @param {import('../context/init').Context} context
+ * @param {import('../context/plan').Context} context
  */
 function Authenticator({
   logger, api, chalk, inquirer, os, jwtDecode, fs, joi, env,
-  oidcAuthenticator, applicationTokenService,
+  oidcAuthenticator, applicationTokenService, mkdirp,
 }) {
   /**
    * @param {string?} path
-   * @returns {string}
+   * @returns {string|null}
    */
   this.getAuthToken = (path = env.TOKEN_PATH || os.homedir()) => {
-    const forestrcToken = this.getVerifiedToken(`${path}/.forestrc`);
-    return forestrcToken || this.getVerifiedToken(`${path}/.lumberrc`);
+    const paths = [
+      `${path}/.forest.d/.forestrc`,
+      `${path}/.forestrc`,
+      `${path}/.lumberrc`,
+    ];
+    for (let i = 0; i < paths.length; i += 1) {
+      const token = this.getVerifiedToken(paths[i]);
+      if (token) return token;
+    }
+    return null;
   };
 
   this.getVerifiedToken = (path) => {
@@ -31,8 +39,11 @@ function Authenticator({
     }
   };
 
-  this.saveToken = (token, path = process.env.TOKEN_PATH || os.homedir()) => fs
-    .writeFileSync(`${path}/.forestrc`, token);
+  this.saveToken = async (token) => {
+    const path = `${env.TOKEN_PATH}/.forest.d`;
+    await mkdirp(path);
+    fs.writeFileSync(`${path}/.forestrc`, token);
+  };
 
   this.verify = (token) => {
     if (!token) return null;
@@ -53,16 +64,25 @@ function Authenticator({
     || 'Invalid token. Please enter your authentication token.';
 
   this.logout = async (opts = {}) => {
-    const pathForestrc = `${os.homedir()}/.forestrc`;
-    const forestToken = this.getVerifiedToken(pathForestrc);
-    const pathLumberrc = `${os.homedir()}/.lumberrc`;
-    const isLumberLoggedIn = this.getVerifiedToken(pathLumberrc);
+    const basePath = env.TOKEN_PATH || os.homedir();
 
+    const pathForestrc = `${basePath}/.forestrc`;
+    const forestToken = this.getVerifiedToken(pathForestrc);
     if (forestToken) {
       fs.unlinkSync(pathForestrc);
       await applicationTokenService.deleteApplicationToken(forestToken);
     }
+
+    const pathForestForestrc = `${basePath}/.forest.d/.forestrc`;
+    const forestForestToken = this.getVerifiedToken(pathForestForestrc);
+    if (forestForestToken) {
+      fs.unlinkSync(pathForestForestrc);
+      await applicationTokenService.deleteApplicationToken(forestForestToken);
+    }
+
     if (opts.log) {
+      const pathLumberrc = `${basePath}/.lumberrc`;
+      const isLumberLoggedIn = this.getVerifiedToken(pathLumberrc);
       if (isLumberLoggedIn) {
         logger.info('You cannot be logged out with this command. Please use "lumber logout" command.');
       } else {
@@ -75,7 +95,7 @@ function Authenticator({
     await this.logout({ log: false });
     try {
       const token = await this.login(config);
-      this.saveToken(token);
+      await this.saveToken(token);
       logger.info('Login successful');
     } catch (error) {
       const message = error instanceof ApplicationError
@@ -128,7 +148,6 @@ function Authenticator({
     }
     return token;
   };
-
 
   this.validateEmail = (input) => {
     if (!joi.string().email().validate(input).error) {

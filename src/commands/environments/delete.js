@@ -1,15 +1,28 @@
-const { flags } = require('@oclif/command');
-const chalk = require('chalk');
-const inquirer = require('inquirer');
 const EnvironmentManager = require('../../services/environment-manager');
-const logger = require('../../services/logger');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
-const envConfig = require('../../config');
 
 class DeleteCommand extends AbstractAuthenticatedCommand {
+  init(plan) {
+    super.init(plan);
+    const {
+      assertPresent,
+      chalk,
+      env,
+      inquirer,
+    } = this.context;
+    assertPresent({
+      chalk,
+      env,
+      inquirer,
+    });
+    this.chalk = chalk;
+    this.env = env;
+    this.inquirer = inquirer;
+  }
+
   async runIfAuthenticated() {
     const parsed = this.parse(DeleteCommand);
-    const config = { ...envConfig, ...parsed.flags, ...parsed.args };
+    const config = { ...this.env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
 
     try {
@@ -17,36 +30,37 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
       let answers;
 
       if (!config.force) {
-        answers = await inquirer
+        answers = await this.inquirer
           .prompt([{
             type: 'input',
-            prefix: '⚠️  WARNING \t',
+            prefix: 'Δ WARNING \t',
             name: 'confirm',
-            message: `This will delete the environment ${chalk.red(environment.name)}.\nTo proceed, type ${chalk.red(environment.name)} or re-run this command with --force : `,
+            message: `This will delete the environment ${this.chalk.red(environment.name)}.\nTo proceed, type ${this.chalk.red(environment.name)} or re-run this command with --force : `,
           }]);
       }
 
       if (!answers || answers.confirm === environment.name) {
         try {
           await manager.deleteEnvironment(config.environmentId);
-          return this.log(`Environment ${chalk.red(environment.name)} successfully deleted.`);
+          this.logger.log(`Environment ${this.chalk.red(environment.name)} successfully deleted.`);
         } catch (error) {
-          logger.error('Oops, something went wrong.');
-          return this.exit(1);
+          this.logger.error('Oops, something went wrong.');
+          this.exit(1);
         }
+      } else {
+        this.logger.error(`Confirmation did not match ${this.chalk.red(environment.name)}. Aborted.`);
+        this.exit(1);
       }
-      logger.error(`Confirmation did not match ${chalk.red(environment.name)}. Aborted.`);
-      return this.exit(1);
     } catch (err) {
       if (err.status === 404) {
-        logger.error(`Cannot find the environment ${chalk.bold(config.environmentId)}.`);
-        return this.exit(1);
+        this.logger.error(`Cannot find the environment ${this.chalk.bold(config.environmentId)}.`);
+        this.exit(1);
+      } else if (err.status === 403) {
+        this.logger.error(`You do not have the rights to delete environment ${this.chalk.bold(config.environmentId)}.`);
+        this.exit(1);
+      } else {
+        throw err;
       }
-      if (err.status === 403) {
-        logger.error(`You do not have the rights to delete environment ${chalk.bold(config.environmentId)}.`);
-        return this.exit(1);
-      }
-      throw err;
     }
   }
 }
@@ -54,7 +68,7 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
 DeleteCommand.description = 'Delete an environment.';
 
 DeleteCommand.flags = {
-  force: flags.boolean({
+  force: AbstractAuthenticatedCommand.flags.boolean({
     char: 'force',
     description: 'Force delete.',
   }),

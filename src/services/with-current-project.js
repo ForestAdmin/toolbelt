@@ -1,16 +1,16 @@
-const inquirer = require('inquirer');
-const ProjectManager = require('./project-manager');
-const singletonGetter = require('../services/singleton-getter');
-const Spinner = require('../services/spinner');
+const Context = require('@forestadmin/context');
 
-const spinner = singletonGetter(Spinner);
+const ProjectManager = require('./project-manager');
 
 module.exports = async function withCurrentProject(config) {
+  const { assertPresent, inquirer, spinner } = Context.inject();
+  assertPresent({ inquirer, spinner });
+
   if (config.projectId) { return config; }
 
   const projectManager = await new ProjectManager(config);
 
-  const envSecret = process.env.FOREST_ENV_SECRET;
+  const envSecret = config.FOREST_ENV_SECRET;
   if (envSecret) {
     const { includeLegacy } = config;
     const projectFromEnv = await projectManager.getByEnvSecret(envSecret, includeLegacy);

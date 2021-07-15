@@ -1,7 +1,17 @@
-const crypto = require('crypto');
+class KeyGenerator {
+  constructor({
+    assertPresent,
+    crypto,
+  }) {
+    assertPresent({
+      crypto,
+    });
+    this.crypto = crypto;
+  }
 
-function generateKey() {
-  return crypto.randomBytes(48).toString('hex');
+  generate() {
+    return this.crypto.randomBytes(48).toString('hex');
+  }
 }
 
-module.exports = { generateKey };
+module.exports = KeyGenerator;

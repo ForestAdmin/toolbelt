@@ -1,35 +1,57 @@
 const chalk = require('chalk');
 
 class Logger {
-  constructor(silent) {
-    this.silent = silent;
+  constructor({
+    assertPresent,
+    env,
+    stderr,
+    stdout,
+  }) {
+    assertPresent({ env, stderr, stdout });
+    this.env = env;
+    this.stderr = stderr;
+    this.stdout = stdout;
+
+    // FIXME: Silent was not used before as no "silent" value was in context.
+    this.silent = !!this.env.SILENT && this.env.SILENT !== '0';
   }
 
-  log(message, std) {
-    if (!this.silent) {
-      if (std === 'err') {
-        process.stderr.write(message);
-      } else {
-        process.stdout.write(message);
-      }
+  _logLine(message, options) {
+    if (this.silent) return;
+
+    options = {
+      color: null,
+      prefix: null,
+      std: null,
+      ...options,
+    };
+
+    let actualPrefix = '';
+    if ([undefined, null, ''].indexOf(options.prefix) === -1) actualPrefix = `${options.prefix} `;
+    if (actualPrefix && options.color) actualPrefix = chalk.bold[options.color](actualPrefix);
+
+    const actualMessage = `${actualPrefix}${message} \n`;
+
+    if (options.std === 'err') {
+      this.stderr.write(actualMessage);
+    } else {
+      this.stdout.write(actualMessage);
     }
   }
 
-  logLine(color, message, std) {
-    this.log(`${chalk[color]('>')} ${message} \n`, std);
+  _logLines(messages, options) {
+    messages.forEach((message) => this._logLine(message, options));
   }
 
-  logLines(color, messages, std = 'out') {
-    messages.forEach((message) => this.logLine(color, message, std));
-  }
+  error(...messages) { this._logLines(messages, { color: 'red', prefix: '×', std: 'err' }); }
 
-  success(...messages) { this.logLines('green', messages); }
+  info(...messages) { this._logLines(messages, { color: 'blue', prefix: '>' }); }
 
-  info(...messages) { this.logLines('blue', messages); }
+  log(...messages) { this._logLines(messages); }
 
-  warn(...messages) { this.logLines('yellow', messages); }
+  success(...messages) { this._logLines(messages, { color: 'green', prefix: '√' }); }
 
-  error(...messages) { this.logLines('red', messages, 'err'); }
+  warn(...messages) { this._logLines(messages, { color: 'yellow', prefix: 'Δ' }); }
 }
 
-module.exports = new Logger();
+module.exports = Logger;

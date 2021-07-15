@@ -1,16 +1,11 @@
-const inquirer = require('inquirer');
 const chalk = require('chalk');
 const clipboardy = require('clipboardy');
 const fs = require('fs');
 const { EOL } = require('os');
-const logger = require('../services/logger');
-const { handleError } = require('../utils/error');
-const { generateKey } = require('../utils/key-generator');
-const DatabasePrompter = require('../services/prompter/database-prompter');
-const envConfig = require('../config');
-const singletonGetter = require('../services/singleton-getter');
-const Spinner = require('../services/spinner');
+const Context = require('@forestadmin/context');
 
+const { handleError } = require('../utils/error');
+const { DatabasePrompts } = require('../services/prompter/database-prompts');
 
 const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE = 'Copying the environment variables in your `.env` file';
 const SUCCESS_MESSAGE_ENV_FILE_CREATED_AND_FILLED = 'Creating a new `.env` file containing your environment variables';
@@ -29,8 +24,6 @@ const VALIDATION_REGEX_HTTPS = /^http((s:\/\/.*)|(s?:\/\/(localhost|127\.0\.0\.1
 const SPLIT_URL_REGEX = new RegExp('(\\w+)://([\\w\\-\\.]+)(:(\\d+))?');
 
 const ENV_VARIABLES_AUTO_FILLING_PREFIX = '\n\n# ℹ️ The content below was automatically added by the `forest init` command ⤵️\n';
-
-const spinner = singletonGetter(Spinner);
 
 const OPTIONS_DATABASE = [
   'dbDialect',
@@ -67,6 +60,8 @@ function handleInitError(rawError) {
 }
 
 async function handleDatabaseConfiguration() {
+  const { env, inquirer } = Context.inject();
+
   const response = await inquirer
     .prompt([{
       type: 'confirm',
@@ -77,7 +72,7 @@ async function handleDatabaseConfiguration() {
   if (!response.confirm) return null;
 
   const promptContent = [];
-  await new DatabasePrompter(OPTIONS_DATABASE, envConfig, promptContent, { }).handlePrompts();
+  await new DatabasePrompts(OPTIONS_DATABASE, env, promptContent, { }).handlePrompts();
   return inquirer.prompt(promptContent);
 }
 
@@ -96,7 +91,9 @@ function getApplicationPortFromCompleteEndpoint(endpoint) {
 }
 
 function getContentToAddInDotenvFile(environmentVariables) {
-  const authSecret = generateKey();
+  const { keyGenerator } = Context.inject();
+
+  const authSecret = keyGenerator.generate();
   let contentToAddInDotenvFile = '';
 
   if (environmentVariables.applicationPort) {
@@ -138,6 +135,9 @@ function commentExistingVariablesInAFile(fileData, environmentVariables) {
 }
 
 function amendDotenvFile(environmentVariables) {
+  const { assertPresent, spinner } = Context.inject();
+  assertPresent({ spinner });
+
   let newEnvFileData = getContentToAddInDotenvFile(environmentVariables);
   spinner.start({ text: SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE });
   const existingEnvFileData = fs.readFileSync('.env', 'utf8');
@@ -154,6 +154,9 @@ function amendDotenvFile(environmentVariables) {
 }
 
 function createDotenvFile(environmentVariables) {
+  const { assertPresent, spinner } = Context.inject();
+  assertPresent({ spinner });
+
   const contentToAdd = getContentToAddInDotenvFile(environmentVariables);
   spinner.start({ text: SUCCESS_MESSAGE_ENV_FILE_CREATED_AND_FILLED });
   fs.writeFileSync('.env', contentToAdd);
@@ -161,6 +164,7 @@ function createDotenvFile(environmentVariables) {
 }
 
 async function displayEnvironmentVariablesAndCopyToClipboard(environmentVariables) {
+  const { logger } = Context.inject();
   const variablesToDisplay = getContentToAddInDotenvFile(environmentVariables);
   logger.info(SUCCESS_MESSAGE_DISPLAY_ENV_VARIABLES + chalk.black.bgCyan(variablesToDisplay));
   await clipboardy.write(variablesToDisplay)

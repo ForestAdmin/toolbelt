@@ -1,5 +1,3 @@
-const { flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const EnvironmentManager = require('../services/environment-manager');
 const ProjectManager = require('../services/project-manager');
@@ -8,21 +6,12 @@ const withCurrentProject = require('../services/with-current-project');
 
 /** Deploy layout changes of an environment to the reference one. */
 class DeployCommand extends AbstractAuthenticatedCommand {
-  constructor(...args) {
-    super(...args);
-
-    /** @type {import('../context/init').Context} */
-    const { inquirer, config } = context.inject();
-
-    /** @private @readonly */
+  init(plan) {
+    super.init(plan);
+    const { assertPresent, env, inquirer } = this.context;
+    assertPresent({ env, inquirer });
+    this.env = env;
     this.inquirer = inquirer;
-
-    /** @private @readonly */
-    this.envConfig = config;
-
-    ['inquirer', 'envConfig'].forEach((name) => {
-      if (!this[name]) throw new Error(`Missing dependency ${name}`);
-    });
   }
 
   /**
@@ -35,7 +24,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
   async getEnvironment(config) {
     const environments = await new EnvironmentManager(config).listEnvironments();
 
-    if (environments.length === 0) throw new Error('❌ No environment found.');
+    if (environments.length === 0) throw new Error('No environment found.');
 
     const environmentName = config.ENVIRONMENT_NAME || await this.selectEnvironment(environments);
     return environments.find((environment) => environment.name === environmentName);
@@ -65,10 +54,10 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * @returns {Object} The command configuration, including its envSecret correctly set.
    */
   async getConfig() {
-    const envSecret = process.env.FOREST_ENV_SECRET;
+    const envSecret = this.env.FOREST_ENV_SECRET;
     const parsed = this.parse(DeployCommand);
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
-    const config = await withCurrentProject({ ...this.envConfig, ...commandOptions });
+    const config = await withCurrentProject({ ...this.env, ...commandOptions });
 
     if (!config.envSecret) {
       const environment = await new ProjectManager(config)
@@ -104,28 +93,32 @@ class DeployCommand extends AbstractAuthenticatedCommand {
       const environment = await this.getEnvironment(config);
 
       if (environment === undefined) throw new Error('Environment not found.');
-      if (!config.force && !(await this.confirm(environment))) return null;
+
+      if (!config.force && !(await this.confirm(environment))) return;
 
       await new EnvironmentManager(config).deploy(environment);
 
-      return this.log(`✅ Deployed ${environment.name} layout changes to reference environment.`);
+      this.logger.success(`Deployed ${environment.name} layout changes to reference environment.`);
     } catch (error) {
-      return this.error(handleBranchError(error));
+      this.logger.error(handleBranchError(error));
+      this.exit(2);
     }
   }
 }
 
+DeployCommand.aliases = ['environments:deploy'];
+
 DeployCommand.description = 'Deploy layout changes of an environment to the reference one.';
 
 DeployCommand.flags = {
-  help: flags.boolean({
+  help: AbstractAuthenticatedCommand.flags.boolean({
     description: 'Display usage information.',
   }),
-  force: flags.boolean({
+  force: AbstractAuthenticatedCommand.flags.boolean({
     char: 'f',
     description: 'Skip deploy confirmation.',
   }),
-  projectId: flags.integer({
+  projectId: AbstractAuthenticatedCommand.flags.integer({
     char: 'p',
     description: 'The id of the project you want to deploy.',
     default: null,

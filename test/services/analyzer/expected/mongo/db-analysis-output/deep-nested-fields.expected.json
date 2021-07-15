@@ -1,0 +1,68 @@
+{
+  "persons": {
+    "fields": [
+      {
+        "name": "name",
+        "type": "String"
+      },
+      {
+        "name": "very",
+        "type": {
+          "deep": {
+            "model": {
+              "arrayOfNumber": [
+                "Number"
+              ],
+              "arrayMixed": [
+                "Object"
+              ],
+              "arrayOfObjectIds": [
+                "Mongoose.Schema.Types.ObjectId"
+              ],
+              "arrayWithComplexObject": [
+                {
+                  "_id": "Mongoose.Schema.Types.ObjectId",
+                  "name": "String",
+                  "propGroup": {
+                    "answer": "Boolean",
+                    "date": "Date",
+                    "sentence": "String",
+                    "number": "Number"
+                  }
+                }
+              ],
+              "arrayOfComplexObjects": [
+                {
+                  "_id": "Mongoose.Schema.Types.ObjectId",
+                  "propGroup": {
+                    "answer": "Boolean",
+                    "date": "Date",
+                    "sentence": "String",
+                    "number": "Number"
+                  },
+                  "so": {
+                    "nested": {
+                      "arrayMixed": [
+                        "Object"
+                      ],
+                      "arrayOfNumber": [
+                        "Number"
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "options": {
+      "timestamps": false
+    },
+    "primaryKeys": [
+      "_id"
+    ],
+    "references": []
+  }
+}

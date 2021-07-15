@@ -4,8 +4,6 @@ const ProjectSerializer = require('../../src/serializers/project');
 const EnvironmentSerializer = require('../../src/serializers/environment');
 const JobSerializer = require('../../src/serializers/job');
 
-nock.disableNetConnect();
-
 /**
  * @param {import('nock').Scope} nockScope
  */
@@ -159,7 +157,6 @@ function loginValidOidc() {
   );
 }
 
-
 module.exports = {
   loginInvalidOidc,
   loginValidOidc,
@@ -309,6 +306,14 @@ module.exports = {
       secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
     })),
 
+  createEnvironmentForbidden: () => nock('http://localhost:3001')
+    .post('/api/environments')
+    .reply(403),
+
+  createEnvironmentDetailedError: () => nock('http://localhost:3001')
+    .post('/api/environments')
+    .reply(422, { errors: [{ detail: 'dummy test error' }] }),
+
   getEnvironmentNotFound: (id = '3947') => nock('http://localhost:3001')
     .matchHeader('forest-environment-id', id)
     .get(`/api/environments/${id}`)
@@ -402,7 +407,6 @@ module.exports = {
         id: '2200',
       },
     })),
-
 
   getProjectByEnv: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .get('/api/projects?envSecret')
@@ -629,7 +633,7 @@ module.exports = {
     .get(`/api/projects/${projectId}/dev-workflow`)
     .reply(200, ProjectSerializer.serialize({ id: `${projectId}`, name: 'Forest', origin: 'In-app' })),
 
-  getLumberProjectForDevWorkflow: (projectId) => nock('http://localhost:3001')
+  getForestCLIProjectForDevWorkflow: (projectId) => nock('http://localhost:3001')
     .get(`/api/projects/${projectId}/dev-workflow`)
     .reply(200, ProjectSerializer.serialize({ id: `${projectId}`, name: 'Forest', origin: 'Lumber' })),
 
@@ -647,5 +651,43 @@ module.exports = {
       errors: [{
         detail: 'Forbidden',
       }],
+    })),
+
+  createProject: () => nock('http://localhost:3001')
+    .post('/api/projects', {
+      data: {
+        type: 'projects',
+        attributes: { name: 'name' },
+      },
+    })
+    .reply(201, ProjectSerializer.serialize({
+      name: 'name',
+      id: 4242,
+      defaultEnvironment: {
+        id: 182,
+        name: 'development',
+        apiEndpoint: 'http://localhost:3310',
+        type: 'development',
+        secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
+      },
+      origin: 'Lumber',
+    })),
+  updateNewEnvironmentEndpoint: () => nock('http://localhost:3001')
+    .put('/api/environments/182', {
+      data: {
+        type: 'environments',
+        id: '182',
+        attributes: {
+          name: 'development',
+          'api-endpoint': 'http://localhost:3310',
+          type: 'development',
+        },
+      },
+    })
+    .reply(200, EnvironmentSerializer.serialize({
+      name: 'development',
+      apiEndpoint: 'http://localhost:3310',
+      type: 'development',
+      secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
     })),
 };

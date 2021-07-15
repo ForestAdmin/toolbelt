@@ -1,5 +1,3 @@
-const { flags } = require('@oclif/command');
-const context = require('@forestadmin/context');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
@@ -7,19 +5,12 @@ const EnvironmentManager = require('../services/environment-manager');
 const withCurrentProject = require('../services/with-current-project');
 
 class PushCommand extends AbstractAuthenticatedCommand {
-  constructor(...args) {
-    super(...args);
-    /** @type {import('../context/init').Context} */
-    const { inquirer, config: envConfig } = context.inject();
-
-    /** @private @readonly */
+  init(plan) {
+    super.init(plan);
+    const { assertPresent, env, inquirer } = this.context;
+    assertPresent({ env, inquirer });
+    this.env = env;
     this.inquirer = inquirer;
-    /** @private @readonly */
-    this.envConfig = envConfig;
-
-    ['inquirer', 'envConfig'].forEach((name) => {
-      if (!this[name]) throw new Error(`Missing dependency ${name}`);
-    });
   }
 
   // TODO: DWO EP17 probably update this function to handle environment selection
@@ -44,7 +35,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
     const commandOptions = { ...parsed.flags, ...parsed.args };
 
     try {
-      const config = await withCurrentProject({ ...this.envConfig, ...commandOptions });
+      const config = await withCurrentProject({ ...this.env, ...commandOptions });
 
       const projectManager = new ProjectManager(config);
       const project = await projectManager.getProjectForDevWorkflow();
@@ -72,33 +63,36 @@ class PushCommand extends AbstractAuthenticatedCommand {
             name: 'confirm',
             message: `Push branch ${currentBranch.name} onto ${config.environment}`,
           }]);
-        if (!response.confirm) return null;
+        if (!response.confirm) return;
       }
 
       await BranchManager.pushBranch(config.environment, config.envSecret);
-      return this.log(`✅ Branch ${currentBranch.name} successfully pushed onto ${config.environment}.`);
+      this.logger.success(`Branch ${currentBranch.name} successfully pushed onto ${config.environment}.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
-      return this.error(customError);
+      this.logger.error(customError);
+      this.exit(2);
     }
   }
 }
+
+PushCommand.aliases = ['branches:push'];
 
 PushCommand.description = 'Push layout changes of your current branch to a remote environment.';
 
 PushCommand.flags = {
   // TODO: DWO EP17 remove environment option
-  environment: flags.string({
+  environment: AbstractAuthenticatedCommand.flags.string({
     char: 'e',
     description: 'The remote environment name to push onto.',
   }),
-  force: flags.boolean({
+  force: AbstractAuthenticatedCommand.flags.boolean({
     description: 'Skip push changes confirmation.',
   }),
-  help: flags.boolean({
+  help: AbstractAuthenticatedCommand.flags.boolean({
     description: 'Display usage information.',
   }),
-  projectId: flags.integer({
+  projectId: AbstractAuthenticatedCommand.flags.integer({
     char: 'p',
     description: 'The id of the project to work on.',
     default: null,
