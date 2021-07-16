@@ -36,7 +36,7 @@
     "jsonapi-serializer": "3.6.2",
     "jsonwebtoken": "8.5.1",
     "jwt-decode": "2.2.0",
-    "lodash": "4.17.19",
+    "lodash": "4.17.21",
     "mkdirp": "1.0.4",
     "mongodb": "3.6.3",
     "mysql2": "2.2.5",
