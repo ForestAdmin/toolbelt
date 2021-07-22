@@ -37,6 +37,7 @@ module.exports = class DatabaseAnalyzer {
     let analyze;
     if (config.dbDialect === 'mongodb') {
       analyze = this.mongoAnalyzer;
+      databaseConnection = databaseConnection.db();
     } else {
       analyze = this.sequelizeAnalyzer;
     }
