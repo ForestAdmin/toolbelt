@@ -1,3 +1,10 @@
+## [2.2.3](https://github.com/ForestAdmin/toolbelt/compare/v2.2.2...v2.2.3) (2021-07-23)
+
+
+### Bug Fixes
+
+* handle properly mongo connection close ([#209](https://github.com/ForestAdmin/toolbelt/issues/209)) ([4a6da5d](https://github.com/ForestAdmin/toolbelt/commit/4a6da5d9233367be73ab2096f6cfef52525c93c8))
+
 ## [2.2.2](https://github.com/ForestAdmin/toolbelt/compare/v2.2.1...v2.2.2) (2021-07-20)
 
 ## [2.2.1](https://github.com/ForestAdmin/toolbelt/compare/v2.2.0...v2.2.1) (2021-07-16)
