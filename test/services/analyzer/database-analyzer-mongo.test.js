@@ -73,9 +73,10 @@ describe('services > database analyser > MongoDB', () => {
       expect.assertions(1);
       const mongoHelper = await getMongoHelper(mongoUrl);
       const databaseConnection = await mongoHelper.connect();
+      const db = databaseConnection.db();
       await mongoHelper.dropAllCollections();
-      await databaseConnection.collection('connect_test').insertOne({ name: 'hello' });
-      const doc = await databaseConnection.collection('connect_test').findOne({ name: 'hello' });
+      await db.collection('connect_test').insertOne({ name: 'hello' });
+      const doc = await db.collection('connect_test').findOne({ name: 'hello' });
       await mongoHelper.close();
       expect(doc.name).toStrictEqual('hello');
     });

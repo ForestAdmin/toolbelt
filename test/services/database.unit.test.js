@@ -204,29 +204,6 @@ describe('services > database', () => {
       });
     });
 
-    it('should call mongodb db function on successful connection', async () => {
-      expect.assertions(2);
-
-      const mongoDbMock = {
-        db: jest.fn(),
-      };
-      const context = {
-        mongodb: {
-          MongoClient: {
-            connect: jest.fn().mockReturnValue(
-              Promise.resolve(mongoDbMock),
-            ),
-          },
-        },
-      };
-      const database = setupDatabase(context);
-
-      await database.connectToMongodb({ dbName: 'fake' });
-
-      expect(mongoDbMock.db).toHaveBeenCalledTimes(1);
-      expect(mongoDbMock.db).toHaveBeenCalledWith('fake');
-    });
-
     it('should call handleAuthenticationError on a failed connection', async () => {
       expect.assertions(2);
 
