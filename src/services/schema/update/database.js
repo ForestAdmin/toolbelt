@@ -68,7 +68,6 @@ class Database {
     }
 
     return this.mongodb.MongoClient.connect(connectionUrl, connectionOptionsMongoClient)
-      .then((client) => client.db(options.dbName))
       .catch((error) => this.handleAuthenticationError(error));
   }
 

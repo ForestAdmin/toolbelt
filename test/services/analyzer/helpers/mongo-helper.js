@@ -5,7 +5,7 @@ const dbName = 'forest-test';
 
 class MongoHelper {
   constructor(url) {
-    this.url = url;
+    this.url = `${url}/${dbName}`;
   }
 
   connect() {
@@ -13,8 +13,8 @@ class MongoHelper {
     return new Promise((resolve) => {
       this.client.connect((err) => {
         assert.equal(null, err);
-        this.db = this.client.db(dbName);
-        resolve(this.db);
+        this.db = this.client.db();
+        resolve(this.client);
       });
     });
   }
