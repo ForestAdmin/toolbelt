@@ -68,12 +68,13 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       dbConnectionUrl: config.databaseConnectionURL,
       dbDialect: config.databaseDialect,
       dbHostname: config.databaseHost,
-      dbPort: config.databasePort,
       dbName: config.databaseName,
-      dbUser: config.databaseUser,
       dbPassword: config.databasePassword,
-      ssl: config.databaseSSL,
+      dbPort: config.databasePort,
+      dbSchema: config.databaseSchema,
+      dbUser: config.databaseUser,
       mongodbSrv: config.mongoDBSRV,
+      ssl: config.databaseSSL,
     };
 
     if (!config.databaseDialect && !config.databaseConnectionURL) {
