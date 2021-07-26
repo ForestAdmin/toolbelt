@@ -353,6 +353,43 @@ describe('projects:create', () => {
         exitCode: 0,
       }));
     });
+
+    describe('with a non-existent schema', () => {
+      // eslint-disable-next-line jest/no-hooks
+      beforeAll(async () => {
+        const sequelizeHelper = new SequelizeHelper();
+        await sequelizeHelper.connect(DATABASE_URL_POSTGRESQL_MAX);
+        await sequelizeHelper.given('customers');
+        await sequelizeHelper.close();
+      });
+
+      it('should fail', () => testCli({
+        commandClass: CreateProjectCommand,
+        commandArgs: ['name'],
+        env: testEnvWithSecret,
+        token: 'any',
+        prompts: [
+          {
+            in: makePromptInputList(),
+            out: {
+              databaseDialect: 'postgres',
+              databaseName: 'forestadmin_test_toolbelt-sequelize',
+              databaseSchema: 'missing_schema',
+              databaseHost: 'localhost',
+              databasePort: 54369,
+              databaseUser: 'forest',
+              databasePassword: 'secret',
+              databaseSSL: false,
+            },
+          },
+        ],
+        std: [
+          { spinner: '√ Connecting to your database' },
+          { err: '× This schema does not exists.' },
+        ],
+        exitCode: 1,
+      }));
+    });
   });
 
   describe('catch', () => {
