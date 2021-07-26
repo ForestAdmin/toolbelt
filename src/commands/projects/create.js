@@ -71,6 +71,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       dbName: config.databaseName,
       dbPassword: config.databasePassword,
       dbPort: config.databasePort,
+      dbSchema: config.databaseSchema,
       dbUser: config.databaseUser,
       mongodbSrv: config.mongoDBSRV,
       ssl: config.databaseSSL,
