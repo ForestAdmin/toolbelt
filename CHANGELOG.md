@@ -1,3 +1,10 @@
+## [2.2.4](https://github.com/ForestAdmin/toolbelt/compare/v2.2.3...v2.2.4) (2021-07-26)
+
+
+### Bug Fixes
+
+* transmit databaseSchema in command projects:create ([#210](https://github.com/ForestAdmin/toolbelt/issues/210)) ([c6fd2e3](https://github.com/ForestAdmin/toolbelt/commit/c6fd2e3c3f1596f0984caad85ba5b57618e0d5a8))
+
 ## [2.2.3](https://github.com/ForestAdmin/toolbelt/compare/v2.2.2...v2.2.3) (2021-07-23)
 
 
