@@ -1,3 +1,10 @@
+## [2.2.5](https://github.com/ForestAdmin/toolbelt/compare/v2.2.4...v2.2.5) (2021-08-03)
+
+
+### Bug Fixes
+
+* avoid details route conflicting with count when overriding details route ([#211](https://github.com/ForestAdmin/toolbelt/issues/211)) ([0060bfd](https://github.com/ForestAdmin/toolbelt/commit/0060bfd7f03a09490c75ea3e1d9fa9c538129b89))
+
 ## [2.2.4](https://github.com/ForestAdmin/toolbelt/compare/v2.2.3...v2.2.4) (2021-07-26)
 
 
