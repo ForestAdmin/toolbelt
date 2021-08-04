@@ -220,4 +220,19 @@ describe('services > dumper > MongoDB', () => {
       cleanOutput();
     });
   });
+
+  describe('/forest folder', () => {
+    it('should add `fieldsToFlatten` property in the generated file', async () => {
+      expect.assertions(1);
+
+      const context = buildContext();
+      const dumper = getDumper(context);
+      await dumper.dump(simpleModel, CONFIG);
+      const generatedFile = fs.readFileSync(`${appRoot}/test-output/mongo/forest/films.js`, 'utf8');
+      const expectedFile = fs.readFileSync(`${__dirname}/expected/mongo/dumper-output/forest-simple.expected.js`, 'utf8');
+
+      expect(generatedFile).toStrictEqual(expectedFile);
+      cleanOutput();
+    });
+  });
 });
