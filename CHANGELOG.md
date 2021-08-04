@@ -1,3 +1,10 @@
+## [2.2.6](https://github.com/ForestAdmin/toolbelt/compare/v2.2.5...v2.2.6) (2021-08-04)
+
+
+### Bug Fixes
+
+* automatically add `fieldsToFlatten` property for mongoose projects to the generated files ([#212](https://github.com/ForestAdmin/toolbelt/issues/212)) ([08b5661](https://github.com/ForestAdmin/toolbelt/commit/08b566108887c11b155423ba409cc6d9d06270f4))
+
 ## [2.2.5](https://github.com/ForestAdmin/toolbelt/compare/v2.2.4...v2.2.5) (2021-08-03)
 
 
