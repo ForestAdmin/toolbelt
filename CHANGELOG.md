@@ -1,3 +1,10 @@
+## [2.2.7](https://github.com/ForestAdmin/toolbelt/compare/v2.2.6...v2.2.7) (2021-08-16)
+
+
+### Bug Fixes
+
+* correct HTML markup in generated view/index.html ([#215](https://github.com/ForestAdmin/toolbelt/issues/215)) ([5968d15](https://github.com/ForestAdmin/toolbelt/commit/5968d15d5ad6d9245e8b32dd69d0e713a8d79207))
+
 ## [2.2.6](https://github.com/ForestAdmin/toolbelt/compare/v2.2.5...v2.2.6) (2021-08-04)
 
 
