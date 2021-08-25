@@ -1,3 +1,10 @@
+## [2.2.8](https://github.com/ForestAdmin/toolbelt/compare/v2.2.7...v2.2.8) (2021-08-25)
+
+
+### Bug Fixes
+
+* **dumper:** ignore stats model name when generating/updating project to avoid route conflicts ([#216](https://github.com/ForestAdmin/toolbelt/issues/216)) ([649f802](https://github.com/ForestAdmin/toolbelt/commit/649f802cb7740ab1896fe689b1871330e5f5d7d8))
+
 ## [2.2.7](https://github.com/ForestAdmin/toolbelt/compare/v2.2.6...v2.2.7) (2021-08-16)
 
 
