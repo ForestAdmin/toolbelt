@@ -875,10 +875,8 @@ describe('services > dumper (unit)', () => {
       it('should return true', () => {
         expect.assertions(2);
 
-        const dumper = createDumper();
-
-        expect(dumper.shouldSkipRouteGenerationForModel('stats')).toStrictEqual(true);
-        expect(dumper.shouldSkipRouteGenerationForModel('Sessions')).toStrictEqual(true);
+        expect(Dumper.shouldSkipRouteGenerationForModel('stats')).toStrictEqual(true);
+        expect(Dumper.shouldSkipRouteGenerationForModel('Sessions')).toStrictEqual(true);
       });
     });
 
@@ -886,10 +884,8 @@ describe('services > dumper (unit)', () => {
       it('should return false', () => {
         expect.assertions(2);
 
-        const dumper = createDumper();
-
-        expect(dumper.shouldSkipRouteGenerationForModel('users')).toStrictEqual(false);
-        expect(dumper.shouldSkipRouteGenerationForModel('projects')).toStrictEqual(false);
+        expect(Dumper.shouldSkipRouteGenerationForModel('users')).toStrictEqual(false);
+        expect(Dumper.shouldSkipRouteGenerationForModel('projects')).toStrictEqual(false);
       });
     });
   });
