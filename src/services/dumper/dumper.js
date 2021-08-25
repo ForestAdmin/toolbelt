@@ -439,7 +439,7 @@ class Dumper {
       //       Forest Admin internal route (session or stats creation).
       //       As a workaround, we don't generate the route file.
       // TODO: Remove the if condition, once the routes paths refactored to prevent such conflict.
-      if (!['sessions', 'stats'].includes(modelName)) {
+      if (!['sessions', 'stats'].includes(modelName.toLowerCase())) {
         this.writeRoute(projectPath, config, modelName);
       }
     });
