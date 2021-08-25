@@ -600,7 +600,7 @@ describe('services > dumper (unit)', () => {
     });
 
     it('should call all the mandatory functions required to update project', async () => {
-      expect.assertions(18);
+      expect.assertions(19);
 
       const mkdirpMock = jest.fn();
       const dumper = createDumper({
@@ -621,6 +621,7 @@ describe('services > dumper (unit)', () => {
       const writeDockerfileSpy = jest.spyOn(dumper, 'writeDockerfile').mockImplementation();
       const writePackageJsonSpy = jest.spyOn(dumper, 'writePackageJson').mockImplementation();
       const copyTemplateSpy = jest.spyOn(dumper, 'copyTemplate').mockImplementation();
+      jest.spyOn(Dumper, 'shouldSkipRouteGenerationForModel');
 
       const schema = {
         testModel: { fields: {}, references: [], options: {} },
@@ -657,6 +658,8 @@ describe('services > dumper (unit)', () => {
       expect(writeDockerComposeSpy).not.toHaveBeenCalled();
       expect(writeDockerfileSpy).not.toHaveBeenCalled();
       expect(writePackageJsonSpy).not.toHaveBeenCalled();
+
+      expect(Dumper.shouldSkipRouteGenerationForModel).toHaveBeenCalledWith('testModel');
 
       // Copied files
       expect(copyTemplateSpy).not.toHaveBeenCalled();
