@@ -869,4 +869,28 @@ describe('services > dumper (unit)', () => {
       expect(dumper.hasMultipleDatabaseStructure()).toStrictEqual(true);
     });
   });
+
+  describe('shouldSkipRouteGenerationForModel', () => {
+    describe('when a given model should be ignored', () => {
+      it('should return true', () => {
+        expect.assertions(2);
+
+        const dumper = createDumper();
+
+        expect(dumper.shouldSkipRouteGenerationForModel('stats')).toStrictEqual(true);
+        expect(dumper.shouldSkipRouteGenerationForModel('Sessions')).toStrictEqual(true);
+      });
+    });
+
+    describe('when a given model should not be ignored', () => {
+      it('should return false', () => {
+        expect.assertions(2);
+
+        const dumper = createDumper();
+
+        expect(dumper.shouldSkipRouteGenerationForModel('users')).toStrictEqual(false);
+        expect(dumper.shouldSkipRouteGenerationForModel('projects')).toStrictEqual(false);
+      });
+    });
+  });
 });
