@@ -55,6 +55,12 @@ class Dumper {
     }));
   }
 
+  // HACK: If a table name is "sessions" or "stats" the generated routes will conflict with
+  //       Forest Admin internal route (session or stats creation).
+  static shouldSkipRouteGenerationForModel(modelName) {
+    return ['sessions', 'stats'].includes(modelName.toLowerCase());
+  }
+
   isLinuxBasedOs() {
     return this.os.platform() === 'linux';
   }
@@ -435,10 +441,11 @@ class Dumper {
     if (!isUpdate) this.copyTemplate(projectPath, 'public/favicon.png', 'public/favicon.png');
 
     modelNames.forEach((modelName) => {
-      // HACK: If a table name is "sessions" the generated routes will conflict with Forest Admin
-      //       internal session creation route. As a workaround, we don't generate the route file.
+      // HACK: If a table name is "sessions" or "stats" the generated routes will conflict with
+      //       Forest Admin internal route (session or stats creation).
+      //       As a workaround, we don't generate the route file.
       // TODO: Remove the if condition, once the routes paths refactored to prevent such conflict.
-      if (modelName !== 'sessions') {
+      if (!Dumper.shouldSkipRouteGenerationForModel(modelName)) {
         this.writeRoute(projectPath, config, modelName);
       }
     });

@@ -600,7 +600,7 @@ describe('services > dumper (unit)', () => {
     });
 
     it('should call all the mandatory functions required to update project', async () => {
-      expect.assertions(18);
+      expect.assertions(19);
 
       const mkdirpMock = jest.fn();
       const dumper = createDumper({
@@ -621,6 +621,7 @@ describe('services > dumper (unit)', () => {
       const writeDockerfileSpy = jest.spyOn(dumper, 'writeDockerfile').mockImplementation();
       const writePackageJsonSpy = jest.spyOn(dumper, 'writePackageJson').mockImplementation();
       const copyTemplateSpy = jest.spyOn(dumper, 'copyTemplate').mockImplementation();
+      jest.spyOn(Dumper, 'shouldSkipRouteGenerationForModel');
 
       const schema = {
         testModel: { fields: {}, references: [], options: {} },
@@ -657,6 +658,8 @@ describe('services > dumper (unit)', () => {
       expect(writeDockerComposeSpy).not.toHaveBeenCalled();
       expect(writeDockerfileSpy).not.toHaveBeenCalled();
       expect(writePackageJsonSpy).not.toHaveBeenCalled();
+
+      expect(Dumper.shouldSkipRouteGenerationForModel).toHaveBeenCalledWith('testModel');
 
       // Copied files
       expect(copyTemplateSpy).not.toHaveBeenCalled();
@@ -867,6 +870,26 @@ describe('services > dumper (unit)', () => {
       });
 
       expect(dumper.hasMultipleDatabaseStructure()).toStrictEqual(true);
+    });
+  });
+
+  describe('shouldSkipRouteGenerationForModel', () => {
+    describe('when a given model should be ignored', () => {
+      it('should return true', () => {
+        expect.assertions(2);
+
+        expect(Dumper.shouldSkipRouteGenerationForModel('stats')).toStrictEqual(true);
+        expect(Dumper.shouldSkipRouteGenerationForModel('Sessions')).toStrictEqual(true);
+      });
+    });
+
+    describe('when a given model should not be ignored', () => {
+      it('should return false', () => {
+        expect.assertions(2);
+
+        expect(Dumper.shouldSkipRouteGenerationForModel('users')).toStrictEqual(false);
+        expect(Dumper.shouldSkipRouteGenerationForModel('projects')).toStrictEqual(false);
+      });
     });
   });
 });
