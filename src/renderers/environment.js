@@ -35,9 +35,9 @@ class EnvironmentRenderer {
           { type: environment.type || '' },
           { liana: environment.lianaName || '' },
           { version: environment.lianaVersion || '' },
-          { FOREST_AUTH_SECRET: environment.authSecret },
           { FOREST_ENV_SECRET: environment.secretKey || '' },
         );
+        if (environment.authSecret) table.push({ FOREST_AUTH_SECRET: environment.authSecret });
         this.logger.log(
           `${this.chalk.bold('ENVIRONMENT')}`,
           ...table.toString().split('\n'),
