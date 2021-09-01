@@ -35,6 +35,7 @@ class EnvironmentRenderer {
           { type: environment.type || '' },
           { liana: environment.lianaName || '' },
           { version: environment.lianaVersion || '' },
+          { FOREST_AUTH_SECRET: environment.authSecret },
           { FOREST_ENV_SECRET: environment.secretKey || '' },
         );
         this.logger.log(

@@ -17,19 +17,21 @@ describe('environments:create', () => {
         token: 'any',
         commandClass: EnvironmentCreateCommand,
         commandArgs: ['-p', '2', '-n', 'Test', '-u', 'https://test.forestadmin.com'],
+        additionnalStep: (plan) => plan.replace('utils/keyGenerator', { generate: () => 'myAuthSecret' }),
         api: [
           () => createEnvironmentValid(),
         ],
         std: [
           { out: 'ENVIRONMENT' },
           { out: 'id' },
-          { out: 'name               Test' },
-          { out: 'url                https://test.forestadmin.com' },
+          { out: 'name                Test' },
+          { out: 'url                 https://test.forestadmin.com' },
           { out: 'active' },
           { out: 'type' },
           { out: 'liana' },
           { out: 'version' },
-          { out: 'FOREST_ENV_SECRET  2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125' },
+          { out: 'FOREST_AUTH_SECRET  myAuthSecret' },
+          { out: 'FOREST_ENV_SECRET   2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125' },
         ],
       }));
     });
