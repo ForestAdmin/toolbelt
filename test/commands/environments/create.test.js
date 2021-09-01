@@ -92,7 +92,7 @@ describe('environments:create', () => {
         { out: 'name                Test' },
         { out: 'url                 https://test.forestadmin.com' },
         { out: 'FOREST_AUTH_SECRET  myAuthSecret' },
-        { out: 'FOREST_ENV_SECRET  2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125' },
+        { out: 'FOREST_ENV_SECRET   2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125' },
       ],
     }));
   });
