@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/ForestAdmin/toolbelt/compare/v2.2.8...v2.3.0) (2021-09-02)
+
+
+### Features
+
+* display the auth secret when creating an environment ([#219](https://github.com/ForestAdmin/toolbelt/issues/219)) ([6320f5d](https://github.com/ForestAdmin/toolbelt/commit/6320f5d64780c06c1232fe98e4ec80be788537e5))
+
 ## [2.2.8](https://github.com/ForestAdmin/toolbelt/compare/v2.2.7...v2.2.8) (2021-08-25)
 
 
