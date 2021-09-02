@@ -8,8 +8,10 @@ const DeploymentRequestSerializer = require('../serializers/deployment-request')
 const JobStateChecker = require('../services/job-state-checker');
 
 function EnvironmentManager(config) {
-  const { assertPresent, authenticator, env } = Context.inject();
-  assertPresent({ authenticator, env });
+  const {
+    assertPresent, authenticator, env, keyGenerator,
+  } = Context.inject();
+  assertPresent({ authenticator, env, keyGenerator });
 
   this.listEnvironments = async () => {
     const authToken = authenticator.getAuthToken();
@@ -36,7 +38,7 @@ function EnvironmentManager(config) {
   this.createEnvironment = async () => {
     const authToken = authenticator.getAuthToken();
 
-    return agent
+    const response = await agent
       .post(`${env.FOREST_URL}/api/environments`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
@@ -44,8 +46,11 @@ function EnvironmentManager(config) {
         name: config.name,
         apiEndpoint: config.url,
         project: { id: config.projectId },
-      }))
-      .then((response) => environmentDeserializer.deserialize(response.body));
+      }));
+    const environment = await environmentDeserializer.deserialize(response.body);
+
+    environment.authSecret = keyGenerator.generate();
+    return environment;
   };
 
   this.createDevelopmentEnvironment = async (projectId, endpoint) => {

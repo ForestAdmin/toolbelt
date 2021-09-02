@@ -37,6 +37,7 @@ class EnvironmentRenderer {
           { version: environment.lianaVersion || '' },
           { FOREST_ENV_SECRET: environment.secretKey || '' },
         );
+        if (environment.authSecret) table.push({ FOREST_AUTH_SECRET: environment.authSecret });
         this.logger.log(
           `${this.chalk.bold('ENVIRONMENT')}`,
           ...table.toString().split('\n'),

@@ -66,6 +66,7 @@ async function testCli({
   commandClass,
   commandArgs,
   commandPlan: testCommandPlan,
+  additionnalStep,
   exitCode: expectedExitCode,
   exitMessage: expectedExitMessage,
   prompts = [],
@@ -88,7 +89,9 @@ async function testCli({
 
   validateInput(
     files,
-    { commandClass, commandArgs, commandPlan: testCommandPlan },
+    {
+      commandClass, commandArgs, commandPlan: testCommandPlan, additionnalStep,
+    },
     stds,
     prompts,
     expectedExitCode,
@@ -110,6 +113,7 @@ async function testCli({
     inputs,
     prompts,
     tokenBehavior,
+    additionnalStep,
   });
 
   let command;

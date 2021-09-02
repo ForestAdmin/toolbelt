@@ -71,6 +71,7 @@ const preparePlan = ({
   env,
   prompts,
   tokenBehavior,
+  additionnalStep,
 }) => {
   if (testCommandPlan) return { plan: testCommandPlan };
   const inquirerMock = makeInquirerMock(prompts);
@@ -80,20 +81,22 @@ const preparePlan = ({
   const environmentVariablesPlan = makeEnvironmentVariablesReplacement(env);
   const inquirerPlan = makeInquirerReplacement(inquirerMock);
 
-  return {
-    mocks: {
-      inquirer: inquirerMock,
-      jwtDecode: jwtDecodeMock,
-    },
-    plan: [
-      defaultPlan,
-      replaceProcessFunctions,
-      environmentVariablesPlan,
-      dependenciesPlan,
-      inquirerPlan,
-      authenticatorPlan,
-    ],
+  const mocks = {
+    inquirer: inquirerMock,
+    jwtDecode: jwtDecodeMock,
   };
+  const plan = [
+    defaultPlan,
+    replaceProcessFunctions,
+    environmentVariablesPlan,
+    dependenciesPlan,
+    inquirerPlan,
+    authenticatorPlan,
+  ];
+
+  if (additionnalStep) plan.push(additionnalStep);
+
+  return { mocks, plan };
 };
 
 module.exports = { preparePlan };
