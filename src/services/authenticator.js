@@ -42,7 +42,8 @@ function Authenticator({
   this.saveToken = async (token) => {
     const path = `${env.TOKEN_PATH}/.forest.d`;
     await mkdirp(path);
-    fs.writeFileSync(`${path}/.forestrc`, token);
+    const forestrcPath = `${path}/.forestrc`;
+    fs.writeFileSync(forestrcPath, token);
   };
 
   this.verify = (token) => {
