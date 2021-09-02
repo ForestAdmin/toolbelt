@@ -38,7 +38,7 @@ function EnvironmentManager(config) {
   this.createEnvironment = async () => {
     const authToken = authenticator.getAuthToken();
 
-    const environment = await agent
+    const response = await agent
       .post(`${env.FOREST_URL}/api/environments`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
@@ -46,8 +46,8 @@ function EnvironmentManager(config) {
         name: config.name,
         apiEndpoint: config.url,
         project: { id: config.projectId },
-      }))
-      .then((response) => environmentDeserializer.deserialize(response.body));
+      }));
+    const environment = await environmentDeserializer.deserialize(response.body);
 
     environment.authSecret = keyGenerator.generate();
     return environment;
