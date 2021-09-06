@@ -33,7 +33,7 @@ const makeEnvironmentVariablesReplacement = (env) => (plan) => plan
     // PORT: undefined,
     // TOKEN_PATH: undefined,
     // NOTICE: Makes test runner look for token in test temporary directory.
-    TOKEN_PATH: process.env.TOKEN_PATH || '.',
+    TOKEN_PATH: process.cwd(),
     // FIXME: Overrides for this test.
     ...env,
   });
