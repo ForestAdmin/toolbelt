@@ -9,9 +9,6 @@ describe('services > authenticator', () => {
       generateApplicationToken: jest.fn(),
       deleteApplicationToken: jest.fn(),
     };
-    const os = {
-      homedir: jest.fn().mockReturnValue('sweet-home'),
-    };
     const env = {
       TOKEN_PATH: 'sweet-home',
     };
@@ -38,7 +35,6 @@ describe('services > authenticator', () => {
       env,
       oidcAuthenticator,
       applicationTokenService,
-      os,
       fs,
       chalk,
       logger,

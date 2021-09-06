@@ -6,14 +6,14 @@ const { ERROR_UNEXPECTED } = require('../utils/messages');
  * @param {import('../context/plan').Context} context
  */
 function Authenticator({
-  logger, api, chalk, inquirer, os, jwtDecode, fs, joi, env,
+  logger, api, chalk, inquirer, jwtDecode, fs, joi, env,
   oidcAuthenticator, applicationTokenService, mkdirp,
 }) {
   /**
    * @param {string?} path
    * @returns {string|null}
    */
-  this.getAuthToken = (path = env.TOKEN_PATH || os.homedir()) => {
+  this.getAuthToken = (path = env.TOKEN_PATH) => {
     const paths = [
       `${path}/.forest.d/.forestrc`,
       `${path}/.forestrc`,
@@ -65,7 +65,7 @@ function Authenticator({
     || 'Invalid token. Please enter your authentication token.';
 
   this.logout = async (opts = {}) => {
-    const basePath = env.TOKEN_PATH || os.homedir();
+    const basePath = env.TOKEN_PATH;
 
     const pathForestrc = `${basePath}/.forestrc`;
     const forestToken = this.getVerifiedToken(pathForestrc);
