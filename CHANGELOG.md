@@ -1,3 +1,10 @@
+## [2.3.4](https://github.com/ForestAdmin/toolbelt/compare/v2.3.3...v2.3.4) (2021-09-22)
+
+
+### Bug Fixes
+
+* **security:** patch hosted-git-info dependency vulnerabilities ([#228](https://github.com/ForestAdmin/toolbelt/issues/228)) ([aee5744](https://github.com/ForestAdmin/toolbelt/commit/aee5744539f71bf118c86bd44826b7236519ed69))
+
 ## [2.3.3](https://github.com/ForestAdmin/toolbelt/compare/v2.3.2...v2.3.3) (2021-09-22)
 
 
