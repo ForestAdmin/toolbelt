@@ -1,3 +1,13 @@
+## [2.3.1](https://github.com/ForestAdmin/toolbelt/compare/v2.3.0...v2.3.1) (2021-09-22)
+
+
+### Bug Fixes
+
+* **security:** patch jose dependency vulnerability ([#161](https://github.com/ForestAdmin/toolbelt/issues/161)) ([f224f04](https://github.com/ForestAdmin/toolbelt/commit/f224f047386b825a5b2c2d9382e33b8c772217f3))
+* **security:** patch path-parse dependency vulnerabilities ([#214](https://github.com/ForestAdmin/toolbelt/issues/214)) ([9532d3f](https://github.com/ForestAdmin/toolbelt/commit/9532d3f443fbc26010f5de236d9ed51ca1568b44))
+* **security:** patch semantic-release vulnerabilities ([#225](https://github.com/ForestAdmin/toolbelt/issues/225)) ([abd1aff](https://github.com/ForestAdmin/toolbelt/commit/abd1affdaea34b4020af5265b931ede6557cfb18))
+* **security:** patch tmpl dependency vulnerabilities ([#224](https://github.com/ForestAdmin/toolbelt/issues/224)) ([3a6a4ae](https://github.com/ForestAdmin/toolbelt/commit/3a6a4aec2f9925f7056fb38148cc782f2971e6bc))
+
 # [2.3.0](https://github.com/ForestAdmin/toolbelt/compare/v2.2.8...v2.3.0) (2021-09-02)
 
 
