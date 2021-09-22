@@ -1,3 +1,12 @@
+## [2.3.3](https://github.com/ForestAdmin/toolbelt/compare/v2.3.2...v2.3.3) (2021-09-22)
+
+
+### Bug Fixes
+
+* **security:** patch glob-parent dependency vulnerability  ([#185](https://github.com/ForestAdmin/toolbelt/issues/185)) ([ec0e407](https://github.com/ForestAdmin/toolbelt/commit/ec0e4077a1b6936f0974b2750390d11872eae1d9))
+* **security:** patch hosted-git-info dependency vulnerability ([#187](https://github.com/ForestAdmin/toolbelt/issues/187)) ([6ba6afb](https://github.com/ForestAdmin/toolbelt/commit/6ba6afbaf7d31a647cdb4a8b1c5336406e656eb4))
+* **security:** patch normalize-url dependency vulnerability ([#181](https://github.com/ForestAdmin/toolbelt/issues/181)) ([dbdc185](https://github.com/ForestAdmin/toolbelt/commit/dbdc1853d07663b983f594816f75a613f92c11fa))
+
 ## [2.3.2](https://github.com/ForestAdmin/toolbelt/compare/v2.3.1...v2.3.2) (2021-09-22)
 
 
