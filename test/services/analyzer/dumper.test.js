@@ -7,6 +7,7 @@ const defaultPlan = require('../../../src/context/plan');
 
 const DOCKER_COMPOSE_FILE_LOCATION = './test-output/Linux/docker-compose.yml';
 const DOT_ENV_FILE_LOCATION = './test-output/Linux/.env';
+const FORESTADMIN_FILE_LOCATION = './test-output/Linux/middlewares/forestadmin.js';
 
 function cleanOutput() {
   rimraf.sync('./test-output/Linux');
@@ -205,6 +206,25 @@ describe('services > dumper', () => {
           }
         });
       });
+    });
+  });
+
+  describe('generation of ForestAdmin middleware', () => {
+    async function generateForestAdminFile(overrides) {
+      await createLinuxDump(overrides);
+
+      return fs.readFileSync(FORESTADMIN_FILE_LOCATION, 'utf-8');
+    }
+
+    it('should default "schemaDir" to "process.env.FOREST_SCHEMA_DIR"', async () => {
+      expect.assertions(1);
+      try {
+        const forestAdminFile = await generateForestAdminFile({});
+
+        expect(forestAdminFile).toContain('schemaDir: process.env.FOREST_SCHEMA_DIR,');
+      } finally {
+        cleanOutput();
+      }
     });
   });
 });
