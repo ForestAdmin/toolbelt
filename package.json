@@ -111,8 +111,9 @@
   "repository": "ForestAdmin/toolbelt",
   "scripts": {
     "lint": "./node_modules/eslint/bin/eslint.js ./*.js src test",
-    "postpack": "rm -f oclif.manifest.json",
+    "prepare": "husky install",
     "prepack": "oclif-dev manifest",
+    "postpack": "rm -f oclif.manifest.json",
     "test": "jest --runInBand",
     "test:coverage": "jest --runInBand --coverage"
   }
