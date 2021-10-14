@@ -12,6 +12,7 @@ module.exports = async function forestadmin(app) {
     configDir: path.join(__dirname, '../forest'),
     envSecret: process.env.FOREST_ENV_SECRET,
     authSecret: process.env.FOREST_AUTH_SECRET,
+    schemaDir: process.env.FOREST_SCHEMA_DIR,
     objectMapping,
     connections,
   }));
