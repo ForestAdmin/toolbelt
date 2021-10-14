@@ -1,0 +1,19 @@
+name: Dependabot Workflow
+on:
+  pull_request:
+    branches:
+      - main
+
+# allow permissions to be up-scoped
+permissions:
+  pull_requests: write
+
+jobs:
+  call-build-workflow:
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    steps:
+      - uses: ForestAdmin/toolbelt/.github/workflows/test.yml
+  call-test-workflow:
+    steps:
+      - uses: ForestAdmin/toolbelt/.github/workflows/test.yml
+#     - uses: ForestAdmin/toolbelt/.github/workflows/build.yml@main
