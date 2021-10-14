@@ -1,3 +1,10 @@
+## [2.3.5](https://github.com/ForestAdmin/toolbelt/compare/v2.3.4...v2.3.5) (2021-10-14)
+
+
+### Bug Fixes
+
+* **docker:** pass schema directory via process environment ([#229](https://github.com/ForestAdmin/toolbelt/issues/229)) ([0005856](https://github.com/ForestAdmin/toolbelt/commit/0005856f8df0f49c7f1ffcbc1e3e04e89ea144c0))
+
 ## [2.3.4](https://github.com/ForestAdmin/toolbelt/compare/v2.3.3...v2.3.4) (2021-09-22)
 
 
