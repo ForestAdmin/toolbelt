@@ -1,0 +1,14 @@
+name: Dispatch workflow 
+on:
+  pull_request:
+  pull_request_target:
+  workflow_dispatch:
+
+jobs:
+  dispatch:
+    if: |
+      (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') || 
+      (github.event_name == 'pull_request' && github.actor != 'dependabot[bot]') || 
+      github.event_name == 'workflow_dispatch'
+    name: Dispatch event ${{ github.event_name }} from ${{ github.actor }}
+    uses: ForestAdmin/toolbelt/.github/workflows/build.yml@main
