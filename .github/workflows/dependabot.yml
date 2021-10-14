@@ -11,9 +11,7 @@ permissions:
 jobs:
   call-build-workflow:
     if: ${{ github.actor == 'dependabot[bot]' }}
-    steps:
-      - uses: ForestAdmin/toolbelt/.github/workflows/test.yml@chore/prevent-action-on-dependabot
+    uses: ForestAdmin/toolbelt/.github/workflows/test.yml@chore/prevent-action-on-dependabot
   call-test-workflow:
-    steps:
-      - uses: ForestAdmin/toolbelt/.github/workflows/test.yml@chore/prevent-action-on-dependabot
+    uses: ForestAdmin/toolbelt/.github/workflows/test.yml@chore/prevent-action-on-dependabot
 #     - uses: ForestAdmin/toolbelt/.github/workflows/build.yml@main
