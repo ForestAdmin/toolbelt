@@ -5,8 +5,7 @@ on:
       - main
 
 # allow permissions to be up-scoped
-permissions:
-  pull_requests: write
+permissions: write-all
 
 jobs:
   call-build-workflow:
