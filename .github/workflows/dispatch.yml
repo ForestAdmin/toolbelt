@@ -33,12 +33,9 @@ jobs:
     needs: ['get-team']
     runs-on: ubuntu-latest
     steps:
-      - id: get_dependabot
-        if: github.actor == 'dependabot[bot]'
-        run: |
+      - run: |
           echo ${{ needs.get-team.outputs.developers }}
           echo ${{ contains(needs.get-team.outputs.developers, github.actor) }}
-          echo ${{ success() && (contains(needs.get-team.outputs.developers, github.actor) || github.event_name == 'workflow_dispatch') }}
 
   # dispatch:
   #   name: Dispatch event ${{ github.event_name }} from ${{ github.actor }}
