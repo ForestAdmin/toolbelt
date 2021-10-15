@@ -29,15 +29,26 @@ jobs:
         if: github.actor == 'dependabot[bot]'
         run: echo "::set-output name=data::dependabot[bot]"
   
-  dispatch:
+  filter:
     needs: ['get-team']
-    if: |
-      success() && (
-        contains(needs.get-team.outputs.developers, github.actor) ||
-        github.event_name == 'workflow_dispatch'
-      )
-    uses: ForestAdmin/toolbelt/.github/workflows/build.yml@main
-    secrets:
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 1
+        if: |
+          !(success() && (
+            contains(needs.get-team.outputs.developers, github.actor) ||
+            github.event_name == 'workflow_dispatch'
+          ))
+
+  # dispatch:
+  #   needs: ['get-team']
+  #   if: |
+  #     success() && (
+  #       contains(needs.get-team.outputs.developers, github.actor) ||
+  #       github.event_name == 'workflow_dispatch'
+  #     )
+  #   uses: ForestAdmin/toolbelt/.github/workflows/build.yml@main
+  #   secrets:
+  #     DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  #     DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  #     CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
