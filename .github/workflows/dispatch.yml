@@ -6,8 +6,6 @@ on:
   pull_request_target:
   workflow_dispatch:
 
-permissions: read-all
-
 jobs:
   get-team:
     runs-on: ubuntu-latest
