@@ -8,8 +8,6 @@ on:
       - 'dependabot/**'
   workflow_dispatch:
 
-permissions: read-all
-
 jobs:
   dispatch:
     if: |
