@@ -12,7 +12,6 @@ permissions:
   contents: read
   metadata: read
 
-
 jobs:
   dispatch:
     if: |
