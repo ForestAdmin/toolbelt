@@ -13,6 +13,8 @@ jobs:
       developers: |
         ${{ (github.actor != 'dependabot[bot]' && fromJSON(steps.get_devs.outputs.data).*.login) || 
         steps.get_dependabot.outputs.data }}
+      raw: ${{ steps.get_devs.outputs.data }}
+      raw2: ${{ github.actor != 'dependabot[bot]' && steps.get_devs.outputs.data || steps.get_dependabot.outputs.data }}
     steps:
       - id: get_devs
         if: github.actor != 'dependabot[bot]'
@@ -34,8 +36,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo ${{ toJSON(needs.get-team.outputs.developers) }}
+          echo ${{ join(needs.get-team.outputs.developers) }}
           echo ${{ contains(needs.get-team.outputs.developers, github.actor) }}
+          echo ${{ join(fromJSON(needs.get-team.outputs.raw).*.login) }}
+          echo ${{ join(fromJSON(needs.get-team.outputs.raw2).*.login) }}
+          echo ${{ contains(fromJSON(needs.get-team.outputs.raw).*.login, github.actor) }}
+          echo ${{ contains(fromJSON(needs.get-team.outputs.raw2).*.login, github.actor) }}
 
   # dispatch:
   #   name: Dispatch event ${{ github.event_name }} from ${{ github.actor }}
