@@ -25,7 +25,7 @@ jobs:
           team_slug: Developers
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-      - run: "echo ${{ steps.get_devs.outputs.data }}"
+      - run: "echo ${{ fromJSON(steps.get_devs.outputs.data).*.login }}"
   # dispatch:
   #   needs: ['get-team']
   #   if: |
