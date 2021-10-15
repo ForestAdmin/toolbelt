@@ -23,9 +23,11 @@ jobs:
           route: GET /orgs/{org}/teams/{team_slug}/members
           org: ForestAdmin
           team_slug: Developers
+          role: all
+          per_page: 50
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-      - run: "echo ${{ fromJSON(steps.get_devs.outputs.data).*.login }}"
+      - run: "for f in ${{ fromJSON(steps.get_devs.outputs.data).*.login }}; do echo; done"
   # dispatch:
   #   needs: ['get-team']
   #   if: |
