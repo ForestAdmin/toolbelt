@@ -27,7 +27,7 @@ jobs:
           per_page: 50
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-      - run: "for f in ${{ fromJSON(steps.get_devs.outputs.data).*.login }}; do echo; done"
+      - run: "echo ${{ contains(fromJSON(steps.get_devs.outputs.data).*.login, github.actor) }}"
   # dispatch:
   #   needs: ['get-team']
   #   if: |
