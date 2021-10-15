@@ -11,9 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       developers: |
-        ${{ (github.actor != 'dependabot[bot]' && fromJSON(steps.get_devs.outputs.data).*.login) || 
-        steps.get_dependabot.outputs.data }}
-      raw: |
         ${{ github.actor != 'dependabot[bot]' && join(fromJSON(steps.get_devs.outputs.data).*.login,',') || 
         steps.get_dependabot.outputs.data }}
     steps:
@@ -32,26 +29,16 @@ jobs:
         if: github.actor == 'dependabot[bot]'
         run: echo "::set-output name=data::dependabot[bot]"
   
-  print:
+  dispatch:
+    name: Dispatch event ${{ github.event_name }} from ${{ github.actor }}
     needs: ['get-team']
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo ${{ join(needs.get-team.outputs.developers) }}
-          echo ${{ contains(needs.get-team.outputs.developers, github.actor) }}
-          echo ${{ needs.get-team.outputs.raw }}
-          echo ${{ contains(needs.get-team.outputs.raw, github.actor) }}
-
-  # dispatch:
-  #   name: Dispatch event ${{ github.event_name }} from ${{ github.actor }}
-  #   needs: ['get-team']
-  #   if: |
-  #     success() && (
-  #       contains(needs.get-team.outputs.developers, github.actor) ||
-  #       github.event_name == 'workflow_dispatch'
-  #     )
-  #   uses: ForestAdmin/toolbelt/.github/workflows/build.yml@main
-  #   secrets:
-  #     DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-  #     DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  #     CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+    if: |
+      success() && (
+        contains(needs.get-team.outputs.developers, github.actor) ||
+        github.event_name == 'workflow_dispatch'
+      )
+    uses: ForestAdmin/toolbelt/.github/workflows/build.yml@main
+    secrets:
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
