@@ -4,19 +4,43 @@ on:
     branches-ignore:
       - 'dependabot/**'
   pull_request_target:
-    branches:
-      - 'dependabot/**'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  metadata: read
+permissions: read-all
 
 jobs:
+  get-team:
+    runs-on: ubuntu-latest
+    outputs:
+      developers: |
+        ${{ (github.actor != 'dependabot[bot]' && fromJSON(steps.get_devs.outputs.data).*.login) || 
+        steps.get_dependabot.outputs.data }}
+    steps:
+      - id: get_devs
+        if: github.actor != 'dependabot[bot]'
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /orgs/{org}/teams/{team_slug}/members
+          org: ForestAdmin
+          team_slug: Developers
+          role: all
+          per_page: 50
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - id: get_dependabot
+        if: github.actor == 'dependabot[bot]'
+        run: echo "::set-output name=data::dependabot[bot]"
+
   dispatch:
-    if: |
-      (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') || 
-      (github.event_name == 'pull_request' && github.actor != 'dependabot[bot]') || 
-      github.event_name == 'workflow_dispatch'
     name: Dispatch event ${{ github.event_name }} from ${{ github.actor }}
+    needs: ['get-team']
+    if: |
+      success() && (
+        contains(needs.get-team.outputs.developers, github.actor) ||
+        github.event_name == 'workflow_dispatch'
+      )
     uses: ForestAdmin/toolbelt/.github/workflows/build.yml@main
+    secrets:
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}

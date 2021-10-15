@@ -5,6 +5,13 @@ on:
       - main
       - beta
   workflow_call:
+    secrets:
+      DOCKER_PASSWORD:
+        required: true
+      DOCKER_USERNAME:
+        required: true
+      CC_TEST_REPORTER_ID:
+        required: true
 
 jobs:
   lint:
@@ -15,11 +22,11 @@ jobs:
       - name: Cancel previous running workflows
         uses: fkirc/skip-duplicate-actions@master
       - uses: actions/checkout@v2
-        if: github.actor != 'dependabot[bot]'
+        if: github.event_name != 'pull_request_target'
         with:
           fetch-depth: 0
       - uses: actions/checkout@v2
-        if: github.actor == 'dependabot[bot]'
+        if: github.event_name == 'pull_request_target'
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
@@ -50,9 +57,9 @@ jobs:
             withCoverage: ${{ true }}
     steps:
       - uses: actions/checkout@v2
-        if: github.actor != 'dependabot[bot]'
+        if: github.event_name != 'pull_request_target'
       - uses: actions/checkout@v2
-        if: github.actor == 'dependabot[bot]'
+        if: github.event_name == 'pull_request_target'
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-node@v1
