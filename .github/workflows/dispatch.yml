@@ -8,6 +8,8 @@ on:
       - 'dependabot/**'
   workflow_dispatch:
 
+permissions: read-all
+
 jobs:
   dispatch:
     if: |
@@ -15,4 +17,9 @@ jobs:
       (github.event_name == 'pull_request' && github.actor != 'dependabot[bot]') || 
       github.event_name == 'workflow_dispatch'
     name: Dispatch event ${{ github.event_name }} from ${{ github.actor }}
-    uses: ForestAdmin/toolbelt/.github/workflows/build.yml@main
+    uses: ForestAdmin/toolbelt/.github/workflows/build.yml@chore/workflows
+    with:
+      secrets:
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}

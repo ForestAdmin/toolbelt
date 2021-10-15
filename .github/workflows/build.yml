@@ -5,6 +5,13 @@ on:
       - main
       - beta
   workflow_call:
+    secrets:
+      DOCKER_PASSWORD:
+        required: true
+      DOCKER_USERNAME:
+        required: true
+      CC_TEST_REPORTER_ID:
+        required: true
 
 jobs:
   lint:
