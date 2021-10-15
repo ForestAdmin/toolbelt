@@ -11,14 +11,32 @@ on:
 permissions: read-all
 
 jobs:
-  dispatch:
-    if: |
-      (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') || 
-      (github.event_name == 'pull_request' && github.actor != 'dependabot[bot]') || 
-      github.event_name == 'workflow_dispatch'
-    name: Dispatch event ${{ github.event_name }} from ${{ github.actor }}
-    uses: ForestAdmin/toolbelt/.github/workflows/build.yml@chore/workflows
-    secrets:
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+  get-team:
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+     outputs:
+      output: ${{ steps.get_devs.outputs.data }}
+    steps:
+      - uses: octokit/request-action@v2.x
+        id: get_devs
+        with:
+          route: GET /orgs/{org}/teams/{team_slug}/members
+          org: ForestAdmin
+          team_slug: Developers
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: "echo ${{ steps.get_devs.outputs.data }}"
+  # dispatch:
+  #   needs: ['get-team']
+  #   if: |
+  #     echo ${{needs.get-team.outputs.output}}
+  #     contains('|ram|venkat|dependabot[bot]|', format('|{0}|', github.actor))
+  #     (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') || 
+  #     (github.event_name == 'pull_request' && github.actor != 'dependabot[bot]') || 
+  #     github.event_name == 'workflow_dispatch'
+  #   name: Dispatch event ${{ github.event_name }} from ${{ github.actor }}
+  #   uses: ForestAdmin/toolbelt/.github/workflows/build.yml@main
+  #   secrets:
+  #     DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  #     DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  #     CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
