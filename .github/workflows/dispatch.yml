@@ -30,7 +30,6 @@ jobs:
         run: echo "::set-output name=data::dependabot[bot]"
   
   dispatch:
-    name: Dispatch event ${{ github.event_name }} from ${{ github.actor }}
     needs: ['get-team']
     if: |
       success() && (
