@@ -24,7 +24,7 @@ jobs:
           org: ForestAdmin
           team_slug: Developers
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       - run: "echo ${{ steps.get_devs.outputs.data }}"
   # dispatch:
   #   needs: ['get-team']
