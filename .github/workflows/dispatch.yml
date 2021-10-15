@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo ${{ needs.get-team.outputs.developers }}
+          echo ${{ toJSON(needs.get-team.outputs.developers) }}
           echo ${{ contains(needs.get-team.outputs.developers, github.actor) }}
 
   # dispatch:
