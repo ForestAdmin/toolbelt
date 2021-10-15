@@ -39,8 +39,8 @@ jobs:
       - run: |
           echo ${{ join(needs.get-team.outputs.developers) }}
           echo ${{ contains(needs.get-team.outputs.developers, github.actor) }}
-          echo ${{ join(fromJSON(needs.get-team.outputs.raw).*.login) }}
-          echo ${{ contains(fromJSON(needs.get-team.outputs.raw).*.login, github.actor) }}
+          echo ${{ needs.get-team.outputs.raw }}
+          echo ${{ contains(needs.get-team.outputs.raw, github.actor) }}
 
   # dispatch:
   #   name: Dispatch event ${{ github.event_name }} from ${{ github.actor }}
