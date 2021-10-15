@@ -14,7 +14,7 @@ jobs:
   get-team:
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
-     outputs:
+    outputs:
       output: ${{ steps.get_devs.outputs.data }}
     steps:
       - uses: octokit/request-action@v2.x
