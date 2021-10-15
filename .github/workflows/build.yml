@@ -1,11 +1,10 @@
 name: Build, Test and Deploy
-
 on:
   push:
     branches:
       - main
       - beta
-  pull_request:
+  workflow_call:
 
 jobs:
   lint:
@@ -16,8 +15,14 @@ jobs:
       - name: Cancel previous running workflows
         uses: fkirc/skip-duplicate-actions@master
       - uses: actions/checkout@v2
+        if: github.actor != 'dependabot[bot]'
         with:
           fetch-depth: 0
+      - uses: actions/checkout@v2
+        if: github.actor == 'dependabot[bot]'
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-node@v1
         with:
             node-version: 14.17.6
@@ -45,6 +50,11 @@ jobs:
             withCoverage: ${{ true }}
     steps:
       - uses: actions/checkout@v2
+        if: github.actor != 'dependabot[bot]'
+      - uses: actions/checkout@v2
+        if: github.actor == 'dependabot[bot]'
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node }}
