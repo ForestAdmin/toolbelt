@@ -1,3 +1,10 @@
+## [2.3.6](https://github.com/ForestAdmin/toolbelt/compare/v2.3.5...v2.3.6) (2021-10-22)
+
+
+### Bug Fixes
+
+* **docker:** avoid using NODE_PATH in docker ([#260](https://github.com/ForestAdmin/toolbelt/issues/260)) ([fe5e365](https://github.com/ForestAdmin/toolbelt/commit/fe5e365a6aa921de1cf2f459d72419b80aba4c39))
+
 ## [2.3.5](https://github.com/ForestAdmin/toolbelt/compare/v2.3.4...v2.3.5) (2021-10-14)
 
 
