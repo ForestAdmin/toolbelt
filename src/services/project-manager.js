@@ -8,8 +8,8 @@ const ProjectDeserializer = require('../deserializers/project');
 const EnvironmentDeserializer = require('../deserializers/environment');
 
 function ProjectManager(config) {
-  const { assertPresent, authenticator, env } = Context.inject();
-  assertPresent({ authenticator, env });
+  const { assertPresent, authenticator, env, jwtDecode } = Context.inject();
+  assertPresent({ authenticator, env, jwtDecode });
 
   function deserialize(response) {
     const attrs = _.clone(ProjectSerializer.opts.attributes);
@@ -28,9 +28,11 @@ function ProjectManager(config) {
 
   this.listProjects = async () => {
     const authToken = authenticator.getAuthToken();
+    const authTokenDecode = jwtDecode(authToken);
+    const queryParams = (authTokenDecode.organizationId) ? (`?organizationId=${authTokenDecode.organizationId}`) : '';
 
     return agent
-      .get(`${env.FOREST_URL}/api/projects`)
+      .get(`${env.FOREST_URL}/api/projects${queryParams}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
       .then((response) => deserialize(response));
