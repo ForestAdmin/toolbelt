@@ -8,7 +8,9 @@ const ProjectDeserializer = require('../deserializers/project');
 const EnvironmentDeserializer = require('../deserializers/environment');
 
 function ProjectManager(config) {
-  const { assertPresent, authenticator, env, jwtDecode } = Context.inject();
+  const {
+    assertPresent, authenticator, env, jwtDecode,
+  } = Context.inject();
   assertPresent({ authenticator, env, jwtDecode });
 
   function deserialize(response) {
