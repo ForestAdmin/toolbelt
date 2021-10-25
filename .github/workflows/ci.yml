@@ -41,7 +41,7 @@ jobs:
   build-workflow:
       needs: [preflight]
       if: needs.preflight.result != 'failure'
-      uses: ForestAdmin/toolbelt/.github/workflows/build.yml@chore/workflows
+      uses: ForestAdmin/toolbelt/.github/workflows/build.yml@main
       secrets:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
