@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request_target: # Unsecure event. Mind the workflow actor and the code to be ran
+  workflow_dispatch:
+
+# Force down scope permissions
+permissions: read-all
+
+jobs:
+  get-team:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    outputs:
+      developers: |
+        ${{ (github.actor != 'dependabot[bot]' && fromJSON(steps.get_devs.outputs.data).*.login) || 
+        'dependabot[bot]' }}
+    steps:
+      - id: get_devs
+        if: github.actor != 'dependabot[bot]'
+        uses: octokit/request-action@v7e93b91076fad3920c29d44eb2a6311d929db3dd
+        with:
+          route: GET /orgs/{org}/teams/{team_slug}/members
+          org: ForestAdmin
+          team_slug: Developers
+          role: all
+          per_page: 50
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+  preflight:
+    runs-on: ubuntu-latest
+    needs: [get-team]
+    continue-on-error: false
+    steps:
+        - if: ${{ !contains(needs.get-team.outputs.developers, github.actor) }}
+          run: |
+              echo "Workflow needs to be ran manually by a repo maintainer"
+              exit 1
+
+  build-workflow:
+      needs: [preflight]
+      if: needs.preflight.result != 'failure'
+      uses: ForestAdmin/toolbelt/.github/workflows/build.yml@chore/workflows
+      secrets:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
