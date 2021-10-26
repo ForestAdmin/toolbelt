@@ -32,7 +32,9 @@ function ProjectManager(config) {
   this.listProjects = async () => {
     const authToken = authenticator.getAuthToken();
     const authTokenDecode = jwtDecode(authToken);
-    const queryParams = querystring.stringify({ organizationId: authTokenDecode.organizationId });
+    const queryParams = querystring.stringify({
+      ...(authTokenDecode.organizationId ? { organizationId: authTokenDecode.organizationId } : {}),
+    });
 
     return agent
       .get(`${env.FOREST_URL}/api/projects${queryParams ? (`?${queryParams}`) : ''}`)
