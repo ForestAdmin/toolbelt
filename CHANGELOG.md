@@ -1,3 +1,15 @@
+# [2.4.0](https://github.com/ForestAdmin/toolbelt/compare/v2.3.6...v2.4.0) (2021-10-26)
+
+
+### Bug Fixes
+
+* display projects when connected with sso ([#265](https://github.com/ForestAdmin/toolbelt/issues/265)) ([83ec508](https://github.com/ForestAdmin/toolbelt/commit/83ec5082ac94b5610b5f1da712b200b521539d1d))
+
+
+### Features
+
+* show if the user is connected via sso or not ([#266](https://github.com/ForestAdmin/toolbelt/issues/266)) ([5a5a865](https://github.com/ForestAdmin/toolbelt/commit/5a5a865d2e5480130526beb14bcbb7055818ec84))
+
 ## [2.3.6](https://github.com/ForestAdmin/toolbelt/compare/v2.3.5...v2.3.6) (2021-10-22)
 
 
