@@ -1,4 +1,5 @@
 const _ = require('lodash');
+const querystring = require('querystring');
 const P = require('bluebird');
 const agent = require('superagent-promise')(require('superagent'), P);
 const Context = require('@forestadmin/context');
@@ -31,10 +32,10 @@ function ProjectManager(config) {
   this.listProjects = async () => {
     const authToken = authenticator.getAuthToken();
     const authTokenDecode = jwtDecode(authToken);
-    const queryParams = (authTokenDecode.organizationId) ? (`?organizationId=${authTokenDecode.organizationId}`) : '';
+    const queryParams = querystring.stringify({ organizationId: authTokenDecode.organizationId });
 
     return agent
-      .get(`${env.FOREST_URL}/api/projects${queryParams}`)
+      .get(`${env.FOREST_URL}/api/projects${queryParams ? (`?${queryParams}`) : ''}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
       .then((response) => deserialize(response));
