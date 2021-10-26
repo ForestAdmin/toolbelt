@@ -225,6 +225,34 @@ module.exports = {
       },
     }])),
 
+  getProjectofOrganizationDetailledList: () => nock('http://localhost:3001')
+    .get('/api/projects?organizationId=2')
+    .reply(200, ProjectSerializer.serialize([{
+      id: '83',
+      name: 'Forest in org',
+      defaultEnvironment: {
+        id: '2201',
+        name: 'Production',
+        apiEndpoint: 'https://api.forestadmin.com',
+        type: 'production',
+        lianaName: 'forest-express-sequelize',
+        lianaVersion: '2.13.1',
+        renderings: [{ isDefault: true, id: '4912' }],
+      },
+    }, {
+      id: '22',
+      name: 'Illustrio in org',
+      defaultEnvironment: {
+        id: '40',
+        name: 'Production',
+        apiEndpoint: 'http://dev.illustrio.com:5001',
+        type: 'development',
+        lianaName: 'forest-express-mongoose',
+        lianaVersion: '0.2.17',
+        renderings: [{ isDefault: true, id: '69' }],
+      },
+    }])),
+
   getEnvironmentListValid: (projectId = 2) => nock('http://localhost:3001')
     .get(`/api/projects/${projectId}/environments`)
     .reply(200, EnvironmentSerializer.serialize([

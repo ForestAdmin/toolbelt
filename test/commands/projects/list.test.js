@@ -1,9 +1,24 @@
 const testCli = require('../test-cli-helper/test-cli');
 const ListProjectCommand = require('../../../src/commands/projects');
 const { testEnvWithoutSecret } = require('../../fixtures/env');
-const { getProjectDetailledList } = require('../../fixtures/api');
+const { getProjectDetailledList, getProjectofOrganizationDetailledList } = require('../../fixtures/api');
 
 describe('projects', () => {
+  describe('within an organization', () => {
+    it('should return the list of projects within an organization', () => testCli({
+      env: testEnvWithoutSecret,
+      token: { organizationId: 2 },
+      commandClass: ListProjectCommand,
+      api: [() => getProjectofOrganizationDetailledList()],
+      std: [
+        { out: 'PROJECTS' },
+        { out: 'ID        NAME' },
+        { out: '83        Forest in org' },
+        { out: '22        Illustrio in org' },
+      ],
+    }));
+  });
+
   describe('without json option', () => {
     it('should return the list of projects', () => testCli({
       env: testEnvWithoutSecret,
