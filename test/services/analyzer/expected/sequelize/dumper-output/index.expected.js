@@ -17,7 +17,7 @@ databasesConfiguration.forEach((databaseInfo) => {
     .filter((file) => file.indexOf('.') !== 0 && file !== 'index.js')
     .forEach((file) => {
       try {
-        const model = connection.import(path.join(modelsDir, file));
+        const model = require(path.join(modelsDir, file))(connection, Sequelize.DataTypes);
         db[model.name] = model;
       } catch (error) {
         console.error(`Model creation error: ${error}`);
