@@ -1,3 +1,10 @@
+## [2.4.1](https://github.com/ForestAdmin/toolbelt/compare/v2.4.0...v2.4.1) (2021-10-28)
+
+
+### Bug Fixes
+
+* change the method to generate files to be compatible with sequelize@6 ([#267](https://github.com/ForestAdmin/toolbelt/issues/267)) ([4600ffe](https://github.com/ForestAdmin/toolbelt/commit/4600ffe94d8cb910ef29df5d6eade9bdfb99d8e8))
+
 # [2.4.0](https://github.com/ForestAdmin/toolbelt/compare/v2.3.6...v2.4.0) (2021-10-26)
 
 
