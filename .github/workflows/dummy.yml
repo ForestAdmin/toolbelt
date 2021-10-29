@@ -32,20 +32,5 @@ jobs:
     needs: [get-team]
     continue-on-error: false
     steps:
-      - name: Context
-        run: | 
-          echo "Actor is ${{ github.actor }}"
-          echo ${{ needs.get-team.outputs.developers }}
-      - if: ${{ !contains(needs.get-team.outputs.developers, github.actor) }}
-        run: |
-          echo "Workflow needs to be ran manually by a repo maintainer"
-          exit 1
-
-  build-workflow:
-    needs: [preflight]
-    if: needs.preflight.result != 'failure'
-    uses: ForestAdmin/toolbelt/.github/workflows/build.yml@chore/workflows
-    secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+      - name: Semantic Release
+        uses: cycjimmy/semantic-release-action@767cc0b0cd610ffb1ffee1b36a9b39120adc5f80
