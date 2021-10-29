@@ -74,6 +74,8 @@ jobs:
         if: matrix.withCoverage && matrix.node == 14
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+          GIT_COMMIT_SHA: ${{ env.CHECKOUT_REFERENCE }}
+          GIT_BRANCH: ${{ github.head_ref || github.ref }}
         with:
           coverageCommand: yarn test:coverage
       - name: Test prepack
