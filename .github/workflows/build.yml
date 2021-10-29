@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Cancel previous running workflows
-        uses: fkirc/skip-duplicate-actions@f75dd6564bb646f95277dc8c3b80612e46a4a1ea
+        uses: fkirc/skip-duplicate-actions@9da67cec51d21092667038f0f4fda73099a3a451
       - uses: actions/checkout@v2
         with:
           ref: ${{ env.CHECKOUT_REFERENCE }}
@@ -36,7 +36,7 @@ jobs:
       - name: install dependencies
         run: yarn install --frozen-lockfile --non-interactive --production=false
       - name: Lint commit message
-        uses: wagoid/commitlint-github-action@2d572ed5ea8b369af534fa21eea186a7eef07cda
+        uses: wagoid/commitlint-github-action@296247dfa6a133767fe0d64d08fb66326047b680
       - name: lint Javascript
         run: yarn lint
 
@@ -70,7 +70,7 @@ jobs:
         if: ${{ !matrix.withCoverage }}
         run: yarn test
       - name: Test with Node ${{ matrix.node }} & Send coverage
-        uses: paambaati/codeclimate-action@84cea27117a473d605400ca3a97fcef7e433e2d6
+        uses: paambaati/codeclimate-action@a7e64543c78101eac7d82a04686e329a589274cc
         if: matrix.withCoverage && matrix.node == 14
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}

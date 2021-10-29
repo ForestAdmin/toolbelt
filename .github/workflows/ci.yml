@@ -17,7 +17,7 @@ jobs:
     steps:
       - id: get_devs
         if: github.actor != 'dependabot[bot]'
-        uses: octokit/request-action@v7e93b91076fad3920c29d44eb2a6311d929db3dd
+        uses: octokit/request-action@7e93b91076fad3920c29d44eb2a6311d929db3dd
         with:
           route: GET /orgs/{org}/teams/{team_slug}/members
           org: ForestAdmin
