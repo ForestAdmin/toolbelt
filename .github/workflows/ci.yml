@@ -12,8 +12,8 @@ jobs:
     continue-on-error: false
     outputs:
       developers: |
-        ${{ (github.actor != 'dependabot[bot]' && fromJSON(steps.get_devs.outputs.data).*.login) || 
-        'dependabot[bot]' }}
+        ${{ (github.actor != 'dependabot[bot]' && join(fromJSON(steps.get_devs.outputs.data).*.login, ', ')) 
+        || 'dependabot[bot]' }}
     steps:
       - id: get_devs
         if: github.actor != 'dependabot[bot]'
