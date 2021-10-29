@@ -32,6 +32,10 @@ jobs:
     needs: [get-team]
     continue-on-error: false
     steps:
+      - name: Context
+        run: | 
+          echo "Actor is ${{ github.actor }}"
+          echo ${{ needs.get-team.outputs.developers }}
       - if: ${{ !contains(needs.get-team.outputs.developers, github.actor) }}
         run: |
           echo "Workflow needs to be ran manually by a repo maintainer"
