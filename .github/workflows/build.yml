@@ -13,7 +13,7 @@ on:
         required: true
 
 env:
-  CHECKOUT_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+  CHECKOUT_REFERENCE: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   lint:
@@ -24,7 +24,7 @@ jobs:
         uses: fkirc/skip-duplicate-actions@f75dd6564bb646f95277dc8c3b80612e46a4a1ea
       - uses: actions/checkout@v2.x
         with:
-          ref: ${{ env.CHECKOUT_REF }}
+          ref: ${{ env.CHECKOUT_REFERENCE }}
           fetch-depth: 0
       - uses: actions/setup-node@v2.x
         with:
@@ -53,7 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2.x
         with:
-          ref: ${{ env.CHECKOUT_REF }}
+          ref: ${{ env.CHECKOUT_REFERENCE }}
       - uses: actions/setup-node@v2.x
         with:
           node-version: ${{ matrix.node }}
