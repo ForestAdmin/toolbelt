@@ -12,8 +12,8 @@ jobs:
     continue-on-error: false
     outputs:
       developers: |
-        ${{ (github.actor != 'dependabot[bot]' && fromJSON(steps.get_devs.outputs.data).*.login) || 
-        'dependabot[bot]' }}
+        ${{ (github.actor != 'dependabot[bot]' && join(fromJSON(steps.get_devs.outputs.data).*.login, ', ')) 
+        || 'dependabot[bot]' }}
     steps:
       - id: get_devs
         if: github.actor != 'dependabot[bot]'
@@ -32,10 +32,6 @@ jobs:
     needs: [get-team]
     continue-on-error: false
     steps:
-      - name: Context
-        run: | 
-          echo "Actor is ${{ github.actor }}"
-          echo ${{ needs.get-team.outputs.developers }}
       - if: ${{ !contains(needs.get-team.outputs.developers, github.actor) }}
         run: |
           echo "Workflow needs to be ran manually by a repo maintainer"
@@ -44,7 +40,7 @@ jobs:
   build-workflow:
     needs: [preflight]
     if: needs.preflight.result != 'failure'
-    uses: ForestAdmin/toolbelt/.github/workflows/build.yml@chore/workflows
+    uses: ForestAdmin/toolbelt/.github/workflows/build.yml@main
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
