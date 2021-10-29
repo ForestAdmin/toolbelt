@@ -22,14 +22,14 @@ jobs:
     steps:
       - name: Cancel previous running workflows
         uses: fkirc/skip-duplicate-actions@f75dd6564bb646f95277dc8c3b80612e46a4a1ea
-      - uses: actions/checkout@v2.x
+      - uses: actions/checkout@v2
         with:
           ref: ${{ env.CHECKOUT_REFERENCE }}
           fetch-depth: 0
-      - uses: actions/setup-node@v2.x
+      - uses: actions/setup-node@v2
         with:
           node-version: 14.17.6
-      - uses: actions/cache@v2.x
+      - uses: actions/cache@v2
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
@@ -51,14 +51,14 @@ jobs:
           - node: 14
             withCoverage: ${{ true }}
     steps:
-      - uses: actions/checkout@v2.x
+      - uses: actions/checkout@v2
         with:
           ref: ${{ env.CHECKOUT_REFERENCE }}
-      - uses: actions/setup-node@v2.x
+      - uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node }}
       - name: Cache node_modules
-        uses: actions/cache@v2.x
+        uses: actions/cache@v2
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
@@ -87,14 +87,14 @@ jobs:
     needs: [test]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/beta')
     steps:
-      - uses: actions/checkout@v2.x
+      - uses: actions/checkout@v2
         with:
           ref: ${{ github.ref }}
           persist-credentials: false # GITHUB_TOKEN must not be set for the semantic release
-      - uses: actions/setup-node@v2.x
+      - uses: actions/setup-node@v2
         with:
           node-version: 14.17.6
-      - uses: actions/cache@v2.x
+      - uses: actions/cache@v2
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
