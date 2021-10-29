@@ -2,9 +2,8 @@ name: CI
 
 on:
   pull_request_target: # Unsecure event. Mind the workflow actor and the code to be ran
-  workflow_dispatch:
 
-# Force down scope permissions
+# Force down scope of permissions
 permissions: read-all
 
 jobs:
@@ -41,7 +40,7 @@ jobs:
   build-workflow:
     needs: [preflight]
     if: needs.preflight.result != 'failure'
-    uses: ForestAdmin/toolbelt/.github/workflows/build.yml@chore/workflows
+    uses: ForestAdmin/toolbelt/.github/workflows/build.yml@main
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
