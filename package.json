@@ -25,7 +25,7 @@
     "app-root-path": "3.0.0",
     "atob": "2.1.2",
     "bluebird": "3.5.2",
-    "chalk": "4.0.0",
+    "chalk": "4.1.2",
     "cli-table": "0.3.6",
     "clipboardy": "2.3.0",
     "commander": "2.9.0",
