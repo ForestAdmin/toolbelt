@@ -2,9 +2,9 @@ const _ = require('lodash');
 const SequelizeHelper = require('./helpers/sequelize-helper');
 const { describeSequelizeDatabases } = require('./helpers/multiple-database-version-helper');
 const TableConstraintsGetter = require('../../../src/services/schema/update/analyzer/sequelize-table-constraints-getter');
-const expectedAddressesConstraints = require('./expected/sequelize/constraints-getter-output/addresses.expected.js');
-const expectedCustomersConstraints = require('./expected/sequelize/constraints-getter-output/customers.expected.js');
-const expectedReviewsConstraints = require('./expected/sequelize/constraints-getter-output/reviews.expected.js');
+const expectedAddressesConstraints = require('./expected/sequelize/constraints-getter-output/addresses.expected');
+const expectedCustomersConstraints = require('./expected/sequelize/constraints-getter-output/customers.expected');
+const expectedReviewsConstraints = require('./expected/sequelize/constraints-getter-output/reviews.expected');
 
 async function createConnection(connectionUrl) {
   const sequelizeHelper = new SequelizeHelper();

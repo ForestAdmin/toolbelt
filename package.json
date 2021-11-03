@@ -65,7 +65,7 @@
     "eslint": "6.7.2",
     "eslint-config-airbnb-base": "14.0.0",
     "eslint-config-oclif": "3.1.0",
-    "eslint-plugin-import": "2.18.2",
+    "eslint-plugin-import": "2.25.2",
     "eslint-plugin-jest": "25.2.2",
     "eslint-plugin-sonarjs": "0.5.0",
     "fs-extra": "8.1.0",
