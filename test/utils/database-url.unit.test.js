@@ -37,7 +37,7 @@ describe('utils > buildDatabaseUrl', () => {
         };
         const databaseUrl = buildDatabaseUrl(config);
 
-        expect(databaseUrl).toStrictEqual('__protocol__://__dbUser__:__dbPassword__@__dbHostname__:__dbPort__/__dbName__');
+        expect(databaseUrl).toBe('__protocol__://__dbUser__:__dbPassword__@__dbHostname__:__dbPort__/__dbName__');
       });
 
       describe('when given the MongoDB SRV option', () => {
@@ -55,7 +55,7 @@ describe('utils > buildDatabaseUrl', () => {
           };
           const databaseUrl = buildDatabaseUrl(config);
 
-          expect(databaseUrl).toStrictEqual('mongodb+srv://__dbUser__:__dbPassword__@__dbHostname__/__dbName__');
+          expect(databaseUrl).toBe('mongodb+srv://__dbUser__:__dbPassword__@__dbHostname__/__dbName__');
         });
 
         it('should ignore it otherwise', () => {
@@ -72,7 +72,7 @@ describe('utils > buildDatabaseUrl', () => {
           };
           const databaseUrl = buildDatabaseUrl(config);
 
-          expect(databaseUrl).toStrictEqual('__protocol__://__dbUser__:__dbPassword__@__dbHostname__:__dbPort__/__dbName__');
+          expect(databaseUrl).toBe('__protocol__://__dbUser__:__dbPassword__@__dbHostname__:__dbPort__/__dbName__');
         });
       });
     });

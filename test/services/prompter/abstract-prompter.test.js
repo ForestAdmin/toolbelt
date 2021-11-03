@@ -6,12 +6,12 @@ describe('services > prompter > prompt utils', () => {
   describe('when checking if an option is requested', () => {
     it('should return true if the option is present in the requests', () => {
       expect.assertions(1);
-      expect(promptUtils.isOptionRequested('requestedOption')).toStrictEqual(true);
+      expect(promptUtils.isOptionRequested('requestedOption')).toBe(true);
     });
 
     it('should return false if the option is not present in the requests', () => {
       expect.assertions(1);
-      expect(promptUtils.isOptionRequested('notRequestedOption')).toStrictEqual(false);
+      expect(promptUtils.isOptionRequested('notRequestedOption')).toBe(false);
     });
   });
 });

@@ -246,6 +246,7 @@ describe('branch', () => {
             exitCode: 0,
           }));
 
+          // eslint-disable-next-line jest/max-nested-describe
           describe('using `--force` option', () => {
             it('should display a success branch deleted message', () => testCli({
               env: testEnvWithSecret,

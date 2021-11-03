@@ -84,7 +84,7 @@ describe('services > database', () => {
       describe('and a dialect is provided', () => {
         it('should return the given dialect', () => {
           expect.assertions(1);
-          expect(database.getDialect(null, 'something')).toStrictEqual('something');
+          expect(database.getDialect(null, 'something')).toBe('something');
         });
       });
 
@@ -99,22 +99,22 @@ describe('services > database', () => {
     describe('when connectionUrl is provided', () => {
       it('should return postgres when connection url starts with postgres://', () => {
         expect.assertions(1);
-        expect(database.getDialect('postgres://user:passwd@somewhere/db')).toStrictEqual('postgres');
+        expect(database.getDialect('postgres://user:passwd@somewhere/db')).toBe('postgres');
       });
 
       it('should return mysql when connection url starts with mysql://', () => {
         expect.assertions(1);
-        expect(database.getDialect('mysql://user:passwd@somewhere/db')).toStrictEqual('mysql');
+        expect(database.getDialect('mysql://user:passwd@somewhere/db')).toBe('mysql');
       });
 
       it('should return mssql when connection url starts with mssql://', () => {
         expect.assertions(1);
-        expect(database.getDialect('mssql://user:passwd@somewhere/db')).toStrictEqual('mssql');
+        expect(database.getDialect('mssql://user:passwd@somewhere/db')).toBe('mssql');
       });
 
       it('should return mongodb when connection url starts with mongodb', () => {
         expect.assertions(1);
-        expect(database.getDialect('mongodb://user:passwd@somewhere/db')).toStrictEqual('mongodb');
+        expect(database.getDialect('mongodb://user:passwd@somewhere/db')).toBe('mongodb');
       });
     });
   });
@@ -397,7 +397,7 @@ describe('services > database', () => {
         },
       }];
 
-      expect(database.areAllDatabasesOfTheSameType(databasesConfig)).toStrictEqual(true);
+      expect(database.areAllDatabasesOfTheSameType(databasesConfig)).toBe(true);
     });
 
     it('should return false if databases are not of the same type', () => {
@@ -414,7 +414,7 @@ describe('services > database', () => {
         },
       }];
 
-      expect(database.areAllDatabasesOfTheSameType(databasesConfig)).toStrictEqual(false);
+      expect(database.areAllDatabasesOfTheSameType(databasesConfig)).toBe(false);
     });
   });
 });

@@ -5,7 +5,7 @@ const { EOL } = require('os');
 const Context = require('@forestadmin/context');
 
 const { handleError } = require('../utils/error');
-const { DatabasePrompts } = require('../services/prompter/database-prompts');
+const { DatabasePrompts } = require('./prompter/database-prompts');
 
 const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE = 'Copying the environment variables in your `.env` file';
 const SUCCESS_MESSAGE_ENV_FILE_CREATED_AND_FILLED = 'Creating a new `.env` file containing your environment variables';

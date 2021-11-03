@@ -32,7 +32,7 @@ describe('services > ApplicationToken', () => {
 
       const result = await applicationTokenService.generateApplicationToken(SESSION_TOKEN);
 
-      expect(result).toStrictEqual('ABCDE');
+      expect(result).toBe('ABCDE');
       expect(os.hostname).toHaveBeenCalledWith();
       expect(api.createApplicationToken).toHaveBeenCalledWith({
         name: 'forest-cli @Machine name',

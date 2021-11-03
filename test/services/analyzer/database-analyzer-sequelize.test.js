@@ -54,7 +54,7 @@ describe('services > database analyser > Sequelize', () => {
       await sequelizeHelper.forceSync(User);
       const user = await User.create({ name: 'Jane' });
       await sequelizeHelper.close();
-      expect(user.name).toStrictEqual('Jane');
+      expect(user.name).toBe('Jane');
     });
 
     it('should generate a single model', async () => {
@@ -80,9 +80,11 @@ describe('services > database analyser > Sequelize', () => {
         const result = await performDatabaseAnalysis(databaseConnection);
         await sequelizeHelper.close();
 
+        // eslint-disable-next-line jest/no-conditional-expect
         expect(result.default_values).toStrictEqual(expected.default_values);
       } else {
-        expect(true).toStrictEqual(true);
+        // eslint-disable-next-line jest/no-conditional-expect
+        expect(true).toBe(true);
       }
     }, TIMEOUT);
 
@@ -152,7 +154,7 @@ describe('services > database analyser > Sequelize', () => {
       await sequelizeHelper.dropAndCreate('underscored_no_fields');
       const result = await performDatabaseAnalysis(databaseConnection);
       await sequelizeHelper.close();
-      expect(result.underscored_no_fields.options.underscored).toStrictEqual(true);
+      expect(result.underscored_no_fields.options.underscored).toBe(true);
     }, TIMEOUT);
 
     it('should not set underscored to true if parenthesis in column name', async () => {
@@ -162,7 +164,7 @@ describe('services > database analyser > Sequelize', () => {
       await sequelizeHelper.dropAndCreate('parenthesis_table');
       const result = await performDatabaseAnalysis(databaseConnection);
       await sequelizeHelper.close();
-      expect(result.parenthesis_table.options.underscored).toStrictEqual(false);
+      expect(result.parenthesis_table.options.underscored).toBe(false);
     }, TIMEOUT);
 
     it('should not set underscored to true if parenthesis in column name and underscored field', async () => {
@@ -172,7 +174,7 @@ describe('services > database analyser > Sequelize', () => {
       await sequelizeHelper.dropAndCreate('parenthesis_underscored_table');
       const result = await performDatabaseAnalysis(databaseConnection);
       await sequelizeHelper.close();
-      expect(result.parenthesis_underscored_table.options.underscored).toStrictEqual(false);
+      expect(result.parenthesis_underscored_table.options.underscored).toBe(false);
     }, TIMEOUT);
 
     it('should handle conflicts between references alias', async () => {
@@ -209,8 +211,8 @@ describe('services > database analyser > Sequelize', () => {
       expect(fields).toHaveLength(1);
 
       const idField = fields[0];
-      expect(idField.name).toStrictEqual('id');
-      expect(idField.primaryKey).toStrictEqual(true);
+      expect(idField.name).toBe('id');
+      expect(idField.primaryKey).toBe(true);
     }, TIMEOUT);
   });
 });

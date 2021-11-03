@@ -31,10 +31,10 @@ describe('services > Mongo Embedded Analyser', () => {
 
       it('should detect that the value to analyse is a primitive value', () => {
         expect.assertions(5);
-        expect(getMongooseSchema('1')).toStrictEqual('String');
-        expect(getMongooseSchema(1)).toStrictEqual('Number');
-        expect(getMongooseSchema(true)).toStrictEqual('Boolean');
-        expect(getMongooseSchema(new Date())).toStrictEqual('Date');
+        expect(getMongooseSchema('1')).toBe('String');
+        expect(getMongooseSchema(1)).toBe('Number');
+        expect(getMongooseSchema(true)).toBe('Boolean');
+        expect(getMongooseSchema(new Date())).toBe('Date');
         expect(getMongooseSchema(new ObjectId('objectIdFake'))).toStrictEqual(MONGOOSE_SCHEMA_TYPE_OBJECTID);
       });
     });
@@ -50,14 +50,14 @@ describe('services > Mongo Embedded Analyser', () => {
 
       it('should return the correct primitive type depending on the value', () => {
         expect.assertions(9);
-        expect(getMongooseSchema('')).toStrictEqual('String');
-        expect(getMongooseSchema('1')).toStrictEqual('String');
-        expect(getMongooseSchema(1)).toStrictEqual('Number');
-        expect(getMongooseSchema(NaN)).toStrictEqual('Number');
-        expect(getMongooseSchema(1.11)).toStrictEqual('Number');
-        expect(getMongooseSchema(true)).toStrictEqual('Boolean');
-        expect(getMongooseSchema(false)).toStrictEqual('Boolean');
-        expect(getMongooseSchema(new Date())).toStrictEqual('Date');
+        expect(getMongooseSchema('')).toBe('String');
+        expect(getMongooseSchema('1')).toBe('String');
+        expect(getMongooseSchema(1)).toBe('Number');
+        expect(getMongooseSchema(NaN)).toBe('Number');
+        expect(getMongooseSchema(1.11)).toBe('Number');
+        expect(getMongooseSchema(true)).toBe('Boolean');
+        expect(getMongooseSchema(false)).toBe('Boolean');
+        expect(getMongooseSchema(new Date())).toBe('Date');
         expect(getMongooseSchema(new ObjectId('objectIdFake'))).toStrictEqual(MONGOOSE_SCHEMA_TYPE_OBJECTID);
       });
     });
@@ -91,9 +91,9 @@ describe('services > Mongo Embedded Analyser', () => {
         expect.assertions(3);
         const arrayOfSchemaTypeDetection = getMongooseArraySchema([{ one: 1 }, { two: 2 }]);
 
-        expect(typeof arrayOfSchemaTypeDetection === 'object').toStrictEqual(true);
-        expect(Array.isArray(arrayOfSchemaTypeDetection)).toStrictEqual(true);
-        expect(typeof arrayOfSchemaTypeDetection[0] === 'object').toStrictEqual(true);
+        expect(typeof arrayOfSchemaTypeDetection === 'object').toBe(true);
+        expect(Array.isArray(arrayOfSchemaTypeDetection)).toBe(true);
+        expect(typeof arrayOfSchemaTypeDetection[0] === 'object').toBe(true);
       });
 
       it('should handle the _id fields for subDocuments in array', () => {
@@ -124,11 +124,11 @@ describe('services > Mongo Embedded Analyser', () => {
           objectId: new ObjectId('objectIdFake'),
         });
 
-        expect(typeof embeddedOfPrimitiveTypeDetection === 'object').toStrictEqual(true);
-        expect(embeddedOfPrimitiveTypeDetection.string).toStrictEqual('String');
-        expect(embeddedOfPrimitiveTypeDetection.number).toStrictEqual('Number');
-        expect(embeddedOfPrimitiveTypeDetection.boolean).toStrictEqual('Boolean');
-        expect(embeddedOfPrimitiveTypeDetection.date).toStrictEqual('Date');
+        expect(typeof embeddedOfPrimitiveTypeDetection === 'object').toBe(true);
+        expect(embeddedOfPrimitiveTypeDetection.string).toBe('String');
+        expect(embeddedOfPrimitiveTypeDetection.number).toBe('Number');
+        expect(embeddedOfPrimitiveTypeDetection.boolean).toBe('Boolean');
+        expect(embeddedOfPrimitiveTypeDetection.date).toBe('Date');
         expect(embeddedOfPrimitiveTypeDetection.objectId)
           .toStrictEqual(MONGOOSE_SCHEMA_TYPE_OBJECTID);
       });
@@ -144,10 +144,10 @@ describe('services > Mongo Embedded Analyser', () => {
           },
         });
 
-        expect(typeof embeddedWithNestedDetection.level_1 === 'object').toStrictEqual(true);
-        expect(embeddedWithNestedDetection.level_1.string).toStrictEqual('String');
-        expect(typeof embeddedWithNestedDetection.level_1.level_2 === 'object').toStrictEqual(true);
-        expect(embeddedWithNestedDetection.level_1.level_2.number).toStrictEqual('Number');
+        expect(typeof embeddedWithNestedDetection.level_1 === 'object').toBe(true);
+        expect(embeddedWithNestedDetection.level_1.string).toBe('String');
+        expect(typeof embeddedWithNestedDetection.level_1.level_2 === 'object').toBe(true);
+        expect(embeddedWithNestedDetection.level_1.level_2.number).toBe('Number');
       });
 
       it('should not handle `_id` keys if not explicitly requested to', () => {
@@ -165,7 +165,7 @@ describe('services > Mongo Embedded Analyser', () => {
         expect(analysis._id).toBeUndefined();
         expect(analysis.embeddedValue).toBeInstanceOf(Object);
         expect(analysis.embeddedValue._id).toBeUndefined();
-        expect(analysis.embeddedValue.stringValue).toStrictEqual('String');
+        expect(analysis.embeddedValue.stringValue).toBe('String');
       });
 
       it('should handle `_id` keys if explicitly requested to', () => {
@@ -183,7 +183,7 @@ describe('services > Mongo Embedded Analyser', () => {
         expect(analysis._id).toStrictEqual(MONGOOSE_SCHEMA_TYPE_OBJECTID);
         expect(analysis.embeddedValue).toBeInstanceOf(Object);
         expect(analysis.embeddedValue._id).toBeUndefined();
-        expect(analysis.embeddedValue.stringValue).toStrictEqual('String');
+        expect(analysis.embeddedValue.stringValue).toBe('String');
       });
     });
   });
@@ -193,7 +193,7 @@ describe('services > Mongo Embedded Analyser', () => {
       it('should return `Object` if type from analyses are different', () => {
         expect.assertions(1);
         const multipleDifferentAnalyses = ['String', ['Number'], { key: 'Boolean' }];
-        expect(mergeAnalyzedSchemas(multipleDifferentAnalyses)).toStrictEqual('Object');
+        expect(mergeAnalyzedSchemas(multipleDifferentAnalyses)).toBe('Object');
       });
 
       it('should return an array as global key type', () => {
@@ -240,7 +240,7 @@ describe('services > Mongo Embedded Analyser', () => {
         const keySchema = { };
         const nestedKey = 'nestedKey';
         addNestedSchemaToParentSchema(type, keySchema, nestedKey);
-        expect(keySchema[nestedKey]).toStrictEqual('String');
+        expect(keySchema[nestedKey]).toBe('String');
       });
     });
 
@@ -254,7 +254,7 @@ describe('services > Mongo Embedded Analyser', () => {
 
           addMongooseType(type, parentSchema, currentKey);
 
-          expect(parentSchema[currentKey]).toStrictEqual('Object');
+          expect(parentSchema[currentKey]).toBe('Object');
         });
 
         it('should not change the type if types are the same one', () => {
@@ -265,7 +265,7 @@ describe('services > Mongo Embedded Analyser', () => {
 
           addMongooseType(type, parentSchema, currentKey);
 
-          expect(parentSchema[currentKey]).toStrictEqual('String');
+          expect(parentSchema[currentKey]).toBe('String');
         });
       });
 
@@ -278,7 +278,7 @@ describe('services > Mongo Embedded Analyser', () => {
 
           addMongooseType(type, parentSchema, currentKey);
 
-          expect(parentSchema[currentKey]).toStrictEqual('String');
+          expect(parentSchema[currentKey]).toBe('String');
         });
       });
     });
@@ -293,7 +293,7 @@ describe('services > Mongo Embedded Analyser', () => {
 
           addObjectSchema(type, parentSchema, currentKey);
 
-          expect(parentSchema[currentKey]).toStrictEqual('Object');
+          expect(parentSchema[currentKey]).toBe('Object');
         });
 
         it('should not change the type if the set one is an object', () => {
@@ -343,7 +343,7 @@ describe('services > Mongo Embedded Analyser', () => {
 
           addObjectSchema(type, parentSchema, currentKey);
 
-          expect(parentSchema[currentKey]).toStrictEqual('Object');
+          expect(parentSchema[currentKey]).toBe('Object');
         });
 
         it('should not change the type if the set one is an array', () => {
@@ -378,7 +378,7 @@ describe('services > Mongo Embedded Analyser', () => {
 
             addObjectSchema(type, parentSchema, currentKey);
 
-            expect(parentSchema[currentKey][0]._id).toStrictEqual('ambiguous');
+            expect(parentSchema[currentKey][0]._id).toBe('ambiguous');
           });
 
           it('should detect that no _ids are used', () => {
@@ -390,7 +390,7 @@ describe('services > Mongo Embedded Analyser', () => {
 
             addObjectSchema(type, parentSchema, currentKey);
 
-            expect(parentSchema[currentKey][0]._id).toStrictEqual(false);
+            expect(parentSchema[currentKey][0]._id).toBe(false);
           });
 
           it('should detect that _ids are used', () => {
@@ -440,7 +440,7 @@ describe('services > Mongo Embedded Analyser', () => {
           },
         ]);
 
-        expect(result).toStrictEqual(true);
+        expect(result).toBe(true);
       });
 
       it('should return true if all the analyses are embedded analyses', () => {
@@ -456,16 +456,16 @@ describe('services > Mongo Embedded Analyser', () => {
           },
         ]);
 
-        expect(result).toStrictEqual(true);
+        expect(result).toBe(true);
       });
 
       it('should return false if all the analyses is undefined or empty', () => {
         expect.assertions(2);
         let result = hasEmbeddedTypes(undefined);
-        expect(result).toStrictEqual(false);
+        expect(result).toBe(false);
 
         result = hasEmbeddedTypes([]);
-        expect(result).toStrictEqual(false);
+        expect(result).toBe(false);
       });
 
       it('should return false if none of analyses are embedded analysis', () => {
@@ -479,59 +479,59 @@ describe('services > Mongo Embedded Analyser', () => {
           },
         ]);
 
-        expect(result).toStrictEqual(false);
+        expect(result).toBe(false);
       });
     });
 
     describe('checking if two values have the same type', () => {
       it('should return true', () => {
         expect.assertions(7);
-        expect(haveSameEmbeddedType('value1', 'value2')).toStrictEqual(true);
-        expect(haveSameEmbeddedType(1, 2)).toStrictEqual(true);
-        expect(haveSameEmbeddedType(true, false)).toStrictEqual(true);
-        expect(haveSameEmbeddedType(new Date(), new Date())).toStrictEqual(true);
-        expect(haveSameEmbeddedType(new ObjectId('objectIdFake'), new ObjectId('objectIdFake'))).toStrictEqual(true);
-        expect(haveSameEmbeddedType({}, {})).toStrictEqual(true);
-        expect(haveSameEmbeddedType([], [])).toStrictEqual(true);
+        expect(haveSameEmbeddedType('value1', 'value2')).toBe(true);
+        expect(haveSameEmbeddedType(1, 2)).toBe(true);
+        expect(haveSameEmbeddedType(true, false)).toBe(true);
+        expect(haveSameEmbeddedType(new Date(), new Date())).toBe(true);
+        expect(haveSameEmbeddedType(new ObjectId('objectIdFake'), new ObjectId('objectIdFake'))).toBe(true);
+        expect(haveSameEmbeddedType({}, {})).toBe(true);
+        expect(haveSameEmbeddedType([], [])).toBe(true);
       });
 
       it('should return false', () => {
         expect.assertions(2);
-        expect(haveSameEmbeddedType({}, [])).toStrictEqual(false);
-        expect(haveSameEmbeddedType('1', 1)).toStrictEqual(false);
+        expect(haveSameEmbeddedType({}, [])).toBe(false);
+        expect(haveSameEmbeddedType('1', 1)).toBe(false);
       });
     });
 
     describe('checking if every analysis have the same type', () => {
       it('should return false if analyses is not an array, or an empty array', () => {
         expect.assertions(7);
-        expect(areAnalysesSameEmbeddedType([])).toStrictEqual(false);
-        expect(areAnalysesSameEmbeddedType(undefined)).toStrictEqual(false);
-        expect(areAnalysesSameEmbeddedType(null)).toStrictEqual(false);
-        expect(areAnalysesSameEmbeddedType('not an array')).toStrictEqual(false);
-        expect(areAnalysesSameEmbeddedType(true)).toStrictEqual(false);
-        expect(areAnalysesSameEmbeddedType(false)).toStrictEqual(false);
-        expect(areAnalysesSameEmbeddedType(0)).toStrictEqual(false);
+        expect(areAnalysesSameEmbeddedType([])).toBe(false);
+        expect(areAnalysesSameEmbeddedType(undefined)).toBe(false);
+        expect(areAnalysesSameEmbeddedType(null)).toBe(false);
+        expect(areAnalysesSameEmbeddedType('not an array')).toBe(false);
+        expect(areAnalysesSameEmbeddedType(true)).toBe(false);
+        expect(areAnalysesSameEmbeddedType(false)).toBe(false);
+        expect(areAnalysesSameEmbeddedType(0)).toBe(false);
       });
 
       it('should return true if analyses contains only one analysis', () => {
         expect.assertions(3);
-        expect(areAnalysesSameEmbeddedType([{}])).toStrictEqual(true);
-        expect(areAnalysesSameEmbeddedType(['String'])).toStrictEqual(true);
-        expect(areAnalysesSameEmbeddedType(['Number'])).toStrictEqual(true);
+        expect(areAnalysesSameEmbeddedType([{}])).toBe(true);
+        expect(areAnalysesSameEmbeddedType(['String'])).toBe(true);
+        expect(areAnalysesSameEmbeddedType(['Number'])).toBe(true);
       });
 
       it('should return true if every analysis have the same type', () => {
         expect.assertions(2);
-        expect(areAnalysesSameEmbeddedType([[], []])).toStrictEqual(true);
-        expect(areAnalysesSameEmbeddedType([{ one: 1 }, { two: 2 }])).toStrictEqual(true);
+        expect(areAnalysesSameEmbeddedType([[], []])).toBe(true);
+        expect(areAnalysesSameEmbeddedType([{ one: 1 }, { two: 2 }])).toBe(true);
       });
 
       it('should false if at least two analyses type mismatch', () => {
         expect.assertions(3);
-        expect(areAnalysesSameEmbeddedType(['String', []])).toStrictEqual(false);
-        expect(areAnalysesSameEmbeddedType(['String', {}])).toStrictEqual(false);
-        expect(areAnalysesSameEmbeddedType([[], {}])).toStrictEqual(false);
+        expect(areAnalysesSameEmbeddedType(['String', []])).toBe(false);
+        expect(areAnalysesSameEmbeddedType(['String', {}])).toBe(false);
+        expect(areAnalysesSameEmbeddedType([[], {}])).toBe(false);
       });
     });
 
@@ -539,33 +539,33 @@ describe('services > Mongo Embedded Analyser', () => {
       describe('if one at least one type is mixed', () => {
         it('should return true in any case', () => {
           expect.assertions(6);
-          expect(areSchemaTypesMixed('Object', 'Object')).toStrictEqual(true);
-          expect(areSchemaTypesMixed('Object', null)).toStrictEqual(true);
-          expect(areSchemaTypesMixed(null, 'Object')).toStrictEqual(true);
-          expect(areSchemaTypesMixed('Object', {})).toStrictEqual(true);
-          expect(areSchemaTypesMixed('Object', [])).toStrictEqual(true);
-          expect(areSchemaTypesMixed('Object', 'String')).toStrictEqual(true);
+          expect(areSchemaTypesMixed('Object', 'Object')).toBe(true);
+          expect(areSchemaTypesMixed('Object', null)).toBe(true);
+          expect(areSchemaTypesMixed(null, 'Object')).toBe(true);
+          expect(areSchemaTypesMixed('Object', {})).toBe(true);
+          expect(areSchemaTypesMixed('Object', [])).toBe(true);
+          expect(areSchemaTypesMixed('Object', 'String')).toBe(true);
         });
       });
 
       describe('if no types are mixed', () => {
         it('should return false if at least one type is undefined or null', () => {
           expect.assertions(6);
-          expect(areSchemaTypesMixed(null, 'String')).toStrictEqual(false);
-          expect(areSchemaTypesMixed('String', null)).toStrictEqual(false);
-          expect(areSchemaTypesMixed(undefined, 'String')).toStrictEqual(false);
-          expect(areSchemaTypesMixed('String', undefined)).toStrictEqual(false);
-          expect(areSchemaTypesMixed(undefined, undefined)).toStrictEqual(false);
-          expect(areSchemaTypesMixed(null, null)).toStrictEqual(false);
+          expect(areSchemaTypesMixed(null, 'String')).toBe(false);
+          expect(areSchemaTypesMixed('String', null)).toBe(false);
+          expect(areSchemaTypesMixed(undefined, 'String')).toBe(false);
+          expect(areSchemaTypesMixed('String', undefined)).toBe(false);
+          expect(areSchemaTypesMixed(undefined, undefined)).toBe(false);
+          expect(areSchemaTypesMixed(null, null)).toBe(false);
         });
 
         it('should return true if types are different and different', () => {
           expect.assertions(5);
-          expect(areSchemaTypesMixed('String', 'Number')).toStrictEqual(true);
-          expect(areSchemaTypesMixed('Date', 'Object')).toStrictEqual(true);
-          expect(areSchemaTypesMixed([], {})).toStrictEqual(true);
-          expect(areSchemaTypesMixed({}, 'String')).toStrictEqual(true);
-          expect(areSchemaTypesMixed(MONGOOSE_SCHEMA_TYPE_OBJECTID, 'String')).toStrictEqual(true);
+          expect(areSchemaTypesMixed('String', 'Number')).toBe(true);
+          expect(areSchemaTypesMixed('Date', 'Object')).toBe(true);
+          expect(areSchemaTypesMixed([], {})).toBe(true);
+          expect(areSchemaTypesMixed({}, 'String')).toBe(true);
+          expect(areSchemaTypesMixed(MONGOOSE_SCHEMA_TYPE_OBJECTID, 'String')).toBe(true);
         });
       });
     });
@@ -578,13 +578,13 @@ describe('services > Mongo Embedded Analyser', () => {
         let result;
 
         result = detectSubDocumentsIdUsage(alReadyAmbiguous, { });
-        expect(result).toStrictEqual('ambiguous');
+        expect(result).toBe('ambiguous');
 
         result = detectSubDocumentsIdUsage({ }, alReadyAmbiguous);
-        expect(result).toStrictEqual('ambiguous');
+        expect(result).toBe('ambiguous');
 
         result = detectSubDocumentsIdUsage(alReadyAmbiguous, alReadyAmbiguous);
-        expect(result).toStrictEqual('ambiguous');
+        expect(result).toBe('ambiguous');
       });
 
       it('should return `ambiguous` if we can not decide whether the _id should be used', () => {
@@ -595,10 +595,10 @@ describe('services > Mongo Embedded Analyser', () => {
         let result;
 
         result = detectSubDocumentsIdUsage(usingId, notUsingId);
-        expect(result).toStrictEqual('ambiguous');
+        expect(result).toBe('ambiguous');
 
         result = detectSubDocumentsIdUsage(notUsingId, usingId);
-        expect(result).toStrictEqual('ambiguous');
+        expect(result).toBe('ambiguous');
       });
 
       it('should return true if we can assert that _id is used', () => {
@@ -606,7 +606,7 @@ describe('services > Mongo Embedded Analyser', () => {
 
         const usingId = { _id: MONGOOSE_SCHEMA_TYPE_OBJECTID };
 
-        expect(detectSubDocumentsIdUsage(usingId, usingId)).toStrictEqual(true);
+        expect(detectSubDocumentsIdUsage(usingId, usingId)).toBe(true);
       });
 
       it('should return false if we can assert that _id is not used', () => {
@@ -614,7 +614,7 @@ describe('services > Mongo Embedded Analyser', () => {
 
         const notUsingId = { };
 
-        expect(detectSubDocumentsIdUsage(notUsingId, notUsingId)).toStrictEqual(false);
+        expect(detectSubDocumentsIdUsage(notUsingId, notUsingId)).toBe(false);
       });
     });
   });

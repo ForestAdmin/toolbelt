@@ -16,7 +16,7 @@ describe('utils > errors', () => {
 
       const error = new ForestCLIError('an error', 'a detail');
 
-      expect(error.details).toStrictEqual('a detail');
+      expect(error.details).toBe('a detail');
     });
   });
 
