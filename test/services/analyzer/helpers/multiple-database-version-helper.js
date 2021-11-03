@@ -52,13 +52,13 @@ const sqlDatabases = [{
 module.exports = {
   describeMongoDatabases(tests) {
     mongoDatabases.forEach((mongoDatabase) => {
-      // eslint-disable-next-line jest/valid-describe
+      // eslint-disable-next-line jest/valid-describe-callback
       describe(`using Mongo Database v${mongoDatabase.version}`, tests(mongoDatabase.url));
     });
   },
   describeSequelizeDatabases(tests) {
     sqlDatabases.forEach((sqlDatabase) => {
-      // eslint-disable-next-line jest/valid-describe
+      // eslint-disable-next-line jest/valid-describe-callback
       describe(`using ${sqlDatabase.dialect} Database v${sqlDatabase.version}`, tests(sqlDatabase));
     });
   },

@@ -44,9 +44,9 @@ describe('services > prompter > general prompter', () => {
           context,
         } = terminateStub.mock.calls[0][1];
 
-        expect(status).toStrictEqual(1);
-        expect(errorCode).toStrictEqual('unexpected_error');
-        expect(errorMessage).toStrictEqual('error message');
+        expect(status).toBe(1);
+        expect(errorCode).toBe('unexpected_error');
+        expect(errorMessage).toBe('error message');
         expect(logs).toStrictEqual(['logs']);
         expect(context).toBeUndefined();
 

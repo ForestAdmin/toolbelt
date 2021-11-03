@@ -11,7 +11,7 @@ describe('spinner', () => {
         const spinner = new Spinner();
         spinner.start(spinnnerOptions);
         const result = await spinner.attachToPromise(promise());
-        expect(result).toStrictEqual('test');
+        expect(result).toBe('test');
       });
 
       it('should display the options text', async () => {

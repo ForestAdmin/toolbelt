@@ -5,8 +5,8 @@ describe('utils > fields', () => {
     it('should return false', () => {
       expect.assertions(2);
 
-      expect(isUnderscored(undefined)).toStrictEqual(false);
-      expect(isUnderscored([])).toStrictEqual(false);
+      expect(isUnderscored(undefined)).toBe(false);
+      expect(isUnderscored([])).toBe(false);
     });
   });
 
@@ -18,7 +18,7 @@ describe('utils > fields', () => {
         nameColumn: 'id',
       }];
 
-      expect(isUnderscored(fields)).toStrictEqual(true);
+      expect(isUnderscored(fields)).toBe(true);
     });
   });
 
@@ -33,7 +33,7 @@ describe('utils > fields', () => {
           nameColumn: 'first_name',
         }];
 
-        expect(isUnderscored(fields)).toStrictEqual(true);
+        expect(isUnderscored(fields)).toBe(true);
       });
     });
 
@@ -47,7 +47,7 @@ describe('utils > fields', () => {
           nameColumn: 'firstName',
         }];
 
-        expect(isUnderscored(fields)).toStrictEqual(false);
+        expect(isUnderscored(fields)).toBe(false);
       });
     });
   });

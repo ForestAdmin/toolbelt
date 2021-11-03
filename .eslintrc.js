@@ -13,6 +13,8 @@ module.exports = {
   },
   ignorePatterns: ["expected"],
   rules: {
+    'jest/valid-describe': 0, // This rule does not exist anymore. It has been replaced by jest/valid-describe-callback
+    'jest/require-hook': 0, // This rule does not seem to be functional at this time (eslint-plugin-jest-25.2.2)
     'jest/no-disabled-tests': 0,
     'implicit-arrow-linebreak': 0,
     'no-underscore-dangle': 0,

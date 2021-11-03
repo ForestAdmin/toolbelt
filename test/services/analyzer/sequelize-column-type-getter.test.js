@@ -27,8 +27,8 @@ describe('services > column type getter', () => {
         return computedType;
       }
 
-      expect(await getComputedType(DATABASE_URL_MYSQL_MAX, 'mysql')).toStrictEqual('JSON');
-      expect(await getComputedType(DATABASE_URL_POSTGRESQL_MAX, 'postgresql')).toStrictEqual('JSON');
+      await expect(getComputedType(DATABASE_URL_MYSQL_MAX, 'mysql')).resolves.toBe('JSON');
+      await expect(getComputedType(DATABASE_URL_POSTGRESQL_MAX, 'postgresql')).resolves.toBe('JSON');
     });
   });
 
@@ -43,7 +43,7 @@ describe('services > column type getter', () => {
       const columnTypeGetter = new ColumnTypeGetter(databaseConnection, '');
       const computedType = await columnTypeGetter.perform({ type: 'BIT(1)' }, 'paying', 'customers');
 
-      expect(computedType).toStrictEqual('BOOLEAN');
+      expect(computedType).toBe('BOOLEAN');
 
       await sequelizeHelper.drop('customers', 'mysql');
       await sequelizeHelper.close();
@@ -77,7 +77,7 @@ describe('services > column type getter', () => {
       const columnTypeGetter = new ColumnTypeGetter(databaseConnection, 'public');
       const computedType = await columnTypeGetter.perform({ type: 'ARRAY' }, 'pay_by_quarter', 'employees');
 
-      expect(computedType).toStrictEqual('ARRAY(DataTypes.INTEGER)');
+      expect(computedType).toBe('ARRAY(DataTypes.INTEGER)');
 
       await sequelizeHelper.drop('employees', 'postgres');
       await sequelizeHelper.close();

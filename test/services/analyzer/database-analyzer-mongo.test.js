@@ -78,7 +78,7 @@ describe('services > database analyser > MongoDB', () => {
       await db.collection('connect_test').insertOne({ name: 'hello' });
       const doc = await db.collection('connect_test').findOne({ name: 'hello' });
       await mongoHelper.close();
-      expect(doc.name).toStrictEqual('hello');
+      expect(doc.name).toBe('hello');
     });
 
     it('should generate a simple model', async () => {
@@ -186,7 +186,7 @@ describe('services > database analyser > MongoDB', () => {
       // the purpose of this test is to ensure it has not been imported nor analyzed.
       // Still, listCollections() returns unauthorized views only since 4.0.
       expect((await mongoHelper.db.listCollections().toArray())
-        .find((collection) => collection.name === 'system.views')).not.toBeUndefined();
+        .find((collection) => collection.name === 'system.views')).toBeDefined();
     });
 
     // The output is expected to contain the view but not its system.view attached table.

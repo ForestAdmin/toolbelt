@@ -34,7 +34,7 @@ describe('services > dumper (unit)', () => {
         },
       });
 
-      expect(dumper.isLinuxBasedOs()).toStrictEqual(true);
+      expect(dumper.isLinuxBasedOs()).toBe(true);
     });
 
     it('should return false on other OS', () => {
@@ -46,7 +46,7 @@ describe('services > dumper (unit)', () => {
         },
       });
 
-      expect(dumper.isLinuxBasedOs()).toStrictEqual(false);
+      expect(dumper.isLinuxBasedOs()).toBe(false);
     });
   });
 
@@ -184,9 +184,9 @@ describe('services > dumper (unit)', () => {
 
       const parsedPackageJson = JSON.parse(fileContent);
 
-      expect(parsedPackageJson.name).toStrictEqual('test');
-      expect(parsedPackageJson.version).toStrictEqual('0.0.1');
-      expect(parsedPackageJson.private).toStrictEqual(true);
+      expect(parsedPackageJson.name).toBe('test');
+      expect(parsedPackageJson.version).toBe('0.0.1');
+      expect(parsedPackageJson.private).toBe(true);
       expect(parsedPackageJson.scripts).toStrictEqual({ start: 'node ./server.js' });
     });
 
@@ -243,9 +243,9 @@ describe('services > dumper (unit)', () => {
     it('should return a kebab case version of the given parameter', () => {
       expect.assertions(3);
 
-      expect(Dumper.tableToFilename('test')).toStrictEqual('test');
-      expect(Dumper.tableToFilename('testSomething')).toStrictEqual('test-something');
-      expect(Dumper.tableToFilename('test_something_else')).toStrictEqual('test-something-else');
+      expect(Dumper.tableToFilename('test')).toBe('test');
+      expect(Dumper.tableToFilename('testSomething')).toBe('test-something');
+      expect(Dumper.tableToFilename('test_something_else')).toBe('test-something-else');
     });
   });
 
@@ -271,7 +271,7 @@ describe('services > dumper (unit)', () => {
         dbName: 'forest',
       };
 
-      expect(Dumper.getDatabaseUrl(config)).toStrictEqual('mysql://root@localhost:3306/forest');
+      expect(Dumper.getDatabaseUrl(config)).toBe('mysql://root@localhost:3306/forest');
     });
 
     it('should remove the port if mongodbSrv is provided', () => {
@@ -287,7 +287,7 @@ describe('services > dumper (unit)', () => {
         dbName: 'forest',
       };
 
-      expect(Dumper.getDatabaseUrl(config)).toStrictEqual('mongodb+srv://root:password@localhost/forest');
+      expect(Dumper.getDatabaseUrl(config)).toBe('mongodb+srv://root:password@localhost/forest');
     });
   });
 
@@ -297,7 +297,7 @@ describe('services > dumper (unit)', () => {
 
       const dbConnectionUrl = 'mongodb+srv://root:password@localhost/forest';
 
-      expect(Dumper.isDatabaseLocal({ dbConnectionUrl })).toStrictEqual(true);
+      expect(Dumper.isDatabaseLocal({ dbConnectionUrl })).toBe(true);
     });
 
     it('should return false for a config referring to a database not hosted locally', () => {
@@ -305,7 +305,7 @@ describe('services > dumper (unit)', () => {
 
       const dbConnectionUrl = 'mongodb+srv://root:password@somewhere.intheworld.com/forest';
 
-      expect(Dumper.isDatabaseLocal({ dbConnectionUrl })).toStrictEqual(false);
+      expect(Dumper.isDatabaseLocal({ dbConnectionUrl })).toBe(false);
     });
   });
 
@@ -313,13 +313,13 @@ describe('services > dumper (unit)', () => {
     it('should return true for a local url', () => {
       expect.assertions(1);
 
-      expect(Dumper.isLocalUrl('http://localhost')).toStrictEqual(true);
+      expect(Dumper.isLocalUrl('http://localhost')).toBe(true);
     });
 
     it('should return false for not local url', () => {
       expect.assertions(1);
 
-      expect(Dumper.isLocalUrl('http://somewhere.else.intheworld.com')).toStrictEqual(false);
+      expect(Dumper.isLocalUrl('http://somewhere.else.intheworld.com')).toBe(false);
     });
   });
 
@@ -327,13 +327,13 @@ describe('services > dumper (unit)', () => {
     it('should return the given for config containing appPort', () => {
       expect.assertions(1);
 
-      expect(Dumper.getPort({ appPort: 1234 })).toStrictEqual(1234);
+      expect(Dumper.getPort({ appPort: 1234 })).toBe(1234);
     });
 
     it('should return the default port for config not containing appPort', () => {
       expect.assertions(1);
 
-      expect(Dumper.getPort({})).toStrictEqual(3310);
+      expect(Dumper.getPort({})).toBe(3310);
     });
   });
 
@@ -342,7 +342,7 @@ describe('services > dumper (unit)', () => {
       it('should prefix the host name with http://', () => {
         expect.assertions(1);
 
-        expect(Dumper.getApplicationUrl({ appHostname: 'somewhere.not.local.com' })).toStrictEqual('http://somewhere.not.local.com');
+        expect(Dumper.getApplicationUrl({ appHostname: 'somewhere.not.local.com' })).toBe('http://somewhere.not.local.com');
       });
     });
 
@@ -353,7 +353,7 @@ describe('services > dumper (unit)', () => {
         expect(Dumper.getApplicationUrl({
           appHostname: 'http://localhost',
           appPort: 1234,
-        })).toStrictEqual('http://localhost:1234');
+        })).toBe('http://localhost:1234');
       });
 
       it('should return the appHostname already defined', () => {
@@ -361,7 +361,7 @@ describe('services > dumper (unit)', () => {
 
         expect(Dumper.getApplicationUrl({
           appHostname: 'https://somewhere.com',
-        })).toStrictEqual('https://somewhere.com');
+        })).toBe('https://somewhere.com');
       });
     });
   });
@@ -469,7 +469,7 @@ describe('services > dumper (unit)', () => {
         const handlebarContext = copyHandlebarsTemplateSpy.mock.calls[0][0].context;
 
         // eslint-disable-next-line no-template-curly-in-string
-        expect(handlebarContext.forestUrl).toStrictEqual('${FOREST_URL-https://something.com}');
+        expect(handlebarContext.forestUrl).toBe('${FOREST_URL-https://something.com}');
       });
     });
 
@@ -488,7 +488,7 @@ describe('services > dumper (unit)', () => {
         dumper.writeDockerCompose(ABSOLUTE_PROJECT_PATH, {});
         const handlebarContext = copyHandlebarsTemplateSpy.mock.calls[0][0].context;
 
-        expect(handlebarContext.forestUrl).toStrictEqual(false);
+        expect(handlebarContext.forestUrl).toBe(false);
       });
     });
   });
@@ -849,7 +849,7 @@ describe('services > dumper (unit)', () => {
         },
       });
 
-      expect(dumper.hasMultipleDatabaseStructure()).toStrictEqual(false);
+      expect(dumper.hasMultipleDatabaseStructure()).toBe(false);
     });
 
     it('should return true if models folder contains only subfolders', () => {
@@ -869,7 +869,7 @@ describe('services > dumper (unit)', () => {
         },
       });
 
-      expect(dumper.hasMultipleDatabaseStructure()).toStrictEqual(true);
+      expect(dumper.hasMultipleDatabaseStructure()).toBe(true);
     });
   });
 
@@ -878,8 +878,8 @@ describe('services > dumper (unit)', () => {
       it('should return true', () => {
         expect.assertions(2);
 
-        expect(Dumper.shouldSkipRouteGenerationForModel('stats')).toStrictEqual(true);
-        expect(Dumper.shouldSkipRouteGenerationForModel('Sessions')).toStrictEqual(true);
+        expect(Dumper.shouldSkipRouteGenerationForModel('stats')).toBe(true);
+        expect(Dumper.shouldSkipRouteGenerationForModel('Sessions')).toBe(true);
       });
     });
 
@@ -887,8 +887,8 @@ describe('services > dumper (unit)', () => {
       it('should return false', () => {
         expect.assertions(2);
 
-        expect(Dumper.shouldSkipRouteGenerationForModel('users')).toStrictEqual(false);
-        expect(Dumper.shouldSkipRouteGenerationForModel('projects')).toStrictEqual(false);
+        expect(Dumper.shouldSkipRouteGenerationForModel('users')).toBe(false);
+        expect(Dumper.shouldSkipRouteGenerationForModel('projects')).toBe(false);
       });
     });
   });

@@ -5,7 +5,7 @@ const Context = require('@forestadmin/context');
 const EnvironmentSerializer = require('../serializers/environment');
 const environmentDeserializer = require('../deserializers/environment');
 const DeploymentRequestSerializer = require('../serializers/deployment-request');
-const JobStateChecker = require('../services/job-state-checker');
+const JobStateChecker = require('./job-state-checker');
 
 function EnvironmentManager(config) {
   const {
