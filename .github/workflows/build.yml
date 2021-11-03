@@ -19,7 +19,7 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - name: Cancel previous running workflows
         uses: fkirc/skip-duplicate-actions@9da67cec51d21092667038f0f4fda73099a3a451
@@ -44,7 +44,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     needs: [lint]
     strategy:
       matrix:
