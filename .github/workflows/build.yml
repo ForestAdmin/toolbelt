@@ -70,7 +70,7 @@ jobs:
         if: ${{ !matrix.withCoverage }}
         run: yarn test
       - name: Test with Node ${{ matrix.node }} & Send coverage
-        uses: ForestAdmin/codeclimate-action@master
+        uses: ForestAdmin/codeclimate-action@3.0.1
         if: matrix.withCoverage && matrix.node == 14
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
