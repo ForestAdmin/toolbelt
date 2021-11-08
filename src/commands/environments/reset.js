@@ -28,16 +28,6 @@ class ResetCommand extends AbstractAuthenticatedCommand {
     throw new Error('No remote environment.');
   }
 
-  async resetEnvironment(config) {
-    try {
-      await new EnvironmentManager(config).reset(config.environment, config.envSecret);
-      this.logger.success(`Environment ${config.environment} successfully resetted.`);
-    } catch (error) {
-      this.logger.error(error);
-      this.exit(2);
-    }
-  }
-
   async runIfAuthenticated() {
     const parsed = this.parse(ResetCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
@@ -67,7 +57,8 @@ class ResetCommand extends AbstractAuthenticatedCommand {
         if (!response.confirm) return;
       }
 
-      await this.resetEnvironment(config);
+      await new EnvironmentManager(config).reset(config.environment, config.envSecret);
+      this.logger.success(`Environment ${config.environment} successfully resetted.`);
     } catch (error) {
       console.log(error);
       this.logger.error(error);
