@@ -718,4 +718,9 @@ module.exports = {
       type: 'development',
       secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
     })),
+  resetRemoteEnvironment: () => nock('http://localhost:3001')
+    .post('/api/environments/reset', {
+      environmentName: 'name1',
+    })
+    .reply(200),
 };
