@@ -7,6 +7,7 @@ const { handleError } = require('../utils/error');
 const ERROR_MESSAGE_PROJECT_IN_V1 = 'This project does not support branches yet. Please migrate your environments from your Project settings first.';
 const ERROR_MESSAGE_ENV_SECRET_ISSUE = 'Your development environment is not properly set up. Please run `forest init` first and retry.';
 const ERROR_MESSAGE_BRANCH_ALREADY_EXISTS = 'This branch already exists.';
+const ERROR_MESSAGE_ADDITIONAL_REMOTE_BRANCHES = 'The remote environments can\'t have additional branches.';
 const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT = 'You cannot run branch commands until this project has either a remote or a production environment.';
 const ERROR_MESSAGE_NO_REMOTE_ENVIRONMENT = 'You cannot run this command until this project has a remote non-production environment.';
 const ERROR_MESSAGE_BRANCH_DOES_NOT_EXIST = 'This branch doesn\'t exist.';
@@ -111,8 +112,8 @@ function handleBranchError(rawError) {
       return ERROR_MESSAGE_ENV_SECRET_ISSUE;
     case 'Forbidden':
       return ERROR_MESSAGE_NOT_ADMIN_USER;
-    case 'Not development environment.':
-      return ERROR_MESSAGE_ENV_SECRET_ISSUE;
+    case 'Environment is not in development.':
+      return ERROR_MESSAGE_ADDITIONAL_REMOTE_BRANCHES;
     case 'Dev Workflow disabled.':
       return ERROR_MESSAGE_PROJECT_IN_V1;
     case 'Branch name already exists.':

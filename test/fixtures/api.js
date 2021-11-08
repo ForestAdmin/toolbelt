@@ -489,7 +489,7 @@ module.exports = {
     .get('/api/branches')
     .reply(422, JSON.stringify({
       errors: [{
-        detail: 'Not development environment.',
+        detail: 'Environment is not in development.',
       }],
     })),
 
