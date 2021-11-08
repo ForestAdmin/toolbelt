@@ -6,6 +6,9 @@ const {
   getEnvironmentListValid,
   resetRemoteEnvironment,
   getProjectByEnv,
+  resetRemoteUnexistingEnvironment,
+  resetRemoteDisallowedEnvironment,
+  resetRemoteEnvironmentFailed,
 } = require('../../fixtures/api');
 const { testEnvWithoutSecret, testEnvWithSecret } = require('../../fixtures/env');
 
@@ -84,6 +87,57 @@ describe('environments:reset', () => {
           { out: 'Environment name1 successfully resetted' },
         ],
       }));
+
+      describe('when the environment does not exist', () => {
+        it('should forward the error and exit the process with error code 2', () => testCli({
+          env: testEnvWithSecret,
+          token: 'any',
+          commandClass: ResetCommand,
+          commandArgs: ['-e', 'name2', '--force'],
+          api: [
+            () => getProjectByEnv(),
+            () => resetRemoteUnexistingEnvironment(),
+          ],
+          std: [
+            { err: '× Cannot find the environment name2' },
+          ],
+          exitCode: 2,
+        }));
+      });
+
+      describe('when user is not allowed on this environment', () => {
+        it('should forward the error and exit the process with error code 2', () => testCli({
+          env: testEnvWithSecret,
+          token: 'any',
+          commandClass: ResetCommand,
+          commandArgs: ['-e', 'name2', '--force'],
+          api: [
+            () => getProjectByEnv(),
+            () => resetRemoteDisallowedEnvironment(),
+          ],
+          std: [
+            { err: '× You do not have the rights to reset the layout of the environment name2' },
+          ],
+          exitCode: 2,
+        }));
+      });
+
+      describe('when an unexpected issue happens', () => {
+        it('should forward the error and exit the process with error code 2', () => testCli({
+          env: testEnvWithSecret,
+          token: 'any',
+          commandClass: ResetCommand,
+          commandArgs: ['-e', 'name2', '--force'],
+          api: [
+            () => getProjectByEnv(),
+            () => resetRemoteEnvironmentFailed(),
+          ],
+          std: [
+            { err: '× Oops something went wrong.' },
+          ],
+          exitCode: 2,
+        }));
+      });
     });
   });
 

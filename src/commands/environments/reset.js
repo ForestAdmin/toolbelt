@@ -2,6 +2,7 @@ const EnvironmentManager = require('../../services/environment-manager');
 const ProjectManager = require('../../services/project-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const withCurrentProject = require('../../services/with-current-project');
+const { handleError } = require('../../utils/error');
 
 class ResetCommand extends AbstractAuthenticatedCommand {
   init(plan) {
@@ -60,8 +61,13 @@ class ResetCommand extends AbstractAuthenticatedCommand {
       await new EnvironmentManager(config).reset(config.environment, config.envSecret);
       this.logger.success(`Environment ${config.environment} successfully resetted.`);
     } catch (error) {
-      console.log(error);
-      this.logger.error(error);
+      if (error.response && error.status === 403) {
+        this.logger.error(`You do not have the rights to reset the layout of the environment ${config.environment}`);
+      } else if (error.response && error.status === 404) {
+        this.logger.error(`Cannot find the environment ${config.environment}`);
+      } else {
+        this.logger.error(handleError(error));
+      }
       this.exit(2);
     }
   }

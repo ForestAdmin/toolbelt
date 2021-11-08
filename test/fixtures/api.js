@@ -723,4 +723,19 @@ module.exports = {
       environmentName: 'name1',
     })
     .reply(200),
+  resetRemoteUnexistingEnvironment: () => nock('http://localhost:3001')
+    .post('/api/environments/reset', {
+      environmentName: 'name2',
+    })
+    .reply(404),
+  resetRemoteDisallowedEnvironment: () => nock('http://localhost:3001')
+    .post('/api/environments/reset', {
+      environmentName: 'name2',
+    })
+    .reply(403),
+  resetRemoteEnvironmentFailed: () => nock('http://localhost:3001')
+    .post('/api/environments/reset', {
+      environmentName: 'name2',
+    })
+    .reply(422),
 };
