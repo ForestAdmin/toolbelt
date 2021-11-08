@@ -9,6 +9,7 @@ const {
   resetRemoteUnexistingEnvironment,
   resetRemoteDisallowedEnvironment,
   resetRemoteEnvironmentFailed,
+  getNoEnvironmentListValid,
 } = require('../../fixtures/api');
 const { testEnvWithoutSecret, testEnvWithSecret } = require('../../fixtures/env');
 
@@ -60,6 +61,36 @@ describe('environments:reset', () => {
         std: [
           { out: 'Environment name1 successfully resetted' },
         ],
+      }));
+    });
+
+    describe('when no remote environment is available', () => {
+      it('should return prompt for a list of remote environment, ask confirmation and call reset', () => testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: ResetCommand,
+        commandArgs: [],
+        api: [
+          () => getProjectListValid(),
+          () => getDevelopmentEnvironmentValid(),
+          () => getNoEnvironmentListValid(1),
+        ],
+        prompts: [{
+          in: [{
+            name: 'project',
+            message: 'Select your project',
+            type: 'list',
+            choices: [
+              { name: 'project1', value: 1 },
+              { name: 'project2', value: 2 },
+            ],
+          }],
+          out: { project: 1 },
+        }],
+        std: [
+          { err: '× No remote environment' },
+        ],
+        exitCode: 2,
       }));
     });
 
