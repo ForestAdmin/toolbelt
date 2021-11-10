@@ -59,7 +59,7 @@ class ResetCommand extends AbstractAuthenticatedCommand {
       }
 
       await new EnvironmentManager(config).reset(config.environment, config.envSecret);
-      this.logger.success(`Environment ${config.environment} successfully resetted.`);
+      this.logger.success(`Environment ${config.environment} successfully reset. Please refresh your browser to see the new state.`);
     } catch (error) {
       if (error.response && error.status === 403) {
         this.logger.error(`You do not have the rights to reset the layout of the environment ${config.environment}`);
@@ -82,6 +82,11 @@ ResetCommand.flags = {
   }),
   force: AbstractAuthenticatedCommand.flags.boolean({
     description: 'Skip reset changes confirmation.',
+  }),
+  projectId: AbstractAuthenticatedCommand.flags.integer({
+    char: 'p',
+    description: 'The id of the project to work on.',
+    default: null,
   }),
 };
 

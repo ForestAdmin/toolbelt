@@ -59,7 +59,7 @@ describe('environments:reset', () => {
           },
         }],
         std: [
-          { out: 'Environment name1 successfully resetted' },
+          { out: 'Environment name1 successfully reset. Please refresh your browser to see the new state.' },
         ],
       }));
     });
@@ -115,7 +115,7 @@ describe('environments:reset', () => {
           },
         }],
         std: [
-          { out: 'Environment name1 successfully resetted' },
+          { out: 'Environment name1 successfully reset. Please refresh your browser to see the new state.' },
         ],
       }));
 
@@ -184,7 +184,44 @@ describe('environments:reset', () => {
       ],
       prompts: [],
       std: [
-        { out: 'Environment name1 successfully resetted' },
+        { out: 'Environment name1 successfully reset. Please refresh your browser to see the new state.' },
+      ],
+    }));
+  });
+
+  describe('with -p/--projectId option', () => {
+    it('should ask confirmation and call reset', () => testCli({
+      env: testEnvWithoutSecret,
+      token: 'any',
+      commandClass: ResetCommand,
+      commandArgs: ['-p', '1'],
+      api: [
+        () => getDevelopmentEnvironmentValid(),
+        () => getEnvironmentListValid(1),
+        () => resetRemoteEnvironment(),
+      ],
+      prompts: [{
+        in: [{
+          name: 'environment',
+          message: 'Select the remote environment you want to reset',
+          type: 'list',
+          choices: ['name1'],
+        }],
+        out: {
+          environment: 'name1',
+        },
+      }, {
+        in: [{
+          name: 'confirm',
+          message: 'Reset changes on the environment name1',
+          type: 'confirm',
+        }],
+        out: {
+          confirm: true,
+        },
+      }],
+      std: [
+        { out: 'Environment name1 successfully reset. Please refresh your browser to see the new state.' },
       ],
     }));
   });

@@ -48,15 +48,18 @@ module.exports = class SchemaService {
 
   _getDatabasesConfig(path) {
     const configPath = this.path.resolve(this.constants.CURRENT_WORKING_DIRECTORY, path);
+    console.log(path);
     if (!this.fs.existsSync(configPath)) {
       throw new ForestCLIError(`The configuration file "${configPath}" does not exist.`);
     }
 
     // eslint-disable-next-line global-require, import/no-dynamic-require
     const databasesConfig = require(configPath);
+    console.log(databasesConfig);
     if (!this.database.areAllDatabasesOfTheSameType(databasesConfig)) {
       throw new ForestCLIError(`The "${configPath}" file contains different databases types.`);
     }
+    console.log(databasesConfig);
     return databasesConfig;
   }
 
