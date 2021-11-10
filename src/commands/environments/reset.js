@@ -63,8 +63,6 @@ class ResetCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       if (error.response && error.status === 403) {
         this.logger.error(`You do not have the rights to reset the layout of the environment ${config.environment}`);
-      } else if (error.response && error.status === 404) {
-        this.logger.error(`Cannot find the environment ${config.environment}`);
       } else {
         this.logger.error(handleError(error));
       }

@@ -727,7 +727,11 @@ module.exports = {
     .post('/api/environments/reset', {
       environmentName: 'name2',
     })
-    .reply(404),
+    .reply(404, JSON.stringify({
+      errors: [{
+        detail: 'Environment not found.',
+      }],
+    })),
   resetRemoteDisallowedEnvironment: () => nock('http://localhost:3001')
     .post('/api/environments/reset', {
       environmentName: 'name2',

@@ -130,7 +130,7 @@ describe('environments:reset', () => {
             () => resetRemoteUnexistingEnvironment(),
           ],
           std: [
-            { err: '× Cannot find the environment name2' },
+            { err: '× Environment not found.' },
           ],
           exitCode: 2,
         }));
