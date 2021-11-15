@@ -112,6 +112,16 @@ function EnvironmentManager(config) {
     return jobStateChecker.check(jobId, config.projectId);
   };
 
+  this.reset = async (environmentName, environmentSecret) => {
+    const authToken = authenticator.getAuthToken();
+
+    return agent
+      .post(`${env.FOREST_URL}/api/environments/reset`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('forest-secret-key', `${environmentSecret}`)
+      .send({ environmentName });
+  };
+
   /**
    * Deploy layout changes of an environment to production.
    * @param {Number} environment.id - The environment id that contains the layout changes to deploy.
