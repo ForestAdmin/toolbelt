@@ -1,3 +1,10 @@
+# [2.5.0](https://github.com/ForestAdmin/toolbelt/compare/v2.4.1...v2.5.0) (2021-11-15)
+
+
+### Features
+
+* **reset:** allow users to reset layout changes on a remote environment ([#284](https://github.com/ForestAdmin/toolbelt/issues/284)) ([1c2ce0e](https://github.com/ForestAdmin/toolbelt/commit/1c2ce0e8aaccb05ca6747a40e0a24ca5aa759172))
+
 ## [2.4.1](https://github.com/ForestAdmin/toolbelt/compare/v2.4.0...v2.4.1) (2021-10-28)
 
 
