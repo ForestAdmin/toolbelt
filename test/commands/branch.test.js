@@ -293,7 +293,7 @@ describe('branch', () => {
             () => getBranchInvalidNotDevEnv(),
           ],
           std: [
-            { err: '× Your development environment is not properly set up. Please run `forest init` first and retry.' },
+            { err: '× The remote environments can\'t have additional branches.' },
           ],
           exitCode: 2,
         }));
