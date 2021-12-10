@@ -1,3 +1,10 @@
+## [2.5.1](https://github.com/ForestAdmin/toolbelt/compare/v2.5.0...v2.5.1) (2021-12-10)
+
+
+### Bug Fixes
+
+* error message when the user wants to create a branch on a remote branch ([#285](https://github.com/ForestAdmin/toolbelt/issues/285)) ([2cbde60](https://github.com/ForestAdmin/toolbelt/commit/2cbde60e62f0172ea306e729d374a737db428cb6))
+
 # [2.5.0](https://github.com/ForestAdmin/toolbelt/compare/v2.4.1...v2.5.0) (2021-11-15)
 
 
