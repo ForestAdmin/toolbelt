@@ -51,7 +51,7 @@ With the Development Workflow activated.
 - `switch` switch to another branch in your local development environment.
 - `push` push layout changes of your current branch to a remote environment.
 - `deploy` deploy layout changes of an environment to the reference one.
-- `environments:reset` reset a remote environment by removing all layout changes
+- `environments:reset` reset a remote environment by removing all layout changes.
 
 ### Schema
 
