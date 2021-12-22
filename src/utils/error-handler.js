@@ -2,7 +2,7 @@ const ForestCLIError = require('../errors/forest-cli-error');
 
 class ErrorHandler {
   /**
-   * @param {import('../context/plan').Context} context
+   * @param {import('../context/default-plan').Context} context
    */
   constructor({
     assertPresent,

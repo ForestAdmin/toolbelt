@@ -10,7 +10,7 @@ const expectedDefaultValuesMysql = require('./expected/sequelize/db-analysis-out
 const expectedDefaultValuesMssql = require('./expected/sequelize/db-analysis-output/default_values.mssql.expected');
 const sequelizeAnalyzer = require('../../../src/services/schema/update/analyzer/sequelize-tables-analyzer');
 
-const defaultPlan = require('../../../src/context/plan');
+const defaultPlan = require('../../../src/context/default-plan');
 
 const TIMEOUT = 30000;
 

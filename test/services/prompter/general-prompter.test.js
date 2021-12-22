@@ -4,7 +4,7 @@ const GeneralPrompter = require('../../../src/services/prompter/general-prompter
 const PrompterError = require('../../../src/services/prompter/prompter-error');
 const Terminator = require('../../../src/utils/terminator');
 
-const defaultPlan = require('../../../src/context/plan');
+const defaultPlan = require('../../../src/context/default-plan');
 
 const setupTest = () => {
   Context.init(defaultPlan);

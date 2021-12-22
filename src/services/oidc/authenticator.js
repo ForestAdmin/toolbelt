@@ -2,7 +2,7 @@ const OidcError = require('./error');
 
 class OidcAuthenticator {
   /**
-   * @param {import('../../context/plan').Context} context
+   * @param {import('../../context/default-plan').Context} context
    */
   constructor({
     assertPresent, openIdClient, env, process, open,

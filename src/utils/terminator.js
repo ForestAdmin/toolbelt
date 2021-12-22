@@ -1,5 +1,3 @@
-const Context = require('@forestadmin/context');
-
 /**
  * @typedef {{
  *  errorCode: string;
@@ -12,25 +10,29 @@ const Context = require('@forestadmin/context');
  * }} MultipleMessages
  */
 
-module.exports = {
-  /**
-   * @param {number} status
-   * @param {DetailedLog | MultipleMessages | DetailedLog & MultipleMessages} log
-   */
-  async terminate(status, {
-    errorCode, errorMessage, logs, context,
-  }) {
-    const { eventSender, exitProcess, logger } = Context.inject();
+module.exports = ({
+  assertPresent, eventSender, exitProcess, logger,
+}) => {
+  assertPresent({ eventSender, exitProcess, logger });
 
-    if (logs.length) {
-      logger.error(...logs);
-    }
-    if (errorCode) {
-      await eventSender.notifyError(errorCode, errorMessage, context);
-    } else {
-      await eventSender.notifyError();
-    }
+  return {
+    /**
+     * @param {number} status
+     * @param {DetailedLog | MultipleMessages | DetailedLog & MultipleMessages} log
+     */
+    async terminate(status, {
+      errorCode, errorMessage, logs, context,
+    }) {
+      if (logs.length) {
+        logger.error(...logs);
+      }
+      if (errorCode) {
+        await eventSender.notifyError(errorCode, errorMessage, context);
+      } else {
+        await eventSender.notifyError();
+      }
 
-    return exitProcess(status);
-  },
+      return exitProcess(status);
+    },
+  };
 };

@@ -1,8 +1,5 @@
-const KeyGenerator = require('../utils/key-generator');
-const messages = require('../utils/messages');
-const terminator = require('../utils/terminator');
-
+/* eslint-disable global-require */
 module.exports = (plan) => plan
-  .addClass(KeyGenerator)
-  .addInstance('terminator', terminator)
-  .addValue('messages', messages);
+  .addUsingClass('keyGenerator', () => require('../utils/key-generator'))
+  .addUsingFunction('terminator', require('../utils/terminator'))
+  .addValue('messages', require('../utils/messages'));
