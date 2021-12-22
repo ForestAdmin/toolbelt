@@ -2,7 +2,7 @@ const { init, inject } = require('@forestadmin/context');
 
 const PrompterError = require('../../../src/services/prompter/prompter-error');
 
-const defaultPlan = require('../../../src/context/default-plan');
+const defaultPlan = require('../../../src/context/plan');
 
 const setupTest = () => {
   init(defaultPlan);

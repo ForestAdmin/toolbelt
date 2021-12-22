@@ -1,6 +1,6 @@
 const { makeAuthenticatorMock } = require('./mocks/plan-mocks');
 
-const defaultPlan = require('../../../src/context/default-plan');
+const defaultPlan = require('../../../src/context/plan');
 
 // FIXME: Need to override things here (fs...)
 

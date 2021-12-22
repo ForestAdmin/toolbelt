@@ -1,5 +1,5 @@
 const { execute, makeDotWrite } = require('@forestadmin/context');
-const defaultPlan = require('../../src/context/default-plan');
+const defaultPlan = require('../../src/context/plan');
 
 describe('show context graph', () => {
   it('show default graph', () => {

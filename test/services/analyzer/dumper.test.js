@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const rimraf = require('rimraf');
 const Dumper = require('../../../src/services/dumper/dumper');
-const defaultPlan = require('../../../src/context/default-plan');
+const defaultPlan = require('../../../src/context/plan');
 
 const DOCKER_COMPOSE_FILE_LOCATION = './test-output/Linux/docker-compose.yml';
 const DOT_ENV_FILE_LOCATION = './test-output/Linux/.env';

@@ -1,7 +1,7 @@
 const { Command, flags } = require('@oclif/command');
 const Context = require('@forestadmin/context');
 
-const defaultPlan = require('./context/default-plan');
+const defaultPlan = require('./context/plan');
 
 class AbstractCommand extends Command {
   init(plan) {
