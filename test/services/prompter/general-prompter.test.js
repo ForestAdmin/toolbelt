@@ -1,13 +1,12 @@
-const Context = require('@forestadmin/context');
+const { init, inject } = require('@forestadmin/context');
 
-const GeneralPrompter = require('../../../src/services/prompter/general-prompter');
 const PrompterError = require('../../../src/services/prompter/prompter-error');
-const Terminator = require('../../../src/utils/terminator');
 
 const defaultPlan = require('../../../src/context/default-plan');
 
 const setupTest = () => {
-  Context.init(defaultPlan);
+  init(defaultPlan);
+  return inject();
 };
 
 describe('services > prompter > general prompter', () => {
@@ -24,7 +23,7 @@ describe('services > prompter > general prompter', () => {
       it('should terminate the process', async () => {
         expect.assertions(5);
 
-        setupTest();
+        const { terminator, GeneralPrompter } = setupTest();
 
         const promptError = new PrompterError('error message', ['logs']);
 
@@ -32,7 +31,7 @@ describe('services > prompter > general prompter', () => {
         const applicationPromptsStub = jest.spyOn(generalPrompter.applicationPrompt, 'handlePrompts').mockRejectedValue(promptError);
         const projectPromptsStub = jest.spyOn(generalPrompter.projectPrompt, 'handlePrompts').mockRejectedValue(promptError);
         const databasePromptsStub = jest.spyOn(generalPrompter.databasePrompt, 'handlePrompts').mockRejectedValue(promptError);
-        const terminateStub = jest.spyOn(Terminator, 'terminate').mockResolvedValue(true);
+        const terminateStub = jest.spyOn(terminator, 'terminate').mockResolvedValue(true);
 
         await generalPrompter.getConfig();
 
