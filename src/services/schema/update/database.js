@@ -6,7 +6,6 @@ class Database {
     terminator,
   }) {
     assertPresent({
-      assertPresent,
       mongodb,
       Sequelize,
       terminator,

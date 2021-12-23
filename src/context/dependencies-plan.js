@@ -1,17 +1,17 @@
 /* eslint-disable global-require */
 module.exports = (plan) => plan
-  .addStep('open', (planOpen) => planOpen
-    .addFunction('open', require('open')))
-  .addStep('std', (planStd) => planStd
-    .addFunction('stdout', process.stdout)
-    .addFunction('stderr', process.stderr))
-  .addStep('inquirer', (planInquirer) => planInquirer
-    .addInstance('inquirer', require('inquirer')))
-  .addStep('jwtDecode', (planJWTDecode) => planJWTDecode
-    .addInstance('jwtDecode', require('jwt-decode')))
-  .addStep('others', (planOthers) => planOthers
+  .addPackage('open', (planOpen) => planOpen
+    .addUsingFunction('open', () => require('open')))
+  .addPackage('std', (planStd) => planStd
+    .addUsingFunction('stdout', () => process.stdout)
+    .addUsingFunction('stderr', () => process.stderr))
+  .addPackage('inquirer', (planInquirer) => planInquirer
+    .addInstance('inquirer', () => require('inquirer')))
+  .addPackage('jwtDecode', (planJWTDecode) => planJWTDecode
+    .addInstance('jwtDecode', () => require('jwt-decode')))
+  .addPackage('others', (planOthers) => planOthers
     .addModule('mkdirp', () => require('mkdirp'))
-    .addInstance('Table', require('cli-table'))
+    .addInstance('Table', () => require('cli-table'))
     .addModule('chalk', () => require('chalk'))
     .addModule('crypto', () => require('crypto'))
     .addModule('fs', () => require('fs'))

@@ -16,3 +16,4 @@ oclif.manifest.json
 .vscode
 
 test-output/
+.generated/

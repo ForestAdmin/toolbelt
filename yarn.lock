@@ -668,10 +668,10 @@
     ts-node "^9"
     tslib "^2"
 
-"@forestadmin/context@1.16.0":
-  version "1.16.0"
-  resolved "https://registry.yarnpkg.com/@forestadmin/context/-/context-1.16.0.tgz#c6b325777321792f38326c5005a33cc38f8acbb4"
-  integrity sha512-ALkIVIWfs7kFRFUZ2VHOQQZ9Li1HiLNOgaejRJyY5vxhm8EL2N2wF06Rkq1vhVM8b/8YTiDfxp8zcoilji1xbQ==
+"@forestadmin/context@1.31.0":
+  version "1.31.0"
+  resolved "https://registry.yarnpkg.com/@forestadmin/context/-/context-1.31.0.tgz#b4b5a3b589e52d337a1f45807db22c2860e640a7"
+  integrity sha512-RQkDBkq+6ySMv+YNezz9VWSyCsqD7fj/+bXrXhQ6lJ62nbRUIUheH7ApvXwfnwFR1u55oT6Yhar11t6DaiE9Ig==
 
 "@gar/promisify@^1.0.1":
   version "1.1.2"

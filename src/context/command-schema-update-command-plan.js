@@ -1,6 +1,4 @@
-const ErrorHandler = require('../utils/error-handler');
-const SchemaService = require('../services/schema/schema-service');
-
+/* eslint-disable global-require */
 module.exports = (plan) => plan
-  .addClass(ErrorHandler)
-  .addClass(SchemaService);
+  .addUsingClass('errorHandler', () => require('../utils/error-handler'))
+  .addUsingClass('schemaService', () => require('../services/schema/schema-service'));
