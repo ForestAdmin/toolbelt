@@ -1,19 +1,8 @@
 name: Build and Test
-
 on:
+  pull_request:
   push:
     branches: ["main", "beta"]
-  workflow_call:
-    secrets:
-      DOCKER_USERNAME:
-        required: true
-      DOCKER_PASSWORD:
-        required: true
-      CC_TEST_REPORTER_ID:
-        required: true
-
-env:
-  CHECKOUT_REFERENCE: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   lint:
@@ -25,7 +14,6 @@ jobs:
         uses: fkirc/skip-duplicate-actions@9da67cec51d21092667038f0f4fda73099a3a451
       - uses: actions/checkout@v2
         with:
-          ref: ${{ env.CHECKOUT_REFERENCE }}
           fetch-depth: 0
       - uses: actions/setup-node@v2
         with:
@@ -54,8 +42,6 @@ jobs:
             withCoverage: ${{ true }}
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: ${{ env.CHECKOUT_REFERENCE }}
       - uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node }}
@@ -78,7 +64,6 @@ jobs:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
         with:
           coverageCommand: yarn test:coverage
-          ref: ${{ env.CHECKOUT_REFERENCE }}
       - name: Test prepack
         run: yarn prepack
       - name: Test postpack
