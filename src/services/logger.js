@@ -27,7 +27,7 @@ class Logger {
     if (this.silent) return;
 
     options = {
-      ...Object.assign(this.allowedOptionKeys),
+      ...Object.fromEntries(this.allowedOptionKeys.map((key) => [key, undefined])),
       ...options,
     };
 
