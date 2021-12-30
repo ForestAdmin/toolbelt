@@ -23,7 +23,7 @@ class Logger {
       color: null,
       prefix: null,
       std: null,
-      colorLine: null,
+      lineColor: null,
       ...options,
     };
 
@@ -32,8 +32,8 @@ class Logger {
     if (actualPrefix && options.color) actualPrefix = chalk.bold[options.color](actualPrefix);
 
     let actualMessage;
-    if (options.colorLine) {
-      actualMessage = `${actualPrefix}${chalk[options.colorLine](message)} \n`;
+    if (options.lineColor) {
+      actualMessage = `${actualPrefix}${chalk[options.lineColor](message)} \n`;
     } else {
       actualMessage = `${actualPrefix}${message} \n`;
     }
