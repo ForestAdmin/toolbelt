@@ -1,5 +1,15 @@
 const chalk = require('chalk');
 
+const ALLOWED_OPTION_KEYS = [
+  'color',
+  'prefix',
+  'std',
+  'lineColor',
+];
+const DEFAULT_OPTION_VALUES = Object.fromEntries(
+  ALLOWED_OPTION_KEYS.map((key) => [key, undefined]),
+);
+
 class Logger {
   constructor({
     assertPresent,
@@ -12,13 +22,6 @@ class Logger {
     this.stderr = stderr;
     this.stdout = stdout;
 
-    this.allowedOptionKeys = [
-      'color',
-      'prefix',
-      'std',
-      'lineColor',
-    ];
-
     // FIXME: Silent was not used before as no "silent" value was in context.
     this.silent = !!this.env.SILENT && this.env.SILENT !== '0';
   }
@@ -27,7 +30,7 @@ class Logger {
     if (this.silent) return;
 
     options = {
-      ...Object.fromEntries(this.allowedOptionKeys.map((key) => [key, undefined])),
+      ...DEFAULT_OPTION_VALUES,
       ...options,
     };
 
@@ -53,7 +56,7 @@ class Logger {
 
   _logLines(messagesWithPotentialGivenOptions, baseOptions) {
     const { options, messages } = Logger._extractGivenOptionsFromMessages(
-      messagesWithPotentialGivenOptions, this.allowedOptionKeys,
+      messagesWithPotentialGivenOptions,
     );
     messages.forEach((message) => this._logLine(message, { ...baseOptions, ...options }));
   }
@@ -74,22 +77,20 @@ class Logger {
     return chalk.bold[color](message);
   }
 
-  static _isObjectKeysMatchAlwaysTheGivenKeys(object, keys) {
+  static _isObjectKeysMatchAlwaysTheGivenKeys(object) {
     if (typeof object !== 'object') {
       return false;
     }
 
-    return Object.keys(object).every((key) => keys.includes(key));
+    return Object.keys(object).every((key) => ALLOWED_OPTION_KEYS.includes(key));
   }
 
   // this method is a hack to keep the signature of all existing public methods.
-  static _extractGivenOptionsFromMessages(messages, allowedOptions) {
+  static _extractGivenOptionsFromMessages(messages) {
     let options = {};
     const potentialGivenOptions = messages[messages.length - 1];
 
-    const isOptions = (object) => Logger._isObjectKeysMatchAlwaysTheGivenKeys(
-      object, allowedOptions,
-    );
+    const isOptions = (object) => Logger._isObjectKeysMatchAlwaysTheGivenKeys(object);
     if (isOptions(potentialGivenOptions)) {
       options = { ...options, ...potentialGivenOptions };
       return { messages: messages.slice(0, -1), options };
