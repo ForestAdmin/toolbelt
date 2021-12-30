@@ -421,4 +421,81 @@ describe('projects:create', () => {
       expect(command.logger.log).toHaveBeenCalledWith(`${errorParameter.description}`);
     });
   });
+
+  describe('analyzeDatabase', () => {
+    const makeContext = () => ({
+      assertPresent: jest.fn(),
+      databaseAnalyzer: {
+        analyze: jest.fn(),
+        analyzeMongoDb: jest.fn(),
+      },
+      logger: {
+        info: jest.fn(),
+        success: jest.fn(),
+      },
+      spinner: {
+        start: jest.fn(),
+        attachToPromise: jest.fn(),
+      },
+    });
+
+    describe('when it is a mongodb dialect', () => {
+      it('should analyze the database and display a log without a spinner', async () => {
+        expect.assertions(7);
+
+        const context = makeContext();
+        const { databaseAnalyzer, logger, spinner } = context;
+
+        const createCommand = new CreateProjectCommand();
+        createCommand.databaseAnalyzer = databaseAnalyzer;
+        createCommand.logger = logger;
+        createCommand.spinner = spinner;
+
+        const dbConfig = { dbDialect: 'mongodb' };
+        const connection = {};
+        await createCommand.analyzeDatabase(dbConfig, connection);
+
+        expect(databaseAnalyzer.analyzeMongoDb).toHaveBeenCalledTimes(1);
+        expect(databaseAnalyzer.analyzeMongoDb).toHaveBeenCalledWith(
+          connection, dbConfig, true,
+        );
+
+        expect(logger.info).toHaveBeenCalledTimes(1);
+        expect(logger.info).toHaveBeenCalledWith('Analyzing the database...');
+
+        expect(logger.success).toHaveBeenCalledTimes(1);
+        expect(logger.success).toHaveBeenCalledWith('Database is analyzed', { lineColor: 'green' });
+
+        expect(spinner.start).toHaveBeenCalledTimes(0);
+      });
+    });
+
+    describe('when it is not a mongodb dialect', () => {
+      it('should analyze the database and display a spinner', async () => {
+        expect.assertions(5);
+
+        const context = makeContext();
+        const { databaseAnalyzer, logger, spinner } = context;
+
+        const createCommand = new CreateProjectCommand();
+        createCommand.databaseAnalyzer = databaseAnalyzer;
+        createCommand.logger = logger;
+        createCommand.spinner = spinner;
+
+        const dbConfig = { dbDialect: 'mysqldb' };
+        const connection = {};
+        await createCommand.analyzeDatabase(dbConfig, connection);
+
+        expect(databaseAnalyzer.analyze).toHaveBeenCalledTimes(1);
+        expect(databaseAnalyzer.analyze).toHaveBeenCalledWith(
+          connection, dbConfig, true,
+        );
+
+        expect(logger.info).toHaveBeenCalledTimes(0);
+
+        expect(spinner.start).toHaveBeenCalledTimes(1);
+        expect(spinner.attachToPromise).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
 });
