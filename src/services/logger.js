@@ -12,12 +12,12 @@ class Logger {
     this.stderr = stderr;
     this.stdout = stdout;
 
-    this.defaultOptions = {
-      color: null,
-      prefix: null,
-      std: null,
-      lineColor: null,
-    };
+    this.allowedOptionKeys = [
+      'color',
+      'prefix',
+      'std',
+      'lineColor',
+    ];
 
     // FIXME: Silent was not used before as no "silent" value was in context.
     this.silent = !!this.env.SILENT && this.env.SILENT !== '0';
@@ -27,7 +27,7 @@ class Logger {
     if (this.silent) return;
 
     options = {
-      ...this.defaultOptions,
+      ...Object.assign(this.allowedOptionKeys),
       ...options,
     };
 
@@ -53,7 +53,7 @@ class Logger {
 
   _logLines(messagesWithPotentialGivenOptions, baseOptions) {
     const { options, messages } = Logger._extractGivenOptionsFromMessages(
-      messagesWithPotentialGivenOptions, Object.keys(this.defaultOptions),
+      messagesWithPotentialGivenOptions, this.allowedOptionKeys,
     );
     messages.forEach((message) => this._logLine(message, { ...baseOptions, ...options }));
   }
