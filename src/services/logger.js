@@ -33,7 +33,7 @@ class Logger {
 
     let actualMessage;
     if (options.colorLine) {
-      actualMessage = `${actualPrefix}${chalk.bold[options.colorLine](message)} \n`;
+      actualMessage = `${actualPrefix}${chalk[options.colorLine](message)} \n`;
     } else {
       actualMessage = `${actualPrefix}${message} \n`;
     }

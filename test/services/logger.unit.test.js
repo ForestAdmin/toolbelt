@@ -36,8 +36,8 @@ describe('services > Logger', () => {
           logger.log('first message', 'second message', { colorLine: 'green', color: 'red' });
 
           expect(stdout.write).toHaveBeenCalledTimes(2);
-          expect(stdout.write).toHaveBeenCalledWith('[1m[32mfirst message[39m[22m \n');
-          expect(stdout.write).toHaveBeenCalledWith('[1m[32msecond message[39m[22m \n');
+          expect(stdout.write).toHaveBeenCalledWith('[32mfirst message[39m \n');
+          expect(stdout.write).toHaveBeenCalledWith('[32msecond message[39m \n');
         });
       });
     });
@@ -66,7 +66,7 @@ describe('services > Logger', () => {
         logger.success('should display this message', { colorLine: 'green' });
 
         expect(stdout.write).toHaveBeenCalledTimes(1);
-        expect(stdout.write).toHaveBeenCalledWith('[1m[32m√ [39m[22m[1m[32mshould display this message[39m[22m \n');
+        expect(stdout.write).toHaveBeenCalledWith('[1m[32m√ [39m[22m[32mshould display this message[39m \n');
       });
     });
 
@@ -80,7 +80,7 @@ describe('services > Logger', () => {
         logger.success('should display this message', { colorLine: 'green', color: 'red' });
 
         expect(stdout.write).toHaveBeenCalledTimes(1);
-        expect(stdout.write).toHaveBeenCalledWith('[1m[31m√ [39m[22m[1m[32mshould display this message[39m[22m \n');
+        expect(stdout.write).toHaveBeenCalledWith('[1m[31m√ [39m[22m[32mshould display this message[39m \n');
       });
     });
   });
