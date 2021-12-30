@@ -45,15 +45,15 @@ class Logger {
     }
   }
 
-  _logLines(messagesWithPotentialGivenOption, baseOptions) {
-    const { options, messages } = Logger._extractGivenOptionFromMessages(
-      messagesWithPotentialGivenOption,
+  _logLines(messagesWithPotentialGivenOptions, baseOptions) {
+    const { options, messages } = Logger._extractGivenOptionsFromMessages(
+      messagesWithPotentialGivenOptions,
     );
     messages.forEach((message) => this._logLine(message, { ...baseOptions, ...options }));
   }
 
   // this method is a hack to keep the signature of all existing public methods.
-  static _extractGivenOptionFromMessages(messages) {
+  static _extractGivenOptionsFromMessages(messages) {
     let options = {};
     const potentialGivenOptionFromCommand = messages[messages.length - 1];
     if (typeof potentialGivenOptionFromCommand === 'object') {
