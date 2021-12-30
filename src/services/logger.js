@@ -44,7 +44,6 @@ class Logger {
     if (options.lineColor) {
       actualMessage = `${Logger._setColor(options.lineColor, actualMessage)}`;
     }
-
     actualMessage = `${actualPrefix}${actualMessage}\n`;
 
     if (options.std === 'err') {
@@ -89,13 +88,15 @@ class Logger {
   // Last `message` is considered an option object if its keys are in `ALLOWED_OPTION_KEYS`.
   static _extractGivenOptionsFromMessages(messages) {
     let options = {};
-    const potentialGivenOptions = messages[messages.length - 1];
 
-    const isOptions = (object) => Logger._isObjectKeysMatchAlwaysTheGivenKeys(object);
-    if (isOptions(potentialGivenOptions)) {
+    const potentialGivenOptions = messages[messages.length - 1];
+    const hasOptions = Logger._isObjectKeysMatchAlwaysTheGivenKeys(potentialGivenOptions);
+
+    if (hasOptions) {
+      messages = messages.slice(0, -1);
       options = { ...options, ...potentialGivenOptions };
-      return { messages: messages.slice(0, -1), options };
     }
+
     return { messages, options };
   }
 
