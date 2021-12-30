@@ -85,7 +85,8 @@ class Logger {
     return Object.keys(object).every((key) => ALLOWED_OPTION_KEYS.includes(key));
   }
 
-  // this method is a hack to keep the signature of all existing public methods.
+  // This is a hack to keep the current signature of Logger methods.
+  // Last `message` is considered an option object if its keys are in `ALLOWED_OPTION_KEYS`.
   static _extractGivenOptionsFromMessages(messages) {
     let options = {};
     const potentialGivenOptions = messages[messages.length - 1];
@@ -99,18 +100,17 @@ class Logger {
   }
 
   /**
-   *  examples:
-   *  loggerInstance.success('message to display')
-   *  loggerInstance.success('message to display', { color: 'blue', colorLine: 'green' })
-   *  loggerInstance.success('message 1', 'message 2')
-   *  loggerInstance.success('message 1', 'message 2',  { color: 'blue', colorLine: 'green' })
+   *  Allows to log one ore more messages, with option object as last optional parameter.
+   *  @example logger.log('message')
+   *  @example logger.log('message', { color: 'blue', colorLine: 'green' })
+   *  @example logger.log('message 1', 'message 2')
+   *  @example logger.log('message 1', 'message 2',  { color: 'blue', colorLine: 'green' })
    */
+  log(...messagesAndOptions) { this._logLines(messagesAndOptions); }
 
   error(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'red', prefix: '×', std: 'err' }); }
 
   info(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'blue', prefix: '>' }); }
-
-  log(...messagesAndOptions) { this._logLines(messagesAndOptions); }
 
   success(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'green', prefix: '√' }); }
 
