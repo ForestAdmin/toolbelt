@@ -33,12 +33,12 @@ class Logger {
       actualPrefix = Logger._setBoldColor(options.color, actualPrefix);
     }
 
-    let actualMessage;
+    let actualMessage = message;
     if (options.lineColor) {
-      actualMessage = `${actualPrefix}${Logger._setColor(options.lineColor, message)} \n`;
-    } else {
-      actualMessage = `${actualPrefix}${message} \n`;
+      actualMessage = `${Logger._setColor(options.lineColor, actualMessage)}`;
     }
+
+    actualMessage = `${actualPrefix}${actualMessage}\n`;
 
     if (options.std === 'err') {
       this.stderr.write(actualMessage);

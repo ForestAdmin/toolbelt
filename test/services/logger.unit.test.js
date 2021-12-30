@@ -27,8 +27,8 @@ describe('services > Logger', () => {
         logger.log('first message', 'second message');
 
         expect(stdout.write).toHaveBeenCalledTimes(2);
-        expect(stdout.write).toHaveBeenCalledWith('first message \n');
-        expect(stdout.write).toHaveBeenCalledWith('second message \n');
+        expect(stdout.write).toHaveBeenCalledWith('first message\n');
+        expect(stdout.write).toHaveBeenCalledWith('second message\n');
       });
 
       describe('when the options are given', () => {
@@ -43,8 +43,8 @@ describe('services > Logger', () => {
           logger.log('first message', 'second message', { lineColor: 'green', color: 'red' });
 
           expect(stdout.write).toHaveBeenCalledTimes(2);
-          expect(stdout.write).toHaveBeenCalledWith('first message \n');
-          expect(stdout.write).toHaveBeenCalledWith('second message \n');
+          expect(stdout.write).toHaveBeenCalledWith('first message\n');
+          expect(stdout.write).toHaveBeenCalledWith('second message\n');
 
           expect(Logger._setColor).toHaveBeenCalledTimes(2);
           expect(Logger._setColor).toHaveBeenCalledWith('green', 'first message');
@@ -65,7 +65,7 @@ describe('services > Logger', () => {
       logger.success('should display this message');
 
       expect(stdout.write).toHaveBeenCalledTimes(1);
-      expect(stdout.write).toHaveBeenCalledWith('√ should display this message \n');
+      expect(stdout.write).toHaveBeenCalledWith('√ should display this message\n');
 
       expect(Logger._setBoldColor).toHaveBeenCalledTimes(1);
       expect(Logger._setBoldColor).toHaveBeenCalledWith('green', '√ ');
@@ -84,7 +84,7 @@ describe('services > Logger', () => {
         logger.success('should display this message', { lineColor: 'green' });
 
         expect(stdout.write).toHaveBeenCalledTimes(1);
-        expect(stdout.write).toHaveBeenCalledWith('√ should display this message \n');
+        expect(stdout.write).toHaveBeenCalledWith('√ should display this message\n');
 
         expect(Logger._setColor).toHaveBeenCalledTimes(1);
         expect(Logger._setColor).toHaveBeenCalledWith('green', 'should display this message');
@@ -107,7 +107,7 @@ describe('services > Logger', () => {
         logger.success('should display this message', { lineColor: 'green', color: 'red' });
 
         expect(stdout.write).toHaveBeenCalledTimes(1);
-        expect(stdout.write).toHaveBeenCalledWith('√ should display this message \n');
+        expect(stdout.write).toHaveBeenCalledWith('√ should display this message\n');
 
         expect(Logger._setColor).toHaveBeenCalledTimes(1);
         expect(Logger._setColor).toHaveBeenCalledWith('green', 'should display this message');
