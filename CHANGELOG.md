@@ -1,3 +1,10 @@
+## [2.5.2](https://github.com/ForestAdmin/toolbelt/compare/v2.5.1...v2.5.2) (2021-12-30)
+
+
+### Bug Fixes
+
+* **mongodb:** fix the onboarding cli when mongodb does't support js ([#311](https://github.com/ForestAdmin/toolbelt/issues/311)) ([ee97db2](https://github.com/ForestAdmin/toolbelt/commit/ee97db2146a0e62f883f0aec9026d21567d809f0))
+
 ## [2.5.1](https://github.com/ForestAdmin/toolbelt/compare/v2.5.0...v2.5.1) (2021-12-10)
 
 
