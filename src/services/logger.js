@@ -23,14 +23,22 @@ class Logger {
       color: null,
       prefix: null,
       std: null,
+      lineColor: null,
       ...options,
     };
 
     let actualPrefix = '';
     if ([undefined, null, ''].indexOf(options.prefix) === -1) actualPrefix = `${options.prefix} `;
-    if (actualPrefix && options.color) actualPrefix = chalk.bold[options.color](actualPrefix);
+    if (actualPrefix && options.color) {
+      actualPrefix = Logger._setBoldColor(options.color, actualPrefix);
+    }
 
-    const actualMessage = `${actualPrefix}${message} \n`;
+    let actualMessage = message;
+    if (options.lineColor) {
+      actualMessage = `${Logger._setColor(options.lineColor, actualMessage)}`;
+    }
+
+    actualMessage = `${actualPrefix}${actualMessage}\n`;
 
     if (options.std === 'err') {
       this.stderr.write(actualMessage);
@@ -39,8 +47,31 @@ class Logger {
     }
   }
 
-  _logLines(messages, options) {
-    messages.forEach((message) => this._logLine(message, options));
+  _logLines(messagesWithPotentialGivenOptions, baseOptions) {
+    const { options, messages } = Logger._extractGivenOptionsFromMessages(
+      messagesWithPotentialGivenOptions,
+    );
+    messages.forEach((message) => this._logLine(message, { ...baseOptions, ...options }));
+  }
+
+  static _setColor(color, message) {
+    return chalk[color](message);
+  }
+
+  static _setBoldColor(color, message) {
+    return chalk.bold[color](message);
+  }
+
+  // this method is a hack to keep the signature of all existing public methods.
+  static _extractGivenOptionsFromMessages(messages) {
+    let options = {};
+    const potentialGivenOption = messages[messages.length - 1];
+
+    if (typeof potentialGivenOption === 'object') {
+      options = { ...options, ...potentialGivenOption };
+      return { messages: messages.slice(0, -1), options };
+    }
+    return { messages, options };
   }
 
   error(...messages) { this._logLines(messages, { color: 'red', prefix: '×', std: 'err' }); }
