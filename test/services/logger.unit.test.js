@@ -3,7 +3,7 @@ const Logger = require('../../src/services/logger');
 describe('services > Logger', () => {
   // eslint-disable-next-line jest/no-hooks
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   const makeContext = () =>
@@ -107,7 +107,7 @@ describe('services > Logger', () => {
     });
 
     describe('when the option lineColor is defined', () => {
-      it('should display the message in the given lineColor', () => {
+      it('should display the message in the given color', () => {
         expect.assertions(6);
         const context = makeContext();
         const { stdout } = context;
@@ -130,7 +130,7 @@ describe('services > Logger', () => {
     });
 
     describe('when the options lineColor is defined and also the color', () => {
-      it('should display the message in the given lineColor and the prefix with the given color', () => {
+      it('should display the message in the given colors for the prefix and the message', () => {
         expect.assertions(6);
         const context = makeContext();
         const { stdout } = context;
@@ -216,6 +216,26 @@ describe('services > Logger', () => {
       expect(Logger._setBoldColor).toHaveBeenCalledWith('red', '× ');
 
       expect(Logger._setColor).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('_setColor', () => {
+    it('should return the message', () => {
+      expect.assertions(1);
+
+      const result = Logger._setColor('red', 'a message');
+
+      expect(result).toContain('a message');
+    });
+  });
+
+  describe('_setBoldColor', () => {
+    it('should return the message', () => {
+      expect.assertions(1);
+
+      const result = Logger._setBoldColor('red', 'a message');
+
+      expect(result).toContain('a message');
     });
   });
 });
