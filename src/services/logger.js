@@ -37,7 +37,7 @@ class Logger {
       actualPrefix = Logger._setBoldColor(options.color, actualPrefix);
     }
 
-    let actualMessage = Logger._castMessage(message);
+    let actualMessage = Logger._stringifyIfObject(message);
     if (options.lineColor) {
       actualMessage = `${Logger._setColor(options.lineColor, actualMessage)}`;
     }
@@ -58,7 +58,7 @@ class Logger {
     messages.forEach((message) => this._logLine(message, { ...baseOptions, ...options }));
   }
 
-  static _castMessage(message) {
+  static _stringifyIfObject(message) {
     if (typeof message === 'object') {
       return JSON.stringify(message);
     }
