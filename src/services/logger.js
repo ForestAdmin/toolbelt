@@ -31,12 +31,11 @@ class Logger {
     if ([undefined, null, ''].indexOf(options.prefix) === -1) actualPrefix = `${options.prefix} `;
     if (actualPrefix && options.color) actualPrefix = chalk.bold[options.color](actualPrefix);
 
-    let actualMessage;
+    let actualMessage = message;
     if (options.lineColor) {
-      actualMessage = `${actualPrefix}${chalk[options.lineColor](message)} \n`;
-    } else {
-      actualMessage = `${actualPrefix}${message} \n`;
+      actualMessage = `${chalk[options.lineColor](message)}`;
     }
+    actualMessage = `${actualPrefix}${actualMessage}\n`;
 
     if (options.std === 'err') {
       this.stderr.write(actualMessage);
