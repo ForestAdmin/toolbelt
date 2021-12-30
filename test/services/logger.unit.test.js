@@ -9,7 +9,9 @@ describe('services > Logger', () => {
   const makeContext = () =>
     ({
       env: jest.fn(),
-      stderr: jest.fn(),
+      stderr: {
+        write: jest.fn(),
+      },
       stdout: {
         write: jest.fn(),
       },
@@ -17,6 +19,39 @@ describe('services > Logger', () => {
     });
 
   describe('log', () => {
+    it('should display a message to the stdout without a prefix', () => {
+      expect.assertions(4);
+      const context = makeContext();
+      const { stdout } = context;
+
+      jest.spyOn(Logger, '_setColor').mockImplementation((color, message) => message);
+      jest.spyOn(Logger, '_setBoldColor').mockImplementation((color, message) => message);
+
+      const logger = new Logger(context);
+      logger.log('should display this message');
+
+      expect(stdout.write).toHaveBeenCalledTimes(1);
+      expect(stdout.write).toHaveBeenCalledWith('should display this message\n');
+
+      expect(Logger._setBoldColor).toHaveBeenCalledTimes(0);
+      expect(Logger._setColor).toHaveBeenCalledTimes(0);
+    });
+
+    describe('when silent is activated', () => {
+      it('should not display the message', () => {
+        expect.assertions(2);
+        const context = makeContext();
+        const { stdout, stderr } = context;
+
+        const logger = new Logger(context);
+        logger.silent = true;
+        logger.log('should display this message');
+
+        expect(stdout.write).toHaveBeenCalledTimes(0);
+        expect(stderr.write).toHaveBeenCalledTimes(0);
+      });
+    });
+
     describe('when there are several messages', () => {
       it('should display all the messages', () => {
         expect.assertions(3);
@@ -115,6 +150,72 @@ describe('services > Logger', () => {
         expect(Logger._setBoldColor).toHaveBeenCalledTimes(1);
         expect(Logger._setBoldColor).toHaveBeenCalledWith('red', '√ ');
       });
+    });
+  });
+
+  describe('warn', () => {
+    it('should display a message to the stdout with a colored prefix', () => {
+      expect.assertions(5);
+      const context = makeContext();
+      const { stdout } = context;
+
+      jest.spyOn(Logger, '_setColor').mockImplementation((color, message) => message);
+      jest.spyOn(Logger, '_setBoldColor').mockImplementation((color, message) => message);
+
+      const logger = new Logger(context);
+      logger.warn('should display this message');
+
+      expect(stdout.write).toHaveBeenCalledTimes(1);
+      expect(stdout.write).toHaveBeenCalledWith('Δ should display this message\n');
+
+      expect(Logger._setBoldColor).toHaveBeenCalledTimes(1);
+      expect(Logger._setBoldColor).toHaveBeenCalledWith('yellow', 'Δ ');
+
+      expect(Logger._setColor).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('info', () => {
+    it('should display a message to the stdout with a colored prefix', () => {
+      expect.assertions(5);
+      const context = makeContext();
+      const { stdout } = context;
+
+      jest.spyOn(Logger, '_setColor').mockImplementation((color, message) => message);
+      jest.spyOn(Logger, '_setBoldColor').mockImplementation((color, message) => message);
+
+      const logger = new Logger(context);
+      logger.info('should display this message');
+
+      expect(stdout.write).toHaveBeenCalledTimes(1);
+      expect(stdout.write).toHaveBeenCalledWith('> should display this message\n');
+
+      expect(Logger._setBoldColor).toHaveBeenCalledTimes(1);
+      expect(Logger._setBoldColor).toHaveBeenCalledWith('blue', '> ');
+
+      expect(Logger._setColor).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('error', () => {
+    it('should display a message to the stderr with a colored prefix', () => {
+      expect.assertions(5);
+      const context = makeContext();
+      const { stderr } = context;
+
+      jest.spyOn(Logger, '_setColor').mockImplementation((color, message) => message);
+      jest.spyOn(Logger, '_setBoldColor').mockImplementation((color, message) => message);
+
+      const logger = new Logger(context);
+      logger.error('should display this message');
+
+      expect(stderr.write).toHaveBeenCalledTimes(1);
+      expect(stderr.write).toHaveBeenCalledWith('× should display this message\n');
+
+      expect(Logger._setBoldColor).toHaveBeenCalledTimes(1);
+      expect(Logger._setBoldColor).toHaveBeenCalledWith('red', '× ');
+
+      expect(Logger._setColor).toHaveBeenCalledTimes(0);
     });
   });
 });
