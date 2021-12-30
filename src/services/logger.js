@@ -12,6 +12,13 @@ class Logger {
     this.stderr = stderr;
     this.stdout = stdout;
 
+    this.defaultOptions = {
+      color: null,
+      prefix: null,
+      std: null,
+      lineColor: null,
+    };
+
     // FIXME: Silent was not used before as no "silent" value was in context.
     this.silent = !!this.env.SILENT && this.env.SILENT !== '0';
   }
@@ -20,10 +27,7 @@ class Logger {
     if (this.silent) return;
 
     options = {
-      color: null,
-      prefix: null,
-      std: null,
-      lineColor: null,
+      ...this.defaultOptions,
       ...options,
     };
 
@@ -33,7 +37,7 @@ class Logger {
       actualPrefix = Logger._setBoldColor(options.color, actualPrefix);
     }
 
-    let actualMessage = message;
+    let actualMessage = Logger._castMessage(message);
     if (options.lineColor) {
       actualMessage = `${Logger._setColor(options.lineColor, actualMessage)}`;
     }
@@ -49,9 +53,17 @@ class Logger {
 
   _logLines(messagesWithPotentialGivenOptions, baseOptions) {
     const { options, messages } = Logger._extractGivenOptionsFromMessages(
-      messagesWithPotentialGivenOptions,
+      messagesWithPotentialGivenOptions, Object.keys(this.defaultOptions),
     );
     messages.forEach((message) => this._logLine(message, { ...baseOptions, ...options }));
+  }
+
+  static _castMessage(message) {
+    if (typeof message === 'object') {
+      return JSON.stringify(message);
+    }
+
+    return message;
   }
 
   static _setColor(color, message) {
@@ -62,27 +74,46 @@ class Logger {
     return chalk.bold[color](message);
   }
 
-  // this method is a hack to keep the signature of all existing public methods.
-  static _extractGivenOptionsFromMessages(messages) {
-    let options = {};
-    const potentialGivenOption = messages[messages.length - 1];
+  static _isObjectKeysMatchAlwaysTheGivenKeys(object, keys) {
+    if (typeof object !== 'object') {
+      return false;
+    }
 
-    if (typeof potentialGivenOption === 'object') {
-      options = { ...options, ...potentialGivenOption };
+    return Object.keys(object).every((key) => keys.includes(key));
+  }
+
+  // this method is a hack to keep the signature of all existing public methods.
+  static _extractGivenOptionsFromMessages(messages, allowedOptions) {
+    let options = {};
+    const potentialGivenOptions = messages[messages.length - 1];
+
+    const isOptions = (object) => Logger._isObjectKeysMatchAlwaysTheGivenKeys(
+      object, allowedOptions,
+    );
+    if (isOptions(potentialGivenOptions)) {
+      options = { ...options, ...potentialGivenOptions };
       return { messages: messages.slice(0, -1), options };
     }
     return { messages, options };
   }
 
-  error(...messages) { this._logLines(messages, { color: 'red', prefix: '×', std: 'err' }); }
+  /**
+   *  examples:
+   *  loggerInstance.success('message to display')
+   *  loggerInstance.success('message to display', { color: 'blue', colorLine: 'green' })
+   *  loggerInstance.success('message 1', 'message 2')
+   *  loggerInstance.success('message 1', 'message 2',  { color: 'blue', colorLine: 'green' })
+   */
 
-  info(...messages) { this._logLines(messages, { color: 'blue', prefix: '>' }); }
+  error(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'red', prefix: '×', std: 'err' }); }
 
-  log(...messages) { this._logLines(messages); }
+  info(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'blue', prefix: '>' }); }
 
-  success(...messages) { this._logLines(messages, { color: 'green', prefix: '√' }); }
+  log(...messagesAndOptions) { this._logLines(messagesAndOptions); }
 
-  warn(...messages) { this._logLines(messages, { color: 'yellow', prefix: 'Δ' }); }
+  success(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'green', prefix: '√' }); }
+
+  warn(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'yellow', prefix: 'Δ' }); }
 }
 
 module.exports = Logger;
