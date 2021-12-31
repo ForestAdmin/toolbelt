@@ -1,3 +1,10 @@
+## [2.5.4](https://github.com/ForestAdmin/toolbelt/compare/v2.5.3...v2.5.4) (2021-12-31)
+
+
+### Bug Fixes
+
+* **logger:** allow logger to display object ([#321](https://github.com/ForestAdmin/toolbelt/issues/321)) ([d81d5f1](https://github.com/ForestAdmin/toolbelt/commit/d81d5f17cab5980ee4009c6b8fe56a1ad06a743f))
+
 ## [2.5.3](https://github.com/ForestAdmin/toolbelt/compare/v2.5.2...v2.5.3) (2021-12-31)
 
 
