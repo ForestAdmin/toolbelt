@@ -52,6 +52,21 @@ describe('services > Logger', () => {
       });
     });
 
+    describe('when a message is an object', () => {
+      it('should display the object as json', () => {
+        expect.assertions(2);
+        const context = makeContext();
+        const { stdout } = context;
+
+        const logger = new Logger(context);
+        const objectToDisplay = { id: 1 };
+        logger.log(objectToDisplay);
+
+        expect(stdout.write).toHaveBeenCalledTimes(1);
+        expect(stdout.write).toHaveBeenCalledWith(`${JSON.stringify(objectToDisplay)}\n`);
+      });
+    });
+
     describe('when there are several messages', () => {
       it('should display all the messages', () => {
         expect.assertions(3);
@@ -236,6 +251,19 @@ describe('services > Logger', () => {
       const result = Logger._setBoldColor('red', 'a message');
 
       expect(result).toContain('a message');
+    });
+  });
+
+  describe('constant DEFAULT_OPTION_VALUES', () => {
+    it('should contain the default values', () => {
+      expect.assertions(1);
+
+      expect(Logger.DEFAULT_OPTION_VALUES).toStrictEqual({
+        color: undefined,
+        prefix: undefined,
+        std: undefined,
+        lineColor: undefined,
+      });
     });
   });
 });
