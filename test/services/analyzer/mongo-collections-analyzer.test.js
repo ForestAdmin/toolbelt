@@ -437,7 +437,7 @@ describe('services > mongoCollectionsAnalyzer', () => {
   });
 
   describe('analyzeMongoCollectionsWithoutProgressBar', () => {
-    it('should return the formatted fields', async () => {
+    it('should return the formatted fields without display the progress bar', async () => {
       expect.assertions(5);
 
       const analyzer = new MongoCollectionsAnalyzer(makeContext());
@@ -446,16 +446,32 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
       const databaseConnection = Symbol('db');
 
-      expect(analyzer.isDisplayProgressBar).toBe(true);
+      expect(analyzer.isProgressBarDisplay).toBe(true);
 
       const result = await analyzer.analyzeMongoCollectionsWithoutProgressBar(databaseConnection);
 
-      expect(analyzer.isDisplayProgressBar).toBe(false);
+      expect(analyzer.isProgressBarDisplay).toBe(false);
 
       expect(analyzer.analyzeMongoCollections).toHaveBeenCalledTimes(1);
       expect(analyzer.analyzeMongoCollections).toHaveBeenLastCalledWith(databaseConnection);
 
       expect(result).toStrictEqual(analyze);
+    });
+
+    describe('when there is no collection', () => {
+      it('should throw an error and restore isProgressBarDisplay as the default value', async () => {
+        expect.assertions(2);
+
+        const databaseConnection = {
+          collections: jest.fn().mockResolvedValue([]),
+        };
+
+        const analyzer = new MongoCollectionsAnalyzer(makeContext());
+        await expect(analyzer.analyzeMongoCollectionsWithoutProgressBar(databaseConnection))
+          .rejects.toThrowErrorMatchingInlineSnapshot('"no collections found"');
+
+        expect(analyzer.isProgressBarDisplay).toBe(true);
+      });
     });
   });
 
@@ -680,7 +696,7 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
         const analyzer = new MongoCollectionsAnalyzer(context);
 
-        analyzer.isDisplayProgressBar = false;
+        analyzer.isProgressBarDisplay = false;
         await analyzer.analyzeCollectionAndDisplayProgressBarIfIsAllow(collection, 'aCollectionName');
 
         expect(makeProgressBar).toHaveBeenCalledTimes(0);
@@ -691,8 +707,32 @@ describe('services > mongoCollectionsAnalyzer', () => {
   });
 
   describe('analyzeMongoCollections', () => {
+    it('should force to set the isProgressBarDisplay to true at the end of the analyze', async () => {
+      expect.assertions(1);
+
+      const context = makeContext();
+      const { getCollectionName } = context;
+
+      getCollectionName.mockImplementation().mockReturnValue(null);
+
+      const collection = Symbol('collection');
+      const databaseConnection = {
+        collections: jest.fn().mockResolvedValue([collection]),
+        listCollections: jest.fn().mockReturnValue(
+          { toArray: jest.fn().mockResolvedValue([]) },
+        ),
+      };
+
+      const analyzer = new MongoCollectionsAnalyzer(context);
+      analyzer.isProgressBarDisplay = false;
+
+      await analyzer.analyzeMongoCollections(databaseConnection);
+
+      expect(analyzer.isProgressBarDisplay).toBe(true);
+    });
+
     describe('when there is no collection', () => {
-      it('should throw an error', async () => {
+      it('should throw an error and restore isProgressBarDisplay as the default value', async () => {
         expect.assertions(1);
 
         const databaseConnection = {
