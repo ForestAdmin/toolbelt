@@ -254,8 +254,8 @@ describe('services > Logger', () => {
     });
   });
 
-  describe('dEFAULT_OPTION_VALUES', () => {
-    it('should return the default values', () => {
+  describe('constant DEFAULT_OPTION_VALUES', () => {
+    it('should contain the default values', () => {
       expect.assertions(1);
 
       expect(Logger.DEFAULT_OPTION_VALUES).toStrictEqual({
