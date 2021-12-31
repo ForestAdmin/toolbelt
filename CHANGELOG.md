@@ -1,3 +1,10 @@
+## [2.5.3](https://github.com/ForestAdmin/toolbelt/compare/v2.5.2...v2.5.3) (2021-12-31)
+
+
+### Bug Fixes
+
+* **mongodb:** force to display progress bar by default ([#322](https://github.com/ForestAdmin/toolbelt/issues/322)) ([c318970](https://github.com/ForestAdmin/toolbelt/commit/c3189707f294615aeecb2a3617519af289486806))
+
 ## [2.5.2](https://github.com/ForestAdmin/toolbelt/compare/v2.5.1...v2.5.2) (2021-12-30)
 
 
