@@ -133,7 +133,8 @@ class MongoCollectionsAnalyzer {
     this.reduceCollection = reduceCollection;
     this.makeProgressBar = makeProgressBar;
 
-    this.isDisplayProgressBar = true;
+    this.restoreDefaultState();
+
     this.mapReduceOptions = {
       out: { inline: 1 },
       limit: 100,
@@ -147,6 +148,10 @@ class MongoCollectionsAnalyzer {
         isOfMongooseType,
       },
     };
+  }
+
+  restoreDefaultState() {
+    this.isProgressBarDisplay = true;
   }
 
   mergeField(field) {
@@ -266,7 +271,7 @@ class MongoCollectionsAnalyzer {
     const countIterations = Math.ceil(countDocuments / numberOfDocumentAllowed);
 
     let fetchFunction = this.fetchByChunkFunction(collection, numberOfDocumentAllowed);
-    if (this.isDisplayProgressBar) {
+    if (this.isProgressBarDisplay) {
       const bar = this.makeProgressBar(
         `Analysing the **${collectionName}** collection`,
         countIterations,
@@ -286,13 +291,14 @@ class MongoCollectionsAnalyzer {
   }
 
   async analyzeMongoCollectionsWithoutProgressBar(databaseConnection) {
-    this.isDisplayProgressBar = false;
+    this.isProgressBarDisplay = false;
     return this.analyzeMongoCollections(databaseConnection);
   }
 
   async analyzeMongoCollections(databaseConnection) {
     const collections = await databaseConnection.collections();
     if (collections.length === 0) {
+      this.restoreDefaultState();
       throw new EmptyDatabaseError('no collections found', {
         orm: 'mongoose',
         dialect: 'mongodb',
@@ -304,7 +310,7 @@ class MongoCollectionsAnalyzer {
     );
 
     let isMongodbInstanceSupportJs = true;
-    return P.reduce(collections, async (schema, collection) => {
+    const schema = await P.reduce(collections, async (schema, collection) => {
       const collectionName = this.getCollectionName(collection);
 
       // Ignore system collections and collection without a valid name.
@@ -329,6 +335,9 @@ class MongoCollectionsAnalyzer {
       schema[collectionName] = this.buildSchema(analysis);
       return schema;
     }, {});
+
+    this.restoreDefaultState();
+    return schema;
   }
 }
 
