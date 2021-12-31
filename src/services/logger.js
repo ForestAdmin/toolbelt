@@ -6,9 +6,10 @@ const ALLOWED_OPTION_KEYS = [
   'std',
   'lineColor',
 ];
-const DEFAULT_OPTION_VALUES = Object.fromEntries(
-  ALLOWED_OPTION_KEYS.map((key) => [key, undefined]),
-);
+const DEFAULT_OPTION_VALUES = ALLOWED_OPTION_KEYS.reduce((options, key) => {
+  options[key] = undefined;
+  return options;
+}, {});
 
 class Logger {
   constructor({
@@ -118,4 +119,7 @@ class Logger {
   warn(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'yellow', prefix: 'Δ' }); }
 }
 
+if (process.env.NODE_ENV === 'test') {
+  Logger.DEFAULT_OPTION_VALUES = DEFAULT_OPTION_VALUES;
+}
 module.exports = Logger;

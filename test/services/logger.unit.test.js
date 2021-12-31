@@ -253,4 +253,17 @@ describe('services > Logger', () => {
       expect(result).toContain('a message');
     });
   });
+
+  describe('dEFAULT_OPTION_VALUES', () => {
+    it('should return the default values', () => {
+      expect.assertions(1);
+
+      expect(Logger.DEFAULT_OPTION_VALUES).toStrictEqual({
+        color: undefined,
+        prefix: undefined,
+        std: undefined,
+        lineColor: undefined,
+      });
+    });
+  });
 });
