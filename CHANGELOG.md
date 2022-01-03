@@ -1,3 +1,10 @@
+## [2.5.5](https://github.com/ForestAdmin/toolbelt/compare/v2.5.4...v2.5.5) (2022-01-03)
+
+
+### Bug Fixes
+
+* **mongodb:** fix typos on the "analysis" word ([#324](https://github.com/ForestAdmin/toolbelt/issues/324)) ([47670a9](https://github.com/ForestAdmin/toolbelt/commit/47670a9d5f12e3574e62d6368d17a420014af6c1))
+
 ## [2.5.4](https://github.com/ForestAdmin/toolbelt/compare/v2.5.3...v2.5.4) (2021-12-31)
 
 
