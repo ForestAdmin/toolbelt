@@ -29,7 +29,7 @@ describe('unit > DatabaseAnalyzer', () => {
   });
 
   describe('analyzeMongoDb', () => {
-    it('should call correctly the analyze for the mongo collections', async () => {
+    it('should call correctly the analysis for the mongo collections', async () => {
       expect.assertions(2);
 
       const context = setupConstructorTest();

@@ -707,7 +707,7 @@ describe('services > mongoCollectionsAnalyzer', () => {
   });
 
   describe('analyzeMongoCollections', () => {
-    it('should force to set the isProgressBarDisplay to true at the end of the analyze', async () => {
+    it('should force to set the isProgressBarDisplay to true at the end of the analysis', async () => {
       expect.assertions(1);
 
       const context = makeContext();
@@ -773,7 +773,7 @@ describe('services > mongoCollectionsAnalyzer', () => {
     });
 
     describe('when the collection is a view', () => {
-      it('should not generate the analyze and apply the relationships', async () => {
+      it('should not generate the analysis and apply the relationships', async () => {
         expect.assertions(6);
 
         const context = makeContext();
