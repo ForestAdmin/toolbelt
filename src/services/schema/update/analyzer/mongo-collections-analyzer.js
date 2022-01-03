@@ -322,7 +322,7 @@ class MongoCollectionsAnalyzer {
         analysis = await this.analyzeMongoCollectionRemotely(databaseConnection, collectionName);
         if (analysis === MAP_REDUCE_ERROR_STRING) {
           isMongodbInstanceSupportJs = false;
-          this.logger.warn('The analyze is running locally instead of in the db instance because your instance does not support javascript.'
+          this.logger.warn('The analysis is running locally instead of in the db instance because your instance does not support javascript.'
           + ' This action can takes a bit of time because it fetches all the collections.');
         }
       }

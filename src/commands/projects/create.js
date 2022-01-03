@@ -119,7 +119,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 
   async analyzeDatabase(dbConfig, connection) {
     if (dbConfig.dbDialect === 'mongodb') {
-      // the mongodb analyzer display a progress bar during the analyze
+      // the mongodb analyzer display a progress bar during the analysis
       this.logger.info('Analyzing the database...');
       const analysis = await this.databaseAnalyzer.analyzeMongoDb(connection, dbConfig, true);
       this.logger.success('Database is analyzed', { lineColor: 'green' });
