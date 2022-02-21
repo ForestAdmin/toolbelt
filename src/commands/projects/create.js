@@ -124,7 +124,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     await this.spinner.attachToPromise(dumpPromise);
 
     this.logger.success(`Hooray, ${this.chalk.green('installation success')}!`);
-    await this.eventSender.notifySuccess(authenticationToken, meta.agent);
+    await this.eventSender.notifySuccess(authenticationToken, meta);
   }
 
   async analyzeDatabase(dbConfig, connection) {
