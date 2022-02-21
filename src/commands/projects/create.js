@@ -102,7 +102,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 
     this.spinner.start({ text: 'Creating your project on Forest Admin' });
     const projectCreationPromise = this.projectCreator.create(
-      authenticationToken, appConfig, meta,
+      authenticationToken, appConfig, meta.agent,
     );
 
     const {

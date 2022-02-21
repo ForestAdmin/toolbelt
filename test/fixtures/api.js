@@ -685,7 +685,7 @@ module.exports = {
     .post('/api/projects', {
       data: {
         type: 'projects',
-        attributes: { name: 'name' },
+        attributes: { name: 'name', agent: 'forest-express-sequelize' },
       },
     })
     .reply(201, ProjectSerializer.serialize({
