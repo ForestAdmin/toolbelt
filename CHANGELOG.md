@@ -1,3 +1,10 @@
+# [2.6.0](https://github.com/ForestAdmin/toolbelt/compare/v2.5.5...v2.6.0) (2022-02-21)
+
+
+### Features
+
+* send better events during project generation ([#348](https://github.com/ForestAdmin/toolbelt/issues/348)) ([60a2800](https://github.com/ForestAdmin/toolbelt/commit/60a2800a5e4e9029d50fe9f7cbe28f53f915b5c1))
+
 ## [2.5.5](https://github.com/ForestAdmin/toolbelt/compare/v2.5.4...v2.5.5) (2022-01-03)
 
 
