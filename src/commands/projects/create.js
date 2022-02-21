@@ -82,6 +82,12 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       this.exit(1);
     }
 
+    const meta = {
+      dbDialect: dbConfig.dbDialect,
+      agent: dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize',
+      isLocal: ['localhost', '127.0.0.1', '::1'].includes(dbConfig.dbHostname),
+    };
+
     let schema = {};
 
     this.spinner.start({ text: 'Connecting to your database' });
@@ -96,10 +102,14 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 
     this.spinner.start({ text: 'Creating your project on Forest Admin' });
     const projectCreationPromise = this.projectCreator.create(
-      authenticationToken, appConfig,
+      authenticationToken, appConfig, meta.agent,
     );
 
-    const { envSecret, authSecret } = await this.spinner.attachToPromise(projectCreationPromise);
+    const {
+      id, envSecret, authSecret,
+    } = await this.spinner.attachToPromise(projectCreationPromise);
+
+    meta.projectId = id;
     config.forestAuthSecret = authSecret;
     config.forestEnvSecret = envSecret;
 
@@ -114,7 +124,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     await this.spinner.attachToPromise(dumpPromise);
 
     this.logger.success(`Hooray, ${this.chalk.green('installation success')}!`);
-    await this.eventSender.notifySuccess();
+    await this.eventSender.notifySuccess(authenticationToken, meta);
   }
 
   async analyzeDatabase(dbConfig, connection) {

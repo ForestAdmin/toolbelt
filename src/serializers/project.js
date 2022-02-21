@@ -5,6 +5,7 @@ module.exports = new JSONAPISerializer('projects', {
     'name',
     'defaultEnvironment',
     'origin',
+    'agent',
   ],
   defaultEnvironment: {
     ref: 'id',

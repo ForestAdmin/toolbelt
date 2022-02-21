@@ -21,12 +21,13 @@ class ProjectCreator {
     this.terminator = terminator;
   }
 
-  async create(sessionToken, config) {
+  async create(sessionToken, config, agent) {
     try {
-      const newProjectPayload = { name: config.applicationName };
+      const newProjectPayload = { name: config.applicationName, agent };
       const newProject = await this.api.createProject(config, sessionToken, newProjectPayload);
 
       return {
+        id: newProject.id,
         envSecret: newProject.defaultEnvironment.secretKey,
         authSecret: this.keyGenerator.generate(),
       };
