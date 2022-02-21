@@ -84,7 +84,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 
     const meta = {
       dbDialect: dbConfig.dbDialect,
-      agent: dbConfig.dbDialect === 'mongodb' ? 'forest-express-mongoose' : 'forest-express-sequelize',
+      agent: dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize',
       isLocal: ['localhost', '127.0.0.1', '::1'].includes(dbConfig.dbHostname),
     };
 
