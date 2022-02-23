@@ -1,9 +1,8 @@
-const superagent = require('superagent');
-
 class EventSender {
-  constructor({ assertPresent, env }) {
-    assertPresent({ env });
+  constructor({ assertPresent, env, superagent }) {
+    assertPresent({ env, superagent });
     this.env = env;
+    this.superagent = superagent;
 
     this.applicationName = null;
     this.command = null;
@@ -12,7 +11,7 @@ class EventSender {
   }
 
   async notifyError(code = 'unknown_error', message = null, context = undefined) {
-    if (!this.applicationName || !this.command || !this.meta) { return; }
+    if (!this.applicationName || !this.command) { return; }
 
     const attributes = {
       code,
@@ -31,14 +30,14 @@ class EventSender {
 
     try {
       if (this.sessionToken) {
-        await superagent.post(`${this.env.FOREST_URL}/api/lumber/error`, {
+        await this.superagent.post(`${this.env.FOREST_URL}/api/lumber/error`, {
           data: {
             type: 'events',
             attributes,
           },
         }).set('Authorization', `Bearer ${this.sessionToken}`);
       } else {
-        await superagent.post(`${this.env.FOREST_URL}/api/lumber/error`, {
+        await this.superagent.post(`${this.env.FOREST_URL}/api/lumber/error`, {
           data: {
             type: 'events',
             attributes,
@@ -52,10 +51,12 @@ class EventSender {
   }
 
   async notifySuccess() {
-    if (!this.applicationName || !this.command || !Object.keys(this.meta).length) { return; }
+    if (
+      !this.applicationName || !this.command || !this.sessionToken || !Object.keys(this.meta).length
+    ) { return; }
 
     try {
-      await superagent.post(`${this.env.FOREST_URL}/api/lumber/success`, {
+      await this.superagent.post(`${this.env.FOREST_URL}/api/lumber/success`, {
         data: {
           type: 'events',
           attributes: {
