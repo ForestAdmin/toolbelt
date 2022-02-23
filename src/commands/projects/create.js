@@ -82,11 +82,29 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       this.exit(1);
     }
 
-    const meta = {
+    this.eventSender.sessionToken = authenticationToken;
+    this.eventSender.meta = {
       dbDialect: dbConfig.dbDialect,
       agent: dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize',
-      isLocal: ['localhost', '127.0.0.1', '::1'].includes(dbConfig.dbHostname),
+      isLocal: ['localhost', '127.0.0.1', '::1'].some((keyword) => (
+        dbConfig.dbHostname
+          ? dbConfig.dbHostname.includes(keyword)
+          : dbConfig.dbConnectionUrl.includes(keyword)
+      )),
     };
+
+    this.spinner.start({ text: 'Creating your project on Forest Admin' });
+    const projectCreationPromise = this.projectCreator.create(
+      authenticationToken, appConfig, this.eventSender.meta.agent,
+    );
+
+    const {
+      id, envSecret, authSecret,
+    } = await this.spinner.attachToPromise(projectCreationPromise);
+
+    this.eventSender.meta.projectId = id;
+    config.forestAuthSecret = authSecret;
+    config.forestEnvSecret = envSecret;
 
     let schema = {};
 
@@ -100,19 +118,6 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     const disconnectPromise = this.database.disconnect(connection);
     await this.spinner.attachToPromise(disconnectPromise);
 
-    this.spinner.start({ text: 'Creating your project on Forest Admin' });
-    const projectCreationPromise = this.projectCreator.create(
-      authenticationToken, appConfig, meta.agent,
-    );
-
-    const {
-      id, envSecret, authSecret,
-    } = await this.spinner.attachToPromise(projectCreationPromise);
-
-    meta.projectId = id;
-    config.forestAuthSecret = authSecret;
-    config.forestEnvSecret = envSecret;
-
     this.spinner.start({ text: 'Creating your project files' });
     const dumperConfig = {
       ...dbConfig,
@@ -124,7 +129,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     await this.spinner.attachToPromise(dumpPromise);
 
     this.logger.success(`Hooray, ${this.chalk.green('installation success')}!`);
-    await this.eventSender.notifySuccess(authenticationToken, meta);
+    await this.eventSender.notifySuccess();
   }
 
   async analyzeDatabase(dbConfig, connection) {
