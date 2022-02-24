@@ -112,7 +112,7 @@ describe('projects:create', () => {
         std: [
           { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check?code=ABCD\nYour confirmation code: USER-CODE' },
           { out: '> Login successful' },
-          { spinner: '× Connecting to your database' },
+          { spinner: '× Creating your project on Forest Admin' },
         ],
         // This only validates login, options are missing thus the error.
         exitCode: 1,
@@ -142,7 +142,7 @@ describe('projects:create', () => {
           },
         ],
         std: [
-          { spinner: '× Connecting to your database' },
+          { spinner: '× Creating your project on Forest Admin' },
         ],
         // This only validates login, options are missing thus the error.
         exitCode: 1,
@@ -168,6 +168,10 @@ describe('projects:create', () => {
           commandArgs: ['name'],
           env: testEnvWithSecret,
           token: 'any',
+          api: [
+            () => createProject(),
+            () => updateNewEnvironmentEndpoint(),
+          ],
           prompts: [
             {
               in: makePromptInputList(),
@@ -185,7 +189,9 @@ describe('projects:create', () => {
             },
           ],
           std: [
+            { spinner: '√ Creating your project on Forest Admin' },
             { spinner: '× Connecting to your database' },
+
           ],
           // This only validates login, options are missing thus the error.
           exitCode: 1,
@@ -219,6 +225,10 @@ describe('projects:create', () => {
           commandArgs: ['name'],
           env: testEnvWithSecret,
           token: 'any',
+          api: [
+            () => createProject(),
+            () => updateNewEnvironmentEndpoint(),
+          ],
           prompts: [
             {
               in: makePromptInputList(),
@@ -236,7 +246,9 @@ describe('projects:create', () => {
             },
           ],
           std: [
+            { spinner: '√ Creating your project on Forest Admin' },
             { spinner: '× Connecting to your database' },
+
           ],
           // This only validates login, options are missing thus the error.
           exitCode: 1,
@@ -251,6 +263,10 @@ describe('projects:create', () => {
           commandArgs: ['name'],
           env: testEnvWithSecret,
           token: 'any',
+          api: [
+            () => createProject(),
+            () => updateNewEnvironmentEndpoint(),
+          ],
           prompts: [
             {
               in: makePromptInputList(),
@@ -268,6 +284,7 @@ describe('projects:create', () => {
             },
           ],
           std: [
+            { spinner: '√ Creating your project on Forest Admin' },
             { spinner: '× Connecting to your database' },
           ],
           // This only validates login, options are missing thus the error.
@@ -281,6 +298,10 @@ describe('projects:create', () => {
           commandArgs: ['name', '--databaseConnectionURL', 'postgres://dummy'],
           env: testEnvWithSecret,
           token: 'any',
+          api: [
+            () => createProject(),
+            () => updateNewEnvironmentEndpoint(),
+          ],
           prompts: [
             {
               in: makePromptInputList({
@@ -300,7 +321,9 @@ describe('projects:create', () => {
             },
           ],
           std: [
+            { spinner: '√ Creating your project on Forest Admin' },
             { spinner: '× Connecting to your database' },
+
           ],
           // This only validates login, options are missing thus the error.
           exitCode: 1,
@@ -344,9 +367,9 @@ describe('projects:create', () => {
           },
         ],
         std: [
+          { spinner: '√ Creating your project on Forest Admin' },
           { spinner: '√ Connecting to your database' },
           { spinner: '√ Analyzing the database' },
-          { spinner: '√ Creating your project on Forest Admin' },
           { spinner: '√ Creating your project files' },
           { out: '√ Hooray, installation success!' },
         ],
@@ -368,6 +391,10 @@ describe('projects:create', () => {
         commandArgs: ['name'],
         env: testEnvWithSecret,
         token: 'any',
+        api: [
+          () => createProject(),
+          () => updateNewEnvironmentEndpoint(),
+        ],
         prompts: [
           {
             in: makePromptInputList(),
@@ -384,6 +411,7 @@ describe('projects:create', () => {
           },
         ],
         std: [
+          { spinner: '√ Creating your project on Forest Admin' },
           { spinner: '√ Connecting to your database' },
           { err: '× This schema does not exists.' },
         ],
