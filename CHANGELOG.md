@@ -1,3 +1,10 @@
+## [2.6.1](https://github.com/ForestAdmin/toolbelt/compare/v2.6.0...v2.6.1) (2022-03-15)
+
+
+### Bug Fixes
+
+* **templates:** add link to performance doc in count route ([#355](https://github.com/ForestAdmin/toolbelt/issues/355)) ([f7ebd92](https://github.com/ForestAdmin/toolbelt/commit/f7ebd928121757a3c5f7ffa92327288b789a71ff))
+
 # [2.6.0](https://github.com/ForestAdmin/toolbelt/compare/v2.5.5...v2.6.0) (2022-02-21)
 
 
