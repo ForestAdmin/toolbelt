@@ -36,6 +36,7 @@ router.get('/{{ modelName }}', permissionMiddlewareCreator.list(), (request, res
 // Get a number of {{ modelNameReadablePlural }}
 router.get('/{{ modelName }}/count', permissionMiddlewareCreator.list(), (request, response, next) => {
   // Learn what this route does here: https://docs.forestadmin.com/documentation/v/v6/reference-guide/routes/default-routes#get-a-number-of-records
+  // Improve peformances disabling pagination: https://docs.forestadmin.com/documentation/reference-guide/performance#disable-pagination-count
   next();
 });
 
