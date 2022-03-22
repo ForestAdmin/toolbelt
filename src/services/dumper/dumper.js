@@ -126,7 +126,7 @@ class Dumper {
         dependencies.tedious = '^6.4.0';
       } else if (dbDialect === 'mongodb') {
         delete dependencies.sequelize;
-        dependencies.mongoose = '~5.8.2';
+        dependencies.mongoose = '~5.13.9';
       }
     }
 
