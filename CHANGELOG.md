@@ -1,3 +1,10 @@
+## [2.6.2](https://github.com/ForestAdmin/toolbelt/compare/v2.6.1...v2.6.2) (2022-03-22)
+
+
+### Bug Fixes
+
+* upgraded Mongoose version in order to resolve vulnerabilities ([#356](https://github.com/ForestAdmin/toolbelt/issues/356)) ([a1cbee1](https://github.com/ForestAdmin/toolbelt/commit/a1cbee17038d55728cf88e842ee320346ee46f47))
+
 ## [2.6.1](https://github.com/ForestAdmin/toolbelt/compare/v2.6.0...v2.6.1) (2022-03-15)
 
 
