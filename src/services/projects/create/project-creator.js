@@ -1,4 +1,28 @@
+/**
+ * @typedef {{
+ *  agent: string;
+ *  dbDialect: string;
+ *  architecture: string;
+ *  isLocal: boolean;
+ * }} ProjectMeta
+ *
+ * @typedef {{
+ *  applicationName: string
+ *  appHostname: string
+ *  appPort: number
+ * }} ProjectConfig
+ */
+
 class ProjectCreator {
+  /**
+   * @param {{
+   *   api: import('../../api')
+   *   chalk: import('chalk')
+   *   keyGenerator: import('../../../utils/key-generator')
+   *   messages: import('../../../utils/messages')
+   *   terminator: import('../../../utils/terminator')
+   * }} dependencies
+   */
   constructor({
     assertPresent,
     api,
@@ -21,9 +45,23 @@ class ProjectCreator {
     this.terminator = terminator;
   }
 
-  async create(sessionToken, config, agent) {
+  /**
+   * @param {string} sessionToken
+   * @param {{
+   *
+   * }} config
+   * @param {ProjectMeta} meta
+   * @returns {Promise<void>}
+   */
+  async create(sessionToken, config, meta) {
     try {
-      const newProjectPayload = { name: config.applicationName, agent };
+      const newProjectPayload = {
+        name: config.applicationName,
+        agent: meta.agent,
+        architecture: meta.architecture,
+        databaseType: meta.dbDialect,
+      };
+
       const newProject = await this.api.createProject(config, sessionToken, newProjectPayload);
 
       return {

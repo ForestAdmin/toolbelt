@@ -169,7 +169,7 @@ describe('projects:create', () => {
           env: testEnvWithSecret,
           token: 'any',
           api: [
-            () => createProject(),
+            () => createProject({ databaseType: 'postgres' }),
             () => updateNewEnvironmentEndpoint(),
           ],
           prompts: [
@@ -226,7 +226,7 @@ describe('projects:create', () => {
           env: testEnvWithSecret,
           token: 'any',
           api: [
-            () => createProject(),
+            () => createProject({ databaseType: 'postgres' }),
             () => updateNewEnvironmentEndpoint(),
           ],
           prompts: [
@@ -264,7 +264,7 @@ describe('projects:create', () => {
           env: testEnvWithSecret,
           token: 'any',
           api: [
-            () => createProject(),
+            () => createProject({ databaseType: 'postgres' }),
             () => updateNewEnvironmentEndpoint(),
           ],
           prompts: [
@@ -299,7 +299,7 @@ describe('projects:create', () => {
           env: testEnvWithSecret,
           token: 'any',
           api: [
-            () => createProject(),
+            () => createProject({ databaseType: 'postgres' }),
             () => updateNewEnvironmentEndpoint(),
           ],
           prompts: [
@@ -348,7 +348,7 @@ describe('projects:create', () => {
         env: testEnvWithSecret,
         token: 'any',
         api: [
-          () => createProject(),
+          () => createProject({ databaseType: 'postgres' }),
           () => updateNewEnvironmentEndpoint(),
         ],
         prompts: [
@@ -392,7 +392,7 @@ describe('projects:create', () => {
         env: testEnvWithSecret,
         token: 'any',
         api: [
-          () => createProject(),
+          () => createProject({ databaseType: 'postgres' }),
           () => updateNewEnvironmentEndpoint(),
         ],
         prompts: [
