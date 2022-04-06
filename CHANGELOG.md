@@ -1,3 +1,10 @@
+## [2.6.4](https://github.com/ForestAdmin/toolbelt/compare/v2.6.3...v2.6.4) (2022-04-06)
+
+
+### Bug Fixes
+
+* **datatypes:** MONEY is not automatically generated anymore on Postgresql and MsSql ([#360](https://github.com/ForestAdmin/toolbelt/issues/360)) ([ac7ab3e](https://github.com/ForestAdmin/toolbelt/commit/ac7ab3e4da6d077f00dc9c5d0e81c22f5c539c68))
+
 ## [2.6.3](https://github.com/ForestAdmin/toolbelt/compare/v2.6.2...v2.6.3) (2022-03-28)
 
 ## [2.6.2](https://github.com/ForestAdmin/toolbelt/compare/v2.6.1...v2.6.2) (2022-03-22)
