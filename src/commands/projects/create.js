@@ -82,8 +82,8 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       this.exit(1);
     }
 
-    this.eventSender.sessionToken = authenticationToken;
-    this.eventSender.meta = {
+    /** @type {import('../../services/projects/create/project-creator').ProjectMeta} */
+    const meta = {
       dbDialect: dbConfig.dbDialect,
       agent: dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize',
       isLocal: ['localhost', '127.0.0.1', '::1'].some((keyword) => (
@@ -91,11 +91,15 @@ class CreateCommand extends AbstractAuthenticatedCommand {
           ? dbConfig.dbHostname.includes(keyword)
           : dbConfig.dbConnectionUrl.includes(keyword)
       )),
+      architecture: 'microservice',
     };
+
+    this.eventSender.sessionToken = authenticationToken;
+    this.eventSender.meta = meta;
 
     this.spinner.start({ text: 'Creating your project on Forest Admin' });
     const projectCreationPromise = this.projectCreator.create(
-      authenticationToken, appConfig, this.eventSender.meta.agent,
+      authenticationToken, appConfig, meta,
     );
 
     const {

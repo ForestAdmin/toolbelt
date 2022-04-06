@@ -681,11 +681,16 @@ module.exports = {
       }],
     })),
 
-  createProject: () => nock('http://localhost:3001')
+  createProject: ({ databaseType }) => nock('http://localhost:3001')
     .post('/api/projects', {
       data: {
         type: 'projects',
-        attributes: { name: 'name', agent: 'express-sequelize' },
+        attributes: {
+          name: 'name',
+          agent: 'express-sequelize',
+          architecture: 'microservice',
+          database_type: databaseType,
+        },
       },
     })
     .reply(201, ProjectSerializer.serialize({
