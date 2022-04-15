@@ -110,7 +110,7 @@ class Dumper {
       debug: '~4.0.1',
       dotenv: '~6.1.0',
       express: '~4.17.1',
-      'express-jwt': '6.0.0',
+      'express-jwt': 'https://github.com/auth0/express-jwt.git#c7881ad378063236d85b1e1b0f4a252b63b8e75b',
       [`forest-express-${orm}`]: '^8.0.0',
       morgan: '1.9.1',
       'require-all': '^3.0.0',
