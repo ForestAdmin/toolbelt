@@ -1,3 +1,10 @@
+## [2.6.5](https://github.com/ForestAdmin/toolbelt/compare/v2.6.4...v2.6.5) (2022-04-15)
+
+
+### Bug Fixes
+
+* **deps:** remove vulnerability on generated projects ([#369](https://github.com/ForestAdmin/toolbelt/issues/369)) ([d00aaca](https://github.com/ForestAdmin/toolbelt/commit/d00aacab619e3f26e71d1631d3f009fc9bc9f4e9))
+
 ## [2.6.4](https://github.com/ForestAdmin/toolbelt/compare/v2.6.3...v2.6.4) (2022-04-06)
 
 
