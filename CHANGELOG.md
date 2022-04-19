@@ -1,3 +1,10 @@
+## [2.6.6](https://github.com/ForestAdmin/toolbelt/compare/v2.6.5...v2.6.6) (2022-04-19)
+
+
+### Bug Fixes
+
+* **security:** patch minimist dependency vulnerabilities ([#362](https://github.com/ForestAdmin/toolbelt/issues/362)) ([b675a31](https://github.com/ForestAdmin/toolbelt/commit/b675a310bb4e021f11dbf48cf0b7387e700ebc48))
+
 ## [2.6.5](https://github.com/ForestAdmin/toolbelt/compare/v2.6.4...v2.6.5) (2022-04-15)
 
 
