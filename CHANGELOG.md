@@ -1,3 +1,16 @@
+## [2.6.7](https://github.com/ForestAdmin/toolbelt/compare/v2.6.6...v2.6.7) (2022-04-19)
+
+
+### Bug Fixes
+
+* **security:** patch ansi-regex dependency vulnerabilities ([8bb7fb5](https://github.com/ForestAdmin/toolbelt/commit/8bb7fb5d0e402e9430862f6106305efd92782d04))
+* **security:** patch ansi-regex dependency vulnerabilities ([f0a9693](https://github.com/ForestAdmin/toolbelt/commit/f0a969351e39e3bd10479112244b7b80b19b7e32))
+* **security:** patch async dependency vulnerabilities ([78e36e3](https://github.com/ForestAdmin/toolbelt/commit/78e36e3e04069e761539333e62147d0817977034))
+* **security:** patch follow-redirects dependency vulnerabilities ([1c03034](https://github.com/ForestAdmin/toolbelt/commit/1c03034d887a882b6b12881677bcda1c78841be8))
+* **security:** patch jsprim dependency vulnerabilities ([14a59d8](https://github.com/ForestAdmin/toolbelt/commit/14a59d836c6aa5a6d34e5218babb245d8a5aeecc))
+* **security:** patch moment dependency vulnerabilities ([239c91a](https://github.com/ForestAdmin/toolbelt/commit/239c91aa1acda928664a3855b4528d736cacd1a3))
+* **security:** patch node-fetch dependency vulnerability ([#349](https://github.com/ForestAdmin/toolbelt/issues/349)) ([8c5661c](https://github.com/ForestAdmin/toolbelt/commit/8c5661c923fb57210c94e5083caf8b7e2d513b75))
+
 ## [2.6.6](https://github.com/ForestAdmin/toolbelt/compare/v2.6.5...v2.6.6) (2022-04-19)
 
 
