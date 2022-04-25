@@ -34,6 +34,10 @@ app.use('/forest/authentication', cors({
   // redirects to the callback route
   origin: corsConfig.origin.concat('null')
 }));
+
+// Support for request-private-network as the `cors` package
+// doesn't support it by default
+// See: https://github.com/expressjs/cors/issues/236
 app.use(function (req, res, next) {
   if (req.headers['access-control-request-private-network']) {
     res.setHeader('access-control-allow-private-network', 'true');
