@@ -27,6 +27,15 @@ const corsConfig = {
 };
 
 app.use(morgan('tiny'));
+// Support for request-private-network as the `cors` package
+// doesn't support it by default
+// See: https://github.com/expressjs/cors/issues/236
+app.use((req, res, next) => {
+  if (req.headers['access-control-request-private-network']) {
+    res.setHeader('access-control-allow-private-network', 'true');
+  }
+  next(null);
+});
 app.use('/forest/authentication', cors({
   ...corsConfig,
   // The null origin is sent by browsers for redirected AJAX calls
@@ -34,16 +43,6 @@ app.use('/forest/authentication', cors({
   // redirects to the callback route
   origin: corsConfig.origin.concat('null')
 }));
-
-// Support for request-private-network as the `cors` package
-// doesn't support it by default
-// See: https://github.com/expressjs/cors/issues/236
-app.use(function (req, res, next) {
-  if (req.headers['access-control-request-private-network']) {
-    res.setHeader('access-control-allow-private-network', 'true');
-  }
-  next(null);
-});
 app.use(cors(corsConfig));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
