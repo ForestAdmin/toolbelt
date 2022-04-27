@@ -1,3 +1,10 @@
+## [2.6.8](https://github.com/ForestAdmin/toolbelt/compare/v2.6.7...v2.6.8) (2022-04-27)
+
+
+### Bug Fixes
+
+* **cors:** add access control allow private network handling ([#372](https://github.com/ForestAdmin/toolbelt/issues/372)) ([9c324fe](https://github.com/ForestAdmin/toolbelt/commit/9c324fef49187882599ba17915556b55361f6771))
+
 ## [2.6.7](https://github.com/ForestAdmin/toolbelt/compare/v2.6.6...v2.6.7) (2022-04-19)
 
 
