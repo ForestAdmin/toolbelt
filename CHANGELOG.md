@@ -1,3 +1,10 @@
+## [2.6.9](https://github.com/ForestAdmin/toolbelt/compare/v2.6.8...v2.6.9) (2022-05-04)
+
+
+### Bug Fixes
+
+* **dockerfile:** upgrade generated dockerfile to use node 14 alpine as base ([#374](https://github.com/ForestAdmin/toolbelt/issues/374)) ([878233c](https://github.com/ForestAdmin/toolbelt/commit/878233c0df78b92bebdc2d0db4a8a5b3b7bbf45c))
+
 ## [2.6.8](https://github.com/ForestAdmin/toolbelt/compare/v2.6.7...v2.6.8) (2022-04-27)
 
 
