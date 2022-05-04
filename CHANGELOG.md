@@ -1,3 +1,10 @@
+## [2.6.10](https://github.com/ForestAdmin/toolbelt/compare/v2.6.9...v2.6.10) (2022-05-04)
+
+
+### Bug Fixes
+
+* upgrade generated project using express-jwt to 6.1.2 ([#375](https://github.com/ForestAdmin/toolbelt/issues/375)) ([7dd58d6](https://github.com/ForestAdmin/toolbelt/commit/7dd58d69eca0744679238664b5123e04bfba08a0))
+
 ## [2.6.9](https://github.com/ForestAdmin/toolbelt/compare/v2.6.8...v2.6.9) (2022-05-04)
 
 
