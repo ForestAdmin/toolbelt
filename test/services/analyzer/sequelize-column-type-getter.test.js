@@ -50,6 +50,22 @@ describe('services > column type getter', () => {
       await sequelizeHelper.drop('customers', 'mysql');
       await sequelizeHelper.close();
     });
+
+    it('should handle DECIMAL(11,2) as double type', async () => {
+      expect.assertions(1);
+
+      Context.init(defaultPlan);
+      const sequelizeHelper = new SequelizeHelper();
+      const databaseConnection = await sequelizeHelper.connect(DATABASE_URL_MYSQL_MAX);
+      await sequelizeHelper.dropAndCreate('cars');
+      const columnTypeGetter = new ColumnTypeGetter(databaseConnection, '');
+      const computedType = await columnTypeGetter.perform({ type: 'DECIMAL(11,2)' }, 'price', 'cars');
+
+      expect(computedType).toBe('DOUBLE');
+
+      await sequelizeHelper.drop('cars', 'mysql');
+      await sequelizeHelper.close();
+    });
   });
 
   describe('using postgresql', () => {
