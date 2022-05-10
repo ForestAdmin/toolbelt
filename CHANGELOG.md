@@ -1,3 +1,10 @@
+## [2.6.11](https://github.com/ForestAdmin/toolbelt/compare/v2.6.10...v2.6.11) (2022-05-10)
+
+
+### Bug Fixes
+
+* **schema:** fix incorrect dateonly model type detection ([#377](https://github.com/ForestAdmin/toolbelt/issues/377)) ([441df27](https://github.com/ForestAdmin/toolbelt/commit/441df2718edc35388b5a7aa87194583acb57f8af))
+
 ## [2.6.10](https://github.com/ForestAdmin/toolbelt/compare/v2.6.9...v2.6.10) (2022-05-04)
 
 
