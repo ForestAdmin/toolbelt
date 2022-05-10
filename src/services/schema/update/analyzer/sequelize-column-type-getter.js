@@ -122,6 +122,7 @@ function ColumnTypeGetter(databaseConnection, schema, allowWarning = true) {
       case 'DOUBLE':
       case 'DOUBLE PRECISION':
       case typeContains(type, 'DECIMAL'):
+        return 'DOUBLE';
       case 'DATE':
         return 'DATEONLY';
       case 'DATETIME':
