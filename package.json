@@ -46,7 +46,7 @@
     "pluralize": "8.0.0",
     "progress": "2.0.3",
     "saslprep": "1.0.3",
-    "sequelize": "5.22.0",
+    "sequelize": "6.19.1",
     "spinnies": "0.5.1",
     "stdout-stderr": "0.1.13",
     "superagent": "5.1.0",
@@ -72,12 +72,12 @@
     "git-hooks": "1.1.10",
     "husky": "7.0.2",
     "jest": "27.3.1",
+    "lint-staged": "12.3.7",
     "mock-stdin": "1.0.0",
     "nock": "13.0.4",
     "rimraf": "3.0.2",
     "semantic-release": "19.0.2",
-    "semantic-release-slack-bot": "3.5.2",
-    "simple-git": "1.126.0"
+    "semantic-release-slack-bot": "3.5.2"
   },
   "engines": {
     "node": ">=8.0.0"
