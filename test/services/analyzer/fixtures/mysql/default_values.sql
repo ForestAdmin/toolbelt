@@ -6,7 +6,7 @@ CREATE TABLE default_values (
     str_null VARCHAR(25) DEFAULT NULL,
     str_cst VARCHAR(25) DEFAULT 'co''nst''ant',
     str_expr VARCHAR(25) DEFAULT (UPPER(CONCAT('Hello', 'World'))),
-    date_null TIMESTAMP DEFAULT NULL,
+    date_null TIMESTAMP NULL DEFAULT NULL,
     date_cst1 TIMESTAMP DEFAULT '2015-05-11 13:01:01',
     date_cst2 DATE DEFAULT '1983-05-27',
     date_expr1 TIMESTAMP DEFAULT NOW(),
