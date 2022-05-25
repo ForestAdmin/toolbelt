@@ -29,7 +29,8 @@ const sqlDatabases = [{
   connectionUrl: DATABASE_URL_MYSQL_MAX,
   schema: 'public',
 }, {
-  dialect: 'mariadb',
+  dbType: 'mariadb',
+  dialect: 'mysql',
   version: '10',
   connectionUrl: DATABASE_URL_MARIADB,
   schema: 'public',
@@ -65,7 +66,7 @@ module.exports = {
   describeSequelizeDatabases(tests) {
     sqlDatabases.forEach((sqlDatabase) => {
       // eslint-disable-next-line jest/valid-describe-callback
-      describe(`using ${sqlDatabase.dialect} Database v${sqlDatabase.version}`, tests(sqlDatabase));
+      describe(`using ${sqlDatabase.dbType || sqlDatabase.dialect} Database v${sqlDatabase.version}`, tests(sqlDatabase));
     });
   },
 };

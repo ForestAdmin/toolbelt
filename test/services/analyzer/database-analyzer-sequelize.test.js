@@ -19,8 +19,8 @@ const defaultsValueExpected = {
   [databaseUrls.DATABASE_URL_POSTGRESQL_MIN]: _.cloneDeep(expectedDefaultValuesPostgres),
   [databaseUrls.DATABASE_URL_POSTGRESQL_MAX]: expectedDefaultValuesPostgres,
   [databaseUrls.DATABASE_URL_MYSQL_MAX]: expectedDefaultValuesMysql,
+  [databaseUrls.DATABASE_URL_MARIADB]: expectedDefaultValuesMysql,
   [databaseUrls.DATABASE_URL_MSSQL_MIN]: expectedDefaultValuesMssql,
-  [databaseUrls.DATABASE_URL_MARIADB]: expectedDefaultValuesMssql,
   [databaseUrls.DATABASE_URL_MSSQL_MAX]: expectedDefaultValuesMssql,
 };
 
