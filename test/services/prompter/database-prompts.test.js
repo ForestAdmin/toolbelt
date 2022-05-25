@@ -207,7 +207,12 @@ describe('services > prompter > database prompts', () => {
           expect(prompts[0].type).toBe('list');
           expect(prompts[0].name).toBe('databaseDialect');
           expect(prompts[0].message).toBe('What\'s the database type?');
-          expect(prompts[0].choices).toStrictEqual(['mongodb', 'mssql', 'mysql', 'postgres']);
+          expect(prompts[0].choices).toStrictEqual([
+            { name: 'mongodb', value: 'mongodb' },
+            { name: 'mssql', value: 'mssql' },
+            { name: 'mysql / mariadb', value: 'mysql' },
+            { name: 'postgres', value: 'postgres' },
+          ]);
           resetParams();
         });
 

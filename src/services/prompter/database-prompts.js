@@ -11,10 +11,10 @@ const MAPPING_DIALECT_TO_PORT = {
 };
 
 const dbDialectOptions = [
-  'mongodb',
-  'mssql',
-  'mysql',
-  'postgres',
+  { name: 'mongodb', value: 'mongodb' },
+  { name: 'mssql', value: 'mssql' },
+  { name: 'mysql / mariadb', value: 'mysql' },
+  { name: 'postgres', value: 'postgres' },
 ];
 
 class DatabasePrompts extends AbstractPrompter {
