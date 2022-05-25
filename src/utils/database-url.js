@@ -12,7 +12,7 @@ function buildDatabaseUrl(config) {
     let port = `:${config.databasePort}`;
     let password = '';
 
-    if (config.dbDialect === 'mongodb' && config.mongodbSrv) {
+    if (config.databaseDialect === 'mongodb' && config.mongodbSrv) {
       protocol = 'mongodb+srv';
       port = '';
     }

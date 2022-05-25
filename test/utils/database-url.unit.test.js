@@ -46,7 +46,7 @@ describe('utils > buildDatabaseUrl', () => {
 
           const config = {
             databaseDialect: 'mongodb',
-            databaseHostname: '__dbHostname__',
+            databaseHost: '__dbHostname__',
             databaseName: '__dbName__',
             databasePassword: '__dbPassword__',
             databasePort: '__dbPort__',
@@ -63,7 +63,7 @@ describe('utils > buildDatabaseUrl', () => {
 
           const config = {
             databaseDialect: '__protocol__',
-            databaseHostname: '__dbHostname__',
+            databaseHost: '__dbHostname__',
             databaseName: '__dbName__',
             databasePassword: '__dbPassword__',
             databasePort: '__dbPort__',
