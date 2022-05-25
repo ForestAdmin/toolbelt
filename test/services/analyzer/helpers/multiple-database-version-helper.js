@@ -5,7 +5,6 @@ const {
   DATABASE_URL_MSSQL_MIN,
   DATABASE_URL_MYSQL_MAX,
   DATABASE_URL_MYSQL_MIN,
-  DATABASE_URL_MARIADB,
   DATABASE_URL_POSTGRESQL_MAX,
   DATABASE_URL_POSTGRESQL_MIN,
 } = require('./database-urls');
@@ -27,12 +26,6 @@ const sqlDatabases = [{
   dialect: 'mysql',
   version: '8.0',
   connectionUrl: DATABASE_URL_MYSQL_MAX,
-  schema: 'public',
-}, {
-  dbType: 'mariadb',
-  dialect: 'mysql',
-  version: '10',
-  connectionUrl: DATABASE_URL_MARIADB,
   schema: 'public',
 }, {
   dialect: 'postgres',
@@ -66,7 +59,7 @@ module.exports = {
   describeSequelizeDatabases(tests) {
     sqlDatabases.forEach((sqlDatabase) => {
       // eslint-disable-next-line jest/valid-describe-callback
-      describe(`using ${sqlDatabase.dbType || sqlDatabase.dialect} Database v${sqlDatabase.version}`, tests(sqlDatabase));
+      describe(`using ${sqlDatabase.dialect} Database v${sqlDatabase.version}`, tests(sqlDatabase));
     });
   },
 };
