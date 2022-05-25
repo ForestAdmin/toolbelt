@@ -5,6 +5,7 @@ const {
   DATABASE_URL_MSSQL_MIN,
   DATABASE_URL_MYSQL_MAX,
   DATABASE_URL_MYSQL_MIN,
+  DATABASE_URL_MARIADB,
   DATABASE_URL_POSTGRESQL_MAX,
   DATABASE_URL_POSTGRESQL_MIN,
 } = require('./database-urls');
@@ -26,6 +27,11 @@ const sqlDatabases = [{
   dialect: 'mysql',
   version: '8.0',
   connectionUrl: DATABASE_URL_MYSQL_MAX,
+  schema: 'public',
+}, {
+  dialect: 'mariadb',
+  version: '10',
+  connectionUrl: DATABASE_URL_MARIADB,
   schema: 'public',
 }, {
   dialect: 'postgres',

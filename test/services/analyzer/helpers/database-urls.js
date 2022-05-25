@@ -5,6 +5,7 @@ module.exports = {
   DATABASE_URL_MSSQL_MAX: 'mssql://sa:forest2019:@localhost:1432/model',
   DATABASE_URL_MYSQL_MIN: 'mysql://forest:secret@localhost:8998/forestadmin_test_toolbelt-sequelize',
   DATABASE_URL_MYSQL_MAX: 'mysql://forest:secret@localhost:8999/forestadmin_test_toolbelt-sequelize',
+  DATABASE_URL_MARIADB: 'mysql://forest:secret@localhost:9000/forestadmin_test_toolbelt-sequelize',
   DATABASE_URL_POSTGRESQL_MIN: 'postgres://forest:secret@localhost:54368/forestadmin_test_toolbelt-sequelize',
   DATABASE_URL_POSTGRESQL_MAX: 'postgres://forest:secret@localhost:54369/forestadmin_test_toolbelt-sequelize',
 };
