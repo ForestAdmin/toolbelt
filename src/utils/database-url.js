@@ -8,8 +8,8 @@ function buildDatabaseUrl(config) {
   if (config.dbConnectionUrl) {
     connectionString = config.dbConnectionUrl;
   } else {
-    let protocol = config.dbDialect;
-    let port = `:${config.dbPort}`;
+    let protocol = config.databaseDialect;
+    let port = `:${config.databasePort}`;
     let password = '';
 
     if (config.dbDialect === 'mongodb' && config.mongodbSrv) {
@@ -19,10 +19,10 @@ function buildDatabaseUrl(config) {
 
     if (config.dbPassword) {
       // NOTICE: Encode password string in case of special chars.
-      password = `:${encodeURIComponent(config.dbPassword)}`;
+      password = `:${encodeURIComponent(config.databasePassword)}`;
     }
 
-    connectionString = `${protocol}://${config.dbUser}${password}@${config.dbHostname}${port}/${config.dbName}`;
+    connectionString = `${protocol}://${config.databaseUser}${password}@${config.databaseHost}${port}/${config.databaseName}`;
   }
 
   return connectionString;
