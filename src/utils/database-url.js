@@ -17,7 +17,7 @@ function buildDatabaseUrl(config) {
       port = '';
     }
 
-    if (config.dbPassword) {
+    if (config.databasePassword) {
       // NOTICE: Encode password string in case of special chars.
       password = `:${encodeURIComponent(config.databasePassword)}`;
     }
