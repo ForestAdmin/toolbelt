@@ -1,3 +1,10 @@
+# [2.7.0](https://github.com/ForestAdmin/toolbelt/compare/v2.6.11...v2.7.0) (2022-05-31)
+
+
+### Features
+
+* add mariadb support ([#385](https://github.com/ForestAdmin/toolbelt/issues/385)) ([6eb5650](https://github.com/ForestAdmin/toolbelt/commit/6eb56507b3d3ccebf4bcb7aaa733de986f1dd58c))
+
 ## [2.6.11](https://github.com/ForestAdmin/toolbelt/compare/v2.6.10...v2.6.11) (2022-05-10)
 
 
