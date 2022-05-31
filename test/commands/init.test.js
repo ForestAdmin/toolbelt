@@ -324,10 +324,10 @@ describe('init command', () => {
                   message: 'What\'s the database type?',
                   type: 'list',
                   choices: [
-                    'mongodb',
-                    'mssql',
-                    'mysql',
-                    'postgres',
+                    { name: 'mongodb', value: 'mongodb' },
+                    { name: 'mssql', value: 'mssql' },
+                    { name: 'mysql / mariadb', value: 'mysql' },
+                    { name: 'postgres', value: 'postgres' },
                   ],
                 },
                 {
