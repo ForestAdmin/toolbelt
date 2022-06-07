@@ -28,12 +28,12 @@ describe('utils > buildDatabaseUrl', () => {
         expect.assertions(1);
 
         const config = {
-          dbDialect: '__protocol__',
-          dbHostname: '__dbHostname__',
-          dbName: '__dbName__',
-          dbPassword: '__dbPassword__',
-          dbPort: '__dbPort__',
-          dbUser: '__dbUser__',
+          databaseDialect: '__protocol__',
+          databaseHost: '__dbHostname__',
+          databaseName: '__dbName__',
+          databasePassword: '__dbPassword__',
+          databasePort: '__dbPort__',
+          databaseUser: '__dbUser__',
         };
         const databaseUrl = buildDatabaseUrl(config);
 
@@ -45,12 +45,12 @@ describe('utils > buildDatabaseUrl', () => {
           expect.assertions(1);
 
           const config = {
-            dbDialect: 'mongodb',
-            dbHostname: '__dbHostname__',
-            dbName: '__dbName__',
-            dbPassword: '__dbPassword__',
-            dbPort: '__dbPort__',
-            dbUser: '__dbUser__',
+            databaseDialect: 'mongodb',
+            databaseHost: '__dbHostname__',
+            databaseName: '__dbName__',
+            databasePassword: '__dbPassword__',
+            databasePort: '__dbPort__',
+            databaseUser: '__dbUser__',
             mongodbSrv: true,
           };
           const databaseUrl = buildDatabaseUrl(config);
@@ -62,12 +62,12 @@ describe('utils > buildDatabaseUrl', () => {
           expect.assertions(1);
 
           const config = {
-            dbDialect: '__protocol__',
-            dbHostname: '__dbHostname__',
-            dbName: '__dbName__',
-            dbPassword: '__dbPassword__',
-            dbPort: '__dbPort__',
-            dbUser: '__dbUser__',
+            databaseDialect: '__protocol__',
+            databaseHost: '__dbHostname__',
+            databaseName: '__dbName__',
+            databasePassword: '__dbPassword__',
+            databasePort: '__dbPort__',
+            databaseUser: '__dbUser__',
             mongodbSrv: true,
           };
           const databaseUrl = buildDatabaseUrl(config);
