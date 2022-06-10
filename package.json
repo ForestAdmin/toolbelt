@@ -76,7 +76,7 @@
     "mock-stdin": "1.0.0",
     "nock": "13.0.4",
     "rimraf": "3.0.2",
-    "semantic-release": "19.0.2",
+    "semantic-release": "19.0.3",
     "semantic-release-slack-bot": "3.5.2"
   },
   "engines": {
