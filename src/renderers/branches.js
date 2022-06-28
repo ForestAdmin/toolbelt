@@ -19,8 +19,8 @@ class BranchesRenderer {
 
   render(branches, format) {
     const table = new this.Table({
-      head: ['NAME', 'ORIGIN', 'IS CURRENT'],
-      colWidths: [20, 20, 20],
+      head: ['NAME', 'ORIGIN', 'IS CURRENT', 'CLOSED AT'],
+      colWidths: [20, 20, 20, 30],
       chars,
     });
 
@@ -30,7 +30,7 @@ class BranchesRenderer {
         break;
       case 'table':
         branches.forEach((branch) => {
-          table.push([branch.name, branch.originEnvironment.name, branch.isCurrent ? '✅' : '']);
+          table.push([branch.name, branch.originEnvironment.name, branch.isCurrent ? '✅' : '', branch.closedAt ? branch.closedAt : '']);
         });
         this.logger.log(
           `${this.chalk.bold('BRANCHES')}`,
