@@ -454,13 +454,35 @@ module.exports = {
     .matchHeader('forest-secret-key', envSecret)
     .get('/api/branches')
     .reply(200, {
-      data: {
-        attributes: [
-          { name: 'feature/first' },
-          { name: 'feature/second', isCurrent: haveCurrent },
-          { name: 'feature/third' },
-        ],
-      },
+      data: [
+        {
+          type: 'branches',
+          attributes: { name: 'feature/first' },
+          relationships: {
+            originEnvironment: {
+              data: { id: '325', type: 'environments' },
+            },
+          },
+        },
+        {
+          type: 'branches',
+          attributes: { name: 'feature/second', isCurrent: haveCurrent },
+          relationships: {
+            originEnvironment: {
+              data: { id: '325', type: 'environments' },
+            },
+          },
+        },
+        {
+          type: 'branches',
+          attributes: { name: 'feature/third' },
+          relationships: {
+            originEnvironment: {
+              data: { id: '325', type: 'environments' },
+            },
+          },
+        },
+      ],
     }),
 
   getNoBranchListValid: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
