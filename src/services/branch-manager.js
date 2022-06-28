@@ -2,7 +2,6 @@ const Context = require('@forestadmin/context');
 
 const branchDeserializer = require('../deserializers/branch');
 const EnvironmentSerializer = require('../serializers/environment');
-const EnvironmentManager = require('../services/environment-manager');
 const { handleError } = require('../utils/error');
 
 const ERROR_MESSAGE_PROJECT_IN_V1 = 'This project does not support branches yet. Please migrate your environments from your Project settings first.';
@@ -33,14 +32,7 @@ function getBranches(envSecret) {
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', envSecret)
     .send()
-    .then((response) => branchDeserializer.deserialize(response.body))
-    .then((branches) => Promise.all(
-      branches.map(async (branch) => {
-        branch.originEnvironment = await new EnvironmentManager()
-          .getEnvironment(branch.originEnvironment.id);
-        return branch;
-      }),
-    ));
+    .then((response) => branchDeserializer.deserialize(response.body));
 }
 
 function deleteBranch(branchName, environmentSecret) {

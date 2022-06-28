@@ -457,10 +457,10 @@ module.exports = {
       data: [
         {
           type: 'branches',
-          attributes: { name: 'feature/first' },
+          attributes: { name: 'feature/first', closedAt: '2022-06-28T13:15:43.513Z' },
           relationships: {
             originEnvironment: {
-              data: { id: '325', type: 'environments' },
+              data: { id: '324', type: 'environments' },
             },
           },
         },
@@ -469,7 +469,7 @@ module.exports = {
           attributes: { name: 'feature/second', isCurrent: haveCurrent },
           relationships: {
             originEnvironment: {
-              data: { id: '325', type: 'environments' },
+              data: { id: '324', type: 'environments' },
             },
           },
         },

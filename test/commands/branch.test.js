@@ -15,6 +15,8 @@ const {
   getDevelopmentEnvironmentValid,
   getDevelopmentEnvironmentNotFound,
   postBranchValidOnSpecificEnv,
+  getEnvironmentValid,
+  getEnvironmentValid2,
 } = require('../fixtures/api');
 const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
 
@@ -27,12 +29,16 @@ describe('branch', () => {
         commandClass: BranchCommand,
         api: [
           () => getProjectByEnv(),
+          () => getEnvironmentValid(),
+          () => getEnvironmentValid2(),
           () => getBranchListValid(),
         ],
         std: [
-          { out: 'feature/first' },
-          { out: 'feature/second < current branch' },
-          { out: 'feature/third' },
+          { out: 'BRANCHES' },
+          { out: 'NAME                ORIGIN              IS CURRENT          CLOSED AT' },
+          { out: 'feature/first       Staging                                 2022-06-28T13:15:43.513Z' },
+          { out: 'feature/second      Staging             ✅' },
+          { out: 'feature/third       Production' },
         ],
       }));
     });
