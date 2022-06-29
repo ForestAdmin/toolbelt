@@ -457,18 +457,18 @@ module.exports = {
       data: [
         {
           type: 'branches',
-          attributes: { name: 'feature/first', closedAt: '2022-06-28T13:15:43.513Z' },
+          attributes: { name: 'feature/first', closed_at: '2022-06-28T13:15:43.513Z' },
           relationships: {
-            originEnvironment: {
+            origin_environment: {
               data: { id: '324', type: 'environments' },
             },
           },
         },
         {
           type: 'branches',
-          attributes: { name: 'feature/second', isCurrent: haveCurrent },
+          attributes: { name: 'feature/second', is_current: haveCurrent },
           relationships: {
-            originEnvironment: {
+            origin_environment: {
               data: { id: '324', type: 'environments' },
             },
           },
@@ -477,12 +477,27 @@ module.exports = {
           type: 'branches',
           attributes: { name: 'feature/third' },
           relationships: {
-            originEnvironment: {
+            origin_environment: {
               data: { id: '325', type: 'environments' },
             },
           },
         },
       ],
+      included: [{
+        type: 'environments',
+        id: '324',
+        attributes: {
+          id: 324,
+          name: 'Staging',
+        },
+      }, {
+        type: 'environments',
+        id: '325',
+        attributes: {
+          id: 325,
+          name: 'Production',
+        },
+      }],
     }),
 
   getNoBranchListValid: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')

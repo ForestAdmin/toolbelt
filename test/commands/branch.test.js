@@ -15,8 +15,6 @@ const {
   getDevelopmentEnvironmentValid,
   getDevelopmentEnvironmentNotFound,
   postBranchValidOnSpecificEnv,
-  getEnvironmentValid,
-  getEnvironmentValid2,
 } = require('../fixtures/api');
 const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
 
@@ -29,8 +27,6 @@ describe('branch', () => {
         commandClass: BranchCommand,
         api: [
           () => getProjectByEnv(),
-          () => getEnvironmentValid(),
-          () => getEnvironmentValid2(),
           () => getBranchListValid(),
         ],
         std: [
