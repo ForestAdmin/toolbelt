@@ -1,5 +1,4 @@
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
-const EnvironmentManager = require('../services/environment-manager');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
@@ -22,21 +21,6 @@ class BranchCommand extends AbstractAuthenticatedCommand {
       if (!branches || branches.length === 0) {
         this.logger.warn('You don\'t have any branch yet. Use `forest branch <branch_name>` to create one.');
       } else {
-        const environmentIds = branches.reduce((ids, branch) => {
-          ids.add(branch.originEnvironment.id);
-          return ids;
-        }, new Set());
-
-        const environmentManager = new EnvironmentManager();
-        const environements = await Promise.all(
-          [...environmentIds].map((id) => environmentManager.getEnvironment(id)),
-        );
-
-        branches.forEach((branch) => {
-          branch.originEnvironment = environements
-            .find(({ id }) => id === branch.originEnvironment.id);
-        });
-
         this.branchesRenderer.render(branches, format);
       }
     } catch (error) {
