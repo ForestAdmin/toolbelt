@@ -1,3 +1,12 @@
+## [2.7.1](https://github.com/ForestAdmin/toolbelt/compare/v2.7.0...v2.7.1) (2022-07-04)
+
+
+### Bug Fixes
+
+* **init:** correctly generate database url when needed ([#384](https://github.com/ForestAdmin/toolbelt/issues/384)) ([4ae33e2](https://github.com/ForestAdmin/toolbelt/commit/4ae33e2d99231cd7380ba93de74233b1a5046076))
+* **security:** patch semantic-release dependencies vulnerabilities ([#391](https://github.com/ForestAdmin/toolbelt/issues/391)) ([889f503](https://github.com/ForestAdmin/toolbelt/commit/889f50378abb0c383aebfedd093946e274ae6e32))
+* **security:** patch semver-regex dependency vulnerability ([#390](https://github.com/ForestAdmin/toolbelt/issues/390)) ([8a05858](https://github.com/ForestAdmin/toolbelt/commit/8a05858553625c9c2ca4103278dd773757371a1a))
+
 # [2.7.0](https://github.com/ForestAdmin/toolbelt/compare/v2.6.11...v2.7.0) (2022-05-31)
 
 
