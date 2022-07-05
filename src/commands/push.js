@@ -44,13 +44,13 @@ class PushCommand extends AbstractAuthenticatedCommand {
           .prompt([{
             type: 'confirm',
             name: 'confirm',
-            message: `Push branch ${currentBranch.name} onto ${config.environment}`,
+            message: `Push branch ${currentBranch.name} onto branch origin`,
           }]);
         if (!response.confirm) return;
       }
 
-      await BranchManager.pushBranch(config.environment, config.envSecret);
-      this.logger.success(`Branch ${currentBranch.name} successfully pushed onto ${config.environment}.`);
+      await BranchManager.pushBranch(config.envSecret);
+      this.logger.success(`Branch ${currentBranch.name} successfully pushed onto branch origin.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
       this.logger.error(customError);
@@ -61,14 +61,9 @@ class PushCommand extends AbstractAuthenticatedCommand {
 
 PushCommand.aliases = ['branches:push'];
 
-PushCommand.description = 'Push layout changes of your current branch to a remote environment.';
+PushCommand.description = 'Push layout changes of your current branch to the branch origin.';
 
 PushCommand.flags = {
-  // TODO: DWO EP17 remove environment option
-  environment: AbstractAuthenticatedCommand.flags.string({
-    char: 'e',
-    description: 'The remote environment name to push onto.',
-  }),
   force: AbstractAuthenticatedCommand.flags.boolean({
     description: 'Skip push changes confirmation.',
   }),
