@@ -1,3 +1,10 @@
+## [2.7.2](https://github.com/ForestAdmin/toolbelt/compare/v2.7.1...v2.7.2) (2022-07-06)
+
+
+### Bug Fixes
+
+* **auth:** display a better error message when the provided token is empty ([#402](https://github.com/ForestAdmin/toolbelt/issues/402)) ([0648bb3](https://github.com/ForestAdmin/toolbelt/commit/0648bb3af247bf0b8c1eefb894a3cc26948e003d))
+
 ## [2.7.1](https://github.com/ForestAdmin/toolbelt/compare/v2.7.0...v2.7.1) (2022-07-04)
 
 
