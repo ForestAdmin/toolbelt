@@ -115,6 +115,10 @@ function Authenticator({
     * @returns {Promise<string>}
     */
   this.login = async ({ email, password, token }) => {
+    if (token !== undefined && typeof token === 'string' && !token.trim()) {
+      throw new ApplicationError('The provided token is empty. Please provide a valid token.');
+    }
+
     if (!password && !token) {
       const sessionToken = await oidcAuthenticator.authenticate();
       return applicationTokenService.generateApplicationToken(sessionToken);
