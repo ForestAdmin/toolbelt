@@ -1,3 +1,4 @@
+const joi = require('joi');
 const Authenticator = require('../../src/services/authenticator');
 
 describe('services > authenticator', () => {
@@ -27,6 +28,7 @@ describe('services > authenticator', () => {
       error: jest.fn(),
       info: jest.fn(),
     };
+
     const jwtDecode = jest.fn();
 
     const mkdirp = jest.fn();
@@ -43,6 +45,7 @@ describe('services > authenticator', () => {
       FOREST_PATH: 'sweet-home/.forestrc',
       FOREST_D_PATH: 'sweet-home/.forest.d/.forestrc',
       LUMBER_PATH: 'sweet-home/.lumberrc',
+      joi,
     };
 
     const authenticator = new Authenticator(context);
@@ -361,6 +364,50 @@ describe('services > authenticator', () => {
 
           expect(logger.error).not.toHaveBeenCalled();
           expect(fs.unlinkSync).not.toHaveBeenCalledWith(LUMBER_PATH);
+        });
+      });
+    });
+
+    describe('when the token is provided', () => {
+      it('should log an error if the token is empty', async () => {
+        expect.assertions(2);
+
+        const { authenticator, logger } = setup();
+
+        await authenticator.tryLogin({ token: '' });
+
+        expect(logger.error).toHaveBeenCalledWith('The provided token is empty. Please provide a valid token.');
+        expect(logger.error).toHaveBeenCalledTimes(1);
+      });
+
+      describe('when the email is provided', () => {
+        it('should log an error if the token is invalid', async () => {
+          expect.assertions(2);
+
+          const { authenticator, logger, jwtDecode } = setup();
+
+          jwtDecode.mockImplementation(() => { throw new Error('invalid'); });
+          await authenticator.tryLogin({ token: 'invalid', email: 'bob@foo.com' });
+
+          expect(logger.error).toHaveBeenCalledWith('Invalid token. Please enter your authentication token.');
+          expect(logger.error).toHaveBeenCalledTimes(1);
+        });
+
+        it('should save the token if it is valid', async () => {
+          expect.assertions(2);
+
+          const {
+            authenticator, fs, logger, jwtDecode,
+          } = setup();
+
+          jwtDecode.mockReturnValue({ exp: (Date.now().valueOf() / 1000) + 5000 });
+          await authenticator.tryLogin({ token: 'valid', email: 'bob@foo.com' });
+
+          expect(logger.error).not.toHaveBeenCalled();
+          expect(fs.writeFileSync).toHaveBeenCalledWith(
+            'sweet-home/.forest.d/.forestrc',
+            'valid',
+          );
         });
       });
     });
