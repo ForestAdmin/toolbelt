@@ -104,6 +104,23 @@ function switchBranch({ id }, environmentSecret) {
     .send(EnvironmentSerializer.serialize({ currentBranchId: id }));
 }
 
+function setOrigin(originEnvironmentName, environmentSecret) {
+  const {
+    assertPresent,
+    authenticator,
+    env,
+    superagent: agent,
+  } = Context.inject();
+  assertPresent({ authenticator, env, superagent: agent });
+  const authToken = authenticator.getAuthToken();
+
+  return agent
+    .post(`${env.FOREST_URL}/api/branches/set-origin`)
+    .set('Authorization', `Bearer ${authToken}`)
+    .set('forest-secret-key', `${environmentSecret}`)
+    .send({ originEnvironmentName: encodeURIComponent(originEnvironmentName) });
+}
+
 function handleBranchError(rawError) {
   const error = handleError(rawError);
   switch (error) {
@@ -145,5 +162,6 @@ module.exports = {
   createBranch,
   pushBranch,
   switchBranch,
+  setOrigin,
   handleBranchError,
 };
