@@ -598,6 +598,15 @@ module.exports = {
       }],
     })),
 
+  invalidPushBranchToReference: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .post('/api/branches/push')
+    .reply(400, JSON.stringify({
+      errors: [{
+        detail: 'Failed to push branch: cannot "push" to reference environment, please use "deploy"',
+      }],
+    })),
+
   pushBranchInvalidDestinationBranch: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', envSecret)
     .post('/api/branches/push')

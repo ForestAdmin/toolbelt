@@ -69,7 +69,6 @@ function createBranch(branchName, environmentSecret) {
     .send({ branchName: encodeURIComponent(branchName) });
 }
 
-// TODO: DWO EP17 remove destinationEnvironmentName handle
 function pushBranch(environmentSecret) {
   const {
     assertPresent,
