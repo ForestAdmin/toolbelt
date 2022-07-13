@@ -1,7 +1,7 @@
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
-const EnvironmentManager = require('../services/environment-manager');
+const askForEnvironment = require('../services/ask-for-environment');
 const withCurrentProject = require('../services/with-current-project');
 
 class SetOriginCommand extends AbstractAuthenticatedCommand {
@@ -11,22 +11,6 @@ class SetOriginCommand extends AbstractAuthenticatedCommand {
     assertPresent({ env, inquirer });
     this.env = env;
     this.inquirer = inquirer;
-  }
-
-  async askForEnvironment(config) {
-    const environments = await new EnvironmentManager(config).listEnvironments();
-    const availableEnvironments = environments.filter((environment) => environment.type !== 'development');
-
-    if (availableEnvironments.length) {
-      const response = await this.inquirer.prompt([{
-        name: 'environment',
-        message: 'Select the environment you want to set as origin',
-        type: 'list',
-        choices: availableEnvironments.map(({ name }) => name),
-      }]);
-      return response.environment;
-    }
-    throw new Error('No remote environment.');
   }
 
   async runIfAuthenticated() {
@@ -45,11 +29,13 @@ class SetOriginCommand extends AbstractAuthenticatedCommand {
       }
 
       if (!config.ENVIRONMENT_NAME) {
-        config.ENVIRONMENT_NAME = await this.askForEnvironment(config);
+        config.ENVIRONMENT_NAME = await askForEnvironment(config, 'Select the environment you want to set as origin', ['remote', 'production']);
       }
 
       await BranchManager.setOrigin(config.ENVIRONMENT_NAME, config.envSecret);
+      this.logger.success(`Origin "${config.ENVIRONMENT_NAME}" successfully set.`);
     } catch (error) {
+      console.log(error);
       const customError = BranchManager.handleBranchError(error);
       this.logger.error(customError);
       this.exit(2);
