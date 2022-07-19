@@ -12,9 +12,10 @@ const {
   deleteBranchValid,
   deleteUnknownBranch,
   deleteBranchInvalid,
-  getDevelopmentEnvironmentValid,
   getDevelopmentEnvironmentNotFound,
-  postBranchValidOnSpecificEnv,
+  getEnvironmentListValid,
+  postBranchInvalidDestination,
+  postBranchInvalidDevelopmentEnvironmentAsOrigin,
 } = require('../fixtures/api');
 const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
 
@@ -89,14 +90,28 @@ describe('branch', () => {
     });
 
     describe('when creating new branches', () => {
-      it('should display a switch to new branch message', () => testCli({
+      it('should ask for origin if not provided and display a switch to new branch message', () => testCli({
         env: testEnvWithSecret,
         token: 'any',
         commandClass: BranchCommand,
         commandArgs: ['some/randombranchename'],
         api: [
           () => getProjectByEnv(),
+          () => getEnvironmentListValid(82),
           () => postBranchValid('some/randombranchename'),
+        ],
+        prompts: [
+          {
+            in: [{
+              name: 'environment',
+              message: 'Select the remote environment you want as origin',
+              type: 'list',
+              choices: ['name1'],
+            }],
+            out: {
+              environment: 'name1',
+            },
+          },
         ],
         std: [
           { out: '√ Switched to new branch: some/randombranchename.' },
@@ -110,12 +125,61 @@ describe('branch', () => {
         commandArgs: ['$0m3/$7r4ng38r4nChn4m3!'],
         api: [
           () => getProjectByEnv(),
+          () => getEnvironmentListValid(82),
           () => postBranchValid('$0m3/$7r4ng38r4nChn4m3!'),
         ],
+        prompts: [
+          {
+            in: [{
+              name: 'environment',
+              message: 'Select the remote environment you want as origin',
+              type: 'list',
+              choices: ['name1'],
+            }],
+            out: {
+              environment: 'name1',
+            },
+          },
+        ],
+
         std: [
           { out: '√ Switched to new branch: $0m3/$7r4ng38r4nChn4m3!.' },
         ],
       }));
+
+      describe('when creating new branches with a development environment as origin', () => {
+        it('should display an error message', () => testCli({
+          env: testEnvWithSecret,
+          token: 'any',
+          commandClass: BranchCommand,
+          commandArgs: ['some/randombranchename', '--origin', 'Development'],
+          api: [
+            () => getProjectByEnv(),
+            () => postBranchInvalidDevelopmentEnvironmentAsOrigin(),
+          ],
+          std: [
+            { err: 'Cannot set a development environment as origin' },
+          ],
+          exitCode: 2,
+        }));
+      });
+
+      describe('when creating new branches with an inexisting environment as origin', () => {
+        it('should display an error message', () => testCli({
+          env: testEnvWithSecret,
+          token: 'any',
+          commandClass: BranchCommand,
+          commandArgs: ['some/randombranchename', '--origin', 'inexistingEnvironment'],
+          api: [
+            () => getProjectByEnv(),
+            () => postBranchInvalidDestination(),
+          ],
+          std: [
+            { err: "× The environment provided doesn't exist." },
+          ],
+          exitCode: 2,
+        }));
+      });
 
       describe('when the branch name already exist', () => {
         it('should display an error message', () => testCli({
@@ -125,7 +189,21 @@ describe('branch', () => {
           commandArgs: ['already/existingbranch'],
           api: [
             () => getProjectByEnv(),
+            () => getEnvironmentListValid(82),
             () => postBranchInvalid(),
+          ],
+          prompts: [
+            {
+              in: [{
+                name: 'environment',
+                message: 'Select the remote environment you want as origin',
+                type: 'list',
+                choices: ['name1'],
+              }],
+              out: {
+                environment: 'name1',
+              },
+            },
           ],
           std: [
             { err: '× This branch already exists.' },
@@ -148,22 +226,6 @@ describe('branch', () => {
               { err: '× Development environment not found.' },
             ],
             exitCode: 2,
-          }));
-        });
-
-        describe('with a valid projectId', () => {
-          it('should display a switch to new branch message', () => testCli({
-            env: testEnvWithoutSecret,
-            token: 'any',
-            commandClass: BranchCommand,
-            commandArgs: ['--projectId', '1', 'watabranch'],
-            api: [
-              () => getDevelopmentEnvironmentValid(),
-              () => postBranchValidOnSpecificEnv('watabranch', '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125'),
-            ],
-            std: [
-              { out: '√ Switched to new branch: watabranch.' },
-            ],
           }));
         });
       });

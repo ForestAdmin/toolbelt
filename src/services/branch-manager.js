@@ -17,6 +17,7 @@ const ERROR_MESSAGE_ENVIRONMENT_NOT_FOUND = 'The environment provided doesn\'t e
 const ERROR_MESSAGE_NO_CURRENT_BRANCH = 'You don\'t have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.';
 const ERROR_MESSAGE_WRONG_ENVIRONMENT_TYPE = 'The environment on which you are trying to push your modifications is not a remote environment.';
 const ERROR_MESSAGE_NO_DESTINATION_BRANCH = 'The environment on which you are trying to push your modifications doesn\'t have current branch.';
+const ERROR_SET_DEV_ENVIRONEMENT_AS_ORIGIN = 'Cannot set a development environment as origin';
 
 function getBranches(envSecret) {
   const {
@@ -52,7 +53,7 @@ function deleteBranch(branchName, environmentSecret) {
     .send();
 }
 
-function createBranch(branchName, environmentSecret) {
+function createBranch(branchName, environmentSecret, originName) {
   const {
     assertPresent,
     authenticator,
@@ -66,7 +67,10 @@ function createBranch(branchName, environmentSecret) {
     .post(`${env.FOREST_URL}/api/branches`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
-    .send({ branchName: encodeURIComponent(branchName) });
+    .send({
+      branchName: encodeURIComponent(branchName),
+      originName: encodeURIComponent(originName),
+    });
 }
 
 function pushBranch(environmentSecret) {
@@ -150,6 +154,8 @@ function handleBranchError(rawError) {
       return ERROR_MESSAGE_WRONG_ENVIRONMENT_TYPE;
     case 'No destination branch.':
       return ERROR_MESSAGE_NO_DESTINATION_BRANCH;
+    case 'Cannot set development environment as origin.':
+      return ERROR_SET_DEV_ENVIRONEMENT_AS_ORIGIN;
     default:
       return error;
   }
