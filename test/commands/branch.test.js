@@ -16,6 +16,8 @@ const {
   getEnvironmentListValid,
   postBranchInvalidDestination,
   postBranchInvalidDevelopmentEnvironmentAsOrigin,
+  getDevelopmentEnvironmentValid,
+  postBranchValidOnSpecificEnv,
 } = require('../fixtures/api');
 const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
 
@@ -146,6 +148,36 @@ describe('branch', () => {
           { out: '√ Switched to new branch: $0m3/$7r4ng38r4nChn4m3!.' },
         ],
       }));
+
+      describe('with a valid projectId', () => {
+        it('should display a switch to new branch message', () => testCli({
+          env: testEnvWithoutSecret,
+          token: 'any',
+          commandClass: BranchCommand,
+          commandArgs: ['--projectId', '82', 'watabranch'],
+          api: [
+            () => getDevelopmentEnvironmentValid(82),
+            () => getEnvironmentListValid(82),
+            () => postBranchValidOnSpecificEnv('watabranch', '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125'),
+          ],
+          prompts: [
+            {
+              in: [{
+                name: 'environment',
+                message: 'Select the remote environment you want as origin',
+                type: 'list',
+                choices: ['name1'],
+              }],
+              out: {
+                environment: 'name1',
+              },
+            },
+          ],
+          std: [
+            { out: '√ Switched to new branch: watabranch.' },
+          ],
+        }));
+      });
 
       describe('when creating new branches with a development environment as origin', () => {
         it('should display an error message', () => testCli({
