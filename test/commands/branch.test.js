@@ -18,6 +18,7 @@ const {
   postBranchInvalidDevelopmentEnvironmentAsOrigin,
   getDevelopmentEnvironmentValid,
   postBranchValidOnSpecificEnv,
+  getBranchNoRemoteEnvironmentForOrigin,
 } = require('../fixtures/api');
 const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
 
@@ -118,6 +119,21 @@ describe('branch', () => {
         std: [
           { out: '√ Switched to new branch: some/randombranchename.' },
         ],
+      }));
+
+      it('should throw an error if no remote environment for origin', () => testCli({
+        env: testEnvWithSecret,
+        token: 'any',
+        commandClass: BranchCommand,
+        api: [
+          () => getProjectByEnv(),
+          () => getBranchNoRemoteEnvironmentForOrigin(),
+        ],
+
+        std: [
+          { err: '× You cannot run this command until this project has a remote non-production environment.' },
+        ],
+        exitCode: 2,
       }));
 
       it('should display a switch to new branch message with a complex branch name', () => testCli({
