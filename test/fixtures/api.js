@@ -264,6 +264,17 @@ module.exports = {
       },
     ])),
 
+  getNoEnvironmentRemoteInList: (projectId = 2) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/environments`)
+    .reply(200, EnvironmentSerializer.serialize([
+      {
+        id: 3, name: 'name1', apiEndpoint: 'http://localhost:1', type: 'development',
+      },
+      {
+        id: 4, name: 'name2', apiEndpoint: 'http://localhost:2', type: 'development',
+      },
+    ])),
+
   getEnvironmentListValid2: () => nock('http://localhost:3001')
     .get('/api/projects/82/environments')
     .reply(200, EnvironmentSerializer.serialize([{
@@ -536,15 +547,6 @@ module.exports = {
     .reply(422, JSON.stringify({
       errors: [{
         detail: 'No production/remote environment.',
-      }],
-    })),
-
-  getBranchNoRemoteEnvironmentForOrigin: () => nock('http://localhost:3001')
-    .matchHeader('forest-secret-key', 'forestEnvSecret')
-    .get('/api/branches')
-    .reply(422, JSON.stringify({
-      errors: [{
-        detail: 'No remote environment.',
       }],
     })),
 

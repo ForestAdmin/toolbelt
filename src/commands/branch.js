@@ -1,8 +1,8 @@
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
-const EnvironmentManager = require('../services/environment-manager');
 const withCurrentProject = require('../services/with-current-project');
+const askForEnvironment = require('../services/ask-for-environment');
 
 class BranchCommand extends AbstractAuthenticatedCommand {
   init(plan) {
@@ -65,22 +65,6 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     }
   }
 
-  async askForOriginEnvironment(config) {
-    const environments = await new EnvironmentManager(config).listEnvironments();
-    const remoteEnvironments = environments.filter((environment) => environment.type === 'remote');
-
-    if (remoteEnvironments.length) {
-      const response = await this.inquirer.prompt([{
-        name: 'environment',
-        message: 'Select the remote environment you want as origin',
-        type: 'list',
-        choices: remoteEnvironments.map(({ name }) => name),
-      }]);
-      return response.environment;
-    }
-    throw new Error('No remote environment.');
-  }
-
   async runIfAuthenticated() {
     const parsed = this.parse(BranchCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
@@ -95,8 +79,9 @@ class BranchCommand extends AbstractAuthenticatedCommand {
           .getDevelopmentEnvironmentForUser(config.projectId);
         config.envSecret = environment.secretKey;
       }
+
       if (!config.origin && config.BRANCH_NAME && !config.delete) {
-        config.origin = await this.askForOriginEnvironment(config);
+        config.origin = await askForEnvironment(config, 'Select the remote environment you want as origin', ['remote', 'production']);
       }
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);

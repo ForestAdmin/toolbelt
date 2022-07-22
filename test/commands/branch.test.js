@@ -18,7 +18,7 @@ const {
   postBranchInvalidDevelopmentEnvironmentAsOrigin,
   getDevelopmentEnvironmentValid,
   postBranchValidOnSpecificEnv,
-  getBranchNoRemoteEnvironmentForOrigin,
+  getNoEnvironmentRemoteInList,
 } = require('../fixtures/api');
 const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
 
@@ -109,7 +109,7 @@ describe('branch', () => {
               name: 'environment',
               message: 'Select the remote environment you want as origin',
               type: 'list',
-              choices: ['name1'],
+              choices: ['name1', 'name2'],
             }],
             out: {
               environment: 'name1',
@@ -119,21 +119,6 @@ describe('branch', () => {
         std: [
           { out: '√ Switched to new branch: some/randombranchename.' },
         ],
-      }));
-
-      it('should throw an error if no remote environment for origin', () => testCli({
-        env: testEnvWithSecret,
-        token: 'any',
-        commandClass: BranchCommand,
-        api: [
-          () => getProjectByEnv(),
-          () => getBranchNoRemoteEnvironmentForOrigin(),
-        ],
-
-        std: [
-          { err: '× You cannot run this command until this project has a remote non-production environment.' },
-        ],
-        exitCode: 2,
       }));
 
       it('should display a switch to new branch message with a complex branch name', () => testCli({
@@ -152,7 +137,7 @@ describe('branch', () => {
               name: 'environment',
               message: 'Select the remote environment you want as origin',
               type: 'list',
-              choices: ['name1'],
+              choices: ['name1', 'name2'],
             }],
             out: {
               environment: 'name1',
@@ -182,7 +167,7 @@ describe('branch', () => {
                 name: 'environment',
                 message: 'Select the remote environment you want as origin',
                 type: 'list',
-                choices: ['name1'],
+                choices: ['name1', 'name2'],
               }],
               out: {
                 environment: 'name1',
@@ -246,7 +231,7 @@ describe('branch', () => {
                 name: 'environment',
                 message: 'Select the remote environment you want as origin',
                 type: 'list',
-                choices: ['name1'],
+                choices: ['name1', 'name2'],
               }],
               out: {
                 environment: 'name1',
@@ -453,6 +438,21 @@ describe('branch', () => {
           api: [
             () => getProjectByEnv(),
             () => getBranchInvalidEnvironmentNoRemote(),
+          ],
+          std: [
+            { err: '× You cannot run branch commands until this project has either a remote or a production environment.' },
+          ],
+          exitCode: 2,
+        }));
+
+        it('should throw an error if no remote environment for origin', () => testCli({
+          env: testEnvWithSecret,
+          token: 'any',
+          commandClass: BranchCommand,
+          commandArgs: ['newBranchName'],
+          api: [
+            () => getProjectByEnv(),
+            () => getNoEnvironmentRemoteInList(82),
           ],
           std: [
             { err: '× You cannot run branch commands until this project has either a remote or a production environment.' },
