@@ -3,6 +3,7 @@ const ProjectManager = require('../../services/project-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const withCurrentProject = require('../../services/with-current-project');
 const { handleError } = require('../../utils/error');
+const askForEnvironment = require('../../services/ask-for-environment');
 
 class ResetCommand extends AbstractAuthenticatedCommand {
   init(plan) {
@@ -11,22 +12,6 @@ class ResetCommand extends AbstractAuthenticatedCommand {
     assertPresent({ env, inquirer });
     this.env = env;
     this.inquirer = inquirer;
-  }
-
-  async askForEnvironment(config) {
-    const environments = await new EnvironmentManager(config).listEnvironments();
-    const remoteEnvironments = environments.filter((environment) => environment.type === 'remote');
-
-    if (remoteEnvironments.length) {
-      const response = await this.inquirer.prompt([{
-        name: 'environment',
-        message: 'Select the remote environment you want to reset',
-        type: 'list',
-        choices: remoteEnvironments.map(({ name }) => name),
-      }]);
-      return response.environment;
-    }
-    throw new Error('No remote environment.');
   }
 
   async runIfAuthenticated() {
@@ -45,7 +30,7 @@ class ResetCommand extends AbstractAuthenticatedCommand {
       }
 
       if (!config.environment) {
-        config.environment = await this.askForEnvironment(config);
+        config.environment = await askForEnvironment(config, 'Select the remote environment you want to reset', ['remote']);
       }
 
       if (!config.force) {

@@ -1,8 +1,8 @@
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
-const EnvironmentManager = require('../services/environment-manager');
 const withCurrentProject = require('../services/with-current-project');
+const askForEnvironment = require('../services/ask-for-environment');
 
 class PushCommand extends AbstractAuthenticatedCommand {
   init(plan) {
@@ -11,23 +11,6 @@ class PushCommand extends AbstractAuthenticatedCommand {
     assertPresent({ env, inquirer });
     this.env = env;
     this.inquirer = inquirer;
-  }
-
-  // TODO: DWO EP17 probably update this function to handle environment selection
-  async askForEnvironment(config) {
-    const environments = await new EnvironmentManager(config).listEnvironments();
-    const remoteEnvironments = environments.filter((environment) => environment.type === 'remote');
-
-    if (remoteEnvironments.length) {
-      const response = await this.inquirer.prompt([{
-        name: 'environment',
-        message: 'Select the remote environment you want to push onto',
-        type: 'list',
-        choices: remoteEnvironments.map(({ name }) => name),
-      }]);
-      return response.environment;
-    }
-    throw new Error('No remote environment.');
   }
 
   async runIfAuthenticated() {
@@ -53,7 +36,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
 
       // TODO: DWO EP17 remove destination environemnt handle
       if (!config.environment) {
-        config.environment = await this.askForEnvironment(config);
+        config.environment = await askForEnvironment(config, 'Select the remote environment you want to push onto', ['remote']);
       }
 
       if (!config.force) {
