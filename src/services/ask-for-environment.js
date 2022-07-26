@@ -20,5 +20,5 @@ module.exports = async function askForEnvironment(config, message, availableEnvi
     }]);
     return response.environment;
   }
-  throw new Error('No remote environment.');
+  throw new Error(`No ${availableEnvironmentTypes.join('/')} environment.`);
 };
