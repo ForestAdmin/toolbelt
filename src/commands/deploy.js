@@ -96,7 +96,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
 
       if (!config.force && !(await this.confirm(environment))) return;
 
-      await new EnvironmentManager(config).deploy(environment);
+      await new EnvironmentManager(config).deploy();
 
       this.logger.success(`Deployed ${environment.name} layout changes to reference environment.`);
     } catch (error) {
@@ -108,7 +108,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
 
 DeployCommand.aliases = ['environments:deploy'];
 
-DeployCommand.description = 'Deploy layout changes of an environment to the reference one.';
+DeployCommand.description = 'Deploy layout changes of the current branch to the reference one.';
 
 DeployCommand.flags = {
   help: AbstractAuthenticatedCommand.flags.boolean({
@@ -124,9 +124,5 @@ DeployCommand.flags = {
     default: null,
   }),
 };
-
-DeployCommand.args = [{
-  name: 'ENVIRONMENT_NAME', required: false, description: 'The name of the environment containing the layout changes to deploy to the reference one.',
-}];
 
 module.exports = DeployCommand;
