@@ -26,7 +26,7 @@ describe('push', () => {
     const branchName = 'feature/second';
     const environmentName = 'Staging';
 
-    it("shouldn't the push if user cancel the confirmation", () => testCli({
+    it("shouldn't push if user cancel the confirmation", () => testCli({
       env: testEnvWithSecret,
       token: 'any',
       commandClass: PushCommand,

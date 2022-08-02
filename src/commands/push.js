@@ -2,7 +2,6 @@ const AbstractAuthenticatedCommand = require('../abstract-authenticated-command'
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
-const askForEnvironment = require('../services/ask-for-environment');
 
 class PushCommand extends AbstractAuthenticatedCommand {
   init(plan) {
@@ -32,11 +31,6 @@ class PushCommand extends AbstractAuthenticatedCommand {
 
       if (!currentBranch) {
         throw new Error('No current branch.');
-      }
-
-      // TODO: DWO EP17 remove destination environemnt handle
-      if (!config.environment) {
-        config.environment = await askForEnvironment(config, 'Select the remote environment you want to push onto', ['remote']);
       }
 
       if (!config.force) {
