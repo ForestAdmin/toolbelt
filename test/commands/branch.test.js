@@ -445,7 +445,7 @@ describe('branch', () => {
           exitCode: 2,
         }));
 
-        it('should throw an error if no remote environment for origin', () => testCli({
+        it('should throw an error if only development environements in askForEnvionement function return', () => testCli({
           env: testEnvWithSecret,
           token: 'any',
           commandClass: BranchCommand,
