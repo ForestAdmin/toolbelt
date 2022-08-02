@@ -440,7 +440,7 @@ describe('branch', () => {
             () => getBranchInvalidEnvironmentNoRemote(),
           ],
           std: [
-            { err: '× You cannot run branch commands until this project has either a remote or a production environment.' },
+            { err: '× You cannot run branch commands until this project has either a remote or a reference environment.' },
           ],
           exitCode: 2,
         }));
@@ -455,7 +455,7 @@ describe('branch', () => {
             () => getNoEnvironmentRemoteInList(82),
           ],
           std: [
-            { err: '× You cannot run branch commands until this project has either a remote or a production environment.' },
+            { err: '× You cannot run branch commands until this project has either a remote or a reference environment.' },
           ],
           exitCode: 2,
         }));
