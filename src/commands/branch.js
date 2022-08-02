@@ -81,7 +81,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
       }
 
       if (!config.origin && config.BRANCH_NAME && !config.delete) {
-        config.origin = await askForEnvironment(config, 'Select the remote environment you want as origin', ['remote', 'production']);
+        config.origin = await askForEnvironment(config, 'Select the remote environment you want as origin', ['production', 'remote']);
       }
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
