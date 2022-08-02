@@ -14,20 +14,21 @@ class PushCommand extends AbstractAuthenticatedCommand {
 
   async runIfAuthenticated() {
     const parsed = this.parse(PushCommand);
-    const commandOptions = { ...parsed.flags, ...parsed.args };
+    const envSecret = this.env.FOREST_ENV_SECRET;
+    const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
+    let config;
 
     try {
-      const config = await withCurrentProject({ ...this.env, ...commandOptions });
+      config = await withCurrentProject({ ...this.env, ...commandOptions });
 
-      const projectManager = new ProjectManager(config);
-      const project = await projectManager.getProjectForDevWorkflow();
+      if (!config.envSecret) {
+        const environment = await new ProjectManager(config)
+          .getDevelopmentEnvironmentForUser(config.projectId);
+        config.envSecret = environment.secretKey;
+      }
+      const branches = await BranchManager.getBranches(config.envSecret);
 
-      const developmentEnvironment = await projectManager
-        .getDevelopmentEnvironmentForUser(project.id);
-      config.envSecret = developmentEnvironment.secretKey;
-
-      const developmentBranches = await BranchManager.getBranches(config.envSecret);
-      const currentBranch = developmentBranches.find((branch) => branch.isCurrent);
+      const currentBranch = branches.find((branch) => branch.isCurrent);
 
       if (!currentBranch) {
         throw new Error('No current branch.');

@@ -2,11 +2,8 @@ const testCli = require('./test-cli-helper/test-cli');
 const PushCommand = require('../../src/commands/push');
 const {
   getBranchListValid,
-  getDevelopmentEnvironmentValid,
-  getInAppProjectForDevWorkflow,
   getNoBranchListValid,
   getProjectByEnv,
-  getV1ProjectForDevWorkflow,
   pushBranchInvalidDestinationBranch,
   pushBranchValid,
   invalidPushBranchToReference,
@@ -15,14 +12,13 @@ const { testEnvWithSecret } = require('../fixtures/env');
 
 const getValidProjectEnvironementAndBranch = (projectId, envSecret) => [
   () => getProjectByEnv(),
-  () => getInAppProjectForDevWorkflow(projectId),
-  () => getDevelopmentEnvironmentValid(projectId),
+
   () => getBranchListValid(envSecret),
 ];
 describe('push', () => {
   describe('when the user use push command', () => {
     const projectId = 82;
-    const envSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
+    const envSecret = 'forestEnvSecret';
     const branchName = 'feature/second';
     const environmentName = 'Staging';
 
@@ -118,7 +114,7 @@ describe('push', () => {
 
   describe('when the user try to push on production', () => {
     const projectId = 82;
-    const envSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
+    const envSecret = 'forestEnvSecret';
     const branchName = 'feature/second';
     const environmentName = 'Staging';
 
@@ -150,16 +146,13 @@ describe('push', () => {
   });
 
   describe('when development environment doesn\'t have branch', () => {
-    const projectId = 82;
-    const envSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
+    const envSecret = 'forestEnvSecret';
     it('should throw an error', () => testCli({
       env: testEnvWithSecret,
       token: 'any',
       commandClass: PushCommand,
       api: [
         () => getProjectByEnv(),
-        () => getInAppProjectForDevWorkflow(projectId),
-        () => getDevelopmentEnvironmentValid(projectId),
         () => getNoBranchListValid(envSecret),
       ],
       std: [
@@ -170,16 +163,13 @@ describe('push', () => {
   });
 
   describe('when development environment doesn\'t have current branch', () => {
-    const projectId = 82;
-    const envSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
+    const envSecret = 'forestEnvSecret';
     it('should throw an error', () => testCli({
       env: testEnvWithSecret,
       token: 'any',
       commandClass: PushCommand,
       api: [
         () => getProjectByEnv(),
-        () => getInAppProjectForDevWorkflow(projectId),
-        () => getDevelopmentEnvironmentValid(projectId),
         () => getBranchListValid(envSecret, false),
       ],
       std: [
@@ -191,7 +181,7 @@ describe('push', () => {
 
   describe('when destination environment doesn\'t have branch', () => {
     const projectId = 82;
-    const envSecret = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
+    const envSecret = 'forestEnvSecret';
     it('should throw an error', () => testCli({
       env: testEnvWithSecret,
       token: 'any',
@@ -203,23 +193,6 @@ describe('push', () => {
       ],
       std: [
         { err: '× The environment on which you are trying to push your modifications doesn\'t have current branch.' },
-      ],
-      exitCode: 2,
-    }));
-  });
-
-  describe('when project is version 1', () => {
-    const projectId = 82;
-    it('should throw an error', () => testCli({
-      env: testEnvWithSecret,
-      token: 'any',
-      commandClass: PushCommand,
-      api: [
-        () => getProjectByEnv(),
-        () => getV1ProjectForDevWorkflow(projectId),
-      ],
-      std: [
-        { err: '× This project does not support branches yet. Please migrate your environments from your Project settings first.' },
       ],
       exitCode: 2,
     }));
