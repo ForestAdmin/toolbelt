@@ -784,4 +784,11 @@ module.exports = {
       environmentName: 'name2',
     })
     .reply(422),
+
+  setOriginValid: (environementName, envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .post('/api/branches/set-origin', {
+      originEnvironmentName: environementName,
+    })
+    .reply(200),
 };
