@@ -15,8 +15,6 @@ module.exports = {
     '**/*.{js,ts,tsx}',
   ],
 
-  modulePathIgnorePatterns: ['test/services/analyzer', 'test/commands/projects'],
-
   coveragePathIgnorePatterns: [
     '/coverage',
     '/.eslint-bin/',
