@@ -21,7 +21,7 @@ const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
 describe('branch', () => {
   describe('when the user is logged in', () => {
     describe('when environment have branches', () => {
-      it('should display a list of branches', () => testCli({
+      it('should display a list of branches as table', () => testCli({
         env: testEnvWithSecret,
         token: 'any',
         commandClass: BranchCommand,
@@ -30,10 +30,46 @@ describe('branch', () => {
           () => getBranchListValid(),
         ],
         std: [
-          { out: 'feature/first' },
-          { out: 'feature/second < current branch' },
-          { out: 'feature/third' },
+          { out: 'BRANCHES' },
+          { out: 'NAME                ORIGIN              IS CURRENT          CLOSED AT' },
+          { out: 'feature/first       Staging                                 2022-06-28T13:15:43.513Z' },
+          { out: 'feature/second      Staging             ✅' },
+          { out: 'feature/third       Production' },
         ],
+      }));
+
+      it('should display a list of branches as json', () => testCli({
+        env: testEnvWithSecret,
+        token: 'any',
+        commandClass: BranchCommand,
+        commandArgs: ['--format', 'json'],
+        api: [
+          () => getProjectByEnv(),
+          () => getBranchListValid(),
+        ],
+        std: [{
+          out: [{
+            name: 'feature/first',
+            closedAt: '2022-06-28T13:15:43.513Z',
+            originEnvironment: {
+              id: '324',
+              name: 'Staging',
+            },
+          }, {
+            name: 'feature/second',
+            isCurrent: true,
+            originEnvironment: {
+              id: '324',
+              name: 'Staging',
+            },
+          }, {
+            name: 'feature/third',
+            originEnvironment: {
+              id: '325',
+              name: 'Production',
+            },
+          }],
+        }],
       }));
     });
 

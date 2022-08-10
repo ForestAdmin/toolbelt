@@ -6,21 +6,22 @@ const withCurrentProject = require('../services/with-current-project');
 class BranchCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan);
-    const { assertPresent, env, inquirer } = this.context;
+    const {
+      assertPresent, env, inquirer, branchesRenderer,
+    } = this.context;
     assertPresent({ env, inquirer });
     this.env = env;
     this.inquirer = inquirer;
+    this.branchesRenderer = branchesRenderer;
   }
 
-  async listBranches(envSecret) {
+  async listBranches(envSecret, format) {
     try {
       const branches = await BranchManager.getBranches(envSecret);
       if (!branches || branches.length === 0) {
         this.logger.warn('You don\'t have any branch yet. Use `forest branch <branch_name>` to create one.');
       } else {
-        branches.forEach((branch) => {
-          this.logger.log(`${branch.name} ${branch.isCurrent ? '< current branch' : ''}`);
-        });
+        this.branchesRenderer.render(branches, format);
       }
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
@@ -82,7 +83,6 @@ class BranchCommand extends AbstractAuthenticatedCommand {
       const customError = BranchManager.handleBranchError(error);
       this.logger.error(customError);
       this.exit(2);
-      return null;
     }
 
     if (config.BRANCH_NAME) {
@@ -91,7 +91,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
       }
       return this.createBranch(config.BRANCH_NAME, config.envSecret);
     }
-    return this.listBranches(config.envSecret);
+    return this.listBranches(config.envSecret, config.format);
   }
 }
 
@@ -112,6 +112,12 @@ BranchCommand.flags = {
   }),
   help: AbstractAuthenticatedCommand.flags.boolean({
     description: 'Display usage information.',
+  }),
+  format: AbstractAuthenticatedCommand.flags.string({
+    char: 'format',
+    description: 'Output format.',
+    options: ['table', 'json'],
+    default: 'table',
   }),
 };
 
