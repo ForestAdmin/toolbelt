@@ -5,6 +5,7 @@ const {
   getDevelopmentEnvironmentValid,
   getEnvironmentListValid,
   setOriginValid,
+  setOriginInValid,
   getProjectByEnv,
   getEnvironmentListValid2,
 } = require('../fixtures/api');
@@ -97,6 +98,24 @@ describe('set origin', () => {
       std: [
         { out: '√ Origin "Production" successfully set.' },
       ],
+    }));
+  });
+
+  describe('when backend throw an error', () => {
+    it('should prompt the error', () => testCli({
+      env: testEnvWithSecret,
+      token: 'any',
+      commandClass: SetOriginCommand,
+      commandArgs: ['unknownEnv'],
+      api: [
+        () => getProjectByEnv(),
+        () => setOriginInValid('unknownEnv'),
+      ],
+      prompts: [],
+      std: [
+        { err: '× Set origin error' },
+      ],
+      exitCode: 2,
     }));
   });
 });
