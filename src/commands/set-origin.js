@@ -35,7 +35,6 @@ class SetOriginCommand extends AbstractAuthenticatedCommand {
       await BranchManager.setOrigin(config.ENVIRONMENT_NAME, config.envSecret);
       this.logger.success(`Origin "${config.ENVIRONMENT_NAME}" successfully set.`);
     } catch (error) {
-      console.log(error);
       const customError = BranchManager.handleBranchError(error);
       this.logger.error(customError);
       this.exit(2);
