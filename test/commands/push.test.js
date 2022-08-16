@@ -7,17 +7,18 @@ const {
   pushBranchInvalidDestinationBranch,
   pushBranchValid,
   invalidPushBranchToReference,
+  getProjectListValid,
+  getDevelopmentEnvironmentValid,
 } = require('../fixtures/api');
-const { testEnvWithSecret } = require('../fixtures/env');
+const { testEnvWithSecret, testEnvWithoutSecret } = require('../fixtures/env');
 
-const getValidProjectEnvironementAndBranch = (projectId, envSecret) => [
+const getValidProjectEnvironementAndBranch = (envSecret) => [
   () => getProjectByEnv(),
-
   () => getBranchListValid(envSecret),
 ];
+
 describe('push', () => {
   describe('when the user use push command', () => {
-    const projectId = 82;
     const envSecret = 'forestEnvSecret';
     const branchName = 'feature/second';
     const environmentName = 'Staging';
@@ -27,7 +28,7 @@ describe('push', () => {
       token: 'any',
       commandClass: PushCommand,
       api: [
-        ...getValidProjectEnvironementAndBranch(projectId, envSecret),
+        ...getValidProjectEnvironementAndBranch(envSecret),
       ],
       prompts: [
         {
@@ -51,7 +52,7 @@ describe('push', () => {
       token: 'any',
       commandClass: PushCommand,
       api: [
-        ...getValidProjectEnvironementAndBranch(projectId, envSecret),
+        ...getValidProjectEnvironementAndBranch(envSecret),
         () => pushBranchValid(envSecret),
       ],
       prompts: [
@@ -77,7 +78,7 @@ describe('push', () => {
       commandClass: PushCommand,
       commandArgs: [],
       api: [
-        ...getValidProjectEnvironementAndBranch(projectId, envSecret),
+        ...getValidProjectEnvironementAndBranch(envSecret),
         () => pushBranchValid(envSecret),
       ],
       prompts: [
@@ -103,17 +104,49 @@ describe('push', () => {
       commandClass: PushCommand,
       commandArgs: ['--force'],
       api: [
-        ...getValidProjectEnvironementAndBranch(projectId, envSecret),
+        ...getValidProjectEnvironementAndBranch(envSecret),
         () => pushBranchValid(envSecret),
       ],
       std: [
         { out: `√ Branch ${branchName} successfully pushed onto ${environmentName}.` },
       ],
     }));
+
+    describe('when no env secret was found', () => {
+      const secretKey = '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125';
+      it('should get by default the development environment of the user', () => testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: PushCommand,
+        commandArgs: ['--force'],
+        api: [
+          () => getProjectListValid(),
+          () => getDevelopmentEnvironmentValid(),
+          () => getBranchListValid(secretKey),
+          () => pushBranchValid(secretKey),
+        ],
+        prompts: [
+          {
+            in: [{
+              name: 'project',
+              message: 'Select your project',
+              type: 'list',
+              choices: [
+                { name: 'project1', value: 1 },
+                { name: 'project2', value: 2 },
+              ],
+            }],
+            out: { project: 1 },
+          },
+        ],
+        std: [
+          { out: `√ Branch ${branchName} successfully pushed onto ${environmentName}.` },
+        ],
+      }));
+    });
   });
 
   describe('when the user try to push on production', () => {
-    const projectId = 82;
     const envSecret = 'forestEnvSecret';
     const branchName = 'feature/second';
     const environmentName = 'Staging';
@@ -123,7 +156,7 @@ describe('push', () => {
       token: 'any',
       commandClass: PushCommand,
       api: [
-        ...getValidProjectEnvironementAndBranch(projectId, envSecret),
+        ...getValidProjectEnvironementAndBranch(envSecret),
         () => invalidPushBranchToReference(envSecret),
       ],
       prompts: [
@@ -180,7 +213,6 @@ describe('push', () => {
   });
 
   describe('when destination environment doesn\'t have branch', () => {
-    const projectId = 82;
     const envSecret = 'forestEnvSecret';
     it('should throw an error', () => testCli({
       env: testEnvWithSecret,
@@ -188,7 +220,7 @@ describe('push', () => {
       commandClass: PushCommand,
       commandArgs: ['--force'],
       api: [
-        ...getValidProjectEnvironementAndBranch(projectId, envSecret),
+        ...getValidProjectEnvironementAndBranch(envSecret),
         () => pushBranchInvalidDestinationBranch(envSecret),
       ],
       std: [
