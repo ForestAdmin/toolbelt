@@ -2,7 +2,6 @@ const AbstractAuthenticatedCommand = require('../abstract-authenticated-command'
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
-const askForEnvironment = require('../services/ask-for-environment');
 
 class PushCommand extends AbstractAuthenticatedCommand {
   init(plan) {
@@ -15,28 +14,24 @@ class PushCommand extends AbstractAuthenticatedCommand {
 
   async runIfAuthenticated() {
     const parsed = this.parse(PushCommand);
-    const commandOptions = { ...parsed.flags, ...parsed.args };
+    const envSecret = this.env.FOREST_ENV_SECRET;
+    const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
+    let config;
 
     try {
-      const config = await withCurrentProject({ ...this.env, ...commandOptions });
+      config = await withCurrentProject({ ...this.env, ...commandOptions });
 
-      const projectManager = new ProjectManager(config);
-      const project = await projectManager.getProjectForDevWorkflow();
+      if (!config.envSecret) {
+        const environment = await new ProjectManager(config)
+          .getDevelopmentEnvironmentForUser(config.projectId);
+        config.envSecret = environment.secretKey;
+      }
+      const branches = await BranchManager.getBranches(config.envSecret);
 
-      const developmentEnvironment = await projectManager
-        .getDevelopmentEnvironmentForUser(project.id);
-      config.envSecret = developmentEnvironment.secretKey;
-
-      const developmentBranches = await BranchManager.getBranches(config.envSecret);
-      const currentBranch = developmentBranches.find((branch) => branch.isCurrent);
+      const currentBranch = branches.find((branch) => branch.isCurrent);
 
       if (!currentBranch) {
         throw new Error('No current branch.');
-      }
-
-      // TODO: DWO EP17 remove destination environemnt handle
-      if (!config.environment) {
-        config.environment = await askForEnvironment(config, 'Select the remote environment you want to push onto', ['remote']);
       }
 
       if (!config.force) {
@@ -44,13 +39,13 @@ class PushCommand extends AbstractAuthenticatedCommand {
           .prompt([{
             type: 'confirm',
             name: 'confirm',
-            message: `Push branch ${currentBranch.name} onto ${config.environment}`,
+            message: `Push branch ${currentBranch.name} onto ${currentBranch.originEnvironment.name}`,
           }]);
         if (!response.confirm) return;
       }
 
-      await BranchManager.pushBranch(config.environment, config.envSecret);
-      this.logger.success(`Branch ${currentBranch.name} successfully pushed onto ${config.environment}.`);
+      await BranchManager.pushBranch(config.envSecret);
+      this.logger.success(`Branch ${currentBranch.name} successfully pushed onto ${currentBranch.originEnvironment.name}.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
       this.logger.error(customError);
@@ -61,14 +56,9 @@ class PushCommand extends AbstractAuthenticatedCommand {
 
 PushCommand.aliases = ['branches:push'];
 
-PushCommand.description = 'Push layout changes of your current branch to a remote environment.';
+PushCommand.description = 'Push layout changes of your current branch to the branch origin.';
 
 PushCommand.flags = {
-  // TODO: DWO EP17 remove environment option
-  environment: AbstractAuthenticatedCommand.flags.string({
-    char: 'e',
-    description: 'The remote environment name to push onto.',
-  }),
   force: AbstractAuthenticatedCommand.flags.boolean({
     description: 'Skip push changes confirmation.',
   }),

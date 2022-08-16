@@ -69,8 +69,7 @@ function createBranch(branchName, environmentSecret) {
     .send({ branchName: encodeURIComponent(branchName) });
 }
 
-// TODO: DWO EP17 remove destinationEnvironmentName handle
-function pushBranch(destinationEnvironmentName, environmentSecret) {
+function pushBranch(environmentSecret) {
   const {
     assertPresent,
     authenticator,
@@ -84,7 +83,7 @@ function pushBranch(destinationEnvironmentName, environmentSecret) {
     .post(`${env.FOREST_URL}/api/branches/push`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
-    .send({ destinationEnvironmentName: encodeURIComponent(destinationEnvironmentName) });
+    .send();
 }
 
 function switchBranch({ id }, environmentSecret) {
