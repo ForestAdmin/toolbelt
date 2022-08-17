@@ -129,8 +129,8 @@ BranchCommand.flags = {
   }),
 };
 
-BranchCommand.args = [
-  { name: 'BRANCH_NAME', required: false, description: 'The name of the branch to create.' },
-];
+BranchCommand.args = [{
+  name: 'BRANCH_NAME', required: false, description: 'The name of the branch to create.',
+}];
 
 module.exports = BranchCommand;

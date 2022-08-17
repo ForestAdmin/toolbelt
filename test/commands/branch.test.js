@@ -15,9 +15,6 @@ const {
   getDevelopmentEnvironmentNotFound,
   getEnvironmentListValid,
   postBranchInvalidDestination,
-  postBranchInvalidDevelopmentEnvironmentAsOrigin,
-  getDevelopmentEnvironmentValid,
-  postBranchValidOnSpecificEnv,
   getNoEnvironmentRemoteInList,
 } = require('../fixtures/api');
 const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
@@ -125,77 +122,16 @@ describe('branch', () => {
         env: testEnvWithSecret,
         token: 'any',
         commandClass: BranchCommand,
-        commandArgs: ['$0m3/$7r4ng38r4nChn4m3!'],
+        commandArgs: ['$0m3/$7r4ng38r4nChn4m3!', '--origin', 'name1'],
         api: [
           () => getProjectByEnv(),
-          () => getEnvironmentListValid(82),
           () => postBranchValid('$0m3/$7r4ng38r4nChn4m3!'),
-        ],
-        prompts: [
-          {
-            in: [{
-              name: 'environment',
-              message: 'Select the remote environment you want as origin',
-              type: 'list',
-              choices: ['name1', 'name2'],
-            }],
-            out: {
-              environment: 'name1',
-            },
-          },
         ],
 
         std: [
           { out: '√ Switched to new branch: $0m3/$7r4ng38r4nChn4m3!.' },
         ],
       }));
-
-      describe('with a valid projectId', () => {
-        it('should display a switch to new branch message', () => testCli({
-          env: testEnvWithoutSecret,
-          token: 'any',
-          commandClass: BranchCommand,
-          commandArgs: ['--projectId', '82', 'watabranch'],
-          api: [
-            () => getDevelopmentEnvironmentValid(82),
-            () => getEnvironmentListValid(82),
-            () => postBranchValidOnSpecificEnv('watabranch', '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125'),
-          ],
-          prompts: [
-            {
-              in: [{
-                name: 'environment',
-                message: 'Select the remote environment you want as origin',
-                type: 'list',
-                choices: ['name1', 'name2'],
-              }],
-              out: {
-                environment: 'name1',
-              },
-            },
-          ],
-          std: [
-            { out: '√ Switched to new branch: watabranch.' },
-          ],
-        }));
-      });
-
-      describe('when creating new branches with a development environment as origin', () => {
-        it('should display an error message', () => testCli({
-          env: testEnvWithSecret,
-          token: 'any',
-          commandClass: BranchCommand,
-          commandArgs: ['some/randombranchename', '--origin', 'Development'],
-          api: [
-            () => getProjectByEnv(),
-            () => postBranchInvalidDevelopmentEnvironmentAsOrigin(),
-          ],
-          std: [
-            { err: 'Cannot set a development environment as origin' },
-          ],
-          exitCode: 2,
-        }));
-      });
 
       describe('when creating new branches with an inexisting environment as origin', () => {
         it('should display an error message', () => testCli({
@@ -219,24 +155,10 @@ describe('branch', () => {
           env: testEnvWithSecret,
           token: 'any',
           commandClass: BranchCommand,
-          commandArgs: ['already/existingbranch'],
+          commandArgs: ['already/existingbranch', '--origin', 'name1'],
           api: [
             () => getProjectByEnv(),
-            () => getEnvironmentListValid(82),
             () => postBranchInvalid(),
-          ],
-          prompts: [
-            {
-              in: [{
-                name: 'environment',
-                message: 'Select the remote environment you want as origin',
-                type: 'list',
-                choices: ['name1', 'name2'],
-              }],
-              out: {
-                environment: 'name1',
-              },
-            },
           ],
           std: [
             { err: '× This branch already exists.' },
@@ -440,7 +362,7 @@ describe('branch', () => {
             () => getBranchInvalidEnvironmentNoRemote(),
           ],
           std: [
-            { err: '× You cannot run branch commands until this project has either a remote or a reference environment.' },
+            { err: '× You cannot run branch commands until this project has either a remote or a production environment.' },
           ],
           exitCode: 2,
         }));
@@ -455,7 +377,7 @@ describe('branch', () => {
             () => getNoEnvironmentRemoteInList(82),
           ],
           std: [
-            { err: '× You cannot run branch commands until this project has either a remote or a reference environment.' },
+            { err: '× You cannot run branch commands until this project has either a remote or a production environment.' },
           ],
           exitCode: 2,
         }));

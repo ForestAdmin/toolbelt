@@ -588,15 +588,6 @@ module.exports = {
       }],
     })),
 
-  postBranchInvalidDevelopmentEnvironmentAsOrigin: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
-    .matchHeader('forest-secret-key', envSecret)
-    .post('/api/branches')
-    .reply(400, JSON.stringify({
-      errors: [{
-        detail: 'Cannot set development environment as origin.',
-      }],
-    })),
-
   pushBranchValid: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', envSecret)
     .post('/api/branches/push')
