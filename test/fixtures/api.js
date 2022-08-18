@@ -264,6 +264,17 @@ module.exports = {
       },
     ])),
 
+  getNoEnvironmentRemoteInList: (projectId = 2) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/environments`)
+    .reply(200, EnvironmentSerializer.serialize([
+      {
+        id: 3, name: 'name1', apiEndpoint: 'http://localhost:1', type: 'development',
+      },
+      {
+        id: 4, name: 'name2', apiEndpoint: 'http://localhost:2', type: 'development',
+      },
+    ])),
+
   getEnvironmentListValid2: () => nock('http://localhost:3001')
     .get('/api/projects/82/environments')
     .reply(200, EnvironmentSerializer.serialize([{
@@ -565,6 +576,15 @@ module.exports = {
     .reply(409, JSON.stringify({
       errors: [{
         detail: 'Branch name already exists.',
+      }],
+    })),
+
+  postBranchInvalidDestination: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .post('/api/branches')
+    .reply(404, JSON.stringify({
+      errors: [{
+        detail: 'Environment not found.',
       }],
     })),
 

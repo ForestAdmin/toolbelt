@@ -2,6 +2,7 @@ const AbstractAuthenticatedCommand = require('../abstract-authenticated-command'
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
+const askForEnvironment = require('../services/ask-for-environment');
 
 class BranchCommand extends AbstractAuthenticatedCommand {
   init(plan) {
@@ -31,14 +32,13 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     }
   }
 
-  async createBranch(branchName, environmentSecret) {
+  async createBranch(branchName, environmentSecret, originName) {
     try {
-      await BranchManager.createBranch(branchName, environmentSecret);
+      await BranchManager.createBranch(branchName, environmentSecret, originName);
 
       this.logger.success(`Switched to new branch: ${branchName}.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
-
       this.logger.error(customError);
       this.exit(2);
     }
@@ -79,6 +79,10 @@ class BranchCommand extends AbstractAuthenticatedCommand {
           .getDevelopmentEnvironmentForUser(config.projectId);
         config.envSecret = environment.secretKey;
       }
+
+      if (!config.origin && config.BRANCH_NAME && !config.delete) {
+        config.origin = await askForEnvironment(config, 'Select the remote environment you want as origin', ['production', 'remote']);
+      }
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
       this.logger.error(customError);
@@ -89,7 +93,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
       if (config.delete) {
         return this.deleteBranch(config.BRANCH_NAME, config.force, config.envSecret);
       }
-      return this.createBranch(config.BRANCH_NAME, config.envSecret);
+      return this.createBranch(config.BRANCH_NAME, config.envSecret, config.origin);
     }
     return this.listBranches(config.envSecret, config.format);
   }
@@ -118,6 +122,10 @@ BranchCommand.flags = {
     description: 'Output format.',
     options: ['table', 'json'],
     default: 'table',
+  }),
+  origin: AbstractAuthenticatedCommand.flags.string({
+    char: 'o',
+    description: 'Set the origin of the created branch.',
   }),
 };
 

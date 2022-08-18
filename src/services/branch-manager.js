@@ -52,7 +52,7 @@ function deleteBranch(branchName, environmentSecret) {
     .send();
 }
 
-function createBranch(branchName, environmentSecret) {
+function createBranch(branchName, environmentSecret, originName) {
   const {
     assertPresent,
     authenticator,
@@ -66,7 +66,10 @@ function createBranch(branchName, environmentSecret) {
     .post(`${env.FOREST_URL}/api/branches`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
-    .send({ branchName: encodeURIComponent(branchName) });
+    .send({
+      branchName: encodeURIComponent(branchName),
+      originName: encodeURIComponent(originName),
+    });
 }
 
 function pushBranch(environmentSecret) {
