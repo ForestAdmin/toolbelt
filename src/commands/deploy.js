@@ -55,7 +55,6 @@ class DeployCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
     try {
       const config = await this.getConfig();
-      if (config.envSecret === undefined) throw new Error('Environment not found.');
 
       if (!config.force && !(await this.confirm())) return;
 
