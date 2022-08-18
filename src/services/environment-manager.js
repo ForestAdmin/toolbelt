@@ -35,6 +35,18 @@ function EnvironmentManager(config) {
       .then((response) => environmentDeserializer.deserialize(response.body));
   };
 
+  this.getEnvironmentBySecretKey = async () => {
+    const authToken = authenticator.getAuthToken();
+    console.log('enter into new method getEnvionmentSecKey');
+
+    return agent
+      .get(`${env.FOREST_URL}/api/environments/secret-key/${config.envSecret}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('forest-secret-key', `${config.envSecret}`)
+      .send()
+      .then((response) => environmentDeserializer.deserialize(response.body));
+  };
+
   this.createEnvironment = async () => {
     const authToken = authenticator.getAuthToken();
 
