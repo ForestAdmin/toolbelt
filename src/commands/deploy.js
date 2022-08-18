@@ -73,12 +73,12 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * @param {Object} environment - The environment containing the layout changes to deploy.
    * @returns {Boolean} Return true if user has confirmed.
    */
-  async confirm(environment) {
+  async confirm() {
     const response = await this.inquirer
       .prompt([{
         type: 'confirm',
         name: 'confirm',
-        message: `Deploy ${environment.name} layout changes to reference?`,
+        message: 'Deploy layout changes to reference?',
       }]);
     return response.confirm;
   }
@@ -91,6 +91,8 @@ class DeployCommand extends AbstractAuthenticatedCommand {
     try {
       const config = await this.getConfig();
       if (config.envSecret === undefined) throw new Error('Environment not found.');
+
+      if (!config.force && !(await this.confirm())) return;
 
       await new EnvironmentManager(config).deploy();
 
