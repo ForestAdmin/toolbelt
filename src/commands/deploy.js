@@ -15,41 +15,6 @@ class DeployCommand extends AbstractAuthenticatedCommand {
   }
 
   /**
-   * Get selected environment; prompt for environment when none is provided.
-   * @param {Object} config - Actual command config (including command parameters).
-   * @throws Will throw an error when there is no environment (unreachable).
-   * @throws Will throw an error when there is no reference environment.
-   * @return {Object} The environment found.
-   */
-  async getEnvironment(config) {
-    const environments = await new EnvironmentManager(config).listEnvironments();
-
-    if (environments.length === 0) throw new Error('No environment found.');
-
-    const environmentName = config.ENVIRONMENT_NAME || await this.selectEnvironment(environments);
-    return environments.find((environment) => environment.name === environmentName);
-  }
-
-  /**
-   * Display an environment selector.
-   * @param {Array} environments List of environments (from backend).
-   * @see getEnvironment
-   */
-  async selectEnvironment(environments) {
-    // NOTICE: Remove production since it should not be deployable on itself.
-    const choices = environments
-      .filter((environment) => environment.type !== 'production')
-      .map(({ name }) => name);
-    const response = await this.inquirer.prompt([{
-      name: 'environment',
-      message: 'Select the environment containing the layout changes you want to deploy to the reference environment',
-      type: 'list',
-      choices,
-    }]);
-    return response.environment;
-  }
-
-  /**
    * Get command configuration (merge env configuration with command context).
    * @returns {Object} The command configuration, including its envSecret correctly set.
    */
