@@ -15,41 +15,6 @@ class DeployCommand extends AbstractAuthenticatedCommand {
   }
 
   /**
-   * Get selected environment; prompt for environment when none is provided.
-   * @param {Object} config - Actual command config (including command parameters).
-   * @throws Will throw an error when there is no environment (unreachable).
-   * @throws Will throw an error when there is no reference environment.
-   * @return {Object} The environment found.
-   */
-  async getEnvironment(config) {
-    const environments = await new EnvironmentManager(config).listEnvironments();
-
-    if (environments.length === 0) throw new Error('No environment found.');
-
-    const environmentName = config.ENVIRONMENT_NAME || await this.selectEnvironment(environments);
-    return environments.find((environment) => environment.name === environmentName);
-  }
-
-  /**
-   * Display an environment selector.
-   * @param {Array} environments List of environments (from backend).
-   * @see getEnvironment
-   */
-  async selectEnvironment(environments) {
-    // NOTICE: Remove production since it should not be deployable on itself.
-    const choices = environments
-      .filter((environment) => environment.type !== 'production')
-      .map(({ name }) => name);
-    const response = await this.inquirer.prompt([{
-      name: 'environment',
-      message: 'Select the environment containing the layout changes you want to deploy to the reference environment',
-      type: 'list',
-      choices,
-    }]);
-    return response.environment;
-  }
-
-  /**
    * Get command configuration (merge env configuration with command context).
    * @returns {Object} The command configuration, including its envSecret correctly set.
    */
@@ -73,12 +38,12 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * @param {Object} environment - The environment containing the layout changes to deploy.
    * @returns {Boolean} Return true if user has confirmed.
    */
-  async confirm(environment) {
+  async confirm() {
     const response = await this.inquirer
       .prompt([{
         type: 'confirm',
         name: 'confirm',
-        message: `Deploy ${environment.name} layout changes to reference?`,
+        message: 'Deploy layout changes to reference?',
       }]);
     return response.confirm;
   }
@@ -90,15 +55,12 @@ class DeployCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
     try {
       const config = await this.getConfig();
-      const environment = await this.getEnvironment(config);
 
-      if (environment === undefined) throw new Error('Environment not found.');
+      if (!config.force && !(await this.confirm())) return;
 
-      if (!config.force && !(await this.confirm(environment))) return;
+      await new EnvironmentManager(config).deploy();
 
-      await new EnvironmentManager(config).deploy(environment);
-
-      this.logger.success(`Deployed ${environment.name} layout changes to reference environment.`);
+      this.logger.success('Deployed layout changes to reference environment.');
     } catch (error) {
       this.logger.error(handleBranchError(error));
       this.exit(2);
@@ -108,7 +70,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
 
 DeployCommand.aliases = ['environments:deploy'];
 
-DeployCommand.description = 'Deploy layout changes of an environment to the reference one.';
+DeployCommand.description = 'Deploy layout changes of the current branch to the reference one.';
 
 DeployCommand.flags = {
   help: AbstractAuthenticatedCommand.flags.boolean({
@@ -124,9 +86,5 @@ DeployCommand.flags = {
     default: null,
   }),
 };
-
-DeployCommand.args = [{
-  name: 'ENVIRONMENT_NAME', required: false, description: 'The name of the environment containing the layout changes to deploy to the reference one.',
-}];
 
 module.exports = DeployCommand;
