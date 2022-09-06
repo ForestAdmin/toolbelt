@@ -2,25 +2,27 @@ const AbstractAuthenticatedCommand = require('../abstract-authenticated-command'
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
+const askForEnvironment = require('../services/ask-for-environment');
 
 class BranchCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan);
-    const { assertPresent, env, inquirer } = this.context;
+    const {
+      assertPresent, env, inquirer, branchesRenderer,
+    } = this.context;
     assertPresent({ env, inquirer });
     this.env = env;
     this.inquirer = inquirer;
+    this.branchesRenderer = branchesRenderer;
   }
 
-  async listBranches(envSecret) {
+  async listBranches(envSecret, format) {
     try {
       const branches = await BranchManager.getBranches(envSecret);
       if (!branches || branches.length === 0) {
         this.logger.warn('You don\'t have any branch yet. Use `forest branch <branch_name>` to create one.');
       } else {
-        branches.forEach((branch) => {
-          this.logger.log(`${branch.name} ${branch.isCurrent ? '< current branch' : ''}`);
-        });
+        this.branchesRenderer.render(branches, format);
       }
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
@@ -30,14 +32,13 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     }
   }
 
-  async createBranch(branchName, environmentSecret) {
+  async createBranch(branchName, environmentSecret, originName) {
     try {
-      await BranchManager.createBranch(branchName, environmentSecret);
+      await BranchManager.createBranch(branchName, environmentSecret, originName);
 
       this.logger.success(`Switched to new branch: ${branchName}.`);
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
-
       this.logger.error(customError);
       this.exit(2);
     }
@@ -78,20 +79,23 @@ class BranchCommand extends AbstractAuthenticatedCommand {
           .getDevelopmentEnvironmentForUser(config.projectId);
         config.envSecret = environment.secretKey;
       }
+
+      if (!config.origin && config.BRANCH_NAME && !config.delete) {
+        config.origin = await askForEnvironment(config, 'Select the remote environment you want as origin', ['production', 'remote']);
+      }
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
       this.logger.error(customError);
       this.exit(2);
-      return null;
     }
 
     if (config.BRANCH_NAME) {
       if (config.delete) {
         return this.deleteBranch(config.BRANCH_NAME, config.force, config.envSecret);
       }
-      return this.createBranch(config.BRANCH_NAME, config.envSecret);
+      return this.createBranch(config.BRANCH_NAME, config.envSecret, config.origin);
     }
-    return this.listBranches(config.envSecret);
+    return this.listBranches(config.envSecret, config.format);
   }
 }
 
@@ -112,6 +116,16 @@ BranchCommand.flags = {
   }),
   help: AbstractAuthenticatedCommand.flags.boolean({
     description: 'Display usage information.',
+  }),
+  format: AbstractAuthenticatedCommand.flags.string({
+    char: 'format',
+    description: 'Output format.',
+    options: ['table', 'json'],
+    default: 'table',
+  }),
+  origin: AbstractAuthenticatedCommand.flags.string({
+    char: 'o',
+    description: 'Set the origin of the created branch.',
   }),
 };
 

@@ -264,6 +264,17 @@ module.exports = {
       },
     ])),
 
+  getNoEnvironmentRemoteInList: (projectId = 2) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/environments`)
+    .reply(200, EnvironmentSerializer.serialize([
+      {
+        id: 3, name: 'name1', apiEndpoint: 'http://localhost:1', type: 'development',
+      },
+      {
+        id: 4, name: 'name2', apiEndpoint: 'http://localhost:2', type: 'development',
+      },
+    ])),
+
   getEnvironmentListValid2: () => nock('http://localhost:3001')
     .get('/api/projects/82/environments')
     .reply(200, EnvironmentSerializer.serialize([{
@@ -454,13 +465,50 @@ module.exports = {
     .matchHeader('forest-secret-key', envSecret)
     .get('/api/branches')
     .reply(200, {
-      data: {
-        attributes: [
-          { name: 'feature/first' },
-          { name: 'feature/second', isCurrent: haveCurrent },
-          { name: 'feature/third' },
-        ],
-      },
+      data: [
+        {
+          type: 'branches',
+          attributes: { name: 'feature/first', closed_at: '2022-06-28T13:15:43.513Z' },
+          relationships: {
+            origin_environment: {
+              data: { id: '324', type: 'environments' },
+            },
+          },
+        },
+        {
+          type: 'branches',
+          attributes: { name: 'feature/second', is_current: haveCurrent },
+          relationships: {
+            origin_environment: {
+              data: { id: '324', type: 'environments' },
+            },
+          },
+        },
+        {
+          type: 'branches',
+          attributes: { name: 'feature/third' },
+          relationships: {
+            origin_environment: {
+              data: { id: '325', type: 'environments' },
+            },
+          },
+        },
+      ],
+      included: [{
+        type: 'environments',
+        id: '324',
+        attributes: {
+          id: 324,
+          name: 'Staging',
+        },
+      }, {
+        type: 'environments',
+        id: '325',
+        attributes: {
+          id: 325,
+          name: 'Production',
+        },
+      }],
     }),
 
   getNoBranchListValid: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
@@ -531,6 +579,15 @@ module.exports = {
       }],
     })),
 
+  postBranchInvalidDestination: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .post('/api/branches')
+    .reply(404, JSON.stringify({
+      errors: [{
+        detail: 'Environment not found.',
+      }],
+    })),
+
   pushBranchValid: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', envSecret)
     .post('/api/branches/push')
@@ -558,6 +615,15 @@ module.exports = {
     .reply(400, JSON.stringify({
       errors: [{
         detail: 'Environment type should be remote.',
+      }],
+    })),
+
+  invalidPushBranchToReference: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .post('/api/branches/push')
+    .reply(400, JSON.stringify({
+      errors: [{
+        detail: 'Failed to push branch: cannot "push" to reference environment, please use "deploy"',
       }],
     })),
 
@@ -747,4 +813,22 @@ module.exports = {
       environmentName: 'name2',
     })
     .reply(422),
+
+  setOriginValid: (environementName, envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .post('/api/branches/set-origin', {
+      originEnvironmentName: environementName,
+    })
+    .reply(200),
+
+  setOriginInValid: (environementName, envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .post('/api/branches/set-origin', {
+      originEnvironmentName: environementName,
+    })
+    .reply(400, JSON.stringify({
+      errors: [{
+        detail: 'Set origin error',
+      }],
+    })),
 };

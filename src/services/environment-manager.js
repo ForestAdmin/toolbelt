@@ -126,15 +126,13 @@ function EnvironmentManager(config) {
    * Deploy layout changes of an environment to production.
    * @param {Number} environment.id - The environment id that contains the layout changes to deploy.
    */
-  this.deploy = ({ id }) => {
+  this.deploy = () => {
     const authToken = authenticator.getAuthToken();
 
     return agent
       .post(`${env.FOREST_URL}/api/environments/deploy`)
       .set('Authorization', `Bearer ${authToken}`)
-      .set('forest-secret-key', `${config.envSecret}`)
-      .set('forest-environment-id', `${id}`)
-      .send({ environmentId: id });
+      .set('forest-secret-key', `${config.envSecret}`);
   };
 }
 
