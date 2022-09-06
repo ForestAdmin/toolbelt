@@ -1,3 +1,15 @@
+# [3.0.0](https://github.com/ForestAdmin/toolbelt/compare/v2.7.2...v3.0.0) (2022-09-06)
+
+
+### Features
+
+* users can now change their branch origin ([#414](https://github.com/ForestAdmin/toolbelt/issues/414)) ([fab4ef5](https://github.com/ForestAdmin/toolbelt/commit/fab4ef5a1efb89943401258d2334b67c624dfc49))
+
+
+### BREAKING CHANGES
+
+* `forest branch`, `forest push`, `forest deploy` usage is now based on `FOREST_ENV_SECRET`
+
 ## [2.7.2](https://github.com/ForestAdmin/toolbelt/compare/v2.7.1...v2.7.2) (2022-07-06)
 
 
