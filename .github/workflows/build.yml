@@ -1,24 +1,23 @@
-name: Build, Test and Deploy
-
+name: Build and Test
 on:
-  push:
-    branches:
-      - master
-      - beta
   pull_request:
+  push:
+    branches: ["main", "beta"]
 
 jobs:
   lint:
-    name: Linting
+    name: Lint
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    timeout-minutes: 10
     steps:
       - name: Cancel previous running workflows
-        uses: fkirc/skip-duplicate-actions@master
+        uses: fkirc/skip-duplicate-actions@9da67cec51d21092667038f0f4fda73099a3a451
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14.17.6
       - uses: actions/cache@v2
         with:
           path: "**/node_modules"
@@ -26,24 +25,24 @@ jobs:
       - name: install dependencies
         run: yarn install --frozen-lockfile --non-interactive --production=false
       - name: Lint commit message
-        uses: wagoid/commitlint-github-action@v2
+        uses: wagoid/commitlint-github-action@296247dfa6a133767fe0d64d08fb66326047b680
       - name: lint Javascript
         run: yarn lint
 
   test:
     name: Test
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [lint]
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     strategy:
       matrix:
-        node: ['10', '14']
+        node: [10, 14]
         include:
-          - node: '14'
+          - node: 14
             withCoverage: ${{ true }}
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node }}
       - name: Cache node_modules
@@ -56,11 +55,11 @@ jobs:
       - name: Start docker container
         run: docker-compose up -d; sleep 15
       - name: Test with Node ${{ matrix.node }}
-        if: '!matrix.withCoverage'
+        if: ${{ !matrix.withCoverage }}
         run: yarn test
       - name: Test with Node ${{ matrix.node }} & Send coverage
-        uses: paambaati/codeclimate-action@v2.7.4
-        if: matrix.withCoverage && matrix.node == '14'
+        uses: paambaati/codeclimate-action@84cea27117a473d605400ca3a97fcef7e433e2d6
+        if: matrix.withCoverage && matrix.node == 14
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
         with:
@@ -73,24 +72,31 @@ jobs:
   deploy:
     name: Release package
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [test]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/beta')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/beta')
     steps:
       - uses: actions/checkout@v2
         with:
+          ref: ${{ github.ref }}
           persist-credentials: false # GITHUB_TOKEN must not be set for the semantic release
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
-          node-version: 12.13.0
+          node-version: 14.17.6
       - uses: actions/cache@v2
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
+      - name: Get Semantic Release current version
+        id: semantic_version
+        run: |
+          VERSION=`node -p "require('./package.json').devDependencies['semantic-release']"`
+          echo "::set-output name=version::$VERSION"
       - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v2
+        uses: cycjimmy/semantic-release-action@767cc0b0cd610ffb1ffee1b36a9b39120adc5f80
         id: semantic
         with:
-          semantic_version: 17.3.0
+          semantic_version: ${{ steps.semantic_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GIT_AUTHOR_EMAIL: ${{ secrets.GIT_AUTHOR_EMAIL }}

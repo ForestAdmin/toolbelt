@@ -1,10 +1,6 @@
-const EnvironmentRenderer = require('../renderers/environment');
-const EnvironmentsRenderer = require('../renderers/environments');
-const ProjectRenderer = require('../renderers/project');
-const ProjectsRenderer = require('../renderers/projects');
-
+/* eslint-disable global-require */
 module.exports = (plan) => plan
-  .addClass(EnvironmentRenderer)
-  .addClass(EnvironmentsRenderer)
-  .addClass(ProjectRenderer)
-  .addClass(ProjectsRenderer);
+  .addUsingClass('environmentRenderer', () => require('../renderers/environment'))
+  .addUsingClass('environmentsRenderer', () => require('../renderers/environments'))
+  .addUsingClass('projectRenderer', () => require('../renderers/project'))
+  .addUsingClass('projectsRenderer', () => require('../renderers/projects'));

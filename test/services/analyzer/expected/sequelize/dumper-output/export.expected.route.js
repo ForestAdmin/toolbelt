@@ -36,11 +36,12 @@ router.get('/modelExport', permissionMiddlewareCreator.list(), (request, respons
 // Get a number of Exports
 router.get('/modelExport/count', permissionMiddlewareCreator.list(), (request, response, next) => {
   // Learn what this route does here: https://docs.forestadmin.com/documentation/v/v6/reference-guide/routes/default-routes#get-a-number-of-records
+  // Improve peformances disabling pagination: https://docs.forestadmin.com/documentation/reference-guide/performance#disable-pagination-count
   next();
 });
 
 // Get a Export
-router.get('/modelExport/:recordId(?!count)', permissionMiddlewareCreator.details(), (request, response, next) => {
+router.get('/modelExport/\\b(?!count\\b):recordId', permissionMiddlewareCreator.details(), (request, response, next) => {
   // Learn what this route does here: https://docs.forestadmin.com/documentation/v/v6/reference-guide/routes/default-routes#get-a-record
   next();
 });

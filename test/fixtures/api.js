@@ -225,6 +225,34 @@ module.exports = {
       },
     }])),
 
+  getProjectofOrganizationDetailledList: () => nock('http://localhost:3001')
+    .get('/api/projects?organizationId=2')
+    .reply(200, ProjectSerializer.serialize([{
+      id: '83',
+      name: 'Forest in org',
+      defaultEnvironment: {
+        id: '2201',
+        name: 'Production',
+        apiEndpoint: 'https://api.forestadmin.com',
+        type: 'production',
+        lianaName: 'forest-express-sequelize',
+        lianaVersion: '2.13.1',
+        renderings: [{ isDefault: true, id: '4912' }],
+      },
+    }, {
+      id: '22',
+      name: 'Illustrio in org',
+      defaultEnvironment: {
+        id: '40',
+        name: 'Production',
+        apiEndpoint: 'http://dev.illustrio.com:5001',
+        type: 'development',
+        lianaName: 'forest-express-mongoose',
+        lianaVersion: '0.2.17',
+        renderings: [{ isDefault: true, id: '69' }],
+      },
+    }])),
+
   getEnvironmentListValid: (projectId = 2) => nock('http://localhost:3001')
     .get(`/api/projects/${projectId}/environments`)
     .reply(200, EnvironmentSerializer.serialize([
@@ -461,7 +489,7 @@ module.exports = {
     .get('/api/branches')
     .reply(422, JSON.stringify({
       errors: [{
-        detail: 'Not development environment.',
+        detail: 'Environment is not in development.',
       }],
     })),
 
@@ -653,11 +681,16 @@ module.exports = {
       }],
     })),
 
-  createProject: () => nock('http://localhost:3001')
+  createProject: ({ databaseType }) => nock('http://localhost:3001')
     .post('/api/projects', {
       data: {
         type: 'projects',
-        attributes: { name: 'name' },
+        attributes: {
+          name: 'name',
+          agent: 'express-sequelize',
+          architecture: 'microservice',
+          database_type: databaseType,
+        },
       },
     })
     .reply(201, ProjectSerializer.serialize({
@@ -690,4 +723,28 @@ module.exports = {
       type: 'development',
       secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
     })),
+  resetRemoteEnvironment: () => nock('http://localhost:3001')
+    .post('/api/environments/reset', {
+      environmentName: 'name1',
+    })
+    .reply(200),
+  resetRemoteUnexistingEnvironment: () => nock('http://localhost:3001')
+    .post('/api/environments/reset', {
+      environmentName: 'name2',
+    })
+    .reply(404, JSON.stringify({
+      errors: [{
+        detail: 'Environment not found.',
+      }],
+    })),
+  resetRemoteDisallowedEnvironment: () => nock('http://localhost:3001')
+    .post('/api/environments/reset', {
+      environmentName: 'name2',
+    })
+    .reply(403),
+  resetRemoteEnvironmentFailed: () => nock('http://localhost:3001')
+    .post('/api/environments/reset', {
+      environmentName: 'name2',
+    })
+    .reply(422),
 };

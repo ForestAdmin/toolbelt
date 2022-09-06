@@ -1,3 +1,286 @@
+## [2.7.2](https://github.com/ForestAdmin/toolbelt/compare/v2.7.1...v2.7.2) (2022-07-06)
+
+
+### Bug Fixes
+
+* **auth:** display a better error message when the provided token is empty ([#402](https://github.com/ForestAdmin/toolbelt/issues/402)) ([0648bb3](https://github.com/ForestAdmin/toolbelt/commit/0648bb3af247bf0b8c1eefb894a3cc26948e003d))
+
+## [2.7.1](https://github.com/ForestAdmin/toolbelt/compare/v2.7.0...v2.7.1) (2022-07-04)
+
+
+### Bug Fixes
+
+* **init:** correctly generate database url when needed ([#384](https://github.com/ForestAdmin/toolbelt/issues/384)) ([4ae33e2](https://github.com/ForestAdmin/toolbelt/commit/4ae33e2d99231cd7380ba93de74233b1a5046076))
+* **security:** patch semantic-release dependencies vulnerabilities ([#391](https://github.com/ForestAdmin/toolbelt/issues/391)) ([889f503](https://github.com/ForestAdmin/toolbelt/commit/889f50378abb0c383aebfedd093946e274ae6e32))
+* **security:** patch semver-regex dependency vulnerability ([#390](https://github.com/ForestAdmin/toolbelt/issues/390)) ([8a05858](https://github.com/ForestAdmin/toolbelt/commit/8a05858553625c9c2ca4103278dd773757371a1a))
+
+# [2.7.0](https://github.com/ForestAdmin/toolbelt/compare/v2.6.11...v2.7.0) (2022-05-31)
+
+
+### Features
+
+* add mariadb support ([#385](https://github.com/ForestAdmin/toolbelt/issues/385)) ([6eb5650](https://github.com/ForestAdmin/toolbelt/commit/6eb56507b3d3ccebf4bcb7aaa733de986f1dd58c))
+
+## [2.6.11](https://github.com/ForestAdmin/toolbelt/compare/v2.6.10...v2.6.11) (2022-05-10)
+
+
+### Bug Fixes
+
+* **schema:** fix incorrect dateonly model type detection ([#377](https://github.com/ForestAdmin/toolbelt/issues/377)) ([441df27](https://github.com/ForestAdmin/toolbelt/commit/441df2718edc35388b5a7aa87194583acb57f8af))
+
+## [2.6.10](https://github.com/ForestAdmin/toolbelt/compare/v2.6.9...v2.6.10) (2022-05-04)
+
+
+### Bug Fixes
+
+* upgrade generated project using express-jwt to 6.1.2 ([#375](https://github.com/ForestAdmin/toolbelt/issues/375)) ([7dd58d6](https://github.com/ForestAdmin/toolbelt/commit/7dd58d69eca0744679238664b5123e04bfba08a0))
+
+## [2.6.9](https://github.com/ForestAdmin/toolbelt/compare/v2.6.8...v2.6.9) (2022-05-04)
+
+
+### Bug Fixes
+
+* **dockerfile:** upgrade generated dockerfile to use node 14 alpine as base ([#374](https://github.com/ForestAdmin/toolbelt/issues/374)) ([878233c](https://github.com/ForestAdmin/toolbelt/commit/878233c0df78b92bebdc2d0db4a8a5b3b7bbf45c))
+
+## [2.6.8](https://github.com/ForestAdmin/toolbelt/compare/v2.6.7...v2.6.8) (2022-04-27)
+
+
+### Bug Fixes
+
+* **cors:** add access control allow private network handling ([#372](https://github.com/ForestAdmin/toolbelt/issues/372)) ([9c324fe](https://github.com/ForestAdmin/toolbelt/commit/9c324fef49187882599ba17915556b55361f6771))
+
+## [2.6.7](https://github.com/ForestAdmin/toolbelt/compare/v2.6.6...v2.6.7) (2022-04-19)
+
+
+### Bug Fixes
+
+* **security:** patch ansi-regex dependency vulnerabilities ([8bb7fb5](https://github.com/ForestAdmin/toolbelt/commit/8bb7fb5d0e402e9430862f6106305efd92782d04))
+* **security:** patch ansi-regex dependency vulnerabilities ([f0a9693](https://github.com/ForestAdmin/toolbelt/commit/f0a969351e39e3bd10479112244b7b80b19b7e32))
+* **security:** patch async dependency vulnerabilities ([78e36e3](https://github.com/ForestAdmin/toolbelt/commit/78e36e3e04069e761539333e62147d0817977034))
+* **security:** patch follow-redirects dependency vulnerabilities ([1c03034](https://github.com/ForestAdmin/toolbelt/commit/1c03034d887a882b6b12881677bcda1c78841be8))
+* **security:** patch jsprim dependency vulnerabilities ([14a59d8](https://github.com/ForestAdmin/toolbelt/commit/14a59d836c6aa5a6d34e5218babb245d8a5aeecc))
+* **security:** patch moment dependency vulnerabilities ([239c91a](https://github.com/ForestAdmin/toolbelt/commit/239c91aa1acda928664a3855b4528d736cacd1a3))
+* **security:** patch node-fetch dependency vulnerability ([#349](https://github.com/ForestAdmin/toolbelt/issues/349)) ([8c5661c](https://github.com/ForestAdmin/toolbelt/commit/8c5661c923fb57210c94e5083caf8b7e2d513b75))
+
+## [2.6.6](https://github.com/ForestAdmin/toolbelt/compare/v2.6.5...v2.6.6) (2022-04-19)
+
+
+### Bug Fixes
+
+* **security:** patch minimist dependency vulnerabilities ([#362](https://github.com/ForestAdmin/toolbelt/issues/362)) ([b675a31](https://github.com/ForestAdmin/toolbelt/commit/b675a310bb4e021f11dbf48cf0b7387e700ebc48))
+
+## [2.6.5](https://github.com/ForestAdmin/toolbelt/compare/v2.6.4...v2.6.5) (2022-04-15)
+
+
+### Bug Fixes
+
+* **deps:** remove vulnerability on generated projects ([#369](https://github.com/ForestAdmin/toolbelt/issues/369)) ([d00aaca](https://github.com/ForestAdmin/toolbelt/commit/d00aacab619e3f26e71d1631d3f009fc9bc9f4e9))
+
+## [2.6.4](https://github.com/ForestAdmin/toolbelt/compare/v2.6.3...v2.6.4) (2022-04-06)
+
+
+### Bug Fixes
+
+* **datatypes:** MONEY is not automatically generated anymore on Postgresql and MsSql ([#360](https://github.com/ForestAdmin/toolbelt/issues/360)) ([ac7ab3e](https://github.com/ForestAdmin/toolbelt/commit/ac7ab3e4da6d077f00dc9c5d0e81c22f5c539c68))
+
+## [2.6.3](https://github.com/ForestAdmin/toolbelt/compare/v2.6.2...v2.6.3) (2022-03-28)
+
+## [2.6.2](https://github.com/ForestAdmin/toolbelt/compare/v2.6.1...v2.6.2) (2022-03-22)
+
+
+### Bug Fixes
+
+* upgraded Mongoose version in order to resolve vulnerabilities ([#356](https://github.com/ForestAdmin/toolbelt/issues/356)) ([a1cbee1](https://github.com/ForestAdmin/toolbelt/commit/a1cbee17038d55728cf88e842ee320346ee46f47))
+
+## [2.6.1](https://github.com/ForestAdmin/toolbelt/compare/v2.6.0...v2.6.1) (2022-03-15)
+
+
+### Bug Fixes
+
+* **templates:** add link to performance doc in count route ([#355](https://github.com/ForestAdmin/toolbelt/issues/355)) ([f7ebd92](https://github.com/ForestAdmin/toolbelt/commit/f7ebd928121757a3c5f7ffa92327288b789a71ff))
+
+# [2.6.0](https://github.com/ForestAdmin/toolbelt/compare/v2.5.5...v2.6.0) (2022-02-21)
+
+
+### Features
+
+* send better events during project generation ([#348](https://github.com/ForestAdmin/toolbelt/issues/348)) ([60a2800](https://github.com/ForestAdmin/toolbelt/commit/60a2800a5e4e9029d50fe9f7cbe28f53f915b5c1))
+
+## [2.5.5](https://github.com/ForestAdmin/toolbelt/compare/v2.5.4...v2.5.5) (2022-01-03)
+
+
+### Bug Fixes
+
+* **mongodb:** fix typos on the "analysis" word ([#324](https://github.com/ForestAdmin/toolbelt/issues/324)) ([47670a9](https://github.com/ForestAdmin/toolbelt/commit/47670a9d5f12e3574e62d6368d17a420014af6c1))
+
+## [2.5.4](https://github.com/ForestAdmin/toolbelt/compare/v2.5.3...v2.5.4) (2021-12-31)
+
+
+### Bug Fixes
+
+* **logger:** allow logger to display object ([#321](https://github.com/ForestAdmin/toolbelt/issues/321)) ([d81d5f1](https://github.com/ForestAdmin/toolbelt/commit/d81d5f17cab5980ee4009c6b8fe56a1ad06a743f))
+
+## [2.5.3](https://github.com/ForestAdmin/toolbelt/compare/v2.5.2...v2.5.3) (2021-12-31)
+
+
+### Bug Fixes
+
+* **mongodb:** force to display progress bar by default ([#322](https://github.com/ForestAdmin/toolbelt/issues/322)) ([c318970](https://github.com/ForestAdmin/toolbelt/commit/c3189707f294615aeecb2a3617519af289486806))
+
+## [2.5.2](https://github.com/ForestAdmin/toolbelt/compare/v2.5.1...v2.5.2) (2021-12-30)
+
+
+### Bug Fixes
+
+* **mongodb:** fix the onboarding cli when mongodb does't support js ([#311](https://github.com/ForestAdmin/toolbelt/issues/311)) ([ee97db2](https://github.com/ForestAdmin/toolbelt/commit/ee97db2146a0e62f883f0aec9026d21567d809f0))
+
+## [2.5.1](https://github.com/ForestAdmin/toolbelt/compare/v2.5.0...v2.5.1) (2021-12-10)
+
+
+### Bug Fixes
+
+* error message when the user wants to create a branch on a remote branch ([#285](https://github.com/ForestAdmin/toolbelt/issues/285)) ([2cbde60](https://github.com/ForestAdmin/toolbelt/commit/2cbde60e62f0172ea306e729d374a737db428cb6))
+
+# [2.5.0](https://github.com/ForestAdmin/toolbelt/compare/v2.4.1...v2.5.0) (2021-11-15)
+
+
+### Features
+
+* **reset:** allow users to reset layout changes on a remote environment ([#284](https://github.com/ForestAdmin/toolbelt/issues/284)) ([1c2ce0e](https://github.com/ForestAdmin/toolbelt/commit/1c2ce0e8aaccb05ca6747a40e0a24ca5aa759172))
+
+## [2.4.1](https://github.com/ForestAdmin/toolbelt/compare/v2.4.0...v2.4.1) (2021-10-28)
+
+
+### Bug Fixes
+
+* change the method to generate files to be compatible with sequelize@6 ([#267](https://github.com/ForestAdmin/toolbelt/issues/267)) ([4600ffe](https://github.com/ForestAdmin/toolbelt/commit/4600ffe94d8cb910ef29df5d6eade9bdfb99d8e8))
+
+# [2.4.0](https://github.com/ForestAdmin/toolbelt/compare/v2.3.6...v2.4.0) (2021-10-26)
+
+
+### Bug Fixes
+
+* display projects when connected with sso ([#265](https://github.com/ForestAdmin/toolbelt/issues/265)) ([83ec508](https://github.com/ForestAdmin/toolbelt/commit/83ec5082ac94b5610b5f1da712b200b521539d1d))
+
+
+### Features
+
+* show if the user is connected via sso or not ([#266](https://github.com/ForestAdmin/toolbelt/issues/266)) ([5a5a865](https://github.com/ForestAdmin/toolbelt/commit/5a5a865d2e5480130526beb14bcbb7055818ec84))
+
+## [2.3.6](https://github.com/ForestAdmin/toolbelt/compare/v2.3.5...v2.3.6) (2021-10-22)
+
+
+### Bug Fixes
+
+* **docker:** avoid using NODE_PATH in docker ([#260](https://github.com/ForestAdmin/toolbelt/issues/260)) ([fe5e365](https://github.com/ForestAdmin/toolbelt/commit/fe5e365a6aa921de1cf2f459d72419b80aba4c39))
+
+## [2.3.5](https://github.com/ForestAdmin/toolbelt/compare/v2.3.4...v2.3.5) (2021-10-14)
+
+
+### Bug Fixes
+
+* **docker:** pass schema directory via process environment ([#229](https://github.com/ForestAdmin/toolbelt/issues/229)) ([0005856](https://github.com/ForestAdmin/toolbelt/commit/0005856f8df0f49c7f1ffcbc1e3e04e89ea144c0))
+
+## [2.3.4](https://github.com/ForestAdmin/toolbelt/compare/v2.3.3...v2.3.4) (2021-09-22)
+
+
+### Bug Fixes
+
+* **security:** patch hosted-git-info dependency vulnerabilities ([#228](https://github.com/ForestAdmin/toolbelt/issues/228)) ([aee5744](https://github.com/ForestAdmin/toolbelt/commit/aee5744539f71bf118c86bd44826b7236519ed69))
+
+## [2.3.3](https://github.com/ForestAdmin/toolbelt/compare/v2.3.2...v2.3.3) (2021-09-22)
+
+
+### Bug Fixes
+
+* **security:** patch glob-parent dependency vulnerability  ([#185](https://github.com/ForestAdmin/toolbelt/issues/185)) ([ec0e407](https://github.com/ForestAdmin/toolbelt/commit/ec0e4077a1b6936f0974b2750390d11872eae1d9))
+* **security:** patch hosted-git-info dependency vulnerability ([#187](https://github.com/ForestAdmin/toolbelt/issues/187)) ([6ba6afb](https://github.com/ForestAdmin/toolbelt/commit/6ba6afbaf7d31a647cdb4a8b1c5336406e656eb4))
+* **security:** patch normalize-url dependency vulnerability ([#181](https://github.com/ForestAdmin/toolbelt/issues/181)) ([dbdc185](https://github.com/ForestAdmin/toolbelt/commit/dbdc1853d07663b983f594816f75a613f92c11fa))
+
+## [2.3.2](https://github.com/ForestAdmin/toolbelt/compare/v2.3.1...v2.3.2) (2021-09-22)
+
+
+### Bug Fixes
+
+* **security:** patch dependencies of dependencies vulnerabilities ([#227](https://github.com/ForestAdmin/toolbelt/issues/227)) ([b0875f5](https://github.com/ForestAdmin/toolbelt/commit/b0875f5ec82e2347557d2d76c2fe5f24803472c9))
+
+## [2.3.1](https://github.com/ForestAdmin/toolbelt/compare/v2.3.0...v2.3.1) (2021-09-22)
+
+
+### Bug Fixes
+
+* **security:** patch jose dependency vulnerability ([#161](https://github.com/ForestAdmin/toolbelt/issues/161)) ([f224f04](https://github.com/ForestAdmin/toolbelt/commit/f224f047386b825a5b2c2d9382e33b8c772217f3))
+* **security:** patch path-parse dependency vulnerabilities ([#214](https://github.com/ForestAdmin/toolbelt/issues/214)) ([9532d3f](https://github.com/ForestAdmin/toolbelt/commit/9532d3f443fbc26010f5de236d9ed51ca1568b44))
+* **security:** patch semantic-release vulnerabilities ([#225](https://github.com/ForestAdmin/toolbelt/issues/225)) ([abd1aff](https://github.com/ForestAdmin/toolbelt/commit/abd1affdaea34b4020af5265b931ede6557cfb18))
+* **security:** patch tmpl dependency vulnerabilities ([#224](https://github.com/ForestAdmin/toolbelt/issues/224)) ([3a6a4ae](https://github.com/ForestAdmin/toolbelt/commit/3a6a4aec2f9925f7056fb38148cc782f2971e6bc))
+
+# [2.3.0](https://github.com/ForestAdmin/toolbelt/compare/v2.2.8...v2.3.0) (2021-09-02)
+
+
+### Features
+
+* display the auth secret when creating an environment ([#219](https://github.com/ForestAdmin/toolbelt/issues/219)) ([6320f5d](https://github.com/ForestAdmin/toolbelt/commit/6320f5d64780c06c1232fe98e4ec80be788537e5))
+
+## [2.2.8](https://github.com/ForestAdmin/toolbelt/compare/v2.2.7...v2.2.8) (2021-08-25)
+
+
+### Bug Fixes
+
+* **dumper:** ignore stats model name when generating/updating project to avoid route conflicts ([#216](https://github.com/ForestAdmin/toolbelt/issues/216)) ([649f802](https://github.com/ForestAdmin/toolbelt/commit/649f802cb7740ab1896fe689b1871330e5f5d7d8))
+
+## [2.2.7](https://github.com/ForestAdmin/toolbelt/compare/v2.2.6...v2.2.7) (2021-08-16)
+
+
+### Bug Fixes
+
+* correct HTML markup in generated view/index.html ([#215](https://github.com/ForestAdmin/toolbelt/issues/215)) ([5968d15](https://github.com/ForestAdmin/toolbelt/commit/5968d15d5ad6d9245e8b32dd69d0e713a8d79207))
+
+## [2.2.6](https://github.com/ForestAdmin/toolbelt/compare/v2.2.5...v2.2.6) (2021-08-04)
+
+
+### Bug Fixes
+
+* automatically add `fieldsToFlatten` property for mongoose projects to the generated files ([#212](https://github.com/ForestAdmin/toolbelt/issues/212)) ([08b5661](https://github.com/ForestAdmin/toolbelt/commit/08b566108887c11b155423ba409cc6d9d06270f4))
+
+## [2.2.5](https://github.com/ForestAdmin/toolbelt/compare/v2.2.4...v2.2.5) (2021-08-03)
+
+
+### Bug Fixes
+
+* avoid details route conflicting with count when overriding details route ([#211](https://github.com/ForestAdmin/toolbelt/issues/211)) ([0060bfd](https://github.com/ForestAdmin/toolbelt/commit/0060bfd7f03a09490c75ea3e1d9fa9c538129b89))
+
+## [2.2.4](https://github.com/ForestAdmin/toolbelt/compare/v2.2.3...v2.2.4) (2021-07-26)
+
+
+### Bug Fixes
+
+* transmit databaseSchema in command projects:create ([#210](https://github.com/ForestAdmin/toolbelt/issues/210)) ([c6fd2e3](https://github.com/ForestAdmin/toolbelt/commit/c6fd2e3c3f1596f0984caad85ba5b57618e0d5a8))
+
+## [2.2.3](https://github.com/ForestAdmin/toolbelt/compare/v2.2.2...v2.2.3) (2021-07-23)
+
+
+### Bug Fixes
+
+* handle properly mongo connection close ([#209](https://github.com/ForestAdmin/toolbelt/issues/209)) ([4a6da5d](https://github.com/ForestAdmin/toolbelt/commit/4a6da5d9233367be73ab2096f6cfef52525c93c8))
+
+## [2.2.2](https://github.com/ForestAdmin/toolbelt/compare/v2.2.1...v2.2.2) (2021-07-20)
+
+## [2.2.1](https://github.com/ForestAdmin/toolbelt/compare/v2.2.0...v2.2.1) (2021-07-16)
+
+# [2.2.0](https://github.com/ForestAdmin/toolbelt/compare/v2.1.2...v2.2.0) (2021-07-15)
+
+
+### Bug Fixes
+
+* logout also logout from forest.d folder ([#202](https://github.com/ForestAdmin/toolbelt/issues/202)) ([4adb531](https://github.com/ForestAdmin/toolbelt/commit/4adb5317c3e03e5b7603505189c9b4c572247dab))
+* save token in forest.d folder ([#201](https://github.com/ForestAdmin/toolbelt/issues/201)) ([d560d45](https://github.com/ForestAdmin/toolbelt/commit/d560d456992ce5f089fbe2e9c52531414c188f64))
+
+
+### Features
+
+* get token from forest folder ([#199](https://github.com/ForestAdmin/toolbelt/issues/199)) ([e6ac1e6](https://github.com/ForestAdmin/toolbelt/commit/e6ac1e60ee283e0d82ef8df47a6d8a2e791d3f58))
+* merge lumber commands into toolbelt ([#198](https://github.com/ForestAdmin/toolbelt/issues/198)) ([e647b6b](https://github.com/ForestAdmin/toolbelt/commit/e647b6b64ff64530035658f05743d34ed9bf2584))
+
 # [2.2.0-beta.4](https://github.com/ForestAdmin/toolbelt/compare/v2.2.0-beta.3...v2.2.0-beta.4) (2021-07-13)
 
 # [2.2.0-beta.3](https://github.com/ForestAdmin/toolbelt/compare/v2.2.0-beta.2...v2.2.0-beta.3) (2021-07-12)

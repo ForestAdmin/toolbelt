@@ -5,11 +5,13 @@ const Context = require('@forestadmin/context');
 const EnvironmentSerializer = require('../serializers/environment');
 const environmentDeserializer = require('../deserializers/environment');
 const DeploymentRequestSerializer = require('../serializers/deployment-request');
-const JobStateChecker = require('../services/job-state-checker');
+const JobStateChecker = require('./job-state-checker');
 
 function EnvironmentManager(config) {
-  const { assertPresent, authenticator, env } = Context.inject();
-  assertPresent({ authenticator, env });
+  const {
+    assertPresent, authenticator, env, keyGenerator,
+  } = Context.inject();
+  assertPresent({ authenticator, env, keyGenerator });
 
   this.listEnvironments = async () => {
     const authToken = authenticator.getAuthToken();
@@ -36,7 +38,7 @@ function EnvironmentManager(config) {
   this.createEnvironment = async () => {
     const authToken = authenticator.getAuthToken();
 
-    return agent
+    const response = await agent
       .post(`${env.FOREST_URL}/api/environments`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
@@ -44,8 +46,11 @@ function EnvironmentManager(config) {
         name: config.name,
         apiEndpoint: config.url,
         project: { id: config.projectId },
-      }))
-      .then((response) => environmentDeserializer.deserialize(response.body));
+      }));
+    const environment = await environmentDeserializer.deserialize(response.body);
+
+    environment.authSecret = keyGenerator.generate();
+    return environment;
   };
 
   this.createDevelopmentEnvironment = async (projectId, endpoint) => {
@@ -105,6 +110,16 @@ function EnvironmentManager(config) {
     const jobId = deploymentRequestResponse.body.meta.job_id;
 
     return jobStateChecker.check(jobId, config.projectId);
+  };
+
+  this.reset = async (environmentName, environmentSecret) => {
+    const authToken = authenticator.getAuthToken();
+
+    return agent
+      .post(`${env.FOREST_URL}/api/environments/reset`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('forest-secret-key', `${environmentSecret}`)
+      .send({ environmentName });
   };
 
   /**

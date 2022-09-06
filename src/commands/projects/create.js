@@ -68,12 +68,13 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       dbConnectionUrl: config.databaseConnectionURL,
       dbDialect: config.databaseDialect,
       dbHostname: config.databaseHost,
-      dbPort: config.databasePort,
       dbName: config.databaseName,
-      dbUser: config.databaseUser,
       dbPassword: config.databasePassword,
-      ssl: config.databaseSSL,
+      dbPort: config.databasePort,
+      dbSchema: config.databaseSchema,
+      dbUser: config.databaseUser,
       mongodbSrv: config.mongoDBSRV,
+      ssl: config.databaseSSL,
     };
 
     if (!config.databaseDialect && !config.databaseConnectionURL) {
@@ -81,28 +82,45 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       this.exit(1);
     }
 
+    /** @type {import('../../services/projects/create/project-creator').ProjectMeta} */
+    const meta = {
+      dbDialect: dbConfig.dbDialect,
+      agent: dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize',
+      isLocal: ['localhost', '127.0.0.1', '::1'].some((keyword) => (
+        dbConfig.dbHostname
+          ? dbConfig.dbHostname.includes(keyword)
+          : dbConfig.dbConnectionUrl.includes(keyword)
+      )),
+      architecture: 'microservice',
+    };
+
+    this.eventSender.sessionToken = authenticationToken;
+    this.eventSender.meta = meta;
+
+    this.spinner.start({ text: 'Creating your project on Forest Admin' });
+    const projectCreationPromise = this.projectCreator.create(
+      authenticationToken, appConfig, meta,
+    );
+
+    const {
+      id, envSecret, authSecret,
+    } = await this.spinner.attachToPromise(projectCreationPromise);
+
+    this.eventSender.meta.projectId = id;
+    config.forestAuthSecret = authSecret;
+    config.forestEnvSecret = envSecret;
+
     let schema = {};
 
     this.spinner.start({ text: 'Connecting to your database' });
     const connectionPromise = this.database.connect(dbConfig);
     const connection = await this.spinner.attachToPromise(connectionPromise);
 
-    this.spinner.start({ text: 'Analyzing the database' });
-    const schemaPromise = this.databaseAnalyzer.analyze(connection, dbConfig, true);
-    schema = await this.spinner.attachToPromise(schemaPromise);
+    schema = await this.analyzeDatabase(dbConfig, connection);
 
     this.spinner.start({ text: 'Disconnecting from your database' });
     const disconnectPromise = this.database.disconnect(connection);
     await this.spinner.attachToPromise(disconnectPromise);
-
-    this.spinner.start({ text: 'Creating your project on Forest Admin' });
-    const projectCreationPromise = this.projectCreator.create(
-      authenticationToken, appConfig,
-    );
-
-    const { envSecret, authSecret } = await this.spinner.attachToPromise(projectCreationPromise);
-    config.forestAuthSecret = authSecret;
-    config.forestEnvSecret = envSecret;
 
     this.spinner.start({ text: 'Creating your project files' });
     const dumperConfig = {
@@ -116,6 +134,20 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 
     this.logger.success(`Hooray, ${this.chalk.green('installation success')}!`);
     await this.eventSender.notifySuccess();
+  }
+
+  async analyzeDatabase(dbConfig, connection) {
+    if (dbConfig.dbDialect === 'mongodb') {
+      // the mongodb analyzer display a progress bar during the analysis
+      this.logger.info('Analyzing the database...');
+      const analysis = await this.databaseAnalyzer.analyzeMongoDb(connection, dbConfig, true);
+      this.logger.success('Database is analyzed', { lineColor: 'green' });
+      return analysis;
+    }
+
+    this.spinner.start({ text: 'Analyzing the database' });
+    const schemaPromise = this.databaseAnalyzer.analyze(connection, dbConfig, true);
+    return this.spinner.attachToPromise(schemaPromise);
   }
 
   // FIXME: Not properly called/tested by testCli helper.

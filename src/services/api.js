@@ -62,7 +62,6 @@ function Api({
     try {
       newProject = await agent
         .post(`${this.endpoint()}/api/projects`)
-        .set(HEADER_FOREST_ORIGIN, 'Lumber')
         .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
         .set(HEADER_USER_AGENT, this.userAgent)
         .set('Authorization', `Bearer ${sessionToken}`)
@@ -79,7 +78,6 @@ function Api({
         newProject = await agent
           .get(`${this.endpoint()}/api/projects/${projectId}`)
           .set('Authorization', `Bearer ${sessionToken}`)
-          .set(HEADER_FOREST_ORIGIN, 'Lumber')
           .set(HEADER_USER_AGENT, this.userAgent)
           .send()
           .then((response) => projectDeserializer.deserialize(response.body));
@@ -97,7 +95,6 @@ function Api({
     newProject.defaultEnvironment.apiEndpoint = `${protocol}${hostname}:${port}`;
     const updatedEnvironment = await agent
       .put(`${this.endpoint()}/api/environments/${newProject.defaultEnvironment.id}`)
-      .set(HEADER_FOREST_ORIGIN, 'Lumber')
       .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
       .set(HEADER_USER_AGENT, this.userAgent)
       .set('Authorization', `Bearer ${sessionToken}`)

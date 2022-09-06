@@ -1,5 +1,16 @@
 const chalk = require('chalk');
 
+const ALLOWED_OPTION_KEYS = [
+  'color',
+  'prefix',
+  'std',
+  'lineColor',
+];
+const DEFAULT_OPTION_VALUES = ALLOWED_OPTION_KEYS.reduce((options, key) => {
+  options[key] = undefined;
+  return options;
+}, {});
+
 class Logger {
   constructor({
     assertPresent,
@@ -20,17 +31,21 @@ class Logger {
     if (this.silent) return;
 
     options = {
-      color: null,
-      prefix: null,
-      std: null,
+      ...DEFAULT_OPTION_VALUES,
       ...options,
     };
 
     let actualPrefix = '';
     if ([undefined, null, ''].indexOf(options.prefix) === -1) actualPrefix = `${options.prefix} `;
-    if (actualPrefix && options.color) actualPrefix = chalk.bold[options.color](actualPrefix);
+    if (actualPrefix && options.color) {
+      actualPrefix = Logger._setBoldColor(options.color, actualPrefix);
+    }
 
-    const actualMessage = `${actualPrefix}${message} \n`;
+    let actualMessage = Logger._stringifyIfObject(message);
+    if (options.lineColor) {
+      actualMessage = `${Logger._setColor(options.lineColor, actualMessage)}`;
+    }
+    actualMessage = `${actualPrefix}${actualMessage}\n`;
 
     if (options.std === 'err') {
       this.stderr.write(actualMessage);
@@ -39,19 +54,72 @@ class Logger {
     }
   }
 
-  _logLines(messages, options) {
-    messages.forEach((message) => this._logLine(message, options));
+  _logLines(messagesWithPotentialGivenOptions, baseOptions) {
+    const { options, messages } = Logger._extractGivenOptionsFromMessages(
+      messagesWithPotentialGivenOptions,
+    );
+    messages.forEach((message) => this._logLine(message, { ...baseOptions, ...options }));
   }
 
-  error(...messages) { this._logLines(messages, { color: 'red', prefix: '×', std: 'err' }); }
+  static _stringifyIfObject(message) {
+    if (typeof message === 'object') {
+      return JSON.stringify(message);
+    }
 
-  info(...messages) { this._logLines(messages, { color: 'blue', prefix: '>' }); }
+    return message;
+  }
 
-  log(...messages) { this._logLines(messages); }
+  static _setColor(color, message) {
+    return chalk[color](message);
+  }
 
-  success(...messages) { this._logLines(messages, { color: 'green', prefix: '√' }); }
+  static _setBoldColor(color, message) {
+    return chalk.bold[color](message);
+  }
 
-  warn(...messages) { this._logLines(messages, { color: 'yellow', prefix: 'Δ' }); }
+  static _isObjectKeysMatchAlwaysTheGivenKeys(object) {
+    if (typeof object !== 'object') {
+      return false;
+    }
+
+    return Object.keys(object).every((key) => ALLOWED_OPTION_KEYS.includes(key));
+  }
+
+  // This is a hack to keep the current signature of Logger methods.
+  // Last `message` is considered an option object if its keys are in `ALLOWED_OPTION_KEYS`.
+  static _extractGivenOptionsFromMessages(messages) {
+    let options = {};
+
+    const potentialGivenOptions = messages[messages.length - 1];
+    const hasOptions = Logger._isObjectKeysMatchAlwaysTheGivenKeys(potentialGivenOptions);
+
+    if (hasOptions) {
+      messages = messages.slice(0, -1);
+      options = { ...options, ...potentialGivenOptions };
+    }
+
+    return { messages, options };
+  }
+
+  /**
+   *  Allows to log one ore more messages, with option object as last optional parameter.
+   *  @example logger.log('message')
+   *  @example logger.log('message', { color: 'blue', colorLine: 'green' })
+   *  @example logger.log('message 1', 'message 2')
+   *  @example logger.log('message 1', 'message 2',  { color: 'blue', colorLine: 'green' })
+   */
+  log(...messagesAndOptions) { this._logLines(messagesAndOptions); }
+
+  error(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'red', prefix: '×', std: 'err' }); }
+
+  info(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'blue', prefix: '>' }); }
+
+  success(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'green', prefix: '√' }); }
+
+  warn(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'yellow', prefix: 'Δ' }); }
 }
 
+if (process.env.NODE_ENV === 'test') {
+  Logger.DEFAULT_OPTION_VALUES = DEFAULT_OPTION_VALUES;
+}
 module.exports = Logger;

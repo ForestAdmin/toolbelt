@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    open-pull-requests-limit: 10
+    directory: "/"
+    target-branch: "main"
+    versioning-strategy: auto
+    schedule:
+        interval: daily
+    commit-message:
+        prefix: "chore(deps):"

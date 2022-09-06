@@ -2,7 +2,6 @@ const Context = require('@forestadmin/context');
 const MongoHelper = require('./helpers/mongo-helper');
 const { DATABASE_URL_MONGODB_MAX } = require('./helpers/database-urls');
 const { describeMongoDatabases } = require('./helpers/multiple-database-version-helper');
-const DatabaseAnalyzer = require('../../../src/services/schema/update/analyzer/database-analyzer');
 const simpleModel = require('./fixtures/mongo/simple-model');
 const hasManyModel = require('./fixtures/mongo/hasmany-model');
 const multipleReferencesModel = require('./fixtures/mongo/multiple-references-same-field-model');
@@ -34,30 +33,20 @@ const expectedSubDocumentsUsingIds = require('./expected/mongo/db-analysis-outpu
 const expectedSubDocumentsNotUsingIds = require('./expected/mongo/db-analysis-output/sub-documents-not-using-ids.expected.json');
 const expectedSubDocumentUsingIds = require('./expected/mongo/db-analysis-output/sub-document-using-ids.expected.json');
 const expectedComplexModelWithAView = require('./expected/mongo/db-analysis-output/complex-model-with-a-view.expected.json');
-const mongoAnalyzer = require('../../../src/services/schema/update/analyzer/mongo-collections-analyzer');
 
 const defaultPlan = require('../../../src/context/plan');
-
-const setupTest = () => {
-  Context.init(defaultPlan);
-  return {
-    assertPresent: jest.fn(),
-    terminator: jest.fn(),
-    mongoAnalyzer,
-    sequelizeAnalyzer: jest.fn(),
-  };
-};
 
 function getMongoHelper(mongoUrl) {
   return new MongoHelper(mongoUrl);
 }
 
 async function getAnalyzerOutput(mongoUrl, callback) {
+  const { databaseAnalyzer } = Context.inject();
+
   const mongoHelper = await getMongoHelper(mongoUrl);
   const databaseConnection = await mongoHelper.connect();
   await mongoHelper.dropAllCollections();
   await callback(mongoHelper);
-  const databaseAnalyzer = new DatabaseAnalyzer(setupTest());
   const outputModel = await databaseAnalyzer.analyze(databaseConnection, { dbDialect: 'mongodb' });
   await mongoHelper.close();
   return outputModel;
@@ -68,16 +57,19 @@ async function getAnalyzerOutputWithModel(mongoUrl, model) {
 }
 
 describe('services > database analyser > MongoDB', () => {
+  Context.init(defaultPlan);
+
   describeMongoDatabases((mongoUrl) => () => {
     it('should connect and insert a document.', async () => {
       expect.assertions(1);
       const mongoHelper = await getMongoHelper(mongoUrl);
       const databaseConnection = await mongoHelper.connect();
+      const db = databaseConnection.db();
       await mongoHelper.dropAllCollections();
-      await databaseConnection.collection('connect_test').insertOne({ name: 'hello' });
-      const doc = await databaseConnection.collection('connect_test').findOne({ name: 'hello' });
+      await db.collection('connect_test').insertOne({ name: 'hello' });
+      const doc = await db.collection('connect_test').findOne({ name: 'hello' });
       await mongoHelper.close();
-      expect(doc.name).toStrictEqual('hello');
+      expect(doc.name).toBe('hello');
     });
 
     it('should generate a simple model', async () => {
@@ -185,7 +177,7 @@ describe('services > database analyser > MongoDB', () => {
       // the purpose of this test is to ensure it has not been imported nor analyzed.
       // Still, listCollections() returns unauthorized views only since 4.0.
       expect((await mongoHelper.db.listCollections().toArray())
-        .find((collection) => collection.name === 'system.views')).not.toBeUndefined();
+        .find((collection) => collection.name === 'system.views')).toBeDefined();
     });
 
     // The output is expected to contain the view but not its system.view attached table.

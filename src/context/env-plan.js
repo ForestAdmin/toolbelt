@@ -1,12 +1,12 @@
 /* eslint-disable global-require */
 module.exports = (plan) => plan
-  .addStep('dotenv', (planDotenv) => planDotenv
+  .addPackage('dotenv', (planDotenv) => planDotenv
     .addModule('dotenv', () => require('dotenv'), { private: true })
     .with('dotenv', (dotenv) => dotenv.config()))
   .addValue('constants', {
     CURRENT_WORKING_DIRECTORY: process.cwd(),
   })
-  .addStep('variables', (planVariables) => planVariables
+  .addPackage('variables', (planVariables) => planVariables
     .addUsingFunction('env', ({ assertPresent, os }) => {
       assertPresent({ os });
       const DEFAULT_FOREST_URL = 'https://api.forestadmin.com';
@@ -22,6 +22,6 @@ module.exports = (plan) => plan
         TOKEN_PATH: process.env.TOKEN_PATH || os.homedir(),
       };
     }))
-  .addStep('others', (planOthers) => planOthers
+  .addPackage('others', (planOthers) => planOthers
     .addValue('process', process)
     .addModule('pkg', () => require('../../package.json')));

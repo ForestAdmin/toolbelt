@@ -9,4 +9,5 @@ collection('{{ table }}', {
   actions: [],
   fields: [],
   segments: [],
+  {{#if isMongoDB }}fieldsToFlatten: [],{{/if}}
 });

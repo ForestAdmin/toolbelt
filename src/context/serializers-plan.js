@@ -1,14 +1,8 @@
-const applicationTokenSerializer = require('../serializers/application-token');
-const applicationTokenDeserializer = require('../deserializers/application-token');
-const environmentDeserializer = require('../deserializers/environment');
-const environmentSerializer = require('../serializers/environment');
-const projectDeserializer = require('../deserializers/project');
-const projectSerializer = require('../serializers/project');
-
+/* eslint-disable global-require */
 module.exports = (plan) => plan
-  .addInstance('applicationTokenSerializer', applicationTokenSerializer)
-  .addInstance('applicationTokenDeserializer', applicationTokenDeserializer)
-  .addInstance('environmentDeserializer', environmentDeserializer)
-  .addInstance('environmentSerializer', environmentSerializer)
-  .addInstance('projectDeserializer', projectDeserializer)
-  .addInstance('projectSerializer', projectSerializer);
+  .addInstance('applicationTokenSerializer', () => require('../serializers/application-token'))
+  .addInstance('applicationTokenDeserializer', () => require('../deserializers/application-token'))
+  .addInstance('environmentDeserializer', () => require('../deserializers/environment'))
+  .addInstance('environmentSerializer', () => require('../serializers/environment'))
+  .addInstance('projectDeserializer', () => require('../deserializers/project'))
+  .addInstance('projectSerializer', () => require('../serializers/project'));

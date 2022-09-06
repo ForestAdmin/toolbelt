@@ -5,9 +5,13 @@ module.exports = new JSONAPISerializer('projects', {
     'name',
     'defaultEnvironment',
     'origin',
+    'agent',
+    'databaseType',
+    'architecture',
   ],
   defaultEnvironment: {
     ref: 'id',
     attributes: ['name', 'apiEndpoint', 'type'],
   },
+  keyForAttribute: 'snake_case',
 });

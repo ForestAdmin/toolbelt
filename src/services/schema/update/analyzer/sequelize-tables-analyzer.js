@@ -1,3 +1,4 @@
+const { inject } = require('@forestadmin/context');
 const P = require('bluebird');
 const _ = require('lodash');
 const { plural, singular } = require('pluralize');
@@ -5,7 +6,6 @@ const ColumnTypeGetter = require('./sequelize-column-type-getter');
 const DefaultValueExpression = require('./sequelize-default-value');
 const TableConstraintsGetter = require('./sequelize-table-constraints-getter');
 const EmptyDatabaseError = require('../../../../errors/database/empty-database-error');
-const { terminate } = require('../../../../utils/terminator');
 const stringUtils = require('../../../../utils/strings');
 const { isUnderscored } = require('../../../../utils/fields');
 
@@ -455,7 +455,7 @@ async function analyzeSequelizeTables(connection, config, allowWarning) {
     if (!schemas.length) {
       const message = 'This schema does not exists.';
 
-      return terminate(1, {
+      return inject().terminator.terminate(1, {
         errorCode: 'database_authentication_error',
         errorMessage: message,
         logs: [message],

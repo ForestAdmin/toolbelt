@@ -29,7 +29,7 @@ databasesConfiguration.forEach((databaseInfo) => {
         const model = require(path.join(modelsDir, file))(connection, Mongoose);
         db[model.modelName] = model;
         {{else}}
-        const model = connection.import(path.join(modelsDir, file));
+        const model = require(path.join(modelsDir, file))(connection, Sequelize.DataTypes);
         db[model.name] = model;
         {{/if}}
       } catch (error) {

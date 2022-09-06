@@ -246,6 +246,7 @@ describe('branch', () => {
             exitCode: 0,
           }));
 
+          // eslint-disable-next-line jest/max-nested-describe
           describe('using `--force` option', () => {
             it('should display a success branch deleted message', () => testCli({
               env: testEnvWithSecret,
@@ -292,7 +293,7 @@ describe('branch', () => {
             () => getBranchInvalidNotDevEnv(),
           ],
           std: [
-            { err: '× Your development environment is not properly set up. Please run `forest init` first and retry.' },
+            { err: '× The remote environments can\'t have additional branches.' },
           ],
           exitCode: 2,
         }));

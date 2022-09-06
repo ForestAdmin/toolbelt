@@ -28,16 +28,16 @@ describe('utils > buildDatabaseUrl', () => {
         expect.assertions(1);
 
         const config = {
-          dbDialect: '__protocol__',
-          dbHostname: '__dbHostname__',
-          dbName: '__dbName__',
-          dbPassword: '__dbPassword__',
-          dbPort: '__dbPort__',
-          dbUser: '__dbUser__',
+          databaseDialect: '__protocol__',
+          databaseHost: '__dbHostname__',
+          databaseName: '__dbName__',
+          databasePassword: '__dbPassword__',
+          databasePort: '__dbPort__',
+          databaseUser: '__dbUser__',
         };
         const databaseUrl = buildDatabaseUrl(config);
 
-        expect(databaseUrl).toStrictEqual('__protocol__://__dbUser__:__dbPassword__@__dbHostname__:__dbPort__/__dbName__');
+        expect(databaseUrl).toBe('__protocol__://__dbUser__:__dbPassword__@__dbHostname__:__dbPort__/__dbName__');
       });
 
       describe('when given the MongoDB SRV option', () => {
@@ -45,34 +45,34 @@ describe('utils > buildDatabaseUrl', () => {
           expect.assertions(1);
 
           const config = {
-            dbDialect: 'mongodb',
-            dbHostname: '__dbHostname__',
-            dbName: '__dbName__',
-            dbPassword: '__dbPassword__',
-            dbPort: '__dbPort__',
-            dbUser: '__dbUser__',
+            databaseDialect: 'mongodb',
+            databaseHost: '__dbHostname__',
+            databaseName: '__dbName__',
+            databasePassword: '__dbPassword__',
+            databasePort: '__dbPort__',
+            databaseUser: '__dbUser__',
             mongodbSrv: true,
           };
           const databaseUrl = buildDatabaseUrl(config);
 
-          expect(databaseUrl).toStrictEqual('mongodb+srv://__dbUser__:__dbPassword__@__dbHostname__/__dbName__');
+          expect(databaseUrl).toBe('mongodb+srv://__dbUser__:__dbPassword__@__dbHostname__/__dbName__');
         });
 
         it('should ignore it otherwise', () => {
           expect.assertions(1);
 
           const config = {
-            dbDialect: '__protocol__',
-            dbHostname: '__dbHostname__',
-            dbName: '__dbName__',
-            dbPassword: '__dbPassword__',
-            dbPort: '__dbPort__',
-            dbUser: '__dbUser__',
+            databaseDialect: '__protocol__',
+            databaseHost: '__dbHostname__',
+            databaseName: '__dbName__',
+            databasePassword: '__dbPassword__',
+            databasePort: '__dbPort__',
+            databaseUser: '__dbUser__',
             mongodbSrv: true,
           };
           const databaseUrl = buildDatabaseUrl(config);
 
-          expect(databaseUrl).toStrictEqual('__protocol__://__dbUser__:__dbPassword__@__dbHostname__:__dbPort__/__dbName__');
+          expect(databaseUrl).toBe('__protocol__://__dbUser__:__dbPassword__@__dbHostname__:__dbPort__/__dbName__');
         });
       });
     });

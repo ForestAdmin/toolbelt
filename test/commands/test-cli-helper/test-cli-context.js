@@ -33,7 +33,7 @@ const makeEnvironmentVariablesReplacement = (env) => (plan) => plan
     // PORT: undefined,
     // TOKEN_PATH: undefined,
     // NOTICE: Makes test runner look for token in test temporary directory.
-    TOKEN_PATH: process.env.TOKEN_PATH || '.',
+    TOKEN_PATH: process.cwd(),
     // FIXME: Overrides for this test.
     ...env,
   });
@@ -71,6 +71,7 @@ const preparePlan = ({
   env,
   prompts,
   tokenBehavior,
+  additionnalStep,
 }) => {
   if (testCommandPlan) return { plan: testCommandPlan };
   const inquirerMock = makeInquirerMock(prompts);
@@ -80,20 +81,22 @@ const preparePlan = ({
   const environmentVariablesPlan = makeEnvironmentVariablesReplacement(env);
   const inquirerPlan = makeInquirerReplacement(inquirerMock);
 
-  return {
-    mocks: {
-      inquirer: inquirerMock,
-      jwtDecode: jwtDecodeMock,
-    },
-    plan: [
-      defaultPlan,
-      replaceProcessFunctions,
-      environmentVariablesPlan,
-      dependenciesPlan,
-      inquirerPlan,
-      authenticatorPlan,
-    ],
+  const mocks = {
+    inquirer: inquirerMock,
+    jwtDecode: jwtDecodeMock,
   };
+  const plan = [
+    defaultPlan,
+    replaceProcessFunctions,
+    environmentVariablesPlan,
+    dependenciesPlan,
+    inquirerPlan,
+    authenticatorPlan,
+  ];
+
+  if (additionnalStep) plan.push(additionnalStep);
+
+  return { mocks, plan };
 };
 
 module.exports = { preparePlan };

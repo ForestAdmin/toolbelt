@@ -134,7 +134,7 @@ describe('services > prompter > database prompts', () => {
 
             await databasePrompts.handleConnectionUrl();
 
-            expect(env.databaseDialect).toStrictEqual('postgres');
+            expect(env.databaseDialect).toBe('postgres');
             resetParams();
           });
 
@@ -147,7 +147,7 @@ describe('services > prompter > database prompts', () => {
 
             await databasePrompts.handleConnectionUrl();
 
-            expect(env.databaseDialect).toStrictEqual('mongodb');
+            expect(env.databaseDialect).toBe('mongodb');
             resetParams();
           });
         });
@@ -204,10 +204,15 @@ describe('services > prompter > database prompts', () => {
         it('should add a database dialect prompt with the correct configuration', () => {
           expect.assertions(4);
           initTestWithDatabaseDialect();
-          expect(prompts[0].type).toStrictEqual('list');
-          expect(prompts[0].name).toStrictEqual('databaseDialect');
-          expect(prompts[0].message).toStrictEqual('What\'s the database type?');
-          expect(prompts[0].choices).toStrictEqual(['mongodb', 'mssql', 'mysql', 'postgres']);
+          expect(prompts[0].type).toBe('list');
+          expect(prompts[0].name).toBe('databaseDialect');
+          expect(prompts[0].message).toBe('What\'s the database type?');
+          expect(prompts[0].choices).toStrictEqual([
+            { name: 'mongodb', value: 'mongodb' },
+            { name: 'mssql', value: 'mssql' },
+            { name: 'mysql / mariadb', value: 'mysql' },
+            { name: 'postgres', value: 'postgres' },
+          ]);
           resetParams();
         });
 
@@ -226,7 +231,7 @@ describe('services > prompter > database prompts', () => {
           const databasePrompts = new DatabasePrompts(requests, env, prompts, program);
           const platformStub = jest.spyOn(os, 'platform').mockReturnValue('win32');
           databasePrompts.handleDialect();
-          expect(prompts[0].type).toStrictEqual('rawlist');
+          expect(prompts[0].type).toBe('rawlist');
           resetParams();
           platformStub.mockRestore();
         });
@@ -268,9 +273,9 @@ describe('services > prompter > database prompts', () => {
       it('should add a database name prompt with the correct configuration', () => {
         expect.assertions(4);
         initTestWithDatabaseName();
-        expect(prompts[0].type).toStrictEqual('input');
-        expect(prompts[0].name).toStrictEqual('databaseName');
-        expect(prompts[0].message).toStrictEqual('What\'s the database name?');
+        expect(prompts[0].type).toBe('input');
+        expect(prompts[0].name).toBe('databaseName');
+        expect(prompts[0].message).toBe('What\'s the database name?');
         expect(prompts[0].validate).toBeInstanceOf(Function);
         resetParams();
       });
@@ -278,8 +283,8 @@ describe('services > prompter > database prompts', () => {
       it('should validate that the name has been filed', () => {
         expect.assertions(2);
         initTestWithDatabaseName();
-        expect(prompts[0].validate('')).toStrictEqual('Please specify the database name.');
-        expect(prompts[0].validate('name')).toStrictEqual(true);
+        expect(prompts[0].validate('')).toBe('Please specify the database name.');
+        expect(prompts[0].validate('name')).toBe(true);
         resetParams();
       });
     });
@@ -339,10 +344,10 @@ describe('services > prompter > database prompts', () => {
         it('should add a database schema name prompt with the correct configuration', () => {
           expect.assertions(6);
           initTestWithDatabaseSchema();
-          expect(prompts[0].type).toStrictEqual('input');
-          expect(prompts[0].name).toStrictEqual('databaseSchema');
-          expect(prompts[0].message).toStrictEqual('What\'s the database schema? [optional]');
-          expect(prompts[0].description).toStrictEqual('Leave blank by default');
+          expect(prompts[0].type).toBe('input');
+          expect(prompts[0].name).toBe('databaseSchema');
+          expect(prompts[0].message).toBe('What\'s the database schema? [optional]');
+          expect(prompts[0].description).toBe('Leave blank by default');
           expect(prompts[0].when).toBeInstanceOf(Function);
           expect(prompts[0].default).toBeInstanceOf(Function);
           resetParams();
@@ -351,18 +356,18 @@ describe('services > prompter > database prompts', () => {
         it('should be prompted only if using postgres or mssql', () => {
           expect.assertions(4);
           initTestWithDatabaseSchema();
-          expect(prompts[0].when({ databaseDialect: 'mongodb' })).toStrictEqual(false);
-          expect(prompts[0].when({ databaseDialect: 'mysql' })).toStrictEqual(false);
-          expect(prompts[0].when({ databaseDialect: 'postgres' })).toStrictEqual(true);
-          expect(prompts[0].when({ databaseDialect: 'mssql' })).toStrictEqual(true);
+          expect(prompts[0].when({ databaseDialect: 'mongodb' })).toBe(false);
+          expect(prompts[0].when({ databaseDialect: 'mysql' })).toBe(false);
+          expect(prompts[0].when({ databaseDialect: 'postgres' })).toBe(true);
+          expect(prompts[0].when({ databaseDialect: 'mssql' })).toBe(true);
           resetParams();
         });
 
         it('should set the correct default schema values', () => {
           expect.assertions(2);
           initTestWithDatabaseSchema();
-          expect(prompts[0].default({ databaseDialect: 'postgres' })).toStrictEqual('public');
-          expect(prompts[0].default({ databaseDialect: 'mssql' })).toStrictEqual('');
+          expect(prompts[0].default({ databaseDialect: 'postgres' })).toBe('public');
+          expect(prompts[0].default({ databaseDialect: 'mssql' })).toBe('');
           resetParams();
         });
       });
@@ -402,10 +407,10 @@ describe('services > prompter > database prompts', () => {
       it('should add a database hostname prompt with the correct configuration', () => {
         expect.assertions(4);
         initTestWithDatabaseHostname();
-        expect(prompts[0].type).toStrictEqual('input');
-        expect(prompts[0].name).toStrictEqual('databaseHost');
-        expect(prompts[0].message).toStrictEqual('What\'s the database hostname?');
-        expect(prompts[0].default).toStrictEqual('localhost');
+        expect(prompts[0].type).toBe('input');
+        expect(prompts[0].name).toBe('databaseHost');
+        expect(prompts[0].message).toBe('What\'s the database hostname?');
+        expect(prompts[0].default).toBe('localhost');
         resetParams();
       });
     });
@@ -444,9 +449,9 @@ describe('services > prompter > database prompts', () => {
       it('should add a database port prompt with the correct configuration', () => {
         expect.assertions(5);
         initTestWithDatabasePort();
-        expect(prompts[0].type).toStrictEqual('input');
-        expect(prompts[0].name).toStrictEqual('databasePort');
-        expect(prompts[0].message).toStrictEqual('What\'s the database port?');
+        expect(prompts[0].type).toBe('input');
+        expect(prompts[0].name).toBe('databasePort');
+        expect(prompts[0].message).toBe('What\'s the database port?');
         expect(prompts[0].default).toBeInstanceOf(Function);
         expect(prompts[0].validate).toBeInstanceOf(Function);
         resetParams();
@@ -455,19 +460,19 @@ describe('services > prompter > database prompts', () => {
       it('should set the correct default port values', () => {
         expect.assertions(4);
         initTestWithDatabasePort();
-        expect(prompts[0].default({ databaseDialect: 'postgres' })).toStrictEqual('5432');
-        expect(prompts[0].default({ databaseDialect: 'mysql' })).toStrictEqual('3306');
-        expect(prompts[0].default({ databaseDialect: 'mssql' })).toStrictEqual('1433');
-        expect(prompts[0].default({ databaseDialect: 'mongodb' })).toStrictEqual('27017');
+        expect(prompts[0].default({ databaseDialect: 'postgres' })).toBe('5432');
+        expect(prompts[0].default({ databaseDialect: 'mysql' })).toBe('3306');
+        expect(prompts[0].default({ databaseDialect: 'mssql' })).toBe('1433');
+        expect(prompts[0].default({ databaseDialect: 'mongodb' })).toBe('27017');
         resetParams();
       });
 
       it('should validate the value filed', () => {
         expect.assertions(3);
         initTestWithDatabasePort();
-        expect(prompts[0].validate('not a number')).toStrictEqual('The port must be a number.');
-        expect(prompts[0].validate(70000)).toStrictEqual('This is not a valid port.');
-        expect(prompts[0].validate(60000)).toStrictEqual(true);
+        expect(prompts[0].validate('not a number')).toBe('The port must be a number.');
+        expect(prompts[0].validate(70000)).toBe('This is not a valid port.');
+        expect(prompts[0].validate(60000)).toBe(true);
         resetParams();
       });
     });
@@ -506,9 +511,9 @@ describe('services > prompter > database prompts', () => {
       it('should add a database user prompt with the correct configuration', () => {
         expect.assertions(4);
         initTestWithDatabaseUser();
-        expect(prompts[0].type).toStrictEqual('input');
-        expect(prompts[0].name).toStrictEqual('databaseUser');
-        expect(prompts[0].message).toStrictEqual('What\'s the database user?');
+        expect(prompts[0].type).toBe('input');
+        expect(prompts[0].name).toBe('databaseUser');
+        expect(prompts[0].message).toBe('What\'s the database user?');
         expect(prompts[0].default).toBeInstanceOf(Function);
         resetParams();
       });
@@ -517,9 +522,9 @@ describe('services > prompter > database prompts', () => {
         expect.assertions(4);
         initTestWithDatabaseUser();
         expect(prompts[0].default({ databaseDialect: 'mongodb' })).toBeUndefined();
-        expect(prompts[0].default({ databaseDialect: 'mysql' })).toStrictEqual('root');
-        expect(prompts[0].default({ databaseDialect: 'mssql' })).toStrictEqual('root');
-        expect(prompts[0].default({ databaseDialect: 'postgres' })).toStrictEqual('root');
+        expect(prompts[0].default({ databaseDialect: 'mysql' })).toBe('root');
+        expect(prompts[0].default({ databaseDialect: 'mssql' })).toBe('root');
+        expect(prompts[0].default({ databaseDialect: 'postgres' })).toBe('root');
         resetParams();
       });
     });
@@ -558,9 +563,9 @@ describe('services > prompter > database prompts', () => {
       it('should add a database password prompt with the correct configuration', () => {
         expect.assertions(3);
         initTestWithDatabasePassword();
-        expect(prompts[0].type).toStrictEqual('password');
-        expect(prompts[0].name).toStrictEqual('databasePassword');
-        expect(prompts[0].message).toStrictEqual('What\'s the database password? [optional]');
+        expect(prompts[0].type).toBe('password');
+        expect(prompts[0].name).toBe('databasePassword');
+        expect(prompts[0].message).toBe('What\'s the database password? [optional]');
         resetParams();
       });
     });
@@ -592,7 +597,7 @@ describe('services > prompter > database prompts', () => {
 
           databasePrompts.handleSsl();
 
-          expect(env.databaseSSL).toStrictEqual(true);
+          expect(env.databaseSSL).toBe(true);
           resetParams();
         });
       });
@@ -614,10 +619,10 @@ describe('services > prompter > database prompts', () => {
         it('should add a SSL prompt with the correct configuration', () => {
           expect.assertions(4);
           initTestWithSSL();
-          expect(prompts[0].type).toStrictEqual('confirm');
-          expect(prompts[0].name).toStrictEqual('databaseSSL');
-          expect(prompts[0].message).toStrictEqual('Does your database require a SSL connection?');
-          expect(prompts[0].default).toStrictEqual(false);
+          expect(prompts[0].type).toBe('confirm');
+          expect(prompts[0].name).toBe('databaseSSL');
+          expect(prompts[0].message).toBe('Does your database require a SSL connection?');
+          expect(prompts[0].default).toBe(false);
           resetParams();
         });
       });
@@ -657,10 +662,10 @@ describe('services > prompter > database prompts', () => {
       it('should add a MongodbSrv prompt with the correct configuration', () => {
         expect.assertions(5);
         initTestWithMongoSrv();
-        expect(prompts[0].type).toStrictEqual('confirm');
-        expect(prompts[0].name).toStrictEqual('mongoDBSRV');
-        expect(prompts[0].message).toStrictEqual('Use a SRV connection string?');
-        expect(prompts[0].default).toStrictEqual(false);
+        expect(prompts[0].type).toBe('confirm');
+        expect(prompts[0].name).toBe('mongoDBSRV');
+        expect(prompts[0].message).toBe('Use a SRV connection string?');
+        expect(prompts[0].default).toBe(false);
         expect(prompts[0].when).toBeInstanceOf(Function);
         resetParams();
       });
@@ -668,10 +673,10 @@ describe('services > prompter > database prompts', () => {
       it('should only be prompted if using mongodb', () => {
         expect.assertions(4);
         initTestWithMongoSrv();
-        expect(prompts[0].when({ databaseDialect: 'mongodb' })).toStrictEqual(true);
-        expect(prompts[0].when({ databaseDialect: 'mssql' })).toStrictEqual(false);
-        expect(prompts[0].when({ databaseDialect: 'mysql' })).toStrictEqual(false);
-        expect(prompts[0].when({ databaseDialect: 'postgres' })).toStrictEqual(false);
+        expect(prompts[0].when({ databaseDialect: 'mongodb' })).toBe(true);
+        expect(prompts[0].when({ databaseDialect: 'mssql' })).toBe(false);
+        expect(prompts[0].when({ databaseDialect: 'mysql' })).toBe(false);
+        expect(prompts[0].when({ databaseDialect: 'postgres' })).toBe(false);
         resetParams();
       });
     });

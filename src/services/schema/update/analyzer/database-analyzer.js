@@ -33,13 +33,7 @@ module.exports = class DatabaseAnalyzer {
     });
   }
 
-  async analyze(databaseConnection, config, allowWarning) {
-    let analyze;
-    if (config.dbDialect === 'mongodb') {
-      analyze = this.mongoAnalyzer;
-    } else {
-      analyze = this.sequelizeAnalyzer;
-    }
+  async _analyze(analyze, databaseConnection, config, allowWarning) {
     return analyze(databaseConnection, config, allowWarning)
       .catch((error) => {
         if (error instanceof EmptyDatabaseError) {
@@ -47,5 +41,24 @@ module.exports = class DatabaseAnalyzer {
         }
         throw error;
       });
+  }
+
+  async analyzeMongoDb(databaseConnection, config, allowWarning) {
+    const analyze = this.mongoAnalyzer.analyzeMongoCollections.bind(this.mongoAnalyzer);
+    return this._analyze(analyze, databaseConnection.db(), config, allowWarning);
+  }
+
+  async analyze(databaseConnection, config, allowWarning) {
+    let analyze;
+    if (config.dbDialect === 'mongodb') {
+      analyze = this.mongoAnalyzer.analyzeMongoCollectionsWithoutProgressBar.bind(
+        this.mongoAnalyzer,
+      );
+
+      databaseConnection = databaseConnection.db();
+    } else {
+      analyze = this.sequelizeAnalyzer;
+    }
+    return this._analyze(analyze, databaseConnection, config, allowWarning);
   }
 };

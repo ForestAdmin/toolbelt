@@ -94,7 +94,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
         this.spinner.continue();
         if (databaseConfiguration) {
           this.environmentVariables.databaseUrl = buildDatabaseUrl(databaseConfiguration);
-          this.environmentVariables.databaseSchema = databaseConfiguration.dbSchema;
+          this.environmentVariables.databaseSchema = databaseConfiguration.databaseSchema;
           this.environmentVariables.databaseSSL = databaseConfiguration.ssl;
         }
       }

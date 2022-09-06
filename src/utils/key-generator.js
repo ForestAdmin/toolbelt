@@ -7,10 +7,11 @@ class KeyGenerator {
       crypto,
     });
     this.crypto = crypto;
+    this.length = 24;
   }
 
   generate() {
-    return this.crypto.randomBytes(48).toString('hex');
+    return this.crypto.randomBytes(this.length).toString('hex');
   }
 }
 

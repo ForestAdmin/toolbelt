@@ -52,10 +52,10 @@ describe('services > prompter > application prompts', () => {
 
         it('should add a prompt with the correct configuration', () => {
           expect.assertions(4);
-          expect(prompts[0].type).toStrictEqual('input');
-          expect(prompts[0].name).toStrictEqual('applicationHost');
-          expect(prompts[0].message).toStrictEqual('What\'s the IP/hostname on which your application will be running?');
-          expect(prompts[0].default).toStrictEqual('http://localhost');
+          expect(prompts[0].type).toBe('input');
+          expect(prompts[0].name).toBe('applicationHost');
+          expect(prompts[0].message).toBe('What\'s the IP/hostname on which your application will be running?');
+          expect(prompts[0].default).toBe('http://localhost');
         });
 
         it('should not change the configuration', () => {
@@ -117,18 +117,18 @@ describe('services > prompter > application prompts', () => {
 
         it('should add a prompt with the correct configuration', () => {
           expect.assertions(5);
-          expect(prompts[0].type).toStrictEqual('input');
-          expect(prompts[0].name).toStrictEqual('applicationPort');
-          expect(prompts[0].message).toStrictEqual('What\'s the port on which your application will be running?');
-          expect(prompts[0].default).toStrictEqual('3310');
+          expect(prompts[0].type).toBe('input');
+          expect(prompts[0].name).toBe('applicationPort');
+          expect(prompts[0].message).toBe('What\'s the port on which your application will be running?');
+          expect(prompts[0].default).toBe('3310');
           expect(prompts[0].validate).toBeInstanceOf(Function);
         });
 
         it('should validate the port', () => {
           expect.assertions(3);
-          expect(prompts[0].validate(FAKE_APP_PORT)).toStrictEqual(true);
-          expect(prompts[0].validate('non number port')).toStrictEqual('The port must be a number.');
-          expect(prompts[0].validate(70000)).toStrictEqual('This is not a valid port.');
+          expect(prompts[0].validate(FAKE_APP_PORT)).toBe(true);
+          expect(prompts[0].validate('non number port')).toBe('The port must be a number.');
+          expect(prompts[0].validate(70000)).toBe('This is not a valid port.');
         });
 
         it('should not change the configuration', () => {

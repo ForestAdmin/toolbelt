@@ -1,10 +1,10 @@
 # Forest Admin CLI
 <p align="center">
-  <img src="https://github.com/ForestAdmin/toolbelt/blob/master/assets/logo.png?raw=true" alt="Toolbelt logo">
+  <img src="https://github.com/ForestAdmin/toolbelt/blob/main/assets/logo.png?raw=true" alt="Toolbelt logo">
 </p>
 
 [![npm package](https://badge.fury.io/js/forest-cli.svg)](https://badge.fury.io/js/forest-cli)
-[![Build Status](https://github.com/ForestAdmin/toolbelt/workflows/Build,%20Test%20and%20Deploy/badge.svg?branch=master)](https://github.com/ForestAdmin/toolbelt/actions)
+[![Build Status](https://github.com/ForestAdmin/toolbelt/workflows/Build,%20Test%20and%20Deploy/badge.svg?branch=main)](https://github.com/ForestAdmin/toolbelt/actions)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/8c0c80478866e3399c92/test_coverage)](https://codeclimate.com/github/ForestAdmin/toolbelt/test_coverage)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
@@ -51,6 +51,7 @@ With the Development Workflow activated.
 - `switch` switch to another branch in your local development environment.
 - `push` push layout changes of your current branch to a remote environment.
 - `deploy` deploy layout changes of an environment to the reference one.
+- `environments:reset` reset a remote environment by removing all layout changes.
 
 ### Schema
 
