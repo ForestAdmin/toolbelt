@@ -52,7 +52,7 @@ function deleteBranch(branchName, environmentSecret) {
     .send();
 }
 
-function createBranch(branchName, environmentSecret) {
+function createBranch(branchName, environmentSecret, originName) {
   const {
     assertPresent,
     authenticator,
@@ -66,11 +66,13 @@ function createBranch(branchName, environmentSecret) {
     .post(`${env.FOREST_URL}/api/branches`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
-    .send({ branchName: encodeURIComponent(branchName) });
+    .send({
+      branchName: encodeURIComponent(branchName),
+      originName: encodeURIComponent(originName),
+    });
 }
 
-// TODO: DWO EP17 remove destinationEnvironmentName handle
-function pushBranch(destinationEnvironmentName, environmentSecret) {
+function pushBranch(environmentSecret) {
   const {
     assertPresent,
     authenticator,
@@ -84,7 +86,7 @@ function pushBranch(destinationEnvironmentName, environmentSecret) {
     .post(`${env.FOREST_URL}/api/branches/push`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
-    .send({ destinationEnvironmentName: encodeURIComponent(destinationEnvironmentName) });
+    .send();
 }
 
 function switchBranch({ id }, environmentSecret) {
@@ -102,6 +104,23 @@ function switchBranch({ id }, environmentSecret) {
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send(EnvironmentSerializer.serialize({ currentBranchId: id }));
+}
+
+function setOrigin(originEnvironmentName, environmentSecret) {
+  const {
+    assertPresent,
+    authenticator,
+    env,
+    superagent: agent,
+  } = Context.inject();
+  assertPresent({ authenticator, env, superagent: agent });
+  const authToken = authenticator.getAuthToken();
+
+  return agent
+    .post(`${env.FOREST_URL}/api/branches/set-origin`)
+    .set('Authorization', `Bearer ${authToken}`)
+    .set('forest-secret-key', `${environmentSecret}`)
+    .send({ originEnvironmentName: encodeURIComponent(originEnvironmentName) });
 }
 
 function handleBranchError(rawError) {
@@ -145,5 +164,6 @@ module.exports = {
   createBranch,
   pushBranch,
   switchBranch,
+  setOrigin,
   handleBranchError,
 };
