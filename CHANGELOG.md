@@ -1,3 +1,10 @@
+## [3.0.1](https://github.com/ForestAdmin/toolbelt/compare/v3.0.0...v3.0.1) (2022-10-10)
+
+
+### Bug Fixes
+
+* **ci:** mark beta as a prerelease delivery channel ([#421](https://github.com/ForestAdmin/toolbelt/issues/421)) ([f33464f](https://github.com/ForestAdmin/toolbelt/commit/f33464f84673a78fefafd5ee167513a6fb182a2e))
+
 ## [3.0.1-beta.1](https://github.com/ForestAdmin/toolbelt/compare/v3.0.0...v3.0.1-beta.1) (2022-09-06)
 
 
