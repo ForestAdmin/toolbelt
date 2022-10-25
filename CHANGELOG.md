@@ -1,3 +1,10 @@
+## [3.0.2](https://github.com/ForestAdmin/toolbelt/compare/v3.0.1...v3.0.2) (2022-10-25)
+
+
+### Performance Improvements
+
+* fix performance issue on pg greater that 12 when updating models ([#444](https://github.com/ForestAdmin/toolbelt/issues/444)) ([f451140](https://github.com/ForestAdmin/toolbelt/commit/f4511409a8688a346c8f78a1de13f4c3eccf0c17))
+
 ## [3.0.1](https://github.com/ForestAdmin/toolbelt/compare/v3.0.0...v3.0.1) (2022-10-10)
 
 
