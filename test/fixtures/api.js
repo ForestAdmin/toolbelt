@@ -511,7 +511,7 @@ module.exports = {
       }],
     }),
 
-  getBranchListNoOriginSet: (envSecret = 'forestEnvSecret', haveCurrent = true) => nock('http://localhost:3001')
+  getBranchListNoOriginSet: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', envSecret)
     .get('/api/branches')
     .reply(200, {
@@ -522,24 +522,6 @@ module.exports = {
           relationships: {
             origin_environment: {
               data: {},
-            },
-          },
-        },
-        {
-          type: 'branches',
-          attributes: { name: 'feature/second', is_current: haveCurrent },
-          relationships: {
-            origin_environment: {
-              data: { id: '324', type: 'environments' },
-            },
-          },
-        },
-        {
-          type: 'branches',
-          attributes: { name: 'feature/third' },
-          relationships: {
-            origin_environment: {
-              data: { id: '325', type: 'environments' },
             },
           },
         },

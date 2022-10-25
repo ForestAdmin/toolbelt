@@ -52,8 +52,6 @@ describe('branch', () => {
           { out: 'BRANCHES' },
           { out: 'NAME                ORIGIN              IS CURRENT          CLOSED AT' },
           { out: 'feature/first       ⚠️  No origin set                       2022-06-28T13:15:43.513Z' },
-          { out: 'feature/second      Staging             ✅' },
-          { out: 'feature/third       Production' },
         ],
       }));
 
