@@ -526,21 +526,6 @@ module.exports = {
           },
         },
       ],
-      included: [{
-        type: 'environments',
-        id: '324',
-        attributes: {
-          id: 324,
-          name: 'Staging',
-        },
-      }, {
-        type: 'environments',
-        id: '325',
-        attributes: {
-          id: 325,
-          name: 'Production',
-        },
-      }],
     }),
 
   getNoBranchListValid: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
