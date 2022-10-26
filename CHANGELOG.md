@@ -1,3 +1,10 @@
+## [3.0.3](https://github.com/ForestAdmin/toolbelt/compare/v3.0.2...v3.0.3) (2022-10-26)
+
+
+### Bug Fixes
+
+* display correct error message when the origin environment has be… ([#440](https://github.com/ForestAdmin/toolbelt/issues/440)) ([f97e5fb](https://github.com/ForestAdmin/toolbelt/commit/f97e5fb00a05217ba2dcd403cf14e7bbc0184b44))
+
 ## [3.0.2](https://github.com/ForestAdmin/toolbelt/compare/v3.0.1...v3.0.2) (2022-10-25)
 
 
