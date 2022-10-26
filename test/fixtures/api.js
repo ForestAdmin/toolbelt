@@ -511,6 +511,23 @@ module.exports = {
       }],
     }),
 
+  getBranchListNoOriginSet: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .get('/api/branches')
+    .reply(200, {
+      data: [
+        {
+          type: 'branches',
+          attributes: { name: 'feature/first', closed_at: '2022-06-28T13:15:43.513Z' },
+          relationships: {
+            origin_environment: {
+              data: {},
+            },
+          },
+        },
+      ],
+    }),
+
   getNoBranchListValid: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', envSecret)
     .get('/api/branches')

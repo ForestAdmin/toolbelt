@@ -8,6 +8,7 @@ const {
   postBranchInvalid,
   getBranchInvalidEnvironmentV1,
   getBranchInvalidNotDevEnv,
+  getBranchListNoOriginSet,
   getBranchInvalidEnvironmentNoRemote,
   deleteBranchValid,
   deleteUnknownBranch,
@@ -36,6 +37,21 @@ describe('branch', () => {
           { out: 'feature/first       Staging                                 2022-06-28T13:15:43.513Z' },
           { out: 'feature/second      Staging             ✅' },
           { out: 'feature/third       Production' },
+        ],
+      }));
+
+      it('should display a branch with no origin set', () => testCli({
+        env: testEnvWithSecret,
+        token: 'any',
+        commandClass: BranchCommand,
+        api: [
+          () => getProjectByEnv(),
+          () => getBranchListNoOriginSet(),
+        ],
+        std: [
+          { out: 'BRANCHES' },
+          { out: 'NAME                ORIGIN              IS CURRENT          CLOSED AT' },
+          { out: 'feature/first       ⚠️  No origin set                       2022-06-28T13:15:43.513Z' },
         ],
       }));
 
