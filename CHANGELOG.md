@@ -1,3 +1,10 @@
+## [3.0.4](https://github.com/ForestAdmin/toolbelt/compare/v3.0.3...v3.0.4) (2022-11-02)
+
+
+### Bug Fixes
+
+* **templates:** update doc links ([#357](https://github.com/ForestAdmin/toolbelt/issues/357)) ([3c022a9](https://github.com/ForestAdmin/toolbelt/commit/3c022a99913f9fd3b57d289da69fdf142cbf8849))
+
 ## [3.0.3](https://github.com/ForestAdmin/toolbelt/compare/v3.0.2...v3.0.3) (2022-10-26)
 
 
