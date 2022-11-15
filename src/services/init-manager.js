@@ -13,7 +13,7 @@ const SUCCESS_MESSAGE_DISPLAY_ENV_VARIABLES = 'Here are the environment variable
 const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_TO_CLIPBOARD = 'Automatically copied to your clipboard!';
 
 const ERROR_MESSAGE_PROJECT_IN_V1 = 'This project does not support branches yet. Please migrate your environments from your Project settings first.';
-const ERROR_MESSAGE_NOT_ADMIN_USER = "You need the 'Admin' role to create a development environment on this project.";
+const ERROR_MESSAGE_NOT_ADMIN_USER = "You need the 'Admin' or 'Developer' role to create a development environment on this project.";
 const ERROR_MESSAGE_PROJECT_BY_ENV_NOT_FOUND = 'Your project was not found. Please check your environment secret.';
 const ERROR_MESSAGE_PROJECT_BY_OPTION_NOT_FOUND = 'The project you specified does not exist.';
 const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT = 'You cannot create your development environment until this project has either a remote or a production environment.';
