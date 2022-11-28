@@ -12,7 +12,7 @@ const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT = 'You cannot run branch
 const ERROR_MESSAGE_NO_REMOTE_ENVIRONMENT = 'You cannot run this command until this project has a remote non-production environment.';
 const ERROR_MESSAGE_BRANCH_DOES_NOT_EXIST = 'This branch doesn\'t exist.';
 const ERROR_MESSAGE_REMOVE_BRANCH_FAILED = 'Failed to delete branch.';
-const ERROR_MESSAGE_NOT_ADMIN_USER = 'You need the \'Admin\' or \'Developer\' role on this project to use branches.';
+const ERROR_MESSAGE_NOT_RIGHT_PERMISSION_LEVEL = 'You need the \'Admin\' or \'Developer\' permission level on this project to use branches.';
 const ERROR_MESSAGE_ENVIRONMENT_NOT_FOUND = 'The environment provided doesn\'t exist.';
 const ERROR_MESSAGE_NO_CURRENT_BRANCH = 'You don\'t have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.';
 const ERROR_MESSAGE_WRONG_ENVIRONMENT_TYPE = 'The environment on which you are trying to push your modifications is not a remote environment.';
@@ -130,7 +130,7 @@ function handleBranchError(rawError) {
     case 'Not Found':
       return ERROR_MESSAGE_ENV_SECRET_ISSUE;
     case 'Forbidden':
-      return ERROR_MESSAGE_NOT_ADMIN_USER;
+      return ERROR_MESSAGE_NOT_RIGHT_PERMISSION_LEVEL;
     case 'Environment is not in development.':
       return ERROR_MESSAGE_ADDITIONAL_REMOTE_BRANCHES;
     case 'Dev Workflow disabled.':
