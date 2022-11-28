@@ -1,3 +1,10 @@
+## [3.0.5](https://github.com/ForestAdmin/toolbelt/compare/v3.0.4...v3.0.5) (2022-11-28)
+
+
+### Bug Fixes
+
+* clarify some errors message ([#455](https://github.com/ForestAdmin/toolbelt/issues/455)) ([226d6dc](https://github.com/ForestAdmin/toolbelt/commit/226d6dc2c5889499da2708247ca093c26adfe77d))
+
 ## [3.0.4](https://github.com/ForestAdmin/toolbelt/compare/v3.0.3...v3.0.4) (2022-11-02)
 
 
