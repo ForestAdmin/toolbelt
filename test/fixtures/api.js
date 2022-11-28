@@ -511,6 +511,15 @@ module.exports = {
       }],
     }),
 
+  getBranchListForbidden: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .get('/api/branches')
+    .reply(403, JSON.stringify({
+      errors: [{
+        detail: 'Forbidden',
+      }],
+    })),
+
   getBranchListNoOriginSet: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
     .matchHeader('forest-secret-key', envSecret)
     .get('/api/branches')
