@@ -1,3 +1,10 @@
+## [3.0.6](https://github.com/ForestAdmin/toolbelt/compare/v3.0.5...v3.0.6) (2022-11-30)
+
+
+### Bug Fixes
+
+* handle case when apiEndPoint is null during the onboarding ([#463](https://github.com/ForestAdmin/toolbelt/issues/463)) ([e24c175](https://github.com/ForestAdmin/toolbelt/commit/e24c175acca94a4f2ea904770b9c09c4dfb991fe))
+
 ## [3.0.5](https://github.com/ForestAdmin/toolbelt/compare/v3.0.4...v3.0.5) (2022-11-28)
 
 
