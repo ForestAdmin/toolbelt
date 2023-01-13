@@ -365,6 +365,12 @@ module.exports = {
     .matchHeader('forest-environment-id', id)
     .get(`/api/environments/${id}`)
     .reply(404),
+  getEnvironmentApimap: (id, apimap = { collections: [] }) => nock('http://localhost:3001')
+    .matchHeader('forest-environment-id', id)
+    .get(`/api/apimaps/${id}`)
+    .reply(200, {
+      data: { apimap },
+    }),
 
   updateEnvironmentName: () => nock('http://localhost:3001')
     .put('/api/environments/182', {

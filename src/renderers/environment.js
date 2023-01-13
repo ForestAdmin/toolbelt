@@ -1,3 +1,4 @@
+const jsonDiff = require('json-diff');
 const { chars } = require('./defaults');
 
 class EnvironmentRenderer {
@@ -44,6 +45,15 @@ class EnvironmentRenderer {
         );
         break;
       default:
+    }
+  }
+
+  renderApimapDiff(apimapFrom, apimapTo) {
+    const diff = jsonDiff.diffString(apimapFrom, apimapTo);
+    if (diff) {
+      this.logger.log(diff);
+    } else {
+      this.logger.log(this.chalk.bold.green('√ The two schema are identical.'));
     }
   }
 }

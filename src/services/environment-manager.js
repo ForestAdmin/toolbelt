@@ -35,6 +35,17 @@ function EnvironmentManager(config) {
       .then((response) => environmentDeserializer.deserialize(response.body));
   };
 
+  this.getEnvironmentApimap = async (environmentId) => {
+    const authToken = authenticator.getAuthToken();
+
+    const response = await agent
+      .get(`${env.FOREST_URL}/api/apimaps/${environmentId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('forest-environment-id', environmentId)
+      .send();
+    return response.body.apimap;
+  };
+
   this.createEnvironment = async () => {
     const authToken = authenticator.getAuthToken();
 
