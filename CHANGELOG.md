@@ -1,3 +1,10 @@
+## [3.0.7](https://github.com/ForestAdmin/toolbelt/compare/v3.0.6...v3.0.7) (2023-01-19)
+
+
+### Bug Fixes
+
+* **security:** patch jose dependency vulnerability ([#487](https://github.com/ForestAdmin/toolbelt/issues/487)) ([4c658c3](https://github.com/ForestAdmin/toolbelt/commit/4c658c330bdfa52de90c384ff3c0a9232cd2b069))
+
 ## [3.0.6](https://github.com/ForestAdmin/toolbelt/compare/v3.0.5...v3.0.6) (2022-11-30)
 
 
