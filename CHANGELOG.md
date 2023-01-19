@@ -1,3 +1,10 @@
+## [3.0.9](https://github.com/ForestAdmin/toolbelt/compare/v3.0.8...v3.0.9) (2023-01-19)
+
+
+### Bug Fixes
+
+* **security:** patch got dependency vulnerability ([#488](https://github.com/ForestAdmin/toolbelt/issues/488)) ([635df16](https://github.com/ForestAdmin/toolbelt/commit/635df16ca6cc2fbd4b913b70e9d096effbcb9903))
+
 ## [3.0.8](https://github.com/ForestAdmin/toolbelt/compare/v3.0.7...v3.0.8) (2023-01-19)
 
 
