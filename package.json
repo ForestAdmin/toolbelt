@@ -16,7 +16,7 @@
   "bugs": "https://github.com/ForestAdmin/toolbelt/issues",
   "dependencies": {
     "@forestadmin/context": "1.31.0",
-    "@oclif/command": "1.5.4",
+    "@oclif/command": "1.8.21",
     "@oclif/config": "1.8.8",
     "@oclif/errors": "1.2.2",
     "@oclif/plugin-help": "2.1.3",
