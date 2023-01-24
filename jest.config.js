@@ -1,6 +1,7 @@
 const appRoot = require('app-root-path');
 
 module.exports = {
+  preset: 'ts-jest',
   coverageReporters: [
     [
       'lcov',

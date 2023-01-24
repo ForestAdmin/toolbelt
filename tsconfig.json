@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "target": "ES2020",
+    "allowJs": true,
+    "outDir": "./dist/",
+    "skipLibCheck": true,
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "declaration": true,
+    "declarationMap": true,
+    "inlineSourceMap": true,
+    "noImplicitOverride": true,
+    "sourceMap": false,
+    "stripInternal": true
+  },
+  "include": ["./src/"],
+  "exclude": ["node_modules"]
+}
