@@ -1,3 +1,10 @@
+## [3.0.10](https://github.com/ForestAdmin/toolbelt/compare/v3.0.9...v3.0.10) (2023-01-24)
+
+
+### Bug Fixes
+
+* **security:** patch cookiejar dependency vulnerabilities ([#490](https://github.com/ForestAdmin/toolbelt/issues/490)) ([5020460](https://github.com/ForestAdmin/toolbelt/commit/5020460aaa69828ff5ffa4670382b126615c3e9c))
+
 ## [3.0.9](https://github.com/ForestAdmin/toolbelt/compare/v3.0.8...v3.0.9) (2023-01-19)
 
 
