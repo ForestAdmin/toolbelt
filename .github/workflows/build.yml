@@ -85,8 +85,6 @@ jobs:
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock', '**/package.json') }}
       - name: Build
         run: yarn build
-      - name: Build
-        run: yarn build
       - name: Upload build
         uses: actions/upload-artifact@v3
         with:
