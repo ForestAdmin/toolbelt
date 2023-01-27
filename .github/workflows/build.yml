@@ -17,7 +17,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v2
         with:
-          node-version: 14.17.6
+          node-version: 16.14.0
       - uses: actions/cache@v2
         with:
           path: "**/node_modules"
@@ -36,9 +36,9 @@ jobs:
     needs: [lint]
     strategy:
       matrix:
-        node: [10, 14]
+        node: [10, 14, 16]
         include:
-          - node: 14
+          - node: 16
             withCoverage: ${{ true }}
     steps:
       - uses: actions/checkout@v2
@@ -69,11 +69,36 @@ jobs:
       - name: Test postpack
         run: yarn postpack
 
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel previous running workflows
+        uses: fkirc/skip-duplicate-actions@master
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16.14.0
+      - uses: actions/cache@v3
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock', '**/package.json') }}
+      - name: Build
+        run: yarn bootstrap --ci
+      - name: Build
+        run: yarn build
+      - name: Upload build
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: '/dist/*'
+          retention-days: 1
+
   deploy:
     name: Release package
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [test]
+    needs: [build]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/beta')
     steps:
       - uses: actions/checkout@v2
@@ -92,6 +117,10 @@ jobs:
         run: |
           VERSION=`node -p "require('./package.json').devDependencies['semantic-release']"`
           echo "::set-output name=version::$VERSION"
+      - name: Download build
+        uses: actions/download-artifact@v3
+        with:
+          name: build
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@767cc0b0cd610ffb1ffee1b36a9b39120adc5f80
         id: semantic
