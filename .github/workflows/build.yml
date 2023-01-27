@@ -84,7 +84,7 @@ jobs:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock', '**/package.json') }}
       - name: Build
-        run: yarn bootstrap --ci
+        run: yarn build
       - name: Build
         run: yarn build
       - name: Upload build
