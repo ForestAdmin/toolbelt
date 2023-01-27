@@ -1,17 +1,22 @@
 module.exports = {
   root: true,
+  parser: '@typescript-eslint/parser',
   extends: [
     'airbnb-base',
     'plugin:sonarjs/recommended',
     'plugin:jest/all',
+    'eslint:recommended',
+    'plugin:@typescript-eslint/eslint-recommended',
+    'plugin:@typescript-eslint/recommended',
   ],
   plugins: [
     'sonarjs',
+    '@typescript-eslint',
   ],
   env: {
     node: true,
   },
-  ignorePatterns: ["expected"],
+  ignorePatterns: ['expected'],
   rules: {
     'jest/valid-describe': 0, // This rule does not exist anymore. It has been replaced by jest/valid-describe-callback
     'jest/require-hook': 0, // This rule does not seem to be functional at this time (eslint-plugin-jest-25.2.2)
@@ -23,8 +28,8 @@ module.exports = {
       {
         devDependencies: [
           '.eslint-bin/*.js',
-          'test/**/*.js'
-        ]
+          'test/**/*.js',
+        ],
       },
     ],
     'no-multiple-empty-lines': [
@@ -32,8 +37,8 @@ module.exports = {
       {
         max: 1,
         maxBOF: 0,
-        maxEOF: 0
-      }
+        maxEOF: 0,
+      },
     ],
     'no-console': 0,
     'no-param-reassign': 0,
@@ -47,4 +52,18 @@ module.exports = {
     'sonarjs/no-unused-collection': 0,
     'sonarjs/prefer-immediate-return': 0,
   },
+  overrides: [
+    {
+      files: ['*.js'],
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+      },
+    },
+    {
+      files: ['test/**'],
+      rules: {
+        '@typescript-eslint/no-empty-function': 'off',
+      },
+    },
+  ],
 };
