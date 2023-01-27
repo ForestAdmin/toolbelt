@@ -43,7 +43,7 @@ function EnvironmentManager(config) {
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-environment-id', environmentId)
       .send();
-    return response.body.apimap;
+    return response.body.data.apimap;
   };
 
   this.createEnvironment = async () => {

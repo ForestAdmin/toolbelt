@@ -1,3 +1,4 @@
+const jsonDiff = require('json-diff');
 const testCli = require('../test-cli-helper/test-cli');
 const DiffSchemaCommand = require('../../../src/commands/schema/diff');
 const { testEnvWithSecret } = require('../../fixtures/env');
@@ -19,7 +20,7 @@ describe('schema:diff', () => {
         { out: 'Click on "Log in" on the browser tab which opened automatically or open this link: http://app.localhost/device/check?code=ABCD' },
         { out: 'Your confirmation code: USER-CODE' },
         { out: '> Login successful' },
-        { out: '√ The two schema are identical.' },
+        { out: '√ The schemas are identical.' },
       ],
     }));
   });
@@ -36,23 +37,27 @@ describe('schema:diff', () => {
         commandClass: DiffSchemaCommand,
         commandArgs: ['10', '11'],
         std: [
-          { out: '√ The two schema are identical.' },
+          { out: '√ The schemas are identical.' },
         ],
       }));
     });
 
     describe('when schemas are not identical', () => {
+      const apiMapA = { collections: [{ name: 'Users' }] };
+      const apiMapB = { collections: [{ name: 'Users' }, { name: 'Posts' }] };
+
       it('display the diff message', () => testCli({
         env: testEnvWithSecret,
         token: 'any',
         api: [
-          () => getEnvironmentApimap(10, { collections: [{ name: 'Users' }] }),
-          () => getEnvironmentApimap(11, { collections: [{ name: 'Users' }, { name: 'Posts' }] }),
+          () => getEnvironmentApimap(10, apiMapA),
+          () => getEnvironmentApimap(11, apiMapB),
         ],
         commandClass: DiffSchemaCommand,
         commandArgs: ['10', '11'],
         std: [
-          { out: '√ The two schema are identical.' },
+          { out: '⚠ The schemas have differences.' },
+          { in: jsonDiff.diffString(apiMapA, apiMapB) },
         ],
       }));
     });
