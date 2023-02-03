@@ -1,3 +1,10 @@
+## [3.0.11](https://github.com/ForestAdmin/toolbelt/compare/v3.0.10...v3.0.11) (2023-02-03)
+
+
+### Bug Fixes
+
+* **security:** patch http-cache-semantics dependencies vulnerabilities ([#500](https://github.com/ForestAdmin/toolbelt/issues/500)) ([8dd4998](https://github.com/ForestAdmin/toolbelt/commit/8dd49986bab9b391cb080f49a65d93ce15b82044))
+
 ## [3.0.10](https://github.com/ForestAdmin/toolbelt/compare/v3.0.9...v3.0.10) (2023-01-24)
 
 
