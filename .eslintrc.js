@@ -1,6 +1,16 @@
 module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
+  settings: {
+    'import/resolver': {
+      node: {
+        extensions: ['.js', '.ts'],
+      },
+    },
+    node: {
+      tryExtensions: ['.js', '.json', '.node', '.ts'],
+    },
+  },
   extends: [
     'airbnb-base',
     'plugin:sonarjs/recommended',
@@ -23,6 +33,7 @@ module.exports = {
     'jest/no-disabled-tests': 0,
     'implicit-arrow-linebreak': 0,
     'no-underscore-dangle': 0,
+    'import/extensions': 0,
     'import/no-extraneous-dependencies': [
       'error',
       {
