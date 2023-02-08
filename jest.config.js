@@ -26,5 +26,9 @@ module.exports = {
     '/.dependency-cruiser.js',
   ],
 
+  transform: {
+    '^.+\\.tsx?$': '@swc/jest',
+  },
+
   testEnvironment: 'node',
 };
