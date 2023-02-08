@@ -1,3 +1,4 @@
+const { flags } = require('@oclif/command');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const { dbDialectOptions } = require('../../services/prompter/database-prompts');
 
@@ -161,28 +162,28 @@ CreateCommand.description = 'Create a Forest API.';
 // FIXME: Currently, defaults are set on inquirer prompts, factor in config
 //        and use in both?
 CreateCommand.flags = {
-  applicationHost: AbstractAuthenticatedCommand.flags.string({
+  applicationHost: flags.string({
     char: 'H',
     dependsOn: [],
     description: 'Hostname of your admin backend application.',
     exclusive: [],
     required: false,
   }),
-  applicationPort: AbstractAuthenticatedCommand.flags.integer({
+  applicationPort: flags.integer({
     char: 'P',
     dependsOn: [],
     description: 'Port of your admin backend application.',
     exclusive: [],
     required: false,
   }),
-  databaseConnectionURL: AbstractAuthenticatedCommand.flags.string({
+  databaseConnectionURL: flags.string({
     char: 'c',
     dependsOn: [],
     description: 'Enter the database credentials with a connection URL.',
     exclusive: ['ssl'],
     required: false,
   }),
-  databaseDialect: AbstractAuthenticatedCommand.flags.string({
+  databaseDialect: flags.string({
     char: 'd',
     dependsOn: [],
     description: 'Enter your database dialect.',
@@ -190,55 +191,55 @@ CreateCommand.flags = {
     options: dbDialectOptions,
     required: false,
   }),
-  databaseName: AbstractAuthenticatedCommand.flags.string({
+  databaseName: flags.string({
     char: 'n',
     dependsOn: [],
     description: 'Enter your database name.',
     exclusive: ['databaseConnectionURL'],
     required: false,
   }),
-  databaseHost: AbstractAuthenticatedCommand.flags.string({
+  databaseHost: flags.string({
     char: 'h',
     dependsOn: [],
     description: 'Enter your database host.',
     exclusive: ['databaseConnectionURL'],
     required: false,
   }),
-  databasePort: AbstractAuthenticatedCommand.flags.integer({
+  databasePort: flags.integer({
     char: 'p',
     dependsOn: [],
     description: 'Enter your database port.',
     exclusive: ['databaseConnectionURL'],
     required: false,
   }),
-  databaseUser: AbstractAuthenticatedCommand.flags.string({
+  databaseUser: flags.string({
     char: 'u',
     dependsOn: [],
     description: 'Enter your database user.',
     exclusive: ['databaseConnectionURL'],
     required: false,
   }),
-  databasePassword: AbstractAuthenticatedCommand.flags.string({
+  databasePassword: flags.string({
     dependsOn: [],
     description: 'Enter your database password.',
     exclusive: ['databaseConnectionURL'],
     required: false,
   }),
-  databaseSchema: AbstractAuthenticatedCommand.flags.string({
+  databaseSchema: flags.string({
     char: 's',
     dependsOn: [],
     description: 'Enter your database schema.',
     exclusive: [],
     required: false,
   }),
-  databaseSSL: AbstractAuthenticatedCommand.flags.boolean({
+  databaseSSL: flags.boolean({
     default: false,
     dependsOn: [],
     description: 'Use SSL for database connection.',
     exclusive: [],
     required: false,
   }),
-  mongoDBSRV: AbstractAuthenticatedCommand.flags.boolean({
+  mongoDBSRV: flags.boolean({
     dependsOn: [],
     description: 'Use SRV DNS record for mongoDB connection.',
     exclusive: ['databaseConnectionURL'],

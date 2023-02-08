@@ -1,3 +1,4 @@
+const { flags } = require('@oclif/command');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const { buildDatabaseUrl } = require('../utils/database-url');
 const withCurrentProject = require('../services/with-current-project');
@@ -162,7 +163,7 @@ InitCommand.aliases = ['environments:init'];
 InitCommand.description = 'Set up your development environment in your current folder.';
 
 InitCommand.flags = {
-  projectId: AbstractAuthenticatedCommand.flags.integer({
+  projectId: flags.integer({
     char: 'p',
     description: 'The id of the project you want to init.',
   }),

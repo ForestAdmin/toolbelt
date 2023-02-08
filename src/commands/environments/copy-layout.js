@@ -1,3 +1,4 @@
+const { flags } = require('@oclif/command');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 const EnvironmentManager = require('../../services/environment-manager');
 const withCurrentProject = require('../../services/with-current-project');
@@ -117,12 +118,12 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
 CopyLayoutCommand.description = 'Copy the layout from one environment to another.';
 
 CopyLayoutCommand.flags = {
-  projectId: AbstractAuthenticatedCommand.flags.integer({
+  projectId: flags.integer({
     char: 'p',
     description: 'Forest project ID.',
     default: null,
   }),
-  force: AbstractAuthenticatedCommand.flags.boolean({
+  force: flags.boolean({
     char: 'force',
     description: 'Force copy.',
   }),

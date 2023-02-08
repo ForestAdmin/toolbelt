@@ -1,3 +1,4 @@
+const { flags } = require('@oclif/command');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
@@ -108,7 +109,7 @@ SwitchCommand.aliases = ['branches:switch'];
 SwitchCommand.description = 'Switch to another branch in your local development environment.';
 
 SwitchCommand.flags = {
-  help: AbstractAuthenticatedCommand.flags.boolean({
+  help: flags.boolean({
     description: 'Display usage information.',
   }),
 };

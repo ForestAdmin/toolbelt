@@ -1,3 +1,4 @@
+const { flags } = require('@oclif/command');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
@@ -110,26 +111,26 @@ BranchCommand.aliases = ['branches'];
 BranchCommand.description = 'Create a new branch or list your existing branches.';
 
 BranchCommand.flags = {
-  projectId: AbstractAuthenticatedCommand.flags.integer({
+  projectId: flags.integer({
     description: 'The id of the project to create a branch in.',
   }),
-  delete: AbstractAuthenticatedCommand.flags.boolean({
+  delete: flags.boolean({
     char: 'd',
     description: 'Delete the branch.',
   }),
-  force: AbstractAuthenticatedCommand.flags.boolean({
+  force: flags.boolean({
     description: 'When deleting a branch, skip confirmation.',
   }),
-  help: AbstractAuthenticatedCommand.flags.boolean({
+  help: flags.boolean({
     description: 'Display usage information.',
   }),
-  format: AbstractAuthenticatedCommand.flags.string({
+  format: flags.string({
     char: 'format',
     description: 'Output format.',
     options: ['table', 'json'],
     default: 'table',
   }),
-  origin: AbstractAuthenticatedCommand.flags.string({
+  origin: flags.string({
     char: 'o',
     description: 'Set the origin of the created branch.',
   }),

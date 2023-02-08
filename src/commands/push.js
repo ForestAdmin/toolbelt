@@ -1,3 +1,4 @@
+const { flags } = require('@oclif/command');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
@@ -65,13 +66,13 @@ PushCommand.aliases = ['branches:push'];
 PushCommand.description = 'Push layout changes of your current branch to the branch origin.';
 
 PushCommand.flags = {
-  force: AbstractAuthenticatedCommand.flags.boolean({
+  force: flags.boolean({
     description: 'Skip push changes confirmation.',
   }),
-  help: AbstractAuthenticatedCommand.flags.boolean({
+  help: flags.boolean({
     description: 'Display usage information.',
   }),
-  projectId: AbstractAuthenticatedCommand.flags.integer({
+  projectId: flags.integer({
     char: 'p',
     description: 'The id of the project to work on.',
     default: null,
