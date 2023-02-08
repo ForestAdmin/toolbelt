@@ -87,6 +87,7 @@ jobs:
       - name: Build
         run: yarn build
       - name: Upload build
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/beta')
         uses: actions/upload-artifact@v3
         with:
           name: build
@@ -112,15 +113,15 @@ jobs:
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
+      - name: Download build
+        uses: actions/download-artifact@v3
+        with:
+          name: build
       - name: Get Semantic Release current version
         id: semantic_version
         run: |
           VERSION=`node -p "require('./package.json').devDependencies['semantic-release']"`
           echo "::set-output name=version::$VERSION"
-      - name: Download build
-        uses: actions/download-artifact@v3
-        with:
-          name: build
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@767cc0b0cd610ffb1ffee1b36a9b39120adc5f80
         id: semantic
