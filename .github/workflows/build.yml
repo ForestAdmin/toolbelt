@@ -76,8 +76,8 @@ jobs:
     steps:
       - name: Cancel previous running workflows
         uses: fkirc/skip-duplicate-actions@master
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
         with:
           node-version: 16.14.0
       - uses: actions/cache@v3
@@ -90,7 +90,12 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: build
-          path: '/dist/*'
+          path: |
+            /dist/*
+            package.json
+            /bin
+            /npm-shrinkwrap.json
+            /oclif.manifest.json
           retention-days: 1
 
   deploy:
@@ -100,10 +105,6 @@ jobs:
     needs: [build, test]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/beta')
     steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.ref }}
-          persist-credentials: false # GITHUB_TOKEN must not be set for the semantic release
       - uses: actions/setup-node@v2
         with:
           node-version: 14.17.6
