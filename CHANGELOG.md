@@ -1,3 +1,80 @@
+## [3.0.11](https://github.com/ForestAdmin/toolbelt/compare/v3.0.10...v3.0.11) (2023-02-03)
+
+
+### Bug Fixes
+
+* **security:** patch http-cache-semantics dependencies vulnerabilities ([#500](https://github.com/ForestAdmin/toolbelt/issues/500)) ([8dd4998](https://github.com/ForestAdmin/toolbelt/commit/8dd49986bab9b391cb080f49a65d93ce15b82044))
+
+## [3.0.10](https://github.com/ForestAdmin/toolbelt/compare/v3.0.9...v3.0.10) (2023-01-24)
+
+
+### Bug Fixes
+
+* **security:** patch cookiejar dependency vulnerabilities ([#490](https://github.com/ForestAdmin/toolbelt/issues/490)) ([5020460](https://github.com/ForestAdmin/toolbelt/commit/5020460aaa69828ff5ffa4670382b126615c3e9c))
+
+## [3.0.9](https://github.com/ForestAdmin/toolbelt/compare/v3.0.8...v3.0.9) (2023-01-19)
+
+
+### Bug Fixes
+
+* **security:** patch got dependency vulnerability ([#488](https://github.com/ForestAdmin/toolbelt/issues/488)) ([635df16](https://github.com/ForestAdmin/toolbelt/commit/635df16ca6cc2fbd4b913b70e9d096effbcb9903))
+
+## [3.0.8](https://github.com/ForestAdmin/toolbelt/compare/v3.0.7...v3.0.8) (2023-01-19)
+
+
+### Bug Fixes
+
+* **security:** patch qs dependency vulnerabilities ([#489](https://github.com/ForestAdmin/toolbelt/issues/489)) ([9384928](https://github.com/ForestAdmin/toolbelt/commit/9384928a3c1beccaa0af9dad6542465cc4b5a443))
+
+## [3.0.7](https://github.com/ForestAdmin/toolbelt/compare/v3.0.6...v3.0.7) (2023-01-19)
+
+
+### Bug Fixes
+
+* **security:** patch jose dependency vulnerability ([#487](https://github.com/ForestAdmin/toolbelt/issues/487)) ([4c658c3](https://github.com/ForestAdmin/toolbelt/commit/4c658c330bdfa52de90c384ff3c0a9232cd2b069))
+
+## [3.0.6](https://github.com/ForestAdmin/toolbelt/compare/v3.0.5...v3.0.6) (2022-11-30)
+
+
+### Bug Fixes
+
+* handle case when apiEndPoint is null during the onboarding ([#463](https://github.com/ForestAdmin/toolbelt/issues/463)) ([e24c175](https://github.com/ForestAdmin/toolbelt/commit/e24c175acca94a4f2ea904770b9c09c4dfb991fe))
+
+## [3.0.5](https://github.com/ForestAdmin/toolbelt/compare/v3.0.4...v3.0.5) (2022-11-28)
+
+
+### Bug Fixes
+
+* clarify some errors message ([#455](https://github.com/ForestAdmin/toolbelt/issues/455)) ([226d6dc](https://github.com/ForestAdmin/toolbelt/commit/226d6dc2c5889499da2708247ca093c26adfe77d))
+
+## [3.0.4](https://github.com/ForestAdmin/toolbelt/compare/v3.0.3...v3.0.4) (2022-11-02)
+
+
+### Bug Fixes
+
+* **templates:** update doc links ([#357](https://github.com/ForestAdmin/toolbelt/issues/357)) ([3c022a9](https://github.com/ForestAdmin/toolbelt/commit/3c022a99913f9fd3b57d289da69fdf142cbf8849))
+
+## [3.0.3](https://github.com/ForestAdmin/toolbelt/compare/v3.0.2...v3.0.3) (2022-10-26)
+
+
+### Bug Fixes
+
+* display correct error message when the origin environment has be… ([#440](https://github.com/ForestAdmin/toolbelt/issues/440)) ([f97e5fb](https://github.com/ForestAdmin/toolbelt/commit/f97e5fb00a05217ba2dcd403cf14e7bbc0184b44))
+
+## [3.0.2](https://github.com/ForestAdmin/toolbelt/compare/v3.0.1...v3.0.2) (2022-10-25)
+
+
+### Performance Improvements
+
+* fix performance issue on pg greater that 12 when updating models ([#444](https://github.com/ForestAdmin/toolbelt/issues/444)) ([f451140](https://github.com/ForestAdmin/toolbelt/commit/f4511409a8688a346c8f78a1de13f4c3eccf0c17))
+
+## [3.0.1](https://github.com/ForestAdmin/toolbelt/compare/v3.0.0...v3.0.1) (2022-10-10)
+
+
+### Bug Fixes
+
+* **ci:** mark beta as a prerelease delivery channel ([#421](https://github.com/ForestAdmin/toolbelt/issues/421)) ([f33464f](https://github.com/ForestAdmin/toolbelt/commit/f33464f84673a78fefafd5ee167513a6fb182a2e))
+
 ## [3.0.1-beta.1](https://github.com/ForestAdmin/toolbelt/compare/v3.0.0...v3.0.1-beta.1) (2022-09-06)
 
 

@@ -20,7 +20,7 @@ function TableConstraintsGetter(databaseConnection, schema) {
             json_agg("uidx"."uniqueIndexes") filter (where "uidx"."uniqueIndexes" is not null) AS "uniqueIndexes"
           FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS "tableConstraints"
           JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS "keyColumnUsage"
-            ON "tableConstraints".constraint_name = "keyColumnUsage".constraint_name
+            ON "tableConstraints".constraint_name = "keyColumnUsage".constraint_name COLLATE "default"
           JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE AS "constraintColumnUsage"
             ON "constraintColumnUsage".constraint_name = "tableConstraints".constraint_name
           FULL OUTER JOIN (

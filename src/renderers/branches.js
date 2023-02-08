@@ -30,7 +30,7 @@ class BranchesRenderer {
         break;
       case 'table':
         branches.forEach((branch) => {
-          table.push([branch.name, branch.originEnvironment.name, branch.isCurrent ? '✅' : '', branch.closedAt ? branch.closedAt : '']);
+          table.push([branch.name, branch.originEnvironment ? branch.originEnvironment.name : '⚠️  No origin set', branch.isCurrent ? '✅' : '', branch.closedAt ? branch.closedAt : '']);
         });
         this.logger.log(
           `${this.chalk.bold('BRANCHES')}`,

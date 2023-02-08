@@ -176,7 +176,7 @@ describe('init command', () => {
         std: [
           { spinner: '√ Selecting your project' },
           { spinner: '× Analyzing your setup' },
-          { err: '× You need the \'Admin\' role to create a development environment on this project.' },
+          { err: '× You need the \'Admin\' or \'Developer\' permission level on this project to use branches.' },
         ],
         exitCode: 1,
       }));

@@ -30,8 +30,13 @@ class EnvironmentsRenderer {
         break;
       case 'table':
         environments.forEach((environment) => {
-          table.push([environment.id, environment.name, environment.apiEndpoint,
-            environment.type]);
+          table.push([
+            environment.id,
+            environment.name,
+            // The table-cli library does not handle null values.
+            environment.apiEndpoint || '',
+            environment.type,
+          ]);
         });
         this.logger.log(
           `${this.chalk.bold('ENVIRONMENTS')}`,

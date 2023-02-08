@@ -39,7 +39,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
           .prompt([{
             type: 'confirm',
             name: 'confirm',
-            message: `Push branch ${currentBranch.name} onto ${currentBranch.originEnvironment.name}`,
+            message: `Push branch ${currentBranch.name} onto ${currentBranch.originEnvironment ? currentBranch.originEnvironment.name : 'its origin'}`,
           }]);
         if (!response.confirm) return;
       }

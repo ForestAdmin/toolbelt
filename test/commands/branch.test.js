@@ -8,6 +8,7 @@ const {
   postBranchInvalid,
   getBranchInvalidEnvironmentV1,
   getBranchInvalidNotDevEnv,
+  getBranchListNoOriginSet,
   getBranchInvalidEnvironmentNoRemote,
   deleteBranchValid,
   deleteUnknownBranch,
@@ -16,6 +17,7 @@ const {
   getEnvironmentListValid,
   postBranchInvalidDestination,
   getNoEnvironmentRemoteInList,
+  getBranchListForbidden,
 } = require('../fixtures/api');
 const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
 
@@ -36,6 +38,21 @@ describe('branch', () => {
           { out: 'feature/first       Staging                                 2022-06-28T13:15:43.513Z' },
           { out: 'feature/second      Staging             ✅' },
           { out: 'feature/third       Production' },
+        ],
+      }));
+
+      it('should display a branch with no origin set', () => testCli({
+        env: testEnvWithSecret,
+        token: 'any',
+        commandClass: BranchCommand,
+        api: [
+          () => getProjectByEnv(),
+          () => getBranchListNoOriginSet(),
+        ],
+        std: [
+          { out: 'BRANCHES' },
+          { out: 'NAME                ORIGIN              IS CURRENT          CLOSED AT' },
+          { out: 'feature/first       ⚠️  No origin set                       2022-06-28T13:15:43.513Z' },
         ],
       }));
 
@@ -379,6 +396,21 @@ describe('branch', () => {
           std: [
             { err: '× You cannot run branch commands until this project has either a remote or a production environment.' },
           ],
+          exitCode: 2,
+        }));
+      });
+
+      describe('when the user has no admin rights on the given project', () => {
+        it('should stop executing with a custom error message', () => testCli({
+          env: testEnvWithSecret,
+          token: 'any',
+          commandClass: BranchCommand,
+          commandArgs: [],
+          api: [
+            () => getProjectByEnv(),
+            () => getBranchListForbidden(),
+          ],
+          std: [{ err: '× You need the \'Admin\' or \'Developer\' permission level on this project to use branches.' }],
           exitCode: 2,
         }));
       });

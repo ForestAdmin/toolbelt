@@ -264,6 +264,14 @@ module.exports = {
       },
     ])),
 
+  getEnvironmentListWithoutApiEndpoint: (projectId = 2) => nock('http://localhost:3001')
+    .get(`/api/projects/${projectId}/environments`)
+    .reply(200, EnvironmentSerializer.serialize([
+      {
+        id: 3, name: 'name1', apiEndpoint: null, type: 'remote',
+      },
+    ])),
+
   getNoEnvironmentRemoteInList: (projectId = 2) => nock('http://localhost:3001')
     .get(`/api/projects/${projectId}/environments`)
     .reply(200, EnvironmentSerializer.serialize([
@@ -509,6 +517,32 @@ module.exports = {
           name: 'Production',
         },
       }],
+    }),
+
+  getBranchListForbidden: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .get('/api/branches')
+    .reply(403, JSON.stringify({
+      errors: [{
+        detail: 'Forbidden',
+      }],
+    })),
+
+  getBranchListNoOriginSet: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
+    .matchHeader('forest-secret-key', envSecret)
+    .get('/api/branches')
+    .reply(200, {
+      data: [
+        {
+          type: 'branches',
+          attributes: { name: 'feature/first', closed_at: '2022-06-28T13:15:43.513Z' },
+          relationships: {
+            origin_environment: {
+              data: {},
+            },
+          },
+        },
+      ],
     }),
 
   getNoBranchListValid: (envSecret = 'forestEnvSecret') => nock('http://localhost:3001')
