@@ -87,6 +87,7 @@ jobs:
       - name: Build
         run: yarn build
       - name: Upload build
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/beta')
         uses: actions/upload-artifact@v3
         with:
           name: build
