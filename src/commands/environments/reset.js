@@ -24,30 +24,40 @@ class ResetCommand extends AbstractAuthenticatedCommand {
       config = await withCurrentProject({ ...this.env, ...commandOptions });
 
       if (!config.envSecret) {
-        const environment = await new ProjectManager(config)
-          .getDevelopmentEnvironmentForUser(config.projectId);
+        const environment = await new ProjectManager(config).getDevelopmentEnvironmentForUser(
+          config.projectId,
+        );
         config.envSecret = environment.secretKey;
       }
 
       if (!config.environment) {
-        config.environment = await askForEnvironment(config, 'Select the remote environment you want to reset', ['remote']);
+        config.environment = await askForEnvironment(
+          config,
+          'Select the remote environment you want to reset',
+          ['remote'],
+        );
       }
 
       if (!config.force) {
-        const response = await this.inquirer
-          .prompt([{
+        const response = await this.inquirer.prompt([
+          {
             type: 'confirm',
             name: 'confirm',
             message: `Reset changes on the environment ${config.environment}`,
-          }]);
+          },
+        ]);
         if (!response.confirm) return;
       }
 
       await new EnvironmentManager(config).reset(config.environment, config.envSecret);
-      this.logger.success(`Environment ${config.environment} successfully reset. Please refresh your browser to see the new state.`);
+      this.logger.success(
+        `Environment ${config.environment} successfully reset. Please refresh your browser to see the new state.`,
+      );
     } catch (error) {
       if (error.response && error.status === 403) {
-        this.logger.error(`You do not have the rights to reset the layout of the environment ${config.environment}`);
+        this.logger.error(
+          `You do not have the rights to reset the layout of the environment ${config.environment}`,
+        );
       } else {
         this.logger.error(handleError(error));
       }

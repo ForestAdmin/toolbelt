@@ -1,5 +1,8 @@
 const { ObjectId } = require('mongodb');
-const { getMongooseTypeFromValue, isOfMongooseType } = require('../../src/utils/mongo-primitive-type');
+const {
+  getMongooseTypeFromValue,
+  isOfMongooseType,
+} = require('../../src/utils/mongo-primitive-type');
 
 describe('utils > Mongo Primitive Type', () => {
   describe('get primitive type from value', () => {
@@ -26,7 +29,9 @@ describe('utils > Mongo Primitive Type', () => {
 
     it('should return `Mongoose.Schema.Types.ObjectId`', () => {
       expect.assertions(1);
-      expect(getMongooseTypeFromValue(new ObjectId('objectIdFake'))).toBe('Mongoose.Schema.Types.ObjectId');
+      expect(getMongooseTypeFromValue(new ObjectId('objectIdFake'))).toBe(
+        'Mongoose.Schema.Types.ObjectId',
+      );
     });
 
     it('should return null', () => {

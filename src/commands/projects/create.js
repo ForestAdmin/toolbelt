@@ -86,11 +86,11 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     const meta = {
       dbDialect: dbConfig.dbDialect,
       agent: dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize',
-      isLocal: ['localhost', '127.0.0.1', '::1'].some((keyword) => (
+      isLocal: ['localhost', '127.0.0.1', '::1'].some(keyword =>
         dbConfig.dbHostname
           ? dbConfig.dbHostname.includes(keyword)
-          : dbConfig.dbConnectionUrl.includes(keyword)
-      )),
+          : dbConfig.dbConnectionUrl.includes(keyword),
+      ),
       architecture: 'microservice',
     };
 
@@ -98,13 +98,11 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     this.eventSender.meta = meta;
 
     this.spinner.start({ text: 'Creating your project on Forest Admin' });
-    const projectCreationPromise = this.projectCreator.create(
-      authenticationToken, appConfig, meta,
-    );
+    const projectCreationPromise = this.projectCreator.create(authenticationToken, appConfig, meta);
 
-    const {
-      id, envSecret, authSecret,
-    } = await this.spinner.attachToPromise(projectCreationPromise);
+    const { id, envSecret, authSecret } = await this.spinner.attachToPromise(
+      projectCreationPromise,
+    );
 
     this.eventSender.meta.projectId = id;
     config.forestAuthSecret = authSecret;
@@ -152,10 +150,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 
   // FIXME: Not properly called/tested by testCli helper.
   async catch(error) {
-    this.logger.error([
-      'Cannot generate your project.',
-      `${this.messages.ERROR_UNEXPECTED}`,
-    ]);
+    this.logger.error(['Cannot generate your project.', `${this.messages.ERROR_UNEXPECTED}`]);
     this.logger.log(`${this.chalk.red(error)}`);
     this.exit(1);
   }

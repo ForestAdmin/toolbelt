@@ -14,9 +14,11 @@ describe('utils > fields', () => {
     it('should return true', () => {
       expect.assertions(1);
 
-      const fields = [{
-        nameColumn: 'id',
-      }];
+      const fields = [
+        {
+          nameColumn: 'id',
+        },
+      ];
 
       expect(isUnderscored(fields)).toBe(true);
     });
@@ -27,11 +29,14 @@ describe('utils > fields', () => {
       it('should return true', () => {
         expect.assertions(1);
 
-        const fields = [{
-          nameColumn: 'id',
-        }, {
-          nameColumn: 'first_name',
-        }];
+        const fields = [
+          {
+            nameColumn: 'id',
+          },
+          {
+            nameColumn: 'first_name',
+          },
+        ];
 
         expect(isUnderscored(fields)).toBe(true);
       });
@@ -41,11 +46,14 @@ describe('utils > fields', () => {
       it('should return false', () => {
         expect.assertions(1);
 
-        const fields = [{
-          nameColumn: 'id',
-        }, {
-          nameColumn: 'firstName',
-        }];
+        const fields = [
+          {
+            nameColumn: 'id',
+          },
+          {
+            nameColumn: 'firstName',
+          },
+        ];
 
         expect(isUnderscored(fields)).toBe(false);
       });

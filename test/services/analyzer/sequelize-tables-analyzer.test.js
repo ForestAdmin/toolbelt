@@ -3,7 +3,7 @@ const EmptyDatabaseError = require('../../../src/errors/database/empty-database-
 
 describe('services > sequelizeTablesAnalyzer', () => {
   describe('analyzeSequelizeTables', () => {
-    it('should return an EmptyDatabase error if connection doesn\'t have tables', async () => {
+    it("should return an EmptyDatabase error if connection doesn't have tables", async () => {
       expect.assertions(1);
 
       const databaseConnectionMock = {

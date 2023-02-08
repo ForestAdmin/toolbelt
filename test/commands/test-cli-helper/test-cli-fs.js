@@ -7,15 +7,10 @@ const TMP_DIRECTORY_BASE = '/tmp/toolbelt-tests';
 module.exports = {
   randomDirectoryName: () => `${TMP_DIRECTORY_BASE}/${uuidv4()}`,
 
-  makeTempDirectory: (dirPath) => fsExtra.ensureDirSync(dirPath),
+  makeTempDirectory: dirPath => fsExtra.ensureDirSync(dirPath),
 
   mockFile: (file = {}) => {
-    const {
-      chdir,
-      content,
-      directory,
-      name,
-    } = file;
+    const { chdir, content, directory, name } = file;
     let filePath = directory || name;
 
     if (filePath) {

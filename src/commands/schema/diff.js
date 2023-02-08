@@ -4,13 +4,7 @@ const AbstractAuthenticatedCommand = require('../../abstract-authenticated-comma
 class DiffCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan);
-    const {
-      assertPresent,
-      chalk,
-      env,
-      environmentRenderer,
-      errorHandler,
-    } = this.context;
+    const { assertPresent, chalk, env, environmentRenderer, errorHandler } = this.context;
     assertPresent({ chalk, env });
     this.chalk = chalk;
     this.env = env;
@@ -33,7 +27,9 @@ class DiffCommand extends AbstractAuthenticatedCommand {
       this.environmentRenderer.renderApimapDiff(apimapFrom, apimapTo);
     } catch (error) {
       this.logger.error(
-        `Cannot fetch the environments ${this.chalk.bold(environmentIdFrom)} and ${this.chalk.bold(environmentIdTo)}.`,
+        `Cannot fetch the environments ${this.chalk.bold(environmentIdFrom)} and ${this.chalk.bold(
+          environmentIdTo,
+        )}.`,
       );
       this.logger.error(manager.handleEnvironmentError(error));
     }

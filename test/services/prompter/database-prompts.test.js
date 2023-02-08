@@ -159,8 +159,9 @@ describe('services > prompter > database prompts', () => {
             program.databaseConnectionURL = 'invalid';
             const databasePrompts = new DatabasePrompts(requests, env, prompts, program);
             await expect(databasePrompts.handleConnectionUrl()).rejects.toThrow(PrompterError);
-            await expect(databasePrompts.handleConnectionUrl()).rejects
-              .toThrow(messages.ERROR_NOT_PARSABLE_CONNECTION_URL);
+            await expect(databasePrompts.handleConnectionUrl()).rejects.toThrow(
+              messages.ERROR_NOT_PARSABLE_CONNECTION_URL,
+            );
             resetParams();
           });
         });
@@ -206,7 +207,7 @@ describe('services > prompter > database prompts', () => {
           initTestWithDatabaseDialect();
           expect(prompts[0].type).toBe('list');
           expect(prompts[0].name).toBe('databaseDialect');
-          expect(prompts[0].message).toBe('What\'s the database type?');
+          expect(prompts[0].message).toBe("What's the database type?");
           expect(prompts[0].choices).toStrictEqual([
             { name: 'mongodb', value: 'mongodb' },
             { name: 'mssql', value: 'mssql' },
@@ -275,7 +276,7 @@ describe('services > prompter > database prompts', () => {
         initTestWithDatabaseName();
         expect(prompts[0].type).toBe('input');
         expect(prompts[0].name).toBe('databaseName');
-        expect(prompts[0].message).toBe('What\'s the database name?');
+        expect(prompts[0].message).toBe("What's the database name?");
         expect(prompts[0].validate).toBeInstanceOf(Function);
         resetParams();
       });
@@ -346,7 +347,7 @@ describe('services > prompter > database prompts', () => {
           initTestWithDatabaseSchema();
           expect(prompts[0].type).toBe('input');
           expect(prompts[0].name).toBe('databaseSchema');
-          expect(prompts[0].message).toBe('What\'s the database schema? [optional]');
+          expect(prompts[0].message).toBe("What's the database schema? [optional]");
           expect(prompts[0].description).toBe('Leave blank by default');
           expect(prompts[0].when).toBeInstanceOf(Function);
           expect(prompts[0].default).toBeInstanceOf(Function);
@@ -409,7 +410,7 @@ describe('services > prompter > database prompts', () => {
         initTestWithDatabaseHostname();
         expect(prompts[0].type).toBe('input');
         expect(prompts[0].name).toBe('databaseHost');
-        expect(prompts[0].message).toBe('What\'s the database hostname?');
+        expect(prompts[0].message).toBe("What's the database hostname?");
         expect(prompts[0].default).toBe('localhost');
         resetParams();
       });
@@ -451,7 +452,7 @@ describe('services > prompter > database prompts', () => {
         initTestWithDatabasePort();
         expect(prompts[0].type).toBe('input');
         expect(prompts[0].name).toBe('databasePort');
-        expect(prompts[0].message).toBe('What\'s the database port?');
+        expect(prompts[0].message).toBe("What's the database port?");
         expect(prompts[0].default).toBeInstanceOf(Function);
         expect(prompts[0].validate).toBeInstanceOf(Function);
         resetParams();
@@ -513,7 +514,7 @@ describe('services > prompter > database prompts', () => {
         initTestWithDatabaseUser();
         expect(prompts[0].type).toBe('input');
         expect(prompts[0].name).toBe('databaseUser');
-        expect(prompts[0].message).toBe('What\'s the database user?');
+        expect(prompts[0].message).toBe("What's the database user?");
         expect(prompts[0].default).toBeInstanceOf(Function);
         resetParams();
       });
@@ -565,7 +566,7 @@ describe('services > prompter > database prompts', () => {
         initTestWithDatabasePassword();
         expect(prompts[0].type).toBe('password');
         expect(prompts[0].name).toBe('databasePassword');
-        expect(prompts[0].message).toBe('What\'s the database password? [optional]');
+        expect(prompts[0].message).toBe("What's the database password? [optional]");
         resetParams();
       });
     });

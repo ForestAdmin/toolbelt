@@ -16,13 +16,7 @@ const {
   randomDirectoryName,
 } = require('./test-cli-fs');
 const { validateInput } = require('./test-cli-errors');
-const {
-  assertOutputs,
-  logStdErr,
-  logStdOut,
-  mockStd,
-  rollbackStd,
-} = require('./test-cli-std');
+const { assertOutputs, logStdErr, logStdOut, mockStd, rollbackStd } = require('./test-cli-std');
 
 function asArray(any) {
   if (!any) return [];
@@ -30,16 +24,20 @@ function asArray(any) {
 }
 
 function filterStds(stds) {
-  const inputs = stds ? stds.filter((type) => type.in !== undefined).map((type) => type.in) : [];
-  const outputs = stds ? stds.filter((type) => type.out !== undefined).map((type) => type.out) : [];
+  const inputs = stds ? stds.filter(type => type.in !== undefined).map(type => type.in) : [];
+  const outputs = stds ? stds.filter(type => type.out !== undefined).map(type => type.out) : [];
   let errorOutputs;
   if (stds) {
     // NOTICE: spinnies outputs to std.err
     const spinnerOutputs = stds
-      .filter((type) => type.spinner)
+      .filter(type => type.spinner)
       // NOTICE: Spinnies uses '-' as prefix when in CI mode.
-      .map((type) => ((process.env.CI || (process.stderr && !process.stderr.isTTY)) ? `-${type.spinner.slice(1)}` : type.spinner));
-    errorOutputs = [...stds.filter((type) => type.err).map((type) => type.err), ...spinnerOutputs];
+      .map(type =>
+        process.env.CI || (process.stderr && !process.stderr.isTTY)
+          ? `-${type.spinner.slice(1)}`
+          : type.spinner,
+      );
+    errorOutputs = [...stds.filter(type => type.err).map(type => type.err), ...spinnerOutputs];
   } else {
     errorOutputs = [];
   }
@@ -78,7 +76,7 @@ async function testCli({
 }) {
   if (!files) files = [];
   const temporaryDirectory = randomDirectoryName();
-  files.forEach((file) => {
+  files.forEach(file => {
     if (!file.chdir) {
       file.chdir = temporaryDirectory;
       file.temporaryDirectory = true;
@@ -90,7 +88,10 @@ async function testCli({
   validateInput(
     files,
     {
-      commandClass, commandArgs, commandPlan: testCommandPlan, additionnalStep,
+      commandClass,
+      commandArgs,
+      commandPlan: testCommandPlan,
+      additionnalStep,
     },
     stds,
     prompts,
@@ -103,7 +104,7 @@ async function testCli({
   makeTempDirectory(temporaryDirectory);
   // WARNING: Keep this BEFORE context construction. Current directory will be included.
   process.chdir(temporaryDirectory);
-  files.forEach((file) => mockFile(file));
+  files.forEach(file => mockFile(file));
 
   const stdin = mockStd(outputs, errorOutputs, print);
 
@@ -130,7 +131,7 @@ async function testCli({
 
   nock.disableNetConnect();
   const nocksToStart = asArray(api);
-  const nocks = nocksToStart.map((nockFlow) => nockFlow());
+  const nocks = nocksToStart.map(nockFlow => nockFlow());
 
   let actualError;
   try {
@@ -147,7 +148,7 @@ async function testCli({
   }
 
   if (!process.env.KEEP_TEMPORARY_FILES) {
-    files.forEach((file) => cleanMockedFile(file));
+    files.forEach(file => cleanMockedFile(file));
     cleanMockedFile({ directory: temporaryDirectory });
   }
   process.chdir(oldcwd);

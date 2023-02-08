@@ -7,17 +7,19 @@ module.exports = async function askForEnvironment(config, message, availableEnvi
   assertPresent({ inquirer });
 
   const environments = await new EnvironmentManager(config).listEnvironments();
-  const availableEnvironments = environments.filter(
-    (environment) => availableEnvironmentTypes.includes(environment.type),
+  const availableEnvironments = environments.filter(environment =>
+    availableEnvironmentTypes.includes(environment.type),
   );
 
   if (availableEnvironments.length) {
-    const response = await inquirer.prompt([{
-      name: 'environment',
-      message,
-      type: 'list',
-      choices: availableEnvironments.map(({ name }) => name),
-    }]);
+    const response = await inquirer.prompt([
+      {
+        name: 'environment',
+        message,
+        type: 'list',
+        choices: availableEnvironments.map(({ name }) => name),
+      },
+    ]);
     return response.environment;
   }
   throw new Error(`No ${availableEnvironmentTypes.join('/')} environment.`);

@@ -37,7 +37,10 @@ describe('services > dumper > SQL', () => {
     it('should force type casting for boolean in config/databases.js file', async () => {
       expect.assertions(1);
       await dump();
-      const indexGeneratedFile = fs.readFileSync(`${appRoot}/test-output/mysql/config/databases.js`, 'utf-8');
+      const indexGeneratedFile = fs.readFileSync(
+        `${appRoot}/test-output/mysql/config/databases.js`,
+        'utf-8',
+      );
 
       expect(indexGeneratedFile).toStrictEqual(expect.stringMatching(TYPE_CAST));
       cleanOutput();
@@ -65,7 +68,10 @@ describe('services > dumper > SQL', () => {
     it('should not force type casting in config/databases.js file', async () => {
       expect.assertions(1);
       await dump();
-      const indexGeneratedFile = fs.readFileSync(`${appRoot}/test-output/mssql/config/databases.js`, 'utf-8');
+      const indexGeneratedFile = fs.readFileSync(
+        `${appRoot}/test-output/mssql/config/databases.js`,
+        'utf-8',
+      );
 
       expect(indexGeneratedFile).toStrictEqual(expect.not.stringMatching(TYPE_CAST));
       cleanOutput();
@@ -93,14 +99,23 @@ describe('services > dumper > SQL', () => {
     it('should generate a model file', async () => {
       expect.assertions(1);
       await dump();
-      const renderingsGeneratedFile = fs.readFileSync(`${appRoot}/test-output/postgres/models/renderings.js`, 'utf8');
-      const renderingsExpectedFile = fs.readFileSync(`${__dirname}/expected/sequelize/dumper-output/renderings.expected.js`, 'utf-8');
+      const renderingsGeneratedFile = fs.readFileSync(
+        `${appRoot}/test-output/postgres/models/renderings.js`,
+        'utf8',
+      );
+      const renderingsExpectedFile = fs.readFileSync(
+        `${__dirname}/expected/sequelize/dumper-output/renderings.expected.js`,
+        'utf-8',
+      );
       expect(renderingsGeneratedFile).toStrictEqual(renderingsExpectedFile);
     });
 
     it('should not force type casting in config/databases.js file', () => {
       expect.assertions(1);
-      const indexGeneratedFile = fs.readFileSync(`${appRoot}/test-output/postgres/config/databases.js`, 'utf-8');
+      const indexGeneratedFile = fs.readFileSync(
+        `${appRoot}/test-output/postgres/config/databases.js`,
+        'utf-8',
+      );
 
       expect(indexGeneratedFile).toStrictEqual(expect.not.stringMatching(TYPE_CAST));
       cleanOutput();

@@ -9,24 +9,20 @@ const ProjectDeserializer = require('../deserializers/project');
 const EnvironmentDeserializer = require('../deserializers/environment');
 
 function ProjectManager(config) {
-  const {
-    assertPresent, authenticator, env, jwtDecode,
-  } = Context.inject();
+  const { assertPresent, authenticator, env, jwtDecode } = Context.inject();
   assertPresent({ authenticator, env, jwtDecode });
 
   function deserialize(response) {
     const attrs = _.clone(ProjectSerializer.opts.attributes);
     attrs.push('id');
 
-    return ProjectDeserializer
-      .deserialize(response.body)
-      .then((deserialized) => {
-        if (_.isArray(deserialized)) {
-          return deserialized.map((d) => _.pick(d, attrs));
-        }
+    return ProjectDeserializer.deserialize(response.body).then(deserialized => {
+      if (_.isArray(deserialized)) {
+        return deserialized.map(d => _.pick(d, attrs));
+      }
 
-        return _.pick(deserialized, attrs);
-      });
+      return _.pick(deserialized, attrs);
+    });
   }
 
   this.listProjects = async () => {
@@ -37,10 +33,10 @@ function ProjectManager(config) {
     });
 
     return agent
-      .get(`${env.FOREST_URL}/api/projects${queryParams ? (`?${queryParams}`) : ''}`)
+      .get(`${env.FOREST_URL}/api/projects${queryParams ? `?${queryParams}` : ''}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
-      .then((response) => deserialize(response));
+      .then(response => deserialize(response));
   };
 
   this.getByEnvSecret = async (envSecret, includeLegacy = false) => {
@@ -52,7 +48,7 @@ function ProjectManager(config) {
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-secret-key', envSecret)
       .send()
-      .then((response) => deserialize(response));
+      .then(response => deserialize(response));
   };
 
   this.getProject = async () => {
@@ -62,7 +58,7 @@ function ProjectManager(config) {
       .get(`${env.FOREST_URL}/api/projects/${config.projectId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
-      .then((response) => deserialize(response));
+      .then(response => deserialize(response));
   };
 
   this.getProjectForDevWorkflow = async () => {
@@ -72,17 +68,17 @@ function ProjectManager(config) {
       .get(`${env.FOREST_URL}/api/projects/${config.projectId}/dev-workflow`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
-      .then((response) => deserialize(response));
+      .then(response => deserialize(response));
   };
 
-  this.getDevelopmentEnvironmentForUser = async (projectId) => {
+  this.getDevelopmentEnvironmentForUser = async projectId => {
     const authToken = authenticator.getAuthToken();
 
     return agent
       .get(`${env.FOREST_URL}/api/projects/${projectId}/development-environment-for-user`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
-      .then((response) => EnvironmentDeserializer.deserialize(response.body));
+      .then(response => EnvironmentDeserializer.deserialize(response.body));
   };
 }
 

@@ -1,13 +1,7 @@
 const { chars } = require('./defaults');
 
 class EnvironmentRenderer {
-  constructor({
-    assertPresent,
-    chalk,
-    logger,
-    Table,
-    diffString,
-  }) {
+  constructor({ assertPresent, chalk, logger, Table, diffString }) {
     assertPresent({
       chalk,
       logger,
@@ -41,10 +35,7 @@ class EnvironmentRenderer {
           { FOREST_ENV_SECRET: environment.secretKey || '' },
         );
         if (environment.authSecret) table.push({ FOREST_AUTH_SECRET: environment.authSecret });
-        this.logger.log(
-          `${this.chalk.bold('ENVIRONMENT')}`,
-          ...table.toString().split('\n'),
-        );
+        this.logger.log(`${this.chalk.bold('ENVIRONMENT')}`, ...table.toString().split('\n'));
         break;
       default:
     }

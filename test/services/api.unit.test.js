@@ -42,9 +42,7 @@ describe('services > API', () => {
     it('should send a query with the serialized token', async () => {
       expect.assertions(7);
 
-      const {
-        superagent, api, applicationTokenSerializer, applicationTokenDeserializer,
-      } = setup();
+      const { superagent, api, applicationTokenSerializer, applicationTokenDeserializer } = setup();
 
       const serializedToken = {
         data: {
@@ -78,7 +76,9 @@ describe('services > API', () => {
       const result = await api.createApplicationToken({ name: 'the token' }, 'SESSION');
 
       expect(result).toBe(deserializedToken);
-      expect(superagent.post).toHaveBeenCalledWith('https://api.test.forestadmin.com/api/application-tokens');
+      expect(superagent.post).toHaveBeenCalledWith(
+        'https://api.test.forestadmin.com/api/application-tokens',
+      );
       expect(superagent.set).toHaveBeenCalledWith({
         'forest-origin': 'forest-cli',
         'Content-Type': 'application/json',
@@ -86,10 +86,10 @@ describe('services > API', () => {
       });
       expect(superagent.set).toHaveBeenCalledWith('Authorization', 'Bearer SESSION');
       expect(superagent.send).toHaveBeenCalledWith(serializedToken);
-      expect(applicationTokenSerializer.serialize)
-        .toHaveBeenCalledWith({ name: 'the token' });
-      expect(applicationTokenDeserializer.deserialize)
-        .toHaveBeenCalledWith(serializedResponseToken);
+      expect(applicationTokenSerializer.serialize).toHaveBeenCalledWith({ name: 'the token' });
+      expect(applicationTokenDeserializer.deserialize).toHaveBeenCalledWith(
+        serializedResponseToken,
+      );
     });
   });
 
@@ -97,15 +97,15 @@ describe('services > API', () => {
     it('should send a query to delete the application token', async () => {
       expect.assertions(6);
 
-      const {
-        superagent, api,
-      } = setup();
+      const { superagent, api } = setup();
 
       superagent.send.mockResolvedValue(undefined);
 
       await api.deleteApplicationToken('THE-TOKEN');
 
-      expect(superagent.delete).toHaveBeenCalledWith('https://api.test.forestadmin.com/api/application-tokens');
+      expect(superagent.delete).toHaveBeenCalledWith(
+        'https://api.test.forestadmin.com/api/application-tokens',
+      );
       expect(superagent.set).toHaveBeenCalledWith('forest-origin', 'forest-cli');
       expect(superagent.set).toHaveBeenCalledWith('Content-Type', 'application/json');
       expect(superagent.set).toHaveBeenCalledWith('User-Agent', 'forest-cli@1.2.3');

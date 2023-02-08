@@ -1,3 +1,3 @@
 const Handlebars = require('handlebars');
 
-Handlebars.registerHelper('isObject', (value) => typeof value === 'object');
+Handlebars.registerHelper('isObject', value => typeof value === 'object');

@@ -34,9 +34,12 @@ describe('services > ApplicationToken', () => {
 
       expect(result).toBe('ABCDE');
       expect(os.hostname).toHaveBeenCalledWith();
-      expect(api.createApplicationToken).toHaveBeenCalledWith({
-        name: 'forest-cli @Machine name',
-      }, SESSION_TOKEN);
+      expect(api.createApplicationToken).toHaveBeenCalledWith(
+        {
+          name: 'forest-cli @Machine name',
+        },
+        SESSION_TOKEN,
+      );
     });
 
     it('should throw an error if something goes wrong with the API', async () => {
@@ -47,8 +50,9 @@ describe('services > ApplicationToken', () => {
       os.hostname.mockReturnValue('Machine name');
       api.createApplicationToken.mockRejectedValue(new Error('Internal error'));
 
-      await expect(applicationTokenService.generateApplicationToken(SESSION_TOKEN))
-        .rejects.toBeInstanceOf(UnableToCreateApplicationTokenError);
+      await expect(
+        applicationTokenService.generateApplicationToken(SESSION_TOKEN),
+      ).rejects.toBeInstanceOf(UnableToCreateApplicationTokenError);
     });
   });
 

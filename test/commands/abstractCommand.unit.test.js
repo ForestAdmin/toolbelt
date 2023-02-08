@@ -8,9 +8,7 @@ describe('abstract command', () => {
       const chalk = Symbol('chalk');
       const logger = Symbol('logger');
 
-      const commandPlan = (plan) => plan
-        .addModule('chalk', chalk)
-        .addInstance('logger', logger);
+      const commandPlan = plan => plan.addModule('chalk', chalk).addInstance('logger', logger);
 
       const abstractCommand = new AbstractCommand();
       abstractCommand.init(commandPlan);

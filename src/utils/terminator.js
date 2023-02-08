@@ -10,9 +10,7 @@
  * }} MultipleMessages
  */
 
-module.exports = ({
-  assertPresent, eventSender, exitProcess, logger,
-}) => {
+module.exports = ({ assertPresent, eventSender, exitProcess, logger }) => {
   assertPresent({ eventSender, exitProcess, logger });
 
   return {
@@ -20,9 +18,7 @@ module.exports = ({
      * @param {number} status
      * @param {DetailedLog | MultipleMessages | DetailedLog & MultipleMessages} log
      */
-    async terminate(status, {
-      errorCode, errorMessage, logs, context,
-    }) {
+    async terminate(status, { errorCode, errorMessage, logs, context }) {
       if (logs.length) {
         logger.error(...logs);
       }

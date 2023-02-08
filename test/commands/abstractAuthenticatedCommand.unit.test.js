@@ -9,17 +9,18 @@ describe('abstractAuthenticated command', () => {
         tryLogin: jest.fn().mockResolvedValue(true),
       },
       chalk: {
-        bold: jest.fn((msg) => msg),
+        bold: jest.fn(msg => msg),
       },
       logger: {
         error: jest.fn(),
         info: jest.fn(),
       },
     };
-    const commandPlan = (plan) => plan
-      .addModule('chalk', stubs.chalk)
-      .addInstance('logger', stubs.logger)
-      .addInstance('authenticator', stubs.authenticator);
+    const commandPlan = plan =>
+      plan
+        .addModule('chalk', stubs.chalk)
+        .addInstance('logger', stubs.logger)
+        .addInstance('authenticator', stubs.authenticator);
     return {
       commandPlan,
       stubs,
@@ -49,7 +50,8 @@ describe('abstractAuthenticated command', () => {
         abstractAuthenticatedCommand.init(commandPlan);
 
         stubs.authenticator.getAuthToken.mockImplementation(() => true);
-        jest.spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
+        jest
+          .spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
           .mockImplementation(() => true);
 
         await abstractAuthenticatedCommand.run();
@@ -68,10 +70,12 @@ describe('abstractAuthenticated command', () => {
 
           stubs.authenticator.getAuthToken.mockImplementation(() => false);
           stubs.authenticator.tryLogin.mockImplementation(() => true);
-          jest.spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
+          jest
+            .spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
             .mockImplementation(() => true);
-          jest.spyOn(abstractAuthenticatedCommand, 'exit')
-            .mockImplementation(() => { throw new Error(); });
+          jest.spyOn(abstractAuthenticatedCommand, 'exit').mockImplementation(() => {
+            throw new Error();
+          });
 
           await expect(() => abstractAuthenticatedCommand.run()).rejects.toThrow(Error);
 
@@ -95,7 +99,8 @@ describe('abstractAuthenticated command', () => {
             .mockImplementationOnce(() => false)
             .mockImplementationOnce(() => true);
           stubs.authenticator.tryLogin.mockImplementation(() => true);
-          jest.spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
+          jest
+            .spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
             .mockImplementation(() => true);
 
           await abstractAuthenticatedCommand.run();
@@ -117,7 +122,8 @@ describe('abstractAuthenticated command', () => {
 
         stubs.authenticator.getAuthToken.mockImplementation(() => true);
         stubs.authenticator.tryLogin.mockImplementation(() => true);
-        jest.spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
+        jest
+          .spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
           .mockImplementation(() => true);
 
         await abstractAuthenticatedCommand.run();
@@ -137,8 +143,9 @@ describe('abstractAuthenticated command', () => {
 
       stubs.authenticator.getAuthToken.mockImplementation(() => true);
 
-      await expect(() => abstractAuthenticatedCommand.run())
-        .rejects.toThrow('\'runIfAuthenticated\' is not implemented on');
+      await expect(() => abstractAuthenticatedCommand.run()).rejects.toThrow(
+        "'runIfAuthenticated' is not implemented on",
+      );
 
       expect(stubs.authenticator.getAuthToken).toHaveBeenCalledTimes(1);
     });
@@ -153,10 +160,12 @@ describe('abstractAuthenticated command', () => {
           abstractAuthenticatedCommand.init(commandPlan);
 
           stubs.authenticator.getAuthToken.mockImplementation(() => true);
-          jest.spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
+          jest
+            .spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
             .mockImplementation(() => true);
-          jest.spyOn(abstractAuthenticatedCommand, 'exit')
-            .mockImplementation(() => { throw new Error(); });
+          jest.spyOn(abstractAuthenticatedCommand, 'exit').mockImplementation(() => {
+            throw new Error();
+          });
 
           await abstractAuthenticatedCommand.run();
 
@@ -175,17 +184,19 @@ describe('abstractAuthenticated command', () => {
           abstractAuthenticatedCommand.init(commandPlan);
 
           stubs.authenticator.getAuthToken.mockImplementation(() => true);
-          jest.spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
+          jest
+            .spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
             .mockRejectedValue({ status: 403 });
-          jest.spyOn(abstractAuthenticatedCommand, 'exit')
-            .mockImplementation(() => { throw new Error(); });
+          jest.spyOn(abstractAuthenticatedCommand, 'exit').mockImplementation(() => {
+            throw new Error();
+          });
 
-          await expect(() => abstractAuthenticatedCommand.run())
-            .rejects.toThrow(Error);
+          await expect(() => abstractAuthenticatedCommand.run()).rejects.toThrow(Error);
 
           expect(stubs.authenticator.getAuthToken).toHaveBeenCalledTimes(1);
-          expect(abstractAuthenticatedCommand.logger.error)
-            .toHaveBeenCalledWith('You do not have the right to execute this action on this project');
+          expect(abstractAuthenticatedCommand.logger.error).toHaveBeenCalledWith(
+            'You do not have the right to execute this action on this project',
+          );
           expect(abstractAuthenticatedCommand.exit).toHaveBeenCalledTimes(1);
           expect(abstractAuthenticatedCommand.exit).toHaveBeenCalledWith(2);
           expect(abstractAuthenticatedCommand.runIfAuthenticated).toHaveBeenCalledTimes(1);
@@ -199,18 +210,20 @@ describe('abstractAuthenticated command', () => {
           abstractAuthenticatedCommand.init(commandPlan);
 
           stubs.authenticator.getAuthToken.mockImplementation(() => true);
-          jest.spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
+          jest
+            .spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
             .mockRejectedValue({ status: 401 });
-          jest.spyOn(abstractAuthenticatedCommand, 'exit')
-            .mockImplementation(() => { throw new Error(); });
+          jest.spyOn(abstractAuthenticatedCommand, 'exit').mockImplementation(() => {
+            throw new Error();
+          });
 
-          await expect(() => abstractAuthenticatedCommand.run())
-            .rejects.toThrow(Error);
+          await expect(() => abstractAuthenticatedCommand.run()).rejects.toThrow(Error);
 
           expect(stubs.authenticator.getAuthToken).toHaveBeenCalledTimes(1);
           expect(stubs.authenticator.logout).toHaveBeenCalledTimes(1);
-          expect(abstractAuthenticatedCommand.logger.error)
-            .toHaveBeenCalledWith('Please use \'forest login\' to sign in to your Forest account.');
+          expect(abstractAuthenticatedCommand.logger.error).toHaveBeenCalledWith(
+            "Please use 'forest login' to sign in to your Forest account.",
+          );
           expect(abstractAuthenticatedCommand.exit).toHaveBeenCalledTimes(1);
           expect(abstractAuthenticatedCommand.exit).toHaveBeenCalledWith(10);
           expect(abstractAuthenticatedCommand.runIfAuthenticated).toHaveBeenCalledTimes(1);
@@ -228,13 +241,12 @@ describe('abstractAuthenticated command', () => {
           runError.status = -1;
 
           stubs.authenticator.getAuthToken.mockImplementation(() => true);
-          jest.spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
+          jest
+            .spyOn(abstractAuthenticatedCommand, 'runIfAuthenticated')
             .mockRejectedValue(runError);
-          jest.spyOn(abstractAuthenticatedCommand, 'exit')
-            .mockImplementation(() => { });
+          jest.spyOn(abstractAuthenticatedCommand, 'exit').mockImplementation(() => {});
 
-          await expect(() => abstractAuthenticatedCommand.run())
-            .rejects.toThrow(runErrorMessage);
+          await expect(() => abstractAuthenticatedCommand.run()).rejects.toThrow(runErrorMessage);
 
           expect(stubs.authenticator.getAuthToken).toHaveBeenCalledTimes(1);
           expect(stubs.authenticator.logout).toHaveBeenCalledTimes(0);

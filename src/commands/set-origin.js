@@ -23,13 +23,18 @@ class SetOriginCommand extends AbstractAuthenticatedCommand {
       config = await withCurrentProject({ ...this.env, ...commandOptions });
 
       if (!config.envSecret) {
-        const environment = await new ProjectManager(config)
-          .getDevelopmentEnvironmentForUser(config.projectId);
+        const environment = await new ProjectManager(config).getDevelopmentEnvironmentForUser(
+          config.projectId,
+        );
         config.envSecret = environment.secretKey;
       }
 
       if (!config.ENVIRONMENT_NAME) {
-        config.ENVIRONMENT_NAME = await askForEnvironment(config, 'Select the environment you want to set as origin', ['remote', 'production']);
+        config.ENVIRONMENT_NAME = await askForEnvironment(
+          config,
+          'Select the environment you want to set as origin',
+          ['remote', 'production'],
+        );
       }
 
       await BranchManager.setOrigin(config.ENVIRONMENT_NAME, config.envSecret);
@@ -44,7 +49,8 @@ class SetOriginCommand extends AbstractAuthenticatedCommand {
 
 SetOriginCommand.aliases = ['branches:origin'];
 
-SetOriginCommand.description = "Set an environment as your branch's origin. Your branch will build on top of that environment's layout.";
+SetOriginCommand.description =
+  "Set an environment as your branch's origin. Your branch will build on top of that environment's layout.";
 
 SetOriginCommand.flags = {
   help: AbstractAuthenticatedCommand.flags.boolean({
@@ -52,8 +58,12 @@ SetOriginCommand.flags = {
   }),
 };
 
-SetOriginCommand.args = [{
-  name: 'ENVIRONMENT_NAME', required: false, description: 'The environment to set as origin.',
-}];
+SetOriginCommand.args = [
+  {
+    name: 'ENVIRONMENT_NAME',
+    required: false,
+    description: 'The environment to set as origin.',
+  },
+];
 
 module.exports = SetOriginCommand;

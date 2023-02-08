@@ -9,8 +9,9 @@ describe('services > command generate config getter', () => {
         assertPresent: () => true,
         GeneralPrompter,
       });
-      const options = commandGenerateConfigGetter
-        .getRequestList({ databaseConnectionURL: 'postgres://forest:secret@localhost:5435/forest' });
+      const options = commandGenerateConfigGetter.getRequestList({
+        databaseConnectionURL: 'postgres://forest:secret@localhost:5435/forest',
+      });
       expect(options).toStrictEqual([
         'dbConnectionUrl',
         'dbSchema',
@@ -30,8 +31,7 @@ describe('services > command generate config getter', () => {
         assertPresent: () => true,
         GeneralPrompter,
       });
-      const options = commandGenerateConfigGetter
-        .getRequestList({ db: true });
+      const options = commandGenerateConfigGetter.getRequestList({ db: true });
       expect(options).toStrictEqual([
         'dbDialect',
         'dbName',

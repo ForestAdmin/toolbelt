@@ -14,7 +14,7 @@ describe('utils > toValidPackageName', () => {
       '-',
     ];
 
-    names.forEach((name) => {
+    names.forEach(name => {
       expect(toValidPackageName(name)).toStrictEqual(name);
     });
   });
@@ -31,7 +31,7 @@ describe('utils > toValidPackageName', () => {
       { original: '', expected: 'forest-cli-project' },
     ];
 
-    names.forEach((name) => {
+    names.forEach(name => {
       expect(toValidPackageName(name.original)).toStrictEqual(name.expected);
     });
   });

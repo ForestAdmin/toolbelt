@@ -6,7 +6,9 @@ module.exports = async function withCurrentProject(config) {
   const { assertPresent, inquirer, spinner } = Context.inject();
   assertPresent({ inquirer, spinner });
 
-  if (config.projectId) { return config; }
+  if (config.projectId) {
+    return config;
+  }
 
   const projectManager = await new ProjectManager(config);
 
@@ -28,14 +30,16 @@ module.exports = async function withCurrentProject(config) {
     // NOTICE: If a spinner is running, it has to be paused during the prompt and resumed after.
     const existingSpinner = spinner.isRunning();
     if (existingSpinner) spinner.pause();
-    const response = await inquirer.prompt([{
-      name: 'project',
-      message: 'Select your project',
-      type: 'list',
-      choices: projects.map((project) => ({ name: project.name, value: project.id })),
-    }]);
+    const response = await inquirer.prompt([
+      {
+        name: 'project',
+        message: 'Select your project',
+        type: 'list',
+        choices: projects.map(project => ({ name: project.name, value: project.id })),
+      },
+    ]);
     if (existingSpinner) spinner.continue();
     return { ...config, projectId: response.project };
   }
-  throw new Error('You don\'t have any project yet.');
+  throw new Error("You don't have any project yet.");
 };

@@ -3,7 +3,7 @@ const MysqlTableConstraintsGetter = require('./mysql-table-constraints-getter');
 function TableConstraintsGetter(databaseConnection, schema) {
   const queryInterface = databaseConnection.getQueryInterface();
 
-  this.perform = async (table) => {
+  this.perform = async table => {
     let query = null;
     const replacements = { table };
 
@@ -167,7 +167,9 @@ function TableConstraintsGetter(databaseConnection, schema) {
                     ) "uidx"
                       ON "uidx"."t_name" = "tableConstraints".table_name
                     WHERE "constraintColumnUsage".table_name = '${table}'
-                      AND "constraintColumnUsage".table_schema = '${schema !== undefined ? schema : 'dbo'}'
+                      AND "constraintColumnUsage".table_schema = '${
+                        schema !== undefined ? schema : 'dbo'
+                      }'
                   ) "constraintsAndIndexes"
                   WHERE "constraintsTable"."tableName" = "constraintsAndIndexes"."tableName"
                     AND "constraintsTable"."columnType" = "constraintsAndIndexes"."columnType"
@@ -257,7 +259,9 @@ function TableConstraintsGetter(databaseConnection, schema) {
               ) "uidx"
                 ON "uidx"."t_name" = "constraintColumnUsage".table_name
               WHERE "constraintColumnUsage".table_name = '${table}'
-                AND "constraintColumnUsage".table_schema = '${schema !== undefined ? schema : 'dbo'}'
+                AND "constraintColumnUsage".table_schema = '${
+                  schema !== undefined ? schema : 'dbo'
+                }'
             ) AS "constraintsTable"
             GROUP BY
               "constraintsTable"."constraintName",
@@ -280,11 +284,13 @@ function TableConstraintsGetter(databaseConnection, schema) {
         break;
     }
 
-    const constraints = await queryInterface.sequelize
-      .query(query, { type: queryInterface.sequelize.QueryTypes.SELECT, replacements });
+    const constraints = await queryInterface.sequelize.query(query, {
+      type: queryInterface.sequelize.QueryTypes.SELECT,
+      replacements,
+    });
 
     // NOTICE: MSSQL doesn't support aggregation to JSON, we need to parse it.
-    return constraints.map((constraint) => {
+    return constraints.map(constraint => {
       let { uniqueIndexes } = constraint;
       if (uniqueIndexes !== null && typeof uniqueIndexes === 'string') {
         uniqueIndexes = JSON.parse(uniqueIndexes);

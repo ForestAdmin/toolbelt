@@ -69,7 +69,10 @@ describe('services > dumper (unit)', () => {
         createDumper(context).writeFile(ABSOLUTE_PROJECT_PATH, RELATIVE_FILE_PATH, 'content');
 
         expect(context.fs.writeFileSync).toHaveBeenCalledTimes(1);
-        expect(context.fs.writeFileSync).toHaveBeenCalledWith(`${ABSOLUTE_PROJECT_PATH}/${RELATIVE_FILE_PATH}`, 'content');
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          `${ABSOLUTE_PROJECT_PATH}/${RELATIVE_FILE_PATH}`,
+          'content',
+        );
       });
 
       it('should call the logger to display a create log message', () => {
@@ -79,7 +82,9 @@ describe('services > dumper (unit)', () => {
         createDumper(context).writeFile(ABSOLUTE_PROJECT_PATH, RELATIVE_FILE_PATH, 'content');
 
         expect(context.logger.log).toHaveBeenCalledTimes(1);
-        expect(context.logger.log).toHaveBeenCalledWith(`  ${chalk.green('create')} ${RELATIVE_FILE_PATH}`);
+        expect(context.logger.log).toHaveBeenCalledWith(
+          `  ${chalk.green('create')} ${RELATIVE_FILE_PATH}`,
+        );
       });
     });
 
@@ -100,7 +105,9 @@ describe('services > dumper (unit)', () => {
         createDumper(context).writeFile(ABSOLUTE_PROJECT_PATH, RELATIVE_FILE_PATH, 'content');
 
         expect(context.logger.log).toHaveBeenCalledTimes(1);
-        expect(context.logger.log).toHaveBeenCalledWith(`  ${chalk.yellow('skip')} ${RELATIVE_FILE_PATH} - already exists.`);
+        expect(context.logger.log).toHaveBeenCalledWith(
+          `  ${chalk.yellow('skip')} ${RELATIVE_FILE_PATH} - already exists.`,
+        );
       });
     });
   });
@@ -142,8 +149,9 @@ describe('services > dumper (unit)', () => {
         const context = makeContextOverrides();
         const dumper = createDumper(context);
 
-        expect(() => dumper.copyHandleBarsTemplate({}))
-          .toThrow('Missing argument (projectPath, source, target or context).');
+        expect(() => dumper.copyHandleBarsTemplate({})).toThrow(
+          'Missing argument (projectPath, source, target or context).',
+        );
       });
     });
 
@@ -191,7 +199,7 @@ describe('services > dumper (unit)', () => {
     });
 
     describe('with specific database dialect', () => {
-      const getPackageJSONContentFromDialect = (dbDialect) => {
+      const getPackageJSONContentFromDialect = dbDialect => {
         const dumper = createDumper({});
         const writeFileSpy = jest.spyOn(dumper, 'writeFile').mockImplementation(() => {});
         dumper.writePackageJson(ABSOLUTE_PROJECT_PATH, {
@@ -342,7 +350,9 @@ describe('services > dumper (unit)', () => {
       it('should prefix the host name with http://', () => {
         expect.assertions(1);
 
-        expect(Dumper.getApplicationUrl({ appHostname: 'somewhere.not.local.com' })).toBe('http://somewhere.not.local.com');
+        expect(Dumper.getApplicationUrl({ appHostname: 'somewhere.not.local.com' })).toBe(
+          'http://somewhere.not.local.com',
+        );
       });
     });
 
@@ -350,18 +360,22 @@ describe('services > dumper (unit)', () => {
       it('should append the port to the given hostname for local application url', () => {
         expect.assertions(1);
 
-        expect(Dumper.getApplicationUrl({
-          appHostname: 'http://localhost',
-          appPort: 1234,
-        })).toBe('http://localhost:1234');
+        expect(
+          Dumper.getApplicationUrl({
+            appHostname: 'http://localhost',
+            appPort: 1234,
+          }),
+        ).toBe('http://localhost:1234');
       });
 
       it('should return the appHostname already defined', () => {
         expect.assertions(1);
 
-        expect(Dumper.getApplicationUrl({
-          appHostname: 'https://somewhere.com',
-        })).toBe('https://somewhere.com');
+        expect(
+          Dumper.getApplicationUrl({
+            appHostname: 'https://somewhere.com',
+          }),
+        ).toBe('https://somewhere.com');
       });
     });
   });
@@ -380,7 +394,9 @@ describe('services > dumper (unit)', () => {
         expect.assertions(2);
 
         const dumper = createDumper();
-        const copyHandlebarsTemplateSpy = jest.spyOn(dumper, 'copyHandleBarsTemplate').mockImplementation();
+        const copyHandlebarsTemplateSpy = jest
+          .spyOn(dumper, 'copyHandleBarsTemplate')
+          .mockImplementation();
         jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(true);
         dumper.writeDotEnv(ABSOLUTE_PROJECT_PATH, config);
 
@@ -409,7 +425,9 @@ describe('services > dumper (unit)', () => {
         expect.assertions(2);
 
         const dumper = createDumper();
-        const copyHandlebarsTemplateSpy = jest.spyOn(dumper, 'copyHandleBarsTemplate').mockImplementation();
+        const copyHandlebarsTemplateSpy = jest
+          .spyOn(dumper, 'copyHandleBarsTemplate')
+          .mockImplementation();
         jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(false);
         dumper.writeDotEnv(ABSOLUTE_PROJECT_PATH, config);
 
@@ -440,7 +458,9 @@ describe('services > dumper (unit)', () => {
       expect.assertions(1);
 
       const dumper = createDumper();
-      const copyHandlebarsTemplateSpy = jest.spyOn(dumper, 'copyHandleBarsTemplate').mockImplementation();
+      const copyHandlebarsTemplateSpy = jest
+        .spyOn(dumper, 'copyHandleBarsTemplate')
+        .mockImplementation();
       dumper.writeDockerfile(ABSOLUTE_PROJECT_PATH, { dbDialect: 'mongodb' });
 
       expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith({
@@ -464,7 +484,9 @@ describe('services > dumper (unit)', () => {
           },
         });
         jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(true);
-        const copyHandlebarsTemplateSpy = jest.spyOn(dumper, 'copyHandleBarsTemplate').mockImplementation();
+        const copyHandlebarsTemplateSpy = jest
+          .spyOn(dumper, 'copyHandleBarsTemplate')
+          .mockImplementation();
         dumper.writeDockerCompose(ABSOLUTE_PROJECT_PATH, {});
         const handlebarContext = copyHandlebarsTemplateSpy.mock.calls[0][0].context;
 
@@ -484,7 +506,9 @@ describe('services > dumper (unit)', () => {
           },
         });
         jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(true);
-        const copyHandlebarsTemplateSpy = jest.spyOn(dumper, 'copyHandleBarsTemplate').mockImplementation();
+        const copyHandlebarsTemplateSpy = jest
+          .spyOn(dumper, 'copyHandleBarsTemplate')
+          .mockImplementation();
         dumper.writeDockerCompose(ABSOLUTE_PROJECT_PATH, {});
         const handlebarContext = copyHandlebarsTemplateSpy.mock.calls[0][0].context;
 
@@ -499,7 +523,9 @@ describe('services > dumper (unit)', () => {
         expect.assertions(1);
 
         const dumper = createDumper();
-        const copyHandlebarsTemplateSpy = jest.spyOn(dumper, 'copyHandleBarsTemplate').mockImplementation();
+        const copyHandlebarsTemplateSpy = jest
+          .spyOn(dumper, 'copyHandleBarsTemplate')
+          .mockImplementation();
         dumper.writeForestAdminMiddleware(ABSOLUTE_PROJECT_PATH, { dbDialect: 'mongodb' });
 
         expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith({
@@ -516,7 +542,9 @@ describe('services > dumper (unit)', () => {
         expect.assertions(1);
 
         const dumper = createDumper();
-        const copyHandlebarsTemplateSpy = jest.spyOn(dumper, 'copyHandleBarsTemplate').mockImplementation();
+        const copyHandlebarsTemplateSpy = jest
+          .spyOn(dumper, 'copyHandleBarsTemplate')
+          .mockImplementation();
         dumper.writeForestAdminMiddleware(ABSOLUTE_PROJECT_PATH, { dbDialect: 'mysql' });
 
         expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith({
@@ -540,14 +568,20 @@ describe('services > dumper (unit)', () => {
         },
         mkdirp: mkdirpMock,
       });
-      const writeForestCollectionSpy = jest.spyOn(dumper, 'writeForestCollection').mockImplementation();
-      const writeForestAdminMiddlewareSpy = jest.spyOn(dumper, 'writeForestAdminMiddleware').mockImplementation();
+      const writeForestCollectionSpy = jest
+        .spyOn(dumper, 'writeForestCollection')
+        .mockImplementation();
+      const writeForestAdminMiddlewareSpy = jest
+        .spyOn(dumper, 'writeForestAdminMiddleware')
+        .mockImplementation();
       const writeModelsIndexSpy = jest.spyOn(dumper, 'writeModelsIndex').mockImplementation();
       const writeModelSpy = jest.spyOn(dumper, 'writeModel').mockImplementation();
       const writeRouteSpy = jest.spyOn(dumper, 'writeRoute').mockImplementation();
       const writeDotEnvSpy = jest.spyOn(dumper, 'writeDotEnv').mockImplementation();
       const writeAppJsSpy = jest.spyOn(dumper, 'writeAppJs').mockImplementation();
-      const writeDatabasesConfigSpy = jest.spyOn(dumper, 'writeDatabasesConfig').mockImplementation();
+      const writeDatabasesConfigSpy = jest
+        .spyOn(dumper, 'writeDatabasesConfig')
+        .mockImplementation();
       const writeDockerComposeSpy = jest.spyOn(dumper, 'writeDockerCompose').mockImplementation();
       const writeDockerfileSpy = jest.spyOn(dumper, 'writeDockerfile').mockImplementation();
       const writePackageJsonSpy = jest.spyOn(dumper, 'writePackageJson').mockImplementation();
@@ -591,10 +625,26 @@ describe('services > dumper (unit)', () => {
 
       // Copied files
       expect(copyTemplateSpy).toHaveBeenCalledTimes(6);
-      expect(copyTemplateSpy).toHaveBeenCalledWith(projectPath, 'middlewares/welcome.hbs', 'middlewares/welcome.js');
-      expect(copyTemplateSpy).toHaveBeenCalledWith(projectPath, 'public/favicon.png', 'public/favicon.png');
-      expect(copyTemplateSpy).toHaveBeenCalledWith(projectPath, 'views/index.hbs', 'views/index.html');
-      expect(copyTemplateSpy).toHaveBeenCalledWith(projectPath, 'dockerignore.hbs', '.dockerignore');
+      expect(copyTemplateSpy).toHaveBeenCalledWith(
+        projectPath,
+        'middlewares/welcome.hbs',
+        'middlewares/welcome.js',
+      );
+      expect(copyTemplateSpy).toHaveBeenCalledWith(
+        projectPath,
+        'public/favicon.png',
+        'public/favicon.png',
+      );
+      expect(copyTemplateSpy).toHaveBeenCalledWith(
+        projectPath,
+        'views/index.hbs',
+        'views/index.html',
+      );
+      expect(copyTemplateSpy).toHaveBeenCalledWith(
+        projectPath,
+        'dockerignore.hbs',
+        '.dockerignore',
+      );
       expect(copyTemplateSpy).toHaveBeenCalledWith(projectPath, 'gitignore.hbs', '.gitignore');
       expect(copyTemplateSpy).toHaveBeenCalledWith(projectPath, 'server.hbs', 'server.js');
     });
@@ -609,14 +659,20 @@ describe('services > dumper (unit)', () => {
         },
         mkdirp: mkdirpMock,
       });
-      const writeForestCollectionSpy = jest.spyOn(dumper, 'writeForestCollection').mockImplementation();
-      const writeForestAdminMiddlewareSpy = jest.spyOn(dumper, 'writeForestAdminMiddleware').mockImplementation();
+      const writeForestCollectionSpy = jest
+        .spyOn(dumper, 'writeForestCollection')
+        .mockImplementation();
+      const writeForestAdminMiddlewareSpy = jest
+        .spyOn(dumper, 'writeForestAdminMiddleware')
+        .mockImplementation();
       const writeModelsIndexSpy = jest.spyOn(dumper, 'writeModelsIndex').mockImplementation();
       const writeModelSpy = jest.spyOn(dumper, 'writeModel').mockImplementation();
       const writeRouteSpy = jest.spyOn(dumper, 'writeRoute').mockImplementation();
       const writeDotEnvSpy = jest.spyOn(dumper, 'writeDotEnv').mockImplementation();
       const writeAppJsSpy = jest.spyOn(dumper, 'writeAppJs').mockImplementation();
-      const writeDatabasesConfigSpy = jest.spyOn(dumper, 'writeDatabasesConfig').mockImplementation();
+      const writeDatabasesConfigSpy = jest
+        .spyOn(dumper, 'writeDatabasesConfig')
+        .mockImplementation();
       const writeDockerComposeSpy = jest.spyOn(dumper, 'writeDockerCompose').mockImplementation();
       const writeDockerfileSpy = jest.spyOn(dumper, 'writeDockerfile').mockImplementation();
       const writePackageJsonSpy = jest.spyOn(dumper, 'writePackageJson').mockImplementation();
@@ -684,12 +740,13 @@ describe('services > dumper (unit)', () => {
 
       const dumper = createDumper({
         fs: {
-          existsSync: jest.fn().mockImplementation((path) => !path.includes('routes')),
+          existsSync: jest.fn().mockImplementation(path => !path.includes('routes')),
         },
       });
 
-      expect(() => dumper.checkForestCLIProjectStructure())
-        .toThrow(InvalidForestCLIProjectStructureError);
+      expect(() => dumper.checkForestCLIProjectStructure()).toThrow(
+        InvalidForestCLIProjectStructureError,
+      );
     });
 
     it('should throw an error when missing forest folder', () => {
@@ -697,12 +754,13 @@ describe('services > dumper (unit)', () => {
 
       const dumper = createDumper({
         fs: {
-          existsSync: jest.fn().mockImplementation((path) => !path.includes('forest')),
+          existsSync: jest.fn().mockImplementation(path => !path.includes('forest')),
         },
       });
 
-      expect(() => dumper.checkForestCLIProjectStructure())
-        .toThrow(InvalidForestCLIProjectStructureError);
+      expect(() => dumper.checkForestCLIProjectStructure()).toThrow(
+        InvalidForestCLIProjectStructureError,
+      );
     });
 
     it('should throw an error when missing models folder', () => {
@@ -710,12 +768,13 @@ describe('services > dumper (unit)', () => {
 
       const dumper = createDumper({
         fs: {
-          existsSync: jest.fn().mockImplementation((path) => !path.includes('models')),
+          existsSync: jest.fn().mockImplementation(path => !path.includes('models')),
         },
       });
 
-      expect(() => dumper.checkForestCLIProjectStructure())
-        .toThrow(InvalidForestCLIProjectStructureError);
+      expect(() => dumper.checkForestCLIProjectStructure()).toThrow(
+        InvalidForestCLIProjectStructureError,
+      );
     });
   });
 
@@ -792,7 +851,10 @@ describe('services > dumper (unit)', () => {
       expect(dumperError).toBeInstanceOf(IncompatibleLianaForUpdateError);
       expect(dumperError).toHaveProperty('message', 'The liana is incompatible for update');
       const packagePath = 'package.json';
-      expect(dumperError).toHaveProperty('reason', `"${packagePath}" not found in current directory.`);
+      expect(dumperError).toHaveProperty(
+        'reason',
+        `"${packagePath}" not found in current directory.`,
+      );
     });
 
     it('should throw an error when liana version is less than 7', () => {
@@ -805,10 +867,11 @@ describe('services > dumper (unit)', () => {
         },
       });
 
-      expect(() => dumper.checkLianaCompatiblityForUpdate())
-        .toThrow(new IncompatibleLianaForUpdateError(
+      expect(() => dumper.checkLianaCompatiblityForUpdate()).toThrow(
+        new IncompatibleLianaForUpdateError(
           'Your project is not compatible with the `lforest schema:update` command. You need to use an agent version greater than 7.0.0.',
-        ));
+        ),
+      );
     });
 
     it('should throw an error when liana version is not found on package.json', () => {
@@ -821,10 +884,11 @@ describe('services > dumper (unit)', () => {
         },
       });
 
-      expect(() => dumper.checkLianaCompatiblityForUpdate())
-        .toThrow(new IncompatibleLianaForUpdateError(
+      expect(() => dumper.checkLianaCompatiblityForUpdate()).toThrow(
+        new IncompatibleLianaForUpdateError(
           'Your project is not compatible with the `lforest schema:update` command. You need to use an agent version greater than 7.0.0.',
-        ));
+        ),
+      );
     });
   });
 
@@ -832,16 +896,20 @@ describe('services > dumper (unit)', () => {
     it('should return false if models folder contains some js files', () => {
       expect.assertions(1);
 
-      const mockedFiles = [{
-        name: 'index.js',
-        isFile: () => true,
-      }, {
-        name: 'user.js',
-        isFile: () => true,
-      }, {
-        name: 'databaseFolder',
-        isFile: () => false,
-      }];
+      const mockedFiles = [
+        {
+          name: 'index.js',
+          isFile: () => true,
+        },
+        {
+          name: 'user.js',
+          isFile: () => true,
+        },
+        {
+          name: 'databaseFolder',
+          isFile: () => false,
+        },
+      ];
 
       const dumper = createDumper({
         fs: {
@@ -855,13 +923,16 @@ describe('services > dumper (unit)', () => {
     it('should return true if models folder contains only subfolders', () => {
       expect.assertions(1);
 
-      const mockedFiles = [{
-        name: 'index.js',
-        isFile: () => true,
-      }, {
-        name: 'databaseFolder',
-        isFile: () => false,
-      }];
+      const mockedFiles = [
+        {
+          name: 'index.js',
+          isFile: () => true,
+        },
+        {
+          name: 'databaseFolder',
+          isFile: () => false,
+        },
+      ];
 
       const dumper = createDumper({
         fs: {

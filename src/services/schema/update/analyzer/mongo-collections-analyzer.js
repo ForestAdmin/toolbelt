@@ -72,7 +72,7 @@ function mapCollection(keys = this, emitFunction, store) {
 function reduceCollection(key, analyses) {
   if (hasEmbeddedTypes(analyses)) {
     const formattedAnalysis = { type: 'embedded', schemas: [] };
-    analyses.forEach((analysis) => {
+    analyses.forEach(analysis => {
       if (analysis.type === 'embedded') {
         formattedAnalysis.schemas.push(analysis.schema);
       } else {
@@ -88,14 +88,25 @@ function reduceCollection(key, analyses) {
 /* eslint-disable no-shadow */
 class MongoCollectionsAnalyzer {
   constructor({
-    assertPresent, logger, detectReferences,
-    applyReferences, detectHasMany, applyHasMany,
-    isUnderscored, getMongooseTypeFromValue,
-    isOfMongooseType, getMongooseArraySchema,
-    getMongooseEmbeddedSchema, getMongooseSchema,
-    haveSameEmbeddedType, hasEmbeddedTypes,
-    mergeAnalyzedSchemas, isSystemCollection,
-    getCollectionName, mapCollection, reduceCollection,
+    assertPresent,
+    logger,
+    detectReferences,
+    applyReferences,
+    detectHasMany,
+    applyHasMany,
+    isUnderscored,
+    getMongooseTypeFromValue,
+    isOfMongooseType,
+    getMongooseArraySchema,
+    getMongooseEmbeddedSchema,
+    getMongooseSchema,
+    haveSameEmbeddedType,
+    hasEmbeddedTypes,
+    mergeAnalyzedSchemas,
+    isSystemCollection,
+    getCollectionName,
+    mapCollection,
+    reduceCollection,
     makeProgressBar,
   }) {
     assertPresent({
@@ -173,7 +184,10 @@ class MongoCollectionsAnalyzer {
   mapReduceErrors(resolve, reject) {
     return (err, results) => {
       if (err) {
-        if (err.message && (err.message.startsWith('CMD_NOT_ALLOWED') || err.message.startsWith('MapReduce'))) {
+        if (
+          err.message &&
+          (err.message.startsWith('CMD_NOT_ALLOWED') || err.message.startsWith('MapReduce'))
+        ) {
           return resolve(MAP_REDUCE_ERROR_STRING);
         }
         if (err.codeName && err.codeName === 'CommandNotSupportedOnView') {
@@ -184,7 +198,7 @@ class MongoCollectionsAnalyzer {
         return reject(err);
       }
 
-      return resolve(results.map((result) => this.mergeField(result)));
+      return resolve(results.map(result => this.mergeField(result)));
     };
   }
 
@@ -215,19 +229,22 @@ class MongoCollectionsAnalyzer {
   async analyzeMongoCollectionLocally(databaseConnection, collectionName) {
     const collection = databaseConnection.collection(collectionName);
     const analyze = await this.analyzeCollectionAndDisplayProgressBarIfIsAllow(
-      collection, collectionName,
+      collection,
+      collectionName,
     );
     return this.getFields(analyze);
   }
 
   analyzeMongoCollectionRemotely(databaseConnection, collectionName) {
     return new Promise((resolve, reject) => {
-      databaseConnection.collection(collectionName).mapReduce(
-        this.mapCollection,
-        this.reduceCollection,
-        this.mapReduceOptions,
-        this.mapReduceErrors(resolve, reject),
-      );
+      databaseConnection
+        .collection(collectionName)
+        .mapReduce(
+          this.mapCollection,
+          this.reduceCollection,
+          this.mapReduceOptions,
+          this.mapReduceErrors(resolve, reject),
+        );
     });
   }
 
@@ -255,8 +272,9 @@ class MongoCollectionsAnalyzer {
       const minIndex = index * numberOfDocumentAllowed;
       const options = { minIndex, limit: numberOfDocumentAllowed };
       const documents = await collection.find({}, options).toArray();
-      documents.map((document) =>
-        this.mapCollection(document, MongoCollectionsAnalyzer.emit, fieldsTypes));
+      documents.map(document =>
+        this.mapCollection(document, MongoCollectionsAnalyzer.emit, fieldsTypes),
+      );
       return fieldsTypes;
     };
   }
@@ -305,36 +323,41 @@ class MongoCollectionsAnalyzer {
       });
     }
     const collectionsInfos = await databaseConnection.listCollections().toArray();
-    const isView = (name) => collectionsInfos.find(
-      (info) => !!info.options.viewOn && name === info.name,
-    );
+    const isView = name =>
+      collectionsInfos.find(info => !!info.options.viewOn && name === info.name);
 
     let isMongodbInstanceSupportJs = true;
-    const schema = await P.reduce(collections, async (schema, collection) => {
-      const collectionName = this.getCollectionName(collection);
+    const schema = await P.reduce(
+      collections,
+      async (schema, collection) => {
+        const collectionName = this.getCollectionName(collection);
 
-      // Ignore system collections and collection without a valid name.
-      if (!collectionName || this.isSystemCollection(collection)) {
-        return schema;
-      }
-      let analysis = [];
-      if (isMongodbInstanceSupportJs && !isView(collectionName)) {
-        analysis = await this.analyzeMongoCollectionRemotely(databaseConnection, collectionName);
-        if (analysis === MAP_REDUCE_ERROR_STRING) {
-          isMongodbInstanceSupportJs = false;
-          this.logger.warn('The analysis is running locally instead of in the db instance because your instance does not support javascript.'
-          + ' This action can takes a bit of time because it fetches all the collections.');
+        // Ignore system collections and collection without a valid name.
+        if (!collectionName || this.isSystemCollection(collection)) {
+          return schema;
         }
-      }
+        let analysis = [];
+        if (isMongodbInstanceSupportJs && !isView(collectionName)) {
+          analysis = await this.analyzeMongoCollectionRemotely(databaseConnection, collectionName);
+          if (analysis === MAP_REDUCE_ERROR_STRING) {
+            isMongodbInstanceSupportJs = false;
+            this.logger.warn(
+              'The analysis is running locally instead of in the db instance because your instance does not support javascript.' +
+                ' This action can takes a bit of time because it fetches all the collections.',
+            );
+          }
+        }
 
-      if (!isMongodbInstanceSupportJs && !isView(collectionName)) {
-        analysis = await this.analyzeMongoCollectionLocally(databaseConnection, collectionName);
-      }
+        if (!isMongodbInstanceSupportJs && !isView(collectionName)) {
+          analysis = await this.analyzeMongoCollectionLocally(databaseConnection, collectionName);
+        }
 
-      analysis = await this.applyRelationships(databaseConnection, analysis, collectionName);
-      schema[collectionName] = this.buildSchema(analysis);
-      return schema;
-    }, {});
+        analysis = await this.applyRelationships(databaseConnection, analysis, collectionName);
+        schema[collectionName] = this.buildSchema(analysis);
+        return schema;
+      },
+      {},
+    );
 
     this.restoreDefaultState();
     return schema;

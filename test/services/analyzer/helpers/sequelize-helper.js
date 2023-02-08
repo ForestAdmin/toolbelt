@@ -12,9 +12,10 @@ class SequelizeHelper {
       },
     });
     return new Promise((resolve, reject) => {
-      this.sequelize.authenticate()
+      this.sequelize
+        .authenticate()
         .then(() => resolve(this.sequelize))
-        .catch((err) => reject(err));
+        .catch(err => reject(err));
     });
   }
 
@@ -41,7 +42,10 @@ class SequelizeHelper {
   }
 
   async given(tableName) {
-    const expectedFilename = path.join(__dirname, `../expected/sequelize/db-analysis-output/${tableName}.expected`);
+    const expectedFilename = path.join(
+      __dirname,
+      `../expected/sequelize/db-analysis-output/${tableName}.expected`,
+    );
 
     await this.dropAndCreate(tableName);
 
@@ -78,7 +82,9 @@ class SequelizeHelper {
         WHERE OBJECT_NAME(f.referenced_object_id) = '${tableName}'
         EXEC (@SQL)
       `);
-      await this.sequelize.query(`IF OBJECT_ID('dbo.${tableName}', 'U') IS NOT NULL DROP TABLE dbo.${tableName}`);
+      await this.sequelize.query(
+        `IF OBJECT_ID('dbo.${tableName}', 'U') IS NOT NULL DROP TABLE dbo.${tableName}`,
+      );
     } else {
       await this.sequelize.query(`DROP TABLE IF EXISTS ${tableName} CASCADE`);
     }

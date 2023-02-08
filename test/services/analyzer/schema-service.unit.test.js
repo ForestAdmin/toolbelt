@@ -56,7 +56,9 @@ describe('schemaService', () => {
       const context = makeContext();
       const { errorHandler } = context;
       const schemaService = new SchemaService(context);
-      jest.spyOn(schemaService, '_update').mockImplementation(() => { throw error; });
+      jest.spyOn(schemaService, '_update').mockImplementation(() => {
+        throw error;
+      });
 
       await schemaService.update(options);
 
@@ -87,7 +89,10 @@ describe('schemaService', () => {
       jest.spyOn(schemaService, '_warnIfSingleToMulti').mockImplementation(() => {});
 
       await schemaService._update({
-        isUpdate, outputDirectory, dbSchema, dbConfigPath,
+        isUpdate,
+        outputDirectory,
+        dbSchema,
+        dbConfigPath,
       });
 
       expect(dumper.checkLianaCompatiblityForUpdate).toHaveBeenCalledWith();
@@ -95,10 +100,16 @@ describe('schemaService', () => {
       expect(schemaService._getDatabasesConfig).toHaveBeenCalledWith(dbConfigPath);
       expect(schemaService._connectToDatabases).toHaveBeenCalledWith(databasesConfig);
       expect(schemaService._analyzeDatabases).toHaveBeenCalledWith(databasesConnection, dbSchema);
-      expect(schemaService._dumpSchemas)
-        .toHaveBeenCalledWith(databasesSchema, outputDirectory, isUpdate, useMultiDatabase);
-      expect(schemaService._warnIfSingleToMulti)
-        .toHaveBeenCalledWith(outputDirectory, useMultiDatabase);
+      expect(schemaService._dumpSchemas).toHaveBeenCalledWith(
+        databasesSchema,
+        outputDirectory,
+        isUpdate,
+        useMultiDatabase,
+      );
+      expect(schemaService._warnIfSingleToMulti).toHaveBeenCalledWith(
+        outputDirectory,
+        useMultiDatabase,
+      );
     });
   });
   describe('_assertOutputDirectory', () => {

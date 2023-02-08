@@ -6,7 +6,7 @@ describe('show context graph', () => {
     expect.assertions(0);
     execute([
       defaultPlan,
-      (plan) => plan.addMetadataHook(makeDotWrite(__dirname, '.generated', 'default-plan-graph.dot')),
+      plan => plan.addMetadataHook(makeDotWrite(__dirname, '.generated', 'default-plan-graph.dot')),
     ]);
   });
 });

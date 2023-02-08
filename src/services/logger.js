@@ -1,23 +1,13 @@
 const chalk = require('chalk');
 
-const ALLOWED_OPTION_KEYS = [
-  'color',
-  'prefix',
-  'std',
-  'lineColor',
-];
+const ALLOWED_OPTION_KEYS = ['color', 'prefix', 'std', 'lineColor'];
 const DEFAULT_OPTION_VALUES = ALLOWED_OPTION_KEYS.reduce((options, key) => {
   options[key] = undefined;
   return options;
 }, {});
 
 class Logger {
-  constructor({
-    assertPresent,
-    env,
-    stderr,
-    stdout,
-  }) {
+  constructor({ assertPresent, env, stderr, stdout }) {
     assertPresent({ env, stderr, stdout });
     this.env = env;
     this.stderr = stderr;
@@ -58,7 +48,7 @@ class Logger {
     const { options, messages } = Logger._extractGivenOptionsFromMessages(
       messagesWithPotentialGivenOptions,
     );
-    messages.forEach((message) => this._logLine(message, { ...baseOptions, ...options }));
+    messages.forEach(message => this._logLine(message, { ...baseOptions, ...options }));
   }
 
   static _stringifyIfObject(message) {
@@ -82,7 +72,7 @@ class Logger {
       return false;
     }
 
-    return Object.keys(object).every((key) => ALLOWED_OPTION_KEYS.includes(key));
+    return Object.keys(object).every(key => ALLOWED_OPTION_KEYS.includes(key));
   }
 
   // This is a hack to keep the current signature of Logger methods.
@@ -108,15 +98,25 @@ class Logger {
    *  @example logger.log('message 1', 'message 2')
    *  @example logger.log('message 1', 'message 2',  { color: 'blue', colorLine: 'green' })
    */
-  log(...messagesAndOptions) { this._logLines(messagesAndOptions); }
+  log(...messagesAndOptions) {
+    this._logLines(messagesAndOptions);
+  }
 
-  error(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'red', prefix: '×', std: 'err' }); }
+  error(...messagesAndOptions) {
+    this._logLines(messagesAndOptions, { color: 'red', prefix: '×', std: 'err' });
+  }
 
-  info(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'blue', prefix: '>' }); }
+  info(...messagesAndOptions) {
+    this._logLines(messagesAndOptions, { color: 'blue', prefix: '>' });
+  }
 
-  success(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'green', prefix: '√' }); }
+  success(...messagesAndOptions) {
+    this._logLines(messagesAndOptions, { color: 'green', prefix: '√' });
+  }
 
-  warn(...messagesAndOptions) { this._logLines(messagesAndOptions, { color: 'yellow', prefix: 'Δ' }); }
+  warn(...messagesAndOptions) {
+    this._logLines(messagesAndOptions, { color: 'yellow', prefix: 'Δ' });
+  }
 }
 
 if (process.env.NODE_ENV === 'test') {

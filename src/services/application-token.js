@@ -10,7 +10,7 @@ class ApplicationTokenService {
     /** @private @readonly */
     this.os = os;
 
-    ['api', 'os'].forEach((name) => {
+    ['api', 'os'].forEach(name => {
       if (!this[name]) throw new Error(`Missing dependency ${name}`);
     });
   }

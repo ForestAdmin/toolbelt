@@ -44,12 +44,13 @@ class Dumper {
   }
 
   static getModelsNameSorted(schema) {
-    return Object.keys(schema)
-      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Object.keys(schema).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: 'base' }),
+    );
   }
 
   static getSafeReferences(references) {
-    return references.map((reference) => ({
+    return references.map(reference => ({
       ...reference,
       ref: Dumper.getModelNameFromTableName(reference.ref),
     }));
@@ -82,16 +83,12 @@ class Dumper {
     this.writeFile(absoluteProjectPath, relativeToPath, this.fs.readFileSync(newFrom, 'utf-8'));
   }
 
-  copyHandleBarsTemplate({
-    projectPath,
-    source,
-    target,
-    context,
-  }) {
-    const handlebarsTemplate = (templatePath) => this.Handlebars.compile(
-      this.fs.readFileSync(`${__dirname}/templates/${templatePath}`, 'utf-8'),
-      { noEscape: true },
-    );
+  copyHandleBarsTemplate({ projectPath, source, target, context }) {
+    const handlebarsTemplate = templatePath =>
+      this.Handlebars.compile(
+        this.fs.readFileSync(`${__dirname}/templates/${templatePath}`, 'utf-8'),
+        { noEscape: true },
+      );
 
     if (!(source && target && context && projectPath)) {
       throw new Error('Missing argument (projectPath, source, target or context).');
@@ -189,9 +186,7 @@ class Dumper {
       ? config.appHostname
       : `http://${config.appHostname}`;
 
-    return Dumper.isLocalUrl(hostUrl)
-      ? `${hostUrl}:${Dumper.getPort(config)}`
-      : hostUrl;
+    return Dumper.isLocalUrl(hostUrl) ? `${hostUrl}:${Dumper.getPort(config)}` : hostUrl;
   }
 
   writeDotEnv(projectPath, config) {
@@ -230,14 +225,16 @@ class Dumper {
       modelPath = `models/${config.modelsExportPath}/${Dumper.tableToFilename(table)}.js`;
     }
 
-    const fieldsDefinition = fields.map((field) => {
+    const fieldsDefinition = fields.map(field => {
       const expectedConventionalColumnName = underscored ? _.snakeCase(field.name) : field.name;
       // NOTICE: sequelize considers column name with parenthesis as raw Attributes
       // only set as unconventional name if underscored is true for adding special field attribute
       // and avoid sequelize issues
-      const hasParenthesis = field.nameColumn && (field.nameColumn.includes('(') || field.nameColumn.includes(')'));
-      const nameColumnUnconventional = field.nameColumn !== expectedConventionalColumnName
-        || (underscored && (/[1-9]/g.test(field.name) || hasParenthesis));
+      const hasParenthesis =
+        field.nameColumn && (field.nameColumn.includes('(') || field.nameColumn.includes(')'));
+      const nameColumnUnconventional =
+        field.nameColumn !== expectedConventionalColumnName ||
+        (underscored && (/[1-9]/g.test(field.name) || hasParenthesis));
 
       return {
         ...field,
@@ -247,13 +244,14 @@ class Dumper {
 
         // Only output default value when non-null
         hasSafeDefaultValue: !_.isNil(field.defaultValue),
-        safeDefaultValue: field.defaultValue instanceof this.Sequelize.Utils.Literal
-          ? `Sequelize.literal('${field.defaultValue.val.replace(/'/g, '\\\'')}')`
-          : JSON.stringify(field.defaultValue),
+        safeDefaultValue:
+          field.defaultValue instanceof this.Sequelize.Utils.Literal
+            ? `Sequelize.literal('${field.defaultValue.val.replace(/'/g, "\\'")}')`
+            : JSON.stringify(field.defaultValue),
       };
     });
 
-    const referencesDefinition = references.map((reference) => ({
+    const referencesDefinition = references.map(reference => ({
       ...reference,
       isBelongsToMany: reference.association === 'belongsToMany',
       targetKey: _.camelCase(reference.targetKey),
@@ -363,7 +361,9 @@ class Dumper {
 
   writeDockerCompose(projectPath, config) {
     const databaseUrl = `\${${this.isLinuxBasedOs() ? 'DATABASE_URL' : 'DOCKER_DATABASE_URL'}}`;
-    const forestUrl = this.env.FOREST_URL_IS_DEFAULT ? false : `\${FOREST_URL-${this.env.FOREST_URL}}`;
+    const forestUrl = this.env.FOREST_URL_IS_DEFAULT
+      ? false
+      : `\${FOREST_URL-${this.env.FOREST_URL}}`;
     let forestExtraHost = false;
     if (forestUrl) {
       try {
@@ -383,7 +383,7 @@ class Dumper {
         dbSchema: config.dbSchema,
         forestExtraHost,
         forestUrl,
-        network: (this.isLinuxBasedOs() && Dumper.isDatabaseLocal(config)) ? 'host' : null,
+        network: this.isLinuxBasedOs() && Dumper.isDatabaseLocal(config) ? 'host' : null,
       },
     });
   }
@@ -423,7 +423,7 @@ class Dumper {
 
     if (!isUpdate) this.writeDatabasesConfig(projectPath, config);
 
-    modelNames.forEach((modelName) => this.writeForestCollection(projectPath, config, modelName));
+    modelNames.forEach(modelName => this.writeForestCollection(projectPath, config, modelName));
 
     if (!isUpdate) {
       this.writeForestAdminMiddleware(projectPath, config);
@@ -431,7 +431,7 @@ class Dumper {
       this.writeModelsIndex(projectPath, config);
     }
 
-    modelNames.forEach((modelName) => {
+    modelNames.forEach(modelName => {
       const { fields, references, options } = schema[modelName];
       const safeReferences = Dumper.getSafeReferences(references);
 
@@ -440,7 +440,7 @@ class Dumper {
 
     if (!isUpdate) this.copyTemplate(projectPath, 'public/favicon.png', 'public/favicon.png');
 
-    modelNames.forEach((modelName) => {
+    modelNames.forEach(modelName => {
       // HACK: If a table name is "sessions" or "stats" the generated routes will conflict with
       //       Forest Admin internal route (session or stats creation).
       //       As a workaround, we don't generate the route file.
@@ -478,7 +478,8 @@ class Dumper {
 
   checkLianaCompatiblityForUpdate() {
     const packagePath = 'package.json';
-    if (!this.fs.existsSync(packagePath)) throw new IncompatibleLianaForUpdateError(`"${packagePath}" not found in current directory.`);
+    if (!this.fs.existsSync(packagePath))
+      throw new IncompatibleLianaForUpdateError(`"${packagePath}" not found in current directory.`);
 
     const file = this.fs.readFileSync(packagePath, 'utf8');
     const match = /forest-express-\D*((\d+).\d+.\d+)/g.exec(file);
@@ -496,7 +497,7 @@ class Dumper {
 
   hasMultipleDatabaseStructure() {
     const files = this.fs.readdirSync('models', { withFileTypes: true });
-    return !files.some((file) => file.isFile() && file.name !== 'index.js');
+    return !files.some(file => file.isFile() && file.name !== 'index.js');
   }
 }
 

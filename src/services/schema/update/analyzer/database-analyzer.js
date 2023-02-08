@@ -1,12 +1,7 @@
 const EmptyDatabaseError = require('../../../../errors/database/empty-database-error');
 
 module.exports = class DatabaseAnalyzer {
-  constructor({
-    assertPresent,
-    mongoAnalyzer,
-    sequelizeAnalyzer,
-    terminator,
-  }) {
+  constructor({ assertPresent, mongoAnalyzer, sequelizeAnalyzer, terminator }) {
     assertPresent({
       mongoAnalyzer,
       sequelizeAnalyzer,
@@ -18,9 +13,15 @@ module.exports = class DatabaseAnalyzer {
   }
 
   async reportEmptyDatabase(orm, dialect) {
-    const logs = [`Your database looks empty! Please create some ${orm === 'mongoose' ? 'collections' : 'tables'} before running the command.`];
+    const logs = [
+      `Your database looks empty! Please create some ${
+        orm === 'mongoose' ? 'collections' : 'tables'
+      } before running the command.`,
+    ];
     if (orm === 'sequelize') {
-      logs.push('If not, check whether you are using a custom database schema (use in that case the --schema option).');
+      logs.push(
+        'If not, check whether you are using a custom database schema (use in that case the --schema option).',
+      );
     }
     return this.terminator.terminate(1, {
       logs,
@@ -34,13 +35,12 @@ module.exports = class DatabaseAnalyzer {
   }
 
   async _analyze(analyze, databaseConnection, config, allowWarning) {
-    return analyze(databaseConnection, config, allowWarning)
-      .catch((error) => {
-        if (error instanceof EmptyDatabaseError) {
-          return this.reportEmptyDatabase(error.details.orm, error.details.dialect);
-        }
-        throw error;
-      });
+    return analyze(databaseConnection, config, allowWarning).catch(error => {
+      if (error instanceof EmptyDatabaseError) {
+        return this.reportEmptyDatabase(error.details.orm, error.details.dialect);
+      }
+      throw error;
+    });
   }
 
   async analyzeMongoDb(databaseConnection, config, allowWarning) {

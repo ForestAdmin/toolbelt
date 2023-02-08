@@ -9,11 +9,7 @@ const persons = [
         model: {
           arrayOfNumber: [1, 2, 3],
           arrayMixed: [1, 'two', true, new Date()],
-          arrayOfObjectIds: [
-            ObjectID(),
-            ObjectID(),
-            ObjectID(),
-          ],
+          arrayOfObjectIds: [ObjectID(), ObjectID(), ObjectID()],
           arrayWithComplexObject: [
             {
               _id: ObjectID(),

@@ -30,7 +30,9 @@ class AbstractAuthenticatedCommand extends AbstractCommand {
 
       if (error.status === 401) {
         await this.authenticator.logout();
-        this.logger.error(`Please use '${this.chalk.bold('forest login')}' to sign in to your Forest account.`);
+        this.logger.error(
+          `Please use '${this.chalk.bold('forest login')}' to sign in to your Forest account.`,
+        );
         this.exit(10);
       }
 

@@ -18,11 +18,13 @@ describe('inquirer', () => {
     it('should confirm', async () => {
       expect.assertions(2);
       const stdin = startMock();
-      const prompt = inquirer.prompt([{
-        type: 'confirm',
-        name: 'The confirm question name',
-        message: 'Is the confirm prompt working?',
-      }]);
+      const prompt = inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'The confirm question name',
+          message: 'Is the confirm prompt working?',
+        },
+      ]);
       send(stdin, 'Y');
       const result = await prompt;
       stopMock();
@@ -33,11 +35,13 @@ describe('inquirer', () => {
     it('should not confirm', async () => {
       expect.assertions(2);
       const stdin = startMock();
-      const prompt = inquirer.prompt([{
-        type: 'confirm',
-        name: 'The confirm question name',
-        message: 'Is the confirm prompt working?',
-      }]);
+      const prompt = inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'The confirm question name',
+          message: 'Is the confirm prompt working?',
+        },
+      ]);
       send(stdin, 'N');
       const result = await prompt;
       stopMock();
@@ -47,14 +51,16 @@ describe('inquirer', () => {
 
     it('should not confirm by default', async () => {
       expect.assertions(4);
-      const testConfirmWithDefault = async (defaultValue) => {
+      const testConfirmWithDefault = async defaultValue => {
         const stdin = startMock();
-        const prompt = inquirer.prompt([{
-          type: 'confirm',
-          name: 'confirm',
-          message: 'Is the confirm prompt working?',
-          default: defaultValue,
-        }]);
+        const prompt = inquirer.prompt([
+          {
+            type: 'confirm',
+            name: 'confirm',
+            message: 'Is the confirm prompt working?',
+            default: defaultValue,
+          },
+        ]);
         send(stdin, '');
         const result = await prompt;
         stopMock();
@@ -70,11 +76,13 @@ describe('inquirer', () => {
     it('should work without validation without default', async () => {
       expect.assertions(2);
       const stdin = startMock();
-      const prompt = inquirer.prompt([{
-        name: 'endpoint',
-        message: 'Enter your local admin backend endpoint:',
-        type: 'input',
-      }]);
+      const prompt = inquirer.prompt([
+        {
+          name: 'endpoint',
+          message: 'Enter your local admin backend endpoint:',
+          type: 'input',
+        },
+      ]);
       send(stdin, 'my-local-admin-backend-endpoint');
       const result = await prompt;
       stopMock();
@@ -84,12 +92,14 @@ describe('inquirer', () => {
     it('should work without validation with default', async () => {
       expect.assertions(2);
       const stdin = startMock();
-      const prompt = inquirer.prompt([{
-        name: 'endpoint',
-        message: 'Enter your local admin backend endpoint:',
-        type: 'input',
-        default: 'my-default-endpoint',
-      }]);
+      const prompt = inquirer.prompt([
+        {
+          name: 'endpoint',
+          message: 'Enter your local admin backend endpoint:',
+          type: 'input',
+          default: 'my-default-endpoint',
+        },
+      ]);
       send(stdin, '');
       const result = await prompt;
       stopMock();
@@ -99,12 +109,14 @@ describe('inquirer', () => {
     it('should work with valid validation', async () => {
       expect.assertions(2);
       const stdin = startMock();
-      const prompt = inquirer.prompt([{
-        name: 'endpoint',
-        message: 'Enter your local admin backend endpoint:',
-        type: 'input',
-        validate: (value) => value === 'same-value',
-      }]);
+      const prompt = inquirer.prompt([
+        {
+          name: 'endpoint',
+          message: 'Enter your local admin backend endpoint:',
+          type: 'input',
+          validate: value => value === 'same-value',
+        },
+      ]);
       send(stdin, 'same-value');
       const result = await prompt;
       stopMock();
@@ -115,15 +127,17 @@ describe('inquirer', () => {
       expect.assertions(4);
       const validateReturns = jest.fn();
       const stdin = startMock();
-      const prompt = inquirer.prompt([{
-        name: 'endpoint',
-        message: 'Enter your local admin backend endpoint:',
-        type: 'input',
-        validate: (value) => {
-          validateReturns(value);
-          return value === 'same-value';
+      const prompt = inquirer.prompt([
+        {
+          name: 'endpoint',
+          message: 'Enter your local admin backend endpoint:',
+          type: 'input',
+          validate: value => {
+            validateReturns(value);
+            return value === 'same-value';
+          },
         },
-      }]);
+      ]);
       send(stdin, 'other-value');
       send(stdin, 'same-value');
       const result = await prompt;
@@ -143,12 +157,14 @@ describe('inquirer', () => {
 
       const stdin = startMock();
 
-      const prompt = inquirer.prompt([{
-        type: 'list',
-        name: 'dbDialect',
-        message: 'What\'s the database type?',
-        choices: ['postgres', 'mysql', 'mssql', 'mongodb'],
-      }]);
+      const prompt = inquirer.prompt([
+        {
+          type: 'list',
+          name: 'dbDialect',
+          message: "What's the database type?",
+          choices: ['postgres', 'mysql', 'mssql', 'mongodb'],
+        },
+      ]);
 
       send(stdin, arrowDown);
       send(stdin, arrowDown);
@@ -157,7 +173,7 @@ describe('inquirer', () => {
       const result = await prompt;
       stopMock();
 
-      expect(stdout.output).toContain('What\'s the database type?');
+      expect(stdout.output).toContain("What's the database type?");
       expect(result).toStrictEqual({ dbDialect: 'mysql' });
     });
   });
@@ -168,15 +184,17 @@ describe('inquirer', () => {
       const validateReturns = jest.fn();
       const stdin = startMock();
 
-      const prompt = inquirer.prompt([{
-        type: 'password',
-        name: 'password',
-        message: 'What is your Forest Admin password:',
-        validate: (input) => {
-          validateReturns(input);
-          return input === 'secret' || 'Please enter your password.';
+      const prompt = inquirer.prompt([
+        {
+          type: 'password',
+          name: 'password',
+          message: 'What is your Forest Admin password:',
+          validate: input => {
+            validateReturns(input);
+            return input === 'secret' || 'Please enter your password.';
+          },
         },
-      }]);
+      ]);
 
       send(stdin, 'badsecret');
       send(stdin, 'secret');

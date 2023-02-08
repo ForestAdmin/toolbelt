@@ -20,8 +20,8 @@ describe('services > authenticator', () => {
       writeFileSync: jest.fn(),
     };
     const chalk = {
-      red: jest.fn().mockImplementation((value) => `[red]${value}[/red]`),
-      green: jest.fn().mockImplementation((value) => `[green]${value}[/green]`),
+      red: jest.fn().mockImplementation(value => `[red]${value}[/red]`),
+      green: jest.fn().mockImplementation(value => `[green]${value}[/green]`),
     };
 
     const logger = {
@@ -59,14 +59,13 @@ describe('services > authenticator', () => {
         expect.assertions(2);
         const { authenticator } = setup();
         const token = Symbol('token');
-        jest
-          .spyOn(authenticator, 'getVerifiedToken')
-          .mockReturnValue(token);
+        jest.spyOn(authenticator, 'getVerifiedToken').mockReturnValue(token);
 
         const result = authenticator.getAuthToken();
 
-        expect(authenticator.getVerifiedToken)
-          .toHaveBeenCalledWith('sweet-home/.forest.d/.forestrc');
+        expect(authenticator.getVerifiedToken).toHaveBeenCalledWith(
+          'sweet-home/.forest.d/.forestrc',
+        );
         expect(result).toBe(token);
       });
     });
@@ -100,8 +99,7 @@ describe('services > authenticator', () => {
 
           const result = authenticator.getAuthToken();
 
-          expect(authenticator.getVerifiedToken)
-            .toHaveBeenNthCalledWith(3, 'sweet-home/.lumberrc');
+          expect(authenticator.getVerifiedToken).toHaveBeenNthCalledWith(3, 'sweet-home/.lumberrc');
           expect(result).toBe(lumberToken);
         });
       });
@@ -109,14 +107,11 @@ describe('services > authenticator', () => {
         it('should return null', () => {
           expect.assertions(2);
           const { authenticator } = setup();
-          jest
-            .spyOn(authenticator, 'getVerifiedToken')
-            .mockReturnValue(null);
+          jest.spyOn(authenticator, 'getVerifiedToken').mockReturnValue(null);
 
           const result = authenticator.getAuthToken();
 
-          expect(authenticator.getVerifiedToken)
-            .toHaveBeenNthCalledWith(3, 'sweet-home/.lumberrc');
+          expect(authenticator.getVerifiedToken).toHaveBeenNthCalledWith(3, 'sweet-home/.lumberrc');
           expect(result).toBeNull();
         });
       });
@@ -128,9 +123,7 @@ describe('services > authenticator', () => {
       it('should return null', () => {
         expect.assertions(2);
         const { authenticator } = setup();
-        jest
-          .spyOn(authenticator, 'readAuthTokenFrom')
-          .mockReturnValue(null);
+        jest.spyOn(authenticator, 'readAuthTokenFrom').mockReturnValue(null);
 
         const path = Symbol('path');
         const result = authenticator.getVerifiedToken(path);
@@ -144,12 +137,8 @@ describe('services > authenticator', () => {
         expect.assertions(3);
         const { authenticator } = setup();
         const token = Symbol('token');
-        jest
-          .spyOn(authenticator, 'readAuthTokenFrom')
-          .mockReturnValue(token);
-        jest
-          .spyOn(authenticator, 'verify')
-          .mockReturnValue(token);
+        jest.spyOn(authenticator, 'readAuthTokenFrom').mockReturnValue(token);
+        jest.spyOn(authenticator, 'verify').mockReturnValue(token);
 
         const path = Symbol('path');
         const result = authenticator.getVerifiedToken(path);
@@ -167,7 +156,9 @@ describe('services > authenticator', () => {
         expect.assertions(2);
         const { authenticator, fs } = setup();
 
-        fs.readFileSync.mockImplementation(() => { throw new Error(); });
+        fs.readFileSync.mockImplementation(() => {
+          throw new Error();
+        });
         const path = Symbol('path');
         const result = authenticator.readAuthTokenFrom(path);
 
@@ -204,7 +195,9 @@ describe('services > authenticator', () => {
         expect.assertions(2);
         const { authenticator, jwtDecode } = setup();
 
-        jwtDecode.mockImplementation(() => { throw new Error(); });
+        jwtDecode.mockImplementation(() => {
+          throw new Error();
+        });
 
         const token = Symbol('token');
         const result = authenticator.verify(token);
@@ -218,7 +211,7 @@ describe('services > authenticator', () => {
         expect.assertions(2);
         const { authenticator, jwtDecode } = setup();
 
-        const decodedToken = { exp: (Date.now().valueOf() / 1000) - 100000 }; // far in the past
+        const decodedToken = { exp: Date.now().valueOf() / 1000 - 100000 }; // far in the past
         jwtDecode.mockReturnValue(decodedToken);
 
         const token = Symbol('token');
@@ -233,7 +226,7 @@ describe('services > authenticator', () => {
         expect.assertions(2);
         const { authenticator, jwtDecode } = setup();
 
-        const decodedToken = { exp: (Date.now().valueOf() / 1000) + 100000 }; // far in the future
+        const decodedToken = { exp: Date.now().valueOf() / 1000 + 100000 }; // far in the future
         jwtDecode.mockReturnValue(decodedToken);
 
         const token = Symbol('token');
@@ -296,11 +289,10 @@ describe('services > authenticator', () => {
 
         expect(logger.error).not.toHaveBeenCalled();
         expect(oidcAuthenticator.authenticate).toHaveBeenCalledWith();
-        expect(applicationTokenService.generateApplicationToken).toHaveBeenCalledWith('SESSION-TOKEN');
-        expect(fs.writeFileSync).toHaveBeenCalledWith(
-          `${FOREST_D_PATH}`,
-          'APP-TOKEN',
+        expect(applicationTokenService.generateApplicationToken).toHaveBeenCalledWith(
+          'SESSION-TOKEN',
         );
+        expect(fs.writeFileSync).toHaveBeenCalledWith(`${FOREST_D_PATH}`, 'APP-TOKEN');
       });
     });
 
@@ -322,11 +314,11 @@ describe('services > authenticator', () => {
 
           oidcAuthenticator.authenticate.mockResolvedValue('SESSION-TOKEN');
           applicationTokenService.generateApplicationToken.mockResolvedValue('APP-TOKEN');
-          fs.readFileSync.mockImplementation((path) => {
+          fs.readFileSync.mockImplementation(path => {
             if (path === FOREST_PATH) return 'PREVIOUS-TOKEN';
             return '';
           });
-          jwtDecode.mockReturnValue({ exp: (Date.now().valueOf() / 1000) + 5000 });
+          jwtDecode.mockReturnValue({ exp: Date.now().valueOf() / 1000 + 5000 });
 
           await authenticator.tryLogin({});
 
@@ -354,11 +346,11 @@ describe('services > authenticator', () => {
 
           oidcAuthenticator.authenticate.mockResolvedValue('SESSION-TOKEN');
           applicationTokenService.generateApplicationToken.mockResolvedValue('APP-TOKEN');
-          fs.readFileSync.mockImplementation((path) => {
+          fs.readFileSync.mockImplementation(path => {
             if (path === LUMBER_PATH) return 'PREVIOUS-TOKEN';
             return '';
           });
-          jwtDecode.mockReturnValue({ exp: (Date.now().valueOf() / 1000) + 5000 });
+          jwtDecode.mockReturnValue({ exp: Date.now().valueOf() / 1000 + 5000 });
 
           await authenticator.tryLogin({});
 
@@ -376,7 +368,9 @@ describe('services > authenticator', () => {
 
         await authenticator.tryLogin({ token: '' });
 
-        expect(logger.error).toHaveBeenCalledWith('The provided token is empty. Please provide a valid token.');
+        expect(logger.error).toHaveBeenCalledWith(
+          'The provided token is empty. Please provide a valid token.',
+        );
         expect(logger.error).toHaveBeenCalledTimes(1);
       });
 
@@ -386,28 +380,27 @@ describe('services > authenticator', () => {
 
           const { authenticator, logger, jwtDecode } = setup();
 
-          jwtDecode.mockImplementation(() => { throw new Error('invalid'); });
+          jwtDecode.mockImplementation(() => {
+            throw new Error('invalid');
+          });
           await authenticator.tryLogin({ token: 'invalid', email: 'bob@foo.com' });
 
-          expect(logger.error).toHaveBeenCalledWith('Invalid token. Please enter your authentication token.');
+          expect(logger.error).toHaveBeenCalledWith(
+            'Invalid token. Please enter your authentication token.',
+          );
           expect(logger.error).toHaveBeenCalledTimes(1);
         });
 
         it('should save the token if it is valid', async () => {
           expect.assertions(2);
 
-          const {
-            authenticator, fs, logger, jwtDecode,
-          } = setup();
+          const { authenticator, fs, logger, jwtDecode } = setup();
 
-          jwtDecode.mockReturnValue({ exp: (Date.now().valueOf() / 1000) + 5000 });
+          jwtDecode.mockReturnValue({ exp: Date.now().valueOf() / 1000 + 5000 });
           await authenticator.tryLogin({ token: 'valid', email: 'bob@foo.com' });
 
           expect(logger.error).not.toHaveBeenCalled();
-          expect(fs.writeFileSync).toHaveBeenCalledWith(
-            'sweet-home/.forest.d/.forestrc',
-            'valid',
-          );
+          expect(fs.writeFileSync).toHaveBeenCalledWith('sweet-home/.forest.d/.forestrc', 'valid');
         });
       });
     });
@@ -415,7 +408,7 @@ describe('services > authenticator', () => {
 
   describe('logout', () => {
     function mockGetToken(pathWithAToken) {
-      return (path) => {
+      return path => {
         if (path === pathWithAToken) {
           return 'THE TOKEN';
         }
@@ -429,31 +422,29 @@ describe('services > authenticator', () => {
 
         const { authenticator, fs, applicationTokenService } = setup();
         const forestForestToken = Symbol('forestForestToken');
-        jest.spyOn(authenticator, 'getVerifiedToken')
+        jest
+          .spyOn(authenticator, 'getVerifiedToken')
           .mockReturnValueOnce(null)
           .mockReturnValueOnce(forestForestToken);
 
         authenticator.logout();
 
         expect(fs.unlinkSync).toHaveBeenCalledWith('sweet-home/.forest.d/.forestrc');
-        expect(applicationTokenService.deleteApplicationToken)
-          .toHaveBeenCalledWith(forestForestToken);
+        expect(applicationTokenService.deleteApplicationToken).toHaveBeenCalledWith(
+          forestForestToken,
+        );
       });
     });
 
     describe('a forest token is found', () => {
       it('should delete the .forestrc file and call the api to invalidate the token', async () => {
         expect.assertions(5);
-        const {
-          authenticator, fs, jwtDecode, applicationTokenService,
-          FOREST_PATH, logger,
-        } = setup();
+        const { authenticator, fs, jwtDecode, applicationTokenService, FOREST_PATH, logger } =
+          setup();
 
-        fs.readFileSync
-          .mockImplementation(mockGetToken(FOREST_PATH));
-        jwtDecode.mockReturnValue({ exp: (Date.now() / 1000) + 60 });
-        applicationTokenService.deleteApplicationToken
-          .mockResolvedValue(undefined);
+        fs.readFileSync.mockImplementation(mockGetToken(FOREST_PATH));
+        jwtDecode.mockReturnValue({ exp: Date.now() / 1000 + 60 });
+        applicationTokenService.deleteApplicationToken.mockResolvedValue(undefined);
 
         await authenticator.logout();
 
@@ -468,14 +459,11 @@ describe('services > authenticator', () => {
     describe('only a lumber token is found', () => {
       it('should do nothing', async () => {
         expect.assertions(3);
-        const {
-          authenticator, fs, jwtDecode, applicationTokenService,
-          LUMBER_PATH, logger,
-        } = setup();
+        const { authenticator, fs, jwtDecode, applicationTokenService, LUMBER_PATH, logger } =
+          setup();
 
-        fs.readFileSync
-          .mockImplementation(mockGetToken(LUMBER_PATH));
-        jwtDecode.mockReturnValue({ exp: (Date.now() / 1000) + 60 });
+        fs.readFileSync.mockImplementation(mockGetToken(LUMBER_PATH));
+        jwtDecode.mockReturnValue({ exp: Date.now() / 1000 + 60 });
 
         await authenticator.logout();
 
@@ -488,16 +476,12 @@ describe('services > authenticator', () => {
     describe('when called with the option to write log messages', () => {
       it('should logout and write a message', async () => {
         expect.assertions(3);
-        const {
-          authenticator, fs, jwtDecode, applicationTokenService,
-          FOREST_PATH, logger,
-        } = setup();
+        const { authenticator, fs, jwtDecode, applicationTokenService, FOREST_PATH, logger } =
+          setup();
 
-        fs.readFileSync
-          .mockImplementation(mockGetToken(FOREST_PATH));
-        jwtDecode.mockReturnValue({ exp: (Date.now() / 1000) + 60 });
-        applicationTokenService.deleteApplicationToken
-          .mockResolvedValue(undefined);
+        fs.readFileSync.mockImplementation(mockGetToken(FOREST_PATH));
+        jwtDecode.mockReturnValue({ exp: Date.now() / 1000 + 60 });
+        applicationTokenService.deleteApplicationToken.mockResolvedValue(undefined);
 
         await authenticator.logout({ log: true });
 
@@ -508,22 +492,20 @@ describe('services > authenticator', () => {
 
       it('should not do anything and write a message', async () => {
         expect.assertions(3);
-        const {
-          authenticator, fs, jwtDecode, applicationTokenService,
-          LUMBER_PATH, logger,
-        } = setup();
+        const { authenticator, fs, jwtDecode, applicationTokenService, LUMBER_PATH, logger } =
+          setup();
 
-        fs.readFileSync
-          .mockImplementation(mockGetToken(LUMBER_PATH));
-        jwtDecode.mockReturnValue({ exp: (Date.now() / 1000) + 60 });
-        applicationTokenService.deleteApplicationToken
-          .mockResolvedValue(undefined);
+        fs.readFileSync.mockImplementation(mockGetToken(LUMBER_PATH));
+        jwtDecode.mockReturnValue({ exp: Date.now() / 1000 + 60 });
+        applicationTokenService.deleteApplicationToken.mockResolvedValue(undefined);
 
         await authenticator.logout({ log: true });
 
         expect(fs.unlinkSync).not.toHaveBeenCalled();
         expect(applicationTokenService.deleteApplicationToken).not.toHaveBeenCalled();
-        expect(logger.info).toHaveBeenCalledWith('You cannot be logged out with this command. Please use "lumber logout" command.');
+        expect(logger.info).toHaveBeenCalledWith(
+          'You cannot be logged out with this command. Please use "lumber logout" command.',
+        );
       });
     });
   });

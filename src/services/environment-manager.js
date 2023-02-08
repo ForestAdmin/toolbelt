@@ -9,9 +9,7 @@ const JobStateChecker = require('./job-state-checker');
 const { handleError } = require('../utils/error');
 
 function EnvironmentManager(config) {
-  const {
-    assertPresent, authenticator, env, keyGenerator,
-  } = Context.inject();
+  const { assertPresent, authenticator, env, keyGenerator } = Context.inject();
   assertPresent({ authenticator, env, keyGenerator });
 
   this.listEnvironments = async () => {
@@ -22,10 +20,10 @@ function EnvironmentManager(config) {
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
       .send()
-      .then((response) => environmentDeserializer.deserialize(response.body));
+      .then(response => environmentDeserializer.deserialize(response.body));
   };
 
-  this.getEnvironment = async (environmentId) => {
+  this.getEnvironment = async environmentId => {
     const authToken = authenticator.getAuthToken();
 
     return agent
@@ -33,10 +31,10 @@ function EnvironmentManager(config) {
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-environment-id', environmentId)
       .send()
-      .then((response) => environmentDeserializer.deserialize(response.body));
+      .then(response => environmentDeserializer.deserialize(response.body));
   };
 
-  this.getEnvironmentApimap = async (environmentId) => {
+  this.getEnvironmentApimap = async environmentId => {
     const authToken = authenticator.getAuthToken();
 
     const response = await agent
@@ -54,11 +52,13 @@ function EnvironmentManager(config) {
       .post(`${env.FOREST_URL}/api/environments`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
-      .send(EnvironmentSerializer.serialize({
-        name: config.name,
-        apiEndpoint: config.url,
-        project: { id: config.projectId },
-      }));
+      .send(
+        EnvironmentSerializer.serialize({
+          name: config.name,
+          apiEndpoint: config.url,
+          project: { id: config.projectId },
+        }),
+      );
     const environment = await environmentDeserializer.deserialize(response.body);
 
     environment.authSecret = keyGenerator.generate();
@@ -72,7 +72,7 @@ function EnvironmentManager(config) {
       .post(`${env.FOREST_URL}/api/projects/${projectId}/development-environment-for-user`)
       .set('Authorization', `Bearer ${authToken}`)
       .send({ endpoint })
-      .then((response) => environmentDeserializer.deserialize(response.body));
+      .then(response => environmentDeserializer.deserialize(response.body));
   };
 
   this.updateEnvironment = async () => {
@@ -80,13 +80,15 @@ function EnvironmentManager(config) {
     return agent
       .put(`${env.FOREST_URL}/api/environments/${config.environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
-      .send(EnvironmentSerializer.serialize({
-        name: config.name,
-        apiEndpoint: config.url,
-      }));
+      .send(
+        EnvironmentSerializer.serialize({
+          name: config.name,
+          apiEndpoint: config.url,
+        }),
+      );
   };
 
-  this.deleteEnvironment = async (environmentId) => {
+  this.deleteEnvironment = async environmentId => {
     const authToken = authenticator.getAuthToken();
 
     return agent
@@ -112,10 +114,12 @@ function EnvironmentManager(config) {
       .set('forest-project-id', config.projectId)
       .send(DeploymentRequestSerializer.serialize(deploymentRequest));
 
-    if (!deploymentRequestResponse
-      || !deploymentRequestResponse.body
-      || !deploymentRequestResponse.body.meta
-      || !deploymentRequestResponse.body.meta.job_id) {
+    if (
+      !deploymentRequestResponse ||
+      !deploymentRequestResponse.body ||
+      !deploymentRequestResponse.body.meta ||
+      !deploymentRequestResponse.body.meta.job_id
+    ) {
       return false;
     }
 
@@ -147,7 +151,7 @@ function EnvironmentManager(config) {
       .set('forest-secret-key', `${config.envSecret}`);
   };
 
-  this.handleEnvironmentError = (rawError) => {
+  this.handleEnvironmentError = rawError => {
     const error = handleError(rawError);
     if (error === 'Forbidden') {
       return 'You do not have the permission to perform this action on the given environments.';
