@@ -121,6 +121,7 @@
     "build": "tsc",
     "build:watch": "tsc --watch",
     "test": "jest --runInBand",
-    "test:coverage": "jest --runInBand --coverage"
+    "test:coverage": "jest --runInBand --coverage",
+    "postbuild": "cp -R src/services/dumper/templates dist/services/dumper/templates"
   }
 }
