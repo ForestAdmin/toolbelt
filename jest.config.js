@@ -1,7 +1,6 @@
 const appRoot = require('app-root-path');
 
 module.exports = {
-  preset: 'ts-jest',
   coverageReporters: [
     [
       'lcov',
@@ -26,6 +25,10 @@ module.exports = {
     '/.*rc.js',
     '/.dependency-cruiser.js',
   ],
+
+  transform: {
+    '^.+\\.tsx?$': '@swc/jest',
+  },
 
   testEnvironment: 'node',
 };
