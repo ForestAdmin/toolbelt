@@ -92,11 +92,11 @@ jobs:
         with:
           name: build
           path: |
-            /dist/*
-            package.json
-            /bin
-            /npm-shrinkwrap.json
-            /oclif.manifest.json
+            ./dist/*
+            ./package.json
+            ./bin
+            ./npm-shrinkwrap.json
+            ./oclif.manifest.json
           retention-days: 1
 
   deploy:
