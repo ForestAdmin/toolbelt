@@ -1,3 +1,5 @@
+## [3.0.12](https://github.com/ForestAdmin/toolbelt/compare/v3.0.11...v3.0.12) (2023-02-09)
+
 ## [3.0.12-beta.2](https://github.com/ForestAdmin/toolbelt/compare/v3.0.12-beta.1...v3.0.12-beta.2) (2023-02-08)
 
 ## [3.0.12-beta.1](https://github.com/ForestAdmin/toolbelt/compare/v3.0.11...v3.0.12-beta.1) (2023-02-08)
