@@ -3,8 +3,8 @@ const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class GetCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, chalk, env, environmentRenderer } = this.context;
     assertPresent({ chalk, env });
     this.chalk = chalk;
@@ -12,7 +12,9 @@ class GetCommand extends AbstractAuthenticatedCommand {
     this.environmentRenderer = environmentRenderer;
   }
 
-  async runIfAuthenticated() {
+  async run() {
+    await this.checkAuthentication();
+
     const parsed = this.parse(GetCommand);
     const config = { ...this.env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
@@ -23,6 +25,11 @@ class GetCommand extends AbstractAuthenticatedCommand {
     } catch (err) {
       this.logger.error(`Cannot find the environment ${this.chalk.bold(config.environmentId)}.`);
     }
+  }
+
+  async catch(error) {
+    await this.handleAuthenticationErrors(error);
+    return super.catch(error);
   }
 }
 

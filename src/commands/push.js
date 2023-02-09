@@ -5,15 +5,17 @@ const ProjectManager = require('../services/project-manager');
 const withCurrentProject = require('../services/with-current-project');
 
 class PushCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, env, inquirer } = this.context;
     assertPresent({ env, inquirer });
     this.env = env;
     this.inquirer = inquirer;
   }
 
-  async runIfAuthenticated() {
+  async run() {
+    await this.checkAuthentication();
+
     const parsed = this.parse(PushCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
@@ -58,6 +60,11 @@ class PushCommand extends AbstractAuthenticatedCommand {
       this.logger.error(customError);
       this.exit(2);
     }
+  }
+
+  async catch(error) {
+    await this.handleAuthenticationErrors(error);
+    return super.catch(error);
   }
 }
 

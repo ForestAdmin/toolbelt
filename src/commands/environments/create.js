@@ -4,15 +4,17 @@ const AbstractAuthenticatedCommand = require('../../abstract-authenticated-comma
 const withCurrentProject = require('../../services/with-current-project');
 
 class CreateCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, env, environmentRenderer } = this.context;
     assertPresent({ env, environmentRenderer });
     this.env = env;
     this.environmentRenderer = environmentRenderer;
   }
 
-  async runIfAuthenticated() {
+  async run() {
+    await this.checkAuthentication();
+
     const parsed = this.parse(CreateCommand);
     const config = await withCurrentProject({ ...this.env, ...parsed.flags });
     const manager = new EnvironmentManager(config);
@@ -36,6 +38,11 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       }
       throw error;
     }
+  }
+
+  async catch(error) {
+    await this.handleAuthenticationErrors(error);
+    return super.catch(error);
   }
 }
 

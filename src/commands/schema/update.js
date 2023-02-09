@@ -3,8 +3,8 @@ const AbstractCommand = require('../../abstract-command');
 const StaticContext = require('../../context/static');
 
 class UpdateCommand extends AbstractCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, env, path, schemaService } = this.context;
     assertPresent({
       env,
@@ -17,6 +17,8 @@ class UpdateCommand extends AbstractCommand {
   }
 
   async run() {
+    await this.checkAuthentication();
+
     const parsed = this.parse(UpdateCommand);
     const commandOptions = { ...parsed.flags, ...parsed.args };
 

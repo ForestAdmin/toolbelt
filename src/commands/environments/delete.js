@@ -3,8 +3,8 @@ const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class DeleteCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, chalk, env, inquirer } = this.context;
     assertPresent({
       chalk,
@@ -16,7 +16,9 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
     this.inquirer = inquirer;
   }
 
-  async runIfAuthenticated() {
+  async run() {
+    await this.checkAuthentication();
+
     const parsed = this.parse(DeleteCommand);
     const config = { ...this.env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
@@ -69,6 +71,11 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
         throw err;
       }
     }
+  }
+
+  async catch(error) {
+    await this.handleAuthenticationErrors(error);
+    return super.catch(error);
   }
 }
 

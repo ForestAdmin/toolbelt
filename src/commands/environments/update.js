@@ -3,14 +3,16 @@ const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class UpdateCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, env } = this.context;
     assertPresent({ env });
     this.env = env;
   }
 
-  async runIfAuthenticated() {
+  async run() {
+    await this.checkAuthentication();
+
     const parsed = this.parse(UpdateCommand);
     const config = { ...this.env, ...parsed.flags };
 
@@ -21,6 +23,11 @@ class UpdateCommand extends AbstractAuthenticatedCommand {
     } else {
       this.logger.error('Please provide environment name and/or url');
     }
+  }
+
+  async catch(error) {
+    await this.handleAuthenticationErrors(error);
+    return super.catch(error);
   }
 }
 

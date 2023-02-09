@@ -7,8 +7,8 @@ const withCurrentProject = require('../services/with-current-project');
 
 /** Deploy layout changes of an environment to the reference one. */
 class DeployCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, env, inquirer } = this.context;
     assertPresent({ env, inquirer });
     this.env = env;
@@ -55,7 +55,9 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * The "deploy" command procedure itself.
    * @returns {void}
    */
-  async runIfAuthenticated() {
+  async run() {
+    await this.checkAuthentication();
+
     try {
       const config = await this.getConfig();
 
@@ -68,6 +70,11 @@ class DeployCommand extends AbstractAuthenticatedCommand {
       this.logger.error(handleBranchError(error));
       this.exit(2);
     }
+  }
+
+  async catch(error) {
+    await this.handleAuthenticationErrors(error);
+    return super.catch(error);
   }
 }
 

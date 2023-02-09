@@ -2,14 +2,16 @@ const { flags } = require('@oclif/command');
 const AbstractCommand = require('../abstract-command');
 
 class LoginCommand extends AbstractCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, authenticator } = this.context;
     assertPresent({ authenticator });
     this.authenticator = authenticator;
   }
 
   async run() {
+    await this.checkAuthentication();
+
     const { flags: config } = this.parse(LoginCommand);
     await this.authenticator.tryLogin(config);
   }

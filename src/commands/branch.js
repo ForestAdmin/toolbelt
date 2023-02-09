@@ -6,8 +6,8 @@ const withCurrentProject = require('../services/with-current-project');
 const askForEnvironment = require('../services/ask-for-environment');
 
 class BranchCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, env, inquirer, branchesRenderer } = this.context;
     assertPresent({ env, inquirer });
     this.env = env;
@@ -67,7 +67,9 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     }
   }
 
-  async runIfAuthenticated() {
+  async run() {
+    await this.checkAuthentication();
+
     const parsed = this.parse(BranchCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
@@ -103,6 +105,11 @@ class BranchCommand extends AbstractAuthenticatedCommand {
       return this.createBranch(config.BRANCH_NAME, config.envSecret, config.origin);
     }
     return this.listBranches(config.envSecret, config.format);
+  }
+
+  async catch(error) {
+    await this.handleAuthenticationErrors(error);
+    return super.catch(error);
   }
 }
 

@@ -5,8 +5,8 @@ const JobStateChecker = require('../../services/job-state-checker');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class ApplyCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, env, fs, joi } = this.context;
     assertPresent({ env, fs, joi });
     this.env = env;
@@ -14,7 +14,9 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
     this.joi = joi;
   }
 
-  async runIfAuthenticated() {
+  async run() {
+    await this.checkAuthentication();
+
     const oclifExit = this.exit.bind(this);
     const { flags: parsedFlags } = this.parse(ApplyCommand);
     const serializedSchema = this.readSchema();
@@ -132,6 +134,11 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
     }
 
     return secret;
+  }
+
+  async catch(error) {
+    await this.handleAuthenticationErrors(error);
+    return super.catch(error);
   }
 }
 
