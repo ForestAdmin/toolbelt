@@ -9,8 +9,6 @@ class LogoutCommand extends AbstractCommand {
   }
 
   async run() {
-    await this.checkAuthentication();
-
     await this.authenticator.logout({ log: true });
   }
 }

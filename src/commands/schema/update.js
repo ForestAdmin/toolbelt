@@ -17,8 +17,6 @@ class UpdateCommand extends AbstractCommand {
   }
 
   async run() {
-    await this.checkAuthentication();
-
     const parsed = this.parse(UpdateCommand);
     const commandOptions = { ...parsed.flags, ...parsed.args };
 

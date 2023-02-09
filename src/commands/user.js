@@ -20,8 +20,6 @@ class UserCommand extends AbstractCommand {
   }
 
   async run() {
-    await this.checkAuthentication();
-
     const token = this.authenticator.getAuthToken();
     if (token) {
       const decoded = this.jwtDecode(token);

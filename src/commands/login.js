@@ -10,8 +10,6 @@ class LoginCommand extends AbstractCommand {
   }
 
   async run() {
-    await this.checkAuthentication();
-
     const { flags: config } = this.parse(LoginCommand);
     await this.authenticator.tryLogin(config);
   }
