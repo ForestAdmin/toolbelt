@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-require('../src/index').run()
+require('../dist/index').run()
   .then(require('@oclif/command/flush'))
   .catch(require('@oclif/errors/handle'));

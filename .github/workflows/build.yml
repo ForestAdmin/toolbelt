@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build, Test and Deploy
 on:
   pull_request:
   push:
@@ -36,7 +36,7 @@ jobs:
     needs: [lint]
     strategy:
       matrix:
-        node: [10, 14]
+        node: [10, 14, 16]
         include:
           - node: 14
             withCoverage: ${{ true }}
@@ -69,11 +69,29 @@ jobs:
       - name: Test postpack
         run: yarn postpack
 
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - name: Cancel previous running workflows
+        uses: fkirc/skip-duplicate-actions@master
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14.17.6
+      - uses: actions/cache@v3
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock', '**/package.json') }}
+      - name: Build
+        run: yarn build
+
   deploy:
     name: Release package
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [test]
+    needs: [build, test]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/beta')
     steps:
       - uses: actions/checkout@v2
@@ -87,6 +105,8 @@ jobs:
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
+      - name: Build
+        run: yarn build
       - name: Get Semantic Release current version
         id: semantic_version
         run: |
