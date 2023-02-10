@@ -9,11 +9,13 @@ class DiffCommand extends AbstractAuthenticatedCommand {
       chalk,
       env,
       environmentRenderer,
+      errorHandler,
     } = this.context;
     assertPresent({ chalk, env });
     this.chalk = chalk;
     this.env = env;
     this.environmentRenderer = environmentRenderer;
+    this.errorHandler = errorHandler;
   }
 
   async runIfAuthenticated() {
@@ -29,11 +31,11 @@ class DiffCommand extends AbstractAuthenticatedCommand {
       ]);
 
       this.environmentRenderer.renderApimapDiff(apimapFrom, apimapTo);
-    } catch (err) {
+    } catch (error) {
       this.logger.error(
         `Cannot fetch the environments ${this.chalk.bold(environmentIdFrom)} and ${this.chalk.bold(environmentIdTo)}.`,
-        { details: err },
       );
+      this.logger.error(manager.handleEnvironmentError(error));
     }
   }
 }

@@ -2,7 +2,10 @@ const jsonDiff = require('json-diff');
 const testCli = require('../test-cli-helper/test-cli');
 const DiffSchemaCommand = require('../../../src/commands/schema/diff');
 const { testEnvWithSecret } = require('../../fixtures/env');
-const { loginValidOidc, getEnvironmentApimap } = require('../../fixtures/api');
+const {
+  loginValidOidc, getEnvironmentApimap,
+  getEnvironmentApimapForbidden,
+} = require('../../fixtures/api');
 
 describe('schema:diff', () => {
   describe('when the user is not logged in', () => {
@@ -68,12 +71,13 @@ describe('schema:diff', () => {
         token: 'any',
         api: [
           () => getEnvironmentApimap(10),
+          () => getEnvironmentApimapForbidden(99999),
         ],
         commandClass: DiffSchemaCommand,
-        commandArgs: ['10', '99999'], // id 99999 does not exist
+        commandArgs: ['10', '99999'],
         std: [
           { err: '× Cannot fetch the environments 10 and 99999.' },
-          { err: '× {"details":{"code":"ERR_NOCK_NO_MATCH","status":404,"statusCode":404}}' },
+          { err: '× Oops something went wrong.' },
         ],
       }));
     });

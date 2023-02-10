@@ -6,6 +6,7 @@ const EnvironmentSerializer = require('../serializers/environment');
 const environmentDeserializer = require('../deserializers/environment');
 const DeploymentRequestSerializer = require('../serializers/deployment-request');
 const JobStateChecker = require('./job-state-checker');
+const { handleError } = require('../utils/error');
 
 function EnvironmentManager(config) {
   const {
@@ -144,6 +145,14 @@ function EnvironmentManager(config) {
       .post(`${env.FOREST_URL}/api/environments/deploy`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-secret-key', `${config.envSecret}`);
+  };
+
+  this.handleEnvironmentError = (rawError) => {
+    const error = handleError(rawError);
+    if (error === 'Forbidden') {
+      return 'You do not have the permission to perform this action on the given environments.';
+    }
+    return error;
   };
 }
 

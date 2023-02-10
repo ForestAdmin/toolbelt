@@ -371,6 +371,10 @@ module.exports = {
     .reply(200, {
       data: { apimap },
     }),
+  getEnvironmentApimapForbidden: (id) => nock('http://localhost:3001')
+    .matchHeader('forest-environment-id', id)
+    .get(`/api/apimaps/${id}`)
+    .reply(403),
 
   updateEnvironmentName: () => nock('http://localhost:3001')
     .put('/api/environments/182', {
