@@ -2,8 +2,7 @@ const path = require('path');
 
 const Context = require('@forestadmin/context');
 
-const staticPlan = (plan) => plan
-  .addModule('path', path);
+const staticPlan = plan => plan.addModule('path', path);
 
 let staticContext;
 

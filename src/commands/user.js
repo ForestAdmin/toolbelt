@@ -3,14 +3,7 @@ const AbstractCommand = require('../abstract-command');
 class UserCommand extends AbstractCommand {
   init(plan) {
     super.init(plan);
-    const {
-      assertPresent,
-      authenticator,
-      chalk,
-      jwtDecode,
-      logger,
-      terminator,
-    } = this.context;
+    const { assertPresent, authenticator, chalk, jwtDecode, logger, terminator } = this.context;
     assertPresent({
       authenticator,
       chalk,
@@ -31,7 +24,11 @@ class UserCommand extends AbstractCommand {
     if (token) {
       const decoded = this.jwtDecode(token);
       const { email } = decoded.data.data.attributes;
-      this.logger.info(`${this.chalk.bold('Email:')} ${this.chalk.cyan(email)} (connected with${decoded.organizationId ? '' : 'out'} SSO)`);
+      this.logger.info(
+        `${this.chalk.bold('Email:')} ${this.chalk.cyan(email)} (connected with${
+          decoded.organizationId ? '' : 'out'
+        } SSO)`,
+      );
     } else {
       return this.terminator.terminate(1, { logs: ['You are not logged.'] });
     }

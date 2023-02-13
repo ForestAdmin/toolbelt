@@ -106,11 +106,11 @@ class Spinner {
   // NOTICE: spinner.start needs to be called first
   attachToPromise(promise) {
     return promise
-      .then((result) => {
+      .then(result => {
         this.success(this.currentSpinnerOptions);
         return result;
       })
-      .catch((error) => {
+      .catch(error => {
         // NOTICE: Only trigger the fail if the spinner is running (ie. not paused)
         if (this.isRunning()) {
           this.fail({ text: error });

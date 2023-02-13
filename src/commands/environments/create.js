@@ -22,8 +22,13 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       if (error.response && error.status !== 403) {
         const errorData = JSON.parse(error.response.text);
-        if (errorData && errorData.errors && errorData.errors.length
-          && errorData.errors[0] && errorData.errors[0].detail) {
+        if (
+          errorData &&
+          errorData.errors &&
+          errorData.errors.length &&
+          errorData.errors[0] &&
+          errorData.errors[0].detail
+        ) {
           this.logger.error(errorData.errors[0].detail);
           this.exit(1);
         }

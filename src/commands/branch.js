@@ -7,9 +7,7 @@ const askForEnvironment = require('../services/ask-for-environment');
 class BranchCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan);
-    const {
-      assertPresent, env, inquirer, branchesRenderer,
-    } = this.context;
+    const { assertPresent, env, inquirer, branchesRenderer } = this.context;
     assertPresent({ env, inquirer });
     this.env = env;
     this.inquirer = inquirer;
@@ -20,7 +18,9 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     try {
       const branches = await BranchManager.getBranches(envSecret);
       if (!branches || branches.length === 0) {
-        this.logger.warn('You don\'t have any branch yet. Use `forest branch <branch_name>` to create one.');
+        this.logger.warn(
+          "You don't have any branch yet. Use `forest branch <branch_name>` to create one.",
+        );
       } else {
         this.branchesRenderer.render(branches, format);
       }
@@ -46,12 +46,13 @@ class BranchCommand extends AbstractAuthenticatedCommand {
 
   async deleteBranch(branchName, forceDelete, envSecret) {
     if (!forceDelete) {
-      const response = await this.inquirer
-        .prompt([{
+      const response = await this.inquirer.prompt([
+        {
           type: 'confirm',
           name: 'confirm',
           message: `Delete branch ${branchName}`,
-        }]);
+        },
+      ]);
       if (!response.confirm) return;
     }
     try {
@@ -75,13 +76,18 @@ class BranchCommand extends AbstractAuthenticatedCommand {
       config = await withCurrentProject({ ...this.env, ...commandOptions });
 
       if (!config.envSecret) {
-        const environment = await new ProjectManager(config)
-          .getDevelopmentEnvironmentForUser(config.projectId);
+        const environment = await new ProjectManager(config).getDevelopmentEnvironmentForUser(
+          config.projectId,
+        );
         config.envSecret = environment.secretKey;
       }
 
       if (!config.origin && config.BRANCH_NAME && !config.delete) {
-        config.origin = await askForEnvironment(config, 'Select the remote environment you want as origin', ['production', 'remote']);
+        config.origin = await askForEnvironment(
+          config,
+          'Select the remote environment you want as origin',
+          ['production', 'remote'],
+        );
       }
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
@@ -129,8 +135,12 @@ BranchCommand.flags = {
   }),
 };
 
-BranchCommand.args = [{
-  name: 'BRANCH_NAME', required: false, description: 'The name of the branch to create.',
-}];
+BranchCommand.args = [
+  {
+    name: 'BRANCH_NAME',
+    required: false,
+    description: 'The name of the branch to create.',
+  },
+];
 
 module.exports = BranchCommand;

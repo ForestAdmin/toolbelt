@@ -28,20 +28,21 @@ describe('services > prompter > general prompter', () => {
         const promptError = new PrompterError('error message', ['logs']);
 
         const generalPrompter = new GeneralPrompter(requests, program);
-        const applicationPromptsStub = jest.spyOn(generalPrompter.applicationPrompt, 'handlePrompts').mockRejectedValue(promptError);
-        const projectPromptsStub = jest.spyOn(generalPrompter.projectPrompt, 'handlePrompts').mockRejectedValue(promptError);
-        const databasePromptsStub = jest.spyOn(generalPrompter.databasePrompt, 'handlePrompts').mockRejectedValue(promptError);
+        const applicationPromptsStub = jest
+          .spyOn(generalPrompter.applicationPrompt, 'handlePrompts')
+          .mockRejectedValue(promptError);
+        const projectPromptsStub = jest
+          .spyOn(generalPrompter.projectPrompt, 'handlePrompts')
+          .mockRejectedValue(promptError);
+        const databasePromptsStub = jest
+          .spyOn(generalPrompter.databasePrompt, 'handlePrompts')
+          .mockRejectedValue(promptError);
         const terminateStub = jest.spyOn(terminator, 'terminate').mockResolvedValue(true);
 
         await generalPrompter.getConfig();
 
         const status = terminateStub.mock.calls[0][0];
-        const {
-          errorCode,
-          errorMessage,
-          logs,
-          context,
-        } = terminateStub.mock.calls[0][1];
+        const { errorCode, errorMessage, logs, context } = terminateStub.mock.calls[0][1];
 
         expect(status).toBe(1);
         expect(errorCode).toBe('unexpected_error');

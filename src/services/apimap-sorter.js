@@ -13,7 +13,7 @@ function ApimapSorter(apimap) {
   function reorderKeysBasic(object) {
     const objectReordered = {};
 
-    _.each(_.sortBy(Object.keys(object)), (key) => {
+    _.each(_.sortBy(Object.keys(object)), key => {
       objectReordered[key] = object[key];
     });
 
@@ -64,13 +64,14 @@ function ApimapSorter(apimap) {
       apimap = reorderKeysBasic(apimap);
       apimap.data = sortArrayOfObjects(apimap.data);
 
-      apimap.data = apimap.data.map((collection) => {
+      apimap.data = apimap.data.map(collection => {
         collection = reorderKeysChild(collection);
         collection.attributes = reorderKeysCollection(collection.attributes);
         if (collection.attributes.fields) {
           collection.attributes.fields = sortArrayOfFields(collection.attributes.fields);
-          collection.attributes.fields = collection.attributes.fields
-            .map((field) => reorderKeysField(field));
+          collection.attributes.fields = collection.attributes.fields.map(field =>
+            reorderKeysField(field),
+          );
         }
         return collection;
       });
@@ -78,13 +79,14 @@ function ApimapSorter(apimap) {
       if (apimap.included) {
         apimap.included = sortArrayOfObjects(apimap.included);
 
-        apimap.included = apimap.included.map((include) => {
+        apimap.included = apimap.included.map(include => {
           include = reorderKeysChild(include);
           include.attributes = reorderKeysCollection(include.attributes);
           if (include.attributes.fields) {
             include.attributes.fields = sortArrayOfFields(include.attributes.fields);
-            include.attributes.fields = include.attributes.fields
-              .map((field) => reorderKeysField(field));
+            include.attributes.fields = include.attributes.fields.map(field =>
+              reorderKeysField(field),
+            );
           }
           return include;
         });

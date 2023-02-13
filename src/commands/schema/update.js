@@ -4,12 +4,7 @@ const StaticContext = require('../../context/static');
 class UpdateCommand extends AbstractCommand {
   init(plan) {
     super.init(plan);
-    const {
-      assertPresent,
-      env,
-      path,
-      schemaService,
-    } = this.context;
+    const { assertPresent, env, path, schemaService } = this.context;
     assertPresent({
       env,
       path,
@@ -38,10 +33,7 @@ class UpdateCommand extends AbstractCommand {
 UpdateCommand.description = 'Refresh your schema by generating files that do not currently exist.';
 
 UpdateCommand.flags = (() => {
-  const {
-    assertPresent,
-    path,
-  } = StaticContext.init();
+  const { assertPresent, path } = StaticContext.init();
   assertPresent({
     path,
   });

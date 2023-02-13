@@ -26,9 +26,9 @@ const defaultsValueExpected = {
 // Expected output for PostgresMin and PostgresMax differ only by one value.
 // CURRENT_TIMESTAMP() is an alias of NOW() in Postgres 9, but not anymore in up-to-date versions.
 // => patch the difference here, instead of duplicating the file.
-defaultsValueExpected[databaseUrls.DATABASE_URL_POSTGRESQL_MIN]
-  .default_values
-  .fields[9].defaultValue.val = 'now()';
+defaultsValueExpected[
+  databaseUrls.DATABASE_URL_POSTGRESQL_MIN
+].default_values.fields[9].defaultValue.val = 'now()';
 
 const setupTest = () => {
   Context.init(defaultPlan);
@@ -57,162 +57,210 @@ describe('services > database analyser > Sequelize', () => {
       expect(user.name).toBe('Jane');
     });
 
-    it('should generate a single model', async () => {
-      expect.assertions(1);
-      const sequelizeHelper = new SequelizeHelper();
-      const databaseConnection = await sequelizeHelper.connect(connectionUrl);
-      const expected = await sequelizeHelper.given('customers');
-      const result = await performDatabaseAnalysis(databaseConnection);
-      await sequelizeHelper.close();
-      expect(result.customers).toStrictEqual(expected.customers);
-    }, TIMEOUT);
-
-    it('should generate a model with default values', async () => {
-      expect.assertions(1);
-
-      // eslint-disable-next-line jest/no-if
-      if (defaultsValueExpected[connectionUrl]) {
+    it(
+      'should generate a single model',
+      async () => {
+        expect.assertions(1);
         const sequelizeHelper = new SequelizeHelper();
         const databaseConnection = await sequelizeHelper.connect(connectionUrl);
+        const expected = await sequelizeHelper.given('customers');
+        const result = await performDatabaseAnalysis(databaseConnection);
+        await sequelizeHelper.close();
+        expect(result.customers).toStrictEqual(expected.customers);
+      },
+      TIMEOUT,
+    );
 
-        const expected = defaultsValueExpected[connectionUrl];
-        await sequelizeHelper.dropAndCreate('default_values');
+    it(
+      'should generate a model with default values',
+      async () => {
+        expect.assertions(1);
+
+        // eslint-disable-next-line jest/no-if
+        if (defaultsValueExpected[connectionUrl]) {
+          const sequelizeHelper = new SequelizeHelper();
+          const databaseConnection = await sequelizeHelper.connect(connectionUrl);
+
+          const expected = defaultsValueExpected[connectionUrl];
+          await sequelizeHelper.dropAndCreate('default_values');
+          const result = await performDatabaseAnalysis(databaseConnection);
+          await sequelizeHelper.close();
+
+          // eslint-disable-next-line jest/no-conditional-expect
+          expect(result.default_values).toStrictEqual(expected.default_values);
+        } else {
+          // eslint-disable-next-line jest/no-conditional-expect
+          expect(true).toBe(true);
+        }
+      },
+      TIMEOUT,
+    );
+
+    it(
+      'should generate a model with a belongsTo association',
+      async () => {
+        expect.assertions(1);
+        const sequelizeHelper = new SequelizeHelper();
+        const databaseConnection = await sequelizeHelper.connect(connectionUrl);
+        const expected = await sequelizeHelper.given('addresses');
+        const result = await performDatabaseAnalysis(databaseConnection);
+        await sequelizeHelper.close();
+        expect(result.addresses).toStrictEqual(expected.addresses);
+      },
+      TIMEOUT,
+    );
+
+    it(
+      'should generate a model with a belongsTo association and sourceKey/targetKey',
+      async () => {
+        expect.assertions(2);
+        const sequelizeHelper = new SequelizeHelper();
+        const databaseConnection = await sequelizeHelper.connect(connectionUrl);
+        const expectedOwners = await sequelizeHelper.given('owners');
+        const expectedProjects = await sequelizeHelper.given('projects');
+        const result = await performDatabaseAnalysis(databaseConnection);
+        await sequelizeHelper.close();
+        expect(result.owners).toStrictEqual(expectedOwners.owners);
+        expect(result.projects).toStrictEqual(expectedProjects.projects);
+      },
+      TIMEOUT,
+    );
+
+    it(
+      'should generate a model with hasOne, hasMany and belongsToMany associations',
+      async () => {
+        expect.assertions(1);
+        const sequelizeHelper = new SequelizeHelper();
+        const databaseConnection = await sequelizeHelper.connect(connectionUrl);
+        const expected = await sequelizeHelper.given('users');
+        await sequelizeHelper.dropAndCreate('books');
+        await sequelizeHelper.dropAndCreate('addresses');
+        await sequelizeHelper.dropAndCreate('reviews');
+        await sequelizeHelper.dropAndCreate('user_books');
+        const result = await performDatabaseAnalysis(databaseConnection);
+        await sequelizeHelper.close();
+        expect(result.users).toStrictEqual(expected.users);
+      },
+      TIMEOUT,
+    );
+
+    it(
+      'should handle conflicts between regular field names and references alias',
+      async () => {
+        expect.assertions(1);
+        const sequelizeHelper = new SequelizeHelper();
+        const databaseConnection = await sequelizeHelper.connect(connectionUrl);
+        await sequelizeHelper.dropAndCreate('cars');
+        const expected = await sequelizeHelper.given('rentals');
+        const result = await performDatabaseAnalysis(databaseConnection);
+        await sequelizeHelper.close();
+        expect(result.rentals).toStrictEqual(expected.rentals);
+      },
+      TIMEOUT,
+    );
+
+    it(
+      'should remove identic references',
+      async () => {
+        expect.assertions(1);
+        const sequelizeHelper = new SequelizeHelper();
+        const databaseConnection = await sequelizeHelper.connect(connectionUrl);
+        await sequelizeHelper.dropAndCreate('cars');
+        const expected = await sequelizeHelper.given('doubleref');
+        const result = await performDatabaseAnalysis(databaseConnection);
+        await sequelizeHelper.close();
+        expect(result.doubleref.references).toHaveLength(expected.doubleref.referencesLength);
+      },
+      TIMEOUT,
+    );
+
+    it(
+      'should detect snake_case even with no fields in the table',
+      async () => {
+        expect.assertions(1);
+        const sequelizeHelper = new SequelizeHelper();
+        const databaseConnection = await sequelizeHelper.connect(connectionUrl);
+        await sequelizeHelper.dropAndCreate('sample_table');
+        await sequelizeHelper.dropAndCreate('underscored_no_fields');
+        const result = await performDatabaseAnalysis(databaseConnection);
+        await sequelizeHelper.close();
+        expect(result.underscored_no_fields.options.underscored).toBe(true);
+      },
+      TIMEOUT,
+    );
+
+    it(
+      'should not set underscored to true if parenthesis in column name',
+      async () => {
+        expect.assertions(1);
+        const sequelizeHelper = new SequelizeHelper();
+        const databaseConnection = await sequelizeHelper.connect(connectionUrl);
+        await sequelizeHelper.dropAndCreate('parenthesis_table');
+        const result = await performDatabaseAnalysis(databaseConnection);
+        await sequelizeHelper.close();
+        expect(result.parenthesis_table.options.underscored).toBe(false);
+      },
+      TIMEOUT,
+    );
+
+    it(
+      'should not set underscored to true if parenthesis in column name and underscored field',
+      async () => {
+        expect.assertions(1);
+        const sequelizeHelper = new SequelizeHelper();
+        const databaseConnection = await sequelizeHelper.connect(connectionUrl);
+        await sequelizeHelper.dropAndCreate('parenthesis_underscored_table');
+        const result = await performDatabaseAnalysis(databaseConnection);
+        await sequelizeHelper.close();
+        expect(result.parenthesis_underscored_table.options.underscored).toBe(false);
+      },
+      TIMEOUT,
+    );
+
+    it(
+      'should handle conflicts between references alias',
+      async () => {
+        expect.assertions(3);
+        const sequelizeHelper = new SequelizeHelper();
+        const databaseConnection = await sequelizeHelper.connect(connectionUrl);
+        const expected = await sequelizeHelper.given('duplicatedalias');
         const result = await performDatabaseAnalysis(databaseConnection);
         await sequelizeHelper.close();
 
-        // eslint-disable-next-line jest/no-conditional-expect
-        expect(result.default_values).toStrictEqual(expected.default_values);
-      } else {
-        // eslint-disable-next-line jest/no-conditional-expect
-        expect(true).toBe(true);
-      }
-    }, TIMEOUT);
+        const projectReferences = new Set(result.project.references.map(({ as }) => as));
+        expect(projectReferences.size).toBe(expected.project.referencesLength);
 
-    it('should generate a model with a belongsTo association', async () => {
-      expect.assertions(1);
-      const sequelizeHelper = new SequelizeHelper();
-      const databaseConnection = await sequelizeHelper.connect(connectionUrl);
-      const expected = await sequelizeHelper.given('addresses');
-      const result = await performDatabaseAnalysis(databaseConnection);
-      await sequelizeHelper.close();
-      expect(result.addresses).toStrictEqual(expected.addresses);
-    }, TIMEOUT);
+        const joinrolesReferences = new Set(result.joinroles.references.map(({ as }) => as));
+        expect(joinrolesReferences.size).toBe(expected.joinroles.referencesLength);
 
-    it('should generate a model with a belongsTo association and sourceKey/targetKey', async () => {
-      expect.assertions(2);
-      const sequelizeHelper = new SequelizeHelper();
-      const databaseConnection = await sequelizeHelper.connect(connectionUrl);
-      const expectedOwners = await sequelizeHelper.given('owners');
-      const expectedProjects = await sequelizeHelper.given('projects');
-      const result = await performDatabaseAnalysis(databaseConnection);
-      await sequelizeHelper.close();
-      expect(result.owners).toStrictEqual(expectedOwners.owners);
-      expect(result.projects).toStrictEqual(expectedProjects.projects);
-    }, TIMEOUT);
+        const rolesReferences = new Set(result.roles.references.map(({ as }) => as));
+        expect(rolesReferences.size).toBe(expected.roles.referencesLength);
+      },
+      TIMEOUT,
+    );
 
-    it('should generate a model with hasOne, hasMany and belongsToMany associations', async () => {
-      expect.assertions(1);
-      const sequelizeHelper = new SequelizeHelper();
-      const databaseConnection = await sequelizeHelper.connect(connectionUrl);
-      const expected = await sequelizeHelper.given('users');
-      await sequelizeHelper.dropAndCreate('books');
-      await sequelizeHelper.dropAndCreate('addresses');
-      await sequelizeHelper.dropAndCreate('reviews');
-      await sequelizeHelper.dropAndCreate('user_books');
-      const result = await performDatabaseAnalysis(databaseConnection);
-      await sequelizeHelper.close();
-      expect(result.users).toStrictEqual(expected.users);
-    }, TIMEOUT);
+    it(
+      'should handle id column if present on table having only foreign keys',
+      async () => {
+        expect.assertions(4);
 
-    it('should handle conflicts between regular field names and references alias', async () => {
-      expect.assertions(1);
-      const sequelizeHelper = new SequelizeHelper();
-      const databaseConnection = await sequelizeHelper.connect(connectionUrl);
-      await sequelizeHelper.dropAndCreate('cars');
-      const expected = await sequelizeHelper.given('rentals');
-      const result = await performDatabaseAnalysis(databaseConnection);
-      await sequelizeHelper.close();
-      expect(result.rentals).toStrictEqual(expected.rentals);
-    }, TIMEOUT);
+        const sequelizeHelper = new SequelizeHelper();
+        const databaseConnection = await sequelizeHelper.connect(connectionUrl);
+        await sequelizeHelper.dropAndCreate('only_foreign_keys_and_id');
+        const result = await performDatabaseAnalysis(databaseConnection);
 
-    it('should remove identic references', async () => {
-      expect.assertions(1);
-      const sequelizeHelper = new SequelizeHelper();
-      const databaseConnection = await sequelizeHelper.connect(connectionUrl);
-      await sequelizeHelper.dropAndCreate('cars');
-      const expected = await sequelizeHelper.given('doubleref');
-      const result = await performDatabaseAnalysis(databaseConnection);
-      await sequelizeHelper.close();
-      expect(result.doubleref.references).toHaveLength(expected.doubleref.referencesLength);
-    }, TIMEOUT);
+        await sequelizeHelper.close();
 
-    it('should detect snake_case even with no fields in the table', async () => {
-      expect.assertions(1);
-      const sequelizeHelper = new SequelizeHelper();
-      const databaseConnection = await sequelizeHelper.connect(connectionUrl);
-      await sequelizeHelper.dropAndCreate('sample_table');
-      await sequelizeHelper.dropAndCreate('underscored_no_fields');
-      const result = await performDatabaseAnalysis(databaseConnection);
-      await sequelizeHelper.close();
-      expect(result.underscored_no_fields.options.underscored).toBe(true);
-    }, TIMEOUT);
+        expect(result.only_foreign_keys_and_id.references).toHaveLength(2);
 
-    it('should not set underscored to true if parenthesis in column name', async () => {
-      expect.assertions(1);
-      const sequelizeHelper = new SequelizeHelper();
-      const databaseConnection = await sequelizeHelper.connect(connectionUrl);
-      await sequelizeHelper.dropAndCreate('parenthesis_table');
-      const result = await performDatabaseAnalysis(databaseConnection);
-      await sequelizeHelper.close();
-      expect(result.parenthesis_table.options.underscored).toBe(false);
-    }, TIMEOUT);
+        const { fields } = result.only_foreign_keys_and_id;
+        expect(fields).toHaveLength(1);
 
-    it('should not set underscored to true if parenthesis in column name and underscored field', async () => {
-      expect.assertions(1);
-      const sequelizeHelper = new SequelizeHelper();
-      const databaseConnection = await sequelizeHelper.connect(connectionUrl);
-      await sequelizeHelper.dropAndCreate('parenthesis_underscored_table');
-      const result = await performDatabaseAnalysis(databaseConnection);
-      await sequelizeHelper.close();
-      expect(result.parenthesis_underscored_table.options.underscored).toBe(false);
-    }, TIMEOUT);
-
-    it('should handle conflicts between references alias', async () => {
-      expect.assertions(3);
-      const sequelizeHelper = new SequelizeHelper();
-      const databaseConnection = await sequelizeHelper.connect(connectionUrl);
-      const expected = await sequelizeHelper.given('duplicatedalias');
-      const result = await performDatabaseAnalysis(databaseConnection);
-      await sequelizeHelper.close();
-
-      const projectReferences = new Set(result.project.references.map(({ as }) => as));
-      expect(projectReferences.size).toBe(expected.project.referencesLength);
-
-      const joinrolesReferences = new Set(result.joinroles.references.map(({ as }) => as));
-      expect(joinrolesReferences.size).toBe(expected.joinroles.referencesLength);
-
-      const rolesReferences = new Set(result.roles.references.map(({ as }) => as));
-      expect(rolesReferences.size).toBe(expected.roles.referencesLength);
-    }, TIMEOUT);
-
-    it('should handle id column if present on table having only foreign keys', async () => {
-      expect.assertions(4);
-
-      const sequelizeHelper = new SequelizeHelper();
-      const databaseConnection = await sequelizeHelper.connect(connectionUrl);
-      await sequelizeHelper.dropAndCreate('only_foreign_keys_and_id');
-      const result = await performDatabaseAnalysis(databaseConnection);
-
-      await sequelizeHelper.close();
-
-      expect(result.only_foreign_keys_and_id.references).toHaveLength(2);
-
-      const { fields } = result.only_foreign_keys_and_id;
-      expect(fields).toHaveLength(1);
-
-      const idField = fields[0];
-      expect(idField.name).toBe('id');
-      expect(idField.primaryKey).toBe(true);
-    }, TIMEOUT);
+        const idField = fields[0];
+        expect(idField.name).toBe('id');
+        expect(idField.primaryKey).toBe(true);
+      },
+      TIMEOUT,
+    );
   });
 });

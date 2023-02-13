@@ -12,13 +12,22 @@ class GeneralPrompter {
     this.knownAnswers = {};
 
     this.projectPrompt = new ProjectPrompts(
-      requests, this.knownAnswers, this.prompts, programArguments,
+      requests,
+      this.knownAnswers,
+      this.prompts,
+      programArguments,
     );
     this.databasePrompt = new DatabasePrompts(
-      requests, this.knownAnswers, this.prompts, programArguments,
+      requests,
+      this.knownAnswers,
+      this.prompts,
+      programArguments,
     );
     this.applicationPrompt = new ApplicationPrompts(
-      requests, this.knownAnswers, this.prompts, programArguments,
+      requests,
+      this.knownAnswers,
+      this.prompts,
+      programArguments,
     );
   }
 
@@ -49,7 +58,9 @@ class GeneralPrompter {
   }
 
   cleanConfigOptions() {
-    if (!this.promptAnswers) { return; }
+    if (!this.promptAnswers) {
+      return;
+    }
 
     // NOTICE: Remove the database password if not set.
     if (!this.promptAnswers.databasePassword) {

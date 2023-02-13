@@ -1,12 +1,7 @@
 const { chars } = require('./defaults');
 
 class EnvironmentsRenderer {
-  constructor({
-    assertPresent,
-    chalk,
-    logger,
-    Table,
-  }) {
+  constructor({ assertPresent, chalk, logger, Table }) {
     assertPresent({
       chalk,
       logger,
@@ -29,7 +24,7 @@ class EnvironmentsRenderer {
         this.logger.log(JSON.stringify(environments, null, 2));
         break;
       case 'table':
-        environments.forEach((environment) => {
+        environments.forEach(environment => {
           table.push([
             environment.id,
             environment.name,
@@ -38,10 +33,7 @@ class EnvironmentsRenderer {
             environment.type,
           ]);
         });
-        this.logger.log(
-          `${this.chalk.bold('ENVIRONMENTS')}`,
-          ...table.toString().split('\n'),
-        );
+        this.logger.log(`${this.chalk.bold('ENVIRONMENTS')}`, ...table.toString().split('\n'));
         break;
       default:
     }

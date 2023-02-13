@@ -44,11 +44,7 @@ function SchemaSerializer() {
       ],
     },
     validations: {
-      attributes: [
-        'message',
-        'type',
-        'value',
-      ],
+      attributes: ['message', 'type', 'value'],
     },
     actions: {
       ref: 'id',
@@ -78,10 +74,7 @@ function SchemaSerializer() {
         ],
       },
       hooks: {
-        attributes: [
-          'change',
-          'load',
-        ],
+        attributes: ['change', 'load'],
       },
     },
     segments: {
@@ -95,12 +88,12 @@ function SchemaSerializer() {
   this.perform = (collections, meta) => {
     // NOTICE: Action ids are defined concatenating the collection name and the object name to
     //         prevent object id conflicts between collections.
-    _.each(collections, (collection) => {
-      _.each(collection.actions, (action) => {
+    _.each(collections, collection => {
+      _.each(collection.actions, action => {
         action.id = `${collection.name}.${action.name}`;
       });
 
-      _.each(collection.segments, (segment) => {
+      _.each(collection.segments, segment => {
         segment.id = `${collection.name}.${segment.name}`;
       });
     });

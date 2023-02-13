@@ -4,12 +4,7 @@ const AbstractAuthenticatedCommand = require('../../abstract-authenticated-comma
 class GetCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan);
-    const {
-      assertPresent,
-      chalk,
-      env,
-      projectRenderer,
-    } = this.context;
+    const { assertPresent, chalk, env, projectRenderer } = this.context;
     assertPresent({
       chalk,
       env,
@@ -46,8 +41,12 @@ GetCommand.flags = {
   }),
 };
 
-GetCommand.args = [{
-  name: 'projectId', required: true, description: 'ID of a project.',
-}];
+GetCommand.args = [
+  {
+    name: 'projectId',
+    required: true,
+    description: 'ID of a project.',
+  },
+];
 
 module.exports = GetCommand;

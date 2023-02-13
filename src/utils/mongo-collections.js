@@ -1,10 +1,7 @@
 const P = require('bluebird');
 
 function getCollectionName(collection) {
-  return collection
-    && collection.s
-    && collection.s.namespace
-    && collection.s.namespace.collection;
+  return collection && collection.s && collection.s.namespace && collection.s.namespace.collection;
 }
 
 function isSystemCollection(collection) {
@@ -13,14 +10,14 @@ function isSystemCollection(collection) {
 }
 
 async function findCollectionMatchingSamples(databaseConnection, samples) {
-  return P.mapSeries(databaseConnection.collections(), async (collection) => {
+  return P.mapSeries(databaseConnection.collections(), async collection => {
     if (isSystemCollection(collection)) return null;
     const count = await collection.countDocuments({ _id: { $in: samples } });
     if (count) {
       return collection.s.namespace.collection;
     }
     return null;
-  }).then((matches) => matches.filter((match) => match));
+  }).then(matches => matches.filter(match => match));
 }
 
 function filterReferenceCollection(referencedCollections) {

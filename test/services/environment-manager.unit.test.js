@@ -24,7 +24,9 @@ describe('services > EnvironmentManager', () => {
         expect.assertions(1);
         const error = new Error('Forbidden');
         const result = buildManager().handleEnvironmentError(error);
-        expect(result).toBe('You do not have the permission to perform this action on the given environments.');
+        expect(result).toBe(
+          'You do not have the permission to perform this action on the given environments.',
+        );
       });
     });
   });

@@ -1,12 +1,7 @@
 const { chars } = require('./defaults');
 
 class BranchesRenderer {
-  constructor({
-    assertPresent,
-    chalk,
-    logger,
-    Table,
-  }) {
+  constructor({ assertPresent, chalk, logger, Table }) {
     assertPresent({
       chalk,
       logger,
@@ -29,13 +24,15 @@ class BranchesRenderer {
         this.logger.log(JSON.stringify(branches, null, 2));
         break;
       case 'table':
-        branches.forEach((branch) => {
-          table.push([branch.name, branch.originEnvironment ? branch.originEnvironment.name : '⚠️  No origin set', branch.isCurrent ? '✅' : '', branch.closedAt ? branch.closedAt : '']);
+        branches.forEach(branch => {
+          table.push([
+            branch.name,
+            branch.originEnvironment ? branch.originEnvironment.name : '⚠️  No origin set',
+            branch.isCurrent ? '✅' : '',
+            branch.closedAt ? branch.closedAt : '',
+          ]);
         });
-        this.logger.log(
-          `${this.chalk.bold('BRANCHES')}`,
-          ...table.toString().split('\n'),
-        );
+        this.logger.log(`${this.chalk.bold('BRANCHES')}`, ...table.toString().split('\n'));
         break;
       default:
     }

@@ -1,8 +1,4 @@
-const prepareCommand = ({
-  commandArgs = [],
-  commandClass: CommandClass,
-  commandPlan,
-}) => {
+const prepareCommand = ({ commandArgs = [], commandClass: CommandClass, commandPlan }) => {
   const instance = new CommandClass(commandArgs);
   instance.init(commandPlan);
 

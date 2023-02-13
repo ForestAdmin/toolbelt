@@ -68,10 +68,14 @@ describe('services > sequelize table constraints getter', () => {
 
       // NOTICE: Get an array of unique indexes for the table (MySQL doesn't order json aggregates)
       function extractUniqueIndexes(constraintsToExtract) {
-        return _.compact(_.flatten(_.uniqWith(
-          constraintsToExtract.map((constraint) => constraint.uniqueIndexes),
-          _.isEqual,
-        )));
+        return _.compact(
+          _.flatten(
+            _.uniqWith(
+              constraintsToExtract.map(constraint => constraint.uniqueIndexes),
+              _.isEqual,
+            ),
+          ),
+        );
       }
 
       const uniqueIndexesList = extractUniqueIndexes(sortedConstraints);
@@ -80,12 +84,15 @@ describe('services > sequelize table constraints getter', () => {
       // NOTICE: Compare the lists of unique indexes
       expect(uniqueIndexesList).toHaveLength(expectedUniqueIndexes.length);
       uniqueIndexesList.forEach((uniqueIndex, index) =>
-        expect(uniqueIndex.sort()).toStrictEqual(expectedUniqueIndexes[index].sort()));
+        expect(uniqueIndex.sort()).toStrictEqual(expectedUniqueIndexes[index].sort()),
+      );
 
       // NOTICE: Compare the other objects
       expect(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         sortedConstraints.map(({ uniqueIndexes, ...otherFields }) => otherFields),
       ).toStrictEqual(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         expectedSortedConstraints.map(({ uniqueIndexes, ...otherFields }) => otherFields),
       );
       await cleanConnection(sequelizeHelper);

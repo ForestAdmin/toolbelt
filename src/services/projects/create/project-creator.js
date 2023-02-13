@@ -23,14 +23,7 @@ class ProjectCreator {
    *   terminator: import('../../../utils/terminator')
    * }} dependencies
    */
-  constructor({
-    assertPresent,
-    api,
-    chalk,
-    keyGenerator,
-    messages,
-    terminator,
-  }) {
+  constructor({ assertPresent, api, chalk, keyGenerator, messages, terminator }) {
     assertPresent({
       api,
       chalk,
@@ -72,7 +65,9 @@ class ProjectCreator {
     } catch (error) {
       let message;
       if (error.message === 'Unauthorized') {
-        message = `Your session has expired. Please log back in with the command \`${this.chalk.cyan('forest login')}\`.`;
+        message = `Your session has expired. Please log back in with the command \`${this.chalk.cyan(
+          'forest login',
+        )}\`.`;
       } else if (error.message === 'Conflict') {
         message = 'A project with this name already exists. Please choose another name.';
       } else {

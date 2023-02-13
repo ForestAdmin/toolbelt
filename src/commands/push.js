@@ -22,30 +22,36 @@ class PushCommand extends AbstractAuthenticatedCommand {
       config = await withCurrentProject({ ...this.env, ...commandOptions });
 
       if (!config.envSecret) {
-        const environment = await new ProjectManager(config)
-          .getDevelopmentEnvironmentForUser(config.projectId);
+        const environment = await new ProjectManager(config).getDevelopmentEnvironmentForUser(
+          config.projectId,
+        );
         config.envSecret = environment.secretKey;
       }
       const branches = await BranchManager.getBranches(config.envSecret);
 
-      const currentBranch = branches.find((branch) => branch.isCurrent);
+      const currentBranch = branches.find(branch => branch.isCurrent);
 
       if (!currentBranch) {
         throw new Error('No current branch.');
       }
 
       if (!config.force) {
-        const response = await this.inquirer
-          .prompt([{
+        const response = await this.inquirer.prompt([
+          {
             type: 'confirm',
             name: 'confirm',
-            message: `Push branch ${currentBranch.name} onto ${currentBranch.originEnvironment ? currentBranch.originEnvironment.name : 'its origin'}`,
-          }]);
+            message: `Push branch ${currentBranch.name} onto ${
+              currentBranch.originEnvironment ? currentBranch.originEnvironment.name : 'its origin'
+            }`,
+          },
+        ]);
         if (!response.confirm) return;
       }
 
       await BranchManager.pushBranch(config.envSecret);
-      this.logger.success(`Branch ${currentBranch.name} successfully pushed onto ${currentBranch.originEnvironment.name}.`);
+      this.logger.success(
+        `Branch ${currentBranch.name} successfully pushed onto ${currentBranch.originEnvironment.name}.`,
+      );
     } catch (error) {
       const customError = BranchManager.handleBranchError(error);
       this.logger.error(customError);

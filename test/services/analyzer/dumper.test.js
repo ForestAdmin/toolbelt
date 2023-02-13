@@ -183,8 +183,10 @@ describe('services > dumper', () => {
               },
             });
 
-            // eslint-disable-next-line no-template-curly-in-string
-            expect(dockerComposeFile).toContain('FOREST_URL=${FOREST_URL-https://api.something.com}');
+            expect(dockerComposeFile).toContain(
+              // eslint-disable-next-line no-template-curly-in-string
+              'FOREST_URL=${FOREST_URL-https://api.something.com}',
+            );
           } finally {
             cleanOutput();
           }

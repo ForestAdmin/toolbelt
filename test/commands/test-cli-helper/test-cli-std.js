@@ -27,8 +27,7 @@ module.exports = {
       if (isString) {
         expect(stdout.output).toContain(outputs[i]);
       } else {
-        const isJson = outputs[i].constructor === ({}).constructor
-          || Array.isArray(outputs[i]);
+        const isJson = outputs[i].constructor === {}.constructor || Array.isArray(outputs[i]);
         if (isJson) {
           expect(JSON.parse(stdout.output)).toStrictEqual(outputs[i]);
         }

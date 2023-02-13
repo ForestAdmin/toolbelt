@@ -4,12 +4,7 @@ const AbstractAuthenticatedCommand = require('../../abstract-authenticated-comma
 class GetCommand extends AbstractAuthenticatedCommand {
   init(plan) {
     super.init(plan);
-    const {
-      assertPresent,
-      chalk,
-      env,
-      environmentRenderer,
-    } = this.context;
+    const { assertPresent, chalk, env, environmentRenderer } = this.context;
     assertPresent({ chalk, env });
     this.chalk = chalk;
     this.env = env;
@@ -41,8 +36,12 @@ GetCommand.flags = {
   }),
 };
 
-GetCommand.args = [{
-  name: 'environmentId', required: true, description: 'ID of an environment.',
-}];
+GetCommand.args = [
+  {
+    name: 'environmentId',
+    required: true,
+    description: 'ID of an environment.',
+  },
+];
 
 module.exports = GetCommand;

@@ -37,7 +37,11 @@ describe('services > mongoCollectionsAnalyzer', () => {
           mapCollection(keys, emit, store);
 
           expect(emit).toHaveBeenCalledTimes(1);
-          expect(emit).toHaveBeenLastCalledWith('anObjectId', 'Mongoose.Schema.Types.ObjectId', store);
+          expect(emit).toHaveBeenLastCalledWith(
+            'anObjectId',
+            'Mongoose.Schema.Types.ObjectId',
+            store,
+          );
         });
       });
 
@@ -144,7 +148,11 @@ describe('services > mongoCollectionsAnalyzer', () => {
           mapCollection(keys, emit, store);
 
           expect(emit).toHaveBeenCalledTimes(1);
-          expect(emit).toHaveBeenLastCalledWith('anObject', '[Mongoose.Schema.Types.ObjectId]', store);
+          expect(emit).toHaveBeenLastCalledWith(
+            'anObject',
+            '[Mongoose.Schema.Types.ObjectId]',
+            store,
+          );
         });
       });
 
@@ -190,7 +198,10 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
         const schema = Symbol('schema');
         const schema2 = Symbol('schema2');
-        const analyses = [{ type: 'embedded', schema }, { type: 'embedded', schema: schema2 }];
+        const analyses = [
+          { type: 'embedded', schema },
+          { type: 'embedded', schema: schema2 },
+        ];
         const formattedAnalysis = reduceCollection('aKey', analyses);
 
         expect(formattedAnalysis).toStrictEqual({ schemas: [schema, schema2], type: 'embedded' });
@@ -298,9 +309,7 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
       const mapReduce = jest.fn().mockResolvedValue();
       const databaseConnection = {
-        collection: jest.fn().mockReturnValue(
-          { mapReduce },
-        ),
+        collection: jest.fn().mockReturnValue({ mapReduce }),
       };
       const collectionName = 'a-collection-name';
 
@@ -365,9 +374,7 @@ describe('services > mongoCollectionsAnalyzer', () => {
       expect.assertions(9);
 
       const context = makeContext();
-      const {
-        detectReferences, applyReferences, detectHasMany, applyHasMany,
-      } = context;
+      const { detectReferences, applyReferences, detectHasMany, applyHasMany } = context;
 
       const references = Symbol('references');
       detectReferences.mockResolvedValue(references);
@@ -380,7 +387,9 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
       const analyzer = new MongoCollectionsAnalyzer(context);
       const expectedFields = await analyzer.applyRelationships(
-        databaseConnection, fields, collectionName,
+        databaseConnection,
+        fields,
+        collectionName,
       );
 
       expect(detectReferences).toHaveBeenCalledTimes(1);
@@ -410,24 +419,31 @@ describe('services > mongoCollectionsAnalyzer', () => {
       const fieldsTypes = { _id: ['string'] };
 
       const analyzer = new MongoCollectionsAnalyzer(makeContext());
-      jest.spyOn(analyzer, 'analyzeCollectionAndDisplayProgressBarIfIsAllow').mockImplementation(() => fieldsTypes);
+      jest
+        .spyOn(analyzer, 'analyzeCollectionAndDisplayProgressBarIfIsAllow')
+        .mockImplementation(() => fieldsTypes);
 
-      const fields = [{
-        name: '_id',
-        type: 'String',
-      }];
+      const fields = [
+        {
+          name: '_id',
+          type: 'String',
+        },
+      ];
       jest.spyOn(analyzer, 'getFields').mockImplementation().mockReturnValue(fields);
 
       const expectedFields = await analyzer.analyzeMongoCollectionLocally(
-        databaseConnection, collectionName,
+        databaseConnection,
+        collectionName,
       );
 
       expect(databaseConnection.collection).toHaveBeenCalledTimes(1);
       expect(databaseConnection.collection).toHaveBeenLastCalledWith(collectionName);
 
       expect(analyzer.analyzeCollectionAndDisplayProgressBarIfIsAllow).toHaveBeenCalledTimes(1);
-      expect(analyzer.analyzeCollectionAndDisplayProgressBarIfIsAllow)
-        .toHaveBeenLastCalledWith(collection, collectionName);
+      expect(analyzer.analyzeCollectionAndDisplayProgressBarIfIsAllow).toHaveBeenLastCalledWith(
+        collection,
+        collectionName,
+      );
 
       expect(analyzer.getFields).toHaveBeenCalledTimes(1);
       expect(analyzer.getFields).toHaveBeenLastCalledWith(fieldsTypes);
@@ -467,8 +483,9 @@ describe('services > mongoCollectionsAnalyzer', () => {
         };
 
         const analyzer = new MongoCollectionsAnalyzer(makeContext());
-        await expect(analyzer.analyzeMongoCollectionsWithoutProgressBar(databaseConnection))
-          .rejects.toThrowErrorMatchingInlineSnapshot('"no collections found"');
+        await expect(
+          analyzer.analyzeMongoCollectionsWithoutProgressBar(databaseConnection),
+        ).rejects.toThrowErrorMatchingInlineSnapshot('"no collections found"');
 
         expect(analyzer.isProgressBarDisplay).toBe(true);
       });
@@ -484,10 +501,13 @@ describe('services > mongoCollectionsAnalyzer', () => {
         account_id: ['Number', 'Number', 'Number'],
       };
       const analyzer = new MongoCollectionsAnalyzer(makeContext());
-      jest.spyOn(analyzer, 'reduceCollection').mockImplementation()
+      jest
+        .spyOn(analyzer, 'reduceCollection')
+        .mockImplementation()
         .mockReturnValueOnce('String')
         .mockReturnValueOnce('Number');
-      jest.spyOn(analyzer, 'mergeField')
+      jest
+        .spyOn(analyzer, 'mergeField')
         .mockReturnValueOnce({ name: '_id', type: 'String' })
         .mockReturnValueOnce({ name: 'account_id', type: 'Number' });
 
@@ -495,7 +515,10 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
       expect(analyzer.reduceCollection).toHaveBeenCalledTimes(2);
       expect(analyzer.reduceCollection).toHaveBeenCalledWith('_id', fieldWithTypes._id);
-      expect(analyzer.reduceCollection).toHaveBeenCalledWith('account_id', fieldWithTypes.account_id);
+      expect(analyzer.reduceCollection).toHaveBeenCalledWith(
+        'account_id',
+        fieldWithTypes.account_id,
+      );
 
       expect(analyzer.mergeField).toHaveBeenCalledTimes(2);
       expect(analyzer.mergeField).toHaveBeenCalledWith({ _id: '_id', value: 'String' });
@@ -530,23 +553,25 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
       const analyzer = new MongoCollectionsAnalyzer(context);
       const expectedFields = await analyzer.analyzeCollectionAndDisplayProgressBarIfIsAllow(
-        collection, 'aCollectionName',
+        collection,
+        'aCollectionName',
       );
 
       expect(collection.countDocuments).toHaveBeenCalledTimes(1);
 
       expect(collection.find).toHaveBeenCalledTimes(1);
-      expect(collection.find).toHaveBeenLastCalledWith(
-        {},
-        { minIndex: 0, limit: 50 },
-      );
+      expect(collection.find).toHaveBeenLastCalledWith({}, { minIndex: 0, limit: 50 });
 
       expect(analyzer.mapCollection).toHaveBeenCalledTimes(documents.length);
       expect(analyzer.mapCollection).toHaveBeenCalledWith(
-        documentA, MongoCollectionsAnalyzer.emit, {},
+        documentA,
+        MongoCollectionsAnalyzer.emit,
+        {},
       );
       expect(analyzer.mapCollection).toHaveBeenCalledWith(
-        documentB, MongoCollectionsAnalyzer.emit, {},
+        documentB,
+        MongoCollectionsAnalyzer.emit,
+        {},
       );
 
       expect(expectedFields).toBeTruthy();
@@ -563,7 +588,8 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
         const analyzer = new MongoCollectionsAnalyzer(makeContext());
         const expectedFields = await analyzer.analyzeCollectionAndDisplayProgressBarIfIsAllow(
-          collection, 'aCollectionName',
+          collection,
+          'aCollectionName',
         );
 
         expect(collection.countDocuments).toHaveBeenCalledTimes(1);
@@ -585,7 +611,10 @@ describe('services > mongoCollectionsAnalyzer', () => {
         };
 
         const analyzer = new MongoCollectionsAnalyzer(context);
-        await analyzer.analyzeCollectionAndDisplayProgressBarIfIsAllow(collection, 'aCollectionName');
+        await analyzer.analyzeCollectionAndDisplayProgressBarIfIsAllow(
+          collection,
+          'aCollectionName',
+        );
 
         expect(makeProgressBar).toHaveBeenCalledTimes(0);
       });
@@ -609,7 +638,10 @@ describe('services > mongoCollectionsAnalyzer', () => {
         makeProgressBar.mockReturnValue({ update, tick });
 
         const analyzer = new MongoCollectionsAnalyzer(context);
-        await analyzer.analyzeCollectionAndDisplayProgressBarIfIsAllow(collection, 'aCollectionName');
+        await analyzer.analyzeCollectionAndDisplayProgressBarIfIsAllow(
+          collection,
+          'aCollectionName',
+        );
 
         // chunk 1 : 50, chunk 2 : 2
         expect(collection.find).toHaveBeenCalledTimes(2);
@@ -641,7 +673,8 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
         expect(makeProgressBar).toHaveBeenCalledTimes(1);
         expect(makeProgressBar).toHaveBeenCalledWith(
-          `Analysing the **${collectionName}** collection`, countChunks,
+          `Analysing the **${collectionName}** collection`,
+          countChunks,
         );
 
         expect(update).toHaveBeenCalledTimes(1);
@@ -670,7 +703,10 @@ describe('services > mongoCollectionsAnalyzer', () => {
         makeProgressBar.mockReturnValue({ update, tick });
 
         const analyzer = new MongoCollectionsAnalyzer(context);
-        await analyzer.analyzeCollectionAndDisplayProgressBarIfIsAllow(collection, 'aCollectionName');
+        await analyzer.analyzeCollectionAndDisplayProgressBarIfIsAllow(
+          collection,
+          'aCollectionName',
+        );
 
         expect(collection.find).toHaveBeenCalledTimes(1);
         expect(collection.find).toHaveBeenCalledWith({}, { minIndex: 0, limit: 50 });
@@ -697,7 +733,10 @@ describe('services > mongoCollectionsAnalyzer', () => {
         const analyzer = new MongoCollectionsAnalyzer(context);
 
         analyzer.isProgressBarDisplay = false;
-        await analyzer.analyzeCollectionAndDisplayProgressBarIfIsAllow(collection, 'aCollectionName');
+        await analyzer.analyzeCollectionAndDisplayProgressBarIfIsAllow(
+          collection,
+          'aCollectionName',
+        );
 
         expect(makeProgressBar).toHaveBeenCalledTimes(0);
         expect(tick).toHaveBeenCalledTimes(0);
@@ -718,9 +757,7 @@ describe('services > mongoCollectionsAnalyzer', () => {
       const collection = Symbol('collection');
       const databaseConnection = {
         collections: jest.fn().mockResolvedValue([collection]),
-        listCollections: jest.fn().mockReturnValue(
-          { toArray: jest.fn().mockResolvedValue([]) },
-        ),
+        listCollections: jest.fn().mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) }),
       };
 
       const analyzer = new MongoCollectionsAnalyzer(context);
@@ -740,8 +777,9 @@ describe('services > mongoCollectionsAnalyzer', () => {
         };
 
         const analyzer = new MongoCollectionsAnalyzer(makeContext());
-        await expect(analyzer.analyzeMongoCollections(databaseConnection))
-          .rejects.toThrowErrorMatchingInlineSnapshot('"no collections found"');
+        await expect(
+          analyzer.analyzeMongoCollections(databaseConnection),
+        ).rejects.toThrowErrorMatchingInlineSnapshot('"no collections found"');
       });
     });
 
@@ -757,9 +795,7 @@ describe('services > mongoCollectionsAnalyzer', () => {
         const collection = Symbol('collection');
         const databaseConnection = {
           collections: jest.fn().mockResolvedValue([collection]),
-          listCollections: jest.fn().mockReturnValue(
-            { toArray: jest.fn().mockResolvedValue([]) },
-          ),
+          listCollections: jest.fn().mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) }),
         };
 
         const analyzer = new MongoCollectionsAnalyzer(context);
@@ -792,9 +828,9 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
         const databaseConnection = {
           collections: jest.fn().mockResolvedValue([collection]),
-          listCollections: jest.fn().mockReturnValue(
-            { toArray: jest.fn().mockResolvedValue([collectionInfo]) },
-          ),
+          listCollections: jest
+            .fn()
+            .mockReturnValue({ toArray: jest.fn().mockResolvedValue([collectionInfo]) }),
         };
 
         const analyzer = new MongoCollectionsAnalyzer(context);
@@ -811,8 +847,11 @@ describe('services > mongoCollectionsAnalyzer', () => {
         expect(analyzer.analyzeMongoCollectionLocally).toHaveBeenCalledTimes(0);
 
         expect(analyzer.applyRelationships).toHaveBeenCalledTimes(1);
-        expect(analyzer.applyRelationships)
-          .toHaveBeenCalledWith(databaseConnection, [], collectionName);
+        expect(analyzer.applyRelationships).toHaveBeenCalledWith(
+          databaseConnection,
+          [],
+          collectionName,
+        );
 
         expect(analyzer.buildSchema).toHaveBeenCalledTimes(1);
 
@@ -836,9 +875,9 @@ describe('services > mongoCollectionsAnalyzer', () => {
         const collectionInfo = {};
         const databaseConnection = {
           collections: jest.fn().mockResolvedValue([collection]),
-          listCollections: jest.fn().mockReturnValue(
-            { toArray: jest.fn().mockResolvedValue([collectionInfo]) },
-          ),
+          listCollections: jest
+            .fn()
+            .mockReturnValue({ toArray: jest.fn().mockResolvedValue([collectionInfo]) }),
         };
 
         const analyzer = new MongoCollectionsAnalyzer(context);
@@ -866,19 +905,20 @@ describe('services > mongoCollectionsAnalyzer', () => {
         const collectionInfo = { options: {}, name: 'aName' };
         const databaseConnection = {
           collections: jest.fn().mockResolvedValue([collection]),
-          listCollections: jest.fn().mockReturnValue(
-            { toArray: jest.fn().mockResolvedValue([collectionInfo]) },
-          ),
+          listCollections: jest
+            .fn()
+            .mockReturnValue({ toArray: jest.fn().mockResolvedValue([collectionInfo]) }),
         };
 
         const analyzer = new MongoCollectionsAnalyzer(context);
 
         jest.spyOn(analyzer, 'analyzeMongoCollectionLocally').mockImplementation();
         const analysis = {};
-        jest.spyOn(analyzer, 'analyzeMongoCollectionRemotely').mockImplementation()
+        jest
+          .spyOn(analyzer, 'analyzeMongoCollectionRemotely')
+          .mockImplementation()
           .mockResolvedValue(analysis);
-        jest.spyOn(analyzer, 'applyRelationships').mockImplementation()
-          .mockResolvedValue(analysis);
+        jest.spyOn(analyzer, 'applyRelationships').mockImplementation().mockResolvedValue(analysis);
 
         const builtSchema = {};
         jest.spyOn(analyzer, 'buildSchema').mockImplementation().mockReturnValue(builtSchema);
@@ -888,12 +928,17 @@ describe('services > mongoCollectionsAnalyzer', () => {
         await expect(analyzer.analyzeMongoCollectionLocally).toHaveBeenCalledTimes(0);
 
         await expect(analyzer.analyzeMongoCollectionRemotely).toHaveBeenCalledTimes(1);
-        await expect(analyzer.analyzeMongoCollectionRemotely)
-          .toHaveBeenLastCalledWith(databaseConnection, collectionName);
+        await expect(analyzer.analyzeMongoCollectionRemotely).toHaveBeenLastCalledWith(
+          databaseConnection,
+          collectionName,
+        );
 
         await expect(analyzer.applyRelationships).toHaveBeenCalledTimes(1);
-        await expect(analyzer.applyRelationships)
-          .toHaveBeenLastCalledWith(databaseConnection, analysis, collectionName);
+        await expect(analyzer.applyRelationships).toHaveBeenLastCalledWith(
+          databaseConnection,
+          analysis,
+          collectionName,
+        );
 
         await expect(analyzer.buildSchema).toHaveBeenCalledTimes(1);
         await expect(analyzer.buildSchema).toHaveBeenLastCalledWith(analysis);
@@ -913,9 +958,9 @@ describe('services > mongoCollectionsAnalyzer', () => {
         const collectionInfo = { options: {}, name: 'aName' };
         const databaseConnection = {
           collections: jest.fn().mockResolvedValue([collection]),
-          listCollections: jest.fn().mockReturnValue(
-            { toArray: jest.fn().mockResolvedValue([collectionInfo]) },
-          ),
+          listCollections: jest
+            .fn()
+            .mockReturnValue({ toArray: jest.fn().mockResolvedValue([collectionInfo]) }),
         };
 
         const analyzer = new MongoCollectionsAnalyzer(context);
@@ -923,13 +968,16 @@ describe('services > mongoCollectionsAnalyzer', () => {
         const collectionName = 'aCollectionName';
         getCollectionName.mockImplementation().mockReturnValue(collectionName);
         isSystemCollection.mockImplementation().mockReturnValue(false);
-        jest.spyOn(analyzer, 'analyzeMongoCollectionRemotely').mockImplementation()
+        jest
+          .spyOn(analyzer, 'analyzeMongoCollectionRemotely')
+          .mockImplementation()
           .mockResolvedValue('MapReduceError');
         const analysis = {};
-        jest.spyOn(analyzer, 'analyzeMongoCollectionLocally').mockImplementation()
+        jest
+          .spyOn(analyzer, 'analyzeMongoCollectionLocally')
+          .mockImplementation()
           .mockResolvedValue(analysis);
-        jest.spyOn(analyzer, 'applyRelationships').mockImplementation()
-          .mockResolvedValue(analysis);
+        jest.spyOn(analyzer, 'applyRelationships').mockImplementation().mockResolvedValue(analysis);
 
         const builtSchema = {};
         jest.spyOn(analyzer, 'buildSchema').mockImplementation().mockReturnValue(builtSchema);
@@ -937,16 +985,23 @@ describe('services > mongoCollectionsAnalyzer', () => {
         const schema = await analyzer.analyzeMongoCollections(databaseConnection);
 
         expect(analyzer.analyzeMongoCollectionLocally).toHaveBeenCalledTimes(1);
-        expect(analyzer.analyzeMongoCollectionLocally)
-          .toHaveBeenLastCalledWith(databaseConnection, collectionName);
+        expect(analyzer.analyzeMongoCollectionLocally).toHaveBeenLastCalledWith(
+          databaseConnection,
+          collectionName,
+        );
 
         expect(analyzer.analyzeMongoCollectionRemotely).toHaveBeenCalledTimes(1);
-        expect(analyzer.analyzeMongoCollectionRemotely)
-          .toHaveBeenLastCalledWith(databaseConnection, collectionName);
+        expect(analyzer.analyzeMongoCollectionRemotely).toHaveBeenLastCalledWith(
+          databaseConnection,
+          collectionName,
+        );
 
         expect(analyzer.applyRelationships).toHaveBeenCalledTimes(1);
-        expect(analyzer.applyRelationships)
-          .toHaveBeenLastCalledWith(databaseConnection, analysis, collectionName);
+        expect(analyzer.applyRelationships).toHaveBeenLastCalledWith(
+          databaseConnection,
+          analysis,
+          collectionName,
+        );
 
         expect(analyzer.buildSchema).toHaveBeenCalledTimes(1);
         expect(analyzer.buildSchema).toHaveBeenLastCalledWith(analysis);
@@ -970,16 +1025,18 @@ describe('services > mongoCollectionsAnalyzer', () => {
           const collectionsInfo = [collectionInfo, collectionInfo];
           const databaseConnection = {
             collections: jest.fn().mockResolvedValue(collections),
-            listCollections: jest.fn().mockReturnValue(
-              { toArray: jest.fn().mockResolvedValue(collectionsInfo) },
-            ),
+            listCollections: jest
+              .fn()
+              .mockReturnValue({ toArray: jest.fn().mockResolvedValue(collectionsInfo) }),
           };
 
           const analyzer = new MongoCollectionsAnalyzer(context);
 
           const collectionName = 'aCollectionName';
           getCollectionName.mockImplementation().mockReturnValue(collectionName);
-          jest.spyOn(analyzer, 'analyzeMongoCollectionRemotely').mockImplementation()
+          jest
+            .spyOn(analyzer, 'analyzeMongoCollectionRemotely')
+            .mockImplementation()
             .mockResolvedValue('MapReduceError');
           jest.spyOn(analyzer, 'analyzeMongoCollectionLocally').mockImplementation();
           jest.spyOn(analyzer, 'applyRelationships').mockImplementation();
@@ -990,8 +1047,7 @@ describe('services > mongoCollectionsAnalyzer', () => {
           await analyzer.analyzeMongoCollections(databaseConnection);
 
           expect(analyzer.analyzeMongoCollectionRemotely).toHaveBeenCalledTimes(1);
-          expect(analyzer.analyzeMongoCollectionLocally)
-            .toHaveBeenCalledTimes(collections.length);
+          expect(analyzer.analyzeMongoCollectionLocally).toHaveBeenCalledTimes(collections.length);
         });
       });
     });
@@ -1009,12 +1065,10 @@ describe('services > mongoCollectionsAnalyzer', () => {
           value: 'String',
         };
 
-        expect(analyzer.mergeField(field)).toStrictEqual(
-          {
-            name: field._id,
-            type: field.value,
-          },
-        );
+        expect(analyzer.mergeField(field)).toStrictEqual({
+          name: field._id,
+          type: field.value,
+        });
       });
     });
 
@@ -1040,12 +1094,10 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
           expect(analyzer.mergeAnalyzedSchemas).toHaveBeenCalledTimes(1);
           expect(analyzer.mergeAnalyzedSchemas).toHaveBeenLastCalledWith(schemas);
-          expect(mergedField).toStrictEqual(
-            {
-              name: field._id,
-              type: mergedSchema,
-            },
-          );
+          expect(mergedField).toStrictEqual({
+            name: field._id,
+            type: mergedSchema,
+          });
         });
       });
 
@@ -1056,9 +1108,10 @@ describe('services > mongoCollectionsAnalyzer', () => {
           const analyzer = new MongoCollectionsAnalyzer(makeContext());
 
           const mergedSchema = {};
-          jest.spyOn(analyzer, 'mergeAnalyzedSchemas').mockImplementation().mockReturnValue(
-            mergedSchema,
-          );
+          jest
+            .spyOn(analyzer, 'mergeAnalyzedSchemas')
+            .mockImplementation()
+            .mockReturnValue(mergedSchema);
           const schema = {};
           const field = {
             _id: 'columnName',
@@ -1068,12 +1121,10 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
           expect(analyzer.mergeAnalyzedSchemas).toHaveBeenCalledTimes(1);
           expect(analyzer.mergeAnalyzedSchemas).toHaveBeenLastCalledWith([schema]);
-          expect(mergedField).toStrictEqual(
-            {
-              name: field._id,
-              type: mergedSchema,
-            },
-          );
+          expect(mergedField).toStrictEqual({
+            name: field._id,
+            type: mergedSchema,
+          });
         });
       });
     });
@@ -1093,7 +1144,9 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
         const mergedFieldA = {};
         const mergedFieldB = {};
-        jest.spyOn(analyzer, 'mergeField').mockImplementation()
+        jest
+          .spyOn(analyzer, 'mergeField')
+          .mockImplementation()
           .mockReturnValueOnce(mergedFieldA)
           .mockReturnValueOnce(mergedFieldB);
 

@@ -9,7 +9,7 @@ describe('service > Oidc > ErrorHandler', () => {
         terminate: jest.fn(),
       },
       chalk: {
-        red: jest.fn().mockImplementation((value) => `<red>${value}</red>`),
+        red: jest.fn().mockImplementation(value => `<red>${value}</red>`),
       },
       messages: {
         ERROR_UNEXPECTED: 'Unexpected',
@@ -31,10 +31,9 @@ describe('service > Oidc > ErrorHandler', () => {
 
         errorHandler.handle(new Error('The error'));
 
-        expect(terminator.terminate).toHaveBeenCalledWith(
-          1,
-          { logs: ['Unexpected <red>The error</red>'] },
-        );
+        expect(terminator.terminate).toHaveBeenCalledWith(1, {
+          logs: ['Unexpected <red>The error</red>'],
+        });
       });
     });
 
@@ -44,12 +43,13 @@ describe('service > Oidc > ErrorHandler', () => {
 
         const { errorHandler, terminator } = setupTest();
 
-        errorHandler.handle(new ForestCLIError('The error', undefined, { reason: 'The inner error' }));
-
-        expect(terminator.terminate).toHaveBeenCalledWith(
-          1,
-          { logs: ['<red>The error</red>: The inner error'] },
+        errorHandler.handle(
+          new ForestCLIError('The error', undefined, { reason: 'The inner error' }),
         );
+
+        expect(terminator.terminate).toHaveBeenCalledWith(1, {
+          logs: ['<red>The error</red>: The inner error'],
+        });
       });
 
       it('should output the possible solution if provided', () => {
@@ -57,12 +57,13 @@ describe('service > Oidc > ErrorHandler', () => {
 
         const { errorHandler, terminator } = setupTest();
 
-        errorHandler.handle(new ForestCLIError('The error', undefined, { possibleSolution: 'possible solution' }));
-
-        expect(terminator.terminate).toHaveBeenCalledWith(
-          1,
-          { logs: ['<red>The error</red>', 'possible solution'] },
+        errorHandler.handle(
+          new ForestCLIError('The error', undefined, { possibleSolution: 'possible solution' }),
         );
+
+        expect(terminator.terminate).toHaveBeenCalledWith(1, {
+          logs: ['<red>The error</red>', 'possible solution'],
+        });
       });
     });
   });

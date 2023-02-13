@@ -25,8 +25,9 @@ class DeployCommand extends AbstractAuthenticatedCommand {
     const config = await withCurrentProject({ ...this.env, ...commandOptions });
 
     if (!config.envSecret) {
-      const environment = await new ProjectManager(config)
-        .getDevelopmentEnvironmentForUser(config.projectId);
+      const environment = await new ProjectManager(config).getDevelopmentEnvironmentForUser(
+        config.projectId,
+      );
       config.envSecret = environment.secretKey;
     }
 
@@ -39,12 +40,13 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * @returns {Boolean} Return true if user has confirmed.
    */
   async confirm() {
-    const response = await this.inquirer
-      .prompt([{
+    const response = await this.inquirer.prompt([
+      {
         type: 'confirm',
         name: 'confirm',
         message: 'Deploy layout changes to reference?',
-      }]);
+      },
+    ]);
     return response.confirm;
   }
 

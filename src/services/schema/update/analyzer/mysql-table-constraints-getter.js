@@ -3,10 +3,11 @@ function MysqlTableConstraintsGetter(databaseConnection) {
 
   // NOTICE: provide an array of array. Each inner array representing a (possibly composite) unique
   //         index
-  this.convertToUniqueIndexArray = (constraints) => {
+  this.convertToUniqueIndexArray = constraints => {
     const uniqueIndexes = {};
-    constraints.filter((constraint) => constraint.columnType === 'UNIQUE')
-      .forEach((constraint) => {
+    constraints
+      .filter(constraint => constraint.columnType === 'UNIQUE')
+      .forEach(constraint => {
         uniqueIndexes[constraint.constraintName] = uniqueIndexes[constraint.constraintName] || [];
         uniqueIndexes[constraint.constraintName].push(constraint.columnName);
       });
@@ -15,16 +16,16 @@ function MysqlTableConstraintsGetter(databaseConnection) {
   };
 
   // NOTICE: This function exists only to create a structure compatible with the needed response.
-  this.applyUniqueIndexArray = (constraints) => {
+  this.applyUniqueIndexArray = constraints => {
     if (constraints && constraints.length) {
       const uniqueIndexes = this.convertToUniqueIndexArray(constraints);
       // NOTICE: We apply the uniqueIndexes array to every element of the constraints array.
-      return constraints.map((constraint) => ({ ...constraint, uniqueIndexes }));
+      return constraints.map(constraint => ({ ...constraint, uniqueIndexes }));
     }
     return constraints;
   };
 
-  this.perform = async (table) => {
+  this.perform = async table => {
     const replacements = { table, schemaName: queryInterface.sequelize.config.database };
     const query = `
         SELECT DISTINCT
@@ -47,9 +48,14 @@ function MysqlTableConstraintsGetter(databaseConnection) {
         ORDER BY uniqueIndexes.SEQ_IN_INDEX;
     `;
 
-    const constraints = (await queryInterface.sequelize
-      .query(query, { type: queryInterface.sequelize.QueryTypes.SELECT, replacements }))
+    const constraints = (
+      await queryInterface.sequelize.query(query, {
+        type: queryInterface.sequelize.QueryTypes.SELECT,
+        replacements,
+      })
+    )
       // NOTICE: This map remove the `sequenceInIndex`property from the constraints.
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .map(({ sequenceInIndex, ...constraint }) => constraint);
 
     return this.applyUniqueIndexArray(constraints);

@@ -18,11 +18,10 @@ module.exports = {
     'eslint:recommended',
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
+    'plugin:prettier/recommended',
+    'prettier',
   ],
-  plugins: [
-    'sonarjs',
-    '@typescript-eslint',
-  ],
+  plugins: ['sonarjs', '@typescript-eslint', 'prettier'],
   env: {
     node: true,
   },
@@ -37,10 +36,7 @@ module.exports = {
     'import/no-extraneous-dependencies': [
       'error',
       {
-        devDependencies: [
-          '.eslint-bin/*.js',
-          'test/**/*.js',
-        ],
+        devDependencies: ['.eslint-bin/*.js', 'test/**/*.js'],
       },
     ],
     'no-multiple-empty-lines': [

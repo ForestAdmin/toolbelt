@@ -20,9 +20,9 @@ class ApplicationPrompts extends AbstractPrompter {
         this.prompts.push({
           type: 'input',
           name: 'applicationHost',
-          message: 'What\'s the IP/hostname on which your application will be running?',
+          message: "What's the IP/hostname on which your application will be running?",
           default: 'http://localhost',
-          validate: (hostname) => {
+          validate: hostname => {
             if (!/^https?:\/\/.*/i.test(hostname)) {
               return 'Application hostname must be a valid url.';
             }
@@ -43,15 +43,17 @@ class ApplicationPrompts extends AbstractPrompter {
         this.prompts.push({
           type: 'input',
           name: 'applicationPort',
-          message: 'What\'s the port on which your application will be running?',
+          message: "What's the port on which your application will be running?",
           default: '3310',
-          validate: (port) => {
+          validate: port => {
             if (!/^\d+$/.test(port)) {
               return 'The port must be a number.';
             }
 
             const parsedPort = parseInt(port, 10);
-            if (parsedPort > 0 && parsedPort < 65536) { return true; }
+            if (parsedPort > 0 && parsedPort < 65536) {
+              return true;
+            }
             return 'This is not a valid port.';
           },
         });

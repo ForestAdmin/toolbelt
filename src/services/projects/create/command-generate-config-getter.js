@@ -6,23 +6,11 @@ const REQUESTS_DATABASE_MANDATORY = [
   'dbUser',
   'dbPassword',
 ];
-const REQUESTS_DATABASE_OPTIONAL = [
-  'dbSchema',
-  'ssl',
-  'mongodbSrv',
-];
-const REQUESTS_APPLICATION = [
-  'applicationName',
-  'appHostname',
-  'appPort',
-];
+const REQUESTS_DATABASE_OPTIONAL = ['dbSchema', 'ssl', 'mongodbSrv'];
+const REQUESTS_APPLICATION = ['applicationName', 'appHostname', 'appPort'];
 
 const REQUESTS = {
-  forConnectionUrl: [
-    'dbConnectionUrl',
-    ...REQUESTS_DATABASE_OPTIONAL,
-    ...REQUESTS_APPLICATION,
-  ],
+  forConnectionUrl: ['dbConnectionUrl', ...REQUESTS_DATABASE_OPTIONAL, ...REQUESTS_APPLICATION],
   forFullPrompt: [
     ...REQUESTS_DATABASE_MANDATORY,
     ...REQUESTS_DATABASE_OPTIONAL,
@@ -31,10 +19,7 @@ const REQUESTS = {
 };
 
 class CommandGenerateConfigGetter {
-  constructor({
-    assertPresent,
-    GeneralPrompter,
-  }) {
+  constructor({ assertPresent, GeneralPrompter }) {
     assertPresent({
       GeneralPrompter,
     });
@@ -51,10 +36,7 @@ class CommandGenerateConfigGetter {
 
   get(programArguments) {
     const requests = this.getRequestList(programArguments);
-    return new this.GeneralPrompter(
-      requests,
-      programArguments,
-    ).getConfig();
+    return new this.GeneralPrompter(requests, programArguments).getConfig();
   }
 }
 

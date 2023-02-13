@@ -14,16 +14,18 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
 
   async selectBranch(branches) {
     try {
-      const { branch } = await this.inquirer.prompt([{
-        name: 'branch',
-        message: 'Select the branch you want to set current',
-        type: 'list',
-        choices: [
-          // NOTICE: Current branch should be last displayed branch.
-          ...branches.filter((currentBranch) => !currentBranch.isCurrent),
-          ...branches.filter((currentBranch) => currentBranch.isCurrent),
-        ].map((currentBranch) => currentBranch.name),
-      }]);
+      const { branch } = await this.inquirer.prompt([
+        {
+          name: 'branch',
+          message: 'Select the branch you want to set current',
+          type: 'list',
+          choices: [
+            // NOTICE: Current branch should be last displayed branch.
+            ...branches.filter(currentBranch => !currentBranch.isCurrent),
+            ...branches.filter(currentBranch => currentBranch.isCurrent),
+          ].map(currentBranch => currentBranch.name),
+        },
+      ]);
 
       return branch;
     } catch (error) {
@@ -55,8 +57,9 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
     const config = await withCurrentProject({ ...this.env, ...commandOptions });
 
     if (!config.envSecret) {
-      const environment = await new ProjectManager(config)
-        .getDevelopmentEnvironmentForUser(config.projectId);
+      const environment = await new ProjectManager(config).getDevelopmentEnvironmentForUser(
+        config.projectId,
+      );
       config.envSecret = environment.secretKey;
     }
 
@@ -66,20 +69,22 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
   async runIfAuthenticated() {
     try {
       const config = await this.getConfig();
-      const branches = await BranchManager.getBranches(config.envSecret) || [];
+      const branches = (await BranchManager.getBranches(config.envSecret)) || [];
 
       if (branches.length === 0) {
-        this.logger.warn('You don\'t have any branch to set as current. Use `forest branch <branch_name>` to create one.');
+        this.logger.warn(
+          "You don't have any branch to set as current. Use `forest branch <branch_name>` to create one.",
+        );
         return;
       }
 
-      const selectedBranchName = config.BRANCH_NAME || await this.selectBranch(branches);
+      const selectedBranchName = config.BRANCH_NAME || (await this.selectBranch(branches));
       if (!selectedBranchName) {
         this.exit(2);
       }
 
-      const selectedBranch = branches.find((branch) => branch.name === selectedBranchName);
-      const currentBranch = branches.find((branch) => branch.isCurrent);
+      const selectedBranch = branches.find(branch => branch.name === selectedBranchName);
+      const currentBranch = branches.find(branch => branch.isCurrent);
 
       if (selectedBranch === undefined) {
         throw new Error('Branch does not exist.');
@@ -108,9 +113,13 @@ SwitchCommand.flags = {
   }),
 };
 
-SwitchCommand.args = [{
-  name: 'BRANCH_NAME', required: false, description: 'The name of the local branch to set as current.',
-}];
+SwitchCommand.args = [
+  {
+    name: 'BRANCH_NAME',
+    required: false,
+    description: 'The name of the local branch to set as current.',
+  },
+];
 
 SwitchCommand.aliases = ['branch:switch'];
 
