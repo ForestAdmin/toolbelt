@@ -84,6 +84,8 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock', '**/package.json') }}
+      - name: install dependencies
+        run: yarn install --frozen-lockfile --non-interactive
       - name: Build
         run: yarn build
 
