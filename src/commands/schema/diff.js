@@ -14,6 +14,8 @@ class DiffCommand extends AbstractAuthenticatedCommand {
   }
 
   async run() {
+    await this.checkAuthentication();
+
     const parsed = this.parse(DiffCommand);
     const config = { ...this.env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
