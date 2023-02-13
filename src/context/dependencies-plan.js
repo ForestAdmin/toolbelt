@@ -18,4 +18,5 @@ module.exports = (plan) => plan
     .addModule('joi', () => require('joi'))
     .addModule('openIdClient', () => require('openid-client'))
     .addModule('os', () => require('os'))
-    .addModule('superagent', () => require('superagent')));
+    .addModule('superagent', () => require('superagent'))
+    .addUsingFunction('diffString', () => require('json-diff').diffString));

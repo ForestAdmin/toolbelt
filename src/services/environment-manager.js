@@ -6,6 +6,7 @@ const EnvironmentSerializer = require('../serializers/environment');
 const environmentDeserializer = require('../deserializers/environment');
 const DeploymentRequestSerializer = require('../serializers/deployment-request');
 const JobStateChecker = require('./job-state-checker');
+const { handleError } = require('../utils/error');
 
 function EnvironmentManager(config) {
   const {
@@ -33,6 +34,17 @@ function EnvironmentManager(config) {
       .set('forest-environment-id', environmentId)
       .send()
       .then((response) => environmentDeserializer.deserialize(response.body));
+  };
+
+  this.getEnvironmentApimap = async (environmentId) => {
+    const authToken = authenticator.getAuthToken();
+
+    const response = await agent
+      .get(`${env.FOREST_URL}/api/apimaps/${environmentId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('forest-environment-id', environmentId)
+      .send();
+    return response.body.data.apimap;
   };
 
   this.createEnvironment = async () => {
@@ -133,6 +145,14 @@ function EnvironmentManager(config) {
       .post(`${env.FOREST_URL}/api/environments/deploy`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-secret-key', `${config.envSecret}`);
+  };
+
+  this.handleEnvironmentError = (rawError) => {
+    const error = handleError(rawError);
+    if (error === 'Forbidden') {
+      return 'You do not have the permission to perform this action on the given environments.';
+    }
+    return error;
   };
 }
 

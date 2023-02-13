@@ -26,6 +26,7 @@ module.exports = ({
       if (logs.length) {
         logger.error(...logs);
       }
+
       if (errorCode) {
         await eventSender.notifyError(errorCode, errorMessage, context);
       } else {
