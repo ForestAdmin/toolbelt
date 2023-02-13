@@ -442,8 +442,10 @@ describe('projects:create', () => {
     it('should log error and throw', async () => {
       expect.assertions(3);
 
-      const errorParameter = Symbol('catch error message');
-      const unexpectedError = Symbol('unexpected error message');
+      const error = new Error('this is an error ');
+      error.status = 500;
+
+      const unexpectedError = 'unexpected error message';
 
       const command = new CreateProjectCommand();
       command.logger = {
@@ -455,14 +457,14 @@ describe('projects:create', () => {
         red: msg => msg,
       };
       const messages = {
-        ERROR_UNEXPECTED: unexpectedError.description,
+        ERROR_UNEXPECTED: unexpectedError,
       };
       command.messages = messages;
 
-      await expect(() => command.catch(errorParameter.description)).rejects.toThrow('EEXIT: 1');
+      await expect(() => command.catch(error)).rejects.toThrow('EEXIT: 1');
       expect(command.logger.error).toHaveBeenCalledTimes(1);
       expect(command.logger.error).toHaveBeenCalledWith(
-        `Cannot generate your project. ${unexpectedError.description} ${errorParameter.description}`,
+        `Cannot generate your project. ${unexpectedError} ${error}`,
       );
     });
   });
