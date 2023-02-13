@@ -3,8 +3,8 @@ const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
 class DiffCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, chalk, env, environmentRenderer, errorHandler } = this.context;
     assertPresent({ chalk, env });
     this.chalk = chalk;
@@ -13,7 +13,7 @@ class DiffCommand extends AbstractAuthenticatedCommand {
     this.errorHandler = errorHandler;
   }
 
-  async runIfAuthenticated() {
+  async run() {
     const parsed = this.parse(DiffCommand);
     const config = { ...this.env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
@@ -34,6 +34,11 @@ class DiffCommand extends AbstractAuthenticatedCommand {
       );
       this.logger.error(manager.handleEnvironmentError(error));
     }
+  }
+
+  async catch(error) {
+    await this.handleAuthenticationErrors(error);
+    return super.catch(error);
   }
 }
 
