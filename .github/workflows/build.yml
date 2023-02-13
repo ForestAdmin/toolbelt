@@ -83,7 +83,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: '**/node_modules'
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock', '**/package.json') }}
+          key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
       - name: Build
         run: yarn build
 
