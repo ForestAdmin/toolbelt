@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/ForestAdmin/toolbelt/compare/v3.0.12...v3.1.0) (2023-02-13)
+
+
+### Features
+
+* **schema-diff:** compare two environments api map ([#476](https://github.com/ForestAdmin/toolbelt/issues/476)) ([170da5d](https://github.com/ForestAdmin/toolbelt/commit/170da5da0f9fefe31e0d1f954885c5e4b011bce7))
+
 ## [3.0.12](https://github.com/ForestAdmin/toolbelt/compare/v3.0.11...v3.0.12) (2023-02-09)
 
 ## [3.0.12-beta.2](https://github.com/ForestAdmin/toolbelt/compare/v3.0.12-beta.1...v3.0.12-beta.2) (2023-02-08)
