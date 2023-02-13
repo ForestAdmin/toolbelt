@@ -1,4 +1,4 @@
-const { Command, flags } = require('@oclif/command');
+const { Command } = require('@oclif/command');
 const Context = require('@forestadmin/context');
 
 const defaultPlan = require('./context/plan');
@@ -19,9 +19,5 @@ class AbstractCommand extends Command {
     this.chalk = chalk;
   }
 }
-
-// NOTICE: Exports flag types within base command to remove need for
-//         requiring @oclif/command in all command files.
-AbstractCommand.flags = flags;
 
 module.exports = AbstractCommand;

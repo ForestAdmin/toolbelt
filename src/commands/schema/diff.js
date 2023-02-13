@@ -1,3 +1,4 @@
+const { flags } = require('@oclif/command');
 const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
@@ -39,7 +40,7 @@ class DiffCommand extends AbstractAuthenticatedCommand {
 DiffCommand.description = 'Allow to compare two environment schemas';
 
 DiffCommand.flags = {
-  help: AbstractAuthenticatedCommand.flags.boolean({
+  help: flags.boolean({
     description: 'Display usage information.',
   }),
 };

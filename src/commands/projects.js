@@ -1,3 +1,4 @@
+const { flags } = require('@oclif/command');
 const ProjectManager = require('../services/project-manager');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
 
@@ -25,7 +26,7 @@ ProjectCommand.aliases = ['projects:list'];
 ProjectCommand.description = 'Manage projects.';
 
 ProjectCommand.flags = {
-  format: AbstractAuthenticatedCommand.flags.string({
+  format: flags.string({
     char: 'format',
     description: 'Ouput format.',
     options: ['table', 'json'],

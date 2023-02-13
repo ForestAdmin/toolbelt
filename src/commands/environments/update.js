@@ -1,3 +1,4 @@
+const { flags } = require('@oclif/command');
 const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
 
@@ -26,17 +27,17 @@ class UpdateCommand extends AbstractAuthenticatedCommand {
 UpdateCommand.description = 'Update an environment.';
 
 UpdateCommand.flags = {
-  environmentId: AbstractAuthenticatedCommand.flags.integer({
+  environmentId: flags.integer({
     char: 'e',
     description: 'The forest environment ID to update.',
     required: true,
   }),
-  name: AbstractAuthenticatedCommand.flags.string({
+  name: flags.string({
     char: 'n',
     description: 'To update the environment name.',
     required: false,
   }),
-  url: AbstractAuthenticatedCommand.flags.string({
+  url: flags.string({
     char: 'u',
     description: 'To update the application URL.',
     required: false,
