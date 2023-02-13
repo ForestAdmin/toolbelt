@@ -83,9 +83,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: '**/node_modules'
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock', '**/package.json') }}
-      - name: install dependencies
-        run: yarn install --frozen-lockfile --non-interactive
+          key: ${{ runner.os }}-node_modules-${{ hashFiles('**/yarn.lock') }}
       - name: Build
         run: yarn build
 
