@@ -30,5 +30,3 @@ export default abstract class AbstractCommand extends Command {
     this.chalk = chalk;
   }
 }
-
-module.exports = AbstractCommand;

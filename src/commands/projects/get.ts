@@ -2,7 +2,7 @@ import { flags } from '@oclif/command';
 import ProjectManager from '../../services/project-manager';
 import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
 
-class GetCommand extends AbstractAuthenticatedCommand {
+export default class GetCommand extends AbstractAuthenticatedCommand {
   private env: any;
 
   private projectRenderer: any;
@@ -60,5 +60,3 @@ class GetCommand extends AbstractAuthenticatedCommand {
     return super.catch(error);
   }
 }
-
-module.exports = GetCommand;

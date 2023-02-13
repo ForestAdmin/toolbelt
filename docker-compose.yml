@@ -1,7 +1,7 @@
 version: '3.4'
 services:
   MongoDB-MIN:
-    image: mongo:3.2
+    image: mongo:4.2
     container_name : forestadmin_test_toolbelt_mongo_min
     ports:
       - "27015:27017"

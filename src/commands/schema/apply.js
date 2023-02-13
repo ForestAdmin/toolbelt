@@ -2,7 +2,7 @@ const { flags } = require('@oclif/command');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
 const JobStateChecker = require('../../services/job-state-checker');
-const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command').default;
 
 class ApplyCommand extends AbstractAuthenticatedCommand {
   constructor(argv, config, plan) {

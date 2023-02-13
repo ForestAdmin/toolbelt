@@ -1,4 +1,4 @@
-const AbstractCommand = require('../abstract-command');
+const AbstractCommand = require('../abstract-command').default;
 
 class UserCommand extends AbstractCommand {
   constructor(argv, config, plan) {

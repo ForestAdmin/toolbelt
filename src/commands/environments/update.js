@@ -1,6 +1,6 @@
 const { flags } = require('@oclif/command');
 const EnvironmentManager = require('../../services/environment-manager');
-const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command').default;
 
 class UpdateCommand extends AbstractAuthenticatedCommand {
   constructor(argv, config, plan) {

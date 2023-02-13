@@ -1,5 +1,5 @@
 const { flags } = require('@oclif/command');
-const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
+const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
 const { buildDatabaseUrl } = require('../utils/database-url');
 const withCurrentProject = require('../services/with-current-project');
 const ProjectManager = require('../services/project-manager');

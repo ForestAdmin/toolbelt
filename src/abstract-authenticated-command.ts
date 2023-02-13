@@ -41,5 +41,3 @@ export default abstract class AbstractAuthenticatedCommand extends AbstractComma
     }
   }
 }
-
-module.exports = AbstractAuthenticatedCommand;

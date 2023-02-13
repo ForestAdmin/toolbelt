@@ -1,5 +1,5 @@
 const { flags } = require('@oclif/command');
-const AbstractCommand = require('../abstract-command');
+const AbstractCommand = require('../abstract-command').default;
 
 class LoginCommand extends AbstractCommand {
   constructor(argv, config, plan) {

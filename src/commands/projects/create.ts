@@ -166,5 +166,3 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
     await this.spinner.attachToPromise(dumpPromise);
   }
 }
-
-module.exports = CreateCommand;

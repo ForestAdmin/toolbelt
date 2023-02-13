@@ -1,6 +1,6 @@
 const { flags } = require('@oclif/command');
 const ProjectManager = require('../services/project-manager');
-const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
+const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
 
 class ProjectCommand extends AbstractAuthenticatedCommand {
   constructor(argv, config, plan) {

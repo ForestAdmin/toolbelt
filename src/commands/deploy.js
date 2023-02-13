@@ -1,5 +1,5 @@
 const { flags } = require('@oclif/command');
-const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
+const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
 const EnvironmentManager = require('../services/environment-manager');
 const ProjectManager = require('../services/project-manager');
 const { handleBranchError } = require('../services/branch-manager');

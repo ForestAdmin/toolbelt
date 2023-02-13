@@ -1,5 +1,5 @@
 const testCli = require('../test-cli-helper/test-cli');
-const GetProjectCommand = require('../../../src/commands/projects/get');
+const GetProjectCommand = require('../../../src/commands/projects/get').default;
 const { testEnvWithoutSecret } = require('../../fixtures/env');
 const { getProjectValid } = require('../../fixtures/api');
 

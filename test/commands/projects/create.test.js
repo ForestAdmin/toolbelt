@@ -1,5 +1,5 @@
 const testCli = require('../test-cli-helper/test-cli');
-const CreateProjectCommand = require('../../../src/commands/projects/create');
+const CreateProjectCommand = require('../../../src/commands/projects/create').default;
 const { testEnvWithoutSecret, testEnvWithSecret } = require('../../fixtures/env');
 const {
   createProject,
@@ -125,7 +125,7 @@ describe('projects:create', () => {
             { spinner: '× Creating your project on Forest Admin' },
           ],
           // This only validates login, options are missing thus the error.
-          exitCode: 1,
+          exitCode: -1,
         }));
     });
 
@@ -154,7 +154,7 @@ describe('projects:create', () => {
           ],
           std: [{ spinner: '× Creating your project on Forest Admin' }],
           // This only validates login, options are missing thus the error.
-          exitCode: 1,
+          exitCode: -1,
         }));
     });
   });
@@ -171,7 +171,6 @@ describe('projects:create', () => {
             exitCode: 2,
           }));
       });
-
       describe('is provided', () => {
         it('should execute command', () =>
           testCli({
@@ -201,7 +200,7 @@ describe('projects:create', () => {
             ],
             std: [
               { spinner: '√ Creating your project on Forest Admin' },
-              { spinner: '× Connecting to your database' },
+              { spinner: '× Testing connection to your database' },
             ],
             // This only validates login, options are missing thus the error.
             exitCode: 1,
@@ -257,7 +256,7 @@ describe('projects:create', () => {
             ],
             std: [
               { spinner: '√ Creating your project on Forest Admin' },
-              { spinner: '× Connecting to your database' },
+              { spinner: '× Testing connection to your database' },
             ],
             // This only validates login, options are missing thus the error.
             exitCode: 1,
@@ -295,7 +294,7 @@ describe('projects:create', () => {
             ],
             std: [
               { spinner: '√ Creating your project on Forest Admin' },
-              { spinner: '× Connecting to your database' },
+              { spinner: '× Testing connection to your database' },
             ],
             // This only validates login, options are missing thus the error.
             exitCode: 1,
@@ -339,7 +338,7 @@ describe('projects:create', () => {
             ],
             std: [
               { spinner: '√ Creating your project on Forest Admin' },
-              { spinner: '× Connecting to your database' },
+              { spinner: '× Testing connection to your database' },
             ],
             // This only validates login, options are missing thus the error.
             exitCode: 1,
@@ -385,10 +384,11 @@ describe('projects:create', () => {
           ],
           std: [
             { spinner: '√ Creating your project on Forest Admin' },
-            { spinner: '√ Connecting to your database' },
+            { spinner: '√ Testing connection to your database' },
             { spinner: '√ Analyzing the database' },
+            { out: '√ Database is analyzed' },
             { spinner: '√ Creating your project files' },
-            { out: '√ Hooray, installation success!' },
+            { out: '> Hooray, installation success!' },
           ],
           exitCode: 0,
         }));
@@ -430,7 +430,7 @@ describe('projects:create', () => {
           ],
           std: [
             { spinner: '√ Creating your project on Forest Admin' },
-            { spinner: '√ Connecting to your database' },
+            { spinner: '√ Testing connection to your database' },
             { err: '× This schema does not exists.' },
           ],
           exitCode: 1,
@@ -440,7 +440,7 @@ describe('projects:create', () => {
 
   describe('catch', () => {
     it('should log error and throw', async () => {
-      expect.assertions(5);
+      expect.assertions(3);
 
       const errorParameter = Symbol('catch error message');
       const unexpectedError = Symbol('unexpected error message');
@@ -461,18 +461,19 @@ describe('projects:create', () => {
 
       await expect(() => command.catch(errorParameter.description)).rejects.toThrow('EEXIT: 1');
       expect(command.logger.error).toHaveBeenCalledTimes(1);
-      expect(command.logger.error).toHaveBeenCalledWith([
-        'Cannot generate your project.',
-        `${unexpectedError.description}`,
-      ]);
-      expect(command.logger.log).toHaveBeenCalledTimes(1);
-      expect(command.logger.log).toHaveBeenCalledWith(`${errorParameter.description}`);
+      expect(command.logger.error).toHaveBeenCalledWith(
+        `Cannot generate your project. ${unexpectedError.description} ${errorParameter.description}`,
+      );
     });
   });
 
   describe('analyzeDatabase', () => {
     const makeContext = () => ({
       assertPresent: jest.fn(),
+      database: {
+        connect: jest.fn().mockResolvedValue({}),
+        disconnect: jest.fn(),
+      },
       databaseAnalyzer: {
         analyze: jest.fn(),
         analyzeMongoDb: jest.fn(),
@@ -488,57 +489,66 @@ describe('projects:create', () => {
     });
 
     describe('when it is a mongodb dialect', () => {
-      it('should analyze the database and display a log without a spinner', async () => {
-        expect.assertions(7);
+      it('should analyze the database and display a spinner for the connection only with a log', async () => {
+        expect.assertions(9);
 
         const context = makeContext();
-        const { databaseAnalyzer, logger, spinner } = context;
+        const { databaseAnalyzer, logger, spinner, database } = context;
 
         const createCommand = new CreateProjectCommand();
         createCommand.databaseAnalyzer = databaseAnalyzer;
         createCommand.logger = logger;
         createCommand.spinner = spinner;
+        createCommand.database = database;
 
         const dbConfig = { dbDialect: 'mongodb' };
         const connection = {};
-        await createCommand.analyzeDatabase(dbConfig, connection);
+        await createCommand.analyzeDatabase(dbConfig);
+
+        expect(database.connect).toHaveBeenCalledTimes(1);
+        expect(database.disconnect).toHaveBeenCalledTimes(1);
 
         expect(databaseAnalyzer.analyzeMongoDb).toHaveBeenCalledTimes(1);
         expect(databaseAnalyzer.analyzeMongoDb).toHaveBeenCalledWith(connection, dbConfig, true);
 
-        expect(logger.info).toHaveBeenCalledTimes(1);
-        expect(logger.info).toHaveBeenCalledWith('Analyzing the database...');
+        expect(spinner.start).toHaveBeenCalledTimes(1);
+        expect(spinner.start).toHaveBeenCalledWith({ text: 'Analyzing the database' });
+        expect(spinner.attachToPromise).not.toHaveBeenCalled();
 
         expect(logger.success).toHaveBeenCalledTimes(1);
         expect(logger.success).toHaveBeenCalledWith('Database is analyzed', { lineColor: 'green' });
-
-        expect(spinner.start).toHaveBeenCalledTimes(0);
       });
     });
 
     describe('when it is not a mongodb dialect', () => {
-      it('should analyze the database and display a spinner', async () => {
-        expect.assertions(5);
+      it('should analyze the database and display a spinner for the connection and the analysis', async () => {
+        expect.assertions(9);
 
         const context = makeContext();
-        const { databaseAnalyzer, logger, spinner } = context;
+        const { databaseAnalyzer, logger, spinner, database } = context;
 
         const createCommand = new CreateProjectCommand();
         createCommand.databaseAnalyzer = databaseAnalyzer;
         createCommand.logger = logger;
         createCommand.spinner = spinner;
+        createCommand.database = database;
 
         const dbConfig = { dbDialect: 'mysqldb' };
         const connection = {};
-        await createCommand.analyzeDatabase(dbConfig, connection);
+        await createCommand.analyzeDatabase(dbConfig);
+
+        expect(database.connect).toHaveBeenCalledTimes(1);
+        expect(database.disconnect).toHaveBeenCalledTimes(1);
 
         expect(databaseAnalyzer.analyze).toHaveBeenCalledTimes(1);
         expect(databaseAnalyzer.analyze).toHaveBeenCalledWith(connection, dbConfig, true);
 
-        expect(logger.info).toHaveBeenCalledTimes(0);
-
         expect(spinner.start).toHaveBeenCalledTimes(1);
+        expect(spinner.start).toHaveBeenCalledWith({ text: 'Analyzing the database' });
         expect(spinner.attachToPromise).toHaveBeenCalledTimes(1);
+
+        expect(logger.success).toHaveBeenCalledTimes(1);
+        expect(logger.success).toHaveBeenCalledWith('Database is analyzed', { lineColor: 'green' });
       });
     });
   });
