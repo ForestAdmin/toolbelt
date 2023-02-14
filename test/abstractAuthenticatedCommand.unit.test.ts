@@ -36,7 +36,7 @@ describe('abstractAuthenticated command', () => {
       const { commandPlan, stubs } = makePlanAndStubs();
 
       class TestAbstractClass extends AbstractAuthenticatedCommand {
-        constructor(argv: string[], config: Config, plan?: any) {
+        constructor(argv: string[], config: Config, plan) {
           super(argv, config, plan);
 
           // protected properties are not accessible outside the class

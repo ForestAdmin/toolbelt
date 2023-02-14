@@ -1,3 +1,5 @@
+import { flags } from '@oclif/command';
+import { Config } from '@oclif/config';
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
 import EventSender from './utils/event-sender';
 import CommandGenerateConfigGetter from './services/projects/create/command-generate-config-getter';
@@ -5,17 +7,18 @@ import ProjectCreator, { ProjectMeta } from './services/projects/create/project-
 import Spinner from './services/spinner';
 import Database from './services/schema/update/database';
 import Messages from './utils/messages';
+import { dbDialectOptions } from './services/prompter/database-prompts';
 
 export interface DbConfigInterface {
-  dbConnectionUrl: string;
-  dbDialect: string;
-  dbHostname: string;
-  dbName: string;
-  dbPassword: string;
-  dbPort: number;
-  dbSchema: string;
-  dbUser: string;
-  mongodbSrv: boolean;
+  dbConnectionUrl?: string;
+  dbDialect?: string;
+  dbHostname?: string;
+  dbName?: string;
+  dbPassword?: string;
+  dbPort?: number;
+  dbSchema?: string;
+  dbUser?: string;
+  mongodbSrv?: boolean;
   ssl: boolean;
 }
 
@@ -33,7 +36,7 @@ export interface ConfigInterface {
 }
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
-  protected eventSender: EventSender;
+  private eventSender: EventSender;
 
   private commandGenerateConfigGetter: CommandGenerateConfigGetter;
 
@@ -45,7 +48,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected spinner: Spinner;
 
-  constructor(argv, config, plan) {
+  constructor(argv: string[], config: Config, plan) {
     super(argv, config, plan);
 
     const {
@@ -88,6 +91,104 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     );
 
     this.exit(1);
+  }
+
+  static makeArgsAndFlagsAndDescription() {
+    return {
+      args: [
+        {
+          name: 'applicationName',
+          required: true,
+          description: 'Name of the project to create.',
+        },
+      ],
+      flags: {
+        applicationHost: flags.string({
+          char: 'H',
+          dependsOn: [],
+          description: 'Hostname of your admin backend application.',
+          exclusive: [],
+          required: false,
+        }),
+        applicationPort: flags.integer({
+          char: 'P',
+          dependsOn: [],
+          description: 'Port of your admin backend application.',
+          exclusive: [],
+          required: false,
+        }),
+        databaseConnectionURL: flags.string({
+          char: 'c',
+          dependsOn: [],
+          description: 'Enter the database credentials with a connection URL.',
+          exclusive: ['ssl'],
+          required: false,
+        }),
+        databaseDialect: flags.string({
+          char: 'd',
+          dependsOn: [],
+          description: 'Enter your database dialect.',
+          exclusive: ['databaseConnectionURL'],
+          options: dbDialectOptions.map(option => option.value),
+          required: false,
+        }),
+        databaseName: flags.string({
+          char: 'n',
+          dependsOn: [],
+          description: 'Enter your database name.',
+          exclusive: ['databaseConnectionURL'],
+          required: false,
+        }),
+        databaseHost: flags.string({
+          char: 'h',
+          dependsOn: [],
+          description: 'Enter your database host.',
+          exclusive: ['databaseConnectionURL'],
+          required: false,
+        }),
+        databasePort: flags.integer({
+          char: 'p',
+          dependsOn: [],
+          description: 'Enter your database port.',
+          exclusive: ['databaseConnectionURL'],
+          required: false,
+        }),
+        databaseUser: flags.string({
+          char: 'u',
+          dependsOn: [],
+          description: 'Enter your database user.',
+          exclusive: ['databaseConnectionURL'],
+          required: false,
+        }),
+        databasePassword: flags.string({
+          dependsOn: [],
+          description: 'Enter your database password.',
+          exclusive: ['databaseConnectionURL'],
+          required: false,
+        }),
+        databaseSchema: flags.string({
+          char: 's',
+          dependsOn: [],
+          description: 'Enter your database schema.',
+          exclusive: [],
+          required: false,
+        }),
+        databaseSSL: flags.boolean({
+          default: false,
+          dependsOn: [],
+          description: 'Use SSL for database connection.',
+          exclusive: [],
+          required: false,
+        }),
+        mongoDBSRV: flags.boolean({
+          dependsOn: [],
+          description: 'Use SRV DNS record for mongoDB connection.',
+          exclusive: ['databaseConnectionURL'],
+          required: false,
+        }),
+      },
+      description: 'Create a new Forest Admin project.',
+    };
   }
 
   async getConfig(commandClass): Promise<{
@@ -139,7 +240,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       architecture: 'microservice',
     };
 
-    const authenticationToken = this.authenticator.getAuthToken() || '';
+    const authenticationToken = (await this.authenticator.getAuthToken()) || '';
 
     this.eventSender.sessionToken = authenticationToken;
     this.eventSender.meta = meta;

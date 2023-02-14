@@ -1,5 +1,3 @@
-import { flags } from '@oclif/command';
-import { dbDialectOptions } from '../../services/prompter/database-prompts';
 import AbstractProjectCreateCommand, {
   ConfigInterface,
   DbConfigInterface,
@@ -12,101 +10,13 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
 
   private dumper: Dumper;
 
-  static override flags = {
-    applicationHost: flags.string({
-      char: 'H',
-      dependsOn: [],
-      description: 'Hostname of your admin backend application.',
-      exclusive: [],
-      required: false,
-    }),
-    applicationPort: flags.integer({
-      char: 'P',
-      dependsOn: [],
-      description: 'Port of your admin backend application.',
-      exclusive: [],
-      required: false,
-    }),
-    databaseConnectionURL: flags.string({
-      char: 'c',
-      dependsOn: [],
-      description: 'Enter the database credentials with a connection URL.',
-      exclusive: ['ssl'],
-      required: false,
-    }),
-    databaseDialect: flags.string({
-      char: 'd',
-      dependsOn: [],
-      description: 'Enter your database dialect.',
-      exclusive: ['databaseConnectionURL'],
-      options: dbDialectOptions.map(option => option.value),
-      required: false,
-    }),
-    databaseName: flags.string({
-      char: 'n',
-      dependsOn: [],
-      description: 'Enter your database name.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databaseHost: flags.string({
-      char: 'h',
-      dependsOn: [],
-      description: 'Enter your database host.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databasePort: flags.integer({
-      char: 'p',
-      dependsOn: [],
-      description: 'Enter your database port.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databaseUser: flags.string({
-      char: 'u',
-      dependsOn: [],
-      description: 'Enter your database user.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databasePassword: flags.string({
-      dependsOn: [],
-      description: 'Enter your database password.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databaseSchema: flags.string({
-      char: 's',
-      dependsOn: [],
-      description: 'Enter your database schema.',
-      exclusive: [],
-      required: false,
-    }),
-    databaseSSL: flags.boolean({
-      default: false,
-      dependsOn: [],
-      description: 'Use SSL for database connection.',
-      exclusive: [],
-      required: false,
-    }),
-    mongoDBSRV: flags.boolean({
-      dependsOn: [],
-      description: 'Use SRV DNS record for mongoDB connection.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-  };
+  // Flags, args and Description must be defined on the class itself otherwise it cannot be parsed properly
+  static override flags = AbstractProjectCreateCommand.makeArgsAndFlagsAndDescription().flags;
 
-  static override args = [
-    {
-      name: 'applicationName',
-      required: true,
-      description: 'Name of the project to create.',
-    },
-  ];
+  static override args = AbstractProjectCreateCommand.makeArgsAndFlagsAndDescription().args;
 
-  static override description = 'Generate an agent for a new project.';
+  static override description =
+    AbstractProjectCreateCommand.makeArgsAndFlagsAndDescription().description;
 
   constructor(argv, config, plan) {
     super(argv, config, plan);

@@ -1,11 +1,12 @@
 import { flags } from '@oclif/command';
 import ProjectManager from '../../services/project-manager';
 import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
+import type ProjectRenderer from '../../renderers/project';
 
 export default class GetCommand extends AbstractAuthenticatedCommand {
-  private env: any;
+  private env: { FOREST_URL: string };
 
-  private projectRenderer: any;
+  private projectRenderer: ProjectRenderer;
 
   static override flags = {
     format: flags.string({
@@ -44,7 +45,7 @@ export default class GetCommand extends AbstractAuthenticatedCommand {
     await this.checkAuthentication();
     const parsed = this.parse(GetCommand);
 
-    const config = { ...this.env, ...parsed.flags, ...parsed.args };
+    const config = { ...this.env, ...parsed.flags, ...(parsed.args as { projectId: string }) };
 
     const manager = new ProjectManager(config);
     try {
