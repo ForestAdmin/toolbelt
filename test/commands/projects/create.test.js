@@ -452,7 +452,7 @@ describe('projects:create', () => {
         error: jest.fn(),
         log: jest.fn(),
       };
-      // For simplicity. Normally passed via context in `.init` call.
+      // For simplicity. Normally passed via context in `.constructor`.
       command.chalk = {
         red: msg => msg,
       };

@@ -5,7 +5,7 @@ import AbstractCommand from './abstract-command';
 export default abstract class AbstractAuthenticatedCommand extends AbstractCommand {
   protected authenticator: Authenticator;
 
-  constructor(argv: string[], config: Config.IConfig, plan?: any) {
+  constructor(argv: string[], config: Config.IConfig, plan?) {
     super(argv, config, plan);
 
     const { assertPresent, authenticator } = this.context;
