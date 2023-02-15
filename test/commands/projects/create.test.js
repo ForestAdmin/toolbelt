@@ -1,4 +1,3 @@
-const chalk = require('chalk');
 const testCli = require('../test-cli-helper/test-cli');
 const CreateProjectCommand = require('../../../src/commands/projects/create').default;
 const { testEnvWithoutSecret, testEnvWithSecret } = require('../../fixtures/env');
@@ -171,7 +170,7 @@ describe('projects:create', () => {
             std: [
               {
                 spinner:
-                  '["Cannot generate your project.","An unexpected error occurred. Please reach out for help in our Developers community (https://community.forestadmin.com/) or create a Github issue with following error:"]',
+                  '× ["Cannot generate your project.","An unexpected error occurred. Please reach out for help in our Developers community (https://community.forestadmin.com/) or create a Github issue with following error:"]',
               },
             ],
             exitCode: 1,
