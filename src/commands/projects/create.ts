@@ -10,14 +10,6 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
 
   private readonly dumper: Dumper;
 
-  // Flags, args and Description must be defined on the class itself otherwise it cannot be parsed properly
-  static override flags = AbstractProjectCreateCommand.makeArgsAndFlagsAndDescription().flags;
-
-  static override args = AbstractProjectCreateCommand.makeArgsAndFlagsAndDescription().args;
-
-  static override description =
-    AbstractProjectCreateCommand.makeArgsAndFlagsAndDescription().description;
-
   constructor(argv: string[], config: Config.IConfig, plan?) {
     super(argv, config, plan);
 
@@ -32,14 +24,9 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
     this.dumper = dumper;
   }
 
-  async runAuthenticated() {
-    const config = await this.createProject(CreateCommand);
-
+  async generateProject(config: ConfigInterface) {
     const schema = await this.analyzeDatabase(config.dbConfig);
-
     await this.createFiles(config, schema);
-
-    await this.notifySuccess();
   }
 
   async analyzeDatabase(dbConfig: DbConfigInterface) {

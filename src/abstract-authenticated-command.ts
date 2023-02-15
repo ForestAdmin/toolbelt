@@ -42,13 +42,14 @@ export default abstract class AbstractAuthenticatedCommand extends AbstractComma
     }
   }
 
-  abstract runAuthenticated(): Promise<void>;
+  abstract runAuthenticated();
 
   async run() {
     await this.checkAuthentication();
     await this.runAuthenticated();
   }
 
+  // Oclif catch mechanism. This called when an error is thrown in the run method.
   override async catch(error) {
     await this.handleAuthenticationErrors(error);
     return super.catch(error);

@@ -30,6 +30,103 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected readonly spinner: Spinner;
 
+  // Flags, args and Description must be defined on the class itself otherwise it cannot be parsed properly
+  static override flags = {
+    applicationHost: flags.string({
+      char: 'H',
+      dependsOn: [],
+      description: 'Hostname of your admin backend application.',
+      exclusive: [],
+      required: false,
+    }),
+    applicationPort: flags.integer({
+      char: 'P',
+      dependsOn: [],
+      description: 'Port of your admin backend application.',
+      exclusive: [],
+      required: false,
+    }),
+    databaseConnectionURL: flags.string({
+      char: 'c',
+      dependsOn: [],
+      description: 'Enter the database credentials with a connection URL.',
+      exclusive: ['ssl'],
+      required: false,
+    }),
+    databaseDialect: flags.string({
+      char: 'd',
+      dependsOn: [],
+      description: 'Enter your database dialect.',
+      exclusive: ['databaseConnectionURL'],
+      options: dbDialectOptions.map(option => option.value),
+      required: false,
+    }),
+    databaseName: flags.string({
+      char: 'n',
+      dependsOn: [],
+      description: 'Enter your database name.',
+      exclusive: ['databaseConnectionURL'],
+      required: false,
+    }),
+    databaseHost: flags.string({
+      char: 'h',
+      dependsOn: [],
+      description: 'Enter your database host.',
+      exclusive: ['databaseConnectionURL'],
+      required: false,
+    }),
+    databasePort: flags.integer({
+      char: 'p',
+      dependsOn: [],
+      description: 'Enter your database port.',
+      exclusive: ['databaseConnectionURL'],
+      required: false,
+    }),
+    databaseUser: flags.string({
+      char: 'u',
+      dependsOn: [],
+      description: 'Enter your database user.',
+      exclusive: ['databaseConnectionURL'],
+      required: false,
+    }),
+    databasePassword: flags.string({
+      dependsOn: [],
+      description: 'Enter your database password.',
+      exclusive: ['databaseConnectionURL'],
+      required: false,
+    }),
+    databaseSchema: flags.string({
+      char: 's',
+      dependsOn: [],
+      description: 'Enter your database schema.',
+      exclusive: [],
+      required: false,
+    }),
+    databaseSSL: flags.boolean({
+      default: false,
+      dependsOn: [],
+      description: 'Use SSL for database connection.',
+      exclusive: [],
+      required: false,
+    }),
+    mongoDBSRV: flags.boolean({
+      dependsOn: [],
+      description: 'Use SRV DNS record for mongoDB connection.',
+      exclusive: ['databaseConnectionURL'],
+      required: false,
+    }),
+  };
+
+  static override args = [
+    {
+      name: 'applicationName',
+      required: true,
+      description: 'Name of the project to create.',
+    },
+  ];
+
+  static override description = 'Create a new Forest Admin project.';
+
   constructor(argv: string[], config: Config.IConfig, plan) {
     super(argv, config, plan);
 
@@ -62,124 +159,13 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     this.spinner = spinner;
   }
 
-  // FIXME: Not properly called/tested by testCli helper.
-  // Error handler for the command. If the error is not handled elsewhere, it will be caught here.
-  override async catch(error) {
-    // Call authentication error handler.
-    await this.handleAuthenticationErrors(error);
-
-    this.logger.error(
-      `Cannot generate your project. ${this.messages.ERROR_UNEXPECTED} ${this.chalk.red(error)}`,
-    );
-
-    this.exit(1);
-  }
-
-  static makeArgsAndFlagsAndDescription() {
-    return {
-      args: [
-        {
-          name: 'applicationName',
-          required: true,
-          description: 'Name of the project to create.',
-        },
-      ],
-      flags: {
-        applicationHost: flags.string({
-          char: 'H',
-          dependsOn: [],
-          description: 'Hostname of your admin backend application.',
-          exclusive: [],
-          required: false,
-        }),
-        applicationPort: flags.integer({
-          char: 'P',
-          dependsOn: [],
-          description: 'Port of your admin backend application.',
-          exclusive: [],
-          required: false,
-        }),
-        databaseConnectionURL: flags.string({
-          char: 'c',
-          dependsOn: [],
-          description: 'Enter the database credentials with a connection URL.',
-          exclusive: ['ssl'],
-          required: false,
-        }),
-        databaseDialect: flags.string({
-          char: 'd',
-          dependsOn: [],
-          description: 'Enter your database dialect.',
-          exclusive: ['databaseConnectionURL'],
-          options: dbDialectOptions.map(option => option.value),
-          required: false,
-        }),
-        databaseName: flags.string({
-          char: 'n',
-          dependsOn: [],
-          description: 'Enter your database name.',
-          exclusive: ['databaseConnectionURL'],
-          required: false,
-        }),
-        databaseHost: flags.string({
-          char: 'h',
-          dependsOn: [],
-          description: 'Enter your database host.',
-          exclusive: ['databaseConnectionURL'],
-          required: false,
-        }),
-        databasePort: flags.integer({
-          char: 'p',
-          dependsOn: [],
-          description: 'Enter your database port.',
-          exclusive: ['databaseConnectionURL'],
-          required: false,
-        }),
-        databaseUser: flags.string({
-          char: 'u',
-          dependsOn: [],
-          description: 'Enter your database user.',
-          exclusive: ['databaseConnectionURL'],
-          required: false,
-        }),
-        databasePassword: flags.string({
-          dependsOn: [],
-          description: 'Enter your database password.',
-          exclusive: ['databaseConnectionURL'],
-          required: false,
-        }),
-        databaseSchema: flags.string({
-          char: 's',
-          dependsOn: [],
-          description: 'Enter your database schema.',
-          exclusive: [],
-          required: false,
-        }),
-        databaseSSL: flags.boolean({
-          default: false,
-          dependsOn: [],
-          description: 'Use SSL for database connection.',
-          exclusive: [],
-          required: false,
-        }),
-        mongoDBSRV: flags.boolean({
-          dependsOn: [],
-          description: 'Use SRV DNS record for mongoDB connection.',
-          exclusive: ['databaseConnectionURL'],
-          required: false,
-        }),
-      },
-      description: 'Create a new Forest Admin project.',
-    };
-  }
-
-  async getConfig(commandClass): Promise<{
+  async getConfig(): Promise<{
     appConfig: AppConfig;
     dbConfig: DbConfigInterface;
     meta: ProjectMeta;
     authenticationToken: string;
   }> {
-    const { args: parsedArgs, flags: parsedFlags } = this.parse(commandClass);
+    const { args: parsedArgs, flags: parsedFlags } = this.parse(AbstractProjectCreateCommand);
 
     // FIXME: Works as only one instance at execution time. Not ideal.
     this.eventSender.command = 'projects:create';
@@ -230,8 +216,8 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     return { appConfig, dbConfig, meta, authenticationToken };
   }
 
-  async createProject(commandClass) {
-    const { appConfig, dbConfig, meta, authenticationToken } = await this.getConfig(commandClass);
+  async runAuthenticated() {
+    const { appConfig, dbConfig, meta, authenticationToken } = await this.getConfig();
 
     this.spinner.start({ text: 'Creating your project on Forest Admin' });
     const projectCreationPromise = this.projectCreator.create(authenticationToken, appConfig, meta);
@@ -243,12 +229,14 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
     await this.testDatabaseConnection(dbConfig);
 
-    return {
+    await this.generateProject({
       dbConfig,
       appConfig,
       forestAuthSecret: authSecret as string,
       forestEnvSecret: envSecret as string,
-    };
+    });
+
+    await this.notifySuccess();
   }
 
   async testDatabaseConnection(dbConfig: DbConfigInterface) {
@@ -265,4 +253,19 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   }
 
   abstract createFiles(config: ConfigInterface, schema?): Promise<void>;
+
+  abstract generateProject(config: ConfigInterface): Promise<void>;
+
+  // FIXME: Not properly called/tested by testCli helper.
+  // Oclif catch mechanism. This called when an error is thrown in the run method.
+  // This one override the AbstractAuthenticatedCommand catch.
+  override async catch(error) {
+    // NOTICE: Must be called in every override of catch.
+    await this.handleAuthenticationErrors(error);
+    this.logger.error(
+      `Cannot generate your project. ${this.messages.ERROR_UNEXPECTED} ${this.chalk.red(error)}`,
+    );
+
+    this.exit(1);
+  }
 }
