@@ -25,10 +25,7 @@ export default abstract class AbstractCommand extends Command {
     const { assertPresent, logger, chalk } = this.context;
     assertPresent({ logger, chalk });
 
-    /** @protected @readonly */
     this.logger = logger;
-
-    /** @protected @readonly */
     this.chalk = chalk;
   }
 }

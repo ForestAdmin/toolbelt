@@ -26,7 +26,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected readonly database: Database;
 
-  private readonly messages: typeof Messages;
+  protected readonly messages: typeof Messages;
 
   protected readonly spinner: Spinner;
 
@@ -217,26 +217,40 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   }
 
   async runAuthenticated() {
-    const { appConfig, dbConfig, meta, authenticationToken } = await this.getConfig();
+    try {
+      const { appConfig, dbConfig, meta, authenticationToken } = await this.getConfig();
 
-    this.spinner.start({ text: 'Creating your project on Forest Admin' });
-    const projectCreationPromise = this.projectCreator.create(authenticationToken, appConfig, meta);
-    const { id, envSecret, authSecret } = await this.spinner.attachToPromise(
-      projectCreationPromise,
-    );
+      this.spinner.start({ text: 'Creating your project on Forest Admin' });
+      const projectCreationPromise = this.projectCreator.create(
+        authenticationToken,
+        appConfig,
+        meta,
+      );
+      const { id, envSecret, authSecret } = await this.spinner.attachToPromise(
+        projectCreationPromise,
+      );
 
-    this.eventSender.meta.projectId = id;
+      this.eventSender.meta.projectId = id;
 
-    await this.testDatabaseConnection(dbConfig);
+      await this.testDatabaseConnection(dbConfig);
 
-    await this.generateProject({
-      dbConfig,
-      appConfig,
-      forestAuthSecret: authSecret as string,
-      forestEnvSecret: envSecret as string,
-    });
+      await this.generateProject({
+        dbConfig,
+        appConfig,
+        forestAuthSecret: authSecret as string,
+        forestEnvSecret: envSecret as string,
+      });
 
-    await this.notifySuccess();
+      await this.notifySuccess();
+    } catch (error) {
+      // Display customized error for non-authentication errors.
+      if (error.status !== 401 && error.status !== 403) {
+        this.logger.error(['Cannot generate your project.', `${this.messages.ERROR_UNEXPECTED}`]);
+        this.logger.log(`${this.chalk.red(error)}`);
+      } else {
+        throw error;
+      }
+    }
   }
 
   async testDatabaseConnection(dbConfig: DbConfigInterface) {
@@ -255,17 +269,4 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   abstract createFiles(config: ConfigInterface, schema?): Promise<void>;
 
   abstract generateProject(config: ConfigInterface): Promise<void>;
-
-  // FIXME: Not properly called/tested by testCli helper.
-  // Oclif catch mechanism. This called when an error is thrown in the run method.
-  // This one override the AbstractAuthenticatedCommand catch.
-  override async catch(error) {
-    // NOTICE: Must be called in every override of catch.
-    await this.handleAuthenticationErrors(error);
-    this.logger.error(
-      `Cannot generate your project. ${this.messages.ERROR_UNEXPECTED} ${this.chalk.red(error)}`,
-    );
-
-    this.exit(1);
-  }
 }

@@ -30,28 +30,26 @@ export default abstract class AbstractAuthenticatedCommand extends AbstractComma
     // NOTICE: Due to ip-whitelist, 404 will never be thrown for a project
     if (error.status === 403) {
       this.logger.error('You do not have the right to execute this action on this project');
-      this.exit(2);
+      return this.exit(2);
     }
-
     if (error.status === 401) {
       await this.authenticator.logout();
       this.logger.error(
         `Please use '${this.chalk.bold('forest login')}' to sign in to your Forest account.`,
       );
-      this.exit(10);
+      return this.exit(10);
     }
+    return super.catch(error);
   }
 
   abstract runAuthenticated();
 
   async run() {
     await this.checkAuthentication();
-    await this.runAuthenticated();
-  }
-
-  // Oclif catch mechanism. This called when an error is thrown in the run method.
-  override async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
+    try {
+      await this.runAuthenticated();
+    } catch (error) {
+      await this.handleAuthenticationErrors(error);
+    }
   }
 }
