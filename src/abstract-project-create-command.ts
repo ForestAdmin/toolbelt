@@ -247,6 +247,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       if (error.status !== 401 && error.status !== 403) {
         this.logger.error(['Cannot generate your project.', `${this.messages.ERROR_UNEXPECTED}`]);
         this.logger.log(`${this.chalk.red(error)}`);
+        this.exit(1);
       } else {
         throw error;
       }

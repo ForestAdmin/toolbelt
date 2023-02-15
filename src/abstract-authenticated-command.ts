@@ -42,7 +42,7 @@ export default abstract class AbstractAuthenticatedCommand extends AbstractComma
     return super.catch(error);
   }
 
-  abstract runAuthenticated();
+  abstract runAuthenticated(): Promise<void>;
 
   async run() {
     await this.checkAuthentication();
