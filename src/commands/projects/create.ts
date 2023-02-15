@@ -29,7 +29,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
     await this.createFiles(config, schema);
   }
 
-  async analyzeDatabase(dbConfig: DbConfigInterface) {
+  private async analyzeDatabase(dbConfig: DbConfigInterface) {
     let schema = {};
 
     this.spinner.start({ text: 'Analyzing the database' });
@@ -49,7 +49,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
     return schema;
   }
 
-  async createFiles(config: ConfigInterface, schema) {
+  private async createFiles(config: ConfigInterface, schema) {
     this.spinner.start({ text: 'Creating your project files' });
     const dumperConfig = {
       ...config.dbConfig,

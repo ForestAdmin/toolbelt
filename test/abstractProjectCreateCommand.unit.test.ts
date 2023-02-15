@@ -21,6 +21,9 @@ describe('abstractProjectCreateCommand command', () => {
       eventSender: {
         notifySuccess: jest.fn(),
         meta: {},
+        command: null,
+        applicationName: null,
+        sessionToken: null,
       },
       commandGenerateConfigGetter: {
         get: jest.fn(),
@@ -58,402 +61,34 @@ describe('abstractProjectCreateCommand command', () => {
     };
   };
 
-  describe('constructor', () => {
-    it('should check and set dependencies', async () => {
-      expect.assertions(8);
-
-      const { commandPlan, stubs } = makePlanAndStubs();
-
-      class TestAbstractClass extends AbstractProjectCreateCommand {
-        constructor(argv: string[], config: Config, plan) {
-          super(argv, config, plan);
-
-          // protected properties are not accessible outside the class
-          expect(this.authenticator).toBe(stubs.authenticator);
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          expect(this.eventSender).toBe(stubs.eventSender);
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          expect(this.commandGenerateConfigGetter).toBe(stubs.commandGenerateConfigGetter);
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          expect(this.projectCreator).toBe(stubs.projectCreator);
-          expect(this.database).toBe(stubs.database);
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          expect(this.messages).toBe(stubs.messages);
-          expect(this.spinner).toBe(stubs.spinner);
-        }
-
-        // eslint-disable-next-line class-methods-use-this
-        createFiles(): Promise<void> {
-          throw new Error('Method not implemented.');
-        }
-
-        // eslint-disable-next-line class-methods-use-this
-        runAuthenticated(): Promise<void> {
-          throw new Error('Method not implemented.');
-        }
-      }
-
-      const testAbstractClass = new TestAbstractClass(
-        [],
-        new Config({ root: process.cwd() }),
-        commandPlan,
-      );
-
-      expect(testAbstractClass).toBeInstanceOf(AbstractProjectCreateCommand);
-    });
-  });
-
-  describe('getConfig', () => {
+  describe('runAuthenticated', () => {
     class TestAbstractClass extends AbstractProjectCreateCommand {
-      static override flags = AbstractProjectCreateCommand.makeArgsAndFlagsAndDescription().flags;
-
-      static override args = AbstractProjectCreateCommand.makeArgsAndFlagsAndDescription().args;
-
-      static override description =
-        AbstractProjectCreateCommand.makeArgsAndFlagsAndDescription().description;
-
-      // eslint-disable-next-line class-methods-use-this
-      createFiles(): Promise<void> {
-        throw new Error('Method not implemented.');
-      }
-
-      // eslint-disable-next-line class-methods-use-this
-      runAuthenticated(): Promise<void> {
-        throw new Error('Method not implemented.');
-      }
+      generateProject = jest.fn().mockResolvedValue(null);
     }
 
-    describe('with databaseDialect or databaseConnectionUrl', () => {
-      let stubs;
-      let testAbstractClass: TestAbstractClass;
-
-      // eslint-disable-next-line jest/no-hooks
-      beforeAll(() => {
-        const planAndStubs = makePlanAndStubs();
-        stubs = planAndStubs.stubs;
-        stubs.commandGenerateConfigGetter.get.mockResolvedValue({
-          applicationName: 'testApp',
-          databaseConnectionURL: 'postgres://testUser:testPwd@localhost:5432/testDb',
-          applicationHost: 'localhost',
-          applicationPort: 3000,
-          databaseSchema: 'pubic',
-          databaseSSL: false,
-          databaseDialect: 'postgres',
-        });
-
-        testAbstractClass = new TestAbstractClass(
-          [
-            'testApp',
-            '--databaseConnectionURL',
-            'postgres://testUser:testPwd@localhost:5432/testDb',
-            '--applicationHost',
-            'localhost',
-            '--applicationPort',
-            '3300',
-            '--databaseSchema',
-            'pubic',
-          ],
-          new Config({ root: process.cwd() }),
-          planAndStubs.commandPlan,
-        );
-      });
-
-      // it should test that the config is correctly retrieved from the commandGenerateConfigGetter
-      it('should set the properties on eventSender', async () => {
-        expect.assertions(4);
-        await testAbstractClass.getConfig(TestAbstractClass);
-
-        expect(stubs.eventSender.command).toBe('projects:create');
-        expect(stubs.eventSender.applicationName).toBe('testApp');
-        expect(stubs.eventSender.sessionToken).toBe('authToken');
-        expect(stubs.eventSender.meta).toStrictEqual({
-          dbDialect: 'postgres',
-          agent: 'express-sequelize',
-          isLocal: true,
-          architecture: 'microservice',
-        });
-      });
-
-      it('should return appConfig, dbConfig, meta and the authenticationToken', async () => {
-        expect.assertions(1);
-        const result = await testAbstractClass.getConfig(TestAbstractClass);
-
-        expect(result).toStrictEqual({
-          appConfig: {
-            applicationName: 'testApp',
-            appHostname: 'localhost',
-            appPort: 3000,
-          },
-          dbConfig: {
-            dbConnectionUrl: 'postgres://testUser:testPwd@localhost:5432/testDb',
-            dbDialect: 'postgres',
-            dbHostname: undefined,
-            dbName: undefined,
-            dbPassword: undefined,
-            dbPort: undefined,
-            dbSchema: 'pubic',
-            dbUser: undefined,
-            mongodbSrv: undefined,
-            ssl: false,
-          },
-          meta: {
-            dbDialect: 'postgres',
-            agent: 'express-sequelize',
-            isLocal: true,
-            architecture: 'microservice',
-          },
-          authenticationToken: 'authToken',
-        });
-      });
-    });
-
-    describe('without databaseDialect or databaseConnectionUrl', () => {
-      let stubs;
-      let testAbstractClass: TestAbstractClass;
-
-      // eslint-disable-next-line jest/no-hooks
-      beforeAll(() => {
-        const planAndStubs = makePlanAndStubs();
-        stubs = planAndStubs.stubs;
-        stubs.commandGenerateConfigGetter.get.mockResolvedValue({
-          applicationName: 'testApp',
-          databaseConnectionURL: null,
-          databaseDialect: null,
-          applicationHost: 'localhost',
-          applicationPort: 3000,
-          databaseSchema: 'pubic',
-          databaseSSL: false,
-        });
-
-        testAbstractClass = new TestAbstractClass(
-          [
-            'testApp',
-            '--applicationHost',
-            'localhost',
-            '--applicationPort',
-            '3300',
-            '--databaseSchema',
-            'pubic',
-          ],
-          new Config({ root: process.cwd() }),
-          planAndStubs.commandPlan,
-        );
-      });
-
-      // it should test that the config is correctly retrieved from the commandGenerateConfigGetter
-      it('should set the properties on eventSender', async () => {
-        expect.assertions(3);
-
-        await expect(() => testAbstractClass.getConfig(TestAbstractClass)).rejects.toThrow(
-          'EEXIT: 1',
-        );
-
-        expect(stubs.eventSender.command).toBe('projects:create');
-        expect(stubs.eventSender.applicationName).toBe('testApp');
-      });
-
-      it('display an error and exit', async () => {
-        expect.assertions(3);
-
-        const exitSpy = jest.spyOn(testAbstractClass, 'exit').mockImplementation(() => {
-          throw new Error('EEXIT: 1');
-        });
-
-        await expect(() => testAbstractClass.getConfig(TestAbstractClass)).rejects.toThrow(
-          'EEXIT: 1',
-        );
-        expect(exitSpy).toHaveBeenCalledWith(1);
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        expect(testAbstractClass.logger.error).toHaveBeenCalledWith(
-          'Missing database dialect option value',
-        );
-      });
-    });
-
-    describe('with a mongodb database', () => {
-      let stubs;
-      let testAbstractClass: TestAbstractClass;
-
-      // eslint-disable-next-line jest/no-hooks
-      beforeAll(() => {
-        const planAndStubs = makePlanAndStubs();
-        stubs = planAndStubs.stubs;
-        stubs.commandGenerateConfigGetter.get.mockResolvedValue({
-          applicationName: 'testApp',
-          databaseConnectionURL: 'mongodb://testUser:testPwd@localhost:5432',
-          applicationHost: 'localhost',
-          applicationPort: 3000,
-          databaseSSL: false,
-          databaseDialect: 'mongodb',
-          mongoDbSrv: false,
-          ssl: false,
-        });
-
-        testAbstractClass = new TestAbstractClass(
-          [
-            'testApp',
-            '--databaseConnectionURL',
-            'mongodb://testUser:testPwd@localhost:5432',
-            '--applicationHost',
-            'localhost',
-            '--applicationPort',
-            '3300',
-            '--databaseSchema',
-            'pubic',
-          ],
-          new Config({ root: process.cwd() }),
-          planAndStubs.commandPlan,
-        );
-      });
-
-      // it should test that the config is correctly retrieved from the commandGenerateConfigGetter
-      it('should set the properties on eventSender', async () => {
-        expect.assertions(4);
-        await testAbstractClass.getConfig(TestAbstractClass);
-
-        expect(stubs.eventSender.command).toBe('projects:create');
-        expect(stubs.eventSender.applicationName).toBe('testApp');
-        expect(stubs.eventSender.sessionToken).toBe('authToken');
-        expect(stubs.eventSender.meta).toStrictEqual({
-          dbDialect: 'mongodb',
-          agent: 'express-mongoose',
-          isLocal: true,
-          architecture: 'microservice',
-        });
-      });
-
-      it('should return appConfig, dbConfig, meta and the authenticationToken', async () => {
-        expect.assertions(1);
-        const result = await testAbstractClass.getConfig(TestAbstractClass);
-
-        expect(result).toStrictEqual({
-          appConfig: {
-            applicationName: 'testApp',
-            appHostname: 'localhost',
-            appPort: 3000,
-          },
-          dbConfig: {
-            dbConnectionUrl: 'mongodb://testUser:testPwd@localhost:5432',
-            dbDialect: 'mongodb',
-            dbHostname: undefined,
-            dbName: undefined,
-            dbPassword: undefined,
-            dbPort: undefined,
-            dbSchema: undefined,
-            dbUser: undefined,
-            mongodbSrv: undefined,
-            ssl: false,
-          },
-          meta: {
-            dbDialect: 'mongodb',
-            agent: 'express-mongoose',
-            isLocal: true,
-            architecture: 'microservice',
-          },
-          authenticationToken: 'authToken',
-        });
-      });
-    });
-  });
-
-  describe('testDatabaseConnection', () => {
-    class TestAbstractClass extends AbstractProjectCreateCommand {
-      // eslint-disable-next-line class-methods-use-this
-      createFiles(): Promise<void> {
-        throw new Error('Method not implemented.');
-      }
-
-      // eslint-disable-next-line class-methods-use-this
-      runAuthenticated(): Promise<void> {
-        throw new Error('Method not implemented.');
-      }
-    }
-
-    it('should test the database connection an disconnect', async () => {
-      expect.assertions(7);
-
-      const planAndStubs = makePlanAndStubs();
-
-      const testAbstractClass = new TestAbstractClass(
-        [],
-        new Config({ root: process.cwd() }),
-        planAndStubs.commandPlan,
-      );
-
-      await testAbstractClass.testDatabaseConnection({
-        dbConnectionUrl: 'postgres://testUser:testPwd@localhost:5432/testDb',
-        dbDialect: 'postgres',
-        dbSchema: 'pubic',
-        ssl: false,
-      });
-
-      expect(planAndStubs.stubs.spinner.start).toHaveBeenCalledTimes(1);
-      expect(planAndStubs.stubs.spinner.start).toHaveBeenCalledWith({
-        text: 'Testing connection to your database',
-      });
-      expect(planAndStubs.stubs.database.connect).toHaveBeenCalledTimes(1);
-      expect(planAndStubs.stubs.database.connect).toHaveBeenCalledWith({
-        dbConnectionUrl: 'postgres://testUser:testPwd@localhost:5432/testDb',
-        dbDialect: 'postgres',
-        dbSchema: 'pubic',
-        ssl: false,
-      });
-      expect(planAndStubs.stubs.database.disconnect).toHaveBeenCalledTimes(1);
-      expect(planAndStubs.stubs.database.disconnect).toHaveBeenCalledWith('this is a connection');
-      expect(planAndStubs.stubs.spinner.attachToPromise).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('createProject', () => {
-    class TestAbstractClass extends AbstractProjectCreateCommand {
-      static override flags = AbstractProjectCreateCommand.makeArgsAndFlagsAndDescription().flags;
-
-      static override args = AbstractProjectCreateCommand.makeArgsAndFlagsAndDescription().args;
-
-      static override description =
-        AbstractProjectCreateCommand.makeArgsAndFlagsAndDescription().description;
-
-      // eslint-disable-next-line class-methods-use-this
-      createFiles(): Promise<void> {
-        throw new Error('Method not implemented.');
-      }
-
-      // eslint-disable-next-line class-methods-use-this
-      runAuthenticated(): Promise<void> {
-        throw new Error('Method not implemented.');
-      }
-    }
-
-    let stubs;
     let testAbstractClass: TestAbstractClass;
 
-    // eslint-disable-next-line jest/no-hooks
-    beforeAll(() => {
+    function setup(config = {}, commandArgs?) {
       const planAndStubs = makePlanAndStubs();
-      stubs = planAndStubs.stubs;
-      stubs.commandGenerateConfigGetter.get.mockResolvedValue({
+      planAndStubs.stubs.commandGenerateConfigGetter.get.mockReturnValue({
         applicationName: 'testApp',
         databaseConnectionURL: 'postgres://testUser:testPwd@localhost:5432/testDb',
         applicationHost: 'localhost',
         applicationPort: 3000,
-        databaseSchema: 'pubic',
+        databaseSchema: 'public',
         databaseSSL: false,
         databaseDialect: 'postgres',
+        ...config,
       });
 
-      stubs.spinner.attachToPromise.mockResolvedValue({
+      planAndStubs.stubs.spinner.attachToPromise.mockResolvedValue({
         id: 1,
         envSecret: 'this an envSecret',
         authSecret: 'this is an authSecret',
       });
 
       testAbstractClass = new TestAbstractClass(
-        [
+        commandArgs || [
           'testApp',
           '--databaseConnectionURL',
           'postgres://testUser:testPwd@localhost:5432/testDb',
@@ -467,12 +102,16 @@ describe('abstractProjectCreateCommand command', () => {
         new Config({ root: process.cwd() }),
         planAndStubs.commandPlan,
       );
-    });
 
-    it('should create a project and log it', async () => {
+      return { stubs: planAndStubs.stubs, instance: testAbstractClass };
+    }
+
+    it('should create a project and log progress', async () => {
       expect.assertions(4);
 
-      await testAbstractClass.createProject(TestAbstractClass);
+      const { stubs, instance } = setup();
+
+      await instance.runAuthenticated();
 
       expect(stubs.spinner.start).toHaveBeenCalledTimes(2);
       expect(stubs.spinner.start).toHaveBeenNthCalledWith(1, {
@@ -495,12 +134,39 @@ describe('abstractProjectCreateCommand command', () => {
         },
       );
     });
+    it('should test that the database is connectable and disconnect', async () => {
+      expect.assertions(4);
 
-    it('should set projectId on eventSender', async () => {
+      const { stubs, instance } = setup();
+
+      await instance.runAuthenticated();
+
+      expect(stubs.spinner.start).toHaveBeenCalledWith({
+        text: 'Testing connection to your database',
+      });
+      expect(stubs.database.connect).toHaveBeenCalledTimes(1);
+      expect(stubs.database.disconnect).toHaveBeenCalledTimes(1);
+      expect(stubs.database.disconnect).toHaveBeenCalledWith('this is a connection');
+    });
+    it('should call child generateProject', async () => {
       expect.assertions(1);
 
-      await testAbstractClass.createProject(TestAbstractClass);
+      const { instance } = setup();
 
+      await instance.runAuthenticated();
+
+      expect(instance.generateProject).toHaveBeenCalledTimes(1);
+    });
+    it('should log the installation success and send the event', async () => {
+      expect.assertions(9);
+
+      const { stubs, instance } = setup();
+
+      await instance.runAuthenticated();
+
+      expect(stubs.logger.info).toHaveBeenCalledTimes(1);
+      expect(stubs.logger.info).toHaveBeenCalledWith('Hooray, installation success!');
+      expect(stubs.chalk.green).toHaveBeenCalledTimes(1);
       expect(stubs.eventSender.meta).toStrictEqual({
         dbDialect: 'postgres',
         agent: 'express-sequelize',
@@ -508,66 +174,180 @@ describe('abstractProjectCreateCommand command', () => {
         architecture: 'microservice',
         projectId: 1,
       });
+      expect(stubs.eventSender.command).toBe('projects:create');
+      expect(stubs.eventSender.applicationName).toBe('testApp');
+      expect(stubs.eventSender.sessionToken).toBe('authToken');
+      expect(stubs.eventSender.meta).toStrictEqual({
+        dbDialect: 'postgres',
+        agent: 'express-sequelize',
+        isLocal: true,
+        architecture: 'microservice',
+        projectId: 1,
+      });
+      expect(stubs.eventSender.notifySuccess).toHaveBeenCalledTimes(1);
     });
-    it('should return dbConfig, appConfig, forestAuthSecret and forestEnvSecret', async () => {
-      expect.assertions(1);
 
-      const result = await testAbstractClass.createProject(TestAbstractClass);
+    describe('on a mongo database', () => {
+      const config = {
+        applicationName: 'testApp',
+        databaseConnectionURL: 'mongodb://testUser:testPwd@localhost:5432/dbName',
+        applicationHost: 'localhost',
+        applicationPort: 3000,
+        databaseSSL: false,
+        databaseDialect: 'mongodb',
+        databaseSchema: undefined,
+        mongoDbSrv: false,
+        ssl: false,
+      };
+      const commandArgs = [
+        'testApp',
+        '--databaseConnectionURL',
+        'mongodb://testUser:testPwd@localhost:5432/dbName',
+        '--applicationHost',
+        'localhost',
+        '--applicationPort',
+        '3300',
+      ];
 
-      expect(result).toStrictEqual({
-        appConfig: {
-          appHostname: 'localhost',
-          appPort: 3000,
-          applicationName: 'testApp',
-        },
-        dbConfig: {
+      it('should test that the database is reachable', async () => {
+        expect.assertions(1);
+
+        const { instance, stubs } = setup(config, commandArgs);
+
+        await instance.runAuthenticated();
+
+        expect(stubs.database.connect).toHaveBeenCalledWith({
+          dbConnectionUrl: 'mongodb://testUser:testPwd@localhost:5432/dbName',
+          dbDialect: 'mongodb',
+          dbHostname: undefined,
+          dbName: undefined,
+          dbPassword: undefined,
+          dbPort: undefined,
+          dbSchema: undefined,
+          dbUser: undefined,
+          mongodbSrv: undefined,
+          ssl: false,
+        });
+      });
+
+      it('should call generate project with correct arguments', async () => {
+        expect.assertions(4);
+
+        const { instance, stubs } = setup(config, commandArgs);
+
+        await instance.runAuthenticated();
+
+        expect(stubs.eventSender.command).toBe('projects:create');
+        expect(stubs.eventSender.applicationName).toBe('testApp');
+        expect(stubs.eventSender.sessionToken).toBe('authToken');
+        expect(stubs.eventSender.meta).toStrictEqual({
+          dbDialect: 'mongodb',
+          agent: 'express-mongoose',
+          isLocal: true,
+          architecture: 'microservice',
+          projectId: 1,
+        });
+      });
+
+      it('call generateProject with the correct properties', async () => {
+        expect.assertions(1);
+
+        const { instance } = setup(config, commandArgs);
+
+        await instance.runAuthenticated();
+
+        expect(instance.generateProject).toHaveBeenCalledWith({
+          appConfig: {
+            applicationName: 'testApp',
+            appHostname: 'localhost',
+            appPort: 3000,
+          },
+          dbConfig: {
+            dbConnectionUrl: 'mongodb://testUser:testPwd@localhost:5432/dbName',
+            dbDialect: 'mongodb',
+            dbHostname: undefined,
+            dbName: undefined,
+            dbPassword: undefined,
+            dbPort: undefined,
+            dbSchema: undefined,
+            dbUser: undefined,
+            mongodbSrv: undefined,
+            ssl: false,
+          },
+          forestAuthSecret: 'this is an authSecret',
+          forestEnvSecret: 'this an envSecret',
+        });
+      });
+    });
+    describe('on a sql database', () => {
+      it('should test that the database is reachable', async () => {
+        expect.assertions(1);
+
+        const { instance, stubs } = setup();
+
+        await instance.runAuthenticated();
+
+        expect(stubs.database.connect).toHaveBeenCalledWith({
           dbConnectionUrl: 'postgres://testUser:testPwd@localhost:5432/testDb',
           dbDialect: 'postgres',
           dbHostname: undefined,
           dbName: undefined,
           dbPassword: undefined,
           dbPort: undefined,
-          dbSchema: 'pubic',
+          dbSchema: 'public',
           dbUser: undefined,
           mongodbSrv: undefined,
           ssl: false,
-        },
-        forestAuthSecret: 'this is an authSecret',
-        forestEnvSecret: 'this an envSecret',
+        });
       });
-    });
-  });
+      it('should call generate project with correct arguments', async () => {
+        expect.assertions(4);
 
-  describe('notifySuccess', () => {
-    class TestAbstractClass extends AbstractProjectCreateCommand {
-      // eslint-disable-next-line class-methods-use-this
-      createFiles(): Promise<void> {
-        throw new Error('Method not implemented.');
-      }
+        const { instance, stubs } = setup();
 
-      // eslint-disable-next-line class-methods-use-this
-      runAuthenticated(): Promise<void> {
-        throw new Error('Method not implemented.');
-      }
-    }
+        await instance.runAuthenticated();
 
-    it('should log the installation success and send the event', async () => {
-      expect.assertions(4);
+        expect(stubs.eventSender.command).toBe('projects:create');
+        expect(stubs.eventSender.applicationName).toBe('testApp');
+        expect(stubs.eventSender.sessionToken).toBe('authToken');
+        expect(stubs.eventSender.meta).toStrictEqual({
+          dbDialect: 'postgres',
+          agent: 'express-sequelize',
+          isLocal: true,
+          architecture: 'microservice',
+          projectId: 1,
+        });
+      });
 
-      const planAndStubs = makePlanAndStubs();
+      it('call generateProject with the correct properties', async () => {
+        expect.assertions(1);
 
-      const testAbstractClass = new TestAbstractClass(
-        [],
-        new Config({ root: process.cwd() }),
-        planAndStubs.commandPlan,
-      );
+        const { instance } = setup();
 
-      await testAbstractClass.notifySuccess();
+        await instance.runAuthenticated();
 
-      expect(planAndStubs.stubs.logger.info).toHaveBeenCalledTimes(1);
-      expect(planAndStubs.stubs.logger.info).toHaveBeenCalledWith('Hooray, installation success!');
-      expect(planAndStubs.stubs.chalk.green).toHaveBeenCalledTimes(1);
-      expect(planAndStubs.stubs.eventSender.notifySuccess).toHaveBeenCalledTimes(1);
+        expect(instance.generateProject).toHaveBeenCalledWith({
+          appConfig: {
+            applicationName: 'testApp',
+            appHostname: 'localhost',
+            appPort: 3000,
+          },
+          dbConfig: {
+            dbConnectionUrl: 'postgres://testUser:testPwd@localhost:5432/testDb',
+            dbDialect: 'postgres',
+            dbHostname: undefined,
+            dbName: undefined,
+            dbPassword: undefined,
+            dbPort: undefined,
+            dbSchema: 'public',
+            dbUser: undefined,
+            mongodbSrv: undefined,
+            ssl: false,
+          },
+          forestAuthSecret: 'this is an authSecret',
+          forestEnvSecret: 'this an envSecret',
+        });
+      });
     });
   });
 });

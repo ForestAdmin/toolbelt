@@ -159,7 +159,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     this.spinner = spinner;
   }
 
-  async getConfig(): Promise<{
+  private async getConfig(): Promise<{
     appConfig: AppConfig;
     dbConfig: DbConfigInterface;
     meta: ProjectMeta;
@@ -261,12 +261,10 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     await this.spinner.attachToPromise(connectionPromise);
   }
 
-  async notifySuccess() {
+  private async notifySuccess() {
     this.logger.info(`Hooray, ${this.chalk.green('installation success')}!`);
     await this.eventSender.notifySuccess();
   }
-
-  abstract createFiles(config: ConfigInterface, schema?): Promise<void>;
 
   abstract generateProject(config: ConfigInterface): Promise<void>;
 }
