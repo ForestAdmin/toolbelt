@@ -42,9 +42,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
     this.environmentVariables = {};
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     try {
       this.spinner.start({ text: 'Selecting your project' });
       await this.spinner.attachToPromise(this.projectSelection());
@@ -157,11 +155,6 @@ class InitCommand extends AbstractAuthenticatedCommand {
       }
     }
     return displayEnvironmentVariablesAndCopyToClipboard(this.environmentVariables);
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

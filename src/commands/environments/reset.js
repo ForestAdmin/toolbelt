@@ -15,9 +15,7 @@ class ResetCommand extends AbstractAuthenticatedCommand {
     this.inquirer = inquirer;
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     const parsed = this.parse(ResetCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
@@ -66,11 +64,6 @@ class ResetCommand extends AbstractAuthenticatedCommand {
       }
       this.exit(2);
     }
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

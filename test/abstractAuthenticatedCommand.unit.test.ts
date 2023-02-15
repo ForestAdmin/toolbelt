@@ -1,5 +1,8 @@
 /* eslint-disable max-classes-per-file */
+import type { IConfig } from '@oclif/config';
+
 import { Config } from '@oclif/config';
+
 import AbstractAuthenticatedCommand from '../src/abstract-authenticated-command';
 
 describe('abstractAuthenticated command', () => {
@@ -36,7 +39,7 @@ describe('abstractAuthenticated command', () => {
       const { commandPlan, stubs } = makePlanAndStubs();
 
       class TestAbstractClass extends AbstractAuthenticatedCommand {
-        constructor(argv: string[], config: Config, plan) {
+        constructor(argv: string[], config: IConfig, plan) {
           super(argv, config, plan);
 
           // protected properties are not accessible outside the class
@@ -44,7 +47,7 @@ describe('abstractAuthenticated command', () => {
         }
 
         // eslint-disable-next-line class-methods-use-this
-        run(): Promise<void> {
+        runAuthenticated(): Promise<void> {
           throw new Error('Method not implemented.');
         }
       }
@@ -62,7 +65,7 @@ describe('abstractAuthenticated command', () => {
   describe('checkAuthentication', () => {
     class TestAbstractClass extends AbstractAuthenticatedCommand {
       // eslint-disable-next-line class-methods-use-this
-      run(): Promise<void> {
+      runAuthenticated(): Promise<void> {
         throw new Error('Method not implemented.');
       }
     }
@@ -129,7 +132,7 @@ describe('abstractAuthenticated command', () => {
   describe('handleAuthenticationErrors', () => {
     class TestAbstractClass extends AbstractAuthenticatedCommand {
       // eslint-disable-next-line class-methods-use-this
-      run(): Promise<void> {
+      runAuthenticated(): Promise<void> {
         throw new Error('Method not implemented.');
       }
     }

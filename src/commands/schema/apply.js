@@ -14,9 +14,7 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
     this.joi = joi;
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     const oclifExit = this.exit.bind(this);
     const { flags: parsedFlags } = this.parse(ApplyCommand);
     const serializedSchema = this.readSchema();
@@ -134,11 +132,6 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
     }
 
     return secret;
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

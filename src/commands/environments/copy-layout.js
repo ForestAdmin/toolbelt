@@ -51,9 +51,7 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
     return { fromEnvironment, toEnvironment };
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     const oclifExit = this.exit.bind(this);
     const parsed = this.parse(CopyLayoutCommand);
     const config = await withCurrentProject({ ...this.env, ...parsed.flags, ...parsed.args });
@@ -114,11 +112,6 @@ class CopyLayoutCommand extends AbstractAuthenticatedCommand {
       }
       this.exit(1);
     }
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

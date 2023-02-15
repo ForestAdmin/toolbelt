@@ -55,9 +55,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * The "deploy" command procedure itself.
    * @returns {void}
    */
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     try {
       const config = await this.getConfig();
 
@@ -70,11 +68,6 @@ class DeployCommand extends AbstractAuthenticatedCommand {
       this.logger.error(handleBranchError(error));
       this.exit(2);
     }
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

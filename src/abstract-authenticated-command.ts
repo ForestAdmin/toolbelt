@@ -1,9 +1,10 @@
+import type Authenticator from './services/authenticator';
 import type * as Config from '@oclif/config';
-import Authenticator from './services/authenticator';
+
 import AbstractCommand from './abstract-command';
 
 export default abstract class AbstractAuthenticatedCommand extends AbstractCommand {
-  protected authenticator: Authenticator;
+  protected readonly authenticator: Authenticator;
 
   constructor(argv: string[], config: Config.IConfig, plan?) {
     super(argv, config, plan);
@@ -39,5 +40,17 @@ export default abstract class AbstractAuthenticatedCommand extends AbstractComma
       );
       this.exit(10);
     }
+  }
+
+  abstract runAuthenticated(): Promise<void>;
+
+  async run() {
+    await this.checkAuthentication();
+    await this.runAuthenticated();
+  }
+
+  override async catch(error) {
+    await this.handleAuthenticationErrors(error);
+    return super.catch(error);
   }
 }

@@ -1,18 +1,20 @@
-import type { Chalk } from 'chalk';
-import type * as Config from '@oclif/config';
-import { Command } from '@oclif/command';
-import Context from '@forestadmin/context';
 import type Logger from './services/logger';
+import type * as Config from '@oclif/config';
+import type { Chalk } from 'chalk';
+
+import Context from '@forestadmin/context';
+import { Command } from '@oclif/command';
+
 import defaultPlan from './context/plan';
 
 export default abstract class AbstractCommand extends Command {
-  protected context: any;
+  protected readonly context: Context;
 
-  protected logger: Logger;
+  protected readonly logger: Logger;
 
-  protected chalk: Chalk;
+  protected readonly chalk: Chalk;
 
-  constructor(argv: string[], config: Config.IConfig, plan?: any) {
+  constructor(argv: string[], config: Config.IConfig, plan?) {
     super(argv, config);
 
     Context.init(plan || defaultPlan, true);

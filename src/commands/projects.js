@@ -11,20 +11,13 @@ class ProjectCommand extends AbstractAuthenticatedCommand {
     this.projectsRenderer = projectsRenderer;
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     const parsed = this.parse(ProjectCommand);
     const config = { ...this.env, ...parsed.flags };
     const manager = new ProjectManager(config);
     const projects = await manager.listProjects();
 
     this.projectsRenderer.render(projects, config);
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

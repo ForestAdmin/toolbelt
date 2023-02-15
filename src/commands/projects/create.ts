@@ -1,14 +1,14 @@
-import AbstractProjectCreateCommand, {
-  ConfigInterface,
-  DbConfigInterface,
-} from '../../abstract-project-create-command';
-import Dumper from '../../services/dumper/dumper';
-import DatabaseAnalyzer from '../../services/schema/update/analyzer/database-analyzer';
+import type { ConfigInterface, DbConfigInterface } from '../../interfaces/project-create-interface';
+import type Dumper from '../../services/dumper/dumper';
+import type DatabaseAnalyzer from '../../services/schema/update/analyzer/database-analyzer';
+import type * as Config from '@oclif/config';
+
+import AbstractProjectCreateCommand from '../../abstract-project-create-command';
 
 export default class CreateCommand extends AbstractProjectCreateCommand {
-  private databaseAnalyzer: DatabaseAnalyzer;
+  private readonly databaseAnalyzer: DatabaseAnalyzer;
 
-  private dumper: Dumper;
+  private readonly dumper: Dumper;
 
   // Flags, args and Description must be defined on the class itself otherwise it cannot be parsed properly
   static override flags = AbstractProjectCreateCommand.makeArgsAndFlagsAndDescription().flags;
@@ -18,7 +18,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
   static override description =
     AbstractProjectCreateCommand.makeArgsAndFlagsAndDescription().description;
 
-  constructor(argv, config, plan) {
+  constructor(argv: string[], config: Config.IConfig, plan?) {
     super(argv, config, plan);
 
     const { assertPresent, databaseAnalyzer, dumper } = this.context;
@@ -32,9 +32,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
     this.dumper = dumper;
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     const config = await this.createProject(CreateCommand);
 
     const schema = await this.analyzeDatabase(config.dbConfig);

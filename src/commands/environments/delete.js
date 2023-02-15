@@ -16,9 +16,7 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
     this.inquirer = inquirer;
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     const parsed = this.parse(DeleteCommand);
     const config = { ...this.env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
@@ -71,11 +69,6 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
         throw err;
       }
     }
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

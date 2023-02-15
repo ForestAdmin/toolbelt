@@ -13,9 +13,7 @@ class DiffCommand extends AbstractAuthenticatedCommand {
     this.errorHandler = errorHandler;
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     const parsed = this.parse(DiffCommand);
     const config = { ...this.env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
@@ -36,11 +34,6 @@ class DiffCommand extends AbstractAuthenticatedCommand {
       );
       this.logger.error(manager.handleEnvironmentError(error));
     }
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

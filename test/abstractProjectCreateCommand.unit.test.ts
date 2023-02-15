@@ -1,5 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import { Config } from '@oclif/config';
+
 import AbstractProjectCreateCommand from '../src/abstract-project-create-command';
 
 describe('abstractProjectCreateCommand command', () => {
@@ -91,7 +92,7 @@ describe('abstractProjectCreateCommand command', () => {
         }
 
         // eslint-disable-next-line class-methods-use-this
-        run(): Promise<void> {
+        runAuthenticated(): Promise<void> {
           throw new Error('Method not implemented.');
         }
       }
@@ -121,7 +122,7 @@ describe('abstractProjectCreateCommand command', () => {
       }
 
       // eslint-disable-next-line class-methods-use-this
-      run(): Promise<void> {
+      runAuthenticated(): Promise<void> {
         throw new Error('Method not implemented.');
       }
     }
@@ -368,7 +369,7 @@ describe('abstractProjectCreateCommand command', () => {
       }
 
       // eslint-disable-next-line class-methods-use-this
-      run(): Promise<void> {
+      runAuthenticated(): Promise<void> {
         throw new Error('Method not implemented.');
       }
     }
@@ -423,7 +424,7 @@ describe('abstractProjectCreateCommand command', () => {
       }
 
       // eslint-disable-next-line class-methods-use-this
-      run(): Promise<void> {
+      runAuthenticated(): Promise<void> {
         throw new Error('Method not implemented.');
       }
     }
@@ -545,7 +546,7 @@ describe('abstractProjectCreateCommand command', () => {
       }
 
       // eslint-disable-next-line class-methods-use-this
-      run(): Promise<void> {
+      runAuthenticated(): Promise<void> {
         throw new Error('Method not implemented.');
       }
     }

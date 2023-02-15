@@ -13,19 +13,12 @@ class EnvironmentCommand extends AbstractAuthenticatedCommand {
     this.environmentsRenderer = environmentsRenderer;
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     const parsed = this.parse(EnvironmentCommand);
     const config = await withCurrentProject({ ...this.env, ...parsed.flags });
     const manager = new EnvironmentManager(config);
     const environments = await manager.listEnvironments();
     this.environmentsRenderer.render(environments, config);
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

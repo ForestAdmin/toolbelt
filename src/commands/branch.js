@@ -67,9 +67,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
     }
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     const parsed = this.parse(BranchCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
@@ -105,11 +103,6 @@ class BranchCommand extends AbstractAuthenticatedCommand {
       return this.createBranch(config.BRANCH_NAME, config.envSecret, config.origin);
     }
     return this.listBranches(config.envSecret, config.format);
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

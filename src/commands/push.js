@@ -13,9 +13,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
     this.inquirer = inquirer;
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     const parsed = this.parse(PushCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
@@ -60,11 +58,6 @@ class PushCommand extends AbstractAuthenticatedCommand {
       this.logger.error(customError);
       this.exit(2);
     }
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

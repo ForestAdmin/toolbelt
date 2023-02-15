@@ -10,9 +10,7 @@ class UpdateCommand extends AbstractAuthenticatedCommand {
     this.env = env;
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     const parsed = this.parse(UpdateCommand);
     const config = { ...this.env, ...parsed.flags };
 
@@ -23,11 +21,6 @@ class UpdateCommand extends AbstractAuthenticatedCommand {
     } else {
       this.logger.error('Please provide environment name and/or url');
     }
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

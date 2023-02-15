@@ -12,9 +12,7 @@ class GetCommand extends AbstractAuthenticatedCommand {
     this.environmentRenderer = environmentRenderer;
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     const parsed = this.parse(GetCommand);
     const config = { ...this.env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
@@ -25,11 +23,6 @@ class GetCommand extends AbstractAuthenticatedCommand {
     } catch (err) {
       this.logger.error(`Cannot find the environment ${this.chalk.bold(config.environmentId)}.`);
     }
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

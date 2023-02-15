@@ -12,9 +12,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     this.environmentRenderer = environmentRenderer;
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     const parsed = this.parse(CreateCommand);
     const config = await withCurrentProject({ ...this.env, ...parsed.flags });
     const manager = new EnvironmentManager(config);
@@ -38,11 +36,6 @@ class CreateCommand extends AbstractAuthenticatedCommand {
       }
       throw error;
     }
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

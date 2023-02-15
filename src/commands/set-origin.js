@@ -14,9 +14,7 @@ class SetOriginCommand extends AbstractAuthenticatedCommand {
     this.inquirer = inquirer;
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     const parsed = this.parse(SetOriginCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };

@@ -34,11 +34,6 @@ class UserCommand extends AbstractCommand {
     }
     return Promise.resolve();
   }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
-  }
 }
 
 UserCommand.description = 'Display the current logged in user.';

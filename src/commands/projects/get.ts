@@ -1,7 +1,10 @@
-import { flags } from '@oclif/command';
-import ProjectManager from '../../services/project-manager';
-import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
 import type ProjectRenderer from '../../renderers/project';
+import type * as Config from '@oclif/config';
+
+import { flags } from '@oclif/command';
+
+import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
+import ProjectManager from '../../services/project-manager';
 
 export default class GetCommand extends AbstractAuthenticatedCommand {
   private env: { FOREST_URL: string };
@@ -27,22 +30,20 @@ export default class GetCommand extends AbstractAuthenticatedCommand {
 
   static override description = 'Get the configuration of a project.';
 
-  constructor(argv, config, plan) {
+  constructor(argv: string[], config: Config.IConfig, plan?) {
     super(argv, config, plan);
 
-    const { assertPresent, chalk, env, projectRenderer } = this.context;
+    const { assertPresent, env, projectRenderer } = this.context;
     assertPresent({
-      chalk,
       env,
       projectRenderer,
     });
-    this.chalk = chalk;
+
     this.env = env;
     this.projectRenderer = projectRenderer;
   }
 
-  async run() {
-    await this.checkAuthentication();
+  async runAuthenticated() {
     const parsed = this.parse(GetCommand);
 
     const config = { ...this.env, ...parsed.flags, ...(parsed.args as { projectId: string }) };
@@ -54,10 +55,5 @@ export default class GetCommand extends AbstractAuthenticatedCommand {
     } catch (err) {
       this.logger.error(`Cannot find the project ${this.chalk.bold(config.projectId)}.`);
     }
-  }
-
-  override async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }

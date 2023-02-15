@@ -67,9 +67,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
     return config;
   }
 
-  async run() {
-    await this.checkAuthentication();
-
+  async runAuthenticated() {
     try {
       const config = await this.getConfig();
       const branches = (await BranchManager.getBranches(config.envSecret)) || [];
@@ -103,11 +101,6 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
       this.logger.error(customError);
       this.exit(2);
     }
-  }
-
-  async catch(error) {
-    await this.handleAuthenticationErrors(error);
-    return super.catch(error);
   }
 }
 

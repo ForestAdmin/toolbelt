@@ -1,54 +1,36 @@
+import type {
+  AppConfig,
+  ConfigInterface,
+  DbConfigInterface,
+} from './interfaces/project-create-interface';
+import type CommandGenerateConfigGetter from './services/projects/create/command-generate-config-getter';
+import type { ProjectMeta } from './services/projects/create/project-creator';
+import type ProjectCreator from './services/projects/create/project-creator';
+import type Database from './services/schema/update/database';
+import type Spinner from './services/spinner';
+import type EventSender from './utils/event-sender';
+import type Messages from './utils/messages';
+import type * as Config from '@oclif/config';
+
 import { flags } from '@oclif/command';
-import { Config } from '@oclif/config';
+
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
-import EventSender from './utils/event-sender';
-import CommandGenerateConfigGetter from './services/projects/create/command-generate-config-getter';
-import ProjectCreator, { ProjectMeta } from './services/projects/create/project-creator';
-import Spinner from './services/spinner';
-import Database from './services/schema/update/database';
-import Messages from './utils/messages';
 import { dbDialectOptions } from './services/prompter/database-prompts';
 
-export interface DbConfigInterface {
-  dbConnectionUrl?: string;
-  dbDialect?: string;
-  dbHostname?: string;
-  dbName?: string;
-  dbPassword?: string;
-  dbPort?: number;
-  dbSchema?: string;
-  dbUser?: string;
-  mongodbSrv?: boolean;
-  ssl: boolean;
-}
-
-export interface AppConfig {
-  applicationName: string;
-  appHostname: string;
-  appPort: number;
-}
-
-export interface ConfigInterface {
-  dbConfig: DbConfigInterface;
-  appConfig: AppConfig;
-  forestAuthSecret: string;
-  forestEnvSecret: string;
-}
-
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
-  private eventSender: EventSender;
+  private readonly eventSender: EventSender;
 
-  private commandGenerateConfigGetter: CommandGenerateConfigGetter;
+  private readonly commandGenerateConfigGetter: CommandGenerateConfigGetter;
 
-  private projectCreator: ProjectCreator;
+  private readonly projectCreator: ProjectCreator;
 
-  protected database: Database;
+  protected readonly database: Database;
 
-  private messages: typeof Messages;
+  private readonly messages: typeof Messages;
 
-  protected spinner: Spinner;
+  protected readonly spinner: Spinner;
 
-  constructor(argv: string[], config: Config, plan) {
+  constructor(argv: string[], config: Config.IConfig, plan) {
     super(argv, config, plan);
 
     const {
