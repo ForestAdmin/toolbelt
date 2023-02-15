@@ -169,8 +169,7 @@ describe('projects:create', () => {
             token: 'any',
             std: [
               {
-                spinner:
-                  '× ["Cannot generate your project.","An unexpected error occurred. Please reach out for help in our Developers community (https://community.forestadmin.com/) or create a Github issue with following error:"]',
+                err: '× ["Cannot generate your project.","An unexpected error occurred. Please reach out for help in our Developers community (https://community.forestadmin.com/) or create a Github issue with following error:"]',
               },
             ],
             exitCode: 1,
