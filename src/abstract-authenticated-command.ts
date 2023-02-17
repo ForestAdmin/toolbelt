@@ -15,7 +15,18 @@ export default abstract class AbstractAuthenticatedCommand extends AbstractComma
     this.authenticator = authenticator;
   }
 
-  async checkAuthentication() {
+  async run() {
+    await this.checkAuthentication();
+    try {
+      await this.runAuthenticated();
+    } catch (error) {
+      await this.handleAuthenticationErrors(error);
+    }
+  }
+
+  protected abstract runAuthenticated(): Promise<void>;
+
+  private async checkAuthentication() {
     if (!this.authenticator.getAuthToken()) {
       this.logger.info('Login required.');
       await this.authenticator.tryLogin({});
@@ -26,7 +37,7 @@ export default abstract class AbstractAuthenticatedCommand extends AbstractComma
   }
 
   // Authentication error handler.
-  async handleAuthenticationErrors(error) {
+  private async handleAuthenticationErrors(error) {
     // NOTICE: Due to ip-whitelist, 404 will never be thrown for a project
     if (error.status === 403) {
       this.logger.error('You do not have the right to execute this action on this project');
@@ -40,16 +51,5 @@ export default abstract class AbstractAuthenticatedCommand extends AbstractComma
       return this.exit(10);
     }
     return super.catch(error);
-  }
-
-  abstract runAuthenticated(): Promise<void>;
-
-  async run() {
-    await this.checkAuthentication();
-    try {
-      await this.runAuthenticated();
-    } catch (error) {
-      await this.handleAuthenticationErrors(error);
-    }
   }
 }

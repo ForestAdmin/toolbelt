@@ -2,6 +2,7 @@
 import { Config } from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../src/abstract-project-create-command';
+import Agents from '../src/utils/agents';
 
 describe('abstractProjectCreateCommand command', () => {
   const makePlanAndStubs = () => {
@@ -63,7 +64,13 @@ describe('abstractProjectCreateCommand command', () => {
 
   describe('runAuthenticated', () => {
     class TestAbstractClass extends AbstractProjectCreateCommand {
+      public _agent: string = Agents.ExpressSequelize;
+
       generateProject = jest.fn().mockResolvedValue(null);
+
+      protected get agent(): string {
+        return this._agent;
+      }
     }
 
     let testAbstractClass: TestAbstractClass;
@@ -127,7 +134,7 @@ describe('abstractProjectCreateCommand command', () => {
         },
         {
           dbDialect: 'postgres',
-          agent: 'express-sequelize',
+          agent: Agents.ExpressSequelize,
           isLocal: true,
           architecture: 'microservice',
           projectId: 1,
@@ -169,7 +176,7 @@ describe('abstractProjectCreateCommand command', () => {
       expect(stubs.chalk.green).toHaveBeenCalledTimes(1);
       expect(stubs.eventSender.meta).toStrictEqual({
         dbDialect: 'postgres',
-        agent: 'express-sequelize',
+        agent: Agents.ExpressSequelize,
         isLocal: true,
         architecture: 'microservice',
         projectId: 1,
@@ -179,7 +186,7 @@ describe('abstractProjectCreateCommand command', () => {
       expect(stubs.eventSender.sessionToken).toBe('authToken');
       expect(stubs.eventSender.meta).toStrictEqual({
         dbDialect: 'postgres',
-        agent: 'express-sequelize',
+        agent: Agents.ExpressSequelize,
         isLocal: true,
         architecture: 'microservice',
         projectId: 1,
@@ -235,6 +242,8 @@ describe('abstractProjectCreateCommand command', () => {
 
         const { instance, stubs } = setup(config, commandArgs);
 
+        instance._agent = Agents.ExpressMongoose;
+
         await instance.runAuthenticated();
 
         expect(stubs.eventSender.command).toBe('projects:create');
@@ -242,7 +251,7 @@ describe('abstractProjectCreateCommand command', () => {
         expect(stubs.eventSender.sessionToken).toBe('authToken');
         expect(stubs.eventSender.meta).toStrictEqual({
           dbDialect: 'mongodb',
-          agent: 'express-mongoose',
+          agent: Agents.ExpressMongoose,
           isLocal: true,
           architecture: 'microservice',
           projectId: 1,
@@ -253,7 +262,7 @@ describe('abstractProjectCreateCommand command', () => {
         expect.assertions(1);
 
         const { instance } = setup(config, commandArgs);
-
+        instance._agent = Agents.ExpressMongoose;
         await instance.runAuthenticated();
 
         expect(instance.generateProject).toHaveBeenCalledWith({
@@ -312,7 +321,7 @@ describe('abstractProjectCreateCommand command', () => {
         expect(stubs.eventSender.sessionToken).toBe('authToken');
         expect(stubs.eventSender.meta).toStrictEqual({
           dbDialect: 'postgres',
-          agent: 'express-sequelize',
+          agent: Agents.ExpressSequelize,
           isLocal: true,
           architecture: 'microservice',
           projectId: 1,

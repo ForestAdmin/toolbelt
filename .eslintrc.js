@@ -91,6 +91,8 @@ module.exports = {
             ignoreDeclarationSort: true,
           },
         ],
+        'no-shadow': 'off',
+        '@typescript-eslint/no-shadow': ['error'],
       },
     },
     {

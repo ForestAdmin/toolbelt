@@ -30,7 +30,6 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected readonly spinner: Spinner;
 
-  // Flags, args and Description must be defined on the class itself otherwise it cannot be parsed properly
   static override flags = {
     applicationHost: flags.string({
       char: 'H',
@@ -159,6 +158,48 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     this.spinner = spinner;
   }
 
+  protected async runAuthenticated() {
+    try {
+      const { appConfig, dbConfig, meta, authenticationToken } = await this.getConfig();
+
+      this.spinner.start({ text: 'Creating your project on Forest Admin' });
+      const projectCreationPromise = this.projectCreator.create(
+        authenticationToken,
+        appConfig,
+        meta,
+      );
+      const { id, envSecret, authSecret } = await this.spinner.attachToPromise(
+        projectCreationPromise,
+      );
+
+      this.eventSender.meta.projectId = id;
+
+      await this.testDatabaseConnection(dbConfig);
+
+      await this.generateProject({
+        dbConfig,
+        appConfig,
+        forestAuthSecret: authSecret as string,
+        forestEnvSecret: envSecret as string,
+      });
+
+      await this.notifySuccess();
+    } catch (error) {
+      // Display customized error for non-authentication errors.
+      if (error.status !== 401 && error.status !== 403) {
+        this.logger.error(['Cannot generate your project.', `${this.messages.ERROR_UNEXPECTED}`]);
+        this.logger.log(`${this.chalk.red(error)}`);
+        this.exit(1);
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  protected abstract generateProject(config: ConfigInterface): Promise<void>;
+
+  protected abstract get agent(): string;
+
   private async getConfig(): Promise<{
     appConfig: AppConfig;
     dbConfig: DbConfigInterface;
@@ -198,14 +239,14 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     }
 
     const meta: ProjectMeta = {
+      agent: this.agent,
       dbDialect: dbConfig.dbDialect,
-      agent: dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize',
+      architecture: 'microservice',
       isLocal: ['localhost', '127.0.0.1', '::1'].some(keyword =>
         dbConfig.dbHostname
           ? dbConfig.dbHostname.includes(keyword)
           : dbConfig.dbConnectionUrl.includes(keyword),
       ),
-      architecture: 'microservice',
     };
 
     const authenticationToken = (await this.authenticator.getAuthToken()) || '';
@@ -216,45 +257,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     return { appConfig, dbConfig, meta, authenticationToken };
   }
 
-  async runAuthenticated() {
-    try {
-      const { appConfig, dbConfig, meta, authenticationToken } = await this.getConfig();
-
-      this.spinner.start({ text: 'Creating your project on Forest Admin' });
-      const projectCreationPromise = this.projectCreator.create(
-        authenticationToken,
-        appConfig,
-        meta,
-      );
-      const { id, envSecret, authSecret } = await this.spinner.attachToPromise(
-        projectCreationPromise,
-      );
-
-      this.eventSender.meta.projectId = id;
-
-      await this.testDatabaseConnection(dbConfig);
-
-      await this.generateProject({
-        dbConfig,
-        appConfig,
-        forestAuthSecret: authSecret as string,
-        forestEnvSecret: envSecret as string,
-      });
-
-      await this.notifySuccess();
-    } catch (error) {
-      // Display customized error for non-authentication errors.
-      if (error.status !== 401 && error.status !== 403) {
-        this.logger.error(['Cannot generate your project.', `${this.messages.ERROR_UNEXPECTED}`]);
-        this.logger.log(`${this.chalk.red(error)}`);
-        this.exit(1);
-      } else {
-        throw error;
-      }
-    }
-  }
-
-  async testDatabaseConnection(dbConfig: DbConfigInterface) {
+  private async testDatabaseConnection(dbConfig: DbConfigInterface) {
     this.spinner.start({ text: 'Testing connection to your database' });
     const connectionPromise = this.database
       .connect(dbConfig)
@@ -266,6 +269,4 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     this.logger.info(`Hooray, ${this.chalk.green('installation success')}!`);
     await this.eventSender.notifySuccess();
   }
-
-  abstract generateProject(config: ConfigInterface): Promise<void>;
 }

@@ -4,11 +4,14 @@ import type DatabaseAnalyzer from '../../services/schema/update/analyzer/databas
 import type * as Config from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../../abstract-project-create-command';
+import Agents from '../../utils/agents';
 
 export default class CreateCommand extends AbstractProjectCreateCommand {
   private readonly databaseAnalyzer: DatabaseAnalyzer;
 
   private readonly dumper: Dumper;
+
+  private readonly _agent: string = Agents.NodeJS;
 
   constructor(argv: string[], config: Config.IConfig, plan?) {
     super(argv, config, plan);
@@ -24,9 +27,13 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
     this.dumper = dumper;
   }
 
-  async generateProject(config: ConfigInterface) {
+  protected async generateProject(config: ConfigInterface) {
     const schema = await this.analyzeDatabase(config.dbConfig);
     await this.createFiles(config, schema);
+  }
+
+  protected get agent() {
+    return this._agent;
   }
 
   private async analyzeDatabase(dbConfig: DbConfigInterface) {
