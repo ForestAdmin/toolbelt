@@ -8,7 +8,7 @@ import { Command } from '@oclif/command';
 import defaultPlan from './context/plan';
 
 export default abstract class AbstractCommand extends Command {
-  protected readonly context: Context;
+  protected readonly context: any;
 
   protected readonly logger: Logger;
 
