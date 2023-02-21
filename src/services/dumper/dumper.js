@@ -6,40 +6,26 @@ const toValidPackageName = require('../../utils/to-valid-package-name');
 const IncompatibleLianaForUpdateError = require('../../errors/dumper/incompatible-liana-for-update-error');
 const InvalidForestCLIProjectStructureError = require('../../errors/dumper/invalid-forest-cli-project-structure-error');
 require('./handlebars/loader');
+const AbstractDumper = require('./abstract-dumper').default;
 
-const DEFAULT_PORT = 3310;
-class Dumper {
-  constructor({
-    assertPresent,
-    fs,
-    chalk,
-    constants,
-    env,
-    os,
-    Sequelize,
-    Handlebars,
-    logger,
-    mkdirp,
-  }) {
+class Dumper extends AbstractDumper {
+  constructor(context) {
+    super(context);
+
+    const { assertPresent, env, os, Sequelize, Handlebars, mkdirp } = context;
+
     assertPresent({
-      fs,
-      chalk,
-      constants,
       env,
       os,
       Sequelize,
       Handlebars,
-      logger,
       mkdirp,
     });
-    this.fs = fs;
-    this.chalk = chalk;
-    this.constants = constants;
+
     this.env = env;
     this.os = os;
     this.Sequelize = Sequelize;
     this.Handlebars = Handlebars;
-    this.logger = logger;
     this.mkdirp = mkdirp;
   }
 
@@ -62,42 +48,16 @@ class Dumper {
     return ['sessions', 'stats'].includes(modelName.toLowerCase());
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  get templateFolder() {
+    return 'agent-v1/';
+  }
+
   isLinuxBasedOs() {
     return this.os.platform() === 'linux';
   }
 
-  writeFile(absoluteProjectPath, relativeFilePath, content) {
-    const fileName = `${absoluteProjectPath}/${relativeFilePath}`;
-
-    if (this.fs.existsSync(fileName)) {
-      this.logger.log(`  ${this.chalk.yellow('skip')} ${relativeFilePath} - already exists.`);
-      return;
-    }
-
-    this.fs.writeFileSync(fileName, content);
-    this.logger.log(`  ${this.chalk.green('create')} ${relativeFilePath}`);
-  }
-
-  copyTemplate(absoluteProjectPath, relativeFromPath, relativeToPath) {
-    const newFrom = `${__dirname}/templates/app/${relativeFromPath}`;
-    this.writeFile(absoluteProjectPath, relativeToPath, this.fs.readFileSync(newFrom, 'utf-8'));
-  }
-
-  copyHandleBarsTemplate({ projectPath, source, target, context }) {
-    const handlebarsTemplate = templatePath =>
-      this.Handlebars.compile(
-        this.fs.readFileSync(`${__dirname}/templates/${templatePath}`, 'utf-8'),
-        { noEscape: true },
-      );
-
-    if (!(source && target && context && projectPath)) {
-      throw new Error('Missing argument (projectPath, source, target or context).');
-    }
-
-    this.writeFile(projectPath, target, handlebarsTemplate(source)(context));
-  }
-
-  writePackageJson(projectPath, { dbDialect, applicationName }) {
+  writePackageJson(dbDialect, applicationName) {
     const orm = dbDialect === 'mongodb' ? 'mongoose' : 'sequelize';
     const dependencies = {
       'body-parser': '1.19.0',
@@ -135,7 +95,7 @@ class Dumper {
       dependencies,
     };
 
-    this.writeFile(projectPath, 'package.json', `${JSON.stringify(pkg, null, 2)}\n`);
+    this.writeFile('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
   }
 
   static tableToFilename(table) {
@@ -177,26 +137,22 @@ class Dumper {
     return /^http:\/\/(?:localhost|127\.0\.0\.1)$/.test(url);
   }
 
-  static getPort(config) {
-    return config.appPort || DEFAULT_PORT;
-  }
-
   static getApplicationUrl(config) {
     const hostUrl = /^https?:\/\//.test(config.appHostname)
       ? config.appHostname
       : `http://${config.appHostname}`;
 
-    return Dumper.isLocalUrl(hostUrl) ? `${hostUrl}:${Dumper.getPort(config)}` : hostUrl;
+    return Dumper.isLocalUrl(hostUrl) ? `${hostUrl}:${this.port}` : hostUrl;
   }
 
-  writeDotEnv(projectPath, config) {
+  writeDotEnv(config) {
     const databaseUrl = Dumper.getDatabaseUrl(config);
     const context = {
       databaseUrl,
       ssl: config.ssl || 'false',
       dbSchema: config.dbSchema,
       hostname: config.appHostname,
-      port: Dumper.getPort(config),
+      port: this.port,
       forestEnvSecret: config.forestEnvSecret,
       forestAuthSecret: config.forestAuthSecret,
       hasDockerDatabaseUrl: false,
@@ -206,19 +162,14 @@ class Dumper {
       context.dockerDatabaseUrl = databaseUrl.replace('localhost', 'host.docker.internal');
       context.hasDockerDatabaseUrl = true;
     }
-    this.copyHandleBarsTemplate({
-      projectPath,
-      source: 'app/env.hbs',
-      target: '.env',
-      context,
-    });
+    this.copyHandleBarsTemplate('env.hbs', '.env', context);
   }
 
   static getModelNameFromTableName(table) {
     return stringUtils.transformToCamelCaseSafeString(table);
   }
 
-  writeModel(projectPath, config, table, fields, references, options = {}) {
+  writeModel(config, table, fields, references, options = {}) {
     const { underscored } = options;
     let modelPath = `models/${Dumper.tableToFilename(table)}.js`;
     if (config.useMultiDatabase) {
@@ -258,11 +209,10 @@ class Dumper {
       sourceKey: _.camelCase(reference.sourceKey),
     }));
 
-    this.copyHandleBarsTemplate({
-      projectPath,
-      source: `app/models/${config.dbDialect === 'mongodb' ? 'mongo' : 'sequelize'}-model.hbs`,
-      target: modelPath,
-      context: {
+    this.copyHandleBarsTemplate(
+      `models/${config.dbDialect === 'mongodb' ? 'mongo' : 'sequelize'}-model.hbs`,
+      modelPath,
+      {
         modelName: Dumper.getModelNameFromTableName(table),
         modelVariableName: stringUtils.pascalCase(stringUtils.transformToSafeString(table)),
         table,
@@ -273,93 +223,63 @@ class Dumper {
         dialect: config.dbDialect,
         noId: !options.hasIdColumn && !options.hasPrimaryKeys,
       },
-    });
+    );
   }
 
-  writeRoute(projectPath, config, modelName) {
+  writeRoute(config, modelName) {
     const routesPath = `routes/${Dumper.tableToFilename(modelName)}.js`;
 
     const modelNameDasherized = _.kebabCase(modelName);
     const readableModelName = _.startCase(modelName);
 
-    this.copyHandleBarsTemplate({
-      projectPath,
-      source: 'app/routes/route.hbs',
-      target: routesPath,
-      context: {
-        modelName: Dumper.getModelNameFromTableName(modelName),
-        modelNameDasherized,
-        modelNameReadablePlural: plural(readableModelName),
-        modelNameReadableSingular: singular(readableModelName),
-        isMongoDB: config.dbDialect === 'mongodb',
-      },
+    this.copyHandleBarsTemplate('routes/route.hbs', routesPath, {
+      modelName: Dumper.getModelNameFromTableName(modelName),
+      modelNameDasherized,
+      modelNameReadablePlural: plural(readableModelName),
+      modelNameReadableSingular: singular(readableModelName),
+      isMongoDB: config.dbDialect === 'mongodb',
     });
   }
 
-  writeForestCollection(projectPath, config, table) {
+  writeForestCollection(config, table) {
     const collectionPath = `forest/${Dumper.tableToFilename(table)}.js`;
 
-    this.copyHandleBarsTemplate({
-      projectPath,
-      source: 'app/forest/collection.hbs',
-      target: collectionPath,
-      context: {
-        isMongoDB: config.dbDialect === 'mongodb',
-        table: Dumper.getModelNameFromTableName(table),
-      },
+    this.copyHandleBarsTemplate('forest/collection.hbs', collectionPath, {
+      isMongoDB: config.dbDialect === 'mongodb',
+      table: Dumper.getModelNameFromTableName(table),
     });
   }
 
-  writeAppJs(projectPath, config) {
-    this.copyHandleBarsTemplate({
-      projectPath,
-      source: 'app/app.hbs',
-      target: 'app.js',
-      context: {
-        isMongoDB: config.dbDialect === 'mongodb',
-        forestUrl: this.env.FOREST_URL,
-      },
+  writeAppJs(config) {
+    this.copyHandleBarsTemplate('app.hbs', 'app.js', {
+      isMongoDB: config.dbDialect === 'mongodb',
+      forestUrl: this.env.FOREST_URL,
     });
   }
 
-  writeModelsIndex(projectPath, config) {
+  writeModelsIndex(config) {
     const { dbDialect } = config;
 
-    this.copyHandleBarsTemplate({
-      projectPath,
-      source: 'app/models/index.hbs',
-      target: 'models/index.js',
-      context: {
-        isMongoDB: dbDialect === 'mongodb',
-      },
+    this.copyHandleBarsTemplate('models/index.hbs', 'models/index.js', {
+      isMongoDB: dbDialect === 'mongodb',
     });
   }
 
-  writeDatabasesConfig(projectPath, config) {
+  writeDatabasesConfig(config) {
     const { dbDialect } = config;
 
-    this.copyHandleBarsTemplate({
-      projectPath,
-      source: 'app/config/databases.hbs',
-      target: 'config/databases.js',
-      context: {
-        isMongoDB: dbDialect === 'mongodb',
-        isMSSQL: dbDialect === 'mssql',
-        isMySQL: dbDialect === 'mysql',
-      },
+    this.copyHandleBarsTemplate('config/databases.hbs', 'config/databases.js', {
+      isMongoDB: dbDialect === 'mongodb',
+      isMSSQL: dbDialect === 'mssql',
+      isMySQL: dbDialect === 'mysql',
     });
   }
 
-  writeDockerfile(projectPath) {
-    this.copyHandleBarsTemplate({
-      projectPath,
-      source: 'app/Dockerfile.hbs',
-      target: 'Dockerfile',
-      context: {},
-    });
+  writeDockerfile() {
+    this.copyHandleBarsTemplate('Dockerfile.hbs', 'Dockerfile');
   }
 
-  writeDockerCompose(projectPath, config) {
+  writeDockerCompose(config) {
     const databaseUrl = `\${${this.isLinuxBasedOs() ? 'DATABASE_URL' : 'DOCKER_DATABASE_URL'}}`;
     const forestUrl = this.env.FOREST_URL_IS_DEFAULT
       ? false
@@ -373,72 +293,61 @@ class Dumper {
         throw new Error(`Invalid value for FOREST_URL: "${this.env.FOREST_URL}"`);
       }
     }
-    this.copyHandleBarsTemplate({
-      projectPath,
-      source: 'app/docker-compose.hbs',
-      target: 'docker-compose.yml',
-      context: {
-        containerName: _.snakeCase(config.applicationName),
-        databaseUrl,
-        dbSchema: config.dbSchema,
-        forestExtraHost,
-        forestUrl,
-        network: this.isLinuxBasedOs() && Dumper.isDatabaseLocal(config) ? 'host' : null,
-      },
+    this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
+      containerName: _.snakeCase(config.applicationName),
+      databaseUrl,
+      dbSchema: config.dbSchema,
+      forestExtraHost,
+      forestUrl,
+      network: this.isLinuxBasedOs() && Dumper.isDatabaseLocal(config) ? 'host' : null,
     });
   }
 
-  writeForestAdminMiddleware(projectPath, config) {
-    this.copyHandleBarsTemplate({
-      projectPath,
-      source: 'app/middlewares/forestadmin.hbs',
-      target: 'middlewares/forestadmin.js',
-      context: { isMongoDB: config.dbDialect === 'mongodb' },
+  writeForestAdminMiddleware(config) {
+    this.copyHandleBarsTemplate('middlewares/forestadmin.hbs', 'middlewares/forestadmin.js', {
+      isMongoDB: config.dbDialect === 'mongodb',
     });
   }
 
   // NOTICE: Generate files in alphabetical order to ensure a nice generation console logs display.
-  async dump(schema, config) {
-    const cwd = config.path || this.constants.CURRENT_WORKING_DIRECTORY;
-    const projectPath = config.applicationName ? `${cwd}/${config.applicationName}` : cwd;
+  async createFiles(config, schema) {
     const { isUpdate, useMultiDatabase, modelsExportPath } = config;
 
-    await this.mkdirp(projectPath);
-    await this.mkdirp(`${projectPath}/routes`);
-    await this.mkdirp(`${projectPath}/forest`);
-    await this.mkdirp(`${projectPath}/models`);
+    await this.mkdirp(`${this.projectPath}/routes`);
+    await this.mkdirp(`${this.projectPath}/forest`);
+    await this.mkdirp(`${this.projectPath}/models`);
 
     if (useMultiDatabase) {
-      await this.mkdirp(`${projectPath}/models/${modelsExportPath}`);
+      await this.mkdirp(`${this.projectPath}/models/${modelsExportPath}`);
     }
 
     if (!isUpdate) {
-      await this.mkdirp(`${projectPath}/config`);
-      await this.mkdirp(`${projectPath}/public`);
-      await this.mkdirp(`${projectPath}/views`);
-      await this.mkdirp(`${projectPath}/middlewares`);
+      await this.mkdirp(`${this.projectPath}/config`);
+      await this.mkdirp(`${this.projectPath}/public`);
+      await this.mkdirp(`${this.projectPath}/views`);
+      await this.mkdirp(`${this.projectPath}/middlewares`);
     }
 
     const modelNames = Dumper.getModelsNameSorted(schema);
 
-    if (!isUpdate) this.writeDatabasesConfig(projectPath, config);
+    if (!isUpdate) this.writeDatabasesConfig(config);
 
-    modelNames.forEach(modelName => this.writeForestCollection(projectPath, config, modelName));
+    modelNames.forEach(modelName => this.writeForestCollection(config, modelName));
 
     if (!isUpdate) {
-      this.writeForestAdminMiddleware(projectPath, config);
-      this.copyTemplate(projectPath, 'middlewares/welcome.hbs', 'middlewares/welcome.js');
-      this.writeModelsIndex(projectPath, config);
+      this.writeForestAdminMiddleware(config);
+      this.copyHandleBarsTemplate('middlewares/welcome.hbs', 'middlewares/welcome.js');
+      this.writeModelsIndex(config);
     }
 
     modelNames.forEach(modelName => {
       const { fields, references, options } = schema[modelName];
       const safeReferences = Dumper.getSafeReferences(references);
 
-      this.writeModel(projectPath, config, modelName, fields, safeReferences, options);
+      this.writeModel(config, modelName, fields, safeReferences, options);
     });
 
-    if (!isUpdate) this.copyTemplate(projectPath, 'public/favicon.png', 'public/favicon.png');
+    if (!isUpdate) this.copyHandleBarsTemplate('public/favicon.png', 'public/favicon.png');
 
     modelNames.forEach(modelName => {
       // HACK: If a table name is "sessions" or "stats" the generated routes will conflict with
@@ -446,20 +355,20 @@ class Dumper {
       //       As a workaround, we don't generate the route file.
       // TODO: Remove the if condition, once the routes paths refactored to prevent such conflict.
       if (!Dumper.shouldSkipRouteGenerationForModel(modelName)) {
-        this.writeRoute(projectPath, config, modelName);
+        this.writeRoute(config, modelName);
       }
     });
 
     if (!isUpdate) {
-      this.copyTemplate(projectPath, 'views/index.hbs', 'views/index.html');
-      this.copyTemplate(projectPath, 'dockerignore.hbs', '.dockerignore');
-      this.writeDotEnv(projectPath, config);
-      this.copyTemplate(projectPath, 'gitignore.hbs', '.gitignore');
-      this.writeAppJs(projectPath, config);
-      this.writeDockerCompose(projectPath, config);
-      this.writeDockerfile(projectPath);
-      this.writePackageJson(projectPath, config);
-      this.copyTemplate(projectPath, 'server.hbs', 'server.js');
+      this.copyHandleBarsTemplate('views/index.hbs', 'views/index.html');
+      this.copyHandleBarsTemplate('dockerignore.hbs', '.dockerignore');
+      this.writeDotEnv(config);
+      this.copyHandleBarsTemplate('gitignore.hbs', '.gitignore');
+      this.writeAppJs(config);
+      this.writeDockerCompose(config);
+      this.writeDockerfile();
+      this.writePackageJson(config.dbConfig.dbDialect, config.appConfig.applicationName);
+      this.copyHandleBarsTemplate('server.hbs', 'server.js');
     }
   }
 
@@ -469,10 +378,7 @@ class Dumper {
       if (!this.fs.existsSync('forest')) throw new Error('No "forest" directory.');
       if (!this.fs.existsSync('models')) throw new Error('No "models“ directory.');
     } catch (error) {
-      throw new InvalidForestCLIProjectStructureError(
-        this.constants.CURRENT_WORKING_DIRECTORY,
-        error,
-      );
+      throw new InvalidForestCLIProjectStructureError(this.projectPath, error);
     }
   }
 

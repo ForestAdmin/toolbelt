@@ -100,22 +100,19 @@ module.exports = class SchemaService {
   async _dumpSchemas(databasesSchema, applicationName, isUpdate, useMultiDatabase) {
     this.spinner.start({ text: 'Generating your files' });
 
-    const dumperOptions = {
-      applicationName,
-      isUpdate,
-      useMultiDatabase,
-      modelsExportPath: '', // Value is defined below, it's different for each schema
-      dbDialect: null, // Value is defined below, it's coming from each analyzerOptions
-      dbSchema: null, // Value is defined below, it's coming from each analyzerOptions
-    };
-
     const dumpPromise = Promise.all(
       databasesSchema.map(databaseSchema =>
         this.dumper.dump(databaseSchema.schema, {
-          ...dumperOptions,
-          modelsExportPath: this.path.relative('models', databaseSchema.modelsDir),
-          dbDialect: databaseSchema.analyzerOptions.dbDialect,
-          dbSchema: databaseSchema.analyzerOptions.dbSchema,
+          appConfig: {
+            applicationName,
+            isUpdate,
+            useMultiDatabase,
+            modelsExportPath: this.path.relative('models', databaseSchema.modelsDir),
+          },
+          dbConfig: {
+            dbDialect: databaseSchema.analyzerOptions.dbDialect,
+            dbSchema: databaseSchema.analyzerOptions.dbSchema,
+          },
         }),
       ),
     );

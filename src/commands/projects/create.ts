@@ -51,13 +51,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
 
   private async createFiles(config: ConfigInterface, schema) {
     this.spinner.start({ text: 'Creating your project files' });
-    const dumperConfig = {
-      ...config.dbConfig,
-      ...config.appConfig,
-      forestAuthSecret: config.forestAuthSecret,
-      forestEnvSecret: config.forestEnvSecret,
-    };
-    const dumpPromise = this.dumper.dump(schema, dumperConfig);
+    const dumpPromise = this.dumper.dump(config, schema);
     await this.spinner.attachToPromise(dumpPromise);
   }
 }
