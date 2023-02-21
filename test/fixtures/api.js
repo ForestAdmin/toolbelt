@@ -226,6 +226,8 @@ module.exports = {
         }),
       ),
 
+  getProjectInvalid: () => nock('http://localhost:3001').get('/api/projects/83').reply(404),
+
   getProjectListValid: () =>
     nock('http://localhost:3001')
       .get('/api/projects')

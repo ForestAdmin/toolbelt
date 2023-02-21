@@ -2,11 +2,11 @@ const { flags } = require('@oclif/command');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
 const JobStateChecker = require('../../services/job-state-checker');
-const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command').default;
 
 class ApplyCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, env, fs, joi } = this.context;
     assertPresent({ env, fs, joi });
     this.env = env;
@@ -14,7 +14,7 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
     this.joi = joi;
   }
 
-  async runIfAuthenticated() {
+  async runAuthenticated() {
     const oclifExit = this.exit.bind(this);
     const { flags: parsedFlags } = this.parse(ApplyCommand);
     const serializedSchema = this.readSchema();

@@ -1,5 +1,5 @@
 const { flags } = require('@oclif/command');
-const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
+const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
 const { buildDatabaseUrl } = require('../utils/database-url');
 const withCurrentProject = require('../services/with-current-project');
 const ProjectManager = require('../services/project-manager');
@@ -24,8 +24,8 @@ const PROMPT_MESSAGE_AUTO_CREATING_ENV_FILE =
   'Do you want a new `.env` file (containing your environment variables) to be automatically created in your current folder?';
 
 class InitCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, env, fs, inquirer, spinner } = this.context;
     assertPresent({
       env,
@@ -42,7 +42,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
     this.environmentVariables = {};
   }
 
-  async runIfAuthenticated() {
+  async runAuthenticated() {
     try {
       this.spinner.start({ text: 'Selecting your project' });
       await this.spinner.attachToPromise(this.projectSelection());

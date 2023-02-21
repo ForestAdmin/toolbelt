@@ -58,12 +58,39 @@ module.exports = {
     'sonarjs/no-same-line-conditional': 0,
     'sonarjs/no-unused-collection': 0,
     'sonarjs/prefer-immediate-return': 0,
+    '@typescript-eslint/consistent-type-imports': 'error',
   },
   overrides: [
     {
       files: ['*.js'],
       rules: {
         '@typescript-eslint/no-var-requires': 'off',
+      },
+    },
+    {
+      files: ['*.ts'],
+      rules: {
+        'import/order': [
+          'error',
+          {
+            groups: [
+              'type',
+              ['builtin', 'external'],
+              ['internal', 'sibling', 'parent', 'index', 'object'],
+            ],
+            'newlines-between': 'always',
+            alphabetize: {
+              order: 'asc',
+              caseInsensitive: true,
+            },
+          },
+        ],
+        'sort-imports': [
+          'error',
+          {
+            ignoreDeclarationSort: true,
+          },
+        ],
       },
     },
     {

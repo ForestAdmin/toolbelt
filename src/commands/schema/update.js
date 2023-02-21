@@ -1,10 +1,10 @@
 const { flags } = require('@oclif/command');
-const AbstractCommand = require('../../abstract-command');
+const AbstractCommand = require('../../abstract-command').default;
 const StaticContext = require('../../context/static');
 
 class UpdateCommand extends AbstractCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, env, path, schemaService } = this.context;
     assertPresent({
       env,

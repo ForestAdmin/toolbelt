@@ -1,10 +1,10 @@
 const { flags } = require('@oclif/command');
 const EnvironmentManager = require('../../services/environment-manager');
-const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command').default;
 
 class GetCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, chalk, env, environmentRenderer } = this.context;
     assertPresent({ chalk, env });
     this.chalk = chalk;
@@ -12,7 +12,7 @@ class GetCommand extends AbstractAuthenticatedCommand {
     this.environmentRenderer = environmentRenderer;
   }
 
-  async runIfAuthenticated() {
+  async runAuthenticated() {
     const parsed = this.parse(GetCommand);
     const config = { ...this.env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);

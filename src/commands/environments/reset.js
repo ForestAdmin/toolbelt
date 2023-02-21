@@ -1,21 +1,21 @@
 const { flags } = require('@oclif/command');
 const EnvironmentManager = require('../../services/environment-manager');
 const ProjectManager = require('../../services/project-manager');
-const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command').default;
 const withCurrentProject = require('../../services/with-current-project');
 const { handleError } = require('../../utils/error');
 const askForEnvironment = require('../../services/ask-for-environment');
 
 class ResetCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, env, inquirer } = this.context;
     assertPresent({ env, inquirer });
     this.env = env;
     this.inquirer = inquirer;
   }
 
-  async runIfAuthenticated() {
+  async runAuthenticated() {
     const parsed = this.parse(ResetCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };

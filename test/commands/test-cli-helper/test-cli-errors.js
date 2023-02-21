@@ -1,4 +1,4 @@
-const AbstractCommand = require('../../../src/abstract-command');
+const AbstractCommand = require('../../../src/abstract-command').default;
 
 function errorIfBadFile(file) {
   if (!file) return;
