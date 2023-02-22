@@ -20,21 +20,29 @@ function cleanOutput() {
  *   appPort?: number;
  * }} [overrides]
  */
-async function createLinuxDump(optionsOverrides = {}, injectedContextOverrides = {}) {
+async function createLinuxDump(
+  optionsOverrides = { appConfig: {}, dbConfig: {} },
+  injectedContextOverrides = {},
+) {
   const config = {
-    applicationName: 'test-output/Linux',
-    dbDialect: 'mysql',
-    dbConnectionUrl: 'mysql://localhost:8999',
-    ssl: false,
-    dbSchema: 'public',
-    appHostname: 'localhost',
-    appPort: 1654,
-    ...optionsOverrides,
+    appConfig: {
+      applicationName: 'test-output/Linux',
+      appHostname: 'localhost',
+      appPort: 1654,
+      ...optionsOverrides.appConfig,
+    },
+    dbConfig: {
+      dbDialect: 'mysql',
+      dbConnectionUrl: 'mysql://localhost:8999',
+      ssl: false,
+      dbSchema: 'public',
+      ...optionsOverrides.dbConfig,
+    },
   };
 
   const injectedContext = Context.execute(defaultPlan);
   const dumper = new Dumper({ ...injectedContext, ...injectedContextOverrides });
-  await dumper.dump({}, config);
+  await dumper.dump(config, {});
 }
 
 describe('services > dumper', () => {
@@ -83,7 +91,7 @@ describe('services > dumper', () => {
         it('should not use `network` option in the docker-compose file', async () => {
           expect.assertions(1);
 
-          await createLinuxDump({ dbConnectionUrl: 'mysql://example.com:8999' });
+          await createLinuxDump({ dbConfig: { dbConnectionUrl: 'mysql://example.com:8999' } });
 
           const dockerComposeFile = fs.readFileSync(DOCKER_COMPOSE_FILE_LOCATION, 'utf-8');
           expect(dockerComposeFile).not.toContain('network');
@@ -109,7 +117,9 @@ describe('services > dumper', () => {
         expect.assertions(1);
         try {
           const dotEnvFile = await generateEnvFile({
-            appHostname: 'agent.forestadmin.com',
+            appConfig: {
+              appHostname: 'agent.forestadmin.com',
+            },
           });
 
           expect(dotEnvFile).toContain('APPLICATION_URL=http://agent.forestadmin.com');
@@ -123,7 +133,9 @@ describe('services > dumper', () => {
 
         try {
           const dotEnvFile = await generateEnvFile({
-            appHostname: 'https://agent.forestadmin.com',
+            appConfig: {
+              appHostname: 'https://agent.forestadmin.com',
+            },
           });
 
           expect(dotEnvFile).toContain('APPLICATION_URL=https://agent.forestadmin.com');
@@ -139,8 +151,10 @@ describe('services > dumper', () => {
 
         try {
           const dotEnvFile = await generateEnvFile({
-            appHostname: 'http://localhost',
-            appPort: 3333,
+            appConfig: {
+              appHostname: 'http://localhost',
+              appPort: 3333,
+            },
           });
 
           expect(dotEnvFile).toContain('APPLICATION_URL=http://localhost:3333');
@@ -154,8 +168,10 @@ describe('services > dumper', () => {
 
         try {
           const dotEnvFile = await generateEnvFile({
-            appHostname: 'localhost',
-            appPort: 3333,
+            appConfig: {
+              appHostname: 'localhost',
+              appPort: 3333,
+            },
           });
 
           expect(dotEnvFile).toContain('APPLICATION_URL=http://localhost:3333');
