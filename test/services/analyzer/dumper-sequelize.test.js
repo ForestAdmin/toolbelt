@@ -22,15 +22,19 @@ function getDumper(context) {
 }
 
 const CONFIG = {
-  applicationName: 'test-output/sequelize',
-  dbDialect: 'postgres',
-  dbConnectionUrl: 'postgres://localhost:27017',
-  ssl: false,
-  dbSchema: 'public',
-  appHostname: 'localhost',
-  appPort: 1654,
-  db: true,
-  path: appRoot,
+  appConfig: {
+    applicationName: 'test-output/sequelize',
+    appHostname: 'localhost',
+    appPort: 1654,
+    path: appRoot,
+  },
+  dbConfig: {
+    dbDialect: 'postgres',
+    dbConnectionUrl: 'postgres://localhost:27017',
+    ssl: false,
+    dbSchema: 'public',
+    db: true,
+  },
 };
 
 function cleanOutput() {
@@ -44,7 +48,7 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const context = execute(defaultPlan);
     const dumper = getDumper(context);
-    await dumper.dump(simpleModel, CONFIG);
+    await dumper.dump(CONFIG, simpleModel);
     const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_CUSTOMERS_PATH, 'utf8');
     const expectedFile = fs.readFileSync(
       `${__dirname}/expected/sequelize/dumper-output/customers.expected.js`,
@@ -59,7 +63,7 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const context = execute(defaultPlan);
     const dumper = getDumper(context);
-    await dumper.dump(belongsToModel, CONFIG);
+    await dumper.dump(CONFIG, belongsToModel);
     const generatedFile = fs.readFileSync(
       `${appRoot}/test-output/sequelize/models/addresses.js`,
       'utf8',
@@ -77,7 +81,7 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(2);
     const context = execute(defaultPlan);
     const dumper = getDumper(context);
-    await dumper.dump({ ...simpleModelNonPrimary, ...belongsToModelNonPrimary }, CONFIG);
+    await dumper.dump(CONFIG, { ...simpleModelNonPrimary, ...belongsToModelNonPrimary });
 
     const ownersGeneratedFile = fs.readFileSync(
       `${appRoot}/test-output/sequelize/models/owners.js`,
@@ -105,7 +109,7 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const context = execute(defaultPlan);
     const dumper = getDumper(context);
-    await dumper.dump(parenthesisColumnName, CONFIG);
+    await dumper.dump(CONFIG, parenthesisColumnName);
     const generatedFile = fs.readFileSync(
       `${appRoot}/test-output/sequelize/models/parenthesis.js`,
       'utf8',
@@ -123,7 +127,7 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const context = execute(defaultPlan);
     const dumper = getDumper(context);
-    await dumper.dump(parenthesisColumnNameUnderscored, CONFIG);
+    await dumper.dump(CONFIG, parenthesisColumnNameUnderscored);
     const generatedFile = fs.readFileSync(
       `${appRoot}/test-output/sequelize/models/parenthesis-underscored.js`,
       'utf8',
@@ -141,7 +145,7 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const context = execute(defaultPlan);
     const dumper = getDumper(context);
-    await dumper.dump(parenthesisColumnNameUnderscoredTrue, CONFIG);
+    await dumper.dump(CONFIG, parenthesisColumnNameUnderscoredTrue);
     const generatedFile = fs.readFileSync(
       `${appRoot}/test-output/sequelize/models/parenthesis-underscored-true.js`,
       'utf8',
@@ -159,7 +163,7 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const context = execute(defaultPlan);
     const dumper = getDumper(context);
-    await dumper.dump(otherAssociationsModel, CONFIG);
+    await dumper.dump(CONFIG, otherAssociationsModel);
     const generatedFile = fs.readFileSync(
       `${appRoot}/test-output/sequelize/models/users.js`,
       'utf8',
@@ -177,7 +181,7 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(2);
     const context = execute(defaultPlan);
     const dumper = getDumper(context);
-    await dumper.dump(exportModel, CONFIG);
+    await dumper.dump(CONFIG, exportModel);
     const generatedModelFile = fs.readFileSync(
       `${appRoot}/test-output/sequelize/models/export.js`,
       'utf8',
@@ -204,7 +208,7 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const context = execute(defaultPlan);
     const dumper = getDumper(context);
-    await dumper.dump(defaultValuesModel, CONFIG);
+    await dumper.dump(CONFIG, defaultValuesModel);
     const generatedFile = fs.readFileSync(
       `${appRoot}/test-output/sequelize/models/default-values.js`,
       'utf8',
@@ -222,7 +226,7 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const context = execute(defaultPlan);
     const dumper = getDumper(context);
-    await dumper.dump(simpleModel, CONFIG);
+    await dumper.dump(CONFIG, simpleModel);
     const generatedFile = fs.readFileSync(
       `${appRoot}/test-output/sequelize/models/index.js`,
       'utf8',
@@ -240,7 +244,7 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const context = execute(defaultPlan);
     const dumper = await getDumper(context);
-    await dumper.dump(simpleModel, CONFIG);
+    await dumper.dump(CONFIG, simpleModel);
     const indexGeneratedFile = fs.readFileSync(
       `${appRoot}/test-output/sequelize/config/databases.js`,
       'utf-8',
@@ -261,7 +265,7 @@ describe('services > dumper > sequelize', () => {
       const context = execute(defaultPlan);
       const dumper = getDumper(context);
       jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(true);
-      await dumper.dump(simpleModel, CONFIG);
+      await dumper.dump(CONFIG, simpleModel);
 
       const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/.env`, 'utf8');
       const expectedFile = fs.readFileSync(
@@ -279,7 +283,7 @@ describe('services > dumper > sequelize', () => {
       const context = execute(defaultPlan);
       const dumper = getDumper(context);
       jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(false);
-      await dumper.dump(simpleModel, CONFIG);
+      await dumper.dump(CONFIG, simpleModel);
 
       const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/.env`, 'utf8');
       const expectedFile = fs.readFileSync(
@@ -296,7 +300,7 @@ describe('services > dumper > sequelize', () => {
     expect.assertions(1);
     const context = execute(defaultPlan);
     const dumper = await getDumper(context);
-    await dumper.dump(joinTableWithIdKey, CONFIG);
+    await dumper.dump(CONFIG, joinTableWithIdKey);
     const generatedFile = fs.readFileSync(
       `${appRoot}/test-output/sequelize/models/only-foreign-keys-and-id.js`,
       'utf8',
@@ -317,10 +321,10 @@ describe('services > dumper > sequelize', () => {
       // Setup test by dumping once to ensure all files exists, then remove a file
       const context = execute(defaultPlan);
       const dumper = getDumper(context);
-      await dumper.dump(simpleModel, CONFIG);
+      await dumper.dump(CONFIG, simpleModel);
       fs.unlinkSync(TEST_OUTPUT_MODEL_CUSTOMERS_PATH);
 
-      await dumper.dump(simpleModel, { ...CONFIG, isUpdate: true });
+      await dumper.dump({ ...CONFIG, isUpdate: true }, simpleModel);
       const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_CUSTOMERS_PATH, 'utf8');
       const expectedFile = fs.readFileSync(
         `${__dirname}/expected/sequelize/dumper-output/customers.expected.js`,
