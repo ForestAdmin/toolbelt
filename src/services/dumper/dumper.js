@@ -102,34 +102,34 @@ class Dumper extends AbstractDumper {
     return _.kebabCase(table);
   }
 
-  static getDatabaseUrl(config) {
+  static getDatabaseUrl(dbConfig) {
     let connectionString;
 
-    if (config.dbConnectionUrl) {
-      connectionString = config.dbConnectionUrl;
+    if (dbConfig.dbConnectionUrl) {
+      connectionString = dbConfig.dbConnectionUrl;
     } else {
-      let protocol = config.dbDialect;
-      let port = `:${config.dbPort}`;
+      let protocol = dbConfig.dbDialect;
+      let port = `:${dbConfig.dbPort}`;
       let password = '';
 
-      if (config.dbDialect === 'mongodb' && config.mongodbSrv) {
+      if (dbConfig.dbDialect === 'mongodb' && dbConfig.mongodbSrv) {
         protocol = 'mongodb+srv';
         port = '';
       }
 
-      if (config.dbPassword) {
+      if (dbConfig.dbPassword) {
         // NOTICE: Encode password string in case of special chars.
-        password = `:${encodeURIComponent(config.dbPassword)}`;
+        password = `:${encodeURIComponent(dbConfig.dbPassword)}`;
       }
 
-      connectionString = `${protocol}://${config.dbUser}${password}@${config.dbHostname}${port}/${config.dbName}`;
+      connectionString = `${protocol}://${dbConfig.dbUser}${password}@${dbConfig.dbHostname}${port}/${dbConfig.dbName}`;
     }
 
     return connectionString;
   }
 
-  static isDatabaseLocal(config) {
-    const databaseUrl = Dumper.getDatabaseUrl(config);
+  static isDatabaseLocal(dbConfig) {
+    const databaseUrl = Dumper.getDatabaseUrl(dbConfig);
     return databaseUrl.includes('127.0.0.1') || databaseUrl.includes('localhost');
   }
 
@@ -137,26 +137,25 @@ class Dumper extends AbstractDumper {
     return /^http:\/\/(?:localhost|127\.0\.0\.1)$/.test(url);
   }
 
-  static getApplicationUrl(config) {
-    const hostUrl = /^https?:\/\//.test(config.appHostname)
-      ? config.appHostname
-      : `http://${config.appHostname}`;
+  getApplicationUrl(appHostname) {
+    const hostUrl = /^https?:\/\//.test(appHostname) ? appHostname : `http://${appHostname}`;
 
     return Dumper.isLocalUrl(hostUrl) ? `${hostUrl}:${this.port}` : hostUrl;
   }
 
   writeDotEnv(config) {
-    const databaseUrl = Dumper.getDatabaseUrl(config);
+    console.log(this.port);
+    const databaseUrl = Dumper.getDatabaseUrl(config.dbConfig);
     const context = {
       databaseUrl,
-      ssl: config.ssl || 'false',
-      dbSchema: config.dbSchema,
-      hostname: config.appHostname,
+      ssl: config.dbConfig.ssl || 'false',
+      dbSchema: config.dbConfig.dbSchema,
+      hostname: config.appConfig.appHostname,
       port: this.port,
       forestEnvSecret: config.forestEnvSecret,
       forestAuthSecret: config.forestAuthSecret,
       hasDockerDatabaseUrl: false,
-      applicationUrl: Dumper.getApplicationUrl(config),
+      applicationUrl: this.getApplicationUrl(config.appConfig.appHostname),
     };
     if (!this.isLinuxBasedOs()) {
       context.dockerDatabaseUrl = databaseUrl.replace('localhost', 'host.docker.internal');
@@ -172,7 +171,7 @@ class Dumper extends AbstractDumper {
   writeModel(config, table, fields, references, options = {}) {
     const { underscored } = options;
     let modelPath = `models/${Dumper.tableToFilename(table)}.js`;
-    if (config.useMultiDatabase) {
+    if (config.appConfig.useMultiDatabase) {
       modelPath = `models/${config.modelsExportPath}/${Dumper.tableToFilename(table)}.js`;
     }
 
@@ -210,7 +209,7 @@ class Dumper extends AbstractDumper {
     }));
 
     this.copyHandleBarsTemplate(
-      `models/${config.dbDialect === 'mongodb' ? 'mongo' : 'sequelize'}-model.hbs`,
+      `models/${config.dbConfig.dbDialect === 'mongodb' ? 'mongo' : 'sequelize'}-model.hbs`,
       modelPath,
       {
         modelName: Dumper.getModelNameFromTableName(table),
@@ -219,14 +218,14 @@ class Dumper extends AbstractDumper {
         fields: fieldsDefinition,
         references: referencesDefinition,
         ...options,
-        schema: config.dbSchema,
-        dialect: config.dbDialect,
+        schema: config.dbConfig.dbSchema,
+        dialect: config.dbConfig.dbDialect,
         noId: !options.hasIdColumn && !options.hasPrimaryKeys,
       },
     );
   }
 
-  writeRoute(config, modelName) {
+  writeRoute(dbDialect, modelName) {
     const routesPath = `routes/${Dumper.tableToFilename(modelName)}.js`;
 
     const modelNameDasherized = _.kebabCase(modelName);
@@ -237,7 +236,7 @@ class Dumper extends AbstractDumper {
       modelNameDasherized,
       modelNameReadablePlural: plural(readableModelName),
       modelNameReadableSingular: singular(readableModelName),
-      isMongoDB: config.dbDialect === 'mongodb',
+      isMongoDB: dbDialect === 'mongodb',
     });
   }
 
@@ -250,16 +249,14 @@ class Dumper extends AbstractDumper {
     });
   }
 
-  writeAppJs(config) {
+  writeAppJs(dbDialect) {
     this.copyHandleBarsTemplate('app.hbs', 'app.js', {
-      isMongoDB: config.dbDialect === 'mongodb',
+      isMongoDB: dbDialect === 'mongodb',
       forestUrl: this.env.FOREST_URL,
     });
   }
 
-  writeModelsIndex(config) {
-    const { dbDialect } = config;
-
+  writeModelsIndex(dbDialect) {
     this.copyHandleBarsTemplate('models/index.hbs', 'models/index.js', {
       isMongoDB: dbDialect === 'mongodb',
     });
@@ -294,18 +291,18 @@ class Dumper extends AbstractDumper {
       }
     }
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
-      containerName: _.snakeCase(config.applicationName),
+      containerName: _.snakeCase(config.appConfig.applicationName),
       databaseUrl,
-      dbSchema: config.dbSchema,
+      dbSchema: config.dbConfig.dbSchema,
       forestExtraHost,
       forestUrl,
-      network: this.isLinuxBasedOs() && Dumper.isDatabaseLocal(config) ? 'host' : null,
+      network: this.isLinuxBasedOs() && Dumper.isDatabaseLocal(config.dbConfig) ? 'host' : null,
     });
   }
 
-  writeForestAdminMiddleware(config) {
+  writeForestAdminMiddleware(dbDialect) {
     this.copyHandleBarsTemplate('middlewares/forestadmin.hbs', 'middlewares/forestadmin.js', {
-      isMongoDB: config.dbDialect === 'mongodb',
+      isMongoDB: dbDialect === 'mongodb',
     });
   }
 
@@ -335,9 +332,9 @@ class Dumper extends AbstractDumper {
     modelNames.forEach(modelName => this.writeForestCollection(config, modelName));
 
     if (!isUpdate) {
-      this.writeForestAdminMiddleware(config);
+      this.writeForestAdminMiddleware(config.dbConfig.dbDialect);
       this.copyHandleBarsTemplate('middlewares/welcome.hbs', 'middlewares/welcome.js');
-      this.writeModelsIndex(config);
+      this.writeModelsIndex(config.dbConfig.dbDialect);
     }
 
     modelNames.forEach(modelName => {
@@ -355,7 +352,7 @@ class Dumper extends AbstractDumper {
       //       As a workaround, we don't generate the route file.
       // TODO: Remove the if condition, once the routes paths refactored to prevent such conflict.
       if (!Dumper.shouldSkipRouteGenerationForModel(modelName)) {
-        this.writeRoute(config, modelName);
+        this.writeRoute(config.dbConfig.dbDialect, modelName);
       }
     });
 
@@ -364,7 +361,7 @@ class Dumper extends AbstractDumper {
       this.copyHandleBarsTemplate('dockerignore.hbs', '.dockerignore');
       this.writeDotEnv(config);
       this.copyHandleBarsTemplate('gitignore.hbs', '.gitignore');
-      this.writeAppJs(config);
+      this.writeAppJs(config.dbConfig.dbDialect);
       this.writeDockerCompose(config);
       this.writeDockerfile();
       this.writePackageJson(config.dbConfig.dbDialect, config.appConfig.applicationName);
