@@ -240,11 +240,11 @@ class Dumper extends AbstractDumper {
     });
   }
 
-  writeForestCollection(config, table) {
+  writeForestCollection(dbDialect, table) {
     const collectionPath = `forest/${Dumper.tableToFilename(table)}.js`;
 
     this.copyHandleBarsTemplate('forest/collection.hbs', collectionPath, {
-      isMongoDB: config.dbDialect === 'mongodb',
+      isMongoDB: dbDialect === 'mongodb',
       table: Dumper.getModelNameFromTableName(table),
     });
   }
@@ -262,9 +262,7 @@ class Dumper extends AbstractDumper {
     });
   }
 
-  writeDatabasesConfig(config) {
-    const { dbDialect } = config;
-
+  writeDatabasesConfig(dbDialect) {
     this.copyHandleBarsTemplate('config/databases.hbs', 'config/databases.js', {
       isMongoDB: dbDialect === 'mongodb',
       isMSSQL: dbDialect === 'mssql',
@@ -327,9 +325,11 @@ class Dumper extends AbstractDumper {
 
     const modelNames = Dumper.getModelsNameSorted(schema);
 
-    if (!isUpdate) this.writeDatabasesConfig(config);
+    if (!isUpdate) this.writeDatabasesConfig(config.dbConfig.dbDialect);
 
-    modelNames.forEach(modelName => this.writeForestCollection(config, modelName));
+    modelNames.forEach(modelName =>
+      this.writeForestCollection(config.dbConfig.dbDialect, modelName),
+    );
 
     if (!isUpdate) {
       this.writeForestAdminMiddleware(config.dbConfig.dbDialect);

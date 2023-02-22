@@ -26,14 +26,18 @@ function getDumper(context) {
 }
 
 const CONFIG = {
-  applicationName: 'test-output/mongo',
-  dbDialect: 'mongodb',
-  dbConnectionUrl: 'mongodb://localhost:27017',
-  ssl: false,
-  dbSchema: 'public',
-  appHostname: 'localhost',
-  appPort: 1654,
-  path: appRoot,
+  appConfig: {
+    applicationName: 'test-output/mongo',
+    appHostname: 'localhost',
+    appPort: 1654,
+    path: appRoot,
+  },
+  dbConfig: {
+    dbConnectionUrl: 'mongodb://localhost:27017',
+    dbDialect: 'mongodb',
+    ssl: false,
+    dbSchema: 'public',
+  },
 };
 
 function cleanOutput() {
@@ -42,7 +46,7 @@ function cleanOutput() {
 
 async function getGeneratedFileFromPersonModel(model, context) {
   const dumper = getDumper(context);
-  await dumper.dump(model, CONFIG);
+  await dumper.dump(CONFIG, model);
   return fs.readFileSync(`${appRoot}/test-output/mongo/models/persons.js`, 'utf8');
 }
 
@@ -54,7 +58,7 @@ describe('services > dumper > MongoDB', () => {
     expect.assertions(1);
     const context = buildContext();
     const dumper = getDumper(context);
-    await dumper.dump(simpleModel, CONFIG);
+    await dumper.dump(CONFIG, simpleModel);
     const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_FILMS_PATH, 'utf8');
     const expectedFile = fs.readFileSync(TEST_EXPECTED_MODEL_FILMS_PATH, 'utf8');
 
@@ -66,7 +70,7 @@ describe('services > dumper > MongoDB', () => {
     expect.assertions(1);
     const context = buildContext();
     const dumper = getDumper(context);
-    await dumper.dump(hasManyModel, CONFIG);
+    await dumper.dump(CONFIG, hasManyModel);
     const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_FILMS_PATH, 'utf8');
     const expectedFile = fs.readFileSync(
       `${__dirname}/expected/mongo/dumper-output/hasmany.expected.js`,
@@ -82,7 +86,7 @@ describe('services > dumper > MongoDB', () => {
       expect.assertions(1);
       const context = buildContext();
       const dumper = getDumper(context);
-      await dumper.dump(simpleModel, CONFIG);
+      await dumper.dump(CONFIG, simpleModel);
       const indexGeneratedFile = fs.readFileSync(
         `${appRoot}/test-output/mongo/models/index.js`,
         'utf-8',
@@ -98,7 +102,7 @@ describe('services > dumper > MongoDB', () => {
       expect.assertions(1);
       const context = buildContext();
       const dumper = getDumper(context);
-      await dumper.dump(simpleModel, CONFIG);
+      await dumper.dump(CONFIG, simpleModel);
       const indexGeneratedFile = fs.readFileSync(
         `${appRoot}/test-output/mongo/models/index.js`,
         'utf-8',
@@ -116,7 +120,7 @@ describe('services > dumper > MongoDB', () => {
       expect.assertions(1);
       const context = buildContext();
       const dumper = getDumper(context);
-      await dumper.dump(simpleModel, CONFIG);
+      await dumper.dump(CONFIG, simpleModel);
       const indexGeneratedFile = fs.readFileSync(
         `${appRoot}/test-output/mongo/config/databases.js`,
         'utf-8',
@@ -255,10 +259,10 @@ describe('services > dumper > MongoDB', () => {
       const context = buildContext();
       // Setup test by dumping once to ensure all files exists, then remove a file
       const dumper = getDumper(context);
-      await dumper.dump(simpleModel, CONFIG);
+      await dumper.dump(CONFIG, simpleModel);
       fs.unlinkSync(TEST_OUTPUT_MODEL_FILMS_PATH);
 
-      await dumper.dump(simpleModel, { ...CONFIG, isUpdate: true });
+      await dumper.dump({ ...CONFIG, isUpdate: true }, simpleModel);
       const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_FILMS_PATH, 'utf8');
       const expectedFile = fs.readFileSync(TEST_EXPECTED_MODEL_FILMS_PATH, 'utf8');
 
@@ -274,7 +278,7 @@ describe('services > dumper > MongoDB', () => {
 
       const context = buildContext();
       const dumper = getDumper(context);
-      await dumper.dump(simpleModel, CONFIG);
+      await dumper.dump(CONFIG, simpleModel);
       const generatedFile = fs.readFileSync(`${appRoot}/test-output/mongo/forest/films.js`, 'utf8');
       const expectedFile = fs.readFileSync(
         `${__dirname}/expected/mongo/dumper-output/forest-simple.expected.js`,
