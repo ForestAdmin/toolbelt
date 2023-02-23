@@ -28,4 +28,8 @@ module.exports = plan =>
     )
     .addPackage('others', planOthers =>
       planOthers.addValue('process', process).addModule('pkg', () => require('../../package.json')),
-    );
+    )
+    .addValue('isLinuxOs', ({ assertPresent, os }) => {
+      assertPresent({ os });
+      return os.platform() === 'linux';
+    });
