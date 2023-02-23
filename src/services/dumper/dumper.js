@@ -12,18 +12,18 @@ class Dumper extends AbstractDumper {
   constructor(context) {
     super(context);
 
-    const { assertPresent, env, os, Sequelize, Handlebars, mkdirp } = context;
+    const { assertPresent, env, Sequelize, Handlebars, mkdirp, isLinuxOs } = context;
 
     assertPresent({
       env,
-      os,
       Sequelize,
       Handlebars,
       mkdirp,
+      isLinuxOs,
     });
 
     this.env = env;
-    this.os = os;
+    this.isLinuxOs = isLinuxOs;
     this.Sequelize = Sequelize;
     this.Handlebars = Handlebars;
     this.mkdirp = mkdirp;
@@ -51,10 +51,6 @@ class Dumper extends AbstractDumper {
   // eslint-disable-next-line class-methods-use-this
   get templateFolder() {
     return 'agent-v1/';
-  }
-
-  isLinuxBasedOs() {
-    return this.os.platform() === 'linux';
   }
 
   writePackageJson(dbDialect, applicationName) {
@@ -156,7 +152,7 @@ class Dumper extends AbstractDumper {
       hasDockerDatabaseUrl: false,
       applicationUrl: this.getApplicationUrl(config.appConfig.appHostname),
     };
-    if (!this.isLinuxBasedOs()) {
+    if (!this.isLinuxOs) {
       context.dockerDatabaseUrl = databaseUrl.replace('localhost', 'host.docker.internal');
       context.hasDockerDatabaseUrl = true;
     }
@@ -274,7 +270,7 @@ class Dumper extends AbstractDumper {
   }
 
   writeDockerCompose(config) {
-    const databaseUrl = `\${${this.isLinuxBasedOs() ? 'DATABASE_URL' : 'DOCKER_DATABASE_URL'}}`;
+    const databaseUrl = `\${${this.isLinuxOs ? 'DATABASE_URL' : 'DOCKER_DATABASE_URL'}}`;
     const forestUrl = this.env.FOREST_URL_IS_DEFAULT
       ? false
       : `\${FOREST_URL-${this.env.FOREST_URL}}`;
@@ -293,7 +289,7 @@ class Dumper extends AbstractDumper {
       dbSchema: config.dbConfig.dbSchema,
       forestExtraHost,
       forestUrl,
-      network: this.isLinuxBasedOs() && Dumper.isDatabaseLocal(config.dbConfig) ? 'host' : null,
+      network: this.isLinuxOs && Dumper.isDatabaseLocal(config.dbConfig) ? 'host' : null,
     });
   }
 

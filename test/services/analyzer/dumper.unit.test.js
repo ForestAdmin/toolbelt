@@ -21,37 +21,12 @@ function createDumper(contextOverride = {}) {
     Sequelize: SequelizeMock,
     chalk,
     mkdirp: () => {},
+    isLinuxOs: false,
     ...contextOverride,
   });
 }
 
 describe('services > dumper (unit)', () => {
-  describe('isLinuxBasedOs', () => {
-    it('should return true on linux', () => {
-      expect.assertions(1);
-
-      const dumper = createDumper({
-        os: {
-          platform: jest.fn().mockReturnValue('linux'),
-        },
-      });
-
-      expect(dumper.isLinuxBasedOs()).toBe(true);
-    });
-
-    it('should return false on other OS', () => {
-      expect.assertions(1);
-
-      const dumper = createDumper({
-        os: {
-          platform: jest.fn().mockReturnValue('windows'),
-        },
-      });
-
-      expect(dumper.isLinuxBasedOs()).toBe(false);
-    });
-  });
-
   describe('writeFile', () => {
     const makeContextOverrides = ({ existsSync }) => ({
       logger: {
@@ -379,12 +354,11 @@ describe('services > dumper (unit)', () => {
       it('should compute the handlebars context from the given config with no dockerDatabaseUrl', () => {
         expect.assertions(2);
 
-        const dumper = createDumper();
+        const dumper = createDumper({ isLinuxOs: true });
         dumper.port = 3310;
         const copyHandlebarsTemplateSpy = jest
           .spyOn(dumper, 'copyHandleBarsTemplate')
           .mockImplementation();
-        jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(true);
         dumper.writeDotEnv(config);
 
         expect(copyHandlebarsTemplateSpy).toHaveBeenCalledTimes(1);
@@ -411,7 +385,6 @@ describe('services > dumper (unit)', () => {
         const copyHandlebarsTemplateSpy = jest
           .spyOn(dumper, 'copyHandleBarsTemplate')
           .mockImplementation();
-        jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(false);
         dumper.writeDotEnv(config);
 
         expect(copyHandlebarsTemplateSpy).toHaveBeenCalledTimes(1);
@@ -456,7 +429,6 @@ describe('services > dumper (unit)', () => {
             FOREST_URL: 'https://something.com',
           },
         });
-        jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(true);
         const copyHandlebarsTemplateSpy = jest
           .spyOn(dumper, 'copyHandleBarsTemplate')
           .mockImplementation();
@@ -481,7 +453,6 @@ describe('services > dumper (unit)', () => {
             FOREST_URL: 'DEFAULT_FOREST_URL',
           },
         });
-        jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(true);
         const copyHandlebarsTemplateSpy = jest
           .spyOn(dumper, 'copyHandleBarsTemplate')
           .mockImplementation();
@@ -540,9 +511,6 @@ describe('services > dumper (unit)', () => {
 
       const mkdirpMock = jest.fn();
       const dumper = createDumper({
-        os: {
-          platform: () => jest.fn().mockReturnValue('linux'),
-        },
         mkdirp: mkdirpMock,
       });
       const writeForestCollectionSpy = jest
@@ -636,9 +604,6 @@ describe('services > dumper (unit)', () => {
 
       const mkdirpMock = jest.fn();
       const dumper = createDumper({
-        os: {
-          platform: () => jest.fn().mockReturnValue('linux'),
-        },
         mkdirp: mkdirpMock,
       });
       const writeForestCollectionSpy = jest
