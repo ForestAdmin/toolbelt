@@ -144,7 +144,6 @@ class Dumper extends AbstractDumper {
   }
 
   writeDotEnv(config) {
-    console.log(this.port);
     const databaseUrl = Dumper.getDatabaseUrl(config.dbConfig);
     const context = {
       databaseUrl,
@@ -306,7 +305,7 @@ class Dumper extends AbstractDumper {
 
   // NOTICE: Generate files in alphabetical order to ensure a nice generation console logs display.
   async createFiles(config, schema) {
-    const { isUpdate, useMultiDatabase, modelsExportPath } = config;
+    const { isUpdate, useMultiDatabase, modelsExportPath } = config.appConfig;
 
     await this.mkdirp(`${this.projectPath}/routes`);
     await this.mkdirp(`${this.projectPath}/forest`);
