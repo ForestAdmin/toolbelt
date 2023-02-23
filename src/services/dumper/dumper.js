@@ -12,7 +12,8 @@ class Dumper extends AbstractDumper {
   constructor(context) {
     super(context);
 
-    const { assertPresent, env, Sequelize, Handlebars, mkdirp, isLinuxOs } = context;
+    const { assertPresent, env, Sequelize, Handlebars, mkdirp, isLinuxOs, buildDatabaseUrl } =
+      context;
 
     assertPresent({
       env,
@@ -20,6 +21,7 @@ class Dumper extends AbstractDumper {
       Handlebars,
       mkdirp,
       isLinuxOs,
+      buildDatabaseUrl,
     });
 
     this.env = env;
@@ -27,6 +29,7 @@ class Dumper extends AbstractDumper {
     this.Sequelize = Sequelize;
     this.Handlebars = Handlebars;
     this.mkdirp = mkdirp;
+    this.buildDatabaseUrl = buildDatabaseUrl;
   }
 
   static getModelsNameSorted(schema) {
@@ -98,34 +101,8 @@ class Dumper extends AbstractDumper {
     return _.kebabCase(table);
   }
 
-  static getDatabaseUrl(dbConfig) {
-    let connectionString;
-
-    if (dbConfig.dbConnectionUrl) {
-      connectionString = dbConfig.dbConnectionUrl;
-    } else {
-      let protocol = dbConfig.dbDialect;
-      let port = `:${dbConfig.dbPort}`;
-      let password = '';
-
-      if (dbConfig.dbDialect === 'mongodb' && dbConfig.mongodbSrv) {
-        protocol = 'mongodb+srv';
-        port = '';
-      }
-
-      if (dbConfig.dbPassword) {
-        // NOTICE: Encode password string in case of special chars.
-        password = `:${encodeURIComponent(dbConfig.dbPassword)}`;
-      }
-
-      connectionString = `${protocol}://${dbConfig.dbUser}${password}@${dbConfig.dbHostname}${port}/${dbConfig.dbName}`;
-    }
-
-    return connectionString;
-  }
-
-  static isDatabaseLocal(dbConfig) {
-    const databaseUrl = Dumper.getDatabaseUrl(dbConfig);
+  isDatabaseLocal(dbConfig) {
+    const databaseUrl = this.buildDatabaseUrl(dbConfig);
     return databaseUrl.includes('127.0.0.1') || databaseUrl.includes('localhost');
   }
 
@@ -140,7 +117,7 @@ class Dumper extends AbstractDumper {
   }
 
   writeDotEnv(config) {
-    const databaseUrl = Dumper.getDatabaseUrl(config.dbConfig);
+    const databaseUrl = this.buildDatabaseUrl(config.dbConfig);
     const context = {
       databaseUrl,
       ssl: config.dbConfig.ssl || 'false',
@@ -289,7 +266,7 @@ class Dumper extends AbstractDumper {
       dbSchema: config.dbConfig.dbSchema,
       forestExtraHost,
       forestUrl,
-      network: this.isLinuxOs && Dumper.isDatabaseLocal(config.dbConfig) ? 'host' : null,
+      network: this.isLinuxOs && this.isDatabaseLocal(config.dbConfig) ? 'host' : null,
     });
   }
 

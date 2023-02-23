@@ -5,4 +5,5 @@ module.exports = plan =>
     .addUsingClass('logger', () => require('../services/logger'))
     .addUsingClass('eventSender', () => require('../utils/event-sender'))
     .addUsingFunction('terminator', require('../utils/terminator'))
-    .addValue('messages', require('../utils/messages'));
+    .addValue('messages', require('../utils/messages'))
+    .addUsingFunction('buildDatabaseUrl', require('../utils/database-url').default);
