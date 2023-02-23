@@ -19,7 +19,18 @@ export default abstract class AbstractDumper {
 
   protected port;
 
-  protected constructor({ assertPresent, fs, logger, chalk, constants, mkdirp, Handlebars }) {
+  protected readonly buildDatabaseUrl: any;
+
+  protected constructor({
+    assertPresent,
+    fs,
+    logger,
+    chalk,
+    constants,
+    mkdirp,
+    Handlebars,
+    buildDatabaseUrl,
+  }) {
     assertPresent({
       fs,
       logger,
@@ -27,6 +38,7 @@ export default abstract class AbstractDumper {
       constants,
       mkdirp,
       Handlebars,
+      buildDatabaseUrl,
     });
 
     this.fs = fs;
@@ -35,6 +47,7 @@ export default abstract class AbstractDumper {
     this.constants = constants;
     this.mkdirp = mkdirp;
     this.Handlebars = Handlebars;
+    this.buildDatabaseUrl = buildDatabaseUrl;
   }
 
   writeFile(relativeFilePath, content) {

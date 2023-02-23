@@ -12,8 +12,7 @@ class Dumper extends AbstractDumper {
   constructor(context) {
     super(context);
 
-    const { assertPresent, env, Sequelize, Handlebars, mkdirp, isLinuxOs, buildDatabaseUrl } =
-      context;
+    const { assertPresent, env, Sequelize, Handlebars, mkdirp, isLinuxOs } = context;
 
     assertPresent({
       env,
@@ -21,7 +20,6 @@ class Dumper extends AbstractDumper {
       Handlebars,
       mkdirp,
       isLinuxOs,
-      buildDatabaseUrl,
     });
 
     this.env = env;
@@ -29,7 +27,6 @@ class Dumper extends AbstractDumper {
     this.Sequelize = Sequelize;
     this.Handlebars = Handlebars;
     this.mkdirp = mkdirp;
-    this.buildDatabaseUrl = buildDatabaseUrl;
   }
 
   static getModelsNameSorted(schema) {
