@@ -3,8 +3,6 @@ import type { ConfigInterface } from '../../interfaces/project-create-interface'
 export default abstract class AbstractDumper {
   protected projectPath: string;
 
-  protected port;
-
   protected readonly buildDatabaseUrl: any;
 
   protected readonly mkdirp: any;
@@ -16,8 +14,6 @@ export default abstract class AbstractDumper {
   private readonly chalk;
 
   private readonly constants: any;
-
-  private readonly defaultPort = 3310;
 
   private readonly Handlebars: any;
 
@@ -88,8 +84,6 @@ export default abstract class AbstractDumper {
     this.projectPath = dumperConfig.appConfig.applicationName
       ? `${cwd}/${dumperConfig.appConfig.applicationName}`
       : cwd;
-
-    this.port = dumperConfig.appConfig.appPort || this.defaultPort;
 
     await this.mkdirp(this.projectPath);
 
