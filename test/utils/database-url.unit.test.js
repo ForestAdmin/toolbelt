@@ -1,4 +1,4 @@
-const { buildDatabaseUrl } = require('../../src/utils/database-url');
+const buildDatabaseUrl = require('../../src/utils/database-url').default;
 
 describe('utils > buildDatabaseUrl', () => {
   describe('when missing configuration', () => {
@@ -28,12 +28,12 @@ describe('utils > buildDatabaseUrl', () => {
         expect.assertions(1);
 
         const config = {
-          databaseDialect: '__protocol__',
-          databaseHost: '__dbHostname__',
-          databaseName: '__dbName__',
-          databasePassword: '__dbPassword__',
-          databasePort: '__dbPort__',
-          databaseUser: '__dbUser__',
+          dbDialect: '__protocol__',
+          dbHostname: '__dbHostname__',
+          dbName: '__dbName__',
+          dbPassword: '__dbPassword__',
+          dbPort: '__dbPort__',
+          dbUser: '__dbUser__',
         };
         const databaseUrl = buildDatabaseUrl(config);
 
@@ -47,12 +47,12 @@ describe('utils > buildDatabaseUrl', () => {
           expect.assertions(1);
 
           const config = {
-            databaseDialect: 'mongodb',
-            databaseHost: '__dbHostname__',
-            databaseName: '__dbName__',
-            databasePassword: '__dbPassword__',
-            databasePort: '__dbPort__',
-            databaseUser: '__dbUser__',
+            dbDialect: 'mongodb',
+            dbHostname: '__dbHostname__',
+            dbName: '__dbName__',
+            dbPassword: '__dbPassword__',
+            dbPort: '__dbPort__',
+            dbUser: '__dbUser__',
             mongodbSrv: true,
           };
           const databaseUrl = buildDatabaseUrl(config);
@@ -66,12 +66,12 @@ describe('utils > buildDatabaseUrl', () => {
           expect.assertions(1);
 
           const config = {
-            databaseDialect: '__protocol__',
-            databaseHost: '__dbHostname__',
-            databaseName: '__dbName__',
-            databasePassword: '__dbPassword__',
-            databasePort: '__dbPort__',
-            databaseUser: '__dbUser__',
+            dbDialect: '__protocol__',
+            dbHostname: '__dbHostname__',
+            dbName: '__dbName__',
+            dbPassword: '__dbPassword__',
+            dbPort: '__dbPort__',
+            dbUser: '__dbUser__',
             mongodbSrv: true,
           };
           const databaseUrl = buildDatabaseUrl(config);

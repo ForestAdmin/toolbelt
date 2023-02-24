@@ -22,6 +22,7 @@ function createDumper(contextOverride = {}) {
     chalk,
     mkdirp: () => {},
     isLinuxOs: false,
+    buildDatabaseUrl: jest.fn(({ dbConnectionUrl }) => dbConnectionUrl),
     ...contextOverride,
   });
 }
@@ -209,63 +210,24 @@ describe('services > dumper (unit)', () => {
     });
   });
 
-  describe('getDatabaseUrl', () => {
-    it('should return the dbConnectionUrl if provided', () => {
-      expect.assertions(1);
-
-      const config = {
-        dbConnectionUrl: 'mysql://root:password@localhost:3306/forest',
-      };
-
-      expect(Dumper.getDatabaseUrl(config)).toStrictEqual(config.dbConnectionUrl);
-    });
-
-    it('should return the connection string if no dbConnectionUrl is provided', () => {
-      expect.assertions(1);
-
-      const config = {
-        dbDialect: 'mysql',
-        dbPort: 3306,
-        dbUser: 'root',
-        dbHostname: 'localhost',
-        dbName: 'forest',
-      };
-
-      expect(Dumper.getDatabaseUrl(config)).toBe('mysql://root@localhost:3306/forest');
-    });
-
-    it('should remove the port if mongodbSrv is provided', () => {
-      expect.assertions(1);
-
-      const config = {
-        dbDialect: 'mongodb',
-        dbPort: 27017,
-        mongodbSrv: true,
-        dbUser: 'root',
-        dbPassword: 'password',
-        dbHostname: 'localhost',
-        dbName: 'forest',
-      };
-
-      expect(Dumper.getDatabaseUrl(config)).toBe('mongodb+srv://root:password@localhost/forest');
-    });
-  });
-
   describe('isDatabaseLocal', () => {
     it('should return true for a config referring to a database hosted locally', () => {
       expect.assertions(1);
 
+      const dumper = createDumper({});
+
       const dbConnectionUrl = 'mongodb+srv://root:password@localhost/forest';
 
-      expect(Dumper.isDatabaseLocal({ dbConnectionUrl })).toBe(true);
+      expect(dumper.isDatabaseLocal({ dbConnectionUrl })).toBe(true);
     });
 
     it('should return false for a config referring to a database not hosted locally', () => {
       expect.assertions(1);
 
+      const dumper = createDumper({});
       const dbConnectionUrl = 'mongodb+srv://root:password@somewhere.intheworld.com/forest';
 
-      expect(Dumper.isDatabaseLocal({ dbConnectionUrl })).toBe(false);
+      expect(dumper.isDatabaseLocal({ dbConnectionUrl })).toBe(false);
     });
   });
 
