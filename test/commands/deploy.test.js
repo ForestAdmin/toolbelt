@@ -5,8 +5,10 @@ const {
   getProjectByEnv,
   getProjectListValid,
   deployValid,
+  deployInvalidSchemasDifferences,
 } = require('../fixtures/api');
 const { testEnvWithoutSecret, testEnvWithSecret } = require('../fixtures/env');
+const DiffCommand = require('../../src/commands/schema/diff');
 
 describe('deploy', () => {
   describe('when the user is logged in', () => {
@@ -79,6 +81,47 @@ describe('deploy', () => {
             ],
             std: [{ out: '√ Deployed layout changes to reference environment.' }],
           }));
+      });
+
+      describe('when the origin environment has a different schema', () => {
+        it('should not deploy the branch and displays a diff', async () => {
+          expect.hasAssertions();
+          const diffCommandMock = jest
+            .spyOn(DiffCommand.prototype, 'runAuthenticated')
+            .mockImplementation();
+          await testCli({
+            env: testEnvWithSecret,
+            token: 'any',
+            commandClass: DeployCommand,
+            commandArgs: ['-p', '82'],
+            api: [() => deployInvalidSchemasDifferences(10, 11)],
+            prompts: [
+              {
+                in: [
+                  {
+                    name: 'confirm',
+                    message: 'Deploy layout changes to reference?',
+                    type: 'confirm',
+                  },
+                ],
+                out: {
+                  confirm: true,
+                },
+              },
+            ],
+            std: [
+              {
+                err:
+                  '× Source and destination environments must have the same schema. Please check your environments code is synchronized.\n' +
+                  ' You can run "schema:diff 10 11" to see the schemas differences.',
+              },
+            ],
+            exitCode: 2,
+          });
+
+          // The diff command must be called to display the schema differences
+          expect(diffCommandMock).toHaveBeenCalledWith();
+        });
       });
 
       describe('guessed from FOREST_ENV_SECRET', () => {

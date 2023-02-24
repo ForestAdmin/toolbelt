@@ -2,7 +2,8 @@ const Context = require('@forestadmin/context');
 
 const branchDeserializer = require('../deserializers/branch');
 const EnvironmentSerializer = require('../serializers/environment');
-const { handleError } = require('../utils/error');
+const { handleErrorWithMeta } = require('../utils/error');
+const DiffCommand = require('../commands/schema/diff');
 
 const ERROR_MESSAGE_PROJECT_IN_V1 =
   'This project does not support branches yet. Please migrate your environments from your Project settings first.';
@@ -102,9 +103,9 @@ function setOrigin(originEnvironmentName, environmentSecret) {
     .send({ originEnvironmentName: encodeURIComponent(originEnvironmentName) });
 }
 
-function handleBranchError(rawError) {
-  const error = handleError(rawError);
-  switch (error) {
+async function handleBranchError(rawError) {
+  const { message, meta } = handleErrorWithMeta(rawError);
+  switch (message) {
     // NOTICE: When no env/project can be found through envSecret
     case 'Not Found':
       return ERROR_MESSAGE_ENV_SECRET_ISSUE;
@@ -132,8 +133,14 @@ function handleBranchError(rawError) {
       return ERROR_MESSAGE_WRONG_ENVIRONMENT_TYPE;
     case 'No destination branch.':
       return ERROR_MESSAGE_NO_DESTINATION_BRANCH;
+    case 'Source and destination environments must have the same schema. Please check your environments code is synchronized.':
+      await new DiffCommand([
+        `${meta.environmentIdSource}`,
+        `${meta.environmentIdDestination}`,
+      ]).runAuthenticated();
+      return `Source and destination environments must have the same schema. Please check your environments code is synchronized.\n You can run "schema:diff ${meta.environmentIdSource} ${meta.environmentIdDestination}" to see the schemas differences.`;
     default:
-      return error;
+      return message;
   }
 }
 

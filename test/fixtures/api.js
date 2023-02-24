@@ -883,6 +883,26 @@ module.exports = {
       .post('/api/environments/deploy')
       .reply(200, {}),
 
+  deployInvalidSchemasDifferences: (environmentIdSource, environmentIdDestination) =>
+    nock('http://localhost:3001')
+      .matchHeader('forest-secret-key', 'forestEnvSecret')
+      .post('/api/environments/deploy')
+      .reply(
+        500,
+        JSON.stringify({
+          errors: [
+            {
+              detail:
+                'Source and destination environments must have the same schema. Please check your environments code is synchronized.',
+              meta: {
+                environmentIdSource,
+                environmentIdDestination,
+              },
+            },
+          ],
+        }),
+      ),
+
   deleteBranchValid: (branchName = 'random-branch') =>
     nock('http://localhost:3001')
       .matchHeader('forest-secret-key', 'forestEnvSecret')
