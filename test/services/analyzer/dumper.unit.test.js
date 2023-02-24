@@ -224,27 +224,6 @@ describe('services > dumper (unit)', () => {
     });
   });
 
-  describe('port', () => {
-    async function createDumperPort(port) {
-      const dumper = createDumper();
-      jest.spyOn(dumper, 'createFiles').mockResolvedValue(true);
-      await dumper.dump({ appConfig: { appPort: port } });
-      return dumper.port;
-    }
-
-    it('should return the given for config containing appPort', async () => {
-      expect.assertions(1);
-
-      await expect(createDumperPort(1234)).resolves.toBe(1234);
-    });
-
-    it('should return the default port for config not containing appPort', async () => {
-      expect.assertions(1);
-
-      await expect(createDumperPort()).resolves.toBe(3310);
-    });
-  });
-
   describe('getApplicationUrl', () => {
     describe('when no protocol is specified', () => {
       it('should prefix the host name with http://', () => {
@@ -263,9 +242,8 @@ describe('services > dumper (unit)', () => {
         expect.assertions(1);
 
         const dumper = createDumper();
-        dumper.port = 1234;
 
-        expect(dumper.getApplicationUrl('http://localhost')).toBe('http://localhost:1234');
+        expect(dumper.getApplicationUrl('http://localhost', '1234')).toBe('http://localhost:1234');
       });
 
       it('should return the appHostname already defined', () => {

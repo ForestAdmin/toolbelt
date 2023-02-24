@@ -9,6 +9,8 @@ require('./handlebars/loader');
 const AbstractDumper = require('./abstract-dumper').default;
 
 class Dumper extends AbstractDumper {
+  DEFAULT_PORT = 3310;
+
   constructor(context) {
     super(context);
 
@@ -107,24 +109,25 @@ class Dumper extends AbstractDumper {
     return /^http:\/\/(?:localhost|127\.0\.0\.1)$/.test(url);
   }
 
-  getApplicationUrl(appHostname) {
+  getApplicationUrl(appHostname, appPort) {
     const hostUrl = /^https?:\/\//.test(appHostname) ? appHostname : `http://${appHostname}`;
 
-    return Dumper.isLocalUrl(hostUrl) ? `${hostUrl}:${this.port}` : hostUrl;
+    return Dumper.isLocalUrl(hostUrl) ? `${hostUrl}:${appPort || this.DEFAULT_PORT}` : hostUrl;
   }
 
   writeDotEnv(config) {
+    const port = config.appConfig.appPort || this.DEFAULT_PORT;
     const databaseUrl = this.buildDatabaseUrl(config.dbConfig);
     const context = {
       databaseUrl,
       ssl: config.dbConfig.ssl || 'false',
       dbSchema: config.dbConfig.dbSchema,
       hostname: config.appConfig.appHostname,
-      port: this.port,
+      port,
       forestEnvSecret: config.forestEnvSecret,
       forestAuthSecret: config.forestAuthSecret,
       hasDockerDatabaseUrl: false,
-      applicationUrl: this.getApplicationUrl(config.appConfig.appHostname),
+      applicationUrl: this.getApplicationUrl(config.appConfig.appHostname, port),
     };
     if (!this.isLinuxOs) {
       context.dockerDatabaseUrl = databaseUrl.replace('localhost', 'host.docker.internal');
