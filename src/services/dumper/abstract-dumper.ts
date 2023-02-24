@@ -54,7 +54,7 @@ export default abstract class AbstractDumper {
 
   abstract createFiles(dumperConfig: ConfigInterface, schema: any);
 
-  writeFile(relativeFilePath, content) {
+  protected writeFile(relativeFilePath, content) {
     const fileName = `${this.projectPath}/${relativeFilePath}`;
 
     if (this.fs.existsSync(fileName)) {
@@ -66,7 +66,11 @@ export default abstract class AbstractDumper {
     this.logger.log(`  ${this.chalk.green('create')} ${relativeFilePath}`);
   }
 
-  copyHandleBarsTemplate(source: string, target: string, context?: Record<string, unknown>) {
+  protected copyHandleBarsTemplate(
+    source: string,
+    target: string,
+    context?: Record<string, unknown>,
+  ) {
     const templatePath = `${__dirname}/templates/${this.templateFolder}/${source}`;
 
     if (context && Object.keys(context).length > 0) {
