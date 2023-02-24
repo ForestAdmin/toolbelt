@@ -1,5 +1,4 @@
 const chalk = require('chalk');
-const appRoot = require('app-root-path');
 
 const Dumper = require('../../../src/services/dumper/dumper');
 const InvalidForestCLIProjectStructureError = require('../../../src/errors/dumper/invalid-forest-cli-project-structure-error');
@@ -86,26 +85,6 @@ describe('services > dumper (unit)', () => {
           `  ${chalk.yellow('skip')} ${RELATIVE_FILE_PATH} - already exists.`,
         );
       });
-    });
-  });
-
-  describe('copyTemplate', () => {
-    const makeContextOverrides = () => ({
-      fs: {
-        readFileSync: jest.fn().mockReturnValue('content'),
-      },
-    });
-
-    it('should call writeFile with computed parameters', () => {
-      expect.assertions(2);
-
-      const context = makeContextOverrides();
-      const dumper = createDumper(context);
-      const writeFileSpy = jest.spyOn(dumper, 'writeFile').mockImplementation(() => {});
-      dumper.copyTemplate('from.js', 'to.js');
-
-      expect(writeFileSpy).toHaveBeenCalledTimes(1);
-      expect(writeFileSpy).toHaveBeenCalledWith('to.js', 'content');
     });
   });
 
@@ -492,10 +471,11 @@ describe('services > dumper (unit)', () => {
       const writeDockerComposeSpy = jest.spyOn(dumper, 'writeDockerCompose').mockImplementation();
       const writeDockerfileSpy = jest.spyOn(dumper, 'writeDockerfile').mockImplementation();
       const writePackageJsonSpy = jest.spyOn(dumper, 'writePackageJson').mockImplementation();
-      const copyTemplateSpy = jest.spyOn(dumper, 'copyTemplate').mockImplementation();
+      const copyHandlebarsTemplateSpy = jest
+        .spyOn(dumper, 'copyHandleBarsTemplate')
+        .mockImplementation();
 
-      const projectPath = `${appRoot}/test-output/unit-test-dumper`;
-      const templatePath = `${appRoot}/src/services/dumper/templates/agent-v1/`;
+      const projectPath = `${ABSOLUTE_PROJECT_PATH}/test-output/unit-test-dumper`;
 
       const schema = {
         testModel: { fields: {}, references: [], options: {} },
@@ -503,7 +483,6 @@ describe('services > dumper (unit)', () => {
       const config = {
         appConfig: {
           applicationName: 'test-output/unit-test-dumper',
-          path: appRoot,
         },
         dbConfig: {
           dbDialect: '',
@@ -540,25 +519,19 @@ describe('services > dumper (unit)', () => {
       );
 
       // Copied files
-      expect(copyTemplateSpy).toHaveBeenCalledTimes(6);
-      expect(copyTemplateSpy).toHaveBeenCalledWith(
-        `${templatePath}middlewares/welcome.hbs`,
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledTimes(6);
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith(
+        `middlewares/welcome.hbs`,
         'middlewares/welcome.js',
       );
-      expect(copyTemplateSpy).toHaveBeenCalledWith(
-        `${templatePath}public/favicon.png`,
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith(
+        `public/favicon.png`,
         'public/favicon.png',
       );
-      expect(copyTemplateSpy).toHaveBeenCalledWith(
-        `${templatePath}views/index.hbs`,
-        'views/index.html',
-      );
-      expect(copyTemplateSpy).toHaveBeenCalledWith(
-        `${templatePath}dockerignore.hbs`,
-        '.dockerignore',
-      );
-      expect(copyTemplateSpy).toHaveBeenCalledWith(`${templatePath}gitignore.hbs`, '.gitignore');
-      expect(copyTemplateSpy).toHaveBeenCalledWith(`${templatePath}server.hbs`, 'server.js');
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith('views/index.hbs', 'views/index.html');
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith('dockerignore.hbs', '.dockerignore');
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith('gitignore.hbs', '.gitignore');
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith('server.hbs', 'server.js');
     });
 
     it('should call all the mandatory functions required to update project', async () => {
@@ -585,10 +558,12 @@ describe('services > dumper (unit)', () => {
       const writeDockerComposeSpy = jest.spyOn(dumper, 'writeDockerCompose').mockImplementation();
       const writeDockerfileSpy = jest.spyOn(dumper, 'writeDockerfile').mockImplementation();
       const writePackageJsonSpy = jest.spyOn(dumper, 'writePackageJson').mockImplementation();
-      const copyTemplateSpy = jest.spyOn(dumper, 'copyTemplate').mockImplementation();
+      const copyHandlebarsTemplateSpy = jest
+        .spyOn(dumper, 'copyHandleBarsTemplate')
+        .mockImplementation();
       jest.spyOn(Dumper, 'shouldSkipRouteGenerationForModel');
 
-      const projectPath = `${appRoot}/test-output/unit-test-dumper`;
+      const projectPath = `${ABSOLUTE_PROJECT_PATH}/test-output/unit-test-dumper`;
 
       const schema = {
         testModel: { fields: {}, references: [], options: {} },
@@ -598,7 +573,6 @@ describe('services > dumper (unit)', () => {
           applicationName: 'test-output/unit-test-dumper',
           isUpdate: true,
           modelsExportPath: 'test',
-          path: appRoot,
           useMultiDatabase: true,
         },
         dbConfig: {},
@@ -630,7 +604,7 @@ describe('services > dumper (unit)', () => {
       expect(Dumper.shouldSkipRouteGenerationForModel).toHaveBeenCalledWith('testModel');
 
       // Copied files
-      expect(copyTemplateSpy).not.toHaveBeenCalled();
+      expect(copyHandlebarsTemplateSpy).not.toHaveBeenCalled();
     });
   });
 
