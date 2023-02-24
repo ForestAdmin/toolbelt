@@ -1,0 +1,20 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
+const { createAgent } = require('@forestadmin/agent');
+{{datasourceImport}}
+import { createMongooseDataSource } from '@forestadmin/datasource-mongoose';
+import * as models from './models';
+
+(async () => {
+  await createAgent({
+    authSecret: process.env.FOREST_AUTH_SECRET,
+    envSecret: process.env.FOREST_ENV_SECRET,
+    isProduction: process.env.NODE_ENV === 'production',
+    forestServerUrl: process.env.FOREST_SERVER_URL,
+    typingsPath: './typings.d.ts',
+  })
+  .addDataSource({{datasourceCreation}})
+  .mountOnStandaloneServer(process.env.APPLICATION_PORT)
+  .start();
+})();

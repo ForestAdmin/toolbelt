@@ -5,6 +5,10 @@ module.exports = plan =>
     .addModule('mongodb', () => require('mongodb'))
     .addModule('Handlebars', () => require('handlebars'))
     .addUsingClass('database', () => require('../services/schema/update/database'))
+    .addUsingClass(
+      'agentNodejsDumper',
+      () => require('../services/dumper/agent-nodejs-dumper').default,
+    )
     .addUsingClass('dumperV1', () => require('../services/dumpers/dumper-v1'))
     .addValue('GeneralPrompter', () => require('../services/prompter/general-prompter'))
     .addUsingClass('commandGenerateConfigGetter', () =>
