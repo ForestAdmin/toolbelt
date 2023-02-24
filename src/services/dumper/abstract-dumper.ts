@@ -80,7 +80,7 @@ export default abstract class AbstractDumper {
   }
 
   async dump(dumperConfig: ConfigInterface, schema?: any) {
-    const cwd = dumperConfig.appConfig.path || this.constants.CURRENT_WORKING_DIRECTORY;
+    const cwd = this.constants.CURRENT_WORKING_DIRECTORY;
     this.projectPath = dumperConfig.appConfig.applicationName
       ? `${cwd}/${dumperConfig.appConfig.applicationName}`
       : cwd;
