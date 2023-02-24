@@ -1,25 +1,25 @@
 import type { ConfigInterface } from '../../interfaces/project-create-interface';
 
 export default abstract class AbstractDumper {
+  protected projectPath: string;
+
+  protected port;
+
+  protected readonly buildDatabaseUrl: any;
+
+  protected readonly mkdirp: any;
+
   private readonly fs;
 
   private readonly logger;
 
   private readonly chalk;
 
-  protected projectPath: string;
-
   private readonly constants: any;
-
-  protected readonly mkdirp: any;
 
   private readonly defaultPort = 3310;
 
   private readonly Handlebars: any;
-
-  protected port;
-
-  protected readonly buildDatabaseUrl: any;
 
   protected constructor({
     assertPresent,
@@ -50,6 +50,10 @@ export default abstract class AbstractDumper {
     this.buildDatabaseUrl = buildDatabaseUrl;
   }
 
+  abstract get templateFolder();
+
+  abstract createFiles(dumperConfig: ConfigInterface, schema: any);
+
   writeFile(relativeFilePath, content) {
     const fileName = `${this.projectPath}/${relativeFilePath}`;
 
@@ -62,12 +66,8 @@ export default abstract class AbstractDumper {
     this.logger.log(`  ${this.chalk.green('create')} ${relativeFilePath}`);
   }
 
-  private copyTemplate(source: string, target: string) {
-    this.writeFile(target, this.fs.readFileSync(source, 'utf-8'));
-  }
-
   copyHandleBarsTemplate(source: string, target: string, context?: Record<string, unknown>) {
-    const templatePath = `${__dirname}/templates/${this.templateFolder}${source}`;
+    const templatePath = `${__dirname}/templates/${this.templateFolder}/${source}`;
 
     if (context && Object.keys(context).length > 0) {
       const handlebarsTemplate = () =>
@@ -76,12 +76,8 @@ export default abstract class AbstractDumper {
       return this.writeFile(target, handlebarsTemplate()(context));
     }
 
-    return this.copyTemplate(templatePath, target);
+    return this.writeFile(target, this.fs.readFileSync(templatePath, 'utf-8'));
   }
-
-  abstract createFiles(dumperConfig: ConfigInterface, schema: any);
-
-  abstract get templateFolder();
 
   async dump(dumperConfig: ConfigInterface, schema?: any) {
     const cwd = dumperConfig.appConfig.path || this.constants.CURRENT_WORKING_DIRECTORY;

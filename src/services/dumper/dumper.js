@@ -50,7 +50,7 @@ class Dumper extends AbstractDumper {
 
   // eslint-disable-next-line class-methods-use-this
   get templateFolder() {
-    return 'agent-v1/';
+    return 'agent-v1';
   }
 
   writePackageJson(dbDialect, applicationName) {
