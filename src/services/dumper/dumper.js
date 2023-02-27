@@ -9,8 +9,6 @@ require('./handlebars/loader');
 const AbstractDumper = require('./abstract-dumper').default;
 
 class Dumper extends AbstractDumper {
-  DEFAULT_PORT = 3310;
-
   constructor(context) {
     super(context);
 
@@ -24,6 +22,7 @@ class Dumper extends AbstractDumper {
       isLinuxOs,
     });
 
+    this.DEFAULT_PORT = 3310;
     this.env = env;
     this.isLinuxOs = isLinuxOs;
     this.Sequelize = Sequelize;
