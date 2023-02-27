@@ -64,7 +64,7 @@ export default class AgentNodeJsDumper extends AbstractDumper {
 
   writeIndex(dbDialect) {
     const context = {
-      forestUrl: this.env.FOREST_URL,
+      forestUrl: !!this.env.FOREST_URL,
       datasourceImport: null,
       datasourceCreation: null,
     };
@@ -87,6 +87,7 @@ export default class AgentNodeJsDumper extends AbstractDumper {
       ssl: dbConfig.ssl || false,
       dbSchema: dbConfig.dbSchema,
       port: applicationPort,
+      forestUrl: this.env.FOREST_URL,
       forestEnvSecret,
       forestAuthSecret,
       hasDockerDatabaseUrl: false,

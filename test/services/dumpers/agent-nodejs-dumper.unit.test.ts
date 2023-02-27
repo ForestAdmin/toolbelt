@@ -232,26 +232,24 @@ describe('services > agentNodejsDumper', () => {
         });
       });
     });
-  });
 
-  describe('when writing index.js file', () => {
     describe('when handling FOREST_URL', () => {
       describe('when FOREST_URL has been provided', () => {
-        it('should set forestUrl', async () => {
+        it('should set forestUrl to actual value', async () => {
           expect.assertions(1);
 
           const { dumper, context, defaultConfig } = createDumper({
             env: {
-              FOREST_URL: 'http://localhost:3001',
+              FOREST_URL: 'https://api.development.forestadmin.com',
             },
           });
 
           await dumper.dump(defaultConfig);
 
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-            '/test/anApplication/index.js',
+            '/test/anApplication/.env',
             expect.objectContaining({
-              forestUrl: 'http://localhost:3001',
+              forestUrl: 'https://api.development.forestadmin.com',
             }),
           );
         });
@@ -266,9 +264,51 @@ describe('services > agentNodejsDumper', () => {
           await dumper.dump(defaultConfig);
 
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-            '/test/anApplication/index.js',
+            '/test/anApplication/.env',
             expect.objectContaining({
               forestUrl: undefined,
+            }),
+          );
+        });
+      });
+    });
+  });
+
+  describe('when writing index.js file', () => {
+    describe('when handling FOREST_URL', () => {
+      describe('when FOREST_URL has been provided', () => {
+        it('should set forestUrl to true', async () => {
+          expect.assertions(1);
+
+          const { dumper, context, defaultConfig } = createDumper({
+            env: {
+              FOREST_URL: 'http://localhost:3001',
+            },
+          });
+
+          await dumper.dump(defaultConfig);
+
+          expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+            '/test/anApplication/index.js',
+            expect.objectContaining({
+              forestUrl: true,
+            }),
+          );
+        });
+      });
+
+      describe('when FOREST_URL has not been provided', () => {
+        it('should not set forestUrl to false', async () => {
+          expect.assertions(1);
+
+          const { dumper, context, defaultConfig } = createDumper();
+
+          await dumper.dump(defaultConfig);
+
+          expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+            '/test/anApplication/index.js',
+            expect.objectContaining({
+              forestUrl: false,
             }),
           );
         });

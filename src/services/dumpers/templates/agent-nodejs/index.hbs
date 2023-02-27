@@ -11,7 +11,9 @@ import * as models from './models';
     authSecret: process.env.FOREST_AUTH_SECRET,
     envSecret: process.env.FOREST_ENV_SECRET,
     isProduction: process.env.NODE_ENV === 'production',
-    forestServerUrl: process.env.FOREST_SERVER_URL,
+    {{#if forestUrl}}
+      forestServerUrl: process.env.FOREST_SERVER_URL,
+    {{/if}}
     typingsPath: './typings.d.ts',
   })
   .addDataSource({{datasourceCreation}})
