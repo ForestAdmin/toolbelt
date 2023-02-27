@@ -6,32 +6,14 @@ import AbstractDumper from './abstract-dumper';
 export default class AgentNodeJsDumper extends AbstractDumper {
   private env: any;
 
-  private readonly DEFAULT_PORT: 3310;
+  private readonly DEFAULT_PORT = 3310;
 
   private readonly isLinuxOs: any;
 
   constructor(context) {
-    const {
-      assertPresent,
-      fs,
-      chalk,
-      constants,
-      Sequelize,
-      Handlebars,
-      logger,
-      mkdirp,
-      env,
-      isLinuxOs,
-    } = context;
+    const { assertPresent, env, isLinuxOs } = context;
 
     assertPresent({
-      fs,
-      chalk,
-      constants,
-      Sequelize,
-      Handlebars,
-      logger,
-      mkdirp,
       env,
       isLinuxOs,
     });
@@ -53,7 +35,7 @@ export default class AgentNodeJsDumper extends AbstractDumper {
       '@forestadmin/agent': '^1.0.0',
     };
 
-    if (dbDialect === 'mongoose') {
+    if (dbDialect === 'mongodb') {
       dependencies['@forestadmin/datasource-mongoose'] = '^1.0.0';
     } else {
       dependencies['@forestadmin/datasource-sql'] = '^1.0.0';
@@ -73,7 +55,7 @@ export default class AgentNodeJsDumper extends AbstractDumper {
       name: toValidPackageName(applicationName),
       version: '0.0.1',
       private: true,
-      scripts: { start: 'node ./server.js' },
+      scripts: { start: 'node ./index.js' },
       dependencies,
     };
 
@@ -88,26 +70,21 @@ export default class AgentNodeJsDumper extends AbstractDumper {
     };
 
     if (dbDialect === 'mongodb') {
-      context.datasourceImport = `
-        const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');
-        const models = require('./models');
-      `;
-      context.datasourceCreation =
-        'createMongooseDataSource(models.connections.default, { }), {});';
+      context.datasourceImport = `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst models = require('./models');`;
+      context.datasourceCreation = 'createMongooseDataSource(models.connections.default, {}), {});';
     } else {
-      context.datasourceImport =
-        "const { createSqlDataSource } = require('@forestadmin/datasource-sql');";
+      context.datasourceImport = `const { createSqlDataSource } = require('@forestadmin/datasource-sql');`;
       context.datasourceCreation = 'createSqlDataSource(process.env.DATABASE_URL)';
     }
 
-    this.copyHandleBarsTemplate('./agent-nodejs/index.hbs', 'index.js', context);
+    this.copyHandleBarsTemplate('index.hbs', 'index.js', context);
   }
 
   private writeDotEnv(dbConfig, applicationPort, forestEnvSecret, forestAuthSecret) {
     const databaseUrl = this.buildDatabaseUrl(dbConfig);
     const context = {
       databaseUrl,
-      ssl: dbConfig.ssl || 'false',
+      ssl: dbConfig.ssl || false,
       dbSchema: dbConfig.dbSchema,
       port: applicationPort,
       forestEnvSecret,
@@ -123,12 +100,10 @@ export default class AgentNodeJsDumper extends AbstractDumper {
   }
 
   private writeGitignore() {
-    this.writeFile('env.js', 'node_modules\n.env');
+    this.writeFile('.gitignore', 'node_modules\n.env');
   }
 
-  async createFiles(dumpConfig: ConfigInterface) {
-    await this.mkdirp(this.projectPath);
-
+  createFiles(dumpConfig: ConfigInterface) {
     this.writePackageJson(dumpConfig.dbConfig.dbDialect, dumpConfig.appConfig.applicationName);
     this.writeIndex(dumpConfig.dbConfig.dbDialect);
     this.writeDotEnv(
