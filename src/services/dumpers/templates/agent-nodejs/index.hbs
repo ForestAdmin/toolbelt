@@ -12,7 +12,7 @@ import * as models from './models';
     envSecret: process.env.FOREST_ENV_SECRET,
     isProduction: process.env.NODE_ENV === 'production',
     {{#if forestUrl}}
-      forestServerUrl: process.env.FOREST_SERVER_URL,
+    forestServerUrl: process.env.FOREST_SERVER_URL,
     {{/if}}
     typingsPath: './typings.d.ts',
   })
