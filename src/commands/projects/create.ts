@@ -1,5 +1,5 @@
 import type { ConfigInterface, DbConfigInterface } from '../../interfaces/project-create-interface';
-import type Dumper from '../../services/dumper/dumper';
+import type DumperV1 from '../../services/dumpers/dumper-v1';
 import type DatabaseAnalyzer from '../../services/schema/update/analyzer/database-analyzer';
 import type * as Config from '@oclif/config';
 
@@ -8,20 +8,20 @@ import AbstractProjectCreateCommand from '../../abstract-project-create-command'
 export default class CreateCommand extends AbstractProjectCreateCommand {
   private readonly databaseAnalyzer: DatabaseAnalyzer;
 
-  private readonly dumper: Dumper;
+  private readonly dumper: DumperV1;
 
   constructor(argv: string[], config: Config.IConfig, plan?) {
     super(argv, config, plan);
 
-    const { assertPresent, databaseAnalyzer, dumper } = this.context;
+    const { assertPresent, databaseAnalyzer, dumperV1 } = this.context;
 
     assertPresent({
       databaseAnalyzer,
-      dumper,
+      dumperV1,
     });
 
     this.databaseAnalyzer = databaseAnalyzer;
-    this.dumper = dumper;
+    this.dumper = dumperV1;
   }
 
   async generateProject(config: ConfigInterface) {

@@ -2,20 +2,20 @@ const { execute } = require('@forestadmin/context');
 const rimraf = require('rimraf');
 const fs = require('fs');
 const appRoot = require('app-root-path');
-const simpleModel = require('./expected/sequelize/db-analysis-output/customers.expected.json');
-const belongsToModel = require('./expected/sequelize/db-analysis-output/addresses.expected.json');
-const simpleModelNonPrimary = require('./expected/sequelize/db-analysis-output/owners.expected.json');
-const belongsToModelNonPrimary = require('./expected/sequelize/db-analysis-output/projects.expected.json');
-const otherAssociationsModel = require('./expected/sequelize/db-analysis-output/users.expected.json');
-const joinTableWithIdKey = require('./expected/sequelize/db-analysis-output/only-foreign-keys-and-id.expected.json');
-const exportModel = require('./expected/sequelize/db-analysis-output/export.expected.json');
-const defaultValuesModel = require('./expected/sequelize/db-analysis-output/default_values.postgres.expected');
-const parenthesisColumnName = require('./expected/sequelize/db-analysis-output/parenthesis.expected.json');
-const parenthesisColumnNameUnderscored = require('./expected/sequelize/db-analysis-output/parenthesis_underscored.expected.json');
-const parenthesisColumnNameUnderscoredTrue = require('./expected/sequelize/db-analysis-output/parenthesis_underscored_true.expected.json');
-const defaultPlan = require('../../../src/context/plan');
+const simpleModel = require('../../analyzer/expected/sequelize/db-analysis-output/customers.expected.json');
+const belongsToModel = require('../../analyzer/expected/sequelize/db-analysis-output/addresses.expected.json');
+const simpleModelNonPrimary = require('../../analyzer/expected/sequelize/db-analysis-output/owners.expected.json');
+const belongsToModelNonPrimary = require('../../analyzer/expected/sequelize/db-analysis-output/projects.expected.json');
+const otherAssociationsModel = require('../../analyzer/expected/sequelize/db-analysis-output/users.expected.json');
+const joinTableWithIdKey = require('../../analyzer/expected/sequelize/db-analysis-output/only-foreign-keys-and-id.expected.json');
+const exportModel = require('../../analyzer/expected/sequelize/db-analysis-output/export.expected.json');
+const defaultValuesModel = require('../../analyzer/expected/sequelize/db-analysis-output/default_values.postgres.expected');
+const parenthesisColumnName = require('../../analyzer/expected/sequelize/db-analysis-output/parenthesis.expected.json');
+const parenthesisColumnNameUnderscored = require('../../analyzer/expected/sequelize/db-analysis-output/parenthesis_underscored.expected.json');
+const parenthesisColumnNameUnderscoredTrue = require('../../analyzer/expected/sequelize/db-analysis-output/parenthesis_underscored_true.expected.json');
+const defaultPlan = require('../../../../src/context/plan');
 
-const Dumper = require('../../../src/services/dumper/dumper');
+const Dumper = require('../../../../src/services/dumpers/dumper-v1');
 
 function getDumper(context) {
   return new Dumper(context);
@@ -51,7 +51,7 @@ describe('services > dumper > sequelize', () => {
     await dumper.dump(CONFIG, simpleModel);
     const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_CUSTOMERS_PATH, 'utf8');
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/sequelize/dumper-output/customers.expected.js`,
+      `${__dirname}/expected/sequelize/customers.expected.js`,
       'utf-8',
     );
 
@@ -69,7 +69,7 @@ describe('services > dumper > sequelize', () => {
       'utf8',
     );
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/sequelize/dumper-output/addresses.expected.js`,
+      `${__dirname}/expected/sequelize/addresses.expected.js`,
       'utf-8',
     );
 
@@ -88,7 +88,7 @@ describe('services > dumper > sequelize', () => {
       'utf8',
     );
     const ownersExpectedFile = fs.readFileSync(
-      `${__dirname}/expected/sequelize/dumper-output/owners.expected.js`,
+      `${__dirname}/expected/sequelize/owners.expected.js`,
       'utf-8',
     );
     const projectsGeneratedFile = fs.readFileSync(
@@ -96,7 +96,7 @@ describe('services > dumper > sequelize', () => {
       'utf8',
     );
     const projectsExpectedFile = fs.readFileSync(
-      `${__dirname}/expected/sequelize/dumper-output/projects.expected.js`,
+      `${__dirname}/expected/sequelize/projects.expected.js`,
       'utf-8',
     );
 
@@ -115,7 +115,7 @@ describe('services > dumper > sequelize', () => {
       'utf8',
     );
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/sequelize/dumper-output/parenthesis.expected.js`,
+      `${__dirname}/expected/sequelize/parenthesis.expected.js`,
       'utf-8',
     );
 
@@ -133,7 +133,7 @@ describe('services > dumper > sequelize', () => {
       'utf8',
     );
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/sequelize/dumper-output/parenthesis_underscored.expected.js`,
+      `${__dirname}/expected/sequelize/parenthesis_underscored.expected.js`,
       'utf-8',
     );
 
@@ -151,7 +151,7 @@ describe('services > dumper > sequelize', () => {
       'utf8',
     );
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/sequelize/dumper-output/parenthesis_underscored_true.expected.js`,
+      `${__dirname}/expected/sequelize/parenthesis_underscored_true.expected.js`,
       'utf-8',
     );
 
@@ -169,7 +169,7 @@ describe('services > dumper > sequelize', () => {
       'utf8',
     );
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/sequelize/dumper-output/users.expected.js`,
+      `${__dirname}/expected/sequelize/users.expected.js`,
       'utf-8',
     );
 
@@ -191,11 +191,11 @@ describe('services > dumper > sequelize', () => {
       'utf8',
     );
     const expectedModelFile = fs.readFileSync(
-      `${__dirname}/expected/sequelize/dumper-output/export.expected.js`,
+      `${__dirname}/expected/sequelize/export.expected.js`,
       'utf-8',
     );
     const expectedRouteFile = fs.readFileSync(
-      `${__dirname}/expected/sequelize/dumper-output/export.expected.route.js`,
+      `${__dirname}/expected/sequelize/export.expected.route.js`,
       'utf-8',
     );
 
@@ -214,7 +214,7 @@ describe('services > dumper > sequelize', () => {
       'utf8',
     );
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/sequelize/dumper-output/default-values.expected.js`,
+      `${__dirname}/expected/sequelize/default-values.expected.js`,
       'utf-8',
     );
 
@@ -232,7 +232,7 @@ describe('services > dumper > sequelize', () => {
       'utf8',
     );
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/sequelize/dumper-output/index.expected.js`,
+      `${__dirname}/expected/sequelize/index.expected.js`,
       'utf-8',
     );
 
@@ -250,7 +250,7 @@ describe('services > dumper > sequelize', () => {
       'utf-8',
     );
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/sequelize/dumper-output/databases.config.expected.js`,
+      `${__dirname}/expected/sequelize/databases.config.expected.js`,
       'utf-8',
     );
 
@@ -268,7 +268,7 @@ describe('services > dumper > sequelize', () => {
 
       const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/.env`, 'utf8');
       const expectedFile = fs.readFileSync(
-        `${__dirname}/expected/sequelize/dumper-output/env.linux.expected`,
+        `${__dirname}/expected/sequelize/env.linux.expected`,
         'utf-8',
       );
 
@@ -285,7 +285,7 @@ describe('services > dumper > sequelize', () => {
 
       const generatedFile = fs.readFileSync(`${appRoot}/test-output/sequelize/.env`, 'utf8');
       const expectedFile = fs.readFileSync(
-        `${__dirname}/expected/sequelize/dumper-output/env.darwin.expected`,
+        `${__dirname}/expected/sequelize/env.darwin.expected`,
         'utf-8',
       );
 
@@ -304,7 +304,7 @@ describe('services > dumper > sequelize', () => {
       'utf8',
     );
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/sequelize/dumper-output/only-foreign-keys-and-id.expected.js`,
+      `${__dirname}/expected/sequelize/only-foreign-keys-and-id.expected.js`,
       'utf-8',
     );
 
@@ -325,7 +325,7 @@ describe('services > dumper > sequelize', () => {
       await dumper.dump({ ...CONFIG, isUpdate: true }, simpleModel);
       const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_CUSTOMERS_PATH, 'utf8');
       const expectedFile = fs.readFileSync(
-        `${__dirname}/expected/sequelize/dumper-output/customers.expected.js`,
+        `${__dirname}/expected/sequelize/customers.expected.js`,
         'utf-8',
       );
 

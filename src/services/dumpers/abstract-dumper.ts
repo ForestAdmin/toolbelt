@@ -3,9 +3,9 @@ import type { ConfigInterface } from '../../interfaces/project-create-interface'
 export default abstract class AbstractDumper {
   protected projectPath: string;
 
-  protected readonly buildDatabaseUrl: any;
+  protected readonly buildDatabaseUrl;
 
-  protected readonly mkdirp: any;
+  protected readonly mkdirp;
 
   private readonly fs;
 
@@ -13,9 +13,9 @@ export default abstract class AbstractDumper {
 
   private readonly chalk;
 
-  private readonly constants: any;
+  private readonly constants;
 
-  private readonly Handlebars: any;
+  private readonly Handlebars;
 
   protected constructor({
     assertPresent,
