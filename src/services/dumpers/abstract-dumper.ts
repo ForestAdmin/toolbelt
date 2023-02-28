@@ -1,4 +1,5 @@
 import type { ConfigInterface } from '../../interfaces/project-create-interface';
+import '../../utils/handlebars/loader';
 
 export default abstract class AbstractDumper {
   protected projectPath: string;

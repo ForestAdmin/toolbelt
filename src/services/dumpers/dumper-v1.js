@@ -5,7 +5,6 @@ const stringUtils = require('../../utils/strings');
 const toValidPackageName = require('../../utils/to-valid-package-name');
 const IncompatibleLianaForUpdateError = require('../../errors/dumper/incompatible-liana-for-update-error');
 const InvalidForestCLIProjectStructureError = require('../../errors/dumper/invalid-forest-cli-project-structure-error');
-require('../../utils/handlebars/loader');
 const AbstractDumper = require('./abstract-dumper').default;
 
 class DumperV1 extends AbstractDumper {
