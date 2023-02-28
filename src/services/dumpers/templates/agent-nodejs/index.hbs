@@ -1,20 +1,62 @@
-const dotenv = require('dotenv');
-dotenv.config();
-
+require('dotenv').config();
 const { createAgent } = require('@forestadmin/agent');
-{{datasourceImport}}
+{{#if isMongoose}}
+const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');
+const models = require('./models');
+{{else}}
+const { createSqlDataSource } = require('@forestadmin/datasource-sql');
 
-(async () => {
-  await createAgent({
-    authSecret: process.env.FOREST_AUTH_SECRET,
-    envSecret: process.env.FOREST_ENV_SECRET,
-    isProduction: process.env.NODE_ENV === 'production',
-    {{#if forestUrl}}
-    forestServerUrl: process.env.FOREST_SERVER_URL,
-    {{/if}}
-    typingsPath: './typings.d.ts',
-  })
-  .addDataSource({{datasourceCreation}})
+const dialectOptions = {};
+{{#if isMySQL}}
+dialectOptions.typeCast = (field, useDefaultTypeCasting) => {
+  if ((field.type === "BIT") && (field.length === 1)) {
+    const bytes = field.buffer();
+    return bytes ? bytes[0] === 1 : bytes;
+  }
+
+  return useDefaultTypeCasting();
+};
+{{/if}}
+if (process.env.DATABASE_SSL && JSON.parse(process.env.DATABASE_SSL.toLowerCase())) {
+{{#if isMySQL}}
+  dialectOptions.ssl = { rejectUnauthorized: true };
+{{else if isMSSQL}}
+  dialectOptions.options = { encrypt: true };
+{{else}}
+  const rejectUnauthorized = process.env.DATABASE_REJECT_UNAUTHORIZED;
+  if (rejectUnauthorized && JSON.parse(rejectUnauthorized.toLowerCase()) === 'false') {
+    dialectOptions.ssl = { rejectUnauthorized: false };
+  } else {
+    dialectOptions.ssl = true;
+  }
+{{/if}}
+}
+{{/if}}
+
+// Create the Forest Admin agent.
+/**
+ * @type {import('@forestadmin/agent').Agent<import('./typings').Schema>}
+ */
+const agent = createAgent({
+  authSecret: process.env.FOREST_AUTH_SECRET,
+  envSecret: process.env.FOREST_ENV_SECRET,
+  isProduction: process.env.NODE_ENV === 'production',
+  {{#if forestServerUrl}}
+  forestServerUrl: process.env.FOREST_SERVER_URL,
+  {{/if}}
+  // Autocompletion of collection names and fields
+  typingsPath: './typings.ts',
+})
+  // Connect your datasources.
+  .addDataSource(
+    {{datasourceCreation}}
+  );
+
+// Add customizations here.
+// agent.addCustomization('collectionName', collection => ...);
+
+agent
+  // Expose an HTTP endpoint.
   .mountOnStandaloneServer(process.env.APPLICATION_PORT)
+  // Start the agent.
   .start();
-})();

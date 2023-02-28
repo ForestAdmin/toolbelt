@@ -47,9 +47,9 @@ export default abstract class AbstractDumper {
     this.buildDatabaseUrl = buildDatabaseUrl;
   }
 
-  abstract get templateFolder();
+  protected abstract get templateFolder();
 
-  abstract createFiles(dumperConfig: ConfigInterface, schema: any);
+  protected abstract createFiles(dumperConfig: ConfigInterface, schema: any);
 
   protected writeFile(relativeFilePath, content) {
     const fileName = `${this.projectPath}/${relativeFilePath}`;

@@ -1,14 +1,16 @@
-import type { ConfigInterface } from '../../interfaces/project-create-interface';
+import type { ConfigInterface, DbConfigInterface } from '../../interfaces/project-create-interface';
+
+import _ from 'lodash';
 
 import toValidPackageName from '../../utils/to-valid-package-name';
 import AbstractDumper from './abstract-dumper';
 
 export default class AgentNodeJsDumper extends AbstractDumper {
-  private env: any;
+  private env: { FOREST_SERVER_URL: string; FOREST_URL_IS_DEFAULT: string };
 
   private readonly DEFAULT_PORT = 3310;
 
-  private readonly isLinuxOs: any;
+  private readonly isLinuxOs: boolean;
 
   constructor(context) {
     const { assertPresent, env, isLinuxOs } = context;
@@ -25,13 +27,13 @@ export default class AgentNodeJsDumper extends AbstractDumper {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  get templateFolder() {
+  protected get templateFolder() {
     return 'agent-nodejs/';
   }
 
   writePackageJson(dbDialect: string, applicationName: string) {
-    const dependencies: any = {
-      nodenv: '^16.0.1',
+    const dependencies: { [name: string]: string } = {
+      dotenv: '^16.0.1',
       '@forestadmin/agent': '^1.0.0',
     };
 
@@ -55,39 +57,57 @@ export default class AgentNodeJsDumper extends AbstractDumper {
       name: toValidPackageName(applicationName),
       version: '0.0.1',
       private: true,
-      scripts: { start: 'node ./index.js' },
+      main: 'index.js',
+      scripts: {
+        'start:watch': 'nodemon',
+        start: 'node ./index.js',
+      },
+      nodemonConfig: {
+        ignore: ['./forestadmin-schema.json'],
+      },
       dependencies,
+      devDependencies: {
+        nodemon: '^2.0.12',
+      },
     };
 
     this.writeFile('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
   }
 
-  writeIndex(dbDialect) {
-    const context = {
-      forestUrl: !!this.env.FOREST_URL,
-      datasourceImport: null,
-      datasourceCreation: null,
-    };
+  writeIndex(dbDialect: string) {
+    const isMongoose = dbDialect === 'mongodb';
 
-    if (dbDialect === 'mongodb') {
-      context.datasourceImport = `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst models = require('./models');`;
-      context.datasourceCreation = 'createMongooseDataSource(models.connections.default, {}), {});';
-    } else {
-      context.datasourceImport = `const { createSqlDataSource } = require('@forestadmin/datasource-sql');`;
-      context.datasourceCreation = 'createSqlDataSource(process.env.DATABASE_URL)';
-    }
+    const context = {
+      isMongoose,
+      isMySQL: dbDialect === 'mysql',
+      isMSSQL: dbDialect === 'mssql',
+      forestServerUrl: !!this.env.FOREST_SERVER_URL,
+      datasourceImport: null,
+      datasourceCreation: isMongoose
+        ? 'createMongooseDataSource(models.connections.default, {}), {});'
+        : `createSqlDataSource({
+      uri: process.env.DATABASE_URL,
+      schema: process.env.DATABASE_SCHEMA || 'public',
+      ...dialectOptions,
+    }),`,
+    };
 
     this.copyHandleBarsTemplate('index.hbs', 'index.js', context);
   }
 
-  private writeDotEnv(dbConfig, applicationPort, forestEnvSecret, forestAuthSecret) {
+  private writeDotEnv(
+    dbConfig: DbConfigInterface,
+    applicationPort: number,
+    forestEnvSecret: string,
+    forestAuthSecret: string,
+  ) {
     const databaseUrl = this.buildDatabaseUrl(dbConfig);
     const context = {
       databaseUrl,
       ssl: dbConfig.ssl || false,
       dbSchema: dbConfig.dbSchema,
       port: applicationPort,
-      forestUrl: this.env.FOREST_URL,
+      forestServerUrl: this.env.FOREST_SERVER_URL,
       forestEnvSecret,
       forestAuthSecret,
       hasDockerDatabaseUrl: false,
@@ -104,7 +124,42 @@ export default class AgentNodeJsDumper extends AbstractDumper {
     this.writeFile('.gitignore', 'node_modules\n.env');
   }
 
-  createFiles(dumpConfig: ConfigInterface) {
+  private writeDockerignore() {
+    this.writeFile('.dockerignore', 'node_modules\nnpm-debug.log\n.env');
+  }
+
+  private writeDockerfile() {
+    this.copyHandleBarsTemplate('Dockerfile.hbs', 'Dockerfile');
+  }
+
+  private writeDockerCompose(config: ConfigInterface) {
+    const databaseUrl = `\${${this.isLinuxOs ? 'DATABASE_URL' : 'DOCKER_DATABASE_URL'}}`;
+    const forestServerUrl = this.env.FOREST_URL_IS_DEFAULT ? false : `\${FOREST_SERVER_URL}`;
+    let forestExtraHost: string | boolean = false;
+    if (forestServerUrl) {
+      try {
+        const parsedForestUrl = new URL(this.env.FOREST_SERVER_URL);
+        forestExtraHost = parsedForestUrl.hostname;
+      } catch (error) {
+        throw new Error(`Invalid value for FOREST_URL: "${this.env.FOREST_SERVER_URL}"`);
+      }
+    }
+    this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
+      containerName: _.snakeCase(config.appConfig.applicationName),
+      databaseUrl,
+      dbSchema: config.dbConfig.dbSchema,
+      forestExtraHost,
+      forestServerUrl,
+      network: this.isLinuxOs && this.isDatabaseLocal(config.dbConfig) ? 'host' : null,
+    });
+  }
+
+  private isDatabaseLocal(dbConfig: DbConfigInterface) {
+    const databaseUrl = this.buildDatabaseUrl(dbConfig);
+    return databaseUrl.includes('127.0.0.1') || databaseUrl.includes('localhost');
+  }
+
+  protected createFiles(dumpConfig: ConfigInterface) {
     this.writePackageJson(dumpConfig.dbConfig.dbDialect, dumpConfig.appConfig.applicationName);
     this.writeIndex(dumpConfig.dbConfig.dbDialect);
     this.writeDotEnv(
@@ -114,5 +169,8 @@ export default class AgentNodeJsDumper extends AbstractDumper {
       dumpConfig.forestAuthSecret,
     );
     this.writeGitignore();
+    this.writeDockerignore();
+    this.writeDockerfile();
+    this.writeDockerCompose(dumpConfig);
   }
 }

@@ -10,8 +10,8 @@ const databaseOptions = {
   dialectOptions: {},
   {{/if}}
 };
-{{#if isMySQL}}
 
+{{#if isMySQL}}
 databaseOptions.dialectOptions.typeCast = (field, useDefaultTypeCasting) => {
   if ((field.type === "BIT") && (field.length === 1)) {
     const bytes = field.buffer();
@@ -21,8 +21,8 @@ databaseOptions.dialectOptions.typeCast = (field, useDefaultTypeCasting) => {
   return useDefaultTypeCasting();
 };
 {{/if}}
-{{#unless isMongoDB}}
 
+{{#unless isMongoDB}}
 if (process.env.DATABASE_SSL && JSON.parse(process.env.DATABASE_SSL.toLowerCase())) {
   {{#if isMySQL}}
   databaseOptions.dialectOptions.ssl = { rejectUnauthorized: true };
@@ -35,7 +35,7 @@ if (process.env.DATABASE_SSL && JSON.parse(process.env.DATABASE_SSL.toLowerCase(
   } else {
     databaseOptions.dialectOptions.ssl = true;
   }
-{{/if}}
+  {{/if}}
 }
 {{/unless}}
 
