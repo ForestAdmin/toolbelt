@@ -104,9 +104,9 @@ export default class AgentNodeJsDumper extends AbstractDumper {
     const databaseUrl = this.buildDatabaseUrl(dbConfig);
     const context = {
       databaseUrl,
-      ssl: dbConfig.ssl || false,
-      dbSchema: dbConfig.dbSchema,
-      port: applicationPort,
+      databaseSsl: dbConfig.ssl || false,
+      databaseSchema: dbConfig.dbSchema,
+      applicationPort,
       forestServerUrl: this.env.FOREST_SERVER_URL,
       forestEnvSecret,
       forestAuthSecret,
