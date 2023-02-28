@@ -1,6 +1,6 @@
-import type { ConfigInterface } from '../../../src/interfaces/project-create-interface';
+import type { ConfigInterface } from '../../../../src/interfaces/project-create-interface';
 
-import AgentNodeJsDumper from '../../../src/services/dumper/agent-nodejs-dumper';
+import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs-dumper';
 
 describe('services > agentNodejsDumper', () => {
   const createDumper = (dependencies = {}) => {

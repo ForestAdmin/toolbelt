@@ -7,7 +7,7 @@ module.exports = plan =>
     .addUsingClass('database', () => require('../services/schema/update/database'))
     .addUsingClass(
       'agentNodejsDumper',
-      () => require('../services/dumper/agent-nodejs-dumper').default,
+      () => require('../services/dumpers/agent-nodejs-dumper').default,
     )
     .addUsingClass('dumperV1', () => require('../services/dumpers/dumper-v1'))
     .addValue('GeneralPrompter', () => require('../services/prompter/general-prompter'))
