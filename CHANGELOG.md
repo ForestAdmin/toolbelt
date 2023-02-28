@@ -1,3 +1,5 @@
+## [3.1.1](https://github.com/ForestAdmin/toolbelt/compare/v3.1.0...v3.1.1) (2023-02-28)
+
 # [3.1.0](https://github.com/ForestAdmin/toolbelt/compare/v3.0.12...v3.1.0) (2023-02-13)
 
 
