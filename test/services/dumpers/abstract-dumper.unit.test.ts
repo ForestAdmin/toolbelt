@@ -2,7 +2,7 @@
 // eslint-disable-next-line max-classes-per-file
 import type { ConfigInterface } from '../../../src/interfaces/project-create-interface';
 
-import AbstractDumper from '../../../src/services/dumper/abstract-dumper';
+import AbstractDumper from '../../../src/services/dumpers/abstract-dumper';
 
 const buildDumper = (ADumper, librairies = {}) => {
   const context = {
@@ -156,7 +156,7 @@ describe('services > Abstract Dumper', () => {
 
         expect(context.Handlebars.compile).not.toHaveBeenCalled();
         const [templateFilePath, format] = context.fs.readFileSync.mock.calls[0];
-        expect(templateFilePath).toMatch(/services\/dumper\/templates\/aTemplateFolder\/aSource$/);
+        expect(templateFilePath).toMatch(/services\/dumpers\/templates\/aTemplateFolder\/aSource$/);
         expect(format).toBe('utf-8');
         expect(writeFileSpy).toHaveBeenCalledWith('aTarget', undefined);
       });
@@ -182,7 +182,7 @@ describe('services > Abstract Dumper', () => {
 
         expect(context.Handlebars.compile).toHaveBeenCalledWith(undefined, { noEscape: true });
         const [templateFilePath, format] = context.fs.readFileSync.mock.calls[0];
-        expect(templateFilePath).toMatch(/services\/dumper\/templates\/aTemplateFolder\/aSource$/);
+        expect(templateFilePath).toMatch(/services\/dumpers\/templates\/aTemplateFolder\/aSource$/);
         expect(format).toBe('utf-8');
         expect(writeFileSpy).toHaveBeenCalledWith('aTarget', undefined);
       });

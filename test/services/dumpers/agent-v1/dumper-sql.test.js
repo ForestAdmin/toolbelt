@@ -2,10 +2,10 @@ const appRoot = require('app-root-path');
 const rimraf = require('rimraf');
 const Context = require('@forestadmin/context');
 const fs = require('fs');
-const renderingModel = require('./expected/sequelize/db-analysis-output/renderings.expected.json');
-const defaultPlan = require('../../../src/context/plan');
+const renderingModel = require('../../analyzer/expected/sequelize/db-analysis-output/renderings.expected.json');
+const defaultPlan = require('../../../../src/context/plan');
 
-const Dumper = require('../../../src/services/dumper/dumper');
+const Dumper = require('../../../../src/services/dumpers/dumper-v1');
 
 const TYPE_CAST = 'databaseOptions.dialectOptions.typeCast';
 
@@ -116,7 +116,7 @@ describe('services > dumper > SQL', () => {
         'utf8',
       );
       const renderingsExpectedFile = fs.readFileSync(
-        `${__dirname}/expected/sequelize/dumper-output/renderings.expected.js`,
+        `${__dirname}/expected/sequelize/renderings.expected.js`,
         'utf-8',
       );
       expect(renderingsGeneratedFile).toStrictEqual(renderingsExpectedFile);

@@ -3,19 +3,19 @@ const rimraf = require('rimraf');
 const fs = require('fs');
 const appRoot = require('app-root-path');
 
-const simpleModel = require('./expected/mongo/db-analysis-output/simple.expected.json');
-const hasManyModel = require('./expected/mongo/db-analysis-output/hasmany.expected.json');
-const nestedObjectModel = require('./expected/mongo/db-analysis-output/nested-object-fields.expected.json');
-const nestedArrayOfNumbersModel = require('./expected/mongo/db-analysis-output/nested-array-of-numbers-fields.expected.json');
-const nestedArrayOfObjectsModel = require('./expected/mongo/db-analysis-output/nested-array-of-objects-fields.expected.json');
-const deepNestedModel = require('./expected/mongo/db-analysis-output/deep-nested-fields.expected.json');
-const subDocumentNotUsingIds = require('./expected/mongo/db-analysis-output/sub-document-not-using-ids.expected.json');
-const subDocumentsAmbiguousIds = require('./expected/mongo/db-analysis-output/sub-documents-ambiguous-ids.expected.json');
-const subDocumentsNotUsingIds = require('./expected/mongo/db-analysis-output/sub-documents-not-using-ids.expected.json');
-const subDocumentsUsingIds = require('./expected/mongo/db-analysis-output/sub-documents-using-ids.expected.json');
-const subDocumentUsingIds = require('./expected/mongo/db-analysis-output/sub-document-using-ids.expected.json');
-const Dumper = require('../../../src/services/dumper/dumper');
-const defaultPlan = require('../../../src/context/plan');
+const simpleModel = require('../../analyzer/expected/mongo/db-analysis-output/simple.expected.json');
+const hasManyModel = require('../../analyzer/expected/mongo/db-analysis-output/hasmany.expected.json');
+const nestedObjectModel = require('../../analyzer/expected/mongo/db-analysis-output/nested-object-fields.expected.json');
+const nestedArrayOfNumbersModel = require('../../analyzer/expected/mongo/db-analysis-output/nested-array-of-numbers-fields.expected.json');
+const nestedArrayOfObjectsModel = require('../../analyzer/expected/mongo/db-analysis-output/nested-array-of-objects-fields.expected.json');
+const deepNestedModel = require('../../analyzer/expected/mongo/db-analysis-output/deep-nested-fields.expected.json');
+const subDocumentNotUsingIds = require('../../analyzer/expected/mongo/db-analysis-output/sub-document-not-using-ids.expected.json');
+const subDocumentsAmbiguousIds = require('../../analyzer/expected/mongo/db-analysis-output/sub-documents-ambiguous-ids.expected.json');
+const subDocumentsNotUsingIds = require('../../analyzer/expected/mongo/db-analysis-output/sub-documents-not-using-ids.expected.json');
+const subDocumentsUsingIds = require('../../analyzer/expected/mongo/db-analysis-output/sub-documents-using-ids.expected.json');
+const subDocumentUsingIds = require('../../analyzer/expected/mongo/db-analysis-output/sub-document-using-ids.expected.json');
+const Dumper = require('../../../../src/services/dumpers/dumper-v1');
+const defaultPlan = require('../../../../src/context/plan');
 
 function buildContext() {
   return Context.execute(defaultPlan);
@@ -51,7 +51,7 @@ async function getGeneratedFileFromPersonModel(model, context) {
 }
 
 const TEST_OUTPUT_MODEL_FILMS_PATH = `${appRoot}/test-output/mongo/models/films.js`;
-const TEST_EXPECTED_MODEL_FILMS_PATH = `${__dirname}/expected/mongo/dumper-output/simple.expected.js`;
+const TEST_EXPECTED_MODEL_FILMS_PATH = `${__dirname}/expected/mongo/simple.expected.js`;
 
 describe('services > dumper > MongoDB', () => {
   it('should generate a simple model file', async () => {
@@ -73,7 +73,7 @@ describe('services > dumper > MongoDB', () => {
     await dumper.dump(CONFIG, hasManyModel);
     const generatedFile = fs.readFileSync(TEST_OUTPUT_MODEL_FILMS_PATH, 'utf8');
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/mongo/dumper-output/hasmany.expected.js`,
+      `${__dirname}/expected/mongo/hasmany.expected.js`,
       'utf-8',
     );
 
@@ -108,7 +108,7 @@ describe('services > dumper > MongoDB', () => {
         'utf-8',
       );
       const expectedFile = fs.readFileSync(
-        `${__dirname}/expected/mongo/dumper-output/index.expected.js`,
+        `${__dirname}/expected/mongo/index.expected.js`,
         'utf-8',
       );
 
@@ -126,7 +126,7 @@ describe('services > dumper > MongoDB', () => {
         'utf-8',
       );
       const expectedFile = fs.readFileSync(
-        `${__dirname}/expected/mongo/dumper-output/databases.config.expected.js`,
+        `${__dirname}/expected/mongo/databases.config.expected.js`,
         'utf-8',
       );
 
@@ -140,7 +140,7 @@ describe('services > dumper > MongoDB', () => {
     const context = buildContext();
     const generatedFile = await getGeneratedFileFromPersonModel(nestedObjectModel, context);
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/mongo/dumper-output/nested-object.expected.js`,
+      `${__dirname}/expected/mongo/nested-object.expected.js`,
       'utf-8',
     );
 
@@ -153,7 +153,7 @@ describe('services > dumper > MongoDB', () => {
     const context = buildContext();
     const generatedFile = await getGeneratedFileFromPersonModel(nestedArrayOfNumbersModel, context);
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/mongo/dumper-output/nested-array-of-numbers.expected.js`,
+      `${__dirname}/expected/mongo/nested-array-of-numbers.expected.js`,
       'utf-8',
     );
 
@@ -166,7 +166,7 @@ describe('services > dumper > MongoDB', () => {
     const context = buildContext();
     const generatedFile = await getGeneratedFileFromPersonModel(nestedArrayOfObjectsModel, context);
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/mongo/dumper-output/nested-array-of-objects.expected.js`,
+      `${__dirname}/expected/mongo/nested-array-of-objects.expected.js`,
       'utf-8',
     );
 
@@ -179,7 +179,7 @@ describe('services > dumper > MongoDB', () => {
     const context = buildContext();
     const generatedFile = await getGeneratedFileFromPersonModel(deepNestedModel, context);
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/mongo/dumper-output/deep-nested.expected.js`,
+      `${__dirname}/expected/mongo/deep-nested.expected.js`,
       'utf-8',
     );
 
@@ -192,7 +192,7 @@ describe('services > dumper > MongoDB', () => {
     const context = buildContext();
     const generatedFile = await getGeneratedFileFromPersonModel(subDocumentsUsingIds, context);
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/mongo/dumper-output/sub-documents-using-ids.expected.js`,
+      `${__dirname}/expected/mongo/sub-documents-using-ids.expected.js`,
       'utf-8',
     );
 
@@ -205,7 +205,7 @@ describe('services > dumper > MongoDB', () => {
     const context = buildContext();
     const generatedFile = await getGeneratedFileFromPersonModel(subDocumentsNotUsingIds, context);
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/mongo/dumper-output/sub-documents-not-using-ids.expected.js`,
+      `${__dirname}/expected/mongo/sub-documents-not-using-ids.expected.js`,
       'utf-8',
     );
 
@@ -218,7 +218,7 @@ describe('services > dumper > MongoDB', () => {
     const context = buildContext();
     const generatedFile = await getGeneratedFileFromPersonModel(subDocumentsAmbiguousIds, context);
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/mongo/dumper-output/sub-documents-ambiguous-ids.expected.js`,
+      `${__dirname}/expected/mongo/sub-documents-ambiguous-ids.expected.js`,
       'utf-8',
     );
 
@@ -231,7 +231,7 @@ describe('services > dumper > MongoDB', () => {
     const context = buildContext();
     const generatedFile = await getGeneratedFileFromPersonModel(subDocumentUsingIds, context);
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/mongo/dumper-output/sub-document-using-ids.expected.js`,
+      `${__dirname}/expected/mongo/sub-document-using-ids.expected.js`,
       'utf-8',
     );
 
@@ -244,7 +244,7 @@ describe('services > dumper > MongoDB', () => {
     const context = buildContext();
     const generatedFile = await getGeneratedFileFromPersonModel(subDocumentNotUsingIds, context);
     const expectedFile = fs.readFileSync(
-      `${__dirname}/expected/mongo/dumper-output/sub-document-not-using-ids.expected.js`,
+      `${__dirname}/expected/mongo/sub-document-not-using-ids.expected.js`,
       'utf-8',
     );
 
@@ -281,7 +281,7 @@ describe('services > dumper > MongoDB', () => {
       await dumper.dump(CONFIG, simpleModel);
       const generatedFile = fs.readFileSync(`${appRoot}/test-output/mongo/forest/films.js`, 'utf8');
       const expectedFile = fs.readFileSync(
-        `${__dirname}/expected/mongo/dumper-output/forest-simple.expected.js`,
+        `${__dirname}/expected/mongo/forest-simple.expected.js`,
         'utf8',
       );
 

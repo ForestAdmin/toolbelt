@@ -6,7 +6,7 @@ module.exports = class SchemaService {
     constants,
     database,
     databaseAnalyzer,
-    dumper,
+    dumperV1,
     env,
     errorHandler,
     fs,
@@ -18,7 +18,7 @@ module.exports = class SchemaService {
       constants,
       database,
       databaseAnalyzer,
-      dumper,
+      dumperV1,
       env,
       errorHandler,
       fs,
@@ -29,7 +29,7 @@ module.exports = class SchemaService {
     this.constants = constants;
     this.database = database;
     this.databaseAnalyzer = databaseAnalyzer;
-    this.dumper = dumper;
+    this.dumper = dumperV1;
     this.env = env;
     this.errorHandler = errorHandler;
     this.fs = fs;
