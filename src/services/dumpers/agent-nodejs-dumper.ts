@@ -12,23 +12,30 @@ export default class AgentNodeJsDumper extends AbstractDumper {
 
   private readonly isLinuxOs: boolean;
 
+  private readonly isDatabaseLocal: (dbConfig: DbConfigInterface) => boolean;
+
+  private readonly buildDatabaseUrl: (dbConfig: DbConfigInterface) => string;
+
   constructor(context) {
-    const { assertPresent, env, isLinuxOs } = context;
+    const { assertPresent, env, isLinuxOs, buildDatabaseUrl, isDatabaseLocal } = context;
 
     assertPresent({
       env,
       isLinuxOs,
+      isDatabaseLocal,
     });
 
     super(context);
 
     this.env = env;
     this.isLinuxOs = isLinuxOs;
+    this.buildDatabaseUrl = buildDatabaseUrl;
+    this.isDatabaseLocal = isDatabaseLocal;
   }
 
   // eslint-disable-next-line class-methods-use-this
   protected get templateFolder() {
-    return 'agent-nodejs/';
+    return 'agent-nodejs';
   }
 
   writePackageJson(dbDialect: string, applicationName: string) {
@@ -82,7 +89,6 @@ export default class AgentNodeJsDumper extends AbstractDumper {
       isMySQL: dbDialect === 'mysql',
       isMSSQL: dbDialect === 'mssql',
       forestServerUrl: !!this.env.FOREST_SERVER_URL,
-      datasourceImport: null,
       datasourceCreation: isMongoose
         ? 'createMongooseDataSource(models.connections.default, {}), {});'
         : `createSqlDataSource({
@@ -135,13 +141,14 @@ export default class AgentNodeJsDumper extends AbstractDumper {
   private writeDockerCompose(config: ConfigInterface) {
     const databaseUrl = `\${${this.isLinuxOs ? 'DATABASE_URL' : 'DOCKER_DATABASE_URL'}}`;
     const forestServerUrl = this.env.FOREST_URL_IS_DEFAULT ? false : `\${FOREST_SERVER_URL}`;
+
     let forestExtraHost: string | boolean = false;
     if (forestServerUrl) {
       try {
         const parsedForestUrl = new URL(this.env.FOREST_SERVER_URL);
         forestExtraHost = parsedForestUrl.hostname;
       } catch (error) {
-        throw new Error(`Invalid value for FOREST_URL: "${this.env.FOREST_SERVER_URL}"`);
+        throw new Error(`Invalid value for FOREST_SERVER_URL: "${this.env.FOREST_SERVER_URL}"`);
       }
     }
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
@@ -152,11 +159,6 @@ export default class AgentNodeJsDumper extends AbstractDumper {
       forestServerUrl,
       network: this.isLinuxOs && this.isDatabaseLocal(config.dbConfig) ? 'host' : null,
     });
-  }
-
-  private isDatabaseLocal(dbConfig: DbConfigInterface) {
-    const databaseUrl = this.buildDatabaseUrl(dbConfig);
-    return databaseUrl.includes('127.0.0.1') || databaseUrl.includes('localhost');
   }
 
   protected createFiles(dumpConfig: ConfigInterface) {

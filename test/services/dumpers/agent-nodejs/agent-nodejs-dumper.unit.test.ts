@@ -2,18 +2,19 @@ import type { ConfigInterface } from '../../../../src/interfaces/project-create-
 
 import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs-dumper';
 
-describe('services > agentNodejsDumper', () => {
+describe('services > dumpers > agentNodejsDumper', () => {
   const createDumper = (dependencies = {}) => {
     const context = {
       assertPresent: jest.fn(),
       env: {
-        FOREST_URL: undefined,
+        FOREST_SERVER_URL: undefined,
+        FOREST_URL_IS_DEFAULT: true,
       },
       isLinuxOs: false,
       fs: {
         existsSync: jest.fn().mockReturnValue(false),
         writeFileSync: jest.fn().mockReturnValue(true),
-        readFileSync: jest.fn(),
+        readFileSync: jest.fn().mockReturnValue('mockedContent'),
       },
       chalk: {
         green: jest.fn(),
@@ -24,6 +25,7 @@ describe('services > agentNodejsDumper', () => {
       },
       mkdirp: jest.fn(),
       buildDatabaseUrl: jest.fn(() => 'localhost'),
+      isDatabaseLocal: jest.fn(() => true),
       constants: {
         CURRENT_WORKING_DIRECTORY: '/test',
       },
@@ -35,6 +37,8 @@ describe('services > agentNodejsDumper', () => {
 
     const defaultConfig: ConfigInterface = {
       appConfig: {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         appPort: null,
         appHostname: 'http://localhost',
         applicationName: 'anApplication',
@@ -73,6 +77,32 @@ describe('services > agentNodejsDumper', () => {
         'node_modules\n.env',
       );
     });
+
+    it('should write a .dockerignore file', async () => {
+      expect.assertions(1);
+
+      const { dumper, context, defaultConfig } = createDumper();
+
+      await dumper.dump(defaultConfig);
+
+      expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+        '/test/anApplication/.dockerignore',
+        'node_modules\nnpm-debug.log\n.env',
+      );
+    });
+
+    it('should write a Dockerfile', async () => {
+      expect.assertions(1);
+
+      const { dumper, context, defaultConfig } = createDumper();
+
+      await dumper.dump(defaultConfig);
+
+      expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+        '/test/anApplication/Dockerfile',
+        'mockedContent',
+      );
+    });
   });
 
   describe('when writing .env file', () => {
@@ -86,9 +116,9 @@ describe('services > agentNodejsDumper', () => {
 
         expect(context.fs.writeFileSync).toHaveBeenCalledWith('/test/anApplication/.env', {
           databaseUrl: 'localhost',
-          ssl: false,
-          dbSchema: 'public',
-          port: 3310,
+          databaseSsl: false,
+          databaseSchema: 'public',
+          applicationPort: 3310,
           forestEnvSecret: 'aForestEnvSecret',
           forestAuthSecret: 'aForestAuthSecret',
           hasDockerDatabaseUrl: true,
@@ -109,14 +139,14 @@ describe('services > agentNodejsDumper', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/.env',
             expect.objectContaining({
-              port: 3310,
+              applicationPort: 3310,
             }),
           );
         });
       });
 
       describe('when application port has been provided', () => {
-        it('should use the port povided', async () => {
+        it('should use the applicationPort provided', async () => {
           expect.assertions(1);
 
           const { dumper, context, defaultConfig } = createDumper();
@@ -128,7 +158,7 @@ describe('services > agentNodejsDumper', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/.env',
             expect.objectContaining({
-              port: 3000,
+              applicationPort: 3000,
             }),
           );
         });
@@ -142,6 +172,8 @@ describe('services > agentNodejsDumper', () => {
 
           const { dumper, context, defaultConfig } = createDumper();
 
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-expect-error
           defaultConfig.dbConfig.ssl = null;
 
           await dumper.dump(defaultConfig);
@@ -149,7 +181,7 @@ describe('services > agentNodejsDumper', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/.env',
             expect.objectContaining({
-              ssl: false,
+              databaseSsl: false,
             }),
           );
         });
@@ -168,7 +200,7 @@ describe('services > agentNodejsDumper', () => {
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
               '/test/anApplication/.env',
               expect.objectContaining({
-                ssl: true,
+                databaseSsl: true,
               }),
             );
           });
@@ -185,7 +217,7 @@ describe('services > agentNodejsDumper', () => {
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
               '/test/anApplication/.env',
               expect.objectContaining({
-                ssl: false,
+                databaseSsl: false,
               }),
             );
           });
@@ -233,14 +265,15 @@ describe('services > agentNodejsDumper', () => {
       });
     });
 
-    describe('when handling FOREST_URL', () => {
-      describe('when FOREST_URL has been provided', () => {
-        it('should set forestUrl to actual value', async () => {
+    describe('when handling FOREST_SERVER_URL', () => {
+      describe('when FOREST_SERVER_URL has been provided', () => {
+        it('should set forestServerUrl to actual value', async () => {
           expect.assertions(1);
 
           const { dumper, context, defaultConfig } = createDumper({
             env: {
-              FOREST_URL: 'https://api.development.forestadmin.com',
+              FOREST_SERVER_URL: 'https://api.development.forestadmin.com',
+              FOREST_URL_IS_DEFAULT: false,
             },
           });
 
@@ -249,14 +282,14 @@ describe('services > agentNodejsDumper', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/.env',
             expect.objectContaining({
-              forestUrl: 'https://api.development.forestadmin.com',
+              forestServerUrl: 'https://api.development.forestadmin.com',
             }),
           );
         });
       });
 
-      describe('when FOREST_URL has not been provided', () => {
-        it('should not set forestUrl', async () => {
+      describe('when FOREST_SERVER_URL has not been provided', () => {
+        it('should not set forestServerUrl', async () => {
           expect.assertions(1);
 
           const { dumper, context, defaultConfig } = createDumper();
@@ -266,7 +299,7 @@ describe('services > agentNodejsDumper', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/.env',
             expect.objectContaining({
-              forestUrl: undefined,
+              forestServerUrl: undefined,
             }),
           );
         });
@@ -275,14 +308,15 @@ describe('services > agentNodejsDumper', () => {
   });
 
   describe('when writing index.js file', () => {
-    describe('when handling FOREST_URL', () => {
-      describe('when FOREST_URL has been provided', () => {
-        it('should set forestUrl to true', async () => {
+    describe('when handling FOREST_SERVER_URL', () => {
+      describe('when FOREST_SERVER_URL has been provided', () => {
+        it('should set forestServerUrl to true', async () => {
           expect.assertions(1);
 
           const { dumper, context, defaultConfig } = createDumper({
             env: {
-              FOREST_URL: 'http://localhost:3001',
+              FOREST_SERVER_URL: 'http://localhost:3001',
+              FOREST_URL_IS_DEFAULT: false,
             },
           });
 
@@ -291,14 +325,14 @@ describe('services > agentNodejsDumper', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/index.js',
             expect.objectContaining({
-              forestUrl: true,
+              forestServerUrl: true,
             }),
           );
         });
       });
 
-      describe('when FOREST_URL has not been provided', () => {
-        it('should not set forestUrl to false', async () => {
+      describe('when FOREST_SERVER_URL has not been provided', () => {
+        it('should not set forestServerUrl to false', async () => {
           expect.assertions(1);
 
           const { dumper, context, defaultConfig } = createDumper();
@@ -308,7 +342,7 @@ describe('services > agentNodejsDumper', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/index.js',
             expect.objectContaining({
-              forestUrl: false,
+              forestServerUrl: false,
             }),
           );
         });
@@ -329,25 +363,32 @@ describe('services > agentNodejsDumper', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/index.js',
             expect.objectContaining({
-              datasourceImport: `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst models = require('./models');`,
+              isMongoose: true,
+              isMySQL: false,
+              isMSSQL: false,
               datasourceCreation: 'createMongooseDataSource(models.connections.default, {}), {});',
             }),
           );
         });
       });
+
       describe('when dbDialect is not mongodb', () => {
         it('should use sql data source', async () => {
           expect.assertions(1);
 
           const { dumper, context, defaultConfig } = createDumper();
 
+          defaultConfig.dbConfig.dbDialect = 'mysql';
+
           await dumper.dump(defaultConfig);
 
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/index.js',
             expect.objectContaining({
-              datasourceImport: `const { createSqlDataSource } = require('@forestadmin/datasource-sql');`,
-              datasourceCreation: 'createSqlDataSource(process.env.DATABASE_URL)',
+              isMongoose: false,
+              isMySQL: true,
+              isMSSQL: false,
+              datasourceCreation: expect.stringMatching('createSqlDataSource'),
             }),
           );
         });
@@ -358,7 +399,7 @@ describe('services > agentNodejsDumper', () => {
   describe('when writing package.json', () => {
     describe('when handling basic attributes', () => {
       it('should write basic attributes with adequate configuration', async () => {
-        expect.assertions(6);
+        expect.assertions(10);
 
         const { dumper, context, defaultConfig } = createDumper();
 
@@ -370,7 +411,15 @@ describe('services > agentNodejsDumper', () => {
         );
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
           '/test/anApplication/package.json',
+          expect.stringContaining('"main": "index.js"'),
+        );
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          '/test/anApplication/package.json',
           expect.stringContaining('"start": "node ./index.js"'),
+        );
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          '/test/anApplication/package.json',
+          expect.stringContaining('"start:watch": "nodemon'),
         );
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
           '/test/anApplication/package.json',
@@ -386,7 +435,15 @@ describe('services > agentNodejsDumper', () => {
         );
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
           '/test/anApplication/package.json',
-          expect.stringContaining('"nodenv": "^16.0.1"'),
+          expect.stringContaining('"dotenv": "^16.0.1"'),
+        );
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          '/test/anApplication/package.json',
+          expect.stringContaining('"nodemon": "^2.0.12"'),
+        );
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          '/test/anApplication/package.json',
+          expect.stringContaining('nodemonConfig'),
         );
       });
     });

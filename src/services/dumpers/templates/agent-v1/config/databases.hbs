@@ -20,8 +20,8 @@ databaseOptions.dialectOptions.typeCast = (field, useDefaultTypeCasting) => {
 
   return useDefaultTypeCasting();
 };
-{{/if}}
 
+{{/if}}
 {{#unless isMongoDB}}
 if (process.env.DATABASE_SSL && JSON.parse(process.env.DATABASE_SSL.toLowerCase())) {
   {{#if isMySQL}}
@@ -35,10 +35,10 @@ if (process.env.DATABASE_SSL && JSON.parse(process.env.DATABASE_SSL.toLowerCase(
   } else {
     databaseOptions.dialectOptions.ssl = true;
   }
-  {{/if}}
+{{/if}}
 }
-{{/unless}}
 
+{{/unless}}
 module.exports = [{
   name: 'default',
   modelsDir: path.resolve(__dirname, '../models'),
