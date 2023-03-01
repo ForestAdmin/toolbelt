@@ -30,22 +30,22 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
   }
 
   private async analyzeDatabase(dbConfig: DbConfigInterface) {
-    let schema = {};
-
-    this.spinner.start({ text: 'Analyzing the database' });
     const connection = await this.database.connect(dbConfig);
 
     if (dbConfig.dbDialect === 'mongodb') {
       // the mongodb analyzer display a progress bar during the analysis
-      schema = await this.databaseAnalyzer.analyzeMongoDb(connection, dbConfig, true);
-    } else {
-      const schemaPromise = this.databaseAnalyzer.analyze(connection, dbConfig, true);
-      schema = await this.spinner.attachToPromise(schemaPromise);
+      this.logger.info('Analyzing the database');
+      const schema = await this.databaseAnalyzer.analyzeMongoDb(connection, dbConfig, true);
+      await this.database.disconnect(connection);
+      this.logger.success('Database is analyzed', { lineColor: 'green' });
+      return schema;
     }
 
-    await this.database.disconnect(connection);
+    this.spinner.start({ text: 'Analyzing the database' });
+    const schemaPromise = this.databaseAnalyzer.analyze(connection, dbConfig, true);
+    const schema = await this.spinner.attachToPromise(schemaPromise);
     this.logger.success('Database is analyzed', { lineColor: 'green' });
-
+    await this.database.disconnect(connection);
     return schema;
   }
 
