@@ -1,3 +1,10 @@
+## [3.1.2](https://github.com/ForestAdmin/toolbelt/compare/v3.1.1...v3.1.2) (2023-03-01)
+
+
+### Bug Fixes
+
+* **mongo:** don't use spinner when analyzing the database ([#535](https://github.com/ForestAdmin/toolbelt/issues/535)) ([db29809](https://github.com/ForestAdmin/toolbelt/commit/db29809121ccba46f77fb3b43972d40f1abc8d18))
+
 ## [3.1.1](https://github.com/ForestAdmin/toolbelt/compare/v3.1.0...v3.1.1) (2023-02-28)
 
 # [3.1.0](https://github.com/ForestAdmin/toolbelt/compare/v3.0.12...v3.1.0) (2023-02-13)
