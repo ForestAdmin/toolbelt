@@ -481,7 +481,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
         });
 
         describe('when dbDialect requires additional dependency', () => {
-          it('should add pg for postgresql', async () => {
+          it('should add pg and pg-hstore for postgresql', async () => {
             expect.assertions(1);
 
             const { dumper, context, defaultConfig } = createDumper();
@@ -493,6 +493,10 @@ describe('services > dumpers > agentNodejsDumper', () => {
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
               '/test/anApplication/package.json',
               expect.stringContaining('"pg": "~8.2.2"'),
+            );
+            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+              '/test/anApplication/package.json',
+              expect.stringContaining('"pg-hstore": "~2.3.4"'),
             );
           });
 

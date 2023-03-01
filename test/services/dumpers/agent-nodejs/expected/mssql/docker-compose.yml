@@ -1,0 +1,21 @@
+version: '3.4'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: test_output_mssql
+    environment:
+      - FOREST_ENV_SECRET=${FOREST_ENV_SECRET}
+      - FOREST_AUTH_SECRET=${FOREST_AUTH_SECRET}
+      - APPLICATION_PORT=${APPLICATION_PORT}
+      - DATABASE_URL=${DOCKER_DATABASE_URL}
+      - DATABASE_SSL=${DATABASE_SSL}
+      - DATABASE_REJECT_UNAUTHORIZED=${DATABASE_REJECT_UNAUTHORIZED}
+      - DATABASE_SCHEMA=${DATABASE_SCHEMA}
+      - NODE_ENV=${NODE_ENV}
+    ports:
+      - "${APPLICATION_PORT}:${APPLICATION_PORT}"
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
