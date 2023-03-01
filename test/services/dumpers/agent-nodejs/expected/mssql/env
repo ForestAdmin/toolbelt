@@ -1,0 +1,15 @@
+FOREST_AUTH_SECRET=forestAuthSecret
+FOREST_ENV_SECRET=forestEnvSecret
+
+FOREST_SERVER_URL=https://api.forestadmin.com
+# This should be removed in production environment.
+NODE_TLS_REJECT_UNAUTHORIZED=0
+
+APPLICATION_PORT=1654
+
+DATABASE_URL=mssql://localhost:1432
+DATABASE_SSL=false
+# This should be true in production environment. It allows to bypass SSL certificate verification.
+DATABASE_REJECT_UNAUTHORIZED=true
+
+NODE_ENV=development

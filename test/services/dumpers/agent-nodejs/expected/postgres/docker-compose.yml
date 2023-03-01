@@ -4,12 +4,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      network: host
     container_name: test_output_postgres
     environment:
       - FOREST_ENV_SECRET=${FOREST_ENV_SECRET}
       - FOREST_AUTH_SECRET=${FOREST_AUTH_SECRET}
       - APPLICATION_PORT=${APPLICATION_PORT}
-      - DATABASE_URL=${DOCKER_DATABASE_URL}
+      - DATABASE_URL=${DATABASE_URL}
       - DATABASE_SSL=${DATABASE_SSL}
       - DATABASE_REJECT_UNAUTHORIZED=${DATABASE_REJECT_UNAUTHORIZED}
       - DATABASE_SCHEMA=${DATABASE_SCHEMA}

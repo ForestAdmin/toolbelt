@@ -17,7 +17,7 @@
     "@forestadmin/agent": "^1.0.0",
     "@forestadmin/datasource-sql": "^1.0.0",
     "pg": "~8.2.2",
-    "pg_hstore": "~2.3.4"
+    "pg-hstore": "~2.3.4"
   },
   "devDependencies": {
     "nodemon": "^2.0.12"

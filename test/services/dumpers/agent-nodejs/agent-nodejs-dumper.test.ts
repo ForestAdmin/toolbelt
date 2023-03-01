@@ -8,49 +8,6 @@ import rimraf from 'rimraf';
 import defaultPlan from '../../../../src/context/plan';
 import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs-dumper';
 
-const DOCKER_COMPOSE_FILE_LOCATION = './test-output/Linux/docker-compose.yml';
-const DOT_ENV_FILE_LOCATION = './test-output/Linux/.env';
-const FORESTADMIN_FILE_LOCATION = './test-output/Linux/middlewares/forestadmin.js';
-const TYPE_CAST = 'databaseOptions.dialectOptions.typeCast';
-
-function cleanOutput() {
-  rimraf.sync('./test-output/Linux');
-}
-
-/**
- * @param {{
- *   dbConnectionUrl?: string;
- *   appHostname?: string;
- *   appPort?: number;
- * }} [overrides]
- */
-async function createLinuxDump(
-  optionsOverrides = { appConfig: {}, dbConfig: {} },
-  injectedContextOverrides = {},
-) {
-  const config = {
-    appConfig: {
-      applicationName: 'test-output/Linux',
-      appHostname: 'localhost',
-      appPort: 1654,
-      ...optionsOverrides.appConfig,
-    },
-    dbConfig: {
-      dbDialect: 'mysql',
-      dbConnectionUrl: 'mysql://localhost:8999',
-      ssl: false,
-      dbSchema: 'public',
-      ...optionsOverrides.dbConfig,
-    },
-    forestAuthSecret: 'forestAuthSecret',
-    forestEnvSecret: 'forestEnvSecret',
-  };
-
-  const injectedContext = Context.execute(defaultPlan) as any;
-  const dumper = new AgentNodeJsDumper({ ...injectedContext, ...injectedContextOverrides });
-  await dumper.dump(config, {});
-}
-
 describe('services > dumpers > agentNodejsDumper', () => {
   describe('dump', () => {
     const configs = [
@@ -133,6 +90,8 @@ describe('services > dumpers > agentNodejsDumper', () => {
           it(`should properly dump ${fileName}`, async () => {
             expect.assertions(1);
 
+            const osStub = jest.spyOn(os, 'platform').mockReturnValue('linux');
+
             await dump();
 
             const generatedFile = fs.readFileSync(
@@ -141,12 +100,13 @@ describe('services > dumpers > agentNodejsDumper', () => {
             );
 
             const expectedFile = fs.readFileSync(
-              `${__dirname}/expected/${config.name}/${fileName}`,
+              `${__dirname}/expected/${config.name}/${fileName === '.env' ? 'env' : fileName}`,
               'utf-8',
             );
 
             expect(generatedFile).toStrictEqual(expectedFile);
             rimraf.sync(`${appRoot}/${config.appConfig.applicationName}`);
+            osStub.mockRestore();
           });
         });
       });

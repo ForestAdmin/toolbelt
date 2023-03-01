@@ -482,7 +482,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
 
         describe('when dbDialect requires additional dependency', () => {
           it('should add pg and pg-hstore for postgresql', async () => {
-            expect.assertions(1);
+            expect.assertions(2);
 
             const { dumper, context, defaultConfig } = createDumper();
 

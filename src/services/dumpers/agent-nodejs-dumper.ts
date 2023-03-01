@@ -53,7 +53,7 @@ export default class AgentNodeJsDumper extends AbstractDumper {
     if (dbDialect) {
       if (dbDialect.includes('postgres')) {
         dependencies.pg = '~8.2.2';
-        dependencies.pg_hstore = '~2.3.4';
+        dependencies['pg-hstore'] = '~2.3.4';
       } else if (dbDialect === 'mysql') {
         dependencies.mysql2 = '~2.2.5';
       } else if (dbDialect === 'mssql') {
@@ -153,6 +153,7 @@ export default class AgentNodeJsDumper extends AbstractDumper {
       }
     }
 
+    console.log(this.isLinuxOs, this.isDatabaseLocal(config.dbConfig));
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
       containerName: _.snakeCase(config.appConfig.applicationName),
       databaseUrl,
