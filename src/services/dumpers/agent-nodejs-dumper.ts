@@ -152,12 +152,6 @@ export default class AgentNodeJsDumper extends AbstractDumper {
         throw new Error(`Invalid value for FOREST_SERVER_URL: "${this.env.FOREST_SERVER_URL}"`);
       }
     }
-    console.log('this.isLinuxOs', this.isLinuxOs);
-    console.log(
-      'this.isDatabaseLocal(config.dbConfig)',
-      this.isDatabaseLocal(config.dbConfig),
-      config.dbConfig.dbConnectionUrl,
-    );
 
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
       containerName: _.snakeCase(config.appConfig.applicationName),
