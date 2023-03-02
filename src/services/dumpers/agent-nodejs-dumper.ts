@@ -56,6 +56,8 @@ export default class AgentNodeJsDumper extends AbstractDumper {
         dependencies['pg-hstore'] = '~2.3.4';
       } else if (dbDialect === 'mysql') {
         dependencies.mysql2 = '~2.2.5';
+      } else if (dbDialect === 'mariadb') {
+        dependencies.mariadb = '^2.3.3';
       } else if (dbDialect === 'mssql') {
         dependencies.tedious = '^6.4.0';
       }
@@ -89,7 +91,8 @@ export default class AgentNodeJsDumper extends AbstractDumper {
       isMongoose,
       isMySQL: dbDialect === 'mysql',
       isMSSQL: dbDialect === 'mssql',
-      forestServerUrl: !!this.env.FOREST_SERVER_URL,
+      isMariaDB: dbDialect === 'mariadb',
+      forestServerUrl: this.env.FOREST_URL_IS_DEFAULT ? false : this.env.FOREST_SERVER_URL,
       datasourceCreation: isMongoose
         ? 'createMongooseDataSource(models.connections.default, {}), {});'
         : `createSqlDataSource({
@@ -97,6 +100,9 @@ export default class AgentNodeJsDumper extends AbstractDumper {
       schema: process.env.DATABASE_SCHEMA || 'public',
       ...dialectOptions,
     }),`,
+      datasourceImport: isMongoose
+        ? `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst models = require('./models');`
+        : `const { createSqlDataSource } = require('@forestadmin/datasource-sql');`,
     };
 
     this.copyHandleBarsTemplate('index.hbs', 'index.js', context);
@@ -112,9 +118,9 @@ export default class AgentNodeJsDumper extends AbstractDumper {
     const context = {
       databaseUrl,
       databaseSsl: dbConfig.ssl || false,
-      databaseSchema: dbConfig.dbSchema,
+      databaseSchema: dbConfig.dbSchema !== '' ? dbConfig.dbSchema : false,
       applicationPort,
-      forestServerUrl: this.env.FOREST_SERVER_URL,
+      forestServerUrl: this.env.FOREST_URL_IS_DEFAULT ? false : this.env.FOREST_SERVER_URL,
       forestEnvSecret,
       forestAuthSecret,
       hasDockerDatabaseUrl: false,
@@ -153,11 +159,10 @@ export default class AgentNodeJsDumper extends AbstractDumper {
       }
     }
 
-    console.log(this.isLinuxOs, this.isDatabaseLocal(config.dbConfig));
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
       containerName: _.snakeCase(config.appConfig.applicationName),
       databaseUrl,
-      dbSchema: config.dbConfig.dbSchema,
+      dbSchema: config.dbConfig.dbSchema !== '' ? config.dbConfig.dbSchema : false,
       forestExtraHost,
       forestServerUrl,
       network: this.isLinuxOs && this.isDatabaseLocal(config.dbConfig) ? 'host' : null,

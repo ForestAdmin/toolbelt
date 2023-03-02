@@ -119,6 +119,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
           databaseSsl: false,
           databaseSchema: 'public',
           applicationPort: 3310,
+          forestServerUrl: false,
           forestEnvSecret: 'aForestEnvSecret',
           forestAuthSecret: 'aForestAuthSecret',
           hasDockerDatabaseUrl: true,
@@ -299,7 +300,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/.env',
             expect.objectContaining({
-              forestServerUrl: undefined,
+              forestServerUrl: false,
             }),
           );
         });
@@ -325,7 +326,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/index.js',
             expect.objectContaining({
-              forestServerUrl: true,
+              forestServerUrl: 'http://localhost:3001',
             }),
           );
         });
@@ -367,6 +368,8 @@ describe('services > dumpers > agentNodejsDumper', () => {
               isMySQL: false,
               isMSSQL: false,
               datasourceCreation: 'createMongooseDataSource(models.connections.default, {}), {});',
+              datasourceImport:
+                "const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst models = require('./models');",
             }),
           );
         });
@@ -388,7 +391,13 @@ describe('services > dumpers > agentNodejsDumper', () => {
               isMongoose: false,
               isMySQL: true,
               isMSSQL: false,
-              datasourceCreation: expect.stringMatching('createSqlDataSource'),
+              datasourceCreation: `createSqlDataSource({
+      uri: process.env.DATABASE_URL,
+      schema: process.env.DATABASE_SCHEMA || 'public',
+      ...dialectOptions,
+    }),`,
+              datasourceImport:
+                "const { createSqlDataSource } = require('@forestadmin/datasource-sql');",
             }),
           );
         });
@@ -467,7 +476,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
       });
 
       describe('when the dbDialect is not mongodb', () => {
-        it('should use the mongoose datasource package', async () => {
+        it('should use the sql datasource package', async () => {
           expect.assertions(1);
 
           const { dumper, context, defaultConfig } = createDumper();
@@ -512,6 +521,21 @@ describe('services > dumpers > agentNodejsDumper', () => {
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
               '/test/anApplication/package.json',
               expect.stringContaining('"mysql2": "~2.2.5"'),
+            );
+          });
+
+          it('should add mysql2 for mariadb', async () => {
+            expect.assertions(1);
+
+            const { dumper, context, defaultConfig } = createDumper();
+
+            defaultConfig.dbConfig.dbDialect = 'mariadb';
+
+            await dumper.dump(defaultConfig);
+
+            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+              '/test/anApplication/package.json',
+              expect.stringContaining('"mariadb": "^2.3.3"'),
             );
           });
 

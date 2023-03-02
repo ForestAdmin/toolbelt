@@ -29,7 +29,6 @@ const agent = createAgent({
   authSecret: process.env.FOREST_AUTH_SECRET,
   envSecret: process.env.FOREST_ENV_SECRET,
   isProduction: process.env.NODE_ENV === 'production',
-  forestServerUrl: process.env.FOREST_SERVER_URL,
   // Autocompletion of collection names and fields
   typingsPath: './typings.ts',
 })

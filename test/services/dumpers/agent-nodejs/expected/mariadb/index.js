@@ -1,11 +1,9 @@
 require('dotenv').config();
 const { createAgent } = require('@forestadmin/agent');
-{{datasourceImport}}
-{{#unless isMongoose}}
+const { createSqlDataSource } = require('@forestadmin/datasource-sql');
 
 const dialectOptions = {};
 
-{{#if (or isMySQL isMariaDB)}}
 dialectOptions.typeCast = (field, useDefaultTypeCasting) => {
   if (field.type === 'BIT' && field.length === 1) {
     const bytes = field.buffer();
@@ -15,31 +13,13 @@ dialectOptions.typeCast = (field, useDefaultTypeCasting) => {
   return useDefaultTypeCasting();
 };
 
-{{/if}}
 if (process.env.DATABASE_SSL && JSON.parse(process.env.DATABASE_SSL.toLowerCase())) {
   // Set to false to bypass SSL certificate verification (useful for self-signed certificates).
   const rejectUnauthorized =
     process.env.DATABASE_REJECT_UNAUTHORIZED &&
     JSON.parse(process.env.DATABASE_REJECT_UNAUTHORIZED.toLowerCase());
-{{#if isMySQL}}
-  dialectOptions.ssl = { rejectUnauthorized };
-{{else if isMSSQL}}
-  dialectOptions.options = {
-    encrypt: true,
-    trustServerCertificate: !rejectUnauthorized,
-  };
-{{else if isMariaDB}}
   dialectOptions.ssl = !rejectUnauthorized ? { rejectUnauthorized } : true;
-{{else}}
-  dialectOptions.ssl = !rejectUnauthorized
-    ? {
-        require: true,
-        rejectUnauthorized,
-      }
-    : true;
-{{/if}}
 }
-{{/unless}}
 
 // Create the Forest Admin agent.
 /**
@@ -49,15 +29,16 @@ const agent = createAgent({
   authSecret: process.env.FOREST_AUTH_SECRET,
   envSecret: process.env.FOREST_ENV_SECRET,
   isProduction: process.env.NODE_ENV === 'production',
-  {{#if forestServerUrl}}
-  forestServerUrl: process.env.FOREST_SERVER_URL,
-  {{/if}}
   // Autocompletion of collection names and fields
   typingsPath: './typings.ts',
 })
   // Connect your datasources.
   .addDataSource(
-    {{datasourceCreation}}
+    createSqlDataSource({
+      uri: process.env.DATABASE_URL,
+      schema: process.env.DATABASE_SCHEMA || 'public',
+      ...dialectOptions,
+    }),
   );
 
 // Add customizations here.
