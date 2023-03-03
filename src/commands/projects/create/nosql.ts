@@ -1,12 +1,12 @@
 import type {
-  ConfigInterface,
-  DbConfigInterface,
-  ProcessedArgumentsInterface,
+  Config,
+  DbConfig,
+  ProcessedArguments,
 } from '../../../interfaces/project-create-interface';
-import type Dumper from '../../../services/dumper/dumper';
+import type AgentNodeJsDumper from '../../../services/dumpers/agent-nodejs-dumper';
 import type CommandGenerateConfigGetter from '../../../services/projects/create/command-generate-config-getter';
 import type DatabaseAnalyzer from '../../../services/schema/update/analyzer/database-analyzer';
-import type * as Config from '@oclif/config';
+import type * as OclifConfig from '@oclif/config';
 
 import { flags } from '@oclif/command';
 
@@ -15,7 +15,7 @@ import { nosqlDbDialectOptions } from '../../../services/prompter/database-promp
 import Agents from '../../../utils/agents';
 
 export default class NosqlCommand extends AbstractProjectCreateCommand {
-  private readonly dumper: Dumper;
+  private readonly dumper: AgentNodeJsDumper;
 
   private readonly databaseAnalyzer: DatabaseAnalyzer;
 
@@ -43,20 +43,21 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
 
   static override readonly args = [...AbstractProjectCreateCommand.args];
 
-  constructor(argv: string[], config: Config.IConfig, plan?) {
+  constructor(argv: string[], config: OclifConfig.IConfig, plan?) {
     super(argv, config, plan);
 
-    const { assertPresent, dumper, databaseAnalyzer, commandGenerateConfigGetter } = this.context;
+    const { assertPresent, agentNodejsDumper, databaseAnalyzer, commandGenerateConfigGetter } =
+      this.context;
 
-    assertPresent({ dumper, databaseAnalyzer, commandGenerateConfigGetter });
+    assertPresent({ agentNodejsDumper, databaseAnalyzer, commandGenerateConfigGetter });
 
-    this.dumper = dumper;
+    this.dumper = agentNodejsDumper;
     this.databaseAnalyzer = databaseAnalyzer;
     this.commandGenerateConfigGetter = commandGenerateConfigGetter;
   }
 
   protected async processArguments(programArguments: { [name: string]: any }): Promise<{
-    config: ProcessedArgumentsInterface;
+    config: ProcessedArguments;
     specificDatabaseConfig: { [name: string]: any };
   }> {
     const config = await this.commandGenerateConfigGetter.get(programArguments, true, true);
@@ -68,7 +69,7 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
     return { config, specificDatabaseConfig };
   }
 
-  protected async generateProject(config: ConfigInterface): Promise<void> {
+  protected async generateProject(config: Config): Promise<void> {
     const schema = await this.analyzeDatabase(config.dbConfig);
     await this.createFiles(config, schema);
   }
@@ -77,32 +78,24 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
     return this._agent;
   }
 
-  private async analyzeDatabase(dbConfig: DbConfigInterface) {
-    let schema = {};
-
-    this.spinner.start({ text: 'Analyzing the database' });
+  private async analyzeDatabase(dbConfig: DbConfig) {
+    this.logger.info('Analyzing the database');
     const connection = await this.database.connect(dbConfig);
-
-    if (dbConfig.dbDialect === 'mongodb') {
-      // the mongodb analyzer display a progress bar during the analysis
-      schema = await this.databaseAnalyzer.analyzeMongoDb(connection, dbConfig, true);
-    }
-
+    const schema = await this.databaseAnalyzer.analyzeMongoDb(connection, dbConfig, true);
     await this.database.disconnect(connection);
     this.logger.success('Database is analyzed', { lineColor: 'green' });
-
     return schema;
   }
 
-  private async createFiles(config: ConfigInterface, schema): Promise<void> {
+  private async createFiles(config: Config, schema): Promise<void> {
     this.spinner.start({ text: 'Creating your project files' });
     const dumperConfig = {
-      ...config.dbConfig,
-      ...config.appConfig,
+      dbConfig: config.dbConfig,
+      appConfig: config.appConfig,
       forestAuthSecret: config.forestAuthSecret,
       forestEnvSecret: config.forestEnvSecret,
     };
-    const dumpPromise = this.dumper.dump(schema, dumperConfig);
+    const dumpPromise = this.dumper.dump(dumperConfig, schema);
     await this.spinner.attachToPromise(dumpPromise);
   }
 }
