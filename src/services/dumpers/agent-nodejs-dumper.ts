@@ -1,7 +1,5 @@
 import type { ConfigInterface, DbConfigInterface } from '../../interfaces/project-create-interface';
 
-import _ from 'lodash';
-
 import toValidPackageName from '../../utils/to-valid-package-name';
 import AbstractDumper from './abstract-dumper';
 
@@ -16,13 +14,16 @@ export default class AgentNodeJsDumper extends AbstractDumper {
 
   private readonly buildDatabaseUrl: (dbConfig: DbConfigInterface) => string;
 
+  private readonly snakeCase: (string: string) => string;
+
   constructor(context) {
-    const { assertPresent, env, isLinuxOs, buildDatabaseUrl, isDatabaseLocal } = context;
+    const { assertPresent, env, isLinuxOs, buildDatabaseUrl, isDatabaseLocal, snakeCase } = context;
 
     assertPresent({
       env,
       isLinuxOs,
       isDatabaseLocal,
+      snakeCase,
     });
 
     super(context);
@@ -31,6 +32,7 @@ export default class AgentNodeJsDumper extends AbstractDumper {
     this.isLinuxOs = isLinuxOs;
     this.buildDatabaseUrl = buildDatabaseUrl;
     this.isDatabaseLocal = isDatabaseLocal;
+    this.snakeCase = snakeCase;
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -94,14 +96,16 @@ export default class AgentNodeJsDumper extends AbstractDumper {
       isMariaDB: dbDialect === 'mariadb',
       forestServerUrl: this.env.FOREST_URL_IS_DEFAULT ? false : this.env.FOREST_SERVER_URL,
       datasourceCreation: isMongoose
-        ? 'createMongooseDataSource(models.connections.default, {}), {});'
-        : `createSqlDataSource({
+        ? 'createMongooseDataSource(connection, {})'
+        : `
+    createSqlDataSource({
       uri: process.env.DATABASE_URL,
       schema: process.env.DATABASE_SCHEMA || 'public',
       ...dialectOptions,
-    }),`,
+    }),
+  `,
       datasourceImport: isMongoose
-        ? `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst models = require('./models');`
+        ? `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst connection = require('./mongoose-models');`
         : `const { createSqlDataSource } = require('@forestadmin/datasource-sql');`,
     };
 
@@ -160,7 +164,7 @@ export default class AgentNodeJsDumper extends AbstractDumper {
     }
 
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
-      containerName: _.snakeCase(config.appConfig.applicationName),
+      containerName: this.snakeCase(config.appConfig.applicationName),
       databaseUrl,
       dbSchema: config.dbConfig.dbSchema !== '' ? config.dbConfig.dbSchema : false,
       forestExtraHost,

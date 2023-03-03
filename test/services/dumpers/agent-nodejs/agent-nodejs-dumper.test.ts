@@ -11,6 +11,23 @@ describe('services > dumpers > agentNodejsDumper', () => {
   describe('dump', () => {
     const configs = [
       {
+        name: 'mongodb',
+        appConfig: {
+          applicationName: 'test-output/mongodb',
+          appHostname: 'localhost',
+          appPort: 1654,
+          path: appRoot,
+        },
+        dbConfig: {
+          dbDialect: 'mongodb',
+          dbConnectionUrl: 'mongodb://localhost:27016',
+          ssl: false,
+          dbSchema: 'public',
+        },
+        forestAuthSecret: 'forestAuthSecret',
+        forestEnvSecret: 'forestEnvSecret',
+      },
+      {
         name: 'postgres',
         appConfig: {
           applicationName: 'test-output/postgres',

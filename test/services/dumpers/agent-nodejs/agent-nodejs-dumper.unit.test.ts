@@ -1,6 +1,7 @@
 import type { ConfigInterface } from '../../../../src/interfaces/project-create-interface';
 
 import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs-dumper';
+import { snakeCase } from '../../../../src/utils/strings';
 
 describe('services > dumpers > agentNodejsDumper', () => {
   const createDumper = (dependencies = {}) => {
@@ -24,6 +25,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
         compile: jest.fn().mockImplementation(() => variables => variables),
       },
       mkdirp: jest.fn(),
+      snakeCase: jest.fn().mockImplementation(string => snakeCase(string)),
       buildDatabaseUrl: jest.fn(() => 'localhost'),
       isDatabaseLocal: jest.fn(() => true),
       constants: {
@@ -367,9 +369,9 @@ describe('services > dumpers > agentNodejsDumper', () => {
               isMongoose: true,
               isMySQL: false,
               isMSSQL: false,
-              datasourceCreation: 'createMongooseDataSource(models.connections.default, {}), {});',
+              datasourceCreation: 'createMongooseDataSource(connection, {})',
               datasourceImport:
-                "const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst models = require('./models');",
+                "const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst connection = require('./mongoose-models');",
             }),
           );
         });
@@ -391,11 +393,13 @@ describe('services > dumpers > agentNodejsDumper', () => {
               isMongoose: false,
               isMySQL: true,
               isMSSQL: false,
-              datasourceCreation: `createSqlDataSource({
+              datasourceCreation: `
+    createSqlDataSource({
       uri: process.env.DATABASE_URL,
       schema: process.env.DATABASE_SCHEMA || 'public',
       ...dialectOptions,
-    }),`,
+    }),
+  `,
               datasourceImport:
                 "const { createSqlDataSource } = require('@forestadmin/datasource-sql');",
             }),
@@ -555,6 +559,28 @@ describe('services > dumpers > agentNodejsDumper', () => {
           });
         });
       });
+    });
+  });
+
+  describe('when writing docker-compose.yml', () => {
+    it('should write docker-compose.yml with adequate configuration', async () => {
+      expect.assertions(1);
+
+      const { dumper, context, defaultConfig } = createDumper();
+
+      await dumper.dump(defaultConfig);
+
+      expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+        '/test/anApplication/docker-compose.yml',
+        expect.objectContaining({
+          containerName: 'an_application',
+          databaseUrl: `\${DOCKER_DATABASE_URL}`,
+          dbSchema: 'public',
+          forestExtraHost: false,
+          forestServerUrl: false,
+          network: null,
+        }),
+      );
     });
   });
 });
