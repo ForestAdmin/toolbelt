@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const ProjectSerializer = require('../../src/serializers/project');
 const EnvironmentSerializer = require('../../src/serializers/environment');
 const JobSerializer = require('../../src/serializers/job');
+const { default: Agents } = require('../../src/utils/agents');
 
 /**
  * @param {import('nock').Scope} nockScope
@@ -1054,14 +1055,14 @@ module.exports = {
         }),
       ),
 
-  createProject: ({ databaseType }) =>
+  createProject: ({ databaseType, agent = Agents.ExpressSequelize }) =>
     nock('http://localhost:3001')
       .post('/api/projects', {
         data: {
           type: 'projects',
           attributes: {
             name: 'name',
-            agent: 'express-sequelize',
+            agent,
             architecture: 'microservice',
             database_type: databaseType,
           },

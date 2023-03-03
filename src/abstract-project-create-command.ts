@@ -1,5 +1,9 @@
-import type { AppConfig, Config, DbConfig } from './interfaces/project-create-interface';
-import type CommandGenerateConfigGetter from './services/projects/create/command-generate-config-getter';
+import type {
+  AppConfig,
+  Config,
+  DbConfig,
+  ProcessedArguments,
+} from './interfaces/project-create-interface';
 import type { ProjectMeta } from './services/projects/create/project-creator';
 import type ProjectCreator from './services/projects/create/project-creator';
 import type Database from './services/schema/update/database';
@@ -7,16 +11,14 @@ import type Spinner from './services/spinner';
 import type EventSender from './utils/event-sender';
 import type Messages from './utils/messages';
 import type * as OclifConfig from '@oclif/config';
+import type { Input } from '@oclif/parser';
 
 import { flags } from '@oclif/command';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
-import { dbDialectOptions } from './services/prompter/database-prompts';
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
   private readonly eventSender: EventSender;
-
-  private readonly commandGenerateConfigGetter: CommandGenerateConfigGetter;
 
   private readonly projectCreator: ProjectCreator;
 
@@ -26,7 +28,6 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected readonly spinner: Spinner;
 
-  // Flags, args and Description must be defined on the class itself otherwise it cannot be parsed properly
   static override flags = {
     applicationHost: flags.string({
       char: 'H',
@@ -47,14 +48,6 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       dependsOn: [],
       description: 'Enter the database credentials with a connection URL.',
       exclusive: ['ssl'],
-      required: false,
-    }),
-    databaseDialect: flags.string({
-      char: 'd',
-      dependsOn: [],
-      description: 'Enter your database dialect.',
-      exclusive: ['databaseConnectionURL'],
-      options: dbDialectOptions.map(option => option.value),
       required: false,
     }),
     databaseName: flags.string({
@@ -91,24 +84,11 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       exclusive: ['databaseConnectionURL'],
       required: false,
     }),
-    databaseSchema: flags.string({
-      char: 's',
-      dependsOn: [],
-      description: 'Enter your database schema.',
-      exclusive: [],
-      required: false,
-    }),
     databaseSSL: flags.boolean({
       default: false,
       dependsOn: [],
       description: 'Use SSL for database connection.',
       exclusive: [],
-      required: false,
-    }),
-    mongoDBSRV: flags.boolean({
-      dependsOn: [],
-      description: 'Use SRV DNS record for mongoDB connection.',
-      exclusive: ['databaseConnectionURL'],
       required: false,
     }),
   };
@@ -130,7 +110,6 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       assertPresent,
       authenticator,
       eventSender,
-      commandGenerateConfigGetter,
       projectCreator,
       database,
       messages,
@@ -140,7 +119,6 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     assertPresent({
       authenticator,
       eventSender,
-      commandGenerateConfigGetter,
       projectCreator,
       database,
       messages,
@@ -148,72 +126,13 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     });
 
     this.eventSender = eventSender;
-    this.commandGenerateConfigGetter = commandGenerateConfigGetter;
     this.projectCreator = projectCreator;
     this.database = database;
     this.messages = messages;
     this.spinner = spinner;
   }
 
-  private async getConfig(): Promise<{
-    appConfig: AppConfig;
-    dbConfig: DbConfig;
-    meta: ProjectMeta;
-    authenticationToken: string;
-  }> {
-    const { args: parsedArgs, flags: parsedFlags } = this.parse(AbstractProjectCreateCommand);
-
-    // FIXME: Works as only one instance at execution time. Not ideal.
-    this.eventSender.command = 'projects:create';
-    this.eventSender.applicationName = parsedArgs.applicationName;
-
-    const programArguments = { ...parsedArgs, ...(parsedFlags as unknown as object) };
-    const config = await this.commandGenerateConfigGetter.get(programArguments);
-
-    const appConfig = {
-      appName: config.applicationName,
-      appHostname: config.applicationHost,
-      appPort: config.applicationPort,
-    } as AppConfig;
-
-    const dbConfig = {
-      dbConnectionUrl: config.databaseConnectionURL,
-      dbDialect: config.databaseDialect,
-      dbSchema: config.databaseSchema,
-      dbName: config.databaseName,
-      dbHostname: config.databaseHost,
-      dbPort: config.databasePort,
-      dbUser: config.databaseUser,
-      dbPassword: config.databasePassword,
-      mongodbSrv: config.mongoDBSRV,
-      dbSsl: config.databaseSSL,
-    } as DbConfig;
-
-    if (!config.databaseDialect && !config.databaseConnectionURL) {
-      this.logger.error('Missing database dialect option value');
-      this.exit(1);
-    }
-
-    const meta: ProjectMeta = {
-      dbDialect: dbConfig.dbDialect,
-      agent: dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize',
-      isLocal: ['localhost', '127.0.0.1', '::1'].some(keyword =>
-        dbConfig.dbHostname
-          ? dbConfig.dbHostname.includes(keyword)
-          : dbConfig.dbConnectionUrl?.includes(keyword),
-      ),
-      architecture: 'microservice',
-    };
-
-    const authenticationToken = (await this.authenticator.getAuthToken()) || '';
-
-    this.eventSender.sessionToken = authenticationToken;
-    this.eventSender.meta = meta;
-
-    return { appConfig, dbConfig, meta, authenticationToken };
-  }
-
-  async runAuthenticated() {
+  protected async runAuthenticated(): Promise<void> {
     try {
       const { appConfig, dbConfig, meta, authenticationToken } = await this.getConfig();
 
@@ -251,7 +170,79 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     }
   }
 
-  async testDatabaseConnection(dbConfig: DbConfig) {
+  protected abstract processArguments(programArguments: { [name: string]: any }): Promise<{
+    config: ProcessedArguments;
+    specificDatabaseConfig: { [name: string]: any };
+  }>;
+
+  protected abstract generateProject(config: Config): Promise<void>;
+
+  protected abstract get agent(): string | null;
+
+  private async getConfig(): Promise<{
+    appConfig: AppConfig;
+    dbConfig: DbConfig;
+    meta: ProjectMeta;
+    authenticationToken: string;
+  }> {
+    const { args: parsedArgs, flags: parsedFlags } = this.parse(
+      this.constructor as Input<typeof AbstractProjectCreateCommand.flags>,
+    );
+
+    // FIXME: Works as only one instance at execution time. Not ideal.
+    this.eventSender.command = 'projects:create';
+    this.eventSender.applicationName = parsedArgs.applicationName;
+
+    const { config, specificDatabaseConfig } = await this.processArguments({
+      ...parsedArgs,
+      ...parsedFlags,
+    });
+
+    if (!config.databaseDialect && !config.databaseConnectionURL) {
+      this.logger.error('Missing database dialect option value');
+      this.exit(1);
+    }
+
+    const appConfig = {
+      appName: config.applicationName,
+      appHostname: config.applicationHost,
+      appPort: config.applicationPort,
+    } as AppConfig;
+    const dbConfig = {
+      dbConnectionUrl: config.databaseConnectionURL,
+      dbDialect: config.databaseDialect,
+      dbSchema: config.databaseSchema,
+      dbName: config.databaseName,
+      dbHostname: config.databaseHost,
+      dbPort: config.databasePort,
+      dbSsl: config.databaseSSL,
+      dbUser: config.databaseUser,
+      dbPassword: config.databasePassword,
+      ...specificDatabaseConfig,
+    } as DbConfig;
+
+    const meta: ProjectMeta = {
+      agent:
+        // FIXME: Remove the condition when the agent v1 command is dropped
+        this.agent || (dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize'),
+      dbDialect: dbConfig.dbDialect,
+      architecture: 'microservice',
+      isLocal: ['localhost', '127.0.0.1', '::1'].some(keyword =>
+        dbConfig.dbHostname
+          ? dbConfig.dbHostname.includes(keyword)
+          : dbConfig.dbConnectionUrl?.includes(keyword),
+      ),
+    };
+
+    const authenticationToken = (await this.authenticator.getAuthToken()) || '';
+
+    this.eventSender.sessionToken = authenticationToken;
+    this.eventSender.meta = meta;
+
+    return { appConfig, dbConfig, meta, authenticationToken };
+  }
+
+  private async testDatabaseConnection(dbConfig: DbConfig) {
     this.spinner.start({ text: 'Testing connection to your database' });
     const connectionPromise = this.database
       .connect(dbConfig)
@@ -259,10 +250,8 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     await this.spinner.attachToPromise(connectionPromise);
   }
 
-  private async notifySuccess() {
+  private async notifySuccess(): Promise<void> {
     this.logger.info(`Hooray, ${this.chalk.green('installation success')}!`);
     await this.eventSender.notifySuccess();
   }
-
-  abstract generateProject(config: Config): Promise<void>;
 }

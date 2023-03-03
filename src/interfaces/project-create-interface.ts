@@ -40,3 +40,18 @@ export interface Config {
   forestAuthSecret: string;
   forestEnvSecret: string;
 }
+export interface ProcessedArguments {
+  applicationName: string;
+  applicationHost: string;
+  applicationPort: number;
+  databaseConnectionURL?: string;
+  databaseDialect?: string;
+  databaseHost: string;
+  databaseName: string;
+  databasePassword: string;
+  databasePort: number;
+  databaseSchema?: string;
+  databaseUser: string;
+  databaseSSL: boolean;
+  mongoDBSRV?: boolean;
+}

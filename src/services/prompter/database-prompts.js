@@ -10,12 +10,13 @@ const MAPPING_DIALECT_TO_PORT = {
   mongodb: '27017',
 };
 
-const dbDialectOptions = [
-  { name: 'mongodb', value: 'mongodb' },
+const sqlDbDialectOptions = [
   { name: 'mssql', value: 'mssql' },
   { name: 'mysql / mariadb', value: 'mysql' },
   { name: 'postgres', value: 'postgres' },
 ];
+
+const nosqlDbDialectOptions = [{ name: 'mongodb', value: 'mongodb' }];
 
 class DatabasePrompts extends AbstractPrompter {
   constructor(requests, knownAnswers, prompts, programArguments) {
@@ -25,9 +26,9 @@ class DatabasePrompts extends AbstractPrompter {
     this.programArguments = programArguments;
   }
 
-  async handlePrompts() {
+  async handlePrompts(forSql = true, forNosql = true) {
     this.handleConnectionUrl();
-    this.handleDialect();
+    this.handleDialect(forSql, forNosql);
     this.handleName();
     this.handleSchema();
     this.handleHostname();
@@ -35,7 +36,7 @@ class DatabasePrompts extends AbstractPrompter {
     this.handleUser();
     this.handlePassword();
     this.handleSsl();
-    this.handleMongodbSrv();
+    if (forNosql) this.handleMongodbSrv();
   }
 
   async handleConnectionUrl() {
@@ -55,7 +56,7 @@ class DatabasePrompts extends AbstractPrompter {
     }
   }
 
-  handleDialect() {
+  handleDialect(forSql = true, forNosql = true) {
     if (!this.knownAnswers.databaseDialect) {
       this.knownAnswers.databaseDialect = this.programArguments.databaseDialect;
     }
@@ -67,7 +68,10 @@ class DatabasePrompts extends AbstractPrompter {
         type: 'list',
         name: 'databaseDialect',
         message: "What's the database type?",
-        choices: dbDialectOptions,
+        choices: [
+          ...(forNosql ? nosqlDbDialectOptions : []),
+          ...(forSql ? sqlDbDialectOptions : []),
+        ],
       };
 
       // NOTICE: use a rawlist on Windows because of this issue:
@@ -217,5 +221,6 @@ class DatabasePrompts extends AbstractPrompter {
 
 module.exports = {
   DatabasePrompts,
-  dbDialectOptions,
+  sqlDbDialectOptions,
+  nosqlDbDialectOptions,
 };
