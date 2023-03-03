@@ -582,5 +582,21 @@ describe('services > dumpers > agentNodejsDumper', () => {
         }),
       );
     });
+
+    describe('when the FOREST_SERVER_URL is invalid', () => {
+      it('should throw an error', async () => {
+        expect.assertions(1);
+
+        const { dumper, defaultConfig } = createDumper({
+          env: {
+            FOREST_SERVER_URL: 'invalidUrl',
+            FOREST_URL_IS_DEFAULT: false,
+          },
+        });
+        await expect(dumper.dump(defaultConfig)).rejects.toThrow(
+          'Invalid value for FOREST_SERVER_URL: "invalidUrl"',
+        );
+      });
+    });
   });
 });
