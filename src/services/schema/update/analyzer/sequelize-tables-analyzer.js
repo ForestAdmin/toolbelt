@@ -6,7 +6,7 @@ const ColumnTypeGetter = require('./sequelize-column-type-getter');
 const DefaultValueExpression = require('./sequelize-default-value');
 const TableConstraintsGetter = require('./sequelize-table-constraints-getter');
 const EmptyDatabaseError = require('../../../../errors/database/empty-database-error');
-const stringUtils = require('../../../../utils/strings');
+const stringUtils = require('../../../../utils/strings').default;
 const { isUnderscored } = require('../../../../utils/fields');
 
 const ASSOCIATION_TYPE_BELONGS_TO = 'belongsTo';

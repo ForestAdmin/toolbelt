@@ -1,7 +1,5 @@
-const _ = require('lodash');
 const { URL } = require('url');
 const { plural, singular } = require('pluralize');
-const stringUtils = require('../../utils/strings');
 const toValidPackageName = require('../../utils/to-valid-package-name');
 const IncompatibleLianaForUpdateError = require('../../errors/dumper/incompatible-liana-for-update-error');
 const InvalidForestCLIProjectStructureError = require('../../errors/dumper/invalid-forest-cli-project-structure-error');
@@ -20,6 +18,8 @@ class DumperV1 extends AbstractDumper {
       isLinuxOs,
       buildDatabaseUrl,
       isDatabaseLocal,
+      strings,
+      lodash,
     } = context;
 
     assertPresent({
@@ -30,6 +30,8 @@ class DumperV1 extends AbstractDumper {
       isLinuxOs,
       buildDatabaseUrl,
       isDatabaseLocal,
+      strings,
+      lodash,
     });
 
     this.DEFAULT_PORT = 3310;
@@ -40,6 +42,8 @@ class DumperV1 extends AbstractDumper {
     this.mkdirp = mkdirp;
     this.buildDatabaseUrl = buildDatabaseUrl;
     this.isDatabaseLocal = isDatabaseLocal;
+    this.strings = strings;
+    this.lodash = lodash;
   }
 
   static getModelsNameSorted(schema) {
@@ -48,10 +52,10 @@ class DumperV1 extends AbstractDumper {
     );
   }
 
-  static getSafeReferences(references) {
+  getSafeReferences(references) {
     return references.map(reference => ({
       ...reference,
-      ref: DumperV1.getModelNameFromTableName(reference.ref),
+      ref: this.getModelNameFromTableName(reference.ref),
     }));
   }
 
@@ -107,8 +111,8 @@ class DumperV1 extends AbstractDumper {
     this.writeFile('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
   }
 
-  static tableToFilename(table) {
-    return _.kebabCase(table);
+  tableToFilename(table) {
+    return this.strings.kebabCase(table);
   }
 
   static isLocalUrl(url) {
@@ -142,19 +146,21 @@ class DumperV1 extends AbstractDumper {
     this.copyHandleBarsTemplate('env.hbs', '.env', context);
   }
 
-  static getModelNameFromTableName(table) {
-    return stringUtils.transformToCamelCaseSafeString(table);
+  getModelNameFromTableName(table) {
+    return this.strings.transformToCamelCaseSafeString(table);
   }
 
   writeModel(config, table, fields, references, options = {}) {
     const { underscored } = options;
-    let modelPath = `models/${DumperV1.tableToFilename(table)}.js`;
+    let modelPath = `models/${this.tableToFilename(table)}.js`;
     if (config.appConfig.useMultiDatabase) {
-      modelPath = `models/${config.modelsExportPath}/${DumperV1.tableToFilename(table)}.js`;
+      modelPath = `models/${config.modelsExportPath}/${this.tableToFilename(table)}.js`;
     }
 
     const fieldsDefinition = fields.map(field => {
-      const expectedConventionalColumnName = underscored ? _.snakeCase(field.name) : field.name;
+      const expectedConventionalColumnName = underscored
+        ? this.strings.snakeCase(field.name)
+        : field.name;
       // NOTICE: sequelize considers column name with parenthesis as raw Attributes
       // only set as unconventional name if underscored is true for adding special field attribute
       // and avoid sequelize issues
@@ -166,12 +172,12 @@ class DumperV1 extends AbstractDumper {
 
       return {
         ...field,
-        ref: field.ref && DumperV1.getModelNameFromTableName(field.ref),
+        ref: field.ref && this.getModelNameFromTableName(field.ref),
         nameColumnUnconventional,
         hasParenthesis,
 
         // Only output default value when non-null
-        hasSafeDefaultValue: !_.isNil(field.defaultValue),
+        hasSafeDefaultValue: !this.lodash.isNil(field.defaultValue),
         safeDefaultValue:
           field.defaultValue instanceof this.Sequelize.Utils.Literal
             ? `Sequelize.literal('${field.defaultValue.val.replace(/'/g, "\\'")}')`
@@ -182,16 +188,16 @@ class DumperV1 extends AbstractDumper {
     const referencesDefinition = references.map(reference => ({
       ...reference,
       isBelongsToMany: reference.association === 'belongsToMany',
-      targetKey: _.camelCase(reference.targetKey),
-      sourceKey: _.camelCase(reference.sourceKey),
+      targetKey: this.strings.camelCase(reference.targetKey),
+      sourceKey: this.strings.camelCase(reference.sourceKey),
     }));
 
     this.copyHandleBarsTemplate(
       `models/${config.dbConfig.dbDialect === 'mongodb' ? 'mongo' : 'sequelize'}-model.hbs`,
       modelPath,
       {
-        modelName: DumperV1.getModelNameFromTableName(table),
-        modelVariableName: stringUtils.pascalCase(stringUtils.transformToSafeString(table)),
+        modelName: this.getModelNameFromTableName(table),
+        modelVariableName: this.strings.pascalCase(this.strings.transformToSafeString(table)),
         table,
         fields: fieldsDefinition,
         references: referencesDefinition,
@@ -204,13 +210,13 @@ class DumperV1 extends AbstractDumper {
   }
 
   writeRoute(dbDialect, modelName) {
-    const routesPath = `routes/${DumperV1.tableToFilename(modelName)}.js`;
+    const routesPath = `routes/${this.tableToFilename(modelName)}.js`;
 
-    const modelNameDasherized = _.kebabCase(modelName);
-    const readableModelName = _.startCase(modelName);
+    const modelNameDasherized = this.strings.kebabCase(modelName);
+    const readableModelName = this.lodash.startCase(modelName);
 
     this.copyHandleBarsTemplate('routes/route.hbs', routesPath, {
-      modelName: DumperV1.getModelNameFromTableName(modelName),
+      modelName: this.getModelNameFromTableName(modelName),
       modelNameDasherized,
       modelNameReadablePlural: plural(readableModelName),
       modelNameReadableSingular: singular(readableModelName),
@@ -219,11 +225,11 @@ class DumperV1 extends AbstractDumper {
   }
 
   writeForestCollection(dbDialect, table) {
-    const collectionPath = `forest/${DumperV1.tableToFilename(table)}.js`;
+    const collectionPath = `forest/${this.tableToFilename(table)}.js`;
 
     this.copyHandleBarsTemplate('forest/collection.hbs', collectionPath, {
       isMongoDB: dbDialect === 'mongodb',
-      table: DumperV1.getModelNameFromTableName(table),
+      table: this.getModelNameFromTableName(table),
     });
   }
 
@@ -267,7 +273,7 @@ class DumperV1 extends AbstractDumper {
       }
     }
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
-      containerName: _.snakeCase(config.appConfig.applicationName),
+      containerName: this.strings.snakeCase(config.appConfig.applicationName),
       databaseUrl,
       dbSchema: config.dbConfig.dbSchema,
       forestExtraHost,

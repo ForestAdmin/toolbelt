@@ -1,4 +1,5 @@
 import type { ConfigInterface, DbConfigInterface } from '../../interfaces/project-create-interface';
+import type Strings from '../../utils/strings';
 
 import toValidPackageName from '../../utils/to-valid-package-name';
 import AbstractDumper from './abstract-dumper';
@@ -14,16 +15,17 @@ export default class AgentNodeJsDumper extends AbstractDumper {
 
   private readonly buildDatabaseUrl: (dbConfig: DbConfigInterface) => string;
 
-  private readonly snakeCase: (string: string) => string;
+  private readonly strings: Strings;
 
   constructor(context) {
-    const { assertPresent, env, isLinuxOs, buildDatabaseUrl, isDatabaseLocal, snakeCase } = context;
+    const { assertPresent, env, isLinuxOs, buildDatabaseUrl, isDatabaseLocal, strings } = context;
 
     assertPresent({
       env,
       isLinuxOs,
       isDatabaseLocal,
-      snakeCase,
+      buildDatabaseUrl,
+      strings,
     });
 
     super(context);
@@ -32,7 +34,7 @@ export default class AgentNodeJsDumper extends AbstractDumper {
     this.isLinuxOs = isLinuxOs;
     this.buildDatabaseUrl = buildDatabaseUrl;
     this.isDatabaseLocal = isDatabaseLocal;
-    this.snakeCase = snakeCase;
+    this.strings = strings;
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -48,6 +50,7 @@ export default class AgentNodeJsDumper extends AbstractDumper {
 
     if (dbDialect === 'mongodb') {
       dependencies['@forestadmin/datasource-mongoose'] = '^1.0.0';
+      dependencies.mongoose = '^6.8.3';
     } else {
       dependencies['@forestadmin/datasource-sql'] = '^1.0.0';
     }
@@ -95,19 +98,23 @@ export default class AgentNodeJsDumper extends AbstractDumper {
       isMSSQL: dbDialect === 'mssql',
       isMariaDB: dbDialect === 'mariadb',
       forestServerUrl: this.env.FOREST_URL_IS_DEFAULT ? false : this.env.FOREST_SERVER_URL,
-      datasourceCreation: isMongoose
-        ? 'createMongooseDataSource(connection, {})'
-        : `
+      datasourceImport: null,
+      datasourceCreation: null,
+    };
+
+    if (isMongoose) {
+      context.datasourceImport = `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst primaryConnection = require('./models/primary');`;
+      context.datasourceCreation = `createMongooseDataSource(primaryConnection, { flattenMode: 'auto' })`;
+    } else {
+      context.datasourceImport = `const { createSqlDataSource } = require('@forestadmin/datasource-sql');`;
+      context.datasourceCreation = `
     createSqlDataSource({
       uri: process.env.DATABASE_URL,
       schema: process.env.DATABASE_SCHEMA || 'public',
       ...dialectOptions,
     }),
-  `,
-      datasourceImport: isMongoose
-        ? `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst connection = require('./mongoose-models');`
-        : `const { createSqlDataSource } = require('@forestadmin/datasource-sql');`,
-    };
+  `;
+    }
 
     this.copyHandleBarsTemplate('index.hbs', 'index.js', context);
   }
@@ -164,7 +171,7 @@ export default class AgentNodeJsDumper extends AbstractDumper {
     }
 
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
-      containerName: this.snakeCase(config.appConfig.applicationName),
+      containerName: this.strings.snakeCase(config.appConfig.applicationName),
       databaseUrl,
       dbSchema: config.dbConfig.dbSchema !== '' ? config.dbConfig.dbSchema : false,
       forestExtraHost,
@@ -173,7 +180,38 @@ export default class AgentNodeJsDumper extends AbstractDumper {
     });
   }
 
-  protected createFiles(dumpConfig: ConfigInterface) {
+  private writeModels(schema) {
+    const collectionNamesSorted = Object.keys(schema).sort();
+
+    collectionNamesSorted.forEach(collectionName => {
+      const { fields, options } = schema[collectionName];
+      const modelPath = `models/primary/${this.strings.kebabCase(collectionName)}.js`;
+
+      const fieldsDefinition = fields.map(field => {
+        return {
+          ...field,
+          ref: field.ref && this.strings.transformToCamelCaseSafeString(field.ref),
+        };
+      });
+
+      this.copyHandleBarsTemplate(`models/model.hbs`, modelPath, {
+        modelName: this.strings.transformToCamelCaseSafeString(collectionName),
+        collectionName,
+        fields: fieldsDefinition,
+        timestamps: options.timestamps,
+      });
+    });
+  }
+
+  private async writeMongooseModels(schema) {
+    await this.mkdirp(`${this.projectPath}/models/primary`);
+
+    this.copyHandleBarsTemplate('models/index.hbs', 'models/primary/index.js');
+
+    this.writeModels(schema);
+  }
+
+  protected async createFiles(dumpConfig: ConfigInterface, schema?: any) {
     this.writePackageJson(dumpConfig.dbConfig.dbDialect, dumpConfig.appConfig.applicationName);
     this.writeIndex(dumpConfig.dbConfig.dbDialect);
     this.writeDotEnv(
@@ -186,5 +224,9 @@ export default class AgentNodeJsDumper extends AbstractDumper {
     this.writeDockerignore();
     this.writeDockerfile();
     this.writeDockerCompose(dumpConfig);
+
+    if (schema) {
+      await this.writeMongooseModels(schema);
+    }
   }
 }

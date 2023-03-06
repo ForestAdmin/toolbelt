@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { createAgent } = require('@forestadmin/agent');
 const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');
-const connection = require('./mongoose-models');
+const primaryConnection = require('./models/primary');
 
 // Create the Forest Admin agent.
 /**
@@ -15,7 +15,7 @@ const agent = createAgent({
   typingsPath: './typings.ts',
 })
   // Connect your datasources.
-  .addDataSource(createMongooseDataSource(connection, {}));
+  .addDataSource(createMongooseDataSource(primaryConnection, { flattenMode: 'auto' }));
 
 // Add customizations here.
 // agent.addCustomization('collectionName', collection => ...);
