@@ -23,6 +23,9 @@ function createDumper(contextOverride = {}) {
     isLinuxOs: false,
     buildDatabaseUrl: jest.fn(({ dbConnectionUrl }) => dbConnectionUrl),
     isDatabaseLocal: jest.fn(() => true),
+    strings: {
+      snakeCase: jest.fn().mockImplementation(value => value),
+    },
     ...contextOverride,
   });
 }
@@ -177,16 +180,6 @@ describe('services > dumper (unit)', () => {
 
         expect(getPackageJSONContentFromDialect('mongodb')).toContain('mongoose');
       });
-    });
-  });
-
-  describe('tableToFilename', () => {
-    it('should return a kebab case version of the given parameter', () => {
-      expect.assertions(3);
-
-      expect(Dumper.tableToFilename('test')).toBe('test');
-      expect(Dumper.tableToFilename('testSomething')).toBe('test-something');
-      expect(Dumper.tableToFilename('test_something_else')).toBe('test-something-else');
     });
   });
 

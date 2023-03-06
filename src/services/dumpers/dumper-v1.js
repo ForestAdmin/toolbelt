@@ -323,7 +323,7 @@ class DumperV1 extends AbstractDumper {
 
     modelNames.forEach(modelName => {
       const { fields, references, options } = schema[modelName];
-      const safeReferences = DumperV1.getSafeReferences(references);
+      const safeReferences = this.getSafeReferences(references);
 
       this.writeModel(config, modelName, fields, safeReferences, options);
     });
