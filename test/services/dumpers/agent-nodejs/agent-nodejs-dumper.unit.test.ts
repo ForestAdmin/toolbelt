@@ -1,7 +1,6 @@
 import type { ConfigInterface } from '../../../../src/interfaces/project-create-interface';
 
 import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs-dumper';
-import { snakeCase } from '../../../../src/utils/strings';
 
 describe('services > dumpers > agentNodejsDumper', () => {
   const createDumper = (dependencies = {}) => {
@@ -25,7 +24,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
         compile: jest.fn().mockImplementation(() => variables => variables),
       },
       mkdirp: jest.fn(),
-      snakeCase: jest.fn().mockImplementation(string => snakeCase(string)),
+      snakeCase: jest.fn().mockImplementation(string => string),
       buildDatabaseUrl: jest.fn(() => 'localhost'),
       isDatabaseLocal: jest.fn(() => true),
       constants: {
@@ -573,8 +572,8 @@ describe('services > dumpers > agentNodejsDumper', () => {
       expect(context.fs.writeFileSync).toHaveBeenCalledWith(
         '/test/anApplication/docker-compose.yml',
         expect.objectContaining({
-          containerName: 'an_application',
-          databaseUrl: `\${DOCKER_DATABASE_URL}`,
+          containerName: 'anApplication',
+          dbUrl: `\${DOCKER_DATABASE_URL}`,
           dbSchema: 'public',
           forestExtraHost: false,
           forestServerUrl: false,
