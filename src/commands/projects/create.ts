@@ -1,7 +1,7 @@
-import type { ConfigInterface, DbConfigInterface } from '../../interfaces/project-create-interface';
+import type { Config, DbConfig } from '../../interfaces/project-create-interface';
 import type ForestExpress from '../../services/dumpers/forest-express';
 import type DatabaseAnalyzer from '../../services/schema/update/analyzer/database-analyzer';
-import type * as Config from '@oclif/config';
+import type * as OclifConfig from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../../abstract-project-create-command';
 
@@ -10,7 +10,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
 
   private readonly dumper: ForestExpress;
 
-  constructor(argv: string[], config: Config.IConfig, plan?) {
+  constructor(argv: string[], config: OclifConfig.IConfig, plan?) {
     super(argv, config, plan);
 
     const { assertPresent, databaseAnalyzer, forestExpressDumper } = this.context;
@@ -24,12 +24,12 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
     this.dumper = forestExpressDumper;
   }
 
-  async generateProject(config: ConfigInterface) {
+  async generateProject(config: Config) {
     const schema = await this.analyzeDatabase(config.dbConfig);
     await this.createFiles(config, schema);
   }
 
-  private async analyzeDatabase(dbConfig: DbConfigInterface) {
+  private async analyzeDatabase(dbConfig: DbConfig) {
     const connection = await this.database.connect(dbConfig);
 
     if (dbConfig.dbDialect === 'mongodb') {
@@ -49,7 +49,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
     return schema;
   }
 
-  private async createFiles(config: ConfigInterface, schema) {
+  private async createFiles(config: Config, schema) {
     this.spinner.start({ text: 'Creating your project files' });
     const dumpPromise = this.dumper.dump(config, schema);
     await this.spinner.attachToPromise(dumpPromise);

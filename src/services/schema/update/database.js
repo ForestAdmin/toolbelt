@@ -119,7 +119,7 @@ class Database {
   }
 
   async connect(options) {
-    const isSSL = options.dbSSL || options.ssl;
+    const isSSL = options.dbSSL || options.dbSsl;
     const databaseDialect = this.getDialect(options.dbConnectionUrl, options.dbDialect);
 
     if (databaseDialect === 'mongodb') {

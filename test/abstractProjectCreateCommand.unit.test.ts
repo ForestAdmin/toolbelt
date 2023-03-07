@@ -121,7 +121,7 @@ describe('abstractProjectCreateCommand command', () => {
       expect(stubs.projectCreator.create).toHaveBeenCalledWith(
         'authToken',
         {
-          applicationName: 'testApp',
+          appName: 'testApp',
           appHostname: 'localhost',
           appPort: 3000,
         },
@@ -226,7 +226,7 @@ describe('abstractProjectCreateCommand command', () => {
           dbSchema: undefined,
           dbUser: undefined,
           mongodbSrv: undefined,
-          ssl: false,
+          dbSsl: false,
         });
       });
 
@@ -258,7 +258,7 @@ describe('abstractProjectCreateCommand command', () => {
 
         expect(instance.generateProject).toHaveBeenCalledWith({
           appConfig: {
-            applicationName: 'testApp',
+            appName: 'testApp',
             appHostname: 'localhost',
             appPort: 3000,
           },
@@ -272,7 +272,7 @@ describe('abstractProjectCreateCommand command', () => {
             dbSchema: undefined,
             dbUser: undefined,
             mongodbSrv: undefined,
-            ssl: false,
+            dbSsl: false,
           },
           forestAuthSecret: 'this is an authSecret',
           forestEnvSecret: 'this an envSecret',
@@ -297,7 +297,7 @@ describe('abstractProjectCreateCommand command', () => {
           dbSchema: 'public',
           dbUser: undefined,
           mongodbSrv: undefined,
-          ssl: false,
+          dbSsl: false,
         });
       });
       it('should call generate project with correct arguments', async () => {
@@ -328,7 +328,7 @@ describe('abstractProjectCreateCommand command', () => {
 
         expect(instance.generateProject).toHaveBeenCalledWith({
           appConfig: {
-            applicationName: 'testApp',
+            appName: 'testApp',
             appHostname: 'localhost',
             appPort: 3000,
           },
@@ -342,7 +342,7 @@ describe('abstractProjectCreateCommand command', () => {
             dbSchema: 'public',
             dbUser: undefined,
             mongodbSrv: undefined,
-            ssl: false,
+            dbSsl: false,
           },
           forestAuthSecret: 'this is an authSecret',
           forestEnvSecret: 'this an envSecret',

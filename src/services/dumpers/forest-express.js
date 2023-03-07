@@ -66,7 +66,7 @@ class ForestExpress extends AbstractDumper {
     return 'forest-express';
   }
 
-  writePackageJson(dbDialect, applicationName) {
+  writePackageJson(dbDialect, appName) {
     const orm = dbDialect === 'mongodb' ? 'mongoose' : 'sequelize';
     const dependencies = {
       'body-parser': '1.19.0',
@@ -97,7 +97,7 @@ class ForestExpress extends AbstractDumper {
     }
 
     const pkg = {
-      name: toValidPackageName(applicationName),
+      name: toValidPackageName(appName),
       version: '0.0.1',
       private: true,
       scripts: { start: 'node ./server.js' },
@@ -128,7 +128,7 @@ class ForestExpress extends AbstractDumper {
     const databaseUrl = this.buildDatabaseUrl(config.dbConfig);
     const context = {
       databaseUrl,
-      ssl: config.dbConfig.ssl || 'false',
+      ssl: config.dbConfig.dbSsl || 'false',
       dbSchema: config.dbConfig.dbSchema,
       hostname: config.appConfig.appHostname,
       port,
@@ -269,7 +269,7 @@ class ForestExpress extends AbstractDumper {
       }
     }
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
-      containerName: _.snakeCase(config.appConfig.applicationName),
+      containerName: _.snakeCase(config.appConfig.appName),
       databaseUrl,
       dbSchema: config.dbConfig.dbSchema,
       forestExtraHost,
@@ -344,7 +344,7 @@ class ForestExpress extends AbstractDumper {
       this.writeAppJs(config.dbConfig.dbDialect);
       this.writeDockerCompose(config);
       this.writeDockerfile();
-      this.writePackageJson(config.dbConfig.dbDialect, config.appConfig.applicationName);
+      this.writePackageJson(config.dbConfig.dbDialect, config.appConfig.appName);
       this.copyHandleBarsTemplate('server.hbs', 'server.js');
     }
   }

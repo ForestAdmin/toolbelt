@@ -240,7 +240,7 @@ describe('services > dumper (unit)', () => {
     const config = {
       dbConfig: {
         dbConnectionUrl: 'mongodb://root:password@localhost:27017/forest',
-        ssl: true,
+        dbSsl: true,
       },
       appConfig: {
         appHostname: 'localhost',
@@ -263,7 +263,7 @@ describe('services > dumper (unit)', () => {
         expect(copyHandlebarsTemplateSpy).toHaveBeenCalledTimes(1);
         expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith('env.hbs', '.env', {
           databaseUrl: config.dbConfig.dbConnectionUrl,
-          ssl: config.dbConfig.ssl,
+          ssl: config.dbConfig.dbSsl,
           dbSchema: undefined,
           hostname: config.appConfig.appHostname,
           port: 3310,
@@ -289,7 +289,7 @@ describe('services > dumper (unit)', () => {
         expect(copyHandlebarsTemplateSpy).toHaveBeenCalledTimes(1);
         expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith('env.hbs', '.env', {
           databaseUrl: config.dbConfig.dbConnectionUrl,
-          ssl: config.dbConfig.ssl,
+          ssl: config.dbConfig.dbSsl,
           dbSchema: undefined,
           dockerDatabaseUrl: 'mongodb://root:password@host.docker.internal:27017/forest',
           hostname: config.appConfig.appHostname,
@@ -440,7 +440,7 @@ describe('services > dumper (unit)', () => {
       };
       const config = {
         appConfig: {
-          applicationName: 'test-output/unit-test-dumper',
+          appName: 'test-output/unit-test-dumper',
         },
         dbConfig: {
           dbDialect: '',
@@ -473,7 +473,7 @@ describe('services > dumper (unit)', () => {
       expect(writeDockerfileSpy).toHaveBeenCalledWith();
       expect(writePackageJsonSpy).toHaveBeenCalledWith(
         config.dbConfig.dbDialect,
-        config.appConfig.applicationName,
+        config.appConfig.appName,
       );
 
       // Copied files
@@ -528,7 +528,7 @@ describe('services > dumper (unit)', () => {
       };
       const config = {
         appConfig: {
-          applicationName: 'test-output/unit-test-dumper',
+          appName: 'test-output/unit-test-dumper',
           isUpdate: true,
           modelsExportPath: 'test',
           useMultiDatabase: true,

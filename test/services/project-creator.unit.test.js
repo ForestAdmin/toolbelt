@@ -71,7 +71,7 @@ describe('project creator', () => {
 
       const sessionToken = 'session-token';
       const config = {
-        applicationName: 'New application',
+        appName: 'New application',
       };
       const meta = {
         agent: 'forest-express-sequelize',

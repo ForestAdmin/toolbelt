@@ -1,9 +1,10 @@
 interface DbConfigBase {
   dbDialect: string;
-  ssl: boolean;
+  dbSsl: boolean;
   dbSchema?: string;
   mongodbSrv?: boolean;
 }
+
 interface DbConfigWithConnectionUrl extends DbConfigBase {
   dbConnectionUrl: string;
   dbName?: never;
@@ -23,8 +24,9 @@ interface DbConfigWithConnectionParams extends DbConfigBase {
 }
 
 export type DbConfigInterface = DbConfigWithConnectionUrl | DbConfigWithConnectionParams;
+
 export interface AppConfig {
-  applicationName: string;
+  appName: string;
   appHostname: string;
   appPort: number;
   isUpdate?: boolean;
@@ -32,8 +34,8 @@ export interface AppConfig {
   modelsExportPath?: string;
 }
 
-export interface ConfigInterface {
-  dbConfig: DbConfigInterface;
+export interface Config {
+  dbConfig: DbConfig;
   appConfig: AppConfig;
   forestAuthSecret: string;
   forestEnvSecret: string;
