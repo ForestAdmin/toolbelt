@@ -22,6 +22,7 @@ function createDumper(contextOverride = {}) {
     mkdirp: () => {},
     isLinuxOs: false,
     buildDatabaseUrl: jest.fn(({ dbConnectionUrl }) => dbConnectionUrl),
+    isDatabaseLocal: jest.fn(() => true),
     ...contextOverride,
   });
 }
@@ -186,27 +187,6 @@ describe('services > dumper (unit)', () => {
       expect(Dumper.tableToFilename('test')).toBe('test');
       expect(Dumper.tableToFilename('testSomething')).toBe('test-something');
       expect(Dumper.tableToFilename('test_something_else')).toBe('test-something-else');
-    });
-  });
-
-  describe('isDatabaseLocal', () => {
-    it('should return true for a config referring to a database hosted locally', () => {
-      expect.assertions(1);
-
-      const dumper = createDumper({});
-
-      const dbConnectionUrl = 'mongodb+srv://root:password@localhost/forest';
-
-      expect(dumper.isDatabaseLocal({ dbConnectionUrl })).toBe(true);
-    });
-
-    it('should return false for a config referring to a database not hosted locally', () => {
-      expect.assertions(1);
-
-      const dumper = createDumper({});
-      const dbConnectionUrl = 'mongodb+srv://root:password@somewhere.intheworld.com/forest';
-
-      expect(dumper.isDatabaseLocal({ dbConnectionUrl })).toBe(false);
     });
   });
 

@@ -6,4 +6,6 @@ module.exports = plan =>
     .addUsingClass('eventSender', () => require('../utils/event-sender'))
     .addUsingFunction('terminator', require('../utils/terminator'))
     .addValue('messages', require('../utils/messages'))
-    .addFunction('buildDatabaseUrl', require('../utils/database-url').default);
+    .addFunction('snakeCase', require('../utils/strings').snakeCase)
+    .addFunction('buildDatabaseUrl', require('../utils/database-url').default)
+    .addFunction('isDatabaseLocal', require('../utils/database-url').isDatabaseLocal);
