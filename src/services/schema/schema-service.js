@@ -102,18 +102,21 @@ module.exports = class SchemaService {
 
     const dumpPromise = Promise.all(
       databasesSchema.map(databaseSchema =>
-        this.dumper.dump(databaseSchema.schema, {
-          appConfig: {
-            applicationName,
-            isUpdate,
-            useMultiDatabase,
-            modelsExportPath: this.path.relative('models', databaseSchema.modelsDir),
+        this.dumper.dump(
+          {
+            appConfig: {
+              applicationName,
+              isUpdate,
+              useMultiDatabase,
+              modelsExportPath: this.path.relative('models', databaseSchema.modelsDir),
+            },
+            dbConfig: {
+              dbDialect: databaseSchema.analyzerOptions.dbDialect,
+              dbSchema: databaseSchema.analyzerOptions.dbSchema,
+            },
           },
-          dbConfig: {
-            dbDialect: databaseSchema.analyzerOptions.dbDialect,
-            dbSchema: databaseSchema.analyzerOptions.dbSchema,
-          },
-        }),
+          databaseSchema.schema,
+        ),
       ),
     );
     return this.spinner.attachToPromise(dumpPromise);
