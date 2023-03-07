@@ -101,45 +101,41 @@ describe('services > dumpers > agentNodejsDumper', () => {
       '.dockerignore',
     ];
 
-    configs.forEach(config => {
-      describe(`database ${config.name}`, () => {
-        async function dump() {
-          const injectedContext = Context.execute(defaultPlan);
-          const dumper = new AgentNodeJsDumper(injectedContext);
-          await dumper.dump(
-            {
-              appConfig: config.appConfig,
-              dbConfig: config.dbConfig,
-              forestAuthSecret: 'forestAuthSecret',
-              forestEnvSecret: 'forestEnvSecret',
-            },
-            {},
-          );
-        }
+    describe.each(configs)('database $name', ({ name, appConfig, dbConfig }) => {
+      async function dump() {
+        const injectedContext = Context.execute(defaultPlan);
+        const dumper = new AgentNodeJsDumper(injectedContext);
+        await dumper.dump(
+          {
+            appConfig,
+            dbConfig,
+            forestAuthSecret: 'forestAuthSecret',
+            forestEnvSecret: 'forestEnvSecret',
+          },
+          {},
+        );
+      }
 
-        files.forEach(fileName => {
-          it(`should properly dump ${fileName}`, async () => {
-            expect.assertions(1);
+      it.each(files)('should properly dump %s', async fileName => {
+        expect.assertions(1);
 
-            const osStub = jest.spyOn(os, 'platform').mockReturnValue('linux');
+        const osStub = jest.spyOn(os, 'platform').mockReturnValue('linux');
 
-            await dump();
+        await dump();
 
-            const generatedFile = fs.readFileSync(
-              `${appRoot}/${config.appConfig.applicationName}/${fileName}`,
-              'utf-8',
-            );
+        const generatedFile = fs.readFileSync(
+          `${appRoot}/${appConfig.applicationName}/${fileName}`,
+          'utf-8',
+        );
 
-            const expectedFile = fs.readFileSync(
-              `${__dirname}/expected/${config.name}/${fileName === '.env' ? 'env' : fileName}`,
-              'utf-8',
-            );
+        const expectedFile = fs.readFileSync(
+          `${__dirname}/expected/${name}/${fileName === '.env' ? 'env' : fileName}`,
+          'utf-8',
+        );
 
-            expect(generatedFile).toStrictEqual(expectedFile);
-            rimraf.sync(`${appRoot}/${config.appConfig.applicationName}`);
-            osStub.mockRestore();
-          });
-        });
+        expect(generatedFile).toStrictEqual(expectedFile);
+        rimraf.sync(`${appRoot}/${appConfig.applicationName}`);
+        osStub.mockRestore();
       });
     });
 
