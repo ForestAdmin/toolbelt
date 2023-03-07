@@ -1,7 +1,7 @@
 import type { DbConfigInterface } from '../interfaces/project-create-interface';
 
-export default function buildDatabaseUrl(config: DbConfigInterface) {
-  let connectionString;
+export default function buildDatabaseUrl(config: DbConfigInterface): string | null {
+  let connectionString: string;
 
   if (!config) {
     return null;
