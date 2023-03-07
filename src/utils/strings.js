@@ -72,6 +72,10 @@ module.exports = {
     return _.chain(input).camelCase().upperFirst().value();
   },
 
+  snakeCase(input) {
+    return _.snakeCase(input);
+  },
+
   camelCase(input) {
     return _.camelCase(input);
   },
