@@ -6,7 +6,6 @@ const ColumnTypeGetter = require('./sequelize-column-type-getter');
 const DefaultValueExpression = require('./sequelize-default-value');
 const TableConstraintsGetter = require('./sequelize-table-constraints-getter');
 const EmptyDatabaseError = require('../../../../errors/database/empty-database-error');
-const stringUtils = require('../../../../utils/strings');
 const { isUnderscored } = require('../../../../utils/fields');
 
 const ASSOCIATION_TYPE_BELONGS_TO = 'belongsTo';
@@ -204,6 +203,8 @@ function createReference(
   foreignKey,
   manyToManyForeignKey,
 ) {
+  const { strings } = inject();
+
   const foreignKeyName = _.camelCase(foreignKey.columnName);
   const reference = {
     foreignKey: foreignKey.columnName,
@@ -220,9 +221,7 @@ function createReference(
   } else if (association === ASSOCIATION_TYPE_BELONGS_TO_MANY) {
     reference.ref = manyToManyForeignKey.foreignTableName;
     reference.otherKey = manyToManyForeignKey.columnName;
-    reference.through = stringUtils.camelCase(
-      stringUtils.transformToSafeString(foreignKey.tableName),
-    );
+    reference.through = strings.camelCase(strings.transformToSafeString(foreignKey.tableName));
     reference.as = _.camelCase(
       plural(`${manyToManyForeignKey.foreignTableName}_through_${foreignKey.tableName}`),
     );

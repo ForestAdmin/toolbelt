@@ -1,6 +1,6 @@
 const chalk = require('chalk');
 
-const Dumper = require('../../../../src/services/dumpers/forest-express');
+const ForestExpress = require('../../../../src/services/dumpers/forest-express');
 const InvalidForestCLIProjectStructureError = require('../../../../src/errors/dumper/invalid-forest-cli-project-structure-error');
 const IncompatibleLianaForUpdateError = require('../../../../src/errors/dumper/incompatible-liana-for-update-error');
 
@@ -12,7 +12,7 @@ const ABSOLUTE_PROJECT_PATH = '/absolute/project/path';
 const RELATIVE_FILE_PATH = 'some/folder/relative-file.js';
 
 function createDumper(contextOverride = {}) {
-  return new Dumper({
+  return new ForestExpress({
     assertPresent: jest.fn(),
     constants: {
       CURRENT_WORKING_DIRECTORY: ABSOLUTE_PROJECT_PATH,
@@ -23,6 +23,9 @@ function createDumper(contextOverride = {}) {
     isLinuxOs: false,
     buildDatabaseUrl: jest.fn(({ dbConnectionUrl }) => dbConnectionUrl),
     isDatabaseLocal: jest.fn(() => true),
+    strings: {
+      snakeCase: jest.fn().mockImplementation(value => value),
+    },
     toValidPackageName: jest.fn().mockImplementation(content => content),
     ...contextOverride,
   });
@@ -180,28 +183,17 @@ describe('services > dumper (unit)', () => {
       });
     });
   });
-
-  describe('tableToFilename', () => {
-    it('should return a kebab case version of the given parameter', () => {
-      expect.assertions(3);
-
-      expect(Dumper.tableToFilename('test')).toBe('test');
-      expect(Dumper.tableToFilename('testSomething')).toBe('test-something');
-      expect(Dumper.tableToFilename('test_something_else')).toBe('test-something-else');
-    });
-  });
-
   describe('isLocalUrl', () => {
     it('should return true for a local url', () => {
       expect.assertions(1);
 
-      expect(Dumper.isLocalUrl('http://localhost')).toBe(true);
+      expect(ForestExpress.isLocalUrl('http://localhost')).toBe(true);
     });
 
     it('should return false for not local url', () => {
       expect.assertions(1);
 
-      expect(Dumper.isLocalUrl('http://somewhere.else.intheworld.com')).toBe(false);
+      expect(ForestExpress.isLocalUrl('http://somewhere.else.intheworld.com')).toBe(false);
     });
   });
 
@@ -210,9 +202,7 @@ describe('services > dumper (unit)', () => {
       it('should prefix the host name with http://', () => {
         expect.assertions(1);
 
-        const dumper = createDumper();
-
-        expect(dumper.getApplicationUrl('somewhere.not.local.com')).toBe(
+        expect(ForestExpress.getApplicationUrl('somewhere.not.local.com')).toBe(
           'http://somewhere.not.local.com',
         );
       });
@@ -222,17 +212,17 @@ describe('services > dumper (unit)', () => {
       it('should append the port to the given hostname for local application url', () => {
         expect.assertions(1);
 
-        const dumper = createDumper();
-
-        expect(dumper.getApplicationUrl('http://localhost', '1234')).toBe('http://localhost:1234');
+        expect(ForestExpress.getApplicationUrl('http://localhost', '1234')).toBe(
+          'http://localhost:1234',
+        );
       });
 
       it('should return the appHostname already defined', () => {
         expect.assertions(1);
 
-        const dumper = createDumper();
-
-        expect(dumper.getApplicationUrl('https://somewhere.com')).toBe('https://somewhere.com');
+        expect(ForestExpress.getApplicationUrl('https://somewhere.com')).toBe(
+          'https://somewhere.com',
+        );
       });
     });
   });
@@ -520,7 +510,7 @@ describe('services > dumper (unit)', () => {
       const copyHandlebarsTemplateSpy = jest
         .spyOn(dumper, 'copyHandleBarsTemplate')
         .mockImplementation();
-      jest.spyOn(Dumper, 'shouldSkipRouteGenerationForModel');
+      jest.spyOn(ForestExpress, 'shouldSkipRouteGenerationForModel');
 
       const projectPath = `${ABSOLUTE_PROJECT_PATH}/test-output/unit-test-dumper`;
 
@@ -560,7 +550,7 @@ describe('services > dumper (unit)', () => {
       expect(writeDockerfileSpy).not.toHaveBeenCalled();
       expect(writePackageJsonSpy).not.toHaveBeenCalled();
 
-      expect(Dumper.shouldSkipRouteGenerationForModel).toHaveBeenCalledWith('testModel');
+      expect(ForestExpress.shouldSkipRouteGenerationForModel).toHaveBeenCalledWith('testModel');
 
       // Copied files
       expect(copyHandlebarsTemplateSpy).not.toHaveBeenCalled();
@@ -794,8 +784,8 @@ describe('services > dumper (unit)', () => {
       it('should return true', () => {
         expect.assertions(2);
 
-        expect(Dumper.shouldSkipRouteGenerationForModel('stats')).toBe(true);
-        expect(Dumper.shouldSkipRouteGenerationForModel('Sessions')).toBe(true);
+        expect(ForestExpress.shouldSkipRouteGenerationForModel('stats')).toBe(true);
+        expect(ForestExpress.shouldSkipRouteGenerationForModel('Sessions')).toBe(true);
       });
     });
 
@@ -803,8 +793,8 @@ describe('services > dumper (unit)', () => {
       it('should return false', () => {
         expect.assertions(2);
 
-        expect(Dumper.shouldSkipRouteGenerationForModel('users')).toBe(false);
-        expect(Dumper.shouldSkipRouteGenerationForModel('projects')).toBe(false);
+        expect(ForestExpress.shouldSkipRouteGenerationForModel('users')).toBe(false);
+        expect(ForestExpress.shouldSkipRouteGenerationForModel('projects')).toBe(false);
       });
     });
   });

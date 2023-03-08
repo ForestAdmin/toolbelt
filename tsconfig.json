@@ -7,6 +7,7 @@
     "skipLibCheck": true,
     "module": "CommonJS",
     "moduleResolution": "Node",
+    "resolveJsonModule": true,
     "esModuleInterop": true,
     "declaration": true,
     "declarationMap": true,
