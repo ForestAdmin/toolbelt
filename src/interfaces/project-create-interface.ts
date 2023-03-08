@@ -15,6 +15,9 @@ export interface AppConfig {
   applicationName: string;
   appHostname: string;
   appPort: number;
+  isUpdate?: boolean;
+  useMultipleDatabase?: boolean;
+  modelsExportPath?: string;
 }
 
 export interface ConfigInterface {

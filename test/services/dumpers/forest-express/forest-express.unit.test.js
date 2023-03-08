@@ -1,9 +1,8 @@
 const chalk = require('chalk');
-const appRoot = require('app-root-path');
 
-const Dumper = require('../../../src/services/dumper/dumper');
-const InvalidForestCLIProjectStructureError = require('../../../src/errors/dumper/invalid-forest-cli-project-structure-error');
-const IncompatibleLianaForUpdateError = require('../../../src/errors/dumper/incompatible-liana-for-update-error');
+const Dumper = require('../../../../src/services/dumpers/forest-express');
+const InvalidForestCLIProjectStructureError = require('../../../../src/errors/dumper/invalid-forest-cli-project-structure-error');
+const IncompatibleLianaForUpdateError = require('../../../../src/errors/dumper/incompatible-liana-for-update-error');
 
 const SequelizeMock = {
   DataTypes: {},
@@ -15,41 +14,19 @@ const RELATIVE_FILE_PATH = 'some/folder/relative-file.js';
 function createDumper(contextOverride = {}) {
   return new Dumper({
     assertPresent: jest.fn(),
-    constants: {},
+    constants: {
+      CURRENT_WORKING_DIRECTORY: ABSOLUTE_PROJECT_PATH,
+    },
     Sequelize: SequelizeMock,
     chalk,
     mkdirp: () => {},
+    isLinuxOs: false,
+    buildDatabaseUrl: jest.fn(({ dbConnectionUrl }) => dbConnectionUrl),
     ...contextOverride,
   });
 }
 
 describe('services > dumper (unit)', () => {
-  describe('isLinuxBasedOs', () => {
-    it('should return true on linux', () => {
-      expect.assertions(1);
-
-      const dumper = createDumper({
-        os: {
-          platform: jest.fn().mockReturnValue('linux'),
-        },
-      });
-
-      expect(dumper.isLinuxBasedOs()).toBe(true);
-    });
-
-    it('should return false on other OS', () => {
-      expect.assertions(1);
-
-      const dumper = createDumper({
-        os: {
-          platform: jest.fn().mockReturnValue('windows'),
-        },
-      });
-
-      expect(dumper.isLinuxBasedOs()).toBe(false);
-    });
-  });
-
   describe('writeFile', () => {
     const makeContextOverrides = ({ existsSync }) => ({
       logger: {
@@ -66,20 +43,19 @@ describe('services > dumper (unit)', () => {
         expect.assertions(2);
 
         const context = makeContextOverrides({ existsSync: false });
-        createDumper(context).writeFile(ABSOLUTE_PROJECT_PATH, RELATIVE_FILE_PATH, 'content');
+        const dumper = createDumper(context);
+        dumper.projectPath = '';
+        dumper.writeFile(RELATIVE_FILE_PATH, 'content');
 
         expect(context.fs.writeFileSync).toHaveBeenCalledTimes(1);
-        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-          `${ABSOLUTE_PROJECT_PATH}/${RELATIVE_FILE_PATH}`,
-          'content',
-        );
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(`/${RELATIVE_FILE_PATH}`, 'content');
       });
 
       it('should call the logger to display a create log message', () => {
         expect.assertions(2);
 
         const context = makeContextOverrides({ existsSync: false });
-        createDumper(context).writeFile(ABSOLUTE_PROJECT_PATH, RELATIVE_FILE_PATH, 'content');
+        createDumper(context).writeFile(RELATIVE_FILE_PATH, 'content');
 
         expect(context.logger.log).toHaveBeenCalledTimes(1);
         expect(context.logger.log).toHaveBeenCalledWith(
@@ -93,7 +69,7 @@ describe('services > dumper (unit)', () => {
         expect.assertions(1);
 
         const context = makeContextOverrides({ existsSync: true });
-        createDumper(context).writeFile(ABSOLUTE_PROJECT_PATH, RELATIVE_FILE_PATH, 'content');
+        createDumper(context).writeFile(RELATIVE_FILE_PATH, 'content');
 
         expect(context.fs.writeFileSync).not.toHaveBeenCalled();
       });
@@ -102,33 +78,13 @@ describe('services > dumper (unit)', () => {
         expect.assertions(2);
 
         const context = makeContextOverrides({ existsSync: true });
-        createDumper(context).writeFile(ABSOLUTE_PROJECT_PATH, RELATIVE_FILE_PATH, 'content');
+        createDumper(context).writeFile(RELATIVE_FILE_PATH, 'content');
 
         expect(context.logger.log).toHaveBeenCalledTimes(1);
         expect(context.logger.log).toHaveBeenCalledWith(
           `  ${chalk.yellow('skip')} ${RELATIVE_FILE_PATH} - already exists.`,
         );
       });
-    });
-  });
-
-  describe('copyTemplate', () => {
-    const makeContextOverrides = () => ({
-      fs: {
-        readFileSync: jest.fn().mockReturnValue('content'),
-      },
-    });
-
-    it('should call writeFile with computed parameters', () => {
-      expect.assertions(2);
-
-      const context = makeContextOverrides();
-      const dumper = createDumper(context);
-      const writeFileSpy = jest.spyOn(dumper, 'writeFile').mockImplementation(() => {});
-      dumper.copyTemplate(ABSOLUTE_PROJECT_PATH, 'from.js', 'to.js');
-
-      expect(writeFileSpy).toHaveBeenCalledTimes(1);
-      expect(writeFileSpy).toHaveBeenCalledWith(ABSOLUTE_PROJECT_PATH, 'to.js', 'content');
     });
   });
 
@@ -142,35 +98,17 @@ describe('services > dumper (unit)', () => {
       },
     });
 
-    describe('with missing parameters', () => {
-      it('should throw an error', () => {
-        expect.assertions(1);
-
-        const context = makeContextOverrides();
-        const dumper = createDumper(context);
-
-        expect(() => dumper.copyHandleBarsTemplate({})).toThrow(
-          'Missing argument (projectPath, source, target or context).',
-        );
-      });
-    });
-
-    describe('with all the required parameters', () => {
+    describe('when context is provided', () => {
       it('should call writeFile with computed parameters', () => {
         expect.assertions(2);
 
         const context = makeContextOverrides();
         const dumper = createDumper(context);
         const writeFileSpy = jest.spyOn(dumper, 'writeFile').mockImplementation(() => {});
-        dumper.copyHandleBarsTemplate({
-          projectPath: ABSOLUTE_PROJECT_PATH,
-          source: 'from.js',
-          target: 'to.js',
-          context: {},
-        });
+        dumper.copyHandleBarsTemplate('from.js', 'to.js', { myVar: 'value' });
 
         expect(writeFileSpy).toHaveBeenCalledTimes(1);
-        expect(writeFileSpy).toHaveBeenCalledWith(ABSOLUTE_PROJECT_PATH, 'to.js', 'content');
+        expect(writeFileSpy).toHaveBeenCalledWith('to.js', 'content');
       });
     });
   });
@@ -181,12 +119,9 @@ describe('services > dumper (unit)', () => {
 
       const dumper = createDumper({});
       const writeFileSpy = jest.spyOn(dumper, 'writeFile').mockImplementation(() => {});
-      dumper.writePackageJson(ABSOLUTE_PROJECT_PATH, {
-        dbDialect: 'none',
-        applicationName: 'test',
-      });
+      dumper.writePackageJson('none', 'test');
 
-      const fileContent = writeFileSpy.mock.calls[0][2];
+      const fileContent = writeFileSpy.mock.calls[0][1];
       expect(writeFileSpy).toHaveBeenCalledTimes(1);
       expect(() => JSON.parse(fileContent)).not.toThrow();
 
@@ -202,12 +137,9 @@ describe('services > dumper (unit)', () => {
       const getPackageJSONContentFromDialect = dbDialect => {
         const dumper = createDumper({});
         const writeFileSpy = jest.spyOn(dumper, 'writeFile').mockImplementation(() => {});
-        dumper.writePackageJson(ABSOLUTE_PROJECT_PATH, {
-          dbDialect,
-          applicationName: 'test',
-        });
+        dumper.writePackageJson(dbDialect, 'test');
 
-        return writeFileSpy.mock.calls[0][2];
+        return writeFileSpy.mock.calls[0][1];
       };
 
       it('undefined: it should not add any dbs connector', () => {
@@ -257,63 +189,24 @@ describe('services > dumper (unit)', () => {
     });
   });
 
-  describe('getDatabaseUrl', () => {
-    it('should return the dbConnectionUrl if provided', () => {
-      expect.assertions(1);
-
-      const config = {
-        dbConnectionUrl: 'mysql://root:password@localhost:3306/forest',
-      };
-
-      expect(Dumper.getDatabaseUrl(config)).toStrictEqual(config.dbConnectionUrl);
-    });
-
-    it('should return the connection string if no dbConnectionUrl is provided', () => {
-      expect.assertions(1);
-
-      const config = {
-        dbDialect: 'mysql',
-        dbPort: 3306,
-        dbUser: 'root',
-        dbHostname: 'localhost',
-        dbName: 'forest',
-      };
-
-      expect(Dumper.getDatabaseUrl(config)).toBe('mysql://root@localhost:3306/forest');
-    });
-
-    it('should remove the port if mongodbSrv is provided', () => {
-      expect.assertions(1);
-
-      const config = {
-        dbDialect: 'mongodb',
-        dbPort: 27017,
-        mongodbSrv: true,
-        dbUser: 'root',
-        dbPassword: 'password',
-        dbHostname: 'localhost',
-        dbName: 'forest',
-      };
-
-      expect(Dumper.getDatabaseUrl(config)).toBe('mongodb+srv://root:password@localhost/forest');
-    });
-  });
-
   describe('isDatabaseLocal', () => {
     it('should return true for a config referring to a database hosted locally', () => {
       expect.assertions(1);
 
+      const dumper = createDumper({});
+
       const dbConnectionUrl = 'mongodb+srv://root:password@localhost/forest';
 
-      expect(Dumper.isDatabaseLocal({ dbConnectionUrl })).toBe(true);
+      expect(dumper.isDatabaseLocal({ dbConnectionUrl })).toBe(true);
     });
 
     it('should return false for a config referring to a database not hosted locally', () => {
       expect.assertions(1);
 
+      const dumper = createDumper({});
       const dbConnectionUrl = 'mongodb+srv://root:password@somewhere.intheworld.com/forest';
 
-      expect(Dumper.isDatabaseLocal({ dbConnectionUrl })).toBe(false);
+      expect(dumper.isDatabaseLocal({ dbConnectionUrl })).toBe(false);
     });
   });
 
@@ -331,26 +224,14 @@ describe('services > dumper (unit)', () => {
     });
   });
 
-  describe('getPort', () => {
-    it('should return the given for config containing appPort', () => {
-      expect.assertions(1);
-
-      expect(Dumper.getPort({ appPort: 1234 })).toBe(1234);
-    });
-
-    it('should return the default port for config not containing appPort', () => {
-      expect.assertions(1);
-
-      expect(Dumper.getPort({})).toBe(3310);
-    });
-  });
-
   describe('getApplicationUrl', () => {
     describe('when no protocol is specified', () => {
       it('should prefix the host name with http://', () => {
         expect.assertions(1);
 
-        expect(Dumper.getApplicationUrl({ appHostname: 'somewhere.not.local.com' })).toBe(
+        const dumper = createDumper();
+
+        expect(dumper.getApplicationUrl('somewhere.not.local.com')).toBe(
           'http://somewhere.not.local.com',
         );
       });
@@ -360,31 +241,30 @@ describe('services > dumper (unit)', () => {
       it('should append the port to the given hostname for local application url', () => {
         expect.assertions(1);
 
-        expect(
-          Dumper.getApplicationUrl({
-            appHostname: 'http://localhost',
-            appPort: 1234,
-          }),
-        ).toBe('http://localhost:1234');
+        const dumper = createDumper();
+
+        expect(dumper.getApplicationUrl('http://localhost', '1234')).toBe('http://localhost:1234');
       });
 
       it('should return the appHostname already defined', () => {
         expect.assertions(1);
 
-        expect(
-          Dumper.getApplicationUrl({
-            appHostname: 'https://somewhere.com',
-          }),
-        ).toBe('https://somewhere.com');
+        const dumper = createDumper();
+
+        expect(dumper.getApplicationUrl('https://somewhere.com')).toBe('https://somewhere.com');
       });
     });
   });
 
   describe('writeDotEnv', () => {
     const config = {
-      dbConnectionUrl: 'mongodb://root:password@localhost:27017/forest',
-      ssl: true,
-      appHostname: 'localhost',
+      dbConfig: {
+        dbConnectionUrl: 'mongodb://root:password@localhost:27017/forest',
+        ssl: true,
+      },
+      appConfig: {
+        appHostname: 'localhost',
+      },
       forestEnvSecret: 'someEnvSecret',
       forestAuthSecret: 'someAuthSecret',
     };
@@ -393,29 +273,24 @@ describe('services > dumper (unit)', () => {
       it('should compute the handlebars context from the given config with no dockerDatabaseUrl', () => {
         expect.assertions(2);
 
-        const dumper = createDumper();
+        const dumper = createDumper({ isLinuxOs: true });
+        dumper.port = 3310;
         const copyHandlebarsTemplateSpy = jest
           .spyOn(dumper, 'copyHandleBarsTemplate')
           .mockImplementation();
-        jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(true);
-        dumper.writeDotEnv(ABSOLUTE_PROJECT_PATH, config);
+        dumper.writeDotEnv(config);
 
         expect(copyHandlebarsTemplateSpy).toHaveBeenCalledTimes(1);
-        expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith({
-          projectPath: ABSOLUTE_PROJECT_PATH,
-          source: 'app/env.hbs',
-          target: '.env',
-          context: {
-            databaseUrl: config.dbConnectionUrl,
-            ssl: config.ssl,
-            dbSchema: undefined,
-            hostname: config.appHostname,
-            port: 3310,
-            forestEnvSecret: config.forestEnvSecret,
-            forestAuthSecret: config.forestAuthSecret,
-            hasDockerDatabaseUrl: false,
-            applicationUrl: 'http://localhost:3310',
-          },
+        expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith('env.hbs', '.env', {
+          databaseUrl: config.dbConfig.dbConnectionUrl,
+          ssl: config.dbConfig.ssl,
+          dbSchema: undefined,
+          hostname: config.appConfig.appHostname,
+          port: 3310,
+          forestEnvSecret: config.forestEnvSecret,
+          forestAuthSecret: config.forestAuthSecret,
+          hasDockerDatabaseUrl: false,
+          applicationUrl: 'http://localhost:3310',
         });
       });
     });
@@ -425,29 +300,24 @@ describe('services > dumper (unit)', () => {
         expect.assertions(2);
 
         const dumper = createDumper();
+        dumper.port = 3310;
         const copyHandlebarsTemplateSpy = jest
           .spyOn(dumper, 'copyHandleBarsTemplate')
           .mockImplementation();
-        jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(false);
-        dumper.writeDotEnv(ABSOLUTE_PROJECT_PATH, config);
+        dumper.writeDotEnv(config);
 
         expect(copyHandlebarsTemplateSpy).toHaveBeenCalledTimes(1);
-        expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith({
-          projectPath: ABSOLUTE_PROJECT_PATH,
-          source: 'app/env.hbs',
-          target: '.env',
-          context: {
-            databaseUrl: config.dbConnectionUrl,
-            ssl: config.ssl,
-            dbSchema: undefined,
-            dockerDatabaseUrl: 'mongodb://root:password@host.docker.internal:27017/forest',
-            hostname: config.appHostname,
-            port: 3310,
-            forestEnvSecret: config.forestEnvSecret,
-            forestAuthSecret: config.forestAuthSecret,
-            hasDockerDatabaseUrl: true,
-            applicationUrl: 'http://localhost:3310',
-          },
+        expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith('env.hbs', '.env', {
+          databaseUrl: config.dbConfig.dbConnectionUrl,
+          ssl: config.dbConfig.ssl,
+          dbSchema: undefined,
+          dockerDatabaseUrl: 'mongodb://root:password@host.docker.internal:27017/forest',
+          hostname: config.appConfig.appHostname,
+          port: 3310,
+          forestEnvSecret: config.forestEnvSecret,
+          forestAuthSecret: config.forestAuthSecret,
+          hasDockerDatabaseUrl: true,
+          applicationUrl: 'http://localhost:3310',
         });
       });
     });
@@ -463,12 +333,7 @@ describe('services > dumper (unit)', () => {
         .mockImplementation();
       dumper.writeDockerfile(ABSOLUTE_PROJECT_PATH, { dbDialect: 'mongodb' });
 
-      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith({
-        projectPath: ABSOLUTE_PROJECT_PATH,
-        source: 'app/Dockerfile.hbs',
-        target: 'Dockerfile',
-        context: {},
-      });
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith('Dockerfile.hbs', 'Dockerfile');
     });
   });
 
@@ -483,12 +348,14 @@ describe('services > dumper (unit)', () => {
             FOREST_URL: 'https://something.com',
           },
         });
-        jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(true);
         const copyHandlebarsTemplateSpy = jest
           .spyOn(dumper, 'copyHandleBarsTemplate')
           .mockImplementation();
-        dumper.writeDockerCompose(ABSOLUTE_PROJECT_PATH, {});
-        const handlebarContext = copyHandlebarsTemplateSpy.mock.calls[0][0].context;
+        dumper.writeDockerCompose({
+          appConfig: {},
+          dbConfig: {},
+        });
+        const handlebarContext = copyHandlebarsTemplateSpy.mock.calls[0][2];
 
         // eslint-disable-next-line no-template-curly-in-string
         expect(handlebarContext.forestUrl).toBe('${FOREST_URL-https://something.com}');
@@ -505,12 +372,14 @@ describe('services > dumper (unit)', () => {
             FOREST_URL: 'DEFAULT_FOREST_URL',
           },
         });
-        jest.spyOn(dumper, 'isLinuxBasedOs').mockReturnValue(true);
         const copyHandlebarsTemplateSpy = jest
           .spyOn(dumper, 'copyHandleBarsTemplate')
           .mockImplementation();
-        dumper.writeDockerCompose(ABSOLUTE_PROJECT_PATH, {});
-        const handlebarContext = copyHandlebarsTemplateSpy.mock.calls[0][0].context;
+        dumper.writeDockerCompose({
+          appConfig: {},
+          dbConfig: {},
+        });
+        const handlebarContext = copyHandlebarsTemplateSpy.mock.calls[0][2];
 
         expect(handlebarContext.forestUrl).toBe(false);
       });
@@ -526,14 +395,13 @@ describe('services > dumper (unit)', () => {
         const copyHandlebarsTemplateSpy = jest
           .spyOn(dumper, 'copyHandleBarsTemplate')
           .mockImplementation();
-        dumper.writeForestAdminMiddleware(ABSOLUTE_PROJECT_PATH, { dbDialect: 'mongodb' });
+        dumper.writeForestAdminMiddleware('mongodb');
 
-        expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith({
-          projectPath: ABSOLUTE_PROJECT_PATH,
-          source: 'app/middlewares/forestadmin.hbs',
-          target: 'middlewares/forestadmin.js',
-          context: { isMongoDB: true },
-        });
+        expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith(
+          'middlewares/forestadmin.hbs',
+          'middlewares/forestadmin.js',
+          { isMongoDB: true },
+        );
       });
     });
 
@@ -545,14 +413,13 @@ describe('services > dumper (unit)', () => {
         const copyHandlebarsTemplateSpy = jest
           .spyOn(dumper, 'copyHandleBarsTemplate')
           .mockImplementation();
-        dumper.writeForestAdminMiddleware(ABSOLUTE_PROJECT_PATH, { dbDialect: 'mysql' });
+        dumper.writeForestAdminMiddleware('mysql');
 
-        expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith({
-          projectPath: ABSOLUTE_PROJECT_PATH,
-          source: 'app/middlewares/forestadmin.hbs',
-          target: 'middlewares/forestadmin.js',
-          context: { isMongoDB: false },
-        });
+        expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith(
+          'middlewares/forestadmin.hbs',
+          'middlewares/forestadmin.js',
+          { isMongoDB: false },
+        );
       });
     });
   });
@@ -563,9 +430,6 @@ describe('services > dumper (unit)', () => {
 
       const mkdirpMock = jest.fn();
       const dumper = createDumper({
-        os: {
-          platform: () => jest.fn().mockReturnValue('linux'),
-        },
         mkdirp: mkdirpMock,
       });
       const writeForestCollectionSpy = jest
@@ -585,18 +449,24 @@ describe('services > dumper (unit)', () => {
       const writeDockerComposeSpy = jest.spyOn(dumper, 'writeDockerCompose').mockImplementation();
       const writeDockerfileSpy = jest.spyOn(dumper, 'writeDockerfile').mockImplementation();
       const writePackageJsonSpy = jest.spyOn(dumper, 'writePackageJson').mockImplementation();
-      const copyTemplateSpy = jest.spyOn(dumper, 'copyTemplate').mockImplementation();
+      const copyHandlebarsTemplateSpy = jest
+        .spyOn(dumper, 'copyHandleBarsTemplate')
+        .mockImplementation();
+
+      const projectPath = `${ABSOLUTE_PROJECT_PATH}/test-output/unit-test-dumper`;
 
       const schema = {
         testModel: { fields: {}, references: [], options: {} },
       };
       const config = {
-        applicationName: 'test-output/unit-test-dumper',
-        path: appRoot,
+        appConfig: {
+          applicationName: 'test-output/unit-test-dumper',
+        },
+        dbConfig: {
+          dbDialect: '',
+        },
       };
-      await dumper.dump(schema, config);
-
-      const projectPath = `${appRoot}/test-output/unit-test-dumper`;
+      await dumper.dump(config, schema);
 
       expect(mkdirpMock).toHaveBeenCalledTimes(8);
       expect(mkdirpMock).toHaveBeenCalledWith(projectPath);
@@ -609,44 +479,37 @@ describe('services > dumper (unit)', () => {
       expect(mkdirpMock).toHaveBeenCalledWith(`${projectPath}/middlewares`);
 
       // Files associated with each models of the schema
-      expect(writeModelSpy).toHaveBeenCalledWith(projectPath, config, 'testModel', {}, [], {});
-      expect(writeRouteSpy).toHaveBeenCalledWith(projectPath, config, 'testModel');
-      expect(writeForestCollectionSpy).toHaveBeenCalledWith(projectPath, config, 'testModel');
+      expect(writeModelSpy).toHaveBeenCalledWith(config, 'testModel', {}, [], {});
+      expect(writeRouteSpy).toHaveBeenCalledWith(config.dbConfig.dbDialect, 'testModel');
+      expect(writeForestCollectionSpy).toHaveBeenCalledWith(config.dbConfig.dbDialect, 'testModel');
 
       // General app files, based on config
-      expect(writeForestAdminMiddlewareSpy).toHaveBeenCalledWith(projectPath, config);
-      expect(writeModelsIndexSpy).toHaveBeenCalledWith(projectPath, config);
-      expect(writeDotEnvSpy).toHaveBeenCalledWith(projectPath, config);
-      expect(writeDatabasesConfigSpy).toHaveBeenCalledWith(projectPath, config);
-      expect(writeAppJsSpy).toHaveBeenCalledWith(projectPath, config);
-      expect(writeDockerComposeSpy).toHaveBeenCalledWith(projectPath, config);
-      expect(writeDockerfileSpy).toHaveBeenCalledWith(projectPath);
-      expect(writePackageJsonSpy).toHaveBeenCalledWith(projectPath, config);
+      expect(writeForestAdminMiddlewareSpy).toHaveBeenCalledWith(config.dbConfig.dbDialect);
+      expect(writeModelsIndexSpy).toHaveBeenCalledWith(config.dbConfig.dbDialect);
+      expect(writeDotEnvSpy).toHaveBeenCalledWith(config);
+      expect(writeDatabasesConfigSpy).toHaveBeenCalledWith(config.dbConfig.dbDialect);
+      expect(writeAppJsSpy).toHaveBeenCalledWith(config.dbConfig.dbDialect);
+      expect(writeDockerComposeSpy).toHaveBeenCalledWith(config);
+      expect(writeDockerfileSpy).toHaveBeenCalledWith();
+      expect(writePackageJsonSpy).toHaveBeenCalledWith(
+        config.dbConfig.dbDialect,
+        config.appConfig.applicationName,
+      );
 
       // Copied files
-      expect(copyTemplateSpy).toHaveBeenCalledTimes(6);
-      expect(copyTemplateSpy).toHaveBeenCalledWith(
-        projectPath,
-        'middlewares/welcome.hbs',
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledTimes(6);
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith(
+        `middlewares/welcome.hbs`,
         'middlewares/welcome.js',
       );
-      expect(copyTemplateSpy).toHaveBeenCalledWith(
-        projectPath,
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith(
+        `public/favicon.png`,
         'public/favicon.png',
-        'public/favicon.png',
       );
-      expect(copyTemplateSpy).toHaveBeenCalledWith(
-        projectPath,
-        'views/index.hbs',
-        'views/index.html',
-      );
-      expect(copyTemplateSpy).toHaveBeenCalledWith(
-        projectPath,
-        'dockerignore.hbs',
-        '.dockerignore',
-      );
-      expect(copyTemplateSpy).toHaveBeenCalledWith(projectPath, 'gitignore.hbs', '.gitignore');
-      expect(copyTemplateSpy).toHaveBeenCalledWith(projectPath, 'server.hbs', 'server.js');
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith('views/index.hbs', 'views/index.html');
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith('dockerignore.hbs', '.dockerignore');
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith('gitignore.hbs', '.gitignore');
+      expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith('server.hbs', 'server.js');
     });
 
     it('should call all the mandatory functions required to update project', async () => {
@@ -654,9 +517,6 @@ describe('services > dumper (unit)', () => {
 
       const mkdirpMock = jest.fn();
       const dumper = createDumper({
-        os: {
-          platform: () => jest.fn().mockReturnValue('linux'),
-        },
         mkdirp: mkdirpMock,
       });
       const writeForestCollectionSpy = jest
@@ -676,22 +536,26 @@ describe('services > dumper (unit)', () => {
       const writeDockerComposeSpy = jest.spyOn(dumper, 'writeDockerCompose').mockImplementation();
       const writeDockerfileSpy = jest.spyOn(dumper, 'writeDockerfile').mockImplementation();
       const writePackageJsonSpy = jest.spyOn(dumper, 'writePackageJson').mockImplementation();
-      const copyTemplateSpy = jest.spyOn(dumper, 'copyTemplate').mockImplementation();
+      const copyHandlebarsTemplateSpy = jest
+        .spyOn(dumper, 'copyHandleBarsTemplate')
+        .mockImplementation();
       jest.spyOn(Dumper, 'shouldSkipRouteGenerationForModel');
+
+      const projectPath = `${ABSOLUTE_PROJECT_PATH}/test-output/unit-test-dumper`;
 
       const schema = {
         testModel: { fields: {}, references: [], options: {} },
       };
       const config = {
-        applicationName: 'test-output/unit-test-dumper',
-        isUpdate: true,
-        modelsExportPath: 'test',
-        path: appRoot,
-        useMultiDatabase: true,
+        appConfig: {
+          applicationName: 'test-output/unit-test-dumper',
+          isUpdate: true,
+          modelsExportPath: 'test',
+          useMultiDatabase: true,
+        },
+        dbConfig: {},
       };
-      await dumper.dump(schema, config);
-
-      const projectPath = `${appRoot}/test-output/unit-test-dumper`;
+      await dumper.dump(config, schema);
 
       expect(mkdirpMock).toHaveBeenCalledTimes(5);
       expect(mkdirpMock).toHaveBeenCalledWith(projectPath);
@@ -701,9 +565,9 @@ describe('services > dumper (unit)', () => {
       expect(mkdirpMock).toHaveBeenCalledWith(`${projectPath}/models/test`);
 
       // Files associated with each models of the schema
-      expect(writeModelSpy).toHaveBeenCalledWith(projectPath, config, 'testModel', {}, [], {});
-      expect(writeRouteSpy).toHaveBeenCalledWith(projectPath, config, 'testModel');
-      expect(writeForestCollectionSpy).toHaveBeenCalledWith(projectPath, config, 'testModel');
+      expect(writeModelSpy).toHaveBeenCalledWith(config, 'testModel', {}, [], {});
+      expect(writeRouteSpy).toHaveBeenCalledWith(config.dbConfig.dbDialect, 'testModel');
+      expect(writeForestCollectionSpy).toHaveBeenCalledWith(config.dbConfig.dbDialect, 'testModel');
 
       // General app files, based on config
       expect(writeForestAdminMiddlewareSpy).not.toHaveBeenCalled();
@@ -718,7 +582,7 @@ describe('services > dumper (unit)', () => {
       expect(Dumper.shouldSkipRouteGenerationForModel).toHaveBeenCalledWith('testModel');
 
       // Copied files
-      expect(copyTemplateSpy).not.toHaveBeenCalled();
+      expect(copyHandlebarsTemplateSpy).not.toHaveBeenCalled();
     });
   });
 

@@ -6,7 +6,7 @@ module.exports = class SchemaService {
     constants,
     database,
     databaseAnalyzer,
-    dumper,
+    forestExpressDumper,
     env,
     errorHandler,
     fs,
@@ -18,7 +18,7 @@ module.exports = class SchemaService {
       constants,
       database,
       databaseAnalyzer,
-      dumper,
+      forestExpressDumper,
       env,
       errorHandler,
       fs,
@@ -29,7 +29,7 @@ module.exports = class SchemaService {
     this.constants = constants;
     this.database = database;
     this.databaseAnalyzer = databaseAnalyzer;
-    this.dumper = dumper;
+    this.dumper = forestExpressDumper;
     this.env = env;
     this.errorHandler = errorHandler;
     this.fs = fs;
@@ -100,23 +100,23 @@ module.exports = class SchemaService {
   async _dumpSchemas(databasesSchema, applicationName, isUpdate, useMultiDatabase) {
     this.spinner.start({ text: 'Generating your files' });
 
-    const dumperOptions = {
-      applicationName,
-      isUpdate,
-      useMultiDatabase,
-      modelsExportPath: '', // Value is defined below, it's different for each schema
-      dbDialect: null, // Value is defined below, it's coming from each analyzerOptions
-      dbSchema: null, // Value is defined below, it's coming from each analyzerOptions
-    };
-
     const dumpPromise = Promise.all(
       databasesSchema.map(databaseSchema =>
-        this.dumper.dump(databaseSchema.schema, {
-          ...dumperOptions,
-          modelsExportPath: this.path.relative('models', databaseSchema.modelsDir),
-          dbDialect: databaseSchema.analyzerOptions.dbDialect,
-          dbSchema: databaseSchema.analyzerOptions.dbSchema,
-        }),
+        this.dumper.dump(
+          {
+            appConfig: {
+              applicationName,
+              isUpdate,
+              useMultiDatabase,
+              modelsExportPath: this.path.relative('models', databaseSchema.modelsDir),
+            },
+            dbConfig: {
+              dbDialect: databaseSchema.analyzerOptions.dbDialect,
+              dbSchema: databaseSchema.analyzerOptions.dbSchema,
+            },
+          },
+          databaseSchema.schema,
+        ),
       ),
     );
     return this.spinner.attachToPromise(dumpPromise);

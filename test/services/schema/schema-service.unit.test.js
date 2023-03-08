@@ -8,7 +8,7 @@ const makeContext = () => ({
   },
   database: {},
   databaseAnalyzer: {},
-  dumper: {
+  forestExpressDumper: {
     checkLianaCompatiblityForUpdate: jest.fn(),
     checkForestCLIProjectStructure: jest.fn(),
   },
@@ -77,7 +77,7 @@ describe('schemaService', () => {
       const databasesSchema = [Symbol('databasesSchema')];
       const useMultiDatabase = false;
       const context = makeContext();
-      const { dumper } = context;
+      const { forestExpressDumper } = context;
 
       const schemaService = new SchemaService(context);
       jest.spyOn(schemaService, '_assertOutputDirectory').mockImplementation(() => {});
@@ -95,7 +95,7 @@ describe('schemaService', () => {
         dbConfigPath,
       });
 
-      expect(dumper.checkLianaCompatiblityForUpdate).toHaveBeenCalledWith();
+      expect(forestExpressDumper.checkLianaCompatiblityForUpdate).toHaveBeenCalledWith();
       expect(schemaService._assertOutputDirectory).toHaveBeenCalledWith(outputDirectory);
       expect(schemaService._getDatabasesConfig).toHaveBeenCalledWith(dbConfigPath);
       expect(schemaService._connectToDatabases).toHaveBeenCalledWith(databasesConfig);
@@ -121,10 +121,10 @@ describe('schemaService', () => {
 
         const schemaService = new SchemaService(context);
 
-        const { dumper, fs } = context;
+        const { forestExpressDumper, fs } = context;
         schemaService._assertOutputDirectory(outputDirectory);
 
-        expect(dumper.checkForestCLIProjectStructure).toHaveBeenCalledWith();
+        expect(forestExpressDumper.checkForestCLIProjectStructure).toHaveBeenCalledWith();
         expect(fs.existsSync).not.toHaveBeenCalled();
       });
     });
@@ -136,10 +136,10 @@ describe('schemaService', () => {
 
         const schemaService = new SchemaService(context);
 
-        const { dumper, fs } = context;
+        const { forestExpressDumper, fs } = context;
         schemaService._assertOutputDirectory(outputDirectory);
 
-        expect(dumper.checkForestCLIProjectStructure).not.toHaveBeenCalled();
+        expect(forestExpressDumper.checkForestCLIProjectStructure).not.toHaveBeenCalled();
         expect(fs.existsSync).toHaveBeenCalledWith(outputDirectory);
       });
     });

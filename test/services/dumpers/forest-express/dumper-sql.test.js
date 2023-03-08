@@ -2,10 +2,10 @@ const appRoot = require('app-root-path');
 const rimraf = require('rimraf');
 const Context = require('@forestadmin/context');
 const fs = require('fs');
-const renderingModel = require('./expected/sequelize/db-analysis-output/renderings.expected.json');
-const defaultPlan = require('../../../src/context/plan');
+const renderingModel = require('../../analyzer/expected/sequelize/db-analysis-output/renderings.expected.json');
+const defaultPlan = require('../../../../src/context/plan');
 
-const Dumper = require('../../../src/services/dumper/dumper');
+const Dumper = require('../../../../src/services/dumpers/forest-express');
 
 const TYPE_CAST = 'databaseOptions.dialectOptions.typeCast';
 
@@ -19,19 +19,23 @@ describe('services > dumper > SQL', () => {
   describe('database MySQL', () => {
     async function dump() {
       const config = {
-        applicationName: 'test-output/mysql',
-        dbDialect: 'mysql',
-        dbConnectionUrl: 'mysql://localhost:8999',
-        ssl: false,
-        dbSchema: 'public',
-        appHostname: 'localhost',
-        appPort: 1654,
-        path: appRoot,
+        appConfig: {
+          applicationName: 'test-output/mysql',
+          appHostname: 'localhost',
+          appPort: 1654,
+          path: appRoot,
+        },
+        dbConfig: {
+          dbDialect: 'mysql',
+          dbConnectionUrl: 'mysql://localhost:8999',
+          ssl: false,
+          dbSchema: 'public',
+        },
       };
 
       const injectedContext = Context.execute(defaultPlan);
       const dumper = new Dumper(injectedContext);
-      await dumper.dump({}, config);
+      await dumper.dump(config, {});
     }
 
     it('should force type casting for boolean in config/databases.js file', async () => {
@@ -50,19 +54,23 @@ describe('services > dumper > SQL', () => {
   describe('database MSSQL', () => {
     async function dump() {
       const config = {
-        applicationName: 'test-output/mssql',
-        dbDialect: 'mssql',
-        dbConnectionUrl: 'mssql://localhost:1432',
-        ssl: false,
-        dbSchema: 'public',
-        appHostname: 'localhost',
-        appPort: 1654,
-        path: appRoot,
+        appConfig: {
+          applicationName: 'test-output/mssql',
+          appHostname: 'localhost',
+          appPort: 1654,
+          path: appRoot,
+        },
+        dbConfig: {
+          dbDialect: 'mssql',
+          dbConnectionUrl: 'mssql://localhost:1432',
+          ssl: false,
+          dbSchema: 'public',
+        },
       };
 
       const injectedContext = Context.execute(defaultPlan);
       const dumper = new Dumper(injectedContext);
-      await dumper.dump({}, config);
+      await dumper.dump(config, {});
     }
 
     it('should not force type casting in config/databases.js file', async () => {
@@ -81,19 +89,23 @@ describe('services > dumper > SQL', () => {
   describe('database postgreSQL', () => {
     async function dump() {
       const config = {
-        applicationName: 'test-output/postgres',
-        dbDialect: 'postgres',
-        dbConnectionUrl: 'postgres://localhost:54369',
-        ssl: false,
-        dbSchema: 'public',
-        appHostname: 'localhost',
-        appPort: 1654,
-        path: appRoot,
+        appConfig: {
+          applicationName: 'test-output/postgres',
+          appHostname: 'localhost',
+          appPort: 1654,
+          path: appRoot,
+        },
+        dbConfig: {
+          dbDialect: 'postgres',
+          dbConnectionUrl: 'postgres://localhost:54369',
+          ssl: false,
+          dbSchema: 'public',
+        },
       };
 
       const injectedContext = Context.execute(defaultPlan);
       const dumper = new Dumper(injectedContext);
-      await dumper.dump(renderingModel, config);
+      await dumper.dump(config, renderingModel);
     }
 
     it('should generate a model file', async () => {
@@ -104,7 +116,7 @@ describe('services > dumper > SQL', () => {
         'utf8',
       );
       const renderingsExpectedFile = fs.readFileSync(
-        `${__dirname}/expected/sequelize/dumper-output/renderings.expected.js`,
+        `${__dirname}/expected/sequelize/renderings.expected.js`,
         'utf-8',
       );
       expect(renderingsGeneratedFile).toStrictEqual(renderingsExpectedFile);

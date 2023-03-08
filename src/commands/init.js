@@ -1,6 +1,5 @@
 const { flags } = require('@oclif/command');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
-const { buildDatabaseUrl } = require('../utils/database-url');
 const withCurrentProject = require('../services/with-current-project');
 const ProjectManager = require('../services/project-manager');
 const EnvironmentManager = require('../services/environment-manager');
@@ -26,18 +25,20 @@ const PROMPT_MESSAGE_AUTO_CREATING_ENV_FILE =
 class InitCommand extends AbstractAuthenticatedCommand {
   constructor(argv, config, plan) {
     super(argv, config, plan);
-    const { assertPresent, env, fs, inquirer, spinner } = this.context;
+    const { assertPresent, env, fs, inquirer, spinner, buildDatabaseUrl } = this.context;
     assertPresent({
       env,
       fs,
       inquirer,
       spinner,
+      buildDatabaseUrl,
     });
 
     this.env = env;
     this.fs = fs;
     this.inquirer = inquirer;
     this.spinner = spinner;
+    this.buildDatabaseUrl = buildDatabaseUrl;
 
     this.environmentVariables = {};
   }
@@ -91,7 +92,19 @@ class InitCommand extends AbstractAuthenticatedCommand {
         const databaseConfiguration = await handleDatabaseConfiguration();
         this.spinner.continue();
         if (databaseConfiguration) {
-          this.environmentVariables.databaseUrl = buildDatabaseUrl(databaseConfiguration);
+          const dbConfig = {
+            dbConnectionUrl: databaseConfiguration.dbConnectionUrl,
+            dbDialect: databaseConfiguration.databaseDialect,
+            dbHostname: databaseConfiguration.databaseHost,
+            dbName: databaseConfiguration.databaseName,
+            dbPassword: databaseConfiguration.databasePassword,
+            dbPort: databaseConfiguration.databasePort,
+            dbSchema: databaseConfiguration.databaseSchema,
+            dbUser: databaseConfiguration.databaseUser,
+            mongodbSrv: databaseConfiguration.mongodbSrv,
+            ssl: databaseConfiguration.databaseSSL,
+          };
+          this.environmentVariables.databaseUrl = this.buildDatabaseUrl(dbConfig);
           this.environmentVariables.databaseSchema = databaseConfiguration.databaseSchema;
           this.environmentVariables.databaseSSL = databaseConfiguration.ssl;
         }

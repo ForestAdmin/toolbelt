@@ -1,5 +1,5 @@
 import type { ConfigInterface, DbConfigInterface } from '../../interfaces/project-create-interface';
-import type Dumper from '../../services/dumper/dumper';
+import type ForestExpress from '../../services/dumpers/forest-express';
 import type DatabaseAnalyzer from '../../services/schema/update/analyzer/database-analyzer';
 import type * as Config from '@oclif/config';
 
@@ -8,20 +8,20 @@ import AbstractProjectCreateCommand from '../../abstract-project-create-command'
 export default class CreateCommand extends AbstractProjectCreateCommand {
   private readonly databaseAnalyzer: DatabaseAnalyzer;
 
-  private readonly dumper: Dumper;
+  private readonly dumper: ForestExpress;
 
   constructor(argv: string[], config: Config.IConfig, plan?) {
     super(argv, config, plan);
 
-    const { assertPresent, databaseAnalyzer, dumper } = this.context;
+    const { assertPresent, databaseAnalyzer, forestExpressDumper } = this.context;
 
     assertPresent({
       databaseAnalyzer,
-      dumper,
+      forestExpressDumper,
     });
 
     this.databaseAnalyzer = databaseAnalyzer;
-    this.dumper = dumper;
+    this.dumper = forestExpressDumper;
   }
 
   async generateProject(config: ConfigInterface) {
@@ -51,13 +51,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
 
   private async createFiles(config: ConfigInterface, schema) {
     this.spinner.start({ text: 'Creating your project files' });
-    const dumperConfig = {
-      ...config.dbConfig,
-      ...config.appConfig,
-      forestAuthSecret: config.forestAuthSecret,
-      forestEnvSecret: config.forestEnvSecret,
-    };
-    const dumpPromise = this.dumper.dump(schema, dumperConfig);
+    const dumpPromise = this.dumper.dump(config, schema);
     await this.spinner.attachToPromise(dumpPromise);
   }
 }

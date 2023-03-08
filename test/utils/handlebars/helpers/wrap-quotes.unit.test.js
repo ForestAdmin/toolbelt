@@ -1,4 +1,4 @@
-const wrapQuotes = require('../../../../../src/services/dumper/handlebars/helpers/wrap-quotes');
+const wrapQuotes = require('../../../../src/utils/handlebars/helpers/wrap-quotes');
 
 describe('wrap-quotes', () => {
   it('should wrap', () => {
