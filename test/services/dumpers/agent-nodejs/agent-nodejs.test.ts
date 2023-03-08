@@ -1,3 +1,5 @@
+import type { ConfigInterface } from '../../../../src/interfaces/project-create-interface';
+
 import Context from '@forestadmin/context';
 import appRoot from 'app-root-path';
 import fs from 'fs';
@@ -9,7 +11,7 @@ import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
 
 describe('services > dumpers > agentNodejs', () => {
   describe('dump', () => {
-    const configs = [
+    const configs: Array<ConfigInterface & { name: string }> = [
       {
         name: 'mongodb',
         appConfig: {
@@ -55,6 +57,8 @@ describe('services > dumpers > agentNodejs', () => {
           ssl: false,
           dbSchema: 'public',
         },
+        forestAuthSecret: 'forestAuthSecret',
+        forestEnvSecret: 'forestEnvSecret',
       },
       {
         name: 'mariadb',
@@ -69,6 +73,8 @@ describe('services > dumpers > agentNodejs', () => {
           ssl: false,
           dbSchema: 'public',
         },
+        forestAuthSecret: 'forestAuthSecret',
+        forestEnvSecret: 'forestEnvSecret',
       },
       {
         name: 'mssql',
@@ -83,6 +89,8 @@ describe('services > dumpers > agentNodejs', () => {
           ssl: false,
           dbSchema: 'public',
         },
+        forestAuthSecret: 'forestAuthSecret',
+        forestEnvSecret: 'forestEnvSecret',
       },
     ];
 
