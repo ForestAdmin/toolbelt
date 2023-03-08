@@ -63,6 +63,6 @@ const agent = createAgent({
 
 agent
   // Expose an HTTP endpoint.
-  .mountOnStandaloneServer(process.env.APPLICATION_PORT)
+  .mountOnStandaloneServer(process.env.PORT || process.env.APPLICATION_PORT)
   // Start the agent.
   .start();

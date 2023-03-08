@@ -30,6 +30,7 @@ describe('services > dumpers > AgentNodeJs', () => {
       constants: {
         CURRENT_WORKING_DIRECTORY: '/test',
       },
+      toValidPackageName: jest.fn().mockImplementation(string => string),
       logger: {
         log: jest.fn(),
       },
@@ -75,7 +76,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
       expect(context.fs.writeFileSync).toHaveBeenCalledWith(
         '/test/anApplication/.gitignore',
-        'node_modules\n.env',
+        'node_modules\n.env\n',
       );
     });
 
@@ -88,7 +89,20 @@ describe('services > dumpers > AgentNodeJs', () => {
 
       expect(context.fs.writeFileSync).toHaveBeenCalledWith(
         '/test/anApplication/.dockerignore',
-        'node_modules\nnpm-debug.log\n.env',
+        'node_modules\nnpm-debug.log\n.env\n',
+      );
+    });
+
+    it('should write a typings.ts file', async () => {
+      expect.assertions(1);
+
+      const { dumper, context, defaultConfig } = createDumper();
+
+      await dumper.dump(defaultConfig);
+
+      expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+        '/test/anApplication/typings.ts',
+        '/* eslint-disable */\nexport type Schema = any;\n',
       );
     });
 
@@ -419,7 +433,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
           '/test/anApplication/package.json',
-          expect.stringContaining('"name": "anapplication"'),
+          expect.stringContaining('"name": "anApplication"'),
         );
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
           '/test/anApplication/package.json',
@@ -575,7 +589,7 @@ describe('services > dumpers > AgentNodeJs', () => {
           containerName: 'anApplication',
           databaseUrl: `\${DOCKER_DATABASE_URL}`,
           dbSchema: 'public',
-          forestExtraHost: false,
+          forestExtraHost: null,
           forestServerUrl: false,
           network: null,
         }),
