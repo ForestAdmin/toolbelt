@@ -16,7 +16,6 @@ describe('services > dumpers > agentNodejs', () => {
           applicationName: 'test-output/mongodb',
           appHostname: 'localhost',
           appPort: 1654,
-          path: appRoot,
         },
         dbConfig: {
           dbDialect: 'mongodb',
@@ -33,7 +32,6 @@ describe('services > dumpers > agentNodejs', () => {
           applicationName: 'test-output/postgres',
           appHostname: 'localhost',
           appPort: 1654,
-          path: appRoot,
         },
         dbConfig: {
           dbDialect: 'postgres',
@@ -50,7 +48,6 @@ describe('services > dumpers > agentNodejs', () => {
           applicationName: 'test-output/mysql',
           appHostname: 'localhost',
           appPort: 1654,
-          path: appRoot,
         },
         dbConfig: {
           dbDialect: 'mysql',
@@ -65,7 +62,6 @@ describe('services > dumpers > agentNodejs', () => {
           applicationName: 'test-output/mariadb',
           appHostname: 'localhost',
           appPort: 1654,
-          path: appRoot,
         },
         dbConfig: {
           dbDialect: 'mariadb',
@@ -80,7 +76,6 @@ describe('services > dumpers > agentNodejs', () => {
           applicationName: 'test-output/mssql',
           appHostname: 'localhost',
           appPort: 1654,
-          path: appRoot,
         },
         dbConfig: {
           dbDialect: 'mssql',
@@ -148,7 +143,6 @@ describe('services > dumpers > agentNodejs', () => {
             applicationName: 'test-output/postgres',
             appHostname: 'localhost',
             appPort: 1654,
-            path: appRoot,
           },
           dbConfig: {
             dbDialect: 'postgres',
@@ -243,7 +237,6 @@ describe('services > dumpers > agentNodejs', () => {
             applicationName: 'test-output/postgres',
             appHostname: 'localhost',
             appPort: 1654,
-            path: appRoot,
           },
           dbConfig: {
             dbDialect: 'postgres',
@@ -337,7 +330,6 @@ describe('services > dumpers > agentNodejs', () => {
             applicationName: 'test-output/postgres',
             appHostname: 'localhost',
             appPort: 1654,
-            path: appRoot,
           },
           dbConfig: {
             dbDialect: 'postgres',
@@ -422,7 +414,6 @@ describe('services > dumpers > agentNodejs', () => {
             applicationName: 'test-output/postgres',
             appHostname: 'localhost',
             appPort: 1654,
-            path: appRoot,
           },
           dbConfig: {
             dbDialect: 'postgres',
@@ -506,7 +497,6 @@ describe('services > dumpers > agentNodejs', () => {
             applicationName: 'test-output/postgres',
             appHostname: 'localhost',
             appPort: 1654,
-            path: appRoot,
           },
           dbConfig: {
             dbDialect: 'postgres',
@@ -563,7 +553,6 @@ describe('services > dumpers > agentNodejs', () => {
             applicationName: 'test-output/postgres',
             appHostname: 'localhost',
             appPort: 1654,
-            path: appRoot,
           },
           dbConfig: {
             dbDialect: 'postgres',
