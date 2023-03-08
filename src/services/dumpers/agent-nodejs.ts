@@ -3,7 +3,7 @@ import type { ConfigInterface, DbConfigInterface } from '../../interfaces/projec
 import toValidPackageName from '../../utils/to-valid-package-name';
 import AbstractDumper from './abstract-dumper';
 
-export default class AgentNodeJsDumper extends AbstractDumper {
+export default class AgentNodeJs extends AbstractDumper {
   private env: { FOREST_SERVER_URL: string; FOREST_URL_IS_DEFAULT: string };
 
   private readonly DEFAULT_PORT = 3310;

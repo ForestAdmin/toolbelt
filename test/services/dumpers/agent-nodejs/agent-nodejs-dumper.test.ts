@@ -5,9 +5,9 @@ import os from 'os';
 import rimraf from 'rimraf';
 
 import defaultPlan from '../../../../src/context/plan';
-import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs-dumper';
+import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
 
-describe('services > dumpers > agentNodejsDumper', () => {
+describe('services > dumpers > agentNodejs', () => {
   describe('dump', () => {
     const configs = [
       {
@@ -104,7 +104,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
     describe.each(configs)('database $name', ({ name, appConfig, dbConfig }) => {
       async function dump() {
         const injectedContext = Context.execute(defaultPlan);
-        const dumper = new AgentNodeJsDumper(injectedContext);
+        const dumper = new AgentNodeJs(injectedContext);
         await dumper.dump(
           {
             appConfig,
@@ -160,7 +160,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
             forestEnvSecret: 'forestEnvSecret',
           };
           const injectedContext = Context.execute(defaultPlan);
-          const dumper = new AgentNodeJsDumper(injectedContext);
+          const dumper = new AgentNodeJs(injectedContext);
           await dumper.dump(
             {
               appConfig: postgresConfig.appConfig,
@@ -257,7 +257,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
             forestEnvSecret: 'forestEnvSecret',
           };
           const injectedContext = Context.execute(defaultPlan);
-          const dumper = new AgentNodeJsDumper(injectedContext);
+          const dumper = new AgentNodeJs(injectedContext);
           await dumper.dump(
             {
               appConfig: postgresConfig.appConfig,
@@ -352,7 +352,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
           forestEnvSecret: 'forestEnvSecret',
         };
         const injectedContext: any = Context.execute(defaultPlan);
-        const dumper = new AgentNodeJsDumper({
+        const dumper = new AgentNodeJs({
           ...injectedContext,
           env: {
             ...injectedContext.env,
@@ -436,7 +436,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
           forestEnvSecret: 'forestEnvSecret',
         };
         const injectedContext: any = Context.execute(defaultPlan);
-        const dumper = new AgentNodeJsDumper({
+        const dumper = new AgentNodeJs({
           ...injectedContext,
         });
         await dumper.dump(
