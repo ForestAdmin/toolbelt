@@ -1,8 +1,8 @@
 import type { ConfigInterface } from '../../../../src/interfaces/project-create-interface';
 
-import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs-dumper';
+import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
 
-describe('services > dumpers > agentNodejsDumper', () => {
+describe('services > dumpers > AgentNodeJs', () => {
   const createDumper = (dependencies = {}) => {
     const context = {
       assertPresent: jest.fn(),
@@ -59,7 +59,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
     };
 
     return {
-      dumper: new AgentNodeJsDumper(context),
+      dumper: new AgentNodeJs(context),
       context,
       defaultConfig,
     };
