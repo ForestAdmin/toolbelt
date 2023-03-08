@@ -1,10 +1,9 @@
 import type { ConfigInterface, DbConfigInterface } from '../../interfaces/project-create-interface';
 
-import toValidPackageName from '../../utils/to-valid-package-name';
 import AbstractDumper from './abstract-dumper';
 
 export default class AgentNodeJs extends AbstractDumper {
-  private env: { FOREST_SERVER_URL: string; FOREST_URL_IS_DEFAULT: string };
+  private env: { FOREST_SERVER_URL: string; FOREST_URL_IS_DEFAULT: boolean };
 
   private readonly DEFAULT_PORT = 3310;
 
@@ -16,8 +15,18 @@ export default class AgentNodeJs extends AbstractDumper {
 
   private readonly snakeCase: (string: string) => string;
 
+  private readonly toValidPackageName: (string: string) => string;
+
   constructor(context) {
-    const { assertPresent, env, isLinuxOs, buildDatabaseUrl, isDatabaseLocal, snakeCase } = context;
+    const {
+      assertPresent,
+      env,
+      isLinuxOs,
+      buildDatabaseUrl,
+      isDatabaseLocal,
+      snakeCase,
+      toValidPackageName,
+    } = context;
 
     assertPresent({
       env,
@@ -33,6 +42,7 @@ export default class AgentNodeJs extends AbstractDumper {
     this.buildDatabaseUrl = buildDatabaseUrl;
     this.isDatabaseLocal = isDatabaseLocal;
     this.snakeCase = snakeCase;
+    this.toValidPackageName = toValidPackageName;
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -66,7 +76,7 @@ export default class AgentNodeJs extends AbstractDumper {
     }
 
     const pkg = {
-      name: toValidPackageName(applicationName),
+      name: this.toValidPackageName(applicationName),
       version: '0.0.1',
       private: true,
       main: 'index.js',
@@ -138,15 +148,15 @@ export default class AgentNodeJs extends AbstractDumper {
   }
 
   private writeGitignore() {
-    this.writeFile('.gitignore', 'node_modules\n.env');
+    this.writeFile('.gitignore', 'node_modules\n.env\n');
   }
 
   private writeTypings() {
-    this.writeFile('typings.ts', '/* eslint-disable */\nexport type Schema = any;');
+    this.writeFile('typings.ts', '/* eslint-disable */\nexport type Schema = any;\n');
   }
 
   private writeDockerignore() {
-    this.writeFile('.dockerignore', 'node_modules\nnpm-debug.log\n.env');
+    this.writeFile('.dockerignore', 'node_modules\nnpm-debug.log\n.env\n');
   }
 
   private writeDockerfile() {
@@ -157,11 +167,10 @@ export default class AgentNodeJs extends AbstractDumper {
     const databaseUrl = `\${${this.isLinuxOs ? 'DATABASE_URL' : 'DOCKER_DATABASE_URL'}}`;
     const forestServerUrl = this.env.FOREST_URL_IS_DEFAULT ? false : `\${FOREST_SERVER_URL}`;
 
-    let forestExtraHost: string | boolean = false;
+    let forestExtraHost: string = null;
     if (forestServerUrl) {
       try {
-        const parsedForestUrl = new URL(this.env.FOREST_SERVER_URL);
-        forestExtraHost = parsedForestUrl.hostname;
+        forestExtraHost = new URL(this.env.FOREST_SERVER_URL).hostname;
       } catch (error) {
         throw new Error(`Invalid value for FOREST_SERVER_URL: "${this.env.FOREST_SERVER_URL}"`);
       }
