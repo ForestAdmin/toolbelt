@@ -15,7 +15,7 @@ const parenthesisColumnNameUnderscored = require('../../analyzer/expected/sequel
 const parenthesisColumnNameUnderscoredTrue = require('../../analyzer/expected/sequelize/db-analysis-output/parenthesis_underscored_true.expected.json');
 const defaultPlan = require('../../../../src/context/plan');
 
-const Dumper = require('../../../../src/services/dumpers/dumper-v1');
+const Dumper = require('../../../../src/services/dumpers/forest-express');
 
 function getDumper(context) {
   return new Dumper(context);

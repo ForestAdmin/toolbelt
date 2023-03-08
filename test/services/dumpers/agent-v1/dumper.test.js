@@ -2,7 +2,7 @@ const Context = require('@forestadmin/context');
 const fs = require('fs');
 const os = require('os');
 const rimraf = require('rimraf');
-const Dumper = require('../../../../src/services/dumpers/dumper-v1');
+const Dumper = require('../../../../src/services/dumpers/forest-express');
 const defaultPlan = require('../../../../src/context/plan');
 
 const DOCKER_COMPOSE_FILE_LOCATION = './test-output/Linux/docker-compose.yml';

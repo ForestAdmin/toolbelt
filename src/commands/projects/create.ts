@@ -1,5 +1,5 @@
 import type { ConfigInterface, DbConfigInterface } from '../../interfaces/project-create-interface';
-import type DumperV1 from '../../services/dumpers/dumper-v1';
+import type ForestExpressDumper from '../../services/dumpers/forest-express';
 import type DatabaseAnalyzer from '../../services/schema/update/analyzer/database-analyzer';
 import type * as Config from '@oclif/config';
 
@@ -8,20 +8,20 @@ import AbstractProjectCreateCommand from '../../abstract-project-create-command'
 export default class CreateCommand extends AbstractProjectCreateCommand {
   private readonly databaseAnalyzer: DatabaseAnalyzer;
 
-  private readonly dumper: DumperV1;
+  private readonly dumper: ForestExpressDumper;
 
   constructor(argv: string[], config: Config.IConfig, plan?) {
     super(argv, config, plan);
 
-    const { assertPresent, databaseAnalyzer, dumperV1 } = this.context;
+    const { assertPresent, databaseAnalyzer, forestExpressDumper } = this.context;
 
     assertPresent({
       databaseAnalyzer,
-      dumperV1,
+      forestExpressDumper,
     });
 
     this.databaseAnalyzer = databaseAnalyzer;
-    this.dumper = dumperV1;
+    this.dumper = forestExpressDumper;
   }
 
   async generateProject(config: ConfigInterface) {

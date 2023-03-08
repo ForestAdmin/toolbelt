@@ -1,6 +1,6 @@
 const chalk = require('chalk');
 
-const Dumper = require('../../../../src/services/dumpers/dumper-v1');
+const Dumper = require('../../../../src/services/dumpers/forest-express');
 const InvalidForestCLIProjectStructureError = require('../../../../src/errors/dumper/invalid-forest-cli-project-structure-error');
 const IncompatibleLianaForUpdateError = require('../../../../src/errors/dumper/incompatible-liana-for-update-error');
 
