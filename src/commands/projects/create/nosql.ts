@@ -3,7 +3,7 @@ import type {
   DbConfig,
   ProcessedArguments,
 } from '../../../interfaces/project-create-interface';
-import type AgentNodeJsDumper from '../../../services/dumpers/agent-nodejs-dumper';
+import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type CommandGenerateConfigGetter from '../../../services/projects/create/command-generate-config-getter';
 import type DatabaseAnalyzer from '../../../services/schema/update/analyzer/database-analyzer';
 import type * as OclifConfig from '@oclif/config';
@@ -15,7 +15,7 @@ import { nosqlDbDialectOptions } from '../../../services/prompter/database-promp
 import Agents from '../../../utils/agents';
 
 export default class NosqlCommand extends AbstractProjectCreateCommand {
-  private readonly dumper: AgentNodeJsDumper;
+  private readonly dumper: AgentNodeJs;
 
   private readonly databaseAnalyzer: DatabaseAnalyzer;
 
