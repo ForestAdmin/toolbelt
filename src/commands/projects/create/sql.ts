@@ -1,5 +1,5 @@
 import type { Config, ProcessedArguments } from '../../../interfaces/project-create-interface';
-import type AgentNodeJsDumper from '../../../services/dumpers/agent-nodejs-dumper';
+import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type CommandGenerateConfigGetter from '../../../services/projects/create/command-generate-config-getter';
 import type * as OclifConfig from '@oclif/config';
 
@@ -10,7 +10,7 @@ import { sqlDbDialectOptions } from '../../../services/prompter/database-prompts
 import Agents from '../../../utils/agents';
 
 export default class SqlCommand extends AbstractProjectCreateCommand {
-  private readonly dumper: AgentNodeJsDumper;
+  private readonly dumper: AgentNodeJs;
 
   private readonly commandGenerateConfigGetter: CommandGenerateConfigGetter;
 

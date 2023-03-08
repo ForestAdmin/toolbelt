@@ -4,6 +4,7 @@ import type {
   ProcessedArguments,
 } from '../../interfaces/project-create-interface';
 import type ForestExpress from '../../services/dumpers/forest-express';
+import type CommandGenerateConfigGetter from '../../services/projects/create/command-generate-config-getter';
 import type DatabaseAnalyzer from '../../services/schema/update/analyzer/database-analyzer';
 import type * as OclifConfig from '@oclif/config';
 
@@ -54,7 +55,8 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
   constructor(argv: string[], config: OclifConfig.IConfig, plan?) {
     super(argv, config, plan);
 
-    const { assertPresent, databaseAnalyzer, forestExpressDumper, commandGenerateConfigGetter } = this.context;
+    const { assertPresent, databaseAnalyzer, forestExpressDumper, commandGenerateConfigGetter } =
+      this.context;
 
     assertPresent({
       databaseAnalyzer,
