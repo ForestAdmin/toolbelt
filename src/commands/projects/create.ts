@@ -1,5 +1,5 @@
 import type { ConfigInterface, DbConfigInterface } from '../../interfaces/project-create-interface';
-import type ForestExpressDumper from '../../services/dumpers/forest-express';
+import type ForestExpress from '../../services/dumpers/forest-express';
 import type DatabaseAnalyzer from '../../services/schema/update/analyzer/database-analyzer';
 import type * as Config from '@oclif/config';
 
@@ -8,7 +8,7 @@ import AbstractProjectCreateCommand from '../../abstract-project-create-command'
 export default class CreateCommand extends AbstractProjectCreateCommand {
   private readonly databaseAnalyzer: DatabaseAnalyzer;
 
-  private readonly dumper: ForestExpressDumper;
+  private readonly dumper: ForestExpress;
 
   constructor(argv: string[], config: Config.IConfig, plan?) {
     super(argv, config, plan);
