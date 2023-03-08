@@ -1,3 +1,10 @@
+## [3.1.4](https://github.com/ForestAdmin/toolbelt/compare/v3.1.3...v3.1.4) (2023-03-08)
+
+
+### Bug Fixes
+
+* **docker:** correctly build docker image to prevent execution error ([#541](https://github.com/ForestAdmin/toolbelt/issues/541)) ([39be1bd](https://github.com/ForestAdmin/toolbelt/commit/39be1bd21565c255f46bef2e8de5f75d4823cea2))
+
 ## [3.1.3](https://github.com/ForestAdmin/toolbelt/compare/v3.1.2...v3.1.3) (2023-03-08)
 
 ## [3.1.2](https://github.com/ForestAdmin/toolbelt/compare/v3.1.1...v3.1.2) (2023-03-01)
