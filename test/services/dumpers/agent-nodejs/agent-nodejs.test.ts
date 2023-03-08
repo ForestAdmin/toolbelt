@@ -96,6 +96,7 @@ describe('services > dumpers > agentNodejs', () => {
       'package.json',
       'Dockerfile',
       'docker-compose.yml',
+      'typings.ts',
       '.env',
       '.gitignore',
       '.dockerignore',
