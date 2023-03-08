@@ -76,7 +76,7 @@ export default class AgentNodeJs extends AbstractDumper {
     }
 
     const pkg = {
-      name: this.toValidPackageName(applicationName),
+      name: this.toValidPackageName(appName),
       version: '0.0.1',
       private: true,
       main: 'index.js',
@@ -143,7 +143,7 @@ export default class AgentNodeJs extends AbstractDumper {
 
     if (!this.isLinuxOs) {
       context.hasDockerDbUrl = true;
-      context.dockerDbUrl = databaseUrl.replace('localhost', 'host.docker.internal');
+      context.dockerDbUrl = dbUrl.replace('localhost', 'host.docker.internal');
     }
 
     this.copyHandleBarsTemplate('env.hbs', '.env', context);

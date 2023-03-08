@@ -587,7 +587,7 @@ describe('services > dumpers > AgentNodeJs', () => {
         '/test/anApplication/docker-compose.yml',
         expect.objectContaining({
           containerName: 'anApplication',
-          databaseUrl: `\${DOCKER_DATABASE_URL}`,
+          dbUrl: `\${DOCKER_DATABASE_URL}`,
           dbSchema: 'public',
           forestExtraHost: '',
           forestServerUrl: false,

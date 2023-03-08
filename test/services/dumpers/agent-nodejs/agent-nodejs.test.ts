@@ -1,4 +1,4 @@
-import type { ConfigInterface } from '../../../../src/interfaces/project-create-interface';
+import type { Config } from '../../../../src/interfaces/project-create-interface';
 
 import Context from '@forestadmin/context';
 import appRoot from 'app-root-path';
@@ -11,7 +11,7 @@ import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
 
 describe('services > dumpers > agentNodejs', () => {
   describe('dump', () => {
-    const configs: Array<ConfigInterface & { name: string }> = [
+    const configs: Array<Config & { name: string }> = [
       {
         name: 'mongodb',
         appConfig: {
@@ -146,16 +146,16 @@ describe('services > dumpers > agentNodejs', () => {
     describe('on a linux based OS', () => {
       const setupAndDump = async (dbConnectionUrl: string | null = null) => {
         const osStub = jest.spyOn(os, 'platform').mockReturnValue('linux');
-        const postgresConfig: ConfigInterface = {
+        const postgresConfig: Config = {
           appConfig: {
-            applicationName: 'test-output/postgres',
+            appName: 'test-output/postgres',
             appHostname: 'localhost',
             appPort: 1654,
           },
           dbConfig: {
             dbDialect: 'postgres',
             dbConnectionUrl: dbConnectionUrl || 'postgres://localhost:54369',
-            ssl: false,
+            dbSsl: false,
             dbSchema: 'public',
           },
           forestAuthSecret: 'forestAuthSecret',
@@ -185,18 +185,18 @@ describe('services > dumpers > agentNodejs', () => {
 
         const { osStub, postgresConfig } = await setupAndDump();
         const dockerComposeFile = fs.readFileSync(
-          `${appRoot}/${postgresConfig.appConfig.applicationName}/docker-compose.yml`,
+          `${appRoot}/${postgresConfig.appConfig.appName}/docker-compose.yml`,
           'utf-8',
         );
         const dotEnvFile = fs.readFileSync(
-          `${appRoot}/${postgresConfig.appConfig.applicationName}/.env`,
+          `${appRoot}/${postgresConfig.appConfig.appName}/.env`,
           'utf-8',
         );
 
         expect(dockerComposeFile).not.toContain('DOCKER_DATABASE_URL');
         expect(dotEnvFile).not.toContain('host.docker.internal');
 
-        rimraf.sync(`${appRoot}/${postgresConfig.appConfig.applicationName}`);
+        rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
         cleanStub(osStub);
       });
 
@@ -211,7 +211,7 @@ describe('services > dumpers > agentNodejs', () => {
           );
           expect(dockerComposeFile).toContain('network: host');
 
-          rimraf.sync(`${appRoot}/${postgresConfig.appConfig.applicationName}`);
+          rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
           cleanStub(osStub);
         });
       });
@@ -223,12 +223,12 @@ describe('services > dumpers > agentNodejs', () => {
           const { osStub, postgresConfig } = await setupAndDump('mysql://example.com:8999');
 
           const dockerComposeFile = fs.readFileSync(
-            `${appRoot}/${postgresConfig.appConfig.applicationName}/docker-compose.yml`,
+            `${appRoot}/${postgresConfig.appConfig.appName}/docker-compose.yml`,
             'utf-8',
           );
           expect(dockerComposeFile).not.toContain('network');
 
-          rimraf.sync(`${appRoot}/${postgresConfig.appConfig.applicationName}`);
+          rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
           cleanStub(osStub);
         });
       });
@@ -237,16 +237,16 @@ describe('services > dumpers > agentNodejs', () => {
     describe('on a non linux based OS', () => {
       const setupAndDump = async (dbConnectionUrl: string | null = null) => {
         const osStub = jest.spyOn(os, 'platform').mockReturnValue('darwin');
-        const postgresConfig: ConfigInterface = {
+        const postgresConfig: Config = {
           appConfig: {
-            applicationName: 'test-output/postgres',
+            appName: 'test-output/postgres',
             appHostname: 'localhost',
             appPort: 1654,
           },
           dbConfig: {
             dbDialect: 'postgres',
             dbConnectionUrl: dbConnectionUrl || 'postgres://localhost:54369',
-            ssl: false,
+            dbSsl: false,
             dbSchema: 'public',
           },
           forestAuthSecret: 'forestAuthSecret',
@@ -276,18 +276,18 @@ describe('services > dumpers > agentNodejs', () => {
 
         const { osStub, postgresConfig } = await setupAndDump();
         const dockerComposeFile = fs.readFileSync(
-          `${appRoot}/${postgresConfig.appConfig.applicationName}/docker-compose.yml`,
+          `${appRoot}/${postgresConfig.appConfig.appName}/docker-compose.yml`,
           'utf-8',
         );
         const dotEnvFile = fs.readFileSync(
-          `${appRoot}/${postgresConfig.appConfig.applicationName}/.env`,
+          `${appRoot}/${postgresConfig.appConfig.appName}/.env`,
           'utf-8',
         );
 
         expect(dockerComposeFile).toContain('DOCKER_DATABASE_URL');
         expect(dotEnvFile).toContain('host.docker.internal');
 
-        rimraf.sync(`${appRoot}/${postgresConfig.appConfig.applicationName}`);
+        rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
         cleanStub(osStub);
       });
 
@@ -302,7 +302,7 @@ describe('services > dumpers > agentNodejs', () => {
           );
           expect(dockerComposeFile).not.toContain('network');
 
-          rimraf.sync(`${appRoot}/${postgresConfig.appConfig.applicationName}`);
+          rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
           cleanStub(osStub);
         });
       });
@@ -314,12 +314,12 @@ describe('services > dumpers > agentNodejs', () => {
           const { osStub, postgresConfig } = await setupAndDump('mysql://example.com:8999');
 
           const dockerComposeFile = fs.readFileSync(
-            `${appRoot}/${postgresConfig.appConfig.applicationName}/docker-compose.yml`,
+            `${appRoot}/${postgresConfig.appConfig.appName}/docker-compose.yml`,
             'utf-8',
           );
           expect(dockerComposeFile).not.toContain('network');
 
-          rimraf.sync(`${appRoot}/${postgresConfig.appConfig.applicationName}`);
+          rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
           cleanStub(osStub);
         });
       });
@@ -327,7 +327,7 @@ describe('services > dumpers > agentNodejs', () => {
 
     describe('with a FOREST_SERVER_URL', () => {
       const setupAndDump = async () => {
-        const postgresConfig: ConfigInterface = {
+        const postgresConfig: Config = {
           appConfig: {
             appName: 'test-output/postgres',
             appHostname: 'localhost',
@@ -408,16 +408,16 @@ describe('services > dumpers > agentNodejs', () => {
 
     describe('without a FOREST_SERVER_URL', () => {
       const setupAndDump = async () => {
-        const postgresConfig: ConfigInterface = {
+        const postgresConfig: Config = {
           appConfig: {
-            applicationName: 'test-output/postgres',
+            appName: 'test-output/postgres',
             appHostname: 'localhost',
             appPort: 1654,
           },
           dbConfig: {
             dbDialect: 'postgres',
             dbConnectionUrl: 'postgres://localhost:54369',
-            ssl: false,
+            dbSsl: false,
             dbSchema: 'public',
           },
           forestAuthSecret: 'forestAuthSecret',
@@ -449,15 +449,15 @@ describe('services > dumpers > agentNodejs', () => {
 
         const postgresConfig = await setupAndDump();
         const dockerComposeFile = fs.readFileSync(
-          `${appRoot}/${postgresConfig.appConfig.applicationName}/docker-compose.yml`,
+          `${appRoot}/${postgresConfig.appConfig.appName}/docker-compose.yml`,
           'utf-8',
         );
         const dotEnvFile = fs.readFileSync(
-          `${appRoot}/${postgresConfig.appConfig.applicationName}/.env`,
+          `${appRoot}/${postgresConfig.appConfig.appName}/.env`,
           'utf-8',
         );
         const indexFile = fs.readFileSync(
-          `${appRoot}/${postgresConfig.appConfig.applicationName}/index.js`,
+          `${appRoot}/${postgresConfig.appConfig.appName}/index.js`,
           'utf-8',
         );
 
@@ -467,7 +467,7 @@ describe('services > dumpers > agentNodejs', () => {
         expect(dockerComposeFile).not.toContain(`- FOREST_SERVER_URL=\${FOREST_SERVER_URL}`);
         expect(indexFile).not.toContain('forestServerUrl: process.env.FOREST_SERVER_URL');
 
-        rimraf.sync(`${appRoot}/${postgresConfig.appConfig.applicationName}`);
+        rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
       });
 
       it('should not set `forestExtraHost` in `docker-compose.yml`', async () => {
@@ -475,20 +475,20 @@ describe('services > dumpers > agentNodejs', () => {
 
         const postgresConfig = await setupAndDump();
         const dockerComposeFile = fs.readFileSync(
-          `${appRoot}/${postgresConfig.appConfig.applicationName}/docker-compose.yml`,
+          `${appRoot}/${postgresConfig.appConfig.appName}/docker-compose.yml`,
           'utf-8',
         );
 
         expect(dockerComposeFile).not.toContain('extra_hosts:');
         expect(dockerComposeFile).not.toContain('- localhost:host-gateway');
 
-        rimraf.sync(`${appRoot}/${postgresConfig.appConfig.applicationName}`);
+        rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
       });
     });
 
     describe('without a schema', () => {
       const setupAndDump = async () => {
-        const postgresConfig: ConfigInterface = {
+        const postgresConfig: Config = {
           appConfig: {
             appName: 'test-output/postgres',
             appHostname: 'localhost',
@@ -541,16 +541,16 @@ describe('services > dumpers > agentNodejs', () => {
 
     describe('with a schema', () => {
       const setupAndDump = async () => {
-        const postgresConfig: ConfigInterface = {
+        const postgresConfig: Config = {
           appConfig: {
-            applicationName: 'test-output/postgres',
+            appName: 'test-output/postgres',
             appHostname: 'localhost',
             appPort: 1654,
           },
           dbConfig: {
             dbDialect: 'postgres',
             dbConnectionUrl: 'postgres://localhost:54369',
-            ssl: false,
+            dbSsl: false,
             dbSchema: 'aSchema',
           },
           forestAuthSecret: 'forestAuthSecret',
@@ -578,18 +578,18 @@ describe('services > dumpers > agentNodejs', () => {
 
         const postgresConfig = await setupAndDump();
         const dockerComposeFile = fs.readFileSync(
-          `${appRoot}/${postgresConfig.appConfig.applicationName}/docker-compose.yml`,
+          `${appRoot}/${postgresConfig.appConfig.appName}/docker-compose.yml`,
           'utf-8',
         );
         const dotEnvFile = fs.readFileSync(
-          `${appRoot}/${postgresConfig.appConfig.applicationName}/.env`,
+          `${appRoot}/${postgresConfig.appConfig.appName}/.env`,
           'utf-8',
         );
 
         expect(dotEnvFile).toContain('DATABASE_SCHEMA=aSchema');
         expect(dockerComposeFile).toContain(`- DATABASE_SCHEMA=\${DATABASE_SCHEMA}`);
 
-        rimraf.sync(`${appRoot}/${postgresConfig.appConfig.applicationName}`);
+        rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
       });
     });
   });

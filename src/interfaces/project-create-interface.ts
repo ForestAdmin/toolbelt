@@ -23,7 +23,7 @@ interface DbConfigWithConnectionParams extends DbConfigBase {
   dbPassword: string;
 }
 
-export type DbConfigInterface = DbConfigWithConnectionUrl | DbConfigWithConnectionParams;
+export type DbConfig = DbConfigWithConnectionUrl | DbConfigWithConnectionParams;
 
 export interface AppConfig {
   appName: string;
