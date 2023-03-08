@@ -141,6 +141,10 @@ export default class AgentNodeJs extends AbstractDumper {
     this.writeFile('.gitignore', 'node_modules\n.env');
   }
 
+  private writeTypings() {
+    this.writeFile('typings.ts', '/* eslint-disable */\nexport type Schema = any;');
+  }
+
   private writeDockerignore() {
     this.writeFile('.dockerignore', 'node_modules\nnpm-debug.log\n.env');
   }
@@ -182,6 +186,7 @@ export default class AgentNodeJs extends AbstractDumper {
       dumpConfig.forestEnvSecret,
       dumpConfig.forestAuthSecret,
     );
+    this.writeTypings();
     this.writeGitignore();
     this.writeDockerignore();
     this.writeDockerfile();
