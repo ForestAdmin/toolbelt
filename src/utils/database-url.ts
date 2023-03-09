@@ -1,31 +1,36 @@
 import type { DbConfig } from '../interfaces/project-create-interface';
 
-export default function buildDatabaseUrl(config: DbConfig): string | null {
+export default function buildDatabaseUrl(dbConfig: DbConfig): string | null {
   let connectionString: string;
 
-  if (!config) {
+  if (!dbConfig) {
     return null;
   }
 
-  if (config.dbConnectionUrl) {
-    connectionString = config.dbConnectionUrl;
+  if (dbConfig.dbConnectionUrl) {
+    connectionString = dbConfig.dbConnectionUrl;
   } else {
-    let protocol = config.dbDialect;
-    let port = `:${config.dbPort}`;
+    let protocol = dbConfig.dbDialect;
+    let port = `:${dbConfig.dbPort}`;
     let password = '';
 
-    if (config.dbDialect === 'mongodb' && config.mongodbSrv) {
+    if (dbConfig.dbDialect === 'mongodb' && dbConfig.mongodbSrv) {
       protocol = 'mongodb+srv';
       port = '';
     }
 
-    if (config.dbPassword) {
+    if (dbConfig.dbPassword) {
       // NOTICE: Encode password string in case of special chars.
-      password = `:${encodeURIComponent(config.dbPassword)}`;
+      password = `:${encodeURIComponent(dbConfig.dbPassword)}`;
     }
 
-    connectionString = `${protocol}://${config.dbUser}${password}@${config.dbHostname}${port}/${config.dbName}`;
+    connectionString = `${protocol}://${dbConfig.dbUser}${password}@${dbConfig.dbHostname}${port}/${dbConfig.dbName}`;
   }
 
   return connectionString;
+}
+
+export function isDatabaseLocal(dbConfig: DbConfig): boolean {
+  const databaseUrl = buildDatabaseUrl(dbConfig);
+  return !!databaseUrl && (databaseUrl.includes('127.0.0.1') || databaseUrl.includes('localhost'));
 }

@@ -6,5 +6,6 @@ require('./helpers/equal');
 require('./helpers/indent');
 require('./helpers/is-array');
 require('./helpers/is-object');
+require('./helpers/or');
 require('./helpers/sum');
 require('./helpers/wrap-quotes');
