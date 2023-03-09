@@ -255,7 +255,7 @@ describe('services > dumpers > AgentNodeJs', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/.env',
             expect.objectContaining({
-              dockerDatabaseUrl: undefined,
+              dockerDatabaseUrl: '',
               hasDockerDatabaseUrl: false,
             }),
           );
@@ -589,7 +589,7 @@ describe('services > dumpers > AgentNodeJs', () => {
           containerName: 'anApplication',
           databaseUrl: `\${DOCKER_DATABASE_URL}`,
           dbSchema: 'public',
-          forestExtraHost: null,
+          forestExtraHost: '',
           forestServerUrl: false,
           network: null,
         }),

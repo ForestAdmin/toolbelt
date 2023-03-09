@@ -138,12 +138,14 @@ export default class AgentNodeJs extends AbstractDumper {
       forestEnvSecret,
       forestAuthSecret,
       hasDockerDatabaseUrl: false,
-      dockerDatabaseUrl: undefined,
+      dockerDatabaseUrl: '',
     };
+
     if (!this.isLinuxOs) {
-      context.dockerDatabaseUrl = databaseUrl.replace('localhost', 'host.docker.internal');
       context.hasDockerDatabaseUrl = true;
+      context.dockerDatabaseUrl = databaseUrl.replace('localhost', 'host.docker.internal');
     }
+
     this.copyHandleBarsTemplate('env.hbs', '.env', context);
   }
 
@@ -167,7 +169,7 @@ export default class AgentNodeJs extends AbstractDumper {
     const databaseUrl = `\${${this.isLinuxOs ? 'DATABASE_URL' : 'DOCKER_DATABASE_URL'}}`;
     const forestServerUrl = this.env.FOREST_URL_IS_DEFAULT ? false : `\${FOREST_SERVER_URL}`;
 
-    let forestExtraHost: string = null;
+    let forestExtraHost = '';
     if (forestServerUrl) {
       try {
         forestExtraHost = new URL(this.env.FOREST_SERVER_URL).hostname;
