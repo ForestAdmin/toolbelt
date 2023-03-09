@@ -146,7 +146,7 @@ describe('services > dumpers > agentNodejs', () => {
     describe('on a linux based OS', () => {
       const setupAndDump = async (dbConnectionUrl: string | null = null) => {
         const osStub = jest.spyOn(os, 'platform').mockReturnValue('linux');
-        const postgresConfig = {
+        const postgresConfig: ConfigInterface = {
           appConfig: {
             applicationName: 'test-output/postgres',
             appHostname: 'localhost',
@@ -154,7 +154,7 @@ describe('services > dumpers > agentNodejs', () => {
           },
           dbConfig: {
             dbDialect: 'postgres',
-            dbConnectionUrl: 'postgres://localhost:54369',
+            dbConnectionUrl: dbConnectionUrl || 'postgres://localhost:54369',
             ssl: false,
             dbSchema: 'public',
           },
@@ -166,10 +166,7 @@ describe('services > dumpers > agentNodejs', () => {
         await dumper.dump(
           {
             appConfig: postgresConfig.appConfig,
-            dbConfig: {
-              ...postgresConfig.dbConfig,
-              dbConnectionUrl: dbConnectionUrl || postgresConfig.dbConfig.dbConnectionUrl,
-            },
+            dbConfig: postgresConfig.dbConfig,
             forestAuthSecret: 'forestAuthSecret',
             forestEnvSecret: 'forestEnvSecret',
           },
@@ -240,7 +237,7 @@ describe('services > dumpers > agentNodejs', () => {
     describe('on a non linux based OS', () => {
       const setupAndDump = async (dbConnectionUrl: string | null = null) => {
         const osStub = jest.spyOn(os, 'platform').mockReturnValue('darwin');
-        const postgresConfig = {
+        const postgresConfig: ConfigInterface = {
           appConfig: {
             applicationName: 'test-output/postgres',
             appHostname: 'localhost',
@@ -248,7 +245,7 @@ describe('services > dumpers > agentNodejs', () => {
           },
           dbConfig: {
             dbDialect: 'postgres',
-            dbConnectionUrl: 'postgres://localhost:54369',
+            dbConnectionUrl: dbConnectionUrl || 'postgres://localhost:54369',
             ssl: false,
             dbSchema: 'public',
           },
@@ -260,10 +257,7 @@ describe('services > dumpers > agentNodejs', () => {
         await dumper.dump(
           {
             appConfig: postgresConfig.appConfig,
-            dbConfig: {
-              ...postgresConfig.dbConfig,
-              dbConnectionUrl: dbConnectionUrl || postgresConfig.dbConfig.dbConnectionUrl,
-            },
+            dbConfig: postgresConfig.dbConfig,
             forestAuthSecret: 'forestAuthSecret',
             forestEnvSecret: 'forestEnvSecret',
           },
@@ -332,8 +326,8 @@ describe('services > dumpers > agentNodejs', () => {
     });
 
     describe('with a FOREST_SERVER_URL', () => {
-      const setupAndDump = async (dbConnectionUrl: string | null = null) => {
-        const postgresConfig = {
+      const setupAndDump = async () => {
+        const postgresConfig: ConfigInterface = {
           appConfig: {
             applicationName: 'test-output/postgres',
             appHostname: 'localhost',
@@ -360,10 +354,7 @@ describe('services > dumpers > agentNodejs', () => {
         await dumper.dump(
           {
             appConfig: postgresConfig.appConfig,
-            dbConfig: {
-              ...postgresConfig.dbConfig,
-              dbConnectionUrl: dbConnectionUrl || postgresConfig.dbConfig.dbConnectionUrl,
-            },
+            dbConfig: postgresConfig.dbConfig,
             forestAuthSecret: 'forestAuthSecret',
             forestEnvSecret: 'forestEnvSecret',
           },
@@ -416,8 +407,8 @@ describe('services > dumpers > agentNodejs', () => {
     });
 
     describe('without a FOREST_SERVER_URL', () => {
-      const setupAndDump = async (dbConnectionUrl: string | null = null) => {
-        const postgresConfig = {
+      const setupAndDump = async () => {
+        const postgresConfig: ConfigInterface = {
           appConfig: {
             applicationName: 'test-output/postgres',
             appHostname: 'localhost',
@@ -443,10 +434,7 @@ describe('services > dumpers > agentNodejs', () => {
         await dumper.dump(
           {
             appConfig: postgresConfig.appConfig,
-            dbConfig: {
-              ...postgresConfig.dbConfig,
-              dbConnectionUrl: dbConnectionUrl || postgresConfig.dbConfig.dbConnectionUrl,
-            },
+            dbConfig: postgresConfig.dbConfig,
             forestAuthSecret: 'forestAuthSecret',
             forestEnvSecret: 'forestEnvSecret',
           },
@@ -499,8 +487,8 @@ describe('services > dumpers > agentNodejs', () => {
     });
 
     describe('without a schema', () => {
-      const setupAndDump = async (dbConnectionUrl: string | null = null) => {
-        const postgresConfig = {
+      const setupAndDump = async () => {
+        const postgresConfig: ConfigInterface = {
           appConfig: {
             applicationName: 'test-output/postgres',
             appHostname: 'localhost',
@@ -521,10 +509,7 @@ describe('services > dumpers > agentNodejs', () => {
         await dumper.dump(
           {
             appConfig: postgresConfig.appConfig,
-            dbConfig: {
-              ...postgresConfig.dbConfig,
-              dbConnectionUrl: dbConnectionUrl || postgresConfig.dbConfig.dbConnectionUrl,
-            },
+            dbConfig: postgresConfig.dbConfig,
             forestAuthSecret: 'forestAuthSecret',
             forestEnvSecret: 'forestEnvSecret',
           },
@@ -555,8 +540,8 @@ describe('services > dumpers > agentNodejs', () => {
     });
 
     describe('with a schema', () => {
-      const setupAndDump = async (dbConnectionUrl: string | null = null) => {
-        const postgresConfig = {
+      const setupAndDump = async () => {
+        const postgresConfig: ConfigInterface = {
           appConfig: {
             applicationName: 'test-output/postgres',
             appHostname: 'localhost',
@@ -578,10 +563,7 @@ describe('services > dumpers > agentNodejs', () => {
         await dumper.dump(
           {
             appConfig: postgresConfig.appConfig,
-            dbConfig: {
-              ...postgresConfig.dbConfig,
-              dbConnectionUrl: dbConnectionUrl || postgresConfig.dbConfig.dbConnectionUrl,
-            },
+            dbConfig: postgresConfig.dbConfig,
             forestAuthSecret: 'forestAuthSecret',
             forestEnvSecret: 'forestEnvSecret',
           },
