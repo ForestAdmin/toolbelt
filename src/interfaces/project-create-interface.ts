@@ -1,16 +1,28 @@
-export interface DbConfigInterface {
-  dbConnectionUrl?: string;
-  dbDialect?: string;
-  dbHostname?: string;
-  dbName?: string;
-  dbPassword?: string;
-  dbPort?: number;
-  dbSchema?: string;
-  dbUser?: string;
-  mongodbSrv?: boolean;
+interface DbConfigBase {
+  dbDialect: string;
   ssl: boolean;
+  dbSchema?: string;
+  mongodbSrv?: boolean;
+}
+interface DbConfigWithConnectionUrl extends DbConfigBase {
+  dbConnectionUrl: string;
+  dbName?: never;
+  dbHostname?: never;
+  dbPort?: never;
+  dbUser?: never;
+  dbPassword?: never;
 }
 
+interface DbConfigWithConnectionParams extends DbConfigBase {
+  dbConnectionUrl?: never;
+  dbName: string;
+  dbHostname: string;
+  dbPort: number;
+  dbUser: string;
+  dbPassword: string;
+}
+
+export type DbConfigInterface = DbConfigWithConnectionUrl | DbConfigWithConnectionParams;
 export interface AppConfig {
   applicationName: string;
   appHostname: string;

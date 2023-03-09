@@ -182,12 +182,12 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     const dbConfig: DbConfigInterface = {
       dbConnectionUrl: config.databaseConnectionURL,
       dbDialect: config.databaseDialect,
-      dbHostname: config.databaseHost,
-      dbName: config.databaseName,
-      dbPassword: config.databasePassword,
-      dbPort: config.databasePort,
       dbSchema: config.databaseSchema,
+      dbName: config.databaseName,
+      dbHostname: config.databaseHost,
+      dbPort: config.databasePort,
       dbUser: config.databaseUser,
+      dbPassword: config.databasePassword,
       mongodbSrv: config.mongoDBSRV,
       ssl: config.databaseSSL,
     };
@@ -203,7 +203,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       isLocal: ['localhost', '127.0.0.1', '::1'].some(keyword =>
         dbConfig.dbHostname
           ? dbConfig.dbHostname.includes(keyword)
-          : dbConfig.dbConnectionUrl.includes(keyword),
+          : dbConfig.dbConnectionUrl?.includes(keyword),
       ),
       architecture: 'microservice',
     };
