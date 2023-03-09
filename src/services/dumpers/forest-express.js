@@ -1,7 +1,6 @@
 const _ = require('lodash');
 const { URL } = require('url');
 const { plural, singular } = require('pluralize');
-const stringUtils = require('../../utils/strings');
 const toValidPackageName = require('../../utils/to-valid-package-name');
 const IncompatibleLianaForUpdateError = require('../../errors/dumper/incompatible-liana-for-update-error');
 const InvalidForestCLIProjectStructureError = require('../../errors/dumper/invalid-forest-cli-project-structure-error');
@@ -20,6 +19,7 @@ class ForestExpress extends AbstractDumper {
       isLinuxOs,
       buildDatabaseUrl,
       isDatabaseLocal,
+      strings,
     } = context;
 
     assertPresent({
@@ -30,6 +30,7 @@ class ForestExpress extends AbstractDumper {
       isLinuxOs,
       buildDatabaseUrl,
       isDatabaseLocal,
+      strings,
     });
 
     this.DEFAULT_PORT = 3310;
@@ -40,6 +41,7 @@ class ForestExpress extends AbstractDumper {
     this.mkdirp = mkdirp;
     this.buildDatabaseUrl = buildDatabaseUrl;
     this.isDatabaseLocal = isDatabaseLocal;
+    this.strings = strings;
   }
 
   static getModelsNameSorted(schema) {
@@ -48,10 +50,10 @@ class ForestExpress extends AbstractDumper {
     );
   }
 
-  static getSafeReferences(references) {
+  getSafeReferences(references) {
     return references.map(reference => ({
       ...reference,
-      ref: ForestExpress.getModelNameFromTableName(reference.ref),
+      ref: this.getModelNameFromTableName(reference.ref),
     }));
   }
 
@@ -144,8 +146,8 @@ class ForestExpress extends AbstractDumper {
     this.copyHandleBarsTemplate('env.hbs', '.env', context);
   }
 
-  static getModelNameFromTableName(table) {
-    return stringUtils.transformToCamelCaseSafeString(table);
+  getModelNameFromTableName(table) {
+    return this.strings.transformToCamelCaseSafeString(table);
   }
 
   writeModel(config, table, fields, references, options = {}) {
@@ -168,7 +170,7 @@ class ForestExpress extends AbstractDumper {
 
       return {
         ...field,
-        ref: field.ref && ForestExpress.getModelNameFromTableName(field.ref),
+        ref: field.ref && this.getModelNameFromTableName(field.ref),
         nameColumnUnconventional,
         hasParenthesis,
 
@@ -192,8 +194,8 @@ class ForestExpress extends AbstractDumper {
       `models/${config.dbConfig.dbDialect === 'mongodb' ? 'mongo' : 'sequelize'}-model.hbs`,
       modelPath,
       {
-        modelName: ForestExpress.getModelNameFromTableName(table),
-        modelVariableName: stringUtils.pascalCase(stringUtils.transformToSafeString(table)),
+        modelName: this.getModelNameFromTableName(table),
+        modelVariableName: this.strings.pascalCase(this.strings.transformToSafeString(table)),
         table,
         fields: fieldsDefinition,
         references: referencesDefinition,
@@ -212,7 +214,7 @@ class ForestExpress extends AbstractDumper {
     const readableModelName = _.startCase(modelName);
 
     this.copyHandleBarsTemplate('routes/route.hbs', routesPath, {
-      modelName: ForestExpress.getModelNameFromTableName(modelName),
+      modelName: this.getModelNameFromTableName(modelName),
       modelNameDasherized,
       modelNameReadablePlural: plural(readableModelName),
       modelNameReadableSingular: singular(readableModelName),
@@ -225,7 +227,7 @@ class ForestExpress extends AbstractDumper {
 
     this.copyHandleBarsTemplate('forest/collection.hbs', collectionPath, {
       isMongoDB: dbDialect === 'mongodb',
-      table: ForestExpress.getModelNameFromTableName(table),
+      table: this.getModelNameFromTableName(table),
     });
   }
 
@@ -319,7 +321,7 @@ class ForestExpress extends AbstractDumper {
 
     modelNames.forEach(modelName => {
       const { fields, references, options } = schema[modelName];
-      const safeReferences = ForestExpress.getSafeReferences(references);
+      const safeReferences = this.getSafeReferences(references);
 
       this.writeModel(config, modelName, fields, safeReferences, options);
     });

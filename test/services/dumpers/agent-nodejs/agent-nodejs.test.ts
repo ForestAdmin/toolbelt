@@ -9,7 +9,6 @@ import rimraf from 'rimraf';
 import defaultPlan from '../../../../src/context/plan';
 import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
 
-console.log(Context);
 describe('services > dumpers > agentNodejs', () => {
   describe('dump', () => {
     const configs: Array<ConfigInterface & { name: string }> = [
