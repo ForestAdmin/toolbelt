@@ -47,6 +47,8 @@ const defaultConfig: ConfigInterface = {
     dbHostname: 'aHostname',
     dbDialect: 'aDialect',
     dbPassword: 'aPassword',
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
     dbPort: null,
     ssl: false,
     dbSchema: 'aSchema',

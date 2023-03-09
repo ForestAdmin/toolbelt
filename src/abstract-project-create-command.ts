@@ -178,8 +178,9 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       applicationName: config.applicationName,
       appHostname: config.applicationHost,
       appPort: config.applicationPort,
-    };
-    const dbConfig: DbConfigInterface = {
+    } as AppConfig;
+
+    const dbConfig = {
       dbConnectionUrl: config.databaseConnectionURL,
       dbDialect: config.databaseDialect,
       dbSchema: config.databaseSchema,
@@ -190,7 +191,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       dbPassword: config.databasePassword,
       mongodbSrv: config.mongoDBSRV,
       ssl: config.databaseSSL,
-    };
+    } as DbConfigInterface;
 
     if (!config.databaseDialect && !config.databaseConnectionURL) {
       this.logger.error('Missing database dialect option value');
