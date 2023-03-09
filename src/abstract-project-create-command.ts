@@ -187,7 +187,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       dbPassword: config.databasePassword,
       mongodbSrv: config.mongoDBSRV,
       dbSsl: config.databaseSSL,
-    } as DbConfigInterface;
+    } as DbConfig;
 
     if (!config.databaseDialect && !config.databaseConnectionURL) {
       this.logger.error('Missing database dialect option value');
