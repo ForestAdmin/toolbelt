@@ -1,7 +1,6 @@
-import type { ConfigInterface } from '../../interfaces/project-create-interface';
+import type { Config } from '../../interfaces/project-create-interface';
 import type Logger from '../logger';
 import type { Chalk } from 'chalk';
-
 import '../../utils/handlebars/loader';
 
 export default abstract class AbstractDumper {
@@ -39,7 +38,7 @@ export default abstract class AbstractDumper {
 
   protected abstract get templateFolder(): string;
 
-  protected abstract createFiles(dumperConfig: ConfigInterface, schema?: any);
+  protected abstract createFiles(dumperConfig: Config, schema?: any);
 
   protected writeFile(relativeFilePath, content) {
     const fileName = `${this.projectPath}/${relativeFilePath}`;
@@ -70,10 +69,10 @@ export default abstract class AbstractDumper {
     return this.writeFile(target, this.fs.readFileSync(templatePath, 'utf-8'));
   }
 
-  async dump(dumperConfig: ConfigInterface, schema?: any) {
+  async dump(dumperConfig: Config, schema?: any) {
     const cwd = this.constants.CURRENT_WORKING_DIRECTORY;
-    this.projectPath = dumperConfig.appConfig.applicationName
-      ? `${cwd}/${dumperConfig.appConfig.applicationName}`
+    this.projectPath = dumperConfig.appConfig.appName
+      ? `${cwd}/${dumperConfig.appConfig.appName}`
       : cwd;
 
     await this.mkdirp(this.projectPath);

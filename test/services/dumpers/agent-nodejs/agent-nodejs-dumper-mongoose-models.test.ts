@@ -25,14 +25,14 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
     const config = {
       name: 'mongodb',
       appConfig: {
-        applicationName: 'test-output/mongodb',
+        appName: 'test-output/mongodb',
         appHostname: 'localhost',
         appPort: 1654,
       },
       dbConfig: {
         dbDialect: 'mongodb',
         dbConnectionUrl: 'mongodb://localhost:27016',
-        ssl: false,
+        dbSsl: false,
         dbSchema: 'public',
       },
       forestAuthSecret: 'forestAuthSecret',

@@ -1,6 +1,6 @@
-import type { DbConfigInterface } from '../interfaces/project-create-interface';
+import type { DbConfig } from '../interfaces/project-create-interface';
 
-export default function buildDatabaseUrl(dbConfig: DbConfigInterface): string | null {
+export default function buildDatabaseUrl(dbConfig: DbConfig): string | null {
   let connectionString: string;
 
   if (!dbConfig) {
@@ -30,7 +30,7 @@ export default function buildDatabaseUrl(dbConfig: DbConfigInterface): string | 
   return connectionString;
 }
 
-export function isDatabaseLocal(dbConfig: DbConfigInterface): boolean {
+export function isDatabaseLocal(dbConfig: DbConfig): boolean {
   const databaseUrl = buildDatabaseUrl(dbConfig);
-  return databaseUrl.includes('127.0.0.1') || databaseUrl.includes('localhost');
+  return !!databaseUrl && (databaseUrl.includes('127.0.0.1') || databaseUrl.includes('localhost'));
 }

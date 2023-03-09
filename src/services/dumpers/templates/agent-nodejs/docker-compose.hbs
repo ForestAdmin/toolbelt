@@ -16,7 +16,7 @@ services:
       - NODE_TLS_REJECT_UNAUTHORIZED=0
 {{/if}}
       - APPLICATION_PORT=${APPLICATION_PORT}
-      - DATABASE_URL={{ databaseUrl }}
+      - DATABASE_URL={{ dbUrl }}
       - DATABASE_SSL=${DATABASE_SSL}
       - DATABASE_REJECT_UNAUTHORIZED=${DATABASE_REJECT_UNAUTHORIZED}
 {{#if dbSchema }}

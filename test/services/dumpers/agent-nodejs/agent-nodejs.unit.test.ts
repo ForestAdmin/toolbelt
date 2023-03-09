@@ -1,4 +1,4 @@
-import type { ConfigInterface } from '../../../../src/interfaces/project-create-interface';
+import type { Config } from '../../../../src/interfaces/project-create-interface';
 
 import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
 
@@ -67,16 +67,14 @@ describe('services > dumpers > AgentNodeJs', () => {
       ...dependencies,
     };
 
-    const defaultConfig: ConfigInterface = {
+    const defaultConfig: Config = {
       appConfig: {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
         appPort: null,
         appHostname: 'http://localhost',
-        applicationName: 'anApplication',
+        appName: 'anApplication',
       },
       dbConfig: {
-        ssl: false,
+        dbSsl: false,
         dbSchema: 'public',
         dbPort: 5432,
         dbPassword: 'aPassword',
@@ -161,15 +159,15 @@ describe('services > dumpers > AgentNodeJs', () => {
         await dumper.dump(defaultConfig);
 
         expect(context.fs.writeFileSync).toHaveBeenCalledWith('/test/anApplication/.env', {
-          databaseUrl: 'localhost',
-          databaseSsl: false,
-          databaseSchema: 'public',
-          applicationPort: 3310,
+          dbUrl: 'localhost',
+          dbSsl: false,
+          dbSchema: 'public',
+          appPort: 3310,
           forestServerUrl: false,
           forestEnvSecret: 'aForestEnvSecret',
           forestAuthSecret: 'aForestAuthSecret',
-          hasDockerDatabaseUrl: true,
-          dockerDatabaseUrl: 'host.docker.internal',
+          hasDockerDbUrl: true,
+          dockerDbUrl: 'host.docker.internal',
         });
       });
     });
@@ -186,14 +184,14 @@ describe('services > dumpers > AgentNodeJs', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/.env',
             expect.objectContaining({
-              applicationPort: 3310,
+              appPort: 3310,
             }),
           );
         });
       });
 
       describe('when application port has been provided', () => {
-        it('should use the applicationPort provided', async () => {
+        it('should use the appPort provided', async () => {
           expect.assertions(1);
 
           const { dumper, context, defaultConfig } = createDumper();
@@ -205,7 +203,7 @@ describe('services > dumpers > AgentNodeJs', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/.env',
             expect.objectContaining({
-              applicationPort: 3000,
+              appPort: 3000,
             }),
           );
         });
@@ -219,16 +217,14 @@ describe('services > dumpers > AgentNodeJs', () => {
 
           const { dumper, context, defaultConfig } = createDumper();
 
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-expect-error
-          defaultConfig.dbConfig.ssl = null;
+          defaultConfig.dbConfig.dbSsl = null;
 
           await dumper.dump(defaultConfig);
 
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/.env',
             expect.objectContaining({
-              databaseSsl: false,
+              dbSsl: false,
             }),
           );
         });
@@ -241,13 +237,13 @@ describe('services > dumpers > AgentNodeJs', () => {
 
             const { dumper, context, defaultConfig } = createDumper();
 
-            defaultConfig.dbConfig.ssl = true;
+            defaultConfig.dbConfig.dbSsl = true;
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
               '/test/anApplication/.env',
               expect.objectContaining({
-                databaseSsl: true,
+                dbSsl: true,
               }),
             );
           });
@@ -264,7 +260,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
               '/test/anApplication/.env',
               expect.objectContaining({
-                databaseSsl: false,
+                dbSsl: false,
               }),
             );
           });
@@ -286,8 +282,8 @@ describe('services > dumpers > AgentNodeJs', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/.env',
             expect.objectContaining({
-              dockerDatabaseUrl: undefined,
-              hasDockerDatabaseUrl: false,
+              dockerDbUrl: '',
+              hasDockerDbUrl: false,
             }),
           );
         });
@@ -304,8 +300,8 @@ describe('services > dumpers > AgentNodeJs', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/.env',
             expect.objectContaining({
-              dockerDatabaseUrl: 'host.docker.internal',
-              hasDockerDatabaseUrl: true,
+              dockerDbUrl: 'host.docker.internal',
+              hasDockerDbUrl: true,
             }),
           );
         });
@@ -632,9 +628,9 @@ describe('services > dumpers > AgentNodeJs', () => {
         '/test/anApplication/docker-compose.yml',
         expect.objectContaining({
           containerName: 'anApplication',
-          databaseUrl: `\${DOCKER_DATABASE_URL}`,
+          dbUrl: `\${DOCKER_DATABASE_URL}`,
           dbSchema: 'public',
-          forestExtraHost: null,
+          forestExtraHost: '',
           forestServerUrl: false,
           network: null,
         }),

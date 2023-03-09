@@ -1,8 +1,4 @@
-import type {
-  AppConfig,
-  ConfigInterface,
-  DbConfigInterface,
-} from './interfaces/project-create-interface';
+import type { AppConfig, Config, DbConfig } from './interfaces/project-create-interface';
 import type CommandGenerateConfigGetter from './services/projects/create/command-generate-config-getter';
 import type { ProjectMeta } from './services/projects/create/project-creator';
 import type ProjectCreator from './services/projects/create/project-creator';
@@ -10,7 +6,7 @@ import type Database from './services/schema/update/database';
 import type Spinner from './services/spinner';
 import type EventSender from './utils/event-sender';
 import type Messages from './utils/messages';
-import type * as Config from '@oclif/config';
+import type * as OclifConfig from '@oclif/config';
 
 import { flags } from '@oclif/command';
 
@@ -127,7 +123,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   static override description = 'Create a new Forest Admin project.';
 
-  constructor(argv: string[], config: Config.IConfig, plan) {
+  constructor(argv: string[], config: OclifConfig.IConfig, plan) {
     super(argv, config, plan);
 
     const {
@@ -161,7 +157,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   private async getConfig(): Promise<{
     appConfig: AppConfig;
-    dbConfig: DbConfigInterface;
+    dbConfig: DbConfig;
     meta: ProjectMeta;
     authenticationToken: string;
   }> {
@@ -175,22 +171,23 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     const config = await this.commandGenerateConfigGetter.get(programArguments);
 
     const appConfig = {
-      applicationName: config.applicationName,
+      appName: config.applicationName,
       appHostname: config.applicationHost,
       appPort: config.applicationPort,
-    };
-    const dbConfig: DbConfigInterface = {
+    } as AppConfig;
+
+    const dbConfig = {
       dbConnectionUrl: config.databaseConnectionURL,
       dbDialect: config.databaseDialect,
-      dbHostname: config.databaseHost,
-      dbName: config.databaseName,
-      dbPassword: config.databasePassword,
-      dbPort: config.databasePort,
       dbSchema: config.databaseSchema,
+      dbName: config.databaseName,
+      dbHostname: config.databaseHost,
+      dbPort: config.databasePort,
       dbUser: config.databaseUser,
+      dbPassword: config.databasePassword,
       mongodbSrv: config.mongoDBSRV,
-      ssl: config.databaseSSL,
-    };
+      dbSsl: config.databaseSSL,
+    } as DbConfig;
 
     if (!config.databaseDialect && !config.databaseConnectionURL) {
       this.logger.error('Missing database dialect option value');
@@ -203,7 +200,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       isLocal: ['localhost', '127.0.0.1', '::1'].some(keyword =>
         dbConfig.dbHostname
           ? dbConfig.dbHostname.includes(keyword)
-          : dbConfig.dbConnectionUrl.includes(keyword),
+          : dbConfig.dbConnectionUrl?.includes(keyword),
       ),
       architecture: 'microservice',
     };
@@ -254,7 +251,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     }
   }
 
-  async testDatabaseConnection(dbConfig: DbConfigInterface) {
+  async testDatabaseConnection(dbConfig: DbConfig) {
     this.spinner.start({ text: 'Testing connection to your database' });
     const connectionPromise = this.database
       .connect(dbConfig)
@@ -267,5 +264,5 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     await this.eventSender.notifySuccess();
   }
 
-  abstract generateProject(config: ConfigInterface): Promise<void>;
+  abstract generateProject(config: Config): Promise<void>;
 }
