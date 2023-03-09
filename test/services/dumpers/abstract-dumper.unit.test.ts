@@ -27,6 +27,7 @@ const buildDumper = (ADumper, librairies = {}) => {
       compile: jest.fn().mockImplementation(() => () => {}),
     },
     buildDatabaseUrl: jest.fn(),
+    toValidPackageName: jest.fn().mockImplementation(content => content),
     ...librairies,
   };
   return {

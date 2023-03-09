@@ -2,7 +2,6 @@ const _ = require('lodash');
 const { URL } = require('url');
 const { plural, singular } = require('pluralize');
 const stringUtils = require('../../utils/strings');
-const toValidPackageName = require('../../utils/to-valid-package-name');
 const IncompatibleLianaForUpdateError = require('../../errors/dumper/incompatible-liana-for-update-error');
 const InvalidForestCLIProjectStructureError = require('../../errors/dumper/invalid-forest-cli-project-structure-error');
 const AbstractDumper = require('./abstract-dumper').default;
@@ -20,6 +19,7 @@ class ForestExpress extends AbstractDumper {
       isLinuxOs,
       buildDatabaseUrl,
       isDatabaseLocal,
+      toValidPackageName,
     } = context;
 
     assertPresent({
@@ -40,6 +40,7 @@ class ForestExpress extends AbstractDumper {
     this.mkdirp = mkdirp;
     this.buildDatabaseUrl = buildDatabaseUrl;
     this.isDatabaseLocal = isDatabaseLocal;
+    this.toValidPackageName = toValidPackageName;
   }
 
   static getModelsNameSorted(schema) {
@@ -97,7 +98,7 @@ class ForestExpress extends AbstractDumper {
     }
 
     const pkg = {
-      name: toValidPackageName(appName),
+      name: this.toValidPackageName(appName),
       version: '0.0.1',
       private: true,
       scripts: { start: 'node ./server.js' },
