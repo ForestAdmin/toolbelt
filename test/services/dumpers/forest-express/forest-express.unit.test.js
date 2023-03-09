@@ -23,6 +23,7 @@ function createDumper(contextOverride = {}) {
     isLinuxOs: false,
     buildDatabaseUrl: jest.fn(({ dbConnectionUrl }) => dbConnectionUrl),
     isDatabaseLocal: jest.fn(() => true),
+    toValidPackageName: jest.fn().mockImplementation(content => content),
     ...contextOverride,
   });
 }
