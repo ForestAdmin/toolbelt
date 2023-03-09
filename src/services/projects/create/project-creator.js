@@ -7,7 +7,7 @@
  * }} ProjectMeta
  *
  * @typedef {{
- *  applicationName: string
+ *  appName: string
  *  appHostname: string
  *  appPort: number
  * }} ProjectConfig
@@ -49,7 +49,7 @@ class ProjectCreator {
   async create(sessionToken, config, meta) {
     try {
       const newProjectPayload = {
-        name: config.applicationName,
+        name: config.appName,
         agent: meta.agent,
         architecture: meta.architecture,
         databaseType: meta.dbDialect,

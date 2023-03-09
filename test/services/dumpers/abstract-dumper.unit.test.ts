@@ -1,6 +1,6 @@
 /* eslint class-methods-use-this: 0 */
 // eslint-disable-next-line max-classes-per-file
-import type { ConfigInterface } from '../../../src/interfaces/project-create-interface';
+import type { Config } from '../../../src/interfaces/project-create-interface';
 
 import AbstractDumper from '../../../src/services/dumpers/abstract-dumper';
 
@@ -35,10 +35,10 @@ const buildDumper = (ADumper, librairies = {}) => {
   };
 };
 
-const defaultConfig: ConfigInterface = {
+const defaultConfig: Config = {
   appConfig: {
     appPort: 3310,
-    applicationName: 'anApp',
+    appName: 'anApp',
     appHostname: 'http://localhost',
   },
   dbConfig: {

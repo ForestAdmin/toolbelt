@@ -23,7 +23,7 @@ function getDumper(context) {
 
 const CONFIG = {
   appConfig: {
-    applicationName: 'test-output/sequelize',
+    appName: 'test-output/sequelize',
     appHostname: 'localhost',
     appPort: 1654,
     path: appRoot,
@@ -31,7 +31,7 @@ const CONFIG = {
   dbConfig: {
     dbDialect: 'postgres',
     dbConnectionUrl: 'postgres://localhost:27017',
-    ssl: false,
+    dbSsl: false,
     dbSchema: 'public',
     db: true,
   },

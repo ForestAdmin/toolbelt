@@ -26,7 +26,7 @@ async function createLinuxDump(
 ) {
   const config = {
     appConfig: {
-      applicationName: 'test-output/Linux',
+      appName: 'test-output/Linux',
       appHostname: 'localhost',
       appPort: 1654,
       ...optionsOverrides.appConfig,
@@ -34,7 +34,7 @@ async function createLinuxDump(
     dbConfig: {
       dbDialect: 'mysql',
       dbConnectionUrl: 'mysql://localhost:8999',
-      ssl: false,
+      dbSsl: false,
       dbSchema: 'public',
       ...optionsOverrides.dbConfig,
     },
