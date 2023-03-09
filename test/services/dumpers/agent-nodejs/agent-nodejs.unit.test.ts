@@ -1,8 +1,8 @@
 import type { ConfigInterface } from '../../../../src/interfaces/project-create-interface';
 
-import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs-dumper';
+import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
 
-describe('services > dumpers > agentNodejsDumper', () => {
+describe('services > dumpers > AgentNodeJs', () => {
   const createDumper = (dependencies = {}) => {
     const schemaSample = {
       collectionA: {
@@ -60,6 +60,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
       constants: {
         CURRENT_WORKING_DIRECTORY: '/test',
       },
+      toValidPackageName: jest.fn().mockImplementation(string => string),
       logger: {
         log: jest.fn(),
       },
@@ -68,6 +69,8 @@ describe('services > dumpers > agentNodejsDumper', () => {
 
     const defaultConfig: ConfigInterface = {
       appConfig: {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         appPort: null,
         appHostname: 'http://localhost',
         applicationName: 'anApplication',
@@ -87,7 +90,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
     };
 
     return {
-      dumper: new AgentNodeJsDumper(context),
+      dumper: new AgentNodeJs(context),
       context,
       defaultConfig,
       schemaSample,
@@ -104,7 +107,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
 
       expect(context.fs.writeFileSync).toHaveBeenCalledWith(
         '/test/anApplication/.gitignore',
-        'node_modules\n.env',
+        'node_modules\n.env\n',
       );
     });
 
@@ -117,7 +120,20 @@ describe('services > dumpers > agentNodejsDumper', () => {
 
       expect(context.fs.writeFileSync).toHaveBeenCalledWith(
         '/test/anApplication/.dockerignore',
-        'node_modules\nnpm-debug.log\n.env',
+        'node_modules\nnpm-debug.log\n.env\n',
+      );
+    });
+
+    it('should write a typings.ts file', async () => {
+      expect.assertions(1);
+
+      const { dumper, context, defaultConfig } = createDumper();
+
+      await dumper.dump(defaultConfig);
+
+      expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+        '/test/anApplication/typings.ts',
+        '/* eslint-disable */\nexport type Schema = any;\n',
       );
     });
 
@@ -203,6 +219,8 @@ describe('services > dumpers > agentNodejsDumper', () => {
 
           const { dumper, context, defaultConfig } = createDumper();
 
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-expect-error
           defaultConfig.dbConfig.ssl = null;
 
           await dumper.dump(defaultConfig);
@@ -445,7 +463,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
 
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
           '/test/anApplication/package.json',
-          expect.stringContaining('"name": "anapplication"'),
+          expect.stringContaining('"name": "anApplication"'),
         );
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
           '/test/anApplication/package.json',
@@ -616,7 +634,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
           containerName: 'anApplication',
           databaseUrl: `\${DOCKER_DATABASE_URL}`,
           dbSchema: 'public',
-          forestExtraHost: false,
+          forestExtraHost: null,
           forestServerUrl: false,
           network: null,
         }),
@@ -683,7 +701,7 @@ describe('services > dumpers > agentNodejsDumper', () => {
             'mockedContent',
           );
 
-          expect(context.fs.writeFileSync).toHaveBeenCalledTimes(8);
+          expect(context.fs.writeFileSync).toHaveBeenCalledTimes(9);
         });
       });
 

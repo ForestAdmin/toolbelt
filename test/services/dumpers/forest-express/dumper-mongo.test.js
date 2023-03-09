@@ -14,7 +14,7 @@ const subDocumentsAmbiguousIds = require('../../analyzer/expected/mongo/db-analy
 const subDocumentsNotUsingIds = require('../../analyzer/expected/mongo/db-analysis-output/sub-documents-not-using-ids.expected.json');
 const subDocumentsUsingIds = require('../../analyzer/expected/mongo/db-analysis-output/sub-documents-using-ids.expected.json');
 const subDocumentUsingIds = require('../../analyzer/expected/mongo/db-analysis-output/sub-document-using-ids.expected.json');
-const Dumper = require('../../../../src/services/dumpers/dumper-v1');
+const Dumper = require('../../../../src/services/dumpers/forest-express');
 const defaultPlan = require('../../../../src/context/plan');
 
 function buildContext() {

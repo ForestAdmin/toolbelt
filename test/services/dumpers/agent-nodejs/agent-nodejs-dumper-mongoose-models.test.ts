@@ -4,7 +4,7 @@ import fs from 'fs';
 import rimraf from 'rimraf';
 
 import defaultPlan from '../../../../src/context/plan';
-import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs-dumper';
+import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs';
 import deepNested from '../../analyzer/expected/mongo/db-analysis-output/deep-nested-fields.expected.json';
 import hasMany from '../../analyzer/expected/mongo/db-analysis-output/hasmany.expected.json';
 import manyObjectIdFields from '../../analyzer/expected/mongo/db-analysis-output/many-objectid-fields.expected.json';

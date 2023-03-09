@@ -1,3 +1,21 @@
+## [3.1.4](https://github.com/ForestAdmin/toolbelt/compare/v3.1.3...v3.1.4) (2023-03-08)
+
+
+### Bug Fixes
+
+* **docker:** correctly build docker image to prevent execution error ([#541](https://github.com/ForestAdmin/toolbelt/issues/541)) ([39be1bd](https://github.com/ForestAdmin/toolbelt/commit/39be1bd21565c255f46bef2e8de5f75d4823cea2))
+
+## [3.1.3](https://github.com/ForestAdmin/toolbelt/compare/v3.1.2...v3.1.3) (2023-03-08)
+
+## [3.1.2](https://github.com/ForestAdmin/toolbelt/compare/v3.1.1...v3.1.2) (2023-03-01)
+
+
+### Bug Fixes
+
+* **mongo:** don't use spinner when analyzing the database ([#535](https://github.com/ForestAdmin/toolbelt/issues/535)) ([db29809](https://github.com/ForestAdmin/toolbelt/commit/db29809121ccba46f77fb3b43972d40f1abc8d18))
+
+## [3.1.1](https://github.com/ForestAdmin/toolbelt/compare/v3.1.0...v3.1.1) (2023-02-28)
+
 # [3.1.0](https://github.com/ForestAdmin/toolbelt/compare/v3.0.12...v3.1.0) (2023-02-13)
 
 

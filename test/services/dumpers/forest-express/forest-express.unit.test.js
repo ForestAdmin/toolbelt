@@ -1,6 +1,6 @@
 const chalk = require('chalk');
 
-const Dumper = require('../../../../src/services/dumpers/dumper-v1');
+const Dumper = require('../../../../src/services/dumpers/forest-express');
 const InvalidForestCLIProjectStructureError = require('../../../../src/errors/dumper/invalid-forest-cli-project-structure-error');
 const IncompatibleLianaForUpdateError = require('../../../../src/errors/dumper/incompatible-liana-for-update-error');
 
@@ -23,9 +23,6 @@ function createDumper(contextOverride = {}) {
     isLinuxOs: false,
     buildDatabaseUrl: jest.fn(({ dbConnectionUrl }) => dbConnectionUrl),
     isDatabaseLocal: jest.fn(() => true),
-    strings: {
-      snakeCase: jest.fn().mockImplementation(value => value),
-    },
     ...contextOverride,
   });
 }
@@ -180,6 +177,16 @@ describe('services > dumper (unit)', () => {
 
         expect(getPackageJSONContentFromDialect('mongodb')).toContain('mongoose');
       });
+    });
+  });
+
+  describe('tableToFilename', () => {
+    it('should return a kebab case version of the given parameter', () => {
+      expect.assertions(3);
+
+      expect(Dumper.tableToFilename('test')).toBe('test');
+      expect(Dumper.tableToFilename('testSomething')).toBe('test-something');
+      expect(Dumper.tableToFilename('test_something_else')).toBe('test-something-else');
     });
   });
 

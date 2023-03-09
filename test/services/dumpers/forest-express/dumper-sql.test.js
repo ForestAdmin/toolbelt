@@ -5,7 +5,7 @@ const fs = require('fs');
 const renderingModel = require('../../analyzer/expected/sequelize/db-analysis-output/renderings.expected.json');
 const defaultPlan = require('../../../../src/context/plan');
 
-const Dumper = require('../../../../src/services/dumpers/dumper-v1');
+const Dumper = require('../../../../src/services/dumpers/forest-express');
 
 const TYPE_CAST = 'databaseOptions.dialectOptions.typeCast';
 

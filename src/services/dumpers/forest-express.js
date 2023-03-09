@@ -1,11 +1,13 @@
+const _ = require('lodash');
 const { URL } = require('url');
 const { plural, singular } = require('pluralize');
+const stringUtils = require('../../utils/strings');
 const toValidPackageName = require('../../utils/to-valid-package-name');
 const IncompatibleLianaForUpdateError = require('../../errors/dumper/incompatible-liana-for-update-error');
 const InvalidForestCLIProjectStructureError = require('../../errors/dumper/invalid-forest-cli-project-structure-error');
 const AbstractDumper = require('./abstract-dumper').default;
 
-class DumperV1 extends AbstractDumper {
+class ForestExpress extends AbstractDumper {
   constructor(context) {
     super(context);
 
@@ -18,8 +20,6 @@ class DumperV1 extends AbstractDumper {
       isLinuxOs,
       buildDatabaseUrl,
       isDatabaseLocal,
-      strings,
-      lodash,
     } = context;
 
     assertPresent({
@@ -30,8 +30,6 @@ class DumperV1 extends AbstractDumper {
       isLinuxOs,
       buildDatabaseUrl,
       isDatabaseLocal,
-      strings,
-      lodash,
     });
 
     this.DEFAULT_PORT = 3310;
@@ -42,8 +40,6 @@ class DumperV1 extends AbstractDumper {
     this.mkdirp = mkdirp;
     this.buildDatabaseUrl = buildDatabaseUrl;
     this.isDatabaseLocal = isDatabaseLocal;
-    this.strings = strings;
-    this.lodash = lodash;
   }
 
   static getModelsNameSorted(schema) {
@@ -52,10 +48,10 @@ class DumperV1 extends AbstractDumper {
     );
   }
 
-  getSafeReferences(references) {
+  static getSafeReferences(references) {
     return references.map(reference => ({
       ...reference,
-      ref: this.getModelNameFromTableName(reference.ref),
+      ref: ForestExpress.getModelNameFromTableName(reference.ref),
     }));
   }
 
@@ -67,7 +63,7 @@ class DumperV1 extends AbstractDumper {
 
   // eslint-disable-next-line class-methods-use-this
   get templateFolder() {
-    return 'agent-v1';
+    return 'forest-express';
   }
 
   writePackageJson(dbDialect, applicationName) {
@@ -111,8 +107,8 @@ class DumperV1 extends AbstractDumper {
     this.writeFile('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
   }
 
-  tableToFilename(table) {
-    return this.strings.kebabCase(table);
+  static tableToFilename(table) {
+    return _.kebabCase(table);
   }
 
   static isLocalUrl(url) {
@@ -122,7 +118,9 @@ class DumperV1 extends AbstractDumper {
   getApplicationUrl(appHostname, appPort) {
     const hostUrl = /^https?:\/\//.test(appHostname) ? appHostname : `http://${appHostname}`;
 
-    return DumperV1.isLocalUrl(hostUrl) ? `${hostUrl}:${appPort || this.DEFAULT_PORT}` : hostUrl;
+    return ForestExpress.isLocalUrl(hostUrl)
+      ? `${hostUrl}:${appPort || this.DEFAULT_PORT}`
+      : hostUrl;
   }
 
   writeDotEnv(config) {
@@ -146,21 +144,19 @@ class DumperV1 extends AbstractDumper {
     this.copyHandleBarsTemplate('env.hbs', '.env', context);
   }
 
-  getModelNameFromTableName(table) {
-    return this.strings.transformToCamelCaseSafeString(table);
+  static getModelNameFromTableName(table) {
+    return stringUtils.transformToCamelCaseSafeString(table);
   }
 
   writeModel(config, table, fields, references, options = {}) {
     const { underscored } = options;
-    let modelPath = `models/${this.tableToFilename(table)}.js`;
+    let modelPath = `models/${ForestExpress.tableToFilename(table)}.js`;
     if (config.appConfig.useMultiDatabase) {
-      modelPath = `models/${config.modelsExportPath}/${this.tableToFilename(table)}.js`;
+      modelPath = `models/${config.modelsExportPath}/${ForestExpress.tableToFilename(table)}.js`;
     }
 
     const fieldsDefinition = fields.map(field => {
-      const expectedConventionalColumnName = underscored
-        ? this.strings.snakeCase(field.name)
-        : field.name;
+      const expectedConventionalColumnName = underscored ? _.snakeCase(field.name) : field.name;
       // NOTICE: sequelize considers column name with parenthesis as raw Attributes
       // only set as unconventional name if underscored is true for adding special field attribute
       // and avoid sequelize issues
@@ -172,12 +168,12 @@ class DumperV1 extends AbstractDumper {
 
       return {
         ...field,
-        ref: field.ref && this.getModelNameFromTableName(field.ref),
+        ref: field.ref && ForestExpress.getModelNameFromTableName(field.ref),
         nameColumnUnconventional,
         hasParenthesis,
 
         // Only output default value when non-null
-        hasSafeDefaultValue: !this.lodash.isNil(field.defaultValue),
+        hasSafeDefaultValue: !_.isNil(field.defaultValue),
         safeDefaultValue:
           field.defaultValue instanceof this.Sequelize.Utils.Literal
             ? `Sequelize.literal('${field.defaultValue.val.replace(/'/g, "\\'")}')`
@@ -188,16 +184,16 @@ class DumperV1 extends AbstractDumper {
     const referencesDefinition = references.map(reference => ({
       ...reference,
       isBelongsToMany: reference.association === 'belongsToMany',
-      targetKey: this.strings.camelCase(reference.targetKey),
-      sourceKey: this.strings.camelCase(reference.sourceKey),
+      targetKey: _.camelCase(reference.targetKey),
+      sourceKey: _.camelCase(reference.sourceKey),
     }));
 
     this.copyHandleBarsTemplate(
       `models/${config.dbConfig.dbDialect === 'mongodb' ? 'mongo' : 'sequelize'}-model.hbs`,
       modelPath,
       {
-        modelName: this.getModelNameFromTableName(table),
-        modelVariableName: this.strings.pascalCase(this.strings.transformToSafeString(table)),
+        modelName: ForestExpress.getModelNameFromTableName(table),
+        modelVariableName: stringUtils.pascalCase(stringUtils.transformToSafeString(table)),
         table,
         fields: fieldsDefinition,
         references: referencesDefinition,
@@ -210,13 +206,13 @@ class DumperV1 extends AbstractDumper {
   }
 
   writeRoute(dbDialect, modelName) {
-    const routesPath = `routes/${this.tableToFilename(modelName)}.js`;
+    const routesPath = `routes/${ForestExpress.tableToFilename(modelName)}.js`;
 
-    const modelNameDasherized = this.strings.kebabCase(modelName);
-    const readableModelName = this.lodash.startCase(modelName);
+    const modelNameDasherized = _.kebabCase(modelName);
+    const readableModelName = _.startCase(modelName);
 
     this.copyHandleBarsTemplate('routes/route.hbs', routesPath, {
-      modelName: this.getModelNameFromTableName(modelName),
+      modelName: ForestExpress.getModelNameFromTableName(modelName),
       modelNameDasherized,
       modelNameReadablePlural: plural(readableModelName),
       modelNameReadableSingular: singular(readableModelName),
@@ -225,11 +221,11 @@ class DumperV1 extends AbstractDumper {
   }
 
   writeForestCollection(dbDialect, table) {
-    const collectionPath = `forest/${this.tableToFilename(table)}.js`;
+    const collectionPath = `forest/${ForestExpress.tableToFilename(table)}.js`;
 
     this.copyHandleBarsTemplate('forest/collection.hbs', collectionPath, {
       isMongoDB: dbDialect === 'mongodb',
-      table: this.getModelNameFromTableName(table),
+      table: ForestExpress.getModelNameFromTableName(table),
     });
   }
 
@@ -273,7 +269,7 @@ class DumperV1 extends AbstractDumper {
       }
     }
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
-      containerName: this.strings.snakeCase(config.appConfig.applicationName),
+      containerName: _.snakeCase(config.appConfig.applicationName),
       databaseUrl,
       dbSchema: config.dbConfig.dbSchema,
       forestExtraHost,
@@ -307,7 +303,7 @@ class DumperV1 extends AbstractDumper {
       await this.mkdirp(`${this.projectPath}/middlewares`);
     }
 
-    const modelNames = DumperV1.getModelsNameSorted(schema);
+    const modelNames = ForestExpress.getModelsNameSorted(schema);
 
     if (!isUpdate) this.writeDatabasesConfig(config.dbConfig.dbDialect);
 
@@ -323,7 +319,7 @@ class DumperV1 extends AbstractDumper {
 
     modelNames.forEach(modelName => {
       const { fields, references, options } = schema[modelName];
-      const safeReferences = this.getSafeReferences(references);
+      const safeReferences = ForestExpress.getSafeReferences(references);
 
       this.writeModel(config, modelName, fields, safeReferences, options);
     });
@@ -335,7 +331,7 @@ class DumperV1 extends AbstractDumper {
       //       Forest Admin internal route (session or stats creation).
       //       As a workaround, we don't generate the route file.
       // TODO: Remove the if condition, once the routes paths refactored to prevent such conflict.
-      if (!DumperV1.shouldSkipRouteGenerationForModel(modelName)) {
+      if (!ForestExpress.shouldSkipRouteGenerationForModel(modelName)) {
         this.writeRoute(config.dbConfig.dbDialect, modelName);
       }
     });
@@ -388,4 +384,4 @@ class DumperV1 extends AbstractDumper {
   }
 }
 
-module.exports = DumperV1;
+module.exports = ForestExpress;

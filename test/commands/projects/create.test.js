@@ -465,7 +465,7 @@ describe('projects:create', () => {
 
     describe('when it is a mongodb dialect', () => {
       it('should analyze the database and display a spinner for the connection only with a log', async () => {
-        expect.assertions(9);
+        expect.assertions(10);
 
         const context = makeContext();
         const { databaseAnalyzer, logger, spinner, database } = context;
@@ -486,8 +486,9 @@ describe('projects:create', () => {
         expect(databaseAnalyzer.analyzeMongoDb).toHaveBeenCalledTimes(1);
         expect(databaseAnalyzer.analyzeMongoDb).toHaveBeenCalledWith(connection, dbConfig, true);
 
-        expect(spinner.start).toHaveBeenCalledTimes(1);
-        expect(spinner.start).toHaveBeenCalledWith({ text: 'Analyzing the database' });
+        expect(spinner.start).not.toHaveBeenCalled();
+        expect(logger.info).toHaveBeenCalledTimes(1);
+        expect(logger.info).toHaveBeenCalledWith('Analyzing the database');
         expect(spinner.attachToPromise).not.toHaveBeenCalled();
 
         expect(logger.success).toHaveBeenCalledTimes(1);

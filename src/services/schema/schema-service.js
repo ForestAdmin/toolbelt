@@ -6,7 +6,7 @@ module.exports = class SchemaService {
     constants,
     database,
     databaseAnalyzer,
-    dumperV1,
+    forestExpressDumper,
     env,
     errorHandler,
     fs,
@@ -18,7 +18,7 @@ module.exports = class SchemaService {
       constants,
       database,
       databaseAnalyzer,
-      dumperV1,
+      forestExpressDumper,
       env,
       errorHandler,
       fs,
@@ -29,7 +29,7 @@ module.exports = class SchemaService {
     this.constants = constants;
     this.database = database;
     this.databaseAnalyzer = databaseAnalyzer;
-    this.dumper = dumperV1;
+    this.dumper = forestExpressDumper;
     this.env = env;
     this.errorHandler = errorHandler;
     this.fs = fs;
@@ -102,18 +102,21 @@ module.exports = class SchemaService {
 
     const dumpPromise = Promise.all(
       databasesSchema.map(databaseSchema =>
-        this.dumper.dump(databaseSchema.schema, {
-          appConfig: {
-            applicationName,
-            isUpdate,
-            useMultiDatabase,
-            modelsExportPath: this.path.relative('models', databaseSchema.modelsDir),
+        this.dumper.dump(
+          {
+            appConfig: {
+              applicationName,
+              isUpdate,
+              useMultiDatabase,
+              modelsExportPath: this.path.relative('models', databaseSchema.modelsDir),
+            },
+            dbConfig: {
+              dbDialect: databaseSchema.analyzerOptions.dbDialect,
+              dbSchema: databaseSchema.analyzerOptions.dbSchema,
+            },
           },
-          dbConfig: {
-            dbDialect: databaseSchema.analyzerOptions.dbDialect,
-            dbSchema: databaseSchema.analyzerOptions.dbSchema,
-          },
-        }),
+          databaseSchema.schema,
+        ),
       ),
     );
     return this.spinner.attachToPromise(dumpPromise);
