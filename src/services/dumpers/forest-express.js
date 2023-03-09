@@ -11,7 +11,16 @@ class ForestExpress extends AbstractDumper {
   constructor(context) {
     super(context);
 
-    const { assertPresent, env, Sequelize, Handlebars, mkdirp, isLinuxOs } = context;
+    const {
+      assertPresent,
+      env,
+      Sequelize,
+      Handlebars,
+      mkdirp,
+      isLinuxOs,
+      buildDatabaseUrl,
+      isDatabaseLocal,
+    } = context;
 
     assertPresent({
       env,
@@ -19,6 +28,8 @@ class ForestExpress extends AbstractDumper {
       Handlebars,
       mkdirp,
       isLinuxOs,
+      buildDatabaseUrl,
+      isDatabaseLocal,
     });
 
     this.DEFAULT_PORT = 3310;
@@ -27,6 +38,8 @@ class ForestExpress extends AbstractDumper {
     this.Sequelize = Sequelize;
     this.Handlebars = Handlebars;
     this.mkdirp = mkdirp;
+    this.buildDatabaseUrl = buildDatabaseUrl;
+    this.isDatabaseLocal = isDatabaseLocal;
   }
 
   static getModelsNameSorted(schema) {
@@ -96,11 +109,6 @@ class ForestExpress extends AbstractDumper {
 
   static tableToFilename(table) {
     return _.kebabCase(table);
-  }
-
-  isDatabaseLocal(dbConfig) {
-    const databaseUrl = this.buildDatabaseUrl(dbConfig);
-    return databaseUrl.includes('127.0.0.1') || databaseUrl.includes('localhost');
   }
 
   static isLocalUrl(url) {

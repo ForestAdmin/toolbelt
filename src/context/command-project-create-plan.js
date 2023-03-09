@@ -5,6 +5,7 @@ module.exports = plan =>
     .addModule('mongodb', () => require('mongodb'))
     .addModule('Handlebars', () => require('handlebars'))
     .addUsingClass('database', () => require('../services/schema/update/database'))
+    .addUsingClass('agentNodejsDumper', () => require('../services/dumpers/agent-nodejs').default)
     .addUsingClass('forestExpressDumper', () => require('../services/dumpers/forest-express'))
     .addValue('GeneralPrompter', () => require('../services/prompter/general-prompter'))
     .addUsingClass('commandGenerateConfigGetter', () =>

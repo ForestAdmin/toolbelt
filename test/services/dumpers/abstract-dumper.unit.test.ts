@@ -57,7 +57,7 @@ const defaultConfig: Config = {
   forestEnvSecret: 'anEnvSecret',
 };
 
-describe('services > Abstract Dumper', () => {
+describe('services > dumpers > Abstract Dumper', () => {
   describe('dump', () => {
     class ADumper extends AbstractDumper {
       get templateFolder() {
