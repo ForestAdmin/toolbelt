@@ -20,7 +20,7 @@ describe('services > dumper > SQL', () => {
     async function dump() {
       const config = {
         appConfig: {
-          applicationName: 'test-output/mysql',
+          appName: 'test-output/mysql',
           appHostname: 'localhost',
           appPort: 1654,
           path: appRoot,
@@ -28,7 +28,7 @@ describe('services > dumper > SQL', () => {
         dbConfig: {
           dbDialect: 'mysql',
           dbConnectionUrl: 'mysql://localhost:8999',
-          ssl: false,
+          dbSsl: false,
           dbSchema: 'public',
         },
       };
@@ -55,7 +55,7 @@ describe('services > dumper > SQL', () => {
     async function dump() {
       const config = {
         appConfig: {
-          applicationName: 'test-output/mssql',
+          appName: 'test-output/mssql',
           appHostname: 'localhost',
           appPort: 1654,
           path: appRoot,
@@ -63,7 +63,7 @@ describe('services > dumper > SQL', () => {
         dbConfig: {
           dbDialect: 'mssql',
           dbConnectionUrl: 'mssql://localhost:1432',
-          ssl: false,
+          dbSsl: false,
           dbSchema: 'public',
         },
       };
@@ -90,7 +90,7 @@ describe('services > dumper > SQL', () => {
     async function dump() {
       const config = {
         appConfig: {
-          applicationName: 'test-output/postgres',
+          appName: 'test-output/postgres',
           appHostname: 'localhost',
           appPort: 1654,
           path: appRoot,
@@ -98,7 +98,7 @@ describe('services > dumper > SQL', () => {
         dbConfig: {
           dbDialect: 'postgres',
           dbConnectionUrl: 'postgres://localhost:54369',
-          ssl: false,
+          dbSsl: false,
           dbSchema: 'public',
         },
       };

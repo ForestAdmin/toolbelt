@@ -1,18 +1,32 @@
-export interface DbConfigInterface {
-  dbConnectionUrl?: string;
-  dbDialect?: string;
-  dbHostname?: string;
-  dbName?: string;
-  dbPassword?: string;
-  dbPort?: number;
+interface DbConfigBase {
+  dbDialect: string;
+  dbSsl: boolean;
   dbSchema?: string;
-  dbUser?: string;
   mongodbSrv?: boolean;
-  ssl: boolean;
 }
 
+interface DbConfigWithConnectionUrl extends DbConfigBase {
+  dbConnectionUrl: string;
+  dbName?: never;
+  dbHostname?: never;
+  dbPort?: never;
+  dbUser?: never;
+  dbPassword?: never;
+}
+
+interface DbConfigWithConnectionParams extends DbConfigBase {
+  dbConnectionUrl?: never;
+  dbName: string;
+  dbHostname: string;
+  dbPort: number;
+  dbUser: string;
+  dbPassword: string;
+}
+
+export type DbConfig = DbConfigWithConnectionUrl | DbConfigWithConnectionParams;
+
 export interface AppConfig {
-  applicationName: string;
+  appName: string;
   appHostname: string;
   appPort: number;
   isUpdate?: boolean;
@@ -20,8 +34,8 @@ export interface AppConfig {
   modelsExportPath?: string;
 }
 
-export interface ConfigInterface {
-  dbConfig: DbConfigInterface;
+export interface Config {
+  dbConfig: DbConfig;
   appConfig: AppConfig;
   forestAuthSecret: string;
   forestEnvSecret: string;
