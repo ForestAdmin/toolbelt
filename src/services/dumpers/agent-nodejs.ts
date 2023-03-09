@@ -32,8 +32,10 @@ export default class AgentNodeJs extends AbstractDumper {
     assertPresent({
       env,
       isLinuxOs,
+      buildDatabaseUrl,
       isDatabaseLocal,
       strings,
+      toValidPackageName,
     });
 
     super(context);
