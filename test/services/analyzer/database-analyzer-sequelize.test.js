@@ -1,4 +1,3 @@
-const _ = require('lodash');
 const Sequelize = require('sequelize');
 const Context = require('@forestadmin/context');
 const SequelizeHelper = require('./helpers/sequelize-helper');
@@ -16,7 +15,9 @@ const TIMEOUT = 30000;
 
 // For convenience when writing the tests, index analyzer output by connectionUrl
 const defaultsValueExpected = {
-  [databaseUrls.DATABASE_URL_POSTGRESQL_MIN]: _.cloneDeep(expectedDefaultValuesPostgres),
+  [databaseUrls.DATABASE_URL_POSTGRESQL_MIN]: JSON.parse(
+    JSON.stringify(expectedDefaultValuesPostgres),
+  ),
   [databaseUrls.DATABASE_URL_POSTGRESQL_MAX]: expectedDefaultValuesPostgres,
   [databaseUrls.DATABASE_URL_MYSQL_MAX]: expectedDefaultValuesMysql,
   [databaseUrls.DATABASE_URL_MSSQL_MIN]: expectedDefaultValuesMssql,

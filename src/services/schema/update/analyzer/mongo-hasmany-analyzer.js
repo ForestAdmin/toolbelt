@@ -1,4 +1,3 @@
-const _ = require('lodash');
 const P = require('bluebird');
 const {
   findCollectionMatchingSamples,
@@ -20,7 +19,7 @@ const pickSampleValues = (databaseConnection, collectionName, field) =>
       { $project: { _id: false, value: `$${field.name}` } },
     ])
     .toArray()
-    .then(samples => _.map(samples, 'value'));
+    .then(samples => samples.map(sample => sample.value));
 
 const buildReference = (collectionName, referencedCollection, field) => {
   if (referencedCollection) {
@@ -47,7 +46,7 @@ const detectHasMany = (databaseConnection, fields, collectionName) => {
 
 const applyHasMany = (fields, references) =>
   references.forEach(reference => {
-    const field = _.find(fields, { name: reference.from.fieldName });
+    const field = fields.find(searchedField => searchedField.name === reference.from.fieldName);
     field.ref = reference.to.collectionName;
     field.hasMany = true;
   });

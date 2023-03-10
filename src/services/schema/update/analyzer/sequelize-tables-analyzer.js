@@ -1,6 +1,5 @@
 const { inject } = require('@forestadmin/context');
 const P = require('bluebird');
-const _ = require('lodash');
 const { plural, singular } = require('pluralize');
 const ColumnTypeGetter = require('./sequelize-column-type-getter');
 const DefaultValueExpression = require('./sequelize-default-value');
@@ -116,7 +115,10 @@ function hasTimestamps(fields) {
 }
 
 function formatAliasName(columnName) {
-  const alias = _.camelCase(columnName);
+  const { assertPresent, lodash } = inject();
+  assertPresent(lodash);
+
+  const alias = lodash.camelCase(columnName);
   if (alias.endsWith('Id') && alias.length > 2) {
     return alias.substring(0, alias.length - 2);
   }
@@ -130,7 +132,7 @@ function formatAliasName(columnName) {
 function hasIdColumn(fields, primaryKeys) {
   return (
     fields.some(field => field.name === 'id' || field.nameColumn === 'id') ||
-    _.includes(primaryKeys, 'id')
+    primaryKeys?.includes('id')
   );
 }
 
@@ -170,13 +172,16 @@ function isJunctionTable(fields, constraints) {
 
 // NOTICE: Check the foreign key's reference unicity
 function checkUnicity(primaryKeys, uniqueIndexes, columnName) {
+  const { assertPresent, lodash } = inject();
+  assertPresent(lodash);
+
   const isUnique =
     uniqueIndexes !== null &&
     uniqueIndexes.find(
       indexColumnName => indexColumnName.length === 1 && indexColumnName.includes(columnName),
     );
 
-  const isPrimary = _.isEqual([columnName], primaryKeys);
+  const isPrimary = lodash.isEqual([columnName], primaryKeys);
 
   return isPrimary || isUnique;
 }
@@ -203,9 +208,10 @@ function createReference(
   foreignKey,
   manyToManyForeignKey,
 ) {
-  const { strings } = inject();
+  const { assertPresent, lodash, strings } = inject();
+  assertPresent(lodash, strings);
 
-  const foreignKeyName = _.camelCase(foreignKey.columnName);
+  const foreignKeyName = lodash.camelCase(foreignKey.columnName);
   const reference = {
     foreignKey: foreignKey.columnName,
     foreignKeyName: `${foreignKeyName}Key`,
@@ -222,7 +228,7 @@ function createReference(
     reference.ref = manyToManyForeignKey.foreignTableName;
     reference.otherKey = manyToManyForeignKey.columnName;
     reference.through = strings.camelCase(strings.transformToSafeString(foreignKey.tableName));
-    reference.as = _.camelCase(
+    reference.as = lodash.camelCase(
       plural(`${manyToManyForeignKey.foreignTableName}_through_${foreignKey.tableName}`),
     );
   } else {
@@ -237,13 +243,13 @@ function createReference(
     if (foreignKey.foreignColumnName !== 'id') {
       reference.sourceKey = foreignKey.foreignColumnName;
     }
-    reference.as = _.camelCase(formater(`${prefix}${foreignKey.tableName}`));
+    reference.as = lodash.camelCase(formater(`${prefix}${foreignKey.tableName}`));
   }
 
   if (referenceAlreadyExists(existingsReferences, reference)) return null;
 
   if (associationNameAlreadyExists(existingsReferences, reference)) {
-    reference.as = _.camelCase(`${reference.as} ${reference.foreignKey}`);
+    reference.as = lodash.camelCase(`${reference.as} ${reference.foreignKey}`);
   }
 
   return reference;
@@ -360,7 +366,10 @@ function isOnlyJoinTableWithId(schema, constraints) {
   );
 
   const columnWithoutForeignKey = possibleForeignColumnNames.find(
-    columnName => !_.find(constraints, { columnName, columnType: FOREIGN_KEY }),
+    columnName =>
+      !constraints.find(
+        constraint => constraint.columnName === columnName && constraint.columnType === FOREIGN_KEY,
+      ),
   );
 
   return !columnWithoutForeignKey;
@@ -371,12 +380,17 @@ async function createTableSchema(
   { schema, constraints, primaryKeys },
   tableName,
 ) {
+  const { assertPresent, lodash } = inject();
+  assertPresent(lodash);
+
   const fields = [];
 
   await P.each(Object.keys(schema), async columnName => {
     const columnInfo = schema[columnName];
     const type = await columnTypeGetter.perform(columnInfo, columnName, tableName);
-    const foreignKey = _.find(constraints, { columnName, columnType: FOREIGN_KEY });
+    const foreignKey = constraints.find(
+      constraint => constraint.columnName === columnName && constraint.columnType === FOREIGN_KEY,
+    );
     const isValidField =
       type &&
       (!foreignKey ||
@@ -396,7 +410,7 @@ async function createTableSchema(
       // NOTICE: sequelize considers column name with parenthesis as raw Attributes
       // do not try to camelCase the name for avoiding sequelize issues
       const hasParenthesis = columnName.includes('(') || columnName.includes(')');
-      const name = hasParenthesis ? columnName : _.camelCase(columnName);
+      const name = hasParenthesis ? columnName : lodash.camelCase(columnName);
       let isRequired = !columnInfo.allowNull;
       if (isTechnicalTimestamp({ name, type })) {
         isRequired = false;
@@ -419,7 +433,7 @@ async function createTableSchema(
     underscored: isUnderscored(fields),
     timestamps: hasTimestamps(fields),
     hasIdColumn: hasIdColumn(fields, primaryKeys),
-    hasPrimaryKeys: !_.isEmpty(primaryKeys),
+    hasPrimaryKeys: Boolean(primaryKeys?.length),
     isJunction: isJunctionTable(fields, constraints),
   };
 
@@ -434,6 +448,9 @@ async function createTableSchema(
 //         and rename reference's alias as `Linked${collectionReferenced}` to prevent Sequelize
 //         from crashing at startup.
 function fixAliasConflicts(wholeSchema) {
+  const { assertPresent, lodash } = inject();
+  assertPresent(lodash);
+
   const tablesName = Object.keys(wholeSchema);
 
   if (!tablesName.length) {
@@ -448,7 +465,7 @@ function fixAliasConflicts(wholeSchema) {
 
       table.references.forEach((reference, index) => {
         if (fieldNames.includes(reference.as)) {
-          table.references[index].as = `linked${_.upperFirst(reference.as)}`;
+          table.references[index].as = `linked${lodash.upperFirst(reference.as)}`;
         }
       });
     }
@@ -456,6 +473,9 @@ function fixAliasConflicts(wholeSchema) {
 }
 
 async function analyzeSequelizeTables(connection, config, allowWarning) {
+  const { assertPresent, lodash } = inject();
+  assertPresent(lodash);
+
   // User provided a schema, check if it exists
   if (config.dbSchema) {
     const schemas = await connection.query(
@@ -519,7 +539,10 @@ async function analyzeSequelizeTables(connection, config, allowWarning) {
   // NOTICE: Fill the references field for each table schema
   const referencesPerTable = createAllReferences(databaseSchema, schemaAllTables);
   Object.keys(referencesPerTable).forEach(tableName => {
-    schemaAllTables[tableName].references = _.sortBy(referencesPerTable[tableName], 'association');
+    schemaAllTables[tableName].references = lodash.sortBy(
+      referencesPerTable[tableName],
+      'association',
+    );
 
     // NOTE: When a table contains no field, it will be considered camelCased
     //       by default, so we need to check its references to ensure whether
@@ -531,7 +554,7 @@ async function analyzeSequelizeTables(connection, config, allowWarning) {
     }
   });
 
-  if (_.isEmpty(schemaAllTables)) {
+  if (Object.keys(schemaAllTables).length) {
     throw new EmptyDatabaseError('no tables found', {
       orm: 'sequelize',
       dialect: connection.getDialect(),
