@@ -97,7 +97,7 @@ module.exports = class SchemaService {
     return this.spinner.attachToPromise(databasesSchemaPromise);
   }
 
-  async _dumpSchemas(databasesSchema, applicationName, isUpdate, useMultiDatabase) {
+  async _dumpSchemas(databasesSchema, appName, isUpdate, useMultiDatabase) {
     this.spinner.start({ text: 'Generating your files' });
 
     const dumpPromise = Promise.all(
@@ -105,7 +105,7 @@ module.exports = class SchemaService {
         this.dumper.dump(
           {
             appConfig: {
-              applicationName,
+              appName,
               isUpdate,
               useMultiDatabase,
               modelsExportPath: this.path.relative('models', databaseSchema.modelsDir),
