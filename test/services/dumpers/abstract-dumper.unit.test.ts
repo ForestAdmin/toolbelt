@@ -27,6 +27,7 @@ const buildDumper = (ADumper, librairies = {}) => {
       compile: jest.fn().mockImplementation(() => () => {}),
     },
     buildDatabaseUrl: jest.fn(),
+    toValidPackageName: jest.fn().mockImplementation(content => content),
     ...librairies,
   };
   return {
@@ -57,7 +58,7 @@ const defaultConfig: Config = {
   forestEnvSecret: 'anEnvSecret',
 };
 
-describe('services > Abstract Dumper', () => {
+describe('services > dumpers > Abstract Dumper', () => {
   describe('dump', () => {
     class ADumper extends AbstractDumper {
       get templateFolder() {
