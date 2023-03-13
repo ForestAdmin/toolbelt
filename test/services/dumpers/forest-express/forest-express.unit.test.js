@@ -413,6 +413,71 @@ describe('services > dumper (unit)', () => {
     });
   });
 
+  describe('writeModel', () => {
+    const config = {
+      appConfig: {
+        useMultiDatabase: true,
+      },
+      dbConfig: {},
+      modelsExportPath: 'accounting',
+    };
+
+    describe('with multiple databases', () => {
+      it('should call the copyHandleBarsTemplate with a valid context', () => {
+        expect.assertions(1);
+
+        const dumper = createDumper();
+        const copyHandlebarsTemplateSpy = jest
+          .spyOn(dumper, 'copyHandleBarsTemplate')
+          .mockImplementation();
+        dumper.writeModel(config, 'database', [], [], {});
+
+        expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith(
+          'models/sequelize-model.hbs',
+          'models/accounting/database.js',
+          {
+            dialect: undefined,
+            fields: [],
+            modelName: 'database',
+            modelVariableName: 'database',
+            noId: true,
+            references: [],
+            schema: undefined,
+            table: 'database',
+          },
+        );
+      });
+    });
+
+    describe('with a single database', () => {
+      it('should call the copyHandleBarsTemplate with a valid context', () => {
+        expect.assertions(1);
+
+        const dumper = createDumper();
+        const copyHandlebarsTemplateSpy = jest
+          .spyOn(dumper, 'copyHandleBarsTemplate')
+          .mockImplementation();
+        config.appConfig.useMultiDatabase = false;
+        dumper.writeModel(config, 'database', [], [], {});
+
+        expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith(
+          'models/sequelize-model.hbs',
+          'models/database.js',
+          {
+            dialect: undefined,
+            fields: [],
+            modelName: 'database',
+            modelVariableName: 'database',
+            noId: true,
+            references: [],
+            schema: undefined,
+            table: 'database',
+          },
+        );
+      });
+    });
+  });
+
   describe('dump', () => {
     it('should call all the mandatory functions required to generate a complete project', async () => {
       expect.assertions(27);
