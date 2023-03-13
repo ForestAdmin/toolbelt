@@ -116,7 +116,7 @@ function hasTimestamps(fields) {
 
 function formatAliasName(columnName) {
   const { assertPresent, lodash } = inject();
-  assertPresent(lodash);
+  assertPresent({ lodash });
 
   const alias = lodash.camelCase(columnName);
   if (alias.endsWith('Id') && alias.length > 2) {
@@ -173,7 +173,7 @@ function isJunctionTable(fields, constraints) {
 // NOTICE: Check the foreign key's reference unicity
 function checkUnicity(primaryKeys, uniqueIndexes, columnName) {
   const { assertPresent, lodash } = inject();
-  assertPresent(lodash);
+  assertPresent({ lodash });
 
   const isUnique =
     uniqueIndexes !== null &&
@@ -209,7 +209,7 @@ function createReference(
   manyToManyForeignKey,
 ) {
   const { assertPresent, lodash, strings } = inject();
-  assertPresent(lodash, strings);
+  assertPresent({ lodash, strings });
 
   const foreignKeyName = lodash.camelCase(foreignKey.columnName);
   const reference = {
@@ -381,7 +381,7 @@ async function createTableSchema(
   tableName,
 ) {
   const { assertPresent, lodash } = inject();
-  assertPresent(lodash);
+  assertPresent({ lodash });
 
   const fields = [];
 
@@ -449,7 +449,7 @@ async function createTableSchema(
 //         from crashing at startup.
 function fixAliasConflicts(wholeSchema) {
   const { assertPresent, lodash } = inject();
-  assertPresent(lodash);
+  assertPresent({ lodash });
 
   const tablesName = Object.keys(wholeSchema);
 
@@ -474,7 +474,7 @@ function fixAliasConflicts(wholeSchema) {
 
 async function analyzeSequelizeTables(connection, config, allowWarning) {
   const { assertPresent, lodash } = inject();
-  assertPresent(lodash);
+  assertPresent({ lodash });
 
   // User provided a schema, check if it exists
   if (config.dbSchema) {
