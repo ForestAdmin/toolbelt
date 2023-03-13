@@ -1,68 +1,31 @@
-const buildDatabaseUrl = require('../../src/utils/database-url').default;
+const { default: buildDatabaseUrl, isDatabaseLocal } = require('../../src/utils/database-url');
 
 describe('utils > buildDatabaseUrl', () => {
-  describe('when missing configuration', () => {
-    it('should return null', () => {
-      expect.assertions(1);
-
-      expect(buildDatabaseUrl(null)).toBeNull();
-    });
-  });
-
-  describe('with a configuration', () => {
-    describe('providing a dbConnectionUrl', () => {
-      it('should return it', () => {
+  describe('buildDatabaseUrl', () => {
+    describe('when missing configuration', () => {
+      it('should return null', () => {
         expect.assertions(1);
 
-        const config = {
-          dbConnectionUrl: Symbol('dbConnectionUrl'),
-        };
-        const databaseUrl = buildDatabaseUrl(config);
-
-        expect(databaseUrl).toBe(config.dbConnectionUrl);
+        expect(buildDatabaseUrl(null)).toBeNull();
       });
     });
 
-    describe('missing a dbConnectionUrl', () => {
-      it('should build the URL from the configuration', () => {
-        expect.assertions(1);
-
-        const config = {
-          dbDialect: '__protocol__',
-          dbHostname: '__dbHostname__',
-          dbName: '__dbName__',
-          dbPassword: '__dbPassword__',
-          dbPort: '__dbPort__',
-          dbUser: '__dbUser__',
-        };
-        const databaseUrl = buildDatabaseUrl(config);
-
-        expect(databaseUrl).toBe(
-          '__protocol__://__dbUser__:__dbPassword__@__dbHostname__:__dbPort__/__dbName__',
-        );
-      });
-
-      describe('when given the MongoDB SRV option', () => {
-        it('should include it when dialect is "mongodb" and ignore port', () => {
+    describe('with a configuration', () => {
+      describe('providing a dbConnectionUrl', () => {
+        it('should return it', () => {
           expect.assertions(1);
 
           const config = {
-            dbDialect: 'mongodb',
-            dbHostname: '__dbHostname__',
-            dbName: '__dbName__',
-            dbPassword: '__dbPassword__',
-            dbPort: '__dbPort__',
-            dbUser: '__dbUser__',
-            mongodbSrv: true,
+            dbConnectionUrl: Symbol('dbConnectionUrl'),
           };
           const databaseUrl = buildDatabaseUrl(config);
 
-          expect(databaseUrl).toBe(
-            'mongodb+srv://__dbUser__:__dbPassword__@__dbHostname__/__dbName__',
-          );
+          expect(databaseUrl).toBe(config.dbConnectionUrl);
         });
+      });
 
-        it('should ignore it otherwise', () => {
+      describe('missing a dbConnectionUrl', () => {
+        it('should build the URL from the configuration', () => {
           expect.assertions(1);
 
           const config = {
@@ -72,7 +35,6 @@ describe('utils > buildDatabaseUrl', () => {
             dbPassword: '__dbPassword__',
             dbPort: '__dbPort__',
             dbUser: '__dbUser__',
-            mongodbSrv: true,
           };
           const databaseUrl = buildDatabaseUrl(config);
 
@@ -80,7 +42,65 @@ describe('utils > buildDatabaseUrl', () => {
             '__protocol__://__dbUser__:__dbPassword__@__dbHostname__:__dbPort__/__dbName__',
           );
         });
+
+        describe('when given the MongoDB SRV option', () => {
+          it('should include it when dialect is "mongodb" and ignore port', () => {
+            expect.assertions(1);
+
+            const config = {
+              dbDialect: 'mongodb',
+              dbHostname: '__dbHostname__',
+              dbName: '__dbName__',
+              dbPassword: '__dbPassword__',
+              dbPort: '__dbPort__',
+              dbUser: '__dbUser__',
+              mongodbSrv: true,
+            };
+            const databaseUrl = buildDatabaseUrl(config);
+
+            expect(databaseUrl).toBe(
+              'mongodb+srv://__dbUser__:__dbPassword__@__dbHostname__/__dbName__',
+            );
+          });
+
+          it('should ignore it otherwise', () => {
+            expect.assertions(1);
+
+            const config = {
+              dbDialect: '__protocol__',
+              dbHostname: '__dbHostname__',
+              dbName: '__dbName__',
+              dbPassword: '__dbPassword__',
+              dbPort: '__dbPort__',
+              dbUser: '__dbUser__',
+              mongodbSrv: true,
+            };
+            const databaseUrl = buildDatabaseUrl(config);
+
+            expect(databaseUrl).toBe(
+              '__protocol__://__dbUser__:__dbPassword__@__dbHostname__:__dbPort__/__dbName__',
+            );
+          });
+        });
       });
+    });
+  });
+
+  describe('isDatabaseLocal', () => {
+    it('should return true for a config referring to a database hosted locally', () => {
+      expect.assertions(1);
+
+      const dbConnectionUrl = 'mongodb+srv://root:password@localhost/forest';
+
+      expect(isDatabaseLocal({ dbConnectionUrl })).toBe(true);
+    });
+
+    it('should return false for a config referring to a database not hosted locally', () => {
+      expect.assertions(1);
+
+      const dbConnectionUrl = 'mongodb+srv://root:password@somewhere.intheworld.com/forest';
+
+      expect(isDatabaseLocal({ dbConnectionUrl })).toBe(false);
     });
   });
 });

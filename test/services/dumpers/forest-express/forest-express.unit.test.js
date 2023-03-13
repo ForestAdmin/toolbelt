@@ -22,6 +22,15 @@ function createDumper(contextOverride = {}) {
     mkdirp: () => {},
     isLinuxOs: false,
     buildDatabaseUrl: jest.fn(({ dbConnectionUrl }) => dbConnectionUrl),
+    isDatabaseLocal: jest.fn(() => true),
+    toValidPackageName: jest.fn().mockImplementation(content => content),
+    strings: {
+      snakeCase: jest.fn().mockImplementation(name => name),
+      transformToCamelCaseSafeString: jest.fn().mockImplementation(name => name),
+      kebabCase: jest.fn().mockImplementation(name => name),
+      pascalCase: jest.fn().mockImplementation(name => name),
+      transformToSafeString: jest.fn().mockImplementation(name => name),
+    },
     ...contextOverride,
   });
 }
@@ -180,33 +189,13 @@ describe('services > dumper (unit)', () => {
   });
 
   describe('tableToFilename', () => {
-    it('should return a kebab case version of the given parameter', () => {
-      expect.assertions(3);
-
-      expect(Dumper.tableToFilename('test')).toBe('test');
-      expect(Dumper.tableToFilename('testSomething')).toBe('test-something');
-      expect(Dumper.tableToFilename('test_something_else')).toBe('test-something-else');
-    });
-  });
-
-  describe('isDatabaseLocal', () => {
-    it('should return true for a config referring to a database hosted locally', () => {
+    it('should call the kebabCase method of the strings service', () => {
       expect.assertions(1);
-
       const dumper = createDumper({});
 
-      const dbConnectionUrl = 'mongodb+srv://root:password@localhost/forest';
+      dumper.tableToFilename('test');
 
-      expect(dumper.isDatabaseLocal({ dbConnectionUrl })).toBe(true);
-    });
-
-    it('should return false for a config referring to a database not hosted locally', () => {
-      expect.assertions(1);
-
-      const dumper = createDumper({});
-      const dbConnectionUrl = 'mongodb+srv://root:password@somewhere.intheworld.com/forest';
-
-      expect(dumper.isDatabaseLocal({ dbConnectionUrl })).toBe(false);
+      expect(dumper.strings.kebabCase).toHaveBeenCalledWith('test');
     });
   });
 
@@ -419,6 +408,71 @@ describe('services > dumper (unit)', () => {
           'middlewares/forestadmin.hbs',
           'middlewares/forestadmin.js',
           { isMongoDB: false },
+        );
+      });
+    });
+  });
+
+  describe('writeModel', () => {
+    const config = {
+      appConfig: {
+        useMultiDatabase: true,
+      },
+      dbConfig: {},
+      modelsExportPath: 'accounting',
+    };
+
+    describe('with multiple databases', () => {
+      it('should call the copyHandleBarsTemplate with a valid context', () => {
+        expect.assertions(1);
+
+        const dumper = createDumper();
+        const copyHandlebarsTemplateSpy = jest
+          .spyOn(dumper, 'copyHandleBarsTemplate')
+          .mockImplementation();
+        dumper.writeModel(config, 'database', [], [], {});
+
+        expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith(
+          'models/sequelize-model.hbs',
+          'models/accounting/database.js',
+          {
+            dialect: undefined,
+            fields: [],
+            modelName: 'database',
+            modelVariableName: 'database',
+            noId: true,
+            references: [],
+            schema: undefined,
+            table: 'database',
+          },
+        );
+      });
+    });
+
+    describe('with a single database', () => {
+      it('should call the copyHandleBarsTemplate with a valid context', () => {
+        expect.assertions(1);
+
+        const dumper = createDumper();
+        const copyHandlebarsTemplateSpy = jest
+          .spyOn(dumper, 'copyHandleBarsTemplate')
+          .mockImplementation();
+        config.appConfig.useMultiDatabase = false;
+        dumper.writeModel(config, 'database', [], [], {});
+
+        expect(copyHandlebarsTemplateSpy).toHaveBeenCalledWith(
+          'models/sequelize-model.hbs',
+          'models/database.js',
+          {
+            dialect: undefined,
+            fields: [],
+            modelName: 'database',
+            modelVariableName: 'database',
+            noId: true,
+            references: [],
+            schema: undefined,
+            table: 'database',
+          },
         );
       });
     });

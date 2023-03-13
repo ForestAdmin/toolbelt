@@ -36,7 +36,7 @@ module.exports = {
     'import/no-extraneous-dependencies': [
       'error',
       {
-        devDependencies: ['.eslint-bin/*.js', 'test/**/*.js'],
+        devDependencies: ['.eslint-bin/*.js', 'test/**/*.js', 'test/**/*.ts'],
       },
     ],
     'no-multiple-empty-lines': [
