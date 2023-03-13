@@ -1,3 +1,10 @@
+## [3.1.6](https://github.com/ForestAdmin/toolbelt/compare/v3.1.5...v3.1.6) (2023-03-13)
+
+
+### Features
+
+* run diff command when push or deploy fails ([#529](https://github.com/ForestAdmin/toolbelt/issues/529)) ([40a236f](https://github.com/ForestAdmin/toolbelt/commit/40a236fdd9c2cb399e794c1a0423f9d24efdb0c6))
+
 ## [3.1.5](https://github.com/ForestAdmin/toolbelt/compare/v3.1.4...v3.1.5) (2023-03-09)
 
 ## [3.1.4](https://github.com/ForestAdmin/toolbelt/compare/v3.1.3...v3.1.4) (2023-03-08)
