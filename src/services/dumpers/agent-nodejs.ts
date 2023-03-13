@@ -1,4 +1,5 @@
 import type { Config, DbConfig } from '../../interfaces/project-create-interface';
+import type Strings from '../../utils/strings';
 
 import AbstractDumper from './abstract-dumper';
 
@@ -13,7 +14,7 @@ export default class AgentNodeJs extends AbstractDumper {
 
   private readonly buildDatabaseUrl: (dbConfig: DbConfig) => string;
 
-  private readonly snakeCase: (string: string) => string;
+  private readonly strings: Strings;
 
   private readonly toValidPackageName: (string: string) => string;
 
@@ -24,7 +25,7 @@ export default class AgentNodeJs extends AbstractDumper {
       isLinuxOs,
       buildDatabaseUrl,
       isDatabaseLocal,
-      snakeCase,
+      strings,
       toValidPackageName,
     } = context;
 
@@ -32,7 +33,7 @@ export default class AgentNodeJs extends AbstractDumper {
       env,
       isLinuxOs,
       isDatabaseLocal,
-      snakeCase,
+      strings,
     });
 
     super(context);
@@ -41,7 +42,7 @@ export default class AgentNodeJs extends AbstractDumper {
     this.isLinuxOs = isLinuxOs;
     this.buildDatabaseUrl = buildDatabaseUrl;
     this.isDatabaseLocal = isDatabaseLocal;
-    this.snakeCase = snakeCase;
+    this.strings = strings;
     this.toValidPackageName = toValidPackageName;
   }
 
@@ -179,7 +180,7 @@ export default class AgentNodeJs extends AbstractDumper {
     }
 
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
-      containerName: this.snakeCase(config.appConfig.appName),
+      containerName: this.strings.snakeCase(config.appConfig.appName),
       dbUrl,
       dbSchema: config.dbConfig.dbSchema ? config.dbConfig.dbSchema : false,
       forestExtraHost,
