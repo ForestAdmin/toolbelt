@@ -69,6 +69,8 @@ describe('services > dumpers > AgentNodeJs', () => {
 
     const defaultConfig: Config = {
       appConfig: {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         appPort: null,
         appHostname: 'http://localhost',
         appName: 'anApplication',
@@ -217,6 +219,8 @@ describe('services > dumpers > AgentNodeJs', () => {
 
           const { dumper, context, defaultConfig } = createDumper();
 
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-expect-error
           defaultConfig.dbConfig.dbSsl = null;
 
           await dumper.dump(defaultConfig);

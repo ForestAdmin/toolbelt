@@ -24,6 +24,13 @@ function createDumper(contextOverride = {}) {
     buildDatabaseUrl: jest.fn(({ dbConnectionUrl }) => dbConnectionUrl),
     isDatabaseLocal: jest.fn(() => true),
     toValidPackageName: jest.fn().mockImplementation(content => content),
+    strings: {
+      snakeCase: jest.fn().mockImplementation(name => name),
+      transformToCamelCaseSafeString: jest.fn().mockImplementation(name => name),
+      kebabCase: jest.fn().mockImplementation(name => name),
+      pascalCase: jest.fn().mockImplementation(name => name),
+      transformToSafeString: jest.fn().mockImplementation(name => name),
+    },
     ...contextOverride,
   });
 }
@@ -182,12 +189,13 @@ describe('services > dumper (unit)', () => {
   });
 
   describe('tableToFilename', () => {
-    it('should return a kebab case version of the given parameter', () => {
-      expect.assertions(3);
+    it('should call the kebabCase method of the strings service', () => {
+      expect.assertions(1);
+      const dumper = createDumper({});
 
-      expect(Dumper.tableToFilename('test')).toBe('test');
-      expect(Dumper.tableToFilename('testSomething')).toBe('test-something');
-      expect(Dumper.tableToFilename('test_something_else')).toBe('test-something-else');
+      dumper.tableToFilename('test');
+
+      expect(dumper.strings.kebabCase).toHaveBeenCalledWith('test');
     });
   });
 

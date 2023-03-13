@@ -26,7 +26,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
         this.branchesRenderer.render(branches, format);
       }
     } catch (error) {
-      const customError = BranchManager.handleBranchError(error);
+      const customError = await BranchManager.handleBranchError(error);
 
       this.logger.error(customError);
       this.exit(2);
@@ -39,7 +39,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
 
       this.logger.success(`Switched to new branch: ${branchName}.`);
     } catch (error) {
-      const customError = BranchManager.handleBranchError(error);
+      const customError = await BranchManager.handleBranchError(error);
       this.logger.error(customError);
       this.exit(2);
     }
@@ -60,7 +60,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
       await BranchManager.deleteBranch(branchName, envSecret);
       this.logger.success(`Branch ${branchName} successfully deleted.`);
     } catch (error) {
-      const customError = BranchManager.handleBranchError(error);
+      const customError = await BranchManager.handleBranchError(error);
 
       this.logger.error(customError);
       this.exit(2);
@@ -91,7 +91,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
         );
       }
     } catch (error) {
-      const customError = BranchManager.handleBranchError(error);
+      const customError = await BranchManager.handleBranchError(error);
       this.logger.error(customError);
       this.exit(2);
     }

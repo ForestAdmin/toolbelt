@@ -76,6 +76,10 @@ export default class Strings {
     this.lodash = lodash;
   }
 
+  private isReservedWord(input) {
+    return this.RESERVED_WORDS.includes(this.lodash.toLower(input));
+  }
+
   pascalCase(input) {
     return this.lodash.chain(input).camelCase().upperFirst().value();
   }
@@ -86,10 +90,6 @@ export default class Strings {
 
   camelCase(input) {
     return this.lodash.camelCase(input);
-  }
-
-  private isReservedWord(input) {
-    return this.RESERVED_WORDS.includes(this.lodash.toLower(input));
   }
 
   kebabCase(input) {

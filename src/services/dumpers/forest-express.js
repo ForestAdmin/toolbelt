@@ -112,8 +112,8 @@ class ForestExpress extends AbstractDumper {
     this.writeFile('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
   }
 
-  static tableToFilename(table) {
-    return _.kebabCase(table);
+  tableToFilename(table) {
+    return this.strings.kebabCase(table);
   }
 
   static isLocalUrl(url) {
@@ -155,13 +155,15 @@ class ForestExpress extends AbstractDumper {
 
   writeModel(config, table, fields, references, options = {}) {
     const { underscored } = options;
-    let modelPath = `models/${ForestExpress.tableToFilename(table)}.js`;
+    let modelPath = `models/${this.tableToFilename(table)}.js`;
     if (config.appConfig.useMultiDatabase) {
-      modelPath = `models/${config.modelsExportPath}/${ForestExpress.tableToFilename(table)}.js`;
+      modelPath = `models/${config.modelsExportPath}/${this.tableToFilename(table)}.js`;
     }
 
     const fieldsDefinition = fields.map(field => {
-      const expectedConventionalColumnName = underscored ? _.snakeCase(field.name) : field.name;
+      const expectedConventionalColumnName = underscored
+        ? this.strings.snakeCase(field.name)
+        : field.name;
       // NOTICE: sequelize considers column name with parenthesis as raw Attributes
       // only set as unconventional name if underscored is true for adding special field attribute
       // and avoid sequelize issues
@@ -189,8 +191,8 @@ class ForestExpress extends AbstractDumper {
     const referencesDefinition = references.map(reference => ({
       ...reference,
       isBelongsToMany: reference.association === 'belongsToMany',
-      targetKey: _.camelCase(reference.targetKey),
-      sourceKey: _.camelCase(reference.sourceKey),
+      targetKey: this.strings.camelCase(reference.targetKey),
+      sourceKey: this.strings.camelCase(reference.sourceKey),
     }));
 
     this.copyHandleBarsTemplate(
@@ -211,9 +213,9 @@ class ForestExpress extends AbstractDumper {
   }
 
   writeRoute(dbDialect, modelName) {
-    const routesPath = `routes/${ForestExpress.tableToFilename(modelName)}.js`;
+    const routesPath = `routes/${this.tableToFilename(modelName)}.js`;
 
-    const modelNameDasherized = _.kebabCase(modelName);
+    const modelNameDasherized = this.strings.kebabCase(modelName);
     const readableModelName = _.startCase(modelName);
 
     this.copyHandleBarsTemplate('routes/route.hbs', routesPath, {
@@ -226,7 +228,7 @@ class ForestExpress extends AbstractDumper {
   }
 
   writeForestCollection(dbDialect, table) {
-    const collectionPath = `forest/${ForestExpress.tableToFilename(table)}.js`;
+    const collectionPath = `forest/${this.tableToFilename(table)}.js`;
 
     this.copyHandleBarsTemplate('forest/collection.hbs', collectionPath, {
       isMongoDB: dbDialect === 'mongodb',
@@ -274,7 +276,7 @@ class ForestExpress extends AbstractDumper {
       }
     }
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
-      containerName: _.snakeCase(config.appConfig.appName),
+      containerName: this.strings.snakeCase(config.appConfig.appName),
       databaseUrl,
       dbSchema: config.dbConfig.dbSchema,
       forestExtraHost,

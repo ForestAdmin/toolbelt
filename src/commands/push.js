@@ -54,7 +54,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
         `Branch ${currentBranch.name} successfully pushed onto ${currentBranch.originEnvironment.name}.`,
       );
     } catch (error) {
-      const customError = BranchManager.handleBranchError(error);
+      const customError = await BranchManager.handleBranchError(error);
       this.logger.error(customError);
       this.exit(2);
     }
