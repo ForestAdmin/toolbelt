@@ -27,11 +27,11 @@ function createDumper(contextOverride = {}) {
     strings: {
       transformToCamelCaseSafeString: jest.fn().mockImplementation(name => name),
       transformToSafeString: jest.fn().mockImplementation(name => name),
+      pascalCase: jest.fn().mockImplementation(name => name),
     },
     lodash: {
       snakeCase: jest.fn().mockImplementation(name => name),
       kebabCase: jest.fn().mockImplementation(name => name),
-      pascalCase: jest.fn().mockImplementation(name => name),
     },
     ...contextOverride,
   });

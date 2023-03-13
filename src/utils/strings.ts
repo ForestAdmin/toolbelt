@@ -80,6 +80,10 @@ export default class Strings {
     return this.RESERVED_WORDS.includes(this.lodash.toLower(input));
   }
 
+  pascalCase(input) {
+    return this.lodash.chain(input).camelCase().upperFirst().value();
+  }
+
   transformToSafeString(input) {
     if (/^[\d]/g.exec(input)) {
       return `model${input}`;

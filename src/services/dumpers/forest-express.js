@@ -207,7 +207,7 @@ class ForestExpress extends AbstractDumper {
       modelPath,
       {
         modelName: this.getModelNameFromTableName(table),
-        modelVariableName: this.lodash.pascalCase(this.strings.transformToSafeString(table)),
+        modelVariableName: this.strings.pascalCase(this.strings.transformToSafeString(table)),
         table,
         fields: fieldsDefinition,
         references: referencesDefinition,
