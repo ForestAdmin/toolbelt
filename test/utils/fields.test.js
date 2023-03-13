@@ -1,6 +1,10 @@
+const Context = require('@forestadmin/context');
 const { isUnderscored } = require('../../src/utils/fields');
+const defaultPlan = require('../../src/context/plan');
 
 describe('utils > fields', () => {
+  Context.init(defaultPlan);
+
   describe('without wrong parameters', () => {
     it('should return false', () => {
       expect.assertions(2);
