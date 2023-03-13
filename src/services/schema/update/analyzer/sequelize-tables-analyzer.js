@@ -554,7 +554,7 @@ async function analyzeSequelizeTables(connection, config, allowWarning) {
     }
   });
 
-  if (Object.keys(schemaAllTables).length) {
+  if (Object.keys(schemaAllTables).length === 0) {
     throw new EmptyDatabaseError('no tables found', {
       orm: 'sequelize',
       dialect: connection.getDialect(),
