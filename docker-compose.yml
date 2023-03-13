@@ -1,6 +1,7 @@
 version: '3.4'
 services:
   MongoDB-MIN:
+    platform: linux/x86_64
     image: mongo:3.2
     container_name : forestadmin_test_toolbelt_mongo_min
     ports:
@@ -33,6 +34,7 @@ services:
       - POSTGRES_PASSWORD=secret
 
   MySQL-MIN:
+    platform: linux/x86_64
     image: mysql:5.6
     container_name: forestadmin_test_toolbelt_mysql_min
     environment:

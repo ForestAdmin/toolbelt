@@ -1,33 +1,24 @@
 import type { Config } from '../../interfaces/project-create-interface';
+import type Logger from '../logger';
+import type { Chalk } from 'chalk';
 import '../../utils/handlebars/loader';
 
 export default abstract class AbstractDumper {
   protected projectPath: string;
 
-  protected readonly buildDatabaseUrl;
-
   protected readonly mkdirp;
 
   private readonly fs;
 
-  private readonly logger;
+  private readonly logger: Logger;
 
-  private readonly chalk;
+  private readonly chalk: Chalk;
 
-  private readonly constants;
+  private readonly constants: { [name: string]: string };
 
   private readonly Handlebars;
 
-  protected constructor({
-    assertPresent,
-    fs,
-    logger,
-    chalk,
-    constants,
-    mkdirp,
-    Handlebars,
-    buildDatabaseUrl,
-  }) {
+  protected constructor({ assertPresent, fs, logger, chalk, constants, mkdirp, Handlebars }) {
     assertPresent({
       fs,
       logger,
@@ -35,7 +26,6 @@ export default abstract class AbstractDumper {
       constants,
       mkdirp,
       Handlebars,
-      buildDatabaseUrl,
     });
 
     this.fs = fs;
@@ -44,12 +34,11 @@ export default abstract class AbstractDumper {
     this.constants = constants;
     this.mkdirp = mkdirp;
     this.Handlebars = Handlebars;
-    this.buildDatabaseUrl = buildDatabaseUrl;
   }
 
-  abstract get templateFolder();
+  protected abstract get templateFolder(): string;
 
-  abstract createFiles(dumperConfig: Config, schema: any);
+  protected abstract createFiles(dumperConfig: Config, schema?: any);
 
   protected writeFile(relativeFilePath, content) {
     const fileName = `${this.projectPath}/${relativeFilePath}`;
