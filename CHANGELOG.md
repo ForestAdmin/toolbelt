@@ -1,3 +1,10 @@
+## [3.1.9](https://github.com/ForestAdmin/toolbelt/compare/v3.1.8...v3.1.9) (2023-03-13)
+
+
+### Bug Fixes
+
+* **node10:** change build target to correctly support node10 ([#549](https://github.com/ForestAdmin/toolbelt/issues/549)) ([5fd2a6c](https://github.com/ForestAdmin/toolbelt/commit/5fd2a6c5f2b39e10c62693304a2822033b109285))
+
 ## [3.1.8](https://github.com/ForestAdmin/toolbelt/compare/v3.1.7...v3.1.8) (2023-03-13)
 
 ## [3.1.7](https://github.com/ForestAdmin/toolbelt/compare/v3.1.6...v3.1.7) (2023-03-13)
