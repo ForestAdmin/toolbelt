@@ -1,0 +1,23 @@
+{
+  "name": "test-output-mongodb",
+  "version": "0.0.1",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start:watch": "nodemon",
+    "start": "node ./index.js"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "./forestadmin-schema.json"
+    ]
+  },
+  "dependencies": {
+    "dotenv": "^16.0.1",
+    "@forestadmin/agent": "^1.0.0",
+    "@forestadmin/datasource-mongoose": "^1.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12"
+  }
+}
