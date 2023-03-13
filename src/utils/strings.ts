@@ -80,22 +80,6 @@ export default class Strings {
     return this.RESERVED_WORDS.includes(this.lodash.toLower(input));
   }
 
-  pascalCase(input) {
-    return this.lodash.chain(input).camelCase().upperFirst().value();
-  }
-
-  snakeCase(input) {
-    return this.lodash.snakeCase(input);
-  }
-
-  camelCase(input) {
-    return this.lodash.camelCase(input);
-  }
-
-  kebabCase(input) {
-    return this.lodash.kebabCase(input);
-  }
-
   transformToSafeString(input) {
     if (/^[\d]/g.exec(input)) {
       return `model${input}`;
@@ -109,6 +93,6 @@ export default class Strings {
   }
 
   transformToCamelCaseSafeString(input) {
-    return this.camelCase(this.transformToSafeString(input));
+    return this.lodash.camelCase(this.transformToSafeString(input));
   }
 }

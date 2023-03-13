@@ -25,11 +25,13 @@ function createDumper(contextOverride = {}) {
     isDatabaseLocal: jest.fn(() => true),
     toValidPackageName: jest.fn().mockImplementation(content => content),
     strings: {
-      snakeCase: jest.fn().mockImplementation(name => name),
       transformToCamelCaseSafeString: jest.fn().mockImplementation(name => name),
+      transformToSafeString: jest.fn().mockImplementation(name => name),
+    },
+    lodash: {
+      snakeCase: jest.fn().mockImplementation(name => name),
       kebabCase: jest.fn().mockImplementation(name => name),
       pascalCase: jest.fn().mockImplementation(name => name),
-      transformToSafeString: jest.fn().mockImplementation(name => name),
     },
     ...contextOverride,
   });
@@ -195,7 +197,7 @@ describe('services > dumper (unit)', () => {
 
       dumper.tableToFilename('test');
 
-      expect(dumper.strings.kebabCase).toHaveBeenCalledWith('test');
+      expect(dumper.lodash.kebabCase).toHaveBeenCalledWith('test');
     });
   });
 

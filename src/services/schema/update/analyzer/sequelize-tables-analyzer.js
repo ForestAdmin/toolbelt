@@ -227,7 +227,7 @@ function createReference(
   } else if (association === ASSOCIATION_TYPE_BELONGS_TO_MANY) {
     reference.ref = manyToManyForeignKey.foreignTableName;
     reference.otherKey = manyToManyForeignKey.columnName;
-    reference.through = strings.camelCase(strings.transformToSafeString(foreignKey.tableName));
+    reference.through = lodash.camelCase(strings.transformToSafeString(foreignKey.tableName));
     reference.as = lodash.camelCase(
       plural(`${manyToManyForeignKey.foreignTableName}_through_${foreignKey.tableName}`),
     );
