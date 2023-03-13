@@ -23,7 +23,7 @@ describe('services > dumpers > AgentNodeJs', () => {
       Handlebars: {
         compile: jest.fn().mockImplementation(() => variables => variables),
       },
-      strings: {
+      lodash: {
         snakeCase: jest.fn().mockImplementation(name => name),
       },
       mkdirp: jest.fn(),
