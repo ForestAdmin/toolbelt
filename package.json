@@ -129,6 +129,6 @@
     "build:watch": "tsc-watch --onSuccess 'yarn postbuild'",
     "test": "jest --runInBand",
     "test:coverage": "jest --runInBand --coverage",
-    "postbuild": "mkdir -p ./dist/services/dumpers/templates && cp -R src/services/dumpers/templates dist/services/dumpers/templates"
+    "postbuild": "mkdir -p ./dist/services/dumpers/templates && cp -R src/services/dumpers/templates dist/services/dumpers/"
   }
 }
