@@ -5,6 +5,7 @@ const {
   getBranchListValid,
   getNoBranchListValid,
   updateEnvironmentCurrentBranchId,
+  getBranchInvalidEnvironmentV1,
 } = require('../fixtures/api');
 const { testEnvWithSecret } = require('../fixtures/env');
 
@@ -96,6 +97,81 @@ describe('switch', () => {
               out: "Δ You don't have any branch to set as current. Use `forest branch <branch_name>` to create one.",
             },
           ],
+        }));
+    });
+
+    describe('when there is an error when fetching branches', () => {
+      it('should display an error message', () =>
+        testCli({
+          env: testEnvWithSecret,
+          token: 'any',
+          commandClass: SwitchCommand,
+          api: [() => getBranchInvalidEnvironmentV1(), () => getProjectByEnv()],
+          std: [
+            {
+              err: '× This project does not support branches yet. Please migrate your environments from your Project settings first.',
+            },
+          ],
+          exitCode: 2,
+        }));
+    });
+
+    describe('when the user switch to a wrong branch', () => {
+      it('should display an error message', () =>
+        testCli({
+          env: testEnvWithSecret,
+          token: 'any',
+          commandClass: SwitchCommand,
+          api: [() => getBranchListValid(), () => getProjectByEnv()],
+          prompts: [
+            {
+              in: [
+                {
+                  name: 'branch',
+                  message: 'Select the branch you want to set current',
+                  type: 'list',
+                  choices: ['feature/first', 'feature/third', 'feature/second'],
+                },
+              ],
+              out: {
+                branch: 'feature/third',
+              },
+            },
+          ],
+          std: [
+            {
+              err: '× Cannot convert undefined or null to object',
+            },
+          ],
+          exitCode: 2,
+        }));
+    });
+
+    describe('when the user select a wrong branch', () => {
+      it('should display an error message', () =>
+        testCli({
+          env: testEnvWithSecret,
+          token: 'any',
+          commandClass: SwitchCommand,
+          api: [() => getBranchListValid(), () => getProjectByEnv()],
+          prompts: [
+            {
+              in: [
+                {
+                  name: 'branch',
+                  message: 'Select the branch you want to set current',
+                  type: 'list',
+                  choices: ['feature/first', 'feature/third', 'feature/second'],
+                },
+              ],
+            },
+          ],
+          std: [
+            {
+              err: '× Cannot destructure property',
+            },
+          ],
+          exitCode: 2,
         }));
     });
   });

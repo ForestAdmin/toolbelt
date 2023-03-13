@@ -65,7 +65,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
 
       this.logger.success('Deployed layout changes to reference environment.');
     } catch (error) {
-      this.logger.error(handleBranchError(error));
+      this.logger.error(await handleBranchError(error));
       this.exit(2);
     }
   }

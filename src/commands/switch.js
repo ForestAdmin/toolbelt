@@ -30,7 +30,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
 
       return branch;
     } catch (error) {
-      const customError = BranchManager.handleBranchError(error);
+      const customError = await BranchManager.handleBranchError(error);
 
       this.logger.error(customError);
       return null;
@@ -43,7 +43,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
 
       this.logger.success(`Switched to branch: ${selectedBranch.name}.`);
     } catch (error) {
-      const customError = BranchManager.handleBranchError(error);
+      const customError = await BranchManager.handleBranchError(error);
 
       this.logger.error(customError);
       this.exit(2);
@@ -97,7 +97,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
         await this.switchTo(selectedBranch, config.envSecret);
       }
     } catch (error) {
-      const customError = BranchManager.handleBranchError(error);
+      const customError = await BranchManager.handleBranchError(error);
       this.logger.error(customError);
       this.exit(2);
     }
