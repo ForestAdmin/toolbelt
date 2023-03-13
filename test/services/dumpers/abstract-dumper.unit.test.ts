@@ -4,7 +4,7 @@ import type { Config } from '../../../src/interfaces/project-create-interface';
 
 import AbstractDumper from '../../../src/services/dumpers/abstract-dumper';
 
-const buildDumper = (ADumper, librairies = {}) => {
+const buildDumper = (ADumper, libraries = {}) => {
   const context = {
     assertPresent: jest.fn(),
     fs: {
@@ -26,9 +26,7 @@ const buildDumper = (ADumper, librairies = {}) => {
     Handlebars: {
       compile: jest.fn().mockImplementation(() => () => {}),
     },
-    buildDatabaseUrl: jest.fn(),
-    toValidPackageName: jest.fn().mockImplementation(content => content),
-    ...librairies,
+    ...libraries,
   };
   return {
     dumper: new ADumper(context),

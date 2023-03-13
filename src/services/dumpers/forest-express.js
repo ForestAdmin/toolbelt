@@ -1,7 +1,6 @@
 const _ = require('lodash');
 const { URL } = require('url');
 const { plural, singular } = require('pluralize');
-const stringUtils = require('../../utils/strings');
 const IncompatibleLianaForUpdateError = require('../../errors/dumper/incompatible-liana-for-update-error');
 const InvalidForestCLIProjectStructureError = require('../../errors/dumper/invalid-forest-cli-project-structure-error');
 const AbstractDumper = require('./abstract-dumper').default;

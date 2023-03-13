@@ -24,6 +24,5 @@ module.exports = plan =>
         .addModule('openIdClient', () => require('openid-client'))
         .addModule('os', () => require('os'))
         .addModule('superagent', () => require('superagent'))
-        .addUsingFunction('diffString', () => require('json-diff').diffString)
-        .addModule('lodash', () => require('lodash')),
+        .addUsingFunction('diffString', () => require('json-diff').diffString),
     );
