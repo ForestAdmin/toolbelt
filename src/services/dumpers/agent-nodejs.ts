@@ -1,6 +1,6 @@
 import type { Config, DbConfig } from '../../interfaces/project-create-interface';
-import type Lodash from 'lodash';
 import type Strings from '../../utils/strings';
+import type Lodash from 'lodash';
 
 import AbstractDumper from './abstract-dumper';
 
@@ -234,7 +234,6 @@ export default class AgentNodeJs extends AbstractDumper {
   }
 
   protected async createFiles(dumpConfig: Config, schema?: any) {
-  protected createFiles(dumpConfig: Config) {
     this.writePackageJson(dumpConfig.dbConfig.dbDialect, dumpConfig.appConfig.appName);
     this.writeIndex(dumpConfig.dbConfig.dbDialect);
     this.writeDotEnv(
