@@ -1,4 +1,3 @@
-const _ = require('lodash');
 const JSONAPISerializer = require('jsonapi-serializer').Serializer;
 const ApimapSorter = require('../services/apimap-sorter');
 
@@ -88,12 +87,12 @@ function SchemaSerializer() {
   this.perform = (collections, meta) => {
     // NOTICE: Action ids are defined concatenating the collection name and the object name to
     //         prevent object id conflicts between collections.
-    _.each(collections, collection => {
-      _.each(collection.actions, action => {
+    collections.forEach(collection => {
+      collection.actions?.forEach(action => {
         action.id = `${collection.name}.${action.name}`;
       });
 
-      _.each(collection.segments, segment => {
+      collection.segments?.forEach(segment => {
         segment.id = `${collection.name}.${segment.name}`;
       });
     });

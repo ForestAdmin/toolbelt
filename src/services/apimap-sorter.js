@@ -1,19 +1,21 @@
-const _ = require('lodash');
-const Context = require('@forestadmin/context');
+const { inject } = require('@forestadmin/context');
 
 function ApimapSorter(apimap) {
+  const { assertPresent, logger, lodash } = inject();
+  assertPresent({ logger, lodash });
+
   function sortArrayOfObjects(array) {
-    return _.sortBy(array, ['type', 'id']);
+    return lodash.sortBy(array, ['type', 'id']);
   }
 
   function sortArrayOfFields(array) {
-    return _.sortBy(array, ['field', 'type']);
+    return lodash.sortBy(array, ['field', 'type']);
   }
 
   function reorderKeysBasic(object) {
     const objectReordered = {};
 
-    _.each(_.sortBy(Object.keys(object)), key => {
+    lodash.each(lodash.sortBy(Object.keys(object)), key => {
       objectReordered[key] = object[key];
     });
 
@@ -96,7 +98,6 @@ function ApimapSorter(apimap) {
 
       return apimap;
     } catch (error) {
-      const { logger } = Context.inject();
       logger.warn('An Apimap reordering issue occured:', error);
       return apimap;
     }

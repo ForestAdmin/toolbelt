@@ -1,4 +1,5 @@
 import type { Config, DbConfig } from '../../interfaces/project-create-interface';
+import type Lodash from 'lodash';
 import type Strings from '../../utils/strings';
 
 import AbstractDumper from './abstract-dumper';
@@ -14,6 +15,8 @@ export default class AgentNodeJs extends AbstractDumper {
 
   private readonly buildDatabaseUrl: (dbConfig: DbConfig) => string;
 
+  private readonly lodash: typeof Lodash;
+
   private readonly strings: Strings;
 
   private readonly toValidPackageName: (string: string) => string;
@@ -25,6 +28,7 @@ export default class AgentNodeJs extends AbstractDumper {
       isLinuxOs,
       buildDatabaseUrl,
       isDatabaseLocal,
+      lodash,
       strings,
       toValidPackageName,
     } = context;
@@ -34,6 +38,7 @@ export default class AgentNodeJs extends AbstractDumper {
       isLinuxOs,
       buildDatabaseUrl,
       isDatabaseLocal,
+      lodash,
       strings,
       toValidPackageName,
     });
@@ -44,6 +49,7 @@ export default class AgentNodeJs extends AbstractDumper {
     this.isLinuxOs = isLinuxOs;
     this.buildDatabaseUrl = buildDatabaseUrl;
     this.isDatabaseLocal = isDatabaseLocal;
+    this.lodash = lodash;
     this.strings = strings;
     this.toValidPackageName = toValidPackageName;
   }
@@ -187,7 +193,7 @@ export default class AgentNodeJs extends AbstractDumper {
     }
 
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
-      containerName: this.strings.snakeCase(config.appConfig.appName),
+      containerName: this.lodash.snakeCase(config.appConfig.appName),
       dbUrl,
       dbSchema: config.dbConfig.dbSchema ? config.dbConfig.dbSchema : false,
       forestExtraHost,
@@ -201,7 +207,7 @@ export default class AgentNodeJs extends AbstractDumper {
 
     collectionNamesSorted.forEach(collectionName => {
       const { fields, options } = schema[collectionName];
-      const modelPath = `models/primary/${this.strings.kebabCase(collectionName)}.js`;
+      const modelPath = `models/primary/${this.lodash.kebabCase(collectionName)}.js`;
 
       const fieldsDefinition = fields.map(field => {
         return {
@@ -228,6 +234,7 @@ export default class AgentNodeJs extends AbstractDumper {
   }
 
   protected async createFiles(dumpConfig: Config, schema?: any) {
+  protected createFiles(dumpConfig: Config) {
     this.writePackageJson(dumpConfig.dbConfig.dbDialect, dumpConfig.appConfig.appName);
     this.writeIndex(dumpConfig.dbConfig.dbDialect);
     this.writeDotEnv(

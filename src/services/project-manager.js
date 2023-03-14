@@ -1,4 +1,3 @@
-const _ = require('lodash');
 const querystring = require('querystring');
 const P = require('bluebird');
 const agent = require('superagent-promise')(require('superagent'), P);
@@ -9,19 +8,19 @@ const ProjectDeserializer = require('../deserializers/project');
 const EnvironmentDeserializer = require('../deserializers/environment');
 
 function ProjectManager(config) {
-  const { assertPresent, authenticator, env, jwtDecode } = Context.inject();
-  assertPresent({ authenticator, env, jwtDecode });
+  const { assertPresent, authenticator, env, jwtDecode, lodash } = Context.inject();
+  assertPresent({ authenticator, env, jwtDecode, lodash });
 
   function deserialize(response) {
-    const attrs = _.clone(ProjectSerializer.opts.attributes);
+    const attrs = Object.assign(ProjectSerializer.opts.attributes);
     attrs.push('id');
 
     return ProjectDeserializer.deserialize(response.body).then(deserialized => {
-      if (_.isArray(deserialized)) {
-        return deserialized.map(d => _.pick(d, attrs));
+      if (Array.isArray(deserialized)) {
+        return deserialized.map(d => lodash.pick(d, attrs));
       }
 
-      return _.pick(deserialized, attrs);
+      return lodash.pick(deserialized, attrs);
     });
   }
 

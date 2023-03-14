@@ -1,7 +1,5 @@
-const _ = require('lodash');
 const { URL } = require('url');
 const { plural, singular } = require('pluralize');
-const stringUtils = require('../../utils/strings');
 const IncompatibleLianaForUpdateError = require('../../errors/dumper/incompatible-liana-for-update-error');
 const InvalidForestCLIProjectStructureError = require('../../errors/dumper/invalid-forest-cli-project-structure-error');
 const AbstractDumper = require('./abstract-dumper').default;
@@ -21,6 +19,7 @@ class ForestExpress extends AbstractDumper {
       isDatabaseLocal,
       toValidPackageName,
       strings,
+      lodash,
     } = context;
 
     assertPresent({
@@ -33,6 +32,7 @@ class ForestExpress extends AbstractDumper {
       isDatabaseLocal,
       toValidPackageName,
       strings,
+      lodash,
     });
 
     this.DEFAULT_PORT = 3310;
@@ -41,6 +41,7 @@ class ForestExpress extends AbstractDumper {
     this.Sequelize = Sequelize;
     this.Handlebars = Handlebars;
     this.mkdirp = mkdirp;
+    this.lodash = lodash;
     this.buildDatabaseUrl = buildDatabaseUrl;
     this.isDatabaseLocal = isDatabaseLocal;
     this.toValidPackageName = toValidPackageName;
@@ -113,7 +114,7 @@ class ForestExpress extends AbstractDumper {
   }
 
   tableToFilename(table) {
-    return this.strings.kebabCase(table);
+    return this.lodash.kebabCase(table);
   }
 
   static isLocalUrl(url) {
@@ -162,7 +163,7 @@ class ForestExpress extends AbstractDumper {
 
     const fieldsDefinition = fields.map(field => {
       const expectedConventionalColumnName = underscored
-        ? this.strings.snakeCase(field.name)
+        ? this.lodash.snakeCase(field.name)
         : field.name;
       // NOTICE: sequelize considers column name with parenthesis as raw Attributes
       // only set as unconventional name if underscored is true for adding special field attribute
@@ -180,7 +181,7 @@ class ForestExpress extends AbstractDumper {
         hasParenthesis,
 
         // Only output default value when non-null
-        hasSafeDefaultValue: !_.isNil(field.defaultValue),
+        hasSafeDefaultValue: !this.lodash.isNil(field.defaultValue),
         safeDefaultValue:
           field.defaultValue instanceof this.Sequelize.Utils.Literal
             ? `Sequelize.literal('${field.defaultValue.val.replace(/'/g, "\\'")}')`
@@ -191,8 +192,8 @@ class ForestExpress extends AbstractDumper {
     const referencesDefinition = references.map(reference => ({
       ...reference,
       isBelongsToMany: reference.association === 'belongsToMany',
-      targetKey: this.strings.camelCase(reference.targetKey),
-      sourceKey: this.strings.camelCase(reference.sourceKey),
+      targetKey: this.lodash.camelCase(reference.targetKey),
+      sourceKey: this.lodash.camelCase(reference.sourceKey),
     }));
 
     this.copyHandleBarsTemplate(
@@ -215,8 +216,8 @@ class ForestExpress extends AbstractDumper {
   writeRoute(dbDialect, modelName) {
     const routesPath = `routes/${this.tableToFilename(modelName)}.js`;
 
-    const modelNameDasherized = this.strings.kebabCase(modelName);
-    const readableModelName = _.startCase(modelName);
+    const modelNameDasherized = this.lodash.kebabCase(modelName);
+    const readableModelName = this.lodash.startCase(modelName);
 
     this.copyHandleBarsTemplate('routes/route.hbs', routesPath, {
       modelName: this.getModelNameFromTableName(modelName),
@@ -276,7 +277,7 @@ class ForestExpress extends AbstractDumper {
       }
     }
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
-      containerName: this.strings.snakeCase(config.appConfig.appName),
+      containerName: this.lodash.snakeCase(config.appConfig.appName),
       databaseUrl,
       dbSchema: config.dbConfig.dbSchema,
       forestExtraHost,

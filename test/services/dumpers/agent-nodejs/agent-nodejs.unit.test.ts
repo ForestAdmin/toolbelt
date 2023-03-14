@@ -49,10 +49,12 @@ describe('services > dumpers > AgentNodeJs', () => {
       Handlebars: {
         compile: jest.fn().mockImplementation(() => variables => variables),
       },
-      strings: {
+      lodash: {
         snakeCase: jest.fn().mockImplementation(name => name),
-        transformToCamelCaseSafeString: jest.fn().mockImplementation(name => name),
         kebabCase: jest.fn().mockImplementation(name => name),
+      },
+      strings: {
+        transformToCamelCaseSafeString: jest.fn().mockImplementation(name => name),
       },
       mkdirp: jest.fn(),
       buildDatabaseUrl: jest.fn(() => 'localhost'),
