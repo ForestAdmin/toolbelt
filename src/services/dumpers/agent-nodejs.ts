@@ -1,4 +1,5 @@
 import type { Config, DbConfig } from '../../interfaces/project-create-interface';
+import type Strings from '../../utils/strings';
 import type Lodash from 'lodash';
 
 import AbstractDumper from './abstract-dumper';
@@ -16,6 +17,8 @@ export default class AgentNodeJs extends AbstractDumper {
 
   private readonly lodash: typeof Lodash;
 
+  private readonly strings: Strings;
+
   private readonly toValidPackageName: (string: string) => string;
 
   constructor(context) {
@@ -26,6 +29,7 @@ export default class AgentNodeJs extends AbstractDumper {
       buildDatabaseUrl,
       isDatabaseLocal,
       lodash,
+      strings,
       toValidPackageName,
     } = context;
 
@@ -35,6 +39,7 @@ export default class AgentNodeJs extends AbstractDumper {
       buildDatabaseUrl,
       isDatabaseLocal,
       lodash,
+      strings,
       toValidPackageName,
     });
 
@@ -45,6 +50,7 @@ export default class AgentNodeJs extends AbstractDumper {
     this.buildDatabaseUrl = buildDatabaseUrl;
     this.isDatabaseLocal = isDatabaseLocal;
     this.lodash = lodash;
+    this.strings = strings;
     this.toValidPackageName = toValidPackageName;
   }
 
@@ -61,6 +67,7 @@ export default class AgentNodeJs extends AbstractDumper {
 
     if (dbDialect === 'mongodb') {
       dependencies['@forestadmin/datasource-mongoose'] = '^1.0.0';
+      dependencies.mongoose = '^6.8.3';
     } else {
       dependencies['@forestadmin/datasource-sql'] = '^1.0.0';
     }
@@ -108,19 +115,23 @@ export default class AgentNodeJs extends AbstractDumper {
       isMSSQL: dbDialect === 'mssql',
       isMariaDB: dbDialect === 'mariadb',
       forestServerUrl: this.env.FOREST_URL_IS_DEFAULT ? false : this.env.FOREST_SERVER_URL,
-      datasourceImport: isMongoose
-        ? `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst connection = require('./mongoose-models');`
-        : `const { createSqlDataSource } = require('@forestadmin/datasource-sql');`,
-      datasourceCreation: isMongoose
-        ? 'createMongooseDataSource(connection, {})'
-        : `
+      datasourceImport: null,
+      datasourceCreation: null,
+    };
+
+    if (isMongoose) {
+      context.datasourceImport = `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst primaryConnection = require('./models/primary');`;
+      context.datasourceCreation = `createMongooseDataSource(primaryConnection, { flattenMode: 'auto' })`;
+    } else {
+      context.datasourceImport = `const { createSqlDataSource } = require('@forestadmin/datasource-sql');`;
+      context.datasourceCreation = `
     createSqlDataSource({
       uri: process.env.DATABASE_URL,
       schema: process.env.DATABASE_SCHEMA || 'public',
       ...dialectOptions,
     }),
-  `,
-    };
+  `;
+    }
 
     this.copyHandleBarsTemplate('index.hbs', 'index.js', context);
   }
@@ -191,7 +202,38 @@ export default class AgentNodeJs extends AbstractDumper {
     });
   }
 
-  protected createFiles(dumpConfig: Config) {
+  private writeModels(schema) {
+    const collectionNamesSorted = Object.keys(schema).sort();
+
+    collectionNamesSorted.forEach(collectionName => {
+      const { fields, options } = schema[collectionName];
+      const modelPath = `models/primary/${this.lodash.kebabCase(collectionName)}.js`;
+
+      const fieldsDefinition = fields.map(field => {
+        return {
+          ...field,
+          ref: field.ref && this.strings.transformToCamelCaseSafeString(field.ref),
+        };
+      });
+
+      this.copyHandleBarsTemplate(`models/model.hbs`, modelPath, {
+        modelName: this.strings.transformToCamelCaseSafeString(collectionName),
+        collectionName,
+        fields: fieldsDefinition,
+        timestamps: options.timestamps,
+      });
+    });
+  }
+
+  private async writeMongooseModels(schema) {
+    await this.mkdirp(`${this.projectPath}/models/primary`);
+
+    this.copyHandleBarsTemplate('models/index.hbs', 'models/primary/index.js');
+
+    this.writeModels(schema);
+  }
+
+  protected async createFiles(dumpConfig: Config, schema?: any) {
     this.writePackageJson(dumpConfig.dbConfig.dbDialect, dumpConfig.appConfig.appName);
     this.writeIndex(dumpConfig.dbConfig.dbDialect);
     this.writeDotEnv(
@@ -205,5 +247,9 @@ export default class AgentNodeJs extends AbstractDumper {
     this.writeDockerignore();
     this.writeDockerfile();
     this.writeDockerCompose(dumpConfig);
+
+    if (schema) {
+      await this.writeMongooseModels(schema);
+    }
   }
 }
