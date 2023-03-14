@@ -1,5 +1,4 @@
 const { ObjectID } = require('mongodb');
-const _ = require('lodash');
 
 const persons = [
   {
@@ -20,12 +19,12 @@ const films = [
   {
     _id: ObjectID(),
     title: 'Terminator',
-    author: _.find(persons, { name: 'James Cameron' })._id,
+    author: persons.find(person => person.name === 'James Cameron')._id,
   },
   {
     _id: ObjectID(),
     title: 'Fight Club',
-    bestActor: _.find(persons, { name: 'Brad Pitt' })._id,
+    bestActor: persons.find(person => person.name === 'Brad Pitt')._id,
   },
 ];
 
