@@ -118,11 +118,6 @@ class ForestExpress extends AbstractDumper {
     return this.lodash.kebabCase(table);
   }
 
-  isDatabaseLocal(dbConfig) {
-    const databaseUrl = this.buildDatabaseUrl(dbConfig);
-    return databaseUrl.includes('127.0.0.1') || databaseUrl.includes('localhost');
-  }
-
   static isLocalUrl(url) {
     return /^http:\/\/(?:localhost|127\.0\.0\.1)$/.test(url);
   }
