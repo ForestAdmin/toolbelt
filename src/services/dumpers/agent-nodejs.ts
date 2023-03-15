@@ -18,6 +18,8 @@ export default class AgentNodeJs extends AbstractDumper {
 
   private readonly toValidPackageName: (string: string) => string;
 
+  protected readonly templateFolder = 'agent-nodejs';
+
   constructor(context) {
     const {
       assertPresent,
@@ -48,11 +50,6 @@ export default class AgentNodeJs extends AbstractDumper {
     this.toValidPackageName = toValidPackageName;
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  protected get templateFolder() {
-    return 'agent-nodejs';
-  }
-
   writePackageJson(dbDialect: string, appName: string) {
     const dependencies: { [name: string]: string } = {
       dotenv: '^16.0.1',
@@ -67,14 +64,13 @@ export default class AgentNodeJs extends AbstractDumper {
 
     if (dbDialect) {
       if (dbDialect.includes('postgres')) {
-        dependencies.pg = '~8.2.2';
-        dependencies['pg-hstore'] = '~2.3.4';
+        dependencies.pg = '^8.8.0';
       } else if (dbDialect === 'mysql') {
-        dependencies.mysql2 = '~2.2.5';
+        dependencies.mysql2 = '^3.0.1';
       } else if (dbDialect === 'mariadb') {
-        dependencies.mariadb = '^2.3.3';
+        dependencies.mariadb = '^3.0.2';
       } else if (dbDialect === 'mssql') {
-        dependencies.tedious = '^6.4.0';
+        dependencies.tedious = '^15.1.2';
       }
     }
 
@@ -99,7 +95,7 @@ export default class AgentNodeJs extends AbstractDumper {
     this.writeFile('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
   }
 
-  writeIndex(dbDialect: string) {
+  writeIndex(dbDialect: string, dbSchema: string) {
     const isMongoose = dbDialect === 'mongodb';
 
     const context = {
@@ -115,8 +111,9 @@ export default class AgentNodeJs extends AbstractDumper {
         ? 'createMongooseDataSource(connection, {})'
         : `
     createSqlDataSource({
-      uri: process.env.DATABASE_URL,
-      schema: process.env.DATABASE_SCHEMA || 'public',
+      uri: process.env.DATABASE_URL,${
+        dbSchema ? '\n      schema: process.env.DATABASE_SCHEMA,' : ''
+      }
       ...dialectOptions,
     }),
   `,
@@ -135,7 +132,7 @@ export default class AgentNodeJs extends AbstractDumper {
     const context = {
       dbUrl,
       dbSsl: dbConfig.dbSsl || false,
-      dbSchema: dbConfig.dbSchema !== '' ? dbConfig.dbSchema : false,
+      dbSchema: dbConfig.dbSchema,
       appPort,
       forestServerUrl: this.env.FOREST_URL_IS_DEFAULT ? false : this.env.FOREST_SERVER_URL,
       forestEnvSecret,
@@ -169,7 +166,6 @@ export default class AgentNodeJs extends AbstractDumper {
   }
 
   private writeDockerCompose(config: Config) {
-    const dbUrl = `\${${this.isLinuxOs ? 'DATABASE_URL' : 'DOCKER_DATABASE_URL'}}`;
     const forestServerUrl = this.env.FOREST_URL_IS_DEFAULT ? false : `\${FOREST_SERVER_URL}`;
 
     let forestExtraHost = '';
@@ -183,17 +179,15 @@ export default class AgentNodeJs extends AbstractDumper {
 
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
       containerName: this.lodash.snakeCase(config.appConfig.appName),
-      dbUrl,
-      dbSchema: config.dbConfig.dbSchema ? config.dbConfig.dbSchema : false,
       forestExtraHost,
-      forestServerUrl,
+      isLinuxOs: this.isLinuxOs,
       network: this.isLinuxOs && this.isDatabaseLocal(config.dbConfig) ? 'host' : null,
     });
   }
 
   protected createFiles(dumpConfig: Config) {
     this.writePackageJson(dumpConfig.dbConfig.dbDialect, dumpConfig.appConfig.appName);
-    this.writeIndex(dumpConfig.dbConfig.dbDialect);
+    this.writeIndex(dumpConfig.dbConfig.dbDialect, dumpConfig.dbConfig.dbSchema);
     this.writeDotEnv(
       dumpConfig.dbConfig,
       dumpConfig.appConfig.appPort || this.DEFAULT_PORT,

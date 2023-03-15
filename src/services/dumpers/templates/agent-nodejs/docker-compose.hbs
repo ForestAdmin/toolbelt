@@ -3,26 +3,16 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
 {{#if network}}
       network: {{network}}
 {{/if}}
     container_name: {{ containerName }}
+    env_file:
+      - .env
+{{#unless isLinuxOs}}
     environment:
-      - FOREST_ENV_SECRET=${FOREST_ENV_SECRET}
-      - FOREST_AUTH_SECRET=${FOREST_AUTH_SECRET}
-{{#if forestServerUrl }}
-      - FOREST_SERVER_URL={{ forestServerUrl }}
-      - NODE_TLS_REJECT_UNAUTHORIZED=0
-{{/if}}
-      - APPLICATION_PORT=${APPLICATION_PORT}
-      - DATABASE_URL={{ dbUrl }}
-      - DATABASE_SSL=${DATABASE_SSL}
-      - DATABASE_REJECT_UNAUTHORIZED=${DATABASE_REJECT_UNAUTHORIZED}
-{{#if dbSchema }}
-      - DATABASE_SCHEMA=${DATABASE_SCHEMA}
-{{/if}}
-      - NODE_ENV=${NODE_ENV}
+      - DATABASE_URL=${DOCKER_DATABASE_URL}
+{{/unless}}
 {{#if forestExtraHost}}
     extra_hosts:
       - {{forestExtraHost}}:host-gateway
@@ -31,4 +21,3 @@ services:
       - "${APPLICATION_PORT}:${APPLICATION_PORT}"
     volumes:
       - ./:/usr/src/app
-      - /usr/src/app/node_modules
