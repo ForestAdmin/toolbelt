@@ -419,9 +419,9 @@ describe('services > dumper (unit)', () => {
     const config = {
       appConfig: {
         useMultiDatabase: true,
+        modelsExportPath: 'accounting',
       },
       dbConfig: {},
-      modelsExportPath: 'accounting',
     };
 
     describe('with multiple databases', () => {
