@@ -1,3 +1,10 @@
+## [3.1.11](https://github.com/ForestAdmin/toolbelt/compare/v3.1.10...v3.1.11) (2023-03-15)
+
+
+### Bug Fixes
+
+* **schema:update:** properly retrieve the export path of the models when using multiple databases ([#555](https://github.com/ForestAdmin/toolbelt/issues/555)) ([0e676b9](https://github.com/ForestAdmin/toolbelt/commit/0e676b98a532d890e3ec1f0a925c743801177264))
+
 ## [3.1.10](https://github.com/ForestAdmin/toolbelt/compare/v3.1.9...v3.1.10) (2023-03-14)
 
 ## [3.1.9](https://github.com/ForestAdmin/toolbelt/compare/v3.1.8...v3.1.9) (2023-03-13)
