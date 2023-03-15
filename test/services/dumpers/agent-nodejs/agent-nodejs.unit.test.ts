@@ -845,11 +845,11 @@ describe('services > dumpers > AgentNodeJs', () => {
 
           defaultConfig.dbConfig.dbDialect = 'mongodb';
 
-          context.strings.kebabCase.mockImplementation(name => `${name}kebab_cased`);
+          context.lodash.kebabCase.mockImplementation(name => `${name}kebab_cased`);
 
           await dumper.dump(defaultConfig, schemaSample);
 
-          expect(context.strings.kebabCase).toHaveBeenCalledWith('collectionA');
+          expect(context.lodash.kebabCase).toHaveBeenCalledWith('collectionA');
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/models/primary/collectionAkebab_cased.js',
             expect.objectContaining({
