@@ -31,12 +31,13 @@ const agent = createAgent({
   isProduction: process.env.NODE_ENV === 'production',
   // Autocompletion of collection names and fields
   typingsPath: './typings.ts',
+  typingsMaxDepth: 5,
 })
   // Connect your datasources.
   .addDataSource(
     createSqlDataSource({
       uri: process.env.DATABASE_URL,
-      schema: process.env.DATABASE_SCHEMA || 'public',
+      schema: process.env.DATABASE_SCHEMA,
       ...dialectOptions,
     }),
   );

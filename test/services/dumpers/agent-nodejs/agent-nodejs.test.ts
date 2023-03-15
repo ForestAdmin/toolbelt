@@ -364,14 +364,10 @@ describe('services > dumpers > agentNodejs', () => {
         return postgresConfig;
       };
 
-      it('should set `forestServerURl` in `.env`, `docker-compose.yml` and `index.js`', async () => {
-        expect.assertions(3);
+      it('should set `forestServerURl` in `.env` and `index.js`', async () => {
+        expect.assertions(2);
 
         const postgresConfig = await setupAndDump();
-        const dockerComposeFile = fs.readFileSync(
-          `${appRoot}/${postgresConfig.appConfig.appName}/docker-compose.yml`,
-          'utf-8',
-        );
         const dotEnvFile = fs.readFileSync(
           `${appRoot}/${postgresConfig.appConfig.appName}/.env`,
           'utf-8',
@@ -384,7 +380,6 @@ describe('services > dumpers > agentNodejs', () => {
         expect(dotEnvFile).toContain(
           'FOREST_SERVER_URL=http://localhost:3001\n# This should be removed in production environment.\nNODE_TLS_REJECT_UNAUTHORIZED=0',
         );
-        expect(dockerComposeFile).toContain(`- FOREST_SERVER_URL=\${FOREST_SERVER_URL}`);
         expect(indexFile).toContain('forestServerUrl: process.env.FOREST_SERVER_URL');
 
         rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
@@ -444,14 +439,10 @@ describe('services > dumpers > agentNodejs', () => {
         return postgresConfig;
       };
 
-      it('should not set `forestServerURl` in `.env`, `docker-compose.yml` and `index.js`', async () => {
-        expect.assertions(3);
+      it('should not set `forestServerURl` in `.env` and `index.js`', async () => {
+        expect.assertions(2);
 
         const postgresConfig = await setupAndDump();
-        const dockerComposeFile = fs.readFileSync(
-          `${appRoot}/${postgresConfig.appConfig.appName}/docker-compose.yml`,
-          'utf-8',
-        );
         const dotEnvFile = fs.readFileSync(
           `${appRoot}/${postgresConfig.appConfig.appName}/.env`,
           'utf-8',
@@ -464,7 +455,6 @@ describe('services > dumpers > agentNodejs', () => {
         expect(dotEnvFile).not.toContain(
           'FOREST_SERVER_URL=http://localhost:3001\n# This should be removed in production environment.\nNODE_TLS_REJECT_UNAUTHORIZED=0',
         );
-        expect(dockerComposeFile).not.toContain(`- FOREST_SERVER_URL=\${FOREST_SERVER_URL}`);
         expect(indexFile).not.toContain('forestServerUrl: process.env.FOREST_SERVER_URL');
 
         rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
@@ -519,12 +509,12 @@ describe('services > dumpers > agentNodejs', () => {
         return postgresConfig;
       };
 
-      it('should not set `DATABASE_SCHEMA` in `.env`, `docker-compose.yml`', async () => {
+      it('should not set `DATABASE_SCHEMA` in `.env` and `index.js`', async () => {
         expect.assertions(2);
 
         const postgresConfig = await setupAndDump();
-        const dockerComposeFile = fs.readFileSync(
-          `${appRoot}/${postgresConfig.appConfig.appName}/docker-compose.yml`,
+        const indexFile = fs.readFileSync(
+          `${appRoot}/${postgresConfig.appConfig.appName}/index.js`,
           'utf-8',
         );
         const dotEnvFile = fs.readFileSync(
@@ -533,7 +523,7 @@ describe('services > dumpers > agentNodejs', () => {
         );
 
         expect(dotEnvFile).not.toContain('DATABASE_SCHEMA=');
-        expect(dockerComposeFile).not.toContain(`- DATABASE_SCHEMA=\${DATABASE_SCHEMA}`);
+        expect(indexFile).not.toContain('schema: process.env.DATABASE_SCHEMA');
 
         rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
       });
@@ -573,12 +563,12 @@ describe('services > dumpers > agentNodejs', () => {
         return postgresConfig;
       };
 
-      it('should set `DATABASE_SCHEMA` in `.env`, `docker-compose.yml`', async () => {
+      it('should set `DATABASE_SCHEMA` in `.env`, `index.js`', async () => {
         expect.assertions(2);
 
         const postgresConfig = await setupAndDump();
-        const dockerComposeFile = fs.readFileSync(
-          `${appRoot}/${postgresConfig.appConfig.appName}/docker-compose.yml`,
+        const indexFile = fs.readFileSync(
+          `${appRoot}/${postgresConfig.appConfig.appName}/index.js`,
           'utf-8',
         );
         const dotEnvFile = fs.readFileSync(
@@ -587,7 +577,7 @@ describe('services > dumpers > agentNodejs', () => {
         );
 
         expect(dotEnvFile).toContain('DATABASE_SCHEMA=aSchema');
-        expect(dockerComposeFile).toContain(`- DATABASE_SCHEMA=\${DATABASE_SCHEMA}`);
+        expect(indexFile).toContain('schema: process.env.DATABASE_SCHEMA');
 
         rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
       });
