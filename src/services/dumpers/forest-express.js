@@ -159,7 +159,7 @@ class ForestExpress extends AbstractDumper {
     const { underscored } = options;
     let modelPath = `models/${this.tableToFilename(table)}.js`;
     if (config.appConfig.useMultiDatabase) {
-      modelPath = `models/${config.modelsExportPath}/${this.tableToFilename(table)}.js`;
+      modelPath = `models/${config.appConfig.modelsExportPath}/${this.tableToFilename(table)}.js`;
     }
 
     const fieldsDefinition = fields.map(field => {
