@@ -13,13 +13,14 @@ module.exports = plan =>
       planVariables.addUsingFunction('env', ({ assertPresent, os }) => {
         assertPresent({ os });
         const DEFAULT_FOREST_URL = 'https://api.forestadmin.com';
-        const FOREST_URL = process.env.FOREST_URL || DEFAULT_FOREST_URL;
-        const FOREST_URL_IS_DEFAULT = FOREST_URL === DEFAULT_FOREST_URL;
+        const FOREST_SERVER_URL =
+          process.env.FOREST_URL || process.env.FOREST_SERVER_URL || DEFAULT_FOREST_URL;
+        const FOREST_URL_IS_DEFAULT = FOREST_SERVER_URL === DEFAULT_FOREST_URL;
         return {
           DATABASE_SCHEMA: process.env.DATABASE_SCHEMA,
           DATABASE_URL: process.env.DATABASE_URL,
           FOREST_ENV_SECRET: process.env.FOREST_ENV_SECRET,
-          FOREST_URL,
+          FOREST_SERVER_URL,
           FOREST_URL_IS_DEFAULT,
           SILENT: process.env.SILENT,
           TOKEN_PATH: process.env.TOKEN_PATH || os.homedir(),

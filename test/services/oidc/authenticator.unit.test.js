@@ -28,7 +28,7 @@ describe('services > Oidc > Authenticator', () => {
       const context = {
         assertPresent: jest.fn(),
         env: {
-          FOREST_URL: 'https://forest.admin',
+          FOREST_SERVER_URL: 'https://forest.admin',
         },
         process: {
           stdout: {

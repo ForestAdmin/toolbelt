@@ -241,7 +241,7 @@ class ForestExpress extends AbstractDumper {
   writeAppJs(dbDialect) {
     this.copyHandleBarsTemplate('app.hbs', 'app.js', {
       isMongoDB: dbDialect === 'mongodb',
-      forestUrl: this.env.FOREST_URL,
+      forestUrl: this.env.FOREST_SERVER_URL,
     });
   }
 
@@ -267,14 +267,14 @@ class ForestExpress extends AbstractDumper {
     const databaseUrl = `\${${this.isLinuxOs ? 'DATABASE_URL' : 'DOCKER_DATABASE_URL'}}`;
     const forestUrl = this.env.FOREST_URL_IS_DEFAULT
       ? false
-      : `\${FOREST_URL-${this.env.FOREST_URL}}`;
+      : `\${FOREST_URL-${this.env.FOREST_SERVER_URL}}`;
     let forestExtraHost = false;
     if (forestUrl) {
       try {
-        const parsedForestUrl = new URL(this.env.FOREST_URL);
+        const parsedForestUrl = new URL(this.env.FOREST_SERVER_URL);
         forestExtraHost = parsedForestUrl.hostname;
       } catch (error) {
-        throw new Error(`Invalid value for FOREST_URL: "${this.env.FOREST_URL}"`);
+        throw new Error(`Invalid value for FOREST_SERVER_URL: "${this.env.FOREST_SERVER_URL}"`);
       }
     }
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {

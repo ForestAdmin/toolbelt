@@ -18,7 +18,7 @@ function JobStateChecker(message, oclifExit) {
   this.check = async jobId => {
     try {
       const jobResponse = await agent
-        .get(`${env.FOREST_URL}/api/jobs/${jobId}`)
+        .get(`${env.FOREST_SERVER_URL}/api/jobs/${jobId}`)
         .set('Authorization', `Bearer ${authenticator.getAuthToken()}`)
         .then(response => jobDeserializer.deserialize(response.body));
 
