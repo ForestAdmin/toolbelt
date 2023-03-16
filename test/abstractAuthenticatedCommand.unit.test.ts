@@ -172,6 +172,26 @@ describe('abstractAuthenticated command', () => {
             expect(testAbstractClass.exit).toHaveBeenCalledWith(10);
           });
         });
+
+        describe('when receiving any other error', () => {
+          it('should propagate the error and not handle it', async () => {
+            expect.assertions(2);
+
+            const { commandPlan, stubs } = makePlanAndAuthenticatedStubs();
+            const testAbstractClass = new TestAbstractClass(
+              [],
+              new Config({ root: process.cwd() }),
+              commandPlan,
+            );
+
+            jest.spyOn(testAbstractClass, 'exit').mockReturnValue(true as never);
+
+            await testAbstractClass.run();
+
+            expect(testAbstractClass.exit).not.toHaveBeenCalled();
+            expect(stubs.logger.error).not.toHaveBeenCalled();
+          });
+        });
       });
     });
   });
