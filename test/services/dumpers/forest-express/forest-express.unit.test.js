@@ -375,6 +375,26 @@ describe('services > dumper (unit)', () => {
         expect(handlebarContext.forestUrl).toBe(false);
       });
     });
+
+    describe('when an invalid environment variable FOREST_SERVER_URL is provided', () => {
+      it('should throw an error', () => {
+        expect.assertions(1);
+
+        const dumper = createDumper({
+          env: {
+            FOREST_URL_IS_DEFAULT: false,
+            FOREST_SERVER_URL: 'invalidURL',
+          },
+        });
+
+        expect(() =>
+          dumper.writeDockerCompose({
+            appConfig: {},
+            dbConfig: {},
+          }),
+        ).toThrow('Invalid value for FOREST_SERVER_URL: "invalidURL"');
+      });
+    });
   });
 
   describe('writeForestAdminMiddleware', () => {
