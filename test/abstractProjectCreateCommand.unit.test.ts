@@ -242,8 +242,6 @@ describe('abstractProjectCreateCommand command', () => {
 
         await instance.run();
 
-        await instance.run();
-
         expect(stubs.eventSender.command).toBe('projects:create');
         expect(stubs.eventSender.applicationName).toBe('testApp');
         expect(stubs.eventSender.sessionToken).toBe('authToken');
