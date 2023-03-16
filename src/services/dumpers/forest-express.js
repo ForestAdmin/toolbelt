@@ -46,6 +46,7 @@ class ForestExpress extends AbstractDumper {
     this.isDatabaseLocal = isDatabaseLocal;
     this.toValidPackageName = toValidPackageName;
     this.strings = strings;
+    this.lodash = lodash;
   }
 
   static getModelsNameSorted(schema) {

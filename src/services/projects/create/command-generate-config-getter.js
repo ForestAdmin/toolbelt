@@ -17,6 +17,7 @@ const REQUESTS = {
     ...REQUESTS_APPLICATION,
   ],
 };
+
 class CommandGenerateConfigGetter {
   constructor({ assertPresent, GeneralPrompter }) {
     assertPresent({
