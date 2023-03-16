@@ -2,6 +2,7 @@
 import { Config } from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../src/abstract-project-create-command';
+import Agents from '../src/utils/agents';
 
 describe('abstractProjectCreateCommand command', () => {
   const makePlanAndStubs = () => {
@@ -61,9 +62,13 @@ describe('abstractProjectCreateCommand command', () => {
     };
   };
 
-  describe('runAuthenticated', () => {
+  describe('run', () => {
     class TestAbstractClass extends AbstractProjectCreateCommand {
       generateProject = jest.fn().mockResolvedValue(null);
+
+      run() {
+        return this.runAuthenticated();
+      }
     }
 
     let testAbstractClass: TestAbstractClass;
@@ -97,7 +102,7 @@ describe('abstractProjectCreateCommand command', () => {
           '--applicationPort',
           '3300',
           '--databaseSchema',
-          'pubic',
+          'public',
         ],
         new Config({ root: process.cwd() }),
         planAndStubs.commandPlan,
@@ -111,7 +116,7 @@ describe('abstractProjectCreateCommand command', () => {
 
       const { stubs, instance } = setup();
 
-      await instance.runAuthenticated();
+      await instance.run();
 
       expect(stubs.spinner.start).toHaveBeenCalledTimes(2);
       expect(stubs.spinner.start).toHaveBeenNthCalledWith(1, {
@@ -127,7 +132,7 @@ describe('abstractProjectCreateCommand command', () => {
         },
         {
           dbDialect: 'postgres',
-          agent: 'express-sequelize',
+          agent: Agents.ExpressSequelize,
           isLocal: true,
           architecture: 'microservice',
           projectId: 1,
@@ -139,7 +144,7 @@ describe('abstractProjectCreateCommand command', () => {
 
       const { stubs, instance } = setup();
 
-      await instance.runAuthenticated();
+      await instance.run();
 
       expect(stubs.spinner.start).toHaveBeenCalledWith({
         text: 'Testing connection to your database',
@@ -153,7 +158,7 @@ describe('abstractProjectCreateCommand command', () => {
 
       const { instance } = setup();
 
-      await instance.runAuthenticated();
+      await instance.run();
 
       expect(instance.generateProject).toHaveBeenCalledTimes(1);
     });
@@ -162,14 +167,14 @@ describe('abstractProjectCreateCommand command', () => {
 
       const { stubs, instance } = setup();
 
-      await instance.runAuthenticated();
+      await instance.run();
 
       expect(stubs.logger.info).toHaveBeenCalledTimes(1);
       expect(stubs.logger.info).toHaveBeenCalledWith('Hooray, installation success!');
       expect(stubs.chalk.green).toHaveBeenCalledTimes(1);
       expect(stubs.eventSender.meta).toStrictEqual({
         dbDialect: 'postgres',
-        agent: 'express-sequelize',
+        agent: Agents.ExpressSequelize,
         isLocal: true,
         architecture: 'microservice',
         projectId: 1,
@@ -179,7 +184,7 @@ describe('abstractProjectCreateCommand command', () => {
       expect(stubs.eventSender.sessionToken).toBe('authToken');
       expect(stubs.eventSender.meta).toStrictEqual({
         dbDialect: 'postgres',
-        agent: 'express-sequelize',
+        agent: Agents.ExpressSequelize,
         isLocal: true,
         architecture: 'microservice',
         projectId: 1,
@@ -214,7 +219,7 @@ describe('abstractProjectCreateCommand command', () => {
 
         const { instance, stubs } = setup(config, commandArgs);
 
-        await instance.runAuthenticated();
+        await instance.run();
 
         expect(stubs.database.connect).toHaveBeenCalledWith({
           dbConnectionUrl: 'mongodb://testUser:testPwd@localhost:5432/dbName',
@@ -235,14 +240,16 @@ describe('abstractProjectCreateCommand command', () => {
 
         const { instance, stubs } = setup(config, commandArgs);
 
-        await instance.runAuthenticated();
+        await instance.run();
+
+        await instance.run();
 
         expect(stubs.eventSender.command).toBe('projects:create');
         expect(stubs.eventSender.applicationName).toBe('testApp');
         expect(stubs.eventSender.sessionToken).toBe('authToken');
         expect(stubs.eventSender.meta).toStrictEqual({
           dbDialect: 'mongodb',
-          agent: 'express-mongoose',
+          agent: Agents.ExpressMongoose,
           isLocal: true,
           architecture: 'microservice',
           projectId: 1,
@@ -254,7 +261,7 @@ describe('abstractProjectCreateCommand command', () => {
 
         const { instance } = setup(config, commandArgs);
 
-        await instance.runAuthenticated();
+        await instance.run();
 
         expect(instance.generateProject).toHaveBeenCalledWith({
           appConfig: {
@@ -285,7 +292,7 @@ describe('abstractProjectCreateCommand command', () => {
 
         const { instance, stubs } = setup();
 
-        await instance.runAuthenticated();
+        await instance.run();
 
         expect(stubs.database.connect).toHaveBeenCalledWith({
           dbConnectionUrl: 'postgres://testUser:testPwd@localhost:5432/testDb',
@@ -305,14 +312,14 @@ describe('abstractProjectCreateCommand command', () => {
 
         const { instance, stubs } = setup();
 
-        await instance.runAuthenticated();
+        await instance.run();
 
         expect(stubs.eventSender.command).toBe('projects:create');
         expect(stubs.eventSender.applicationName).toBe('testApp');
         expect(stubs.eventSender.sessionToken).toBe('authToken');
         expect(stubs.eventSender.meta).toStrictEqual({
           dbDialect: 'postgres',
-          agent: 'express-sequelize',
+          agent: Agents.ExpressSequelize,
           isLocal: true,
           architecture: 'microservice',
           projectId: 1,
@@ -324,7 +331,7 @@ describe('abstractProjectCreateCommand command', () => {
 
         const { instance } = setup();
 
-        await instance.runAuthenticated();
+        await instance.run();
 
         expect(instance.generateProject).toHaveBeenCalledWith({
           appConfig: {

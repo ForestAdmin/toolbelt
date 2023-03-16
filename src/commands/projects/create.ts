@@ -24,7 +24,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
     this.dumper = forestExpressDumper;
   }
 
-  async generateProject(config: Config) {
+  protected async generateProject(config: Config): Promise<void> {
     const schema = await this.analyzeDatabase(config.dbConfig);
     await this.createFiles(config, schema);
   }
@@ -49,7 +49,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
     return schema;
   }
 
-  private async createFiles(config: Config, schema) {
+  private async createFiles(config: Config, schema): Promise<void> {
     this.spinner.start({ text: 'Creating your project files' });
     const dumpPromise = this.dumper.dump(config, schema);
     await this.spinner.attachToPromise(dumpPromise);
