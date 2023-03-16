@@ -60,7 +60,7 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
     config: ProcessedArguments;
     specificDatabaseConfig: { [name: string]: any };
   }> {
-    const config = await this.commandGenerateConfigGetter.get(programArguments, true, true);
+    const config = await this.commandGenerateConfigGetter.get(programArguments, false, true);
 
     const specificDatabaseConfig = {
       mongodbSrv: config.mongoDBSRV,
