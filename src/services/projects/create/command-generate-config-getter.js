@@ -17,7 +17,6 @@ const REQUESTS = {
     ...REQUESTS_APPLICATION,
   ],
 };
-
 class CommandGenerateConfigGetter {
   constructor({ assertPresent, GeneralPrompter }) {
     assertPresent({
@@ -34,9 +33,9 @@ class CommandGenerateConfigGetter {
     return this.AVAILABLE_REQUESTS.forFullPrompt;
   }
 
-  get(programArguments) {
+  async get(programArguments, forSql, forNosql) {
     const requests = this.getRequestList(programArguments);
-    return new this.GeneralPrompter(requests, programArguments).getConfig();
+    return new this.GeneralPrompter(requests, programArguments).getConfig(forSql, forNosql);
   }
 }
 

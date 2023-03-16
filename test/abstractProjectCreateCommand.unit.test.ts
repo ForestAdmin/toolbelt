@@ -1,7 +1,16 @@
 /* eslint-disable max-classes-per-file */
+import type { createCommandArguments } from '../src/interfaces/command-create-project-arguments-interface';
+import type CommandGenerateConfigGetter from '../src/services/projects/create/command-generate-config-getter';
+import type * as ConfigType from '@oclif/config';
+
+import { flags } from '@oclif/command';
 import { Config } from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../src/abstract-project-create-command';
+import {
+  nosqlDbDialectOptions,
+  sqlDbDialectOptions,
+} from '../src/services/prompter/database-prompts';
 import Agents from '../src/utils/agents';
 
 describe('abstractProjectCreateCommand command', () => {
@@ -66,10 +75,62 @@ describe('abstractProjectCreateCommand command', () => {
 
   describe('run', () => {
     class TestAbstractClass extends AbstractProjectCreateCommand {
+      public agent: string | null = null;
+
+      private readonly commandGenerateConfigGetter: CommandGenerateConfigGetter;
+
+      static override readonly flags = {
+        ...AbstractProjectCreateCommand.flags,
+        databaseDialect: flags.string({
+          char: 'd',
+          dependsOn: [],
+          description: 'Enter your database dialect.',
+          exclusive: ['databaseConnectionURL'],
+          options: [...sqlDbDialectOptions, ...nosqlDbDialectOptions].map(option => option.value),
+          required: false,
+        }),
+        databaseSchema: flags.string({
+          char: 's',
+          dependsOn: [],
+          description: 'Enter your database schema.',
+          exclusive: [],
+          required: false,
+        }),
+        mongoDBSRV: flags.boolean({
+          dependsOn: [],
+          description: 'Use SRV DNS record for mongoDB connection.',
+          exclusive: ['databaseConnectionURL'],
+          required: false,
+        }),
+      };
+
+      static override readonly args = [...AbstractProjectCreateCommand.args];
+
+      constructor(argv: string[], config: ConfigType.IConfig, plan?) {
+        super(argv, config, plan);
+
+        const { commandGenerateConfigGetter } = this.context;
+
+        this.commandGenerateConfigGetter = commandGenerateConfigGetter;
+      }
+
       generateProject = jest.fn().mockResolvedValue(null);
 
       run() {
         return this.runAuthenticated();
+      }
+
+      protected async getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{
+        config: createCommandArguments;
+        specificDatabaseConfig: { [name: string]: any };
+      }> {
+        const config = await this.commandGenerateConfigGetter.get(programArguments, true, true);
+
+        const specificDatabaseConfig = {
+          mongodbSrv: config.mongoDBSRV,
+        };
+
+        return { config, specificDatabaseConfig };
       }
     }
 

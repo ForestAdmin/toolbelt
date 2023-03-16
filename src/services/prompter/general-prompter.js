@@ -31,12 +31,12 @@ class GeneralPrompter {
     );
   }
 
-  async getConfig() {
+  async getConfig(forSql, forNosql) {
     const { inquirer, terminator } = Context.inject();
 
     try {
       await this.projectPrompt.handlePrompts();
-      await this.databasePrompt.handlePrompts();
+      await this.databasePrompt.handlePrompts(forSql, forNosql);
       await this.applicationPrompt.handlePrompts();
     } catch (error) {
       if (error instanceof PromptError) {

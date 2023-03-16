@@ -1,5 +1,5 @@
+import type { createCommandArguments } from './interfaces/command-create-project-arguments-interface';
 import type { AppConfig, Config, DbConfig } from './interfaces/project-create-interface';
-import type CommandGenerateConfigGetter from './services/projects/create/command-generate-config-getter';
 import type { ProjectMeta } from './services/projects/create/project-creator';
 import type ProjectCreator from './services/projects/create/project-creator';
 import type Database from './services/schema/update/database';
@@ -7,16 +7,14 @@ import type Spinner from './services/spinner';
 import type EventSender from './utils/event-sender';
 import type Messages from './utils/messages';
 import type * as OclifConfig from '@oclif/config';
+import type { Input } from '@oclif/parser';
 
 import { flags } from '@oclif/command';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
-import { dbDialectOptions } from './services/prompter/database-prompts';
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
   private readonly eventSender: EventSender;
-
-  private readonly commandGenerateConfigGetter: CommandGenerateConfigGetter;
 
   private readonly projectCreator: ProjectCreator;
 
@@ -26,7 +24,8 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected readonly spinner: Spinner;
 
-  // Flags, args and Description must be defined on the class itself otherwise it cannot be parsed properly
+  protected abstract readonly agent: string | null;
+
   static override flags = {
     applicationHost: flags.string({
       char: 'H',
@@ -47,14 +46,6 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       dependsOn: [],
       description: 'Enter the database credentials with a connection URL.',
       exclusive: ['ssl'],
-      required: false,
-    }),
-    databaseDialect: flags.string({
-      char: 'd',
-      dependsOn: [],
-      description: 'Enter your database dialect.',
-      exclusive: ['databaseConnectionURL'],
-      options: dbDialectOptions.map(option => option.value),
       required: false,
     }),
     databaseName: flags.string({
@@ -91,24 +82,11 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       exclusive: ['databaseConnectionURL'],
       required: false,
     }),
-    databaseSchema: flags.string({
-      char: 's',
-      dependsOn: [],
-      description: 'Enter your database schema.',
-      exclusive: [],
-      required: false,
-    }),
     databaseSSL: flags.boolean({
       default: false,
       dependsOn: [],
       description: 'Use SSL for database connection.',
       exclusive: [],
-      required: false,
-    }),
-    mongoDBSRV: flags.boolean({
-      dependsOn: [],
-      description: 'Use SRV DNS record for mongoDB connection.',
-      exclusive: ['databaseConnectionURL'],
       required: false,
     }),
   };
@@ -130,7 +108,6 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       assertPresent,
       authenticator,
       eventSender,
-      commandGenerateConfigGetter,
       projectCreator,
       database,
       messages,
@@ -140,7 +117,6 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     assertPresent({
       authenticator,
       eventSender,
-      commandGenerateConfigGetter,
       projectCreator,
       database,
       messages,
@@ -148,7 +124,6 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     });
 
     this.eventSender = eventSender;
-    this.commandGenerateConfigGetter = commandGenerateConfigGetter;
     this.projectCreator = projectCreator;
     this.database = database;
     this.messages = messages;
@@ -193,6 +168,11 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     }
   }
 
+  protected abstract getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{
+    config: createCommandArguments;
+    specificDatabaseConfig: { [name: string]: any };
+  }>;
+
   protected abstract generateProject(config: Config): Promise<void>;
 
   private async getConfig(): Promise<{
@@ -201,14 +181,19 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     meta: ProjectMeta;
     authenticationToken: string;
   }> {
-    const { args: parsedArgs, flags: parsedFlags } = this.parse(AbstractProjectCreateCommand);
+    const { args: parsedArgs, flags: parsedFlags } = this.parse(
+      this.constructor as Input<typeof AbstractProjectCreateCommand.flags>,
+    );
 
     // FIXME: Works as only one instance at execution time. Not ideal.
     this.eventSender.command = 'projects:create';
     this.eventSender.applicationName = parsedArgs.applicationName;
 
-    const programArguments = { ...parsedArgs, ...(parsedFlags as unknown as object) };
-    const config = await this.commandGenerateConfigGetter.get(programArguments);
+    const { config, specificDatabaseConfig } = await this.getConfigFromArguments({
+      ...parsedArgs,
+      ...parsedFlags,
+    });
+
     if (!config.databaseDialect && !config.databaseConnectionURL) {
       this.logger.error('Missing database dialect option value');
       this.exit(1);
@@ -219,7 +204,6 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       appHostname: config.applicationHost,
       appPort: config.applicationPort,
     } as AppConfig;
-
     const dbConfig = {
       dbConnectionUrl: config.databaseConnectionURL,
       dbDialect: config.databaseDialect,
@@ -227,21 +211,23 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       dbName: config.databaseName,
       dbHostname: config.databaseHost,
       dbPort: config.databasePort,
+      dbSsl: config.databaseSSL,
       dbUser: config.databaseUser,
       dbPassword: config.databasePassword,
-      mongodbSrv: config.mongoDBSRV,
-      dbSsl: config.databaseSSL,
+      ...specificDatabaseConfig,
     } as DbConfig;
 
     const meta: ProjectMeta = {
+      agent:
+        // FIXME: Remove the condition when the agent v1 command is dropped
+        this.agent || (dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize'),
       dbDialect: dbConfig.dbDialect,
-      agent: dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize',
+      architecture: 'microservice',
       isLocal: ['localhost', '127.0.0.1', '::1'].some(keyword =>
         dbConfig.dbHostname
           ? dbConfig.dbHostname.includes(keyword)
           : dbConfig.dbConnectionUrl?.includes(keyword),
       ),
-      architecture: 'microservice',
     };
 
     const authenticationToken = (await this.authenticator.getAuthToken()) || '';
