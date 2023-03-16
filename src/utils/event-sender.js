@@ -33,7 +33,7 @@ class EventSender {
     try {
       if (this.sessionToken) {
         await this.superagent
-          .post(`${this.env.FOREST_URL}/api/lumber/error`, {
+          .post(`${this.env.FOREST_SERVER_URL}/api/lumber/error`, {
             data: {
               type: 'events',
               attributes,
@@ -41,7 +41,7 @@ class EventSender {
           })
           .set('Authorization', `Bearer ${this.sessionToken}`);
       } else {
-        await this.superagent.post(`${this.env.FOREST_URL}/api/lumber/error`, {
+        await this.superagent.post(`${this.env.FOREST_SERVER_URL}/api/lumber/error`, {
           data: {
             type: 'events',
             attributes,
@@ -66,7 +66,7 @@ class EventSender {
 
     try {
       await this.superagent
-        .post(`${this.env.FOREST_URL}/api/lumber/success`, {
+        .post(`${this.env.FOREST_SERVER_URL}/api/lumber/success`, {
           data: {
             type: 'events',
             attributes: {

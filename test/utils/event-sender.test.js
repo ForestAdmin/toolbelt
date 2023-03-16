@@ -8,7 +8,7 @@ describe('utils > EventSender', () => {
     };
 
     const env = {
-      FOREST_URL: 'https://api.test.forestadmin.com',
+      FOREST_SERVER_URL: 'https://api.test.forestadmin.com',
     };
 
     const context = {

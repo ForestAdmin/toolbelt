@@ -28,7 +28,7 @@ const makeEnvironmentVariablesReplacement = env => plan =>
     // FOREST_EMAIL: undefined,
     // FOREST_ENV_SECRET: undefined,
     // FOREST_PASSWORD: undefined,
-    // FOREST_URL: undefined,
+    // FOREST_SERVER_URL: undefined,
     // NODE_ENV: undefined,
     // PORT: undefined,
     // TOKEN_PATH: undefined,

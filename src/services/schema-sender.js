@@ -18,7 +18,7 @@ function SchemaSender(serializedSchema, secret, authenticationToken, oclifExit) 
     const { env, logger } = Context.inject();
 
     return agent
-      .post(`${env.FOREST_URL}/forest/apimaps`)
+      .post(`${env.FOREST_SERVER_URL}/forest/apimaps`)
       .set('forest-secret-key', secret)
       .set('Authorization', `Bearer ${authenticationToken}`)
       .send(serializedSchema)

@@ -28,7 +28,7 @@ class OidcAuthenticator {
   async register() {
     try {
       const issuer = await this.openIdClient.Issuer.discover(
-        `${this.env.FOREST_URL}/oidc/.well-known/openid-configuration`,
+        `${this.env.FOREST_SERVER_URL}/oidc/.well-known/openid-configuration`,
       );
 
       return await issuer.Client.register({
