@@ -14,10 +14,12 @@ describe('abstractProjectCreateCommand command', () => {
       },
       chalk: {
         green: jest.fn(msg => msg),
+        red: jest.fn(msg => msg),
       },
       logger: {
         error: jest.fn(),
         info: jest.fn(),
+        log: jest.fn(),
       },
       eventSender: {
         notifySuccess: jest.fn(),
@@ -139,6 +141,53 @@ describe('abstractProjectCreateCommand command', () => {
         },
       );
     });
+
+    it('should throw an error when there is a 401 error', async () => {
+      expect.assertions(1);
+
+      const { stubs, instance } = setup();
+
+      const error = {
+        status: 401,
+      };
+
+      stubs.spinner.attachToPromise.mockRejectedValue(error);
+
+      await expect(instance.run()).rejects.toBe(error);
+    });
+
+    it('should throw an error when there is a 403 error', async () => {
+      expect.assertions(1);
+
+      const { stubs, instance } = setup();
+
+      const error = {
+        status: 403,
+      };
+
+      stubs.spinner.attachToPromise.mockRejectedValue(error);
+
+      await expect(instance.run()).rejects.toBe(error);
+    });
+
+    it('should exit with code 1 when the error is not a 401 or a 403', async () => {
+      expect.assertions(1);
+
+      const { stubs, instance } = setup();
+
+      const error = {
+        status: 400,
+      };
+
+      stubs.spinner.attachToPromise.mockRejectedValue(error);
+
+      jest.spyOn(instance, 'exit').mockReturnValue(true as never);
+
+      await instance.run();
+
+      expect(instance.exit).toHaveBeenCalledWith(1);
+    });
+
     it('should test that the database is connectable and disconnect', async () => {
       expect.assertions(4);
 
@@ -153,6 +202,7 @@ describe('abstractProjectCreateCommand command', () => {
       expect(stubs.database.disconnect).toHaveBeenCalledTimes(1);
       expect(stubs.database.disconnect).toHaveBeenCalledWith('this is a connection');
     });
+
     it('should call child generateProject', async () => {
       expect.assertions(1);
 
@@ -162,6 +212,7 @@ describe('abstractProjectCreateCommand command', () => {
 
       expect(instance.generateProject).toHaveBeenCalledTimes(1);
     });
+
     it('should log the installation success and send the event', async () => {
       expect.assertions(9);
 
