@@ -33,7 +33,7 @@ function getBranches(envSecret) {
   assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
   return agent
-    .get(`${env.FOREST_URL}/api/branches`)
+    .get(`${env.FOREST_SERVER_URL}/api/branches`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', envSecret)
     .send()
@@ -46,7 +46,7 @@ function deleteBranch(branchName, environmentSecret) {
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .del(`${env.FOREST_URL}/api/branches/${encodeURIComponent(branchName)}`)
+    .del(`${env.FOREST_SERVER_URL}/api/branches/${encodeURIComponent(branchName)}`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send();
@@ -58,7 +58,7 @@ function createBranch(branchName, environmentSecret, originName) {
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .post(`${env.FOREST_URL}/api/branches`)
+    .post(`${env.FOREST_SERVER_URL}/api/branches`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send({
@@ -73,7 +73,7 @@ function pushBranch(environmentSecret) {
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .post(`${env.FOREST_URL}/api/branches/push`)
+    .post(`${env.FOREST_SERVER_URL}/api/branches/push`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send();
@@ -85,7 +85,7 @@ function switchBranch({ id }, environmentSecret) {
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .put(`${env.FOREST_URL}/api/environments`)
+    .put(`${env.FOREST_SERVER_URL}/api/environments`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send(EnvironmentSerializer.serialize({ currentBranchId: id }));
@@ -97,7 +97,7 @@ function setOrigin(originEnvironmentName, environmentSecret) {
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .post(`${env.FOREST_URL}/api/branches/set-origin`)
+    .post(`${env.FOREST_SERVER_URL}/api/branches/set-origin`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send({ originEnvironmentName: encodeURIComponent(originEnvironmentName) });

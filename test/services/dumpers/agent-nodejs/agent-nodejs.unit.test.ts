@@ -441,7 +441,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               datasourceCreation: `
     createSqlDataSource({
       uri: process.env.DATABASE_URL,
-      schema: process.env.DATABASE_SCHEMA || 'public',
+      schema: process.env.DATABASE_SCHEMA,
       ...dialectOptions,
     }),
   `,
@@ -554,8 +554,8 @@ describe('services > dumpers > AgentNodeJs', () => {
         });
 
         describe('when dbDialect requires additional dependency', () => {
-          it('should add pg and pg-hstore for postgresql', async () => {
-            expect.assertions(2);
+          it('should add pg for postgresql', async () => {
+            expect.assertions(1);
 
             const { dumper, context, defaultConfig } = createDumper();
 
@@ -565,11 +565,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
               '/test/anApplication/package.json',
-              expect.stringContaining('"pg": "~8.2.2"'),
-            );
-            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/package.json',
-              expect.stringContaining('"pg-hstore": "~2.3.4"'),
+              expect.stringContaining('"pg": "^8.8.0"'),
             );
           });
 
@@ -584,11 +580,11 @@ describe('services > dumpers > AgentNodeJs', () => {
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
               '/test/anApplication/package.json',
-              expect.stringContaining('"mysql2": "~2.2.5"'),
+              expect.stringContaining('"mysql2": "^3.0.1"'),
             );
           });
 
-          it('should add mysql2 for mariadb', async () => {
+          it('should add mariadb for mariadb', async () => {
             expect.assertions(1);
 
             const { dumper, context, defaultConfig } = createDumper();
@@ -599,7 +595,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
               '/test/anApplication/package.json',
-              expect.stringContaining('"mariadb": "^2.3.3"'),
+              expect.stringContaining('"mariadb": "^3.0.2"'),
             );
           });
 
@@ -614,7 +610,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
               '/test/anApplication/package.json',
-              expect.stringContaining('"tedious": "^6.4.0"'),
+              expect.stringContaining('"tedious": "^15.1.2"'),
             );
           });
         });
@@ -634,10 +630,8 @@ describe('services > dumpers > AgentNodeJs', () => {
         '/test/anApplication/docker-compose.yml',
         expect.objectContaining({
           containerName: 'anApplication',
-          dbUrl: `\${DOCKER_DATABASE_URL}`,
-          dbSchema: 'public',
           forestExtraHost: '',
-          forestServerUrl: false,
+          isLinuxOs: false,
           network: null,
         }),
       );

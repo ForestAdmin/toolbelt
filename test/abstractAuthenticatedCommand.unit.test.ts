@@ -9,7 +9,7 @@ describe('abstractAuthenticated command', () => {
   const makePlanAndStubs = () => {
     const stubs = {
       authenticator: {
-        getAuthToken: jest.fn(),
+        getAuthToken: jest.fn().mockReturnValue(false),
         logout: jest.fn().mockResolvedValue(true),
         tryLogin: jest.fn().mockResolvedValue(true),
       },
@@ -62,83 +62,16 @@ describe('abstractAuthenticated command', () => {
     });
   });
 
-  describe('checkAuthentication', () => {
+  describe('run', () => {
     class TestAbstractClass extends AbstractAuthenticatedCommand {
       // eslint-disable-next-line class-methods-use-this
       runAuthenticated(): Promise<void> {
-        throw new Error('Method not implemented.');
+        return null;
       }
     }
 
-    it('should try to login if not authenticated', async () => {
-      expect.assertions(3);
-
-      const { commandPlan, stubs } = makePlanAndStubs();
-      const testAbstractClass = new TestAbstractClass(
-        [],
-        new Config({ root: process.cwd() }),
-        commandPlan,
-      );
-
-      stubs.authenticator.getAuthToken.mockReturnValueOnce(false).mockReturnValueOnce(true);
-
-      await testAbstractClass.checkAuthentication();
-
-      expect(stubs.authenticator.getAuthToken).toHaveBeenCalledTimes(2);
-      expect(stubs.authenticator.tryLogin).toHaveBeenCalledTimes(1);
-      expect(stubs.logger.info).toHaveBeenCalledWith('Login required.');
-    });
-
-    it('should not try to login if already authenticated', async () => {
-      expect.assertions(3);
-
-      const { commandPlan, stubs } = makePlanAndStubs();
-      const testAbstractClass = new TestAbstractClass(
-        [],
-        new Config({ root: process.cwd() }),
-        commandPlan,
-      );
-
-      stubs.authenticator.getAuthToken.mockReturnValue(true);
-
-      await testAbstractClass.checkAuthentication();
-
-      expect(stubs.authenticator.getAuthToken).toHaveBeenCalledTimes(1);
-      expect(stubs.authenticator.tryLogin).not.toHaveBeenCalled();
-      expect(stubs.logger.info).not.toHaveBeenCalled();
-    });
-
-    it('should exit if login fails', async () => {
-      expect.assertions(2);
-
-      const { commandPlan, stubs } = makePlanAndStubs();
-      const testAbstractClass = new TestAbstractClass(
-        [],
-        new Config({ root: process.cwd() }),
-        commandPlan,
-      );
-
-      stubs.authenticator.getAuthToken.mockReturnValue(false);
-
-      jest.spyOn(testAbstractClass, 'exit').mockReturnValue(true as never);
-
-      await testAbstractClass.checkAuthentication();
-
-      expect(stubs.authenticator.getAuthToken).toHaveBeenCalledTimes(2);
-      expect(testAbstractClass.exit).toHaveBeenCalledWith(10);
-    });
-  });
-
-  describe('handleAuthenticationErrors', () => {
-    class TestAbstractClass extends AbstractAuthenticatedCommand {
-      // eslint-disable-next-line class-methods-use-this
-      runAuthenticated(): Promise<void> {
-        throw new Error('Method not implemented.');
-      }
-    }
-
-    describe('when receiving a 403 error', () => {
-      it('should log it and exit', async () => {
+    describe('when the user is not authenticated', () => {
+      it('should try to login', async () => {
         expect.assertions(3);
 
         const { commandPlan, stubs } = makePlanAndStubs();
@@ -148,46 +81,117 @@ describe('abstractAuthenticated command', () => {
           commandPlan,
         );
 
-        const error = {
-          status: 403,
-        };
+        stubs.authenticator.getAuthToken.mockReturnValueOnce(false).mockReturnValueOnce(true);
 
-        jest.spyOn(testAbstractClass, 'exit').mockReturnValue(true as never);
+        await testAbstractClass.run();
 
-        await testAbstractClass.handleAuthenticationErrors(error);
-
-        expect(stubs.authenticator.logout).not.toHaveBeenCalled();
-        expect(stubs.logger.error).toHaveBeenCalledWith(
-          'You do not have the right to execute this action on this project',
-        );
-        expect(testAbstractClass.exit).toHaveBeenCalledWith(2);
+        expect(stubs.authenticator.getAuthToken).toHaveBeenCalledTimes(2);
+        expect(stubs.authenticator.tryLogin).toHaveBeenCalledTimes(1);
+        expect(stubs.logger.info).toHaveBeenCalledWith('Login required.');
       });
     });
 
-    describe('when receiving a 401 error', () => {
-      it('should logout the user, log it and exit', async () => {
+    describe('when the user is authenticated', () => {
+      const makePlanAndAuthenticatedStubs = () => {
+        const { commandPlan, stubs } = makePlanAndStubs();
+
+        stubs.authenticator.getAuthToken.mockReturnValue(true);
+
+        return {
+          commandPlan,
+          stubs,
+        };
+      };
+
+      it('should not try to login', async () => {
         expect.assertions(3);
 
-        const { commandPlan, stubs } = makePlanAndStubs();
+        const { commandPlan, stubs } = makePlanAndAuthenticatedStubs();
         const testAbstractClass = new TestAbstractClass(
           [],
           new Config({ root: process.cwd() }),
           commandPlan,
         );
 
-        const error = {
-          status: 401,
-        };
+        await testAbstractClass.run();
 
-        jest.spyOn(testAbstractClass, 'exit').mockReturnValue(true as never);
+        expect(stubs.authenticator.getAuthToken).toHaveBeenCalledTimes(1);
+        expect(stubs.authenticator.tryLogin).not.toHaveBeenCalled();
+        expect(stubs.logger.info).not.toHaveBeenCalled();
+      });
 
-        await testAbstractClass.handleAuthenticationErrors(error);
+      describe('when running the authenticated job', () => {
+        describe('when receiving a 403 error', () => {
+          it('should log it and exit', async () => {
+            expect.assertions(3);
 
-        expect(stubs.authenticator.logout).toHaveBeenCalledTimes(1);
-        expect(stubs.logger.error).toHaveBeenCalledWith(
-          "Please use 'forest login' to sign in to your Forest account.",
-        );
-        expect(testAbstractClass.exit).toHaveBeenCalledWith(10);
+            const { commandPlan, stubs } = makePlanAndAuthenticatedStubs();
+            const testAbstractClass = new TestAbstractClass(
+              [],
+              new Config({ root: process.cwd() }),
+              commandPlan,
+            );
+
+            jest.spyOn(testAbstractClass, 'exit').mockReturnValue(true as never);
+            jest.spyOn(testAbstractClass, 'runAuthenticated').mockRejectedValue({
+              status: 403,
+            });
+
+            await testAbstractClass.run();
+
+            expect(stubs.authenticator.logout).not.toHaveBeenCalled();
+            expect(stubs.logger.error).toHaveBeenCalledWith(
+              'You do not have the right to execute this action on this project',
+            );
+            expect(testAbstractClass.exit).toHaveBeenCalledWith(2);
+          });
+        });
+
+        describe('when receiving a 401 error', () => {
+          it('should logout the user, log it and exit', async () => {
+            expect.assertions(3);
+
+            const { commandPlan, stubs } = makePlanAndAuthenticatedStubs();
+            const testAbstractClass = new TestAbstractClass(
+              [],
+              new Config({ root: process.cwd() }),
+              commandPlan,
+            );
+
+            jest.spyOn(testAbstractClass, 'exit').mockReturnValue(true as never);
+            jest.spyOn(testAbstractClass, 'runAuthenticated').mockRejectedValue({
+              status: 401,
+            });
+
+            await testAbstractClass.run();
+
+            expect(stubs.authenticator.logout).toHaveBeenCalledTimes(1);
+            expect(stubs.logger.error).toHaveBeenCalledWith(
+              `Please use 'forest login' to sign in to your Forest account.`,
+            );
+            expect(testAbstractClass.exit).toHaveBeenCalledWith(10);
+          });
+        });
+
+        describe('when receiving any other error', () => {
+          it('should propagate the error and not handle it', async () => {
+            expect.assertions(2);
+
+            const { commandPlan, stubs } = makePlanAndAuthenticatedStubs();
+            const testAbstractClass = new TestAbstractClass(
+              [],
+              new Config({ root: process.cwd() }),
+              commandPlan,
+            );
+
+            jest.spyOn(testAbstractClass, 'exit').mockReturnValue(true as never);
+
+            await testAbstractClass.run();
+
+            expect(testAbstractClass.exit).not.toHaveBeenCalled();
+            expect(stubs.logger.error).not.toHaveBeenCalled();
+          });
+        });
       });
     });
   });

@@ -181,7 +181,7 @@ describe('services > dumper', () => {
       });
     });
 
-    describe('using an environment variable FOREST_URL', () => {
+    describe('using an environment variable FOREST_SERVER_URL', () => {
       async function generateDockerComposeFile(contextOverrides) {
         await createLinuxDump({}, contextOverrides);
 
@@ -195,7 +195,7 @@ describe('services > dumper', () => {
           try {
             const dockerComposeFile = await generateDockerComposeFile({
               env: {
-                FOREST_URL: 'https://api.something.com',
+                FOREST_SERVER_URL: 'https://api.something.com',
               },
             });
 

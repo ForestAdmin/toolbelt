@@ -1,3 +1,4 @@
+const { default: Agents } = require('../../src/utils/agents');
 const EventSender = require('../../src/utils/event-sender');
 
 describe('utils > EventSender', () => {
@@ -8,7 +9,7 @@ describe('utils > EventSender', () => {
     };
 
     const env = {
-      FOREST_URL: 'https://api.test.forestadmin.com',
+      FOREST_SERVER_URL: 'https://api.test.forestadmin.com',
     };
 
     const context = {
@@ -44,7 +45,7 @@ describe('utils > EventSender', () => {
         eventSender.meta = {
           projectId: 42,
           dbDialect: 'postgres',
-          agent: 'express-sequelize',
+          agent: Agents.ExpressSequelize,
           isLocal: true,
         };
         eventSender.sessionToken = 'SESSION-TOKEN';
@@ -56,7 +57,7 @@ describe('utils > EventSender', () => {
           {
             data: {
               attributes: {
-                agent: 'express-sequelize',
+                agent: Agents.ExpressSequelize,
                 command: 'projects:create',
                 db_dialect: 'postgres',
                 is_local: true,
@@ -162,7 +163,7 @@ describe('utils > EventSender', () => {
           eventSender.meta = {
             projectId: 42,
             dbDialect: 'postgres',
-            agent: 'express-sequelize',
+            agent: Agents.ExpressSequelize,
             isLocal: true,
           };
 
@@ -176,7 +177,7 @@ describe('utils > EventSender', () => {
             {
               data: {
                 attributes: {
-                  agent: 'express-sequelize',
+                  agent: Agents.ExpressSequelize,
                   code: 'database_authentication_error',
                   command: 'projects:create',
                   context: undefined,
@@ -206,7 +207,7 @@ describe('utils > EventSender', () => {
           eventSender.meta = {
             projectId: 42,
             dbDialect: 'postgres',
-            agent: 'express-sequelize',
+            agent: Agents.ExpressSequelize,
             isLocal: true,
           };
 
@@ -220,7 +221,7 @@ describe('utils > EventSender', () => {
             {
               data: {
                 attributes: {
-                  agent: 'express-sequelize',
+                  agent: Agents.ExpressSequelize,
                   code: 'database_authentication_error',
                   command: 'projects:create',
                   context: undefined,

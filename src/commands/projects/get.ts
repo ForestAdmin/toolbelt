@@ -7,7 +7,7 @@ import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
 import ProjectManager from '../../services/project-manager';
 
 export default class GetCommand extends AbstractAuthenticatedCommand {
-  private env: { FOREST_URL: string };
+  private env: { FOREST_SERVER_URL: string };
 
   private projectRenderer: ProjectRenderer;
 

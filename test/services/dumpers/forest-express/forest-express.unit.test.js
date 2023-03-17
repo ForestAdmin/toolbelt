@@ -329,14 +329,14 @@ describe('services > dumper (unit)', () => {
   });
 
   describe('writeDockerCompose', () => {
-    describe('when an environment variable FOREST_URL is provided', () => {
+    describe('when an environment variable FOREST_SERVER_URL is provided', () => {
       it('should have called copyHandlebarsTemplate with a valid forestUrl is context', () => {
         expect.assertions(1);
 
         const dumper = createDumper({
           env: {
             FOREST_URL_IS_DEFAULT: false,
-            FOREST_URL: 'https://something.com',
+            FOREST_SERVER_URL: 'https://something.com',
           },
         });
         const copyHandlebarsTemplateSpy = jest
@@ -353,14 +353,14 @@ describe('services > dumper (unit)', () => {
       });
     });
 
-    describe('when no environment variable FOREST_URL is provided', () => {
+    describe('when no environment variable FOREST_SERVER_URL is provided', () => {
       it('should have called copyHandlebarsTemplate with a valid forestUrl is context', () => {
         expect.assertions(1);
 
         const dumper = createDumper({
           env: {
             FOREST_URL_IS_DEFAULT: true,
-            FOREST_URL: 'DEFAULT_FOREST_URL',
+            FOREST_SERVER_URL: 'DEFAULT_FOREST_URL',
           },
         });
         const copyHandlebarsTemplateSpy = jest
@@ -373,6 +373,26 @@ describe('services > dumper (unit)', () => {
         const handlebarContext = copyHandlebarsTemplateSpy.mock.calls[0][2];
 
         expect(handlebarContext.forestUrl).toBe(false);
+      });
+    });
+
+    describe('when an invalid environment variable FOREST_SERVER_URL is provided', () => {
+      it('should throw an error', () => {
+        expect.assertions(1);
+
+        const dumper = createDumper({
+          env: {
+            FOREST_URL_IS_DEFAULT: false,
+            FOREST_SERVER_URL: 'invalidURL',
+          },
+        });
+
+        expect(() =>
+          dumper.writeDockerCompose({
+            appConfig: {},
+            dbConfig: {},
+          }),
+        ).toThrow('Invalid value for FOREST_SERVER_URL: "invalidURL"');
       });
     });
   });
@@ -419,9 +439,9 @@ describe('services > dumper (unit)', () => {
     const config = {
       appConfig: {
         useMultiDatabase: true,
+        modelsExportPath: 'accounting',
       },
       dbConfig: {},
-      modelsExportPath: 'accounting',
     };
 
     describe('with multiple databases', () => {

@@ -16,7 +16,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${env.FOREST_URL}/api/projects/${config.projectId}/environments`)
+      .get(`${env.FOREST_SERVER_URL}/api/projects/${config.projectId}/environments`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
       .send()
@@ -27,7 +27,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${env.FOREST_URL}/api/environments/${environmentId}`)
+      .get(`${env.FOREST_SERVER_URL}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-environment-id', environmentId)
       .send()
@@ -38,7 +38,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     const response = await agent
-      .get(`${env.FOREST_URL}/api/apimaps/${environmentId}`)
+      .get(`${env.FOREST_SERVER_URL}/api/apimaps/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-environment-id', environmentId)
       .send();
@@ -49,7 +49,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     const response = await agent
-      .post(`${env.FOREST_URL}/api/environments`)
+      .post(`${env.FOREST_SERVER_URL}/api/environments`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
       .send(
@@ -69,7 +69,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .post(`${env.FOREST_URL}/api/projects/${projectId}/development-environment-for-user`)
+      .post(`${env.FOREST_SERVER_URL}/api/projects/${projectId}/development-environment-for-user`)
       .set('Authorization', `Bearer ${authToken}`)
       .send({ endpoint })
       .then(response => environmentDeserializer.deserialize(response.body));
@@ -78,7 +78,7 @@ function EnvironmentManager(config) {
   this.updateEnvironment = async () => {
     const authToken = authenticator.getAuthToken();
     return agent
-      .put(`${env.FOREST_URL}/api/environments/${config.environmentId}`)
+      .put(`${env.FOREST_SERVER_URL}/api/environments/${config.environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send(
         EnvironmentSerializer.serialize({
@@ -92,7 +92,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .del(`${env.FOREST_URL}/api/environments/${environmentId}`)
+      .del(`${env.FOREST_SERVER_URL}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-environment-id', environmentId);
   };
@@ -109,7 +109,7 @@ function EnvironmentManager(config) {
     const jobStateChecker = new JobStateChecker('Copying layout', oclifExit);
 
     const deploymentRequestResponse = await agent
-      .post(`${env.FOREST_URL}/api/deployment-requests`)
+      .post(`${env.FOREST_SERVER_URL}/api/deployment-requests`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
       .send(DeploymentRequestSerializer.serialize(deploymentRequest));
@@ -132,7 +132,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .post(`${env.FOREST_URL}/api/environments/reset`)
+      .post(`${env.FOREST_SERVER_URL}/api/environments/reset`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-secret-key', `${environmentSecret}`)
       .send({ environmentName });
@@ -146,7 +146,7 @@ function EnvironmentManager(config) {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .post(`${env.FOREST_URL}/api/environments/deploy`)
+      .post(`${env.FOREST_SERVER_URL}/api/environments/deploy`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-secret-key', `${config.envSecret}`);
   };

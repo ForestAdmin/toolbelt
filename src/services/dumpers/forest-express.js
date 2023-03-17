@@ -5,6 +5,8 @@ const InvalidForestCLIProjectStructureError = require('../../errors/dumper/inval
 const AbstractDumper = require('./abstract-dumper').default;
 
 class ForestExpress extends AbstractDumper {
+  templateFolder = 'forest-express';
+
   constructor(context) {
     super(context);
 
@@ -65,11 +67,6 @@ class ForestExpress extends AbstractDumper {
   //       Forest Admin internal route (session or stats creation).
   static shouldSkipRouteGenerationForModel(modelName) {
     return ['sessions', 'stats'].includes(modelName.toLowerCase());
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  get templateFolder() {
-    return 'forest-express';
   }
 
   writePackageJson(dbDialect, appName) {
@@ -158,7 +155,7 @@ class ForestExpress extends AbstractDumper {
     const { underscored } = options;
     let modelPath = `models/${this.tableToFilename(table)}.js`;
     if (config.appConfig.useMultiDatabase) {
-      modelPath = `models/${config.modelsExportPath}/${this.tableToFilename(table)}.js`;
+      modelPath = `models/${config.appConfig.modelsExportPath}/${this.tableToFilename(table)}.js`;
     }
 
     const fieldsDefinition = fields.map(field => {
@@ -240,7 +237,7 @@ class ForestExpress extends AbstractDumper {
   writeAppJs(dbDialect) {
     this.copyHandleBarsTemplate('app.hbs', 'app.js', {
       isMongoDB: dbDialect === 'mongodb',
-      forestUrl: this.env.FOREST_URL,
+      forestUrl: this.env.FOREST_SERVER_URL,
     });
   }
 
@@ -266,14 +263,14 @@ class ForestExpress extends AbstractDumper {
     const databaseUrl = `\${${this.isLinuxOs ? 'DATABASE_URL' : 'DOCKER_DATABASE_URL'}}`;
     const forestUrl = this.env.FOREST_URL_IS_DEFAULT
       ? false
-      : `\${FOREST_URL-${this.env.FOREST_URL}}`;
+      : `\${FOREST_URL-${this.env.FOREST_SERVER_URL}}`;
     let forestExtraHost = false;
     if (forestUrl) {
       try {
-        const parsedForestUrl = new URL(this.env.FOREST_URL);
+        const parsedForestUrl = new URL(this.env.FOREST_SERVER_URL);
         forestExtraHost = parsedForestUrl.hostname;
       } catch (error) {
-        throw new Error(`Invalid value for FOREST_URL: "${this.env.FOREST_URL}"`);
+        throw new Error(`Invalid value for FOREST_SERVER_URL: "${this.env.FOREST_SERVER_URL}"`);
       }
     }
     this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
