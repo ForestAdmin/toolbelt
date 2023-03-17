@@ -223,7 +223,7 @@ export default class AgentNodeJs extends AbstractDumper {
     });
   }
 
-  protected async createFiles(dumpConfig: Config, schema?: any) {
+  protected async createFiles(dumpConfig: Config, mongoSchema?: any) {
     this.writePackageJson(dumpConfig.dbConfig.dbDialect, dumpConfig.appConfig.appName);
     this.writeIndex(dumpConfig.dbConfig.dbDialect, dumpConfig.dbConfig.dbSchema);
     this.writeDotEnv(
@@ -238,8 +238,8 @@ export default class AgentNodeJs extends AbstractDumper {
     this.writeDockerfile();
     this.writeDockerCompose(dumpConfig);
 
-    if (schema) {
-      await this.writeMongooseModels(schema);
+    if (dumpConfig.dbConfig.dbDialect === 'mongodb' && mongoSchema) {
+      await this.writeMongooseModels(mongoSchema);
     }
   }
 }
