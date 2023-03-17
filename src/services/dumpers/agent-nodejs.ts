@@ -64,7 +64,7 @@ export default class AgentNodeJs extends AbstractDumper {
 
     if (dbDialect === 'mongodb') {
       dependencies['@forestadmin/datasource-mongoose'] = '^1.0.0';
-      dependencies.mongoose = '^6.8.3';
+      dependencies.mongoose = '^6.10.3';
     } else {
       dependencies['@forestadmin/datasource-sql'] = '^1.0.0';
     }
@@ -196,7 +196,11 @@ export default class AgentNodeJs extends AbstractDumper {
     });
   }
 
-  private writeModels(schema) {
+  private async writeMongooseModels(schema) {
+    await this.mkdirp(`${this.projectPath}/models/primary`);
+
+    this.copyHandleBarsTemplate('models/index.hbs', 'models/primary/index.js');
+
     const collectionNamesSorted = Object.keys(schema).sort();
 
     collectionNamesSorted.forEach(collectionName => {
@@ -217,14 +221,6 @@ export default class AgentNodeJs extends AbstractDumper {
         timestamps: options.timestamps,
       });
     });
-  }
-
-  private async writeMongooseModels(schema) {
-    await this.mkdirp(`${this.projectPath}/models/primary`);
-
-    this.copyHandleBarsTemplate('models/index.hbs', 'models/primary/index.js');
-
-    this.writeModels(schema);
   }
 
   protected async createFiles(dumpConfig: Config, schema?: any) {
