@@ -13,8 +13,8 @@ fs
   .filter((file) => file !== 'index.js')
   .forEach((file) => {
     try {
-      const { schema, model, tableName } = require(path.join(modelsDirectory, file));
-      connection.model(model, schema, tableName);
+      const { schema, modelName, collectionName } = require(path.join(__dirname, file));
+      connection.model(modelName, schema, collectionName);
     } catch (error) {
       console.error(`Model creation error: ${error}`);
     }
