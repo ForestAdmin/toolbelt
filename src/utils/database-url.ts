@@ -24,7 +24,9 @@ export default function buildDatabaseUrl(dbConfig: DbConfig): string | null {
       password = `:${encodeURIComponent(dbConfig.dbPassword)}`;
     }
 
-    connectionString = `${protocol}://${dbConfig.dbUser}${password}@${dbConfig.dbHostname}${port}/${dbConfig.dbName}`;
+    connectionString = `${protocol}://${dbConfig.dbUser || ''}${password}${
+      dbConfig.dbUser || password ? '@' : ''
+    }${dbConfig.dbHostname}${port}/${dbConfig.dbName}`;
   }
 
   return connectionString;

@@ -11,6 +11,22 @@ describe('utils > buildDatabaseUrl', () => {
     });
 
     describe('with a configuration', () => {
+      describe('without a username nor a password', () => {
+        it('should return the database URL without an `@', () => {
+          expect.assertions(1);
+
+          const config = {
+            dbDialect: 'mongodb',
+            dbHostname: 'localhost',
+            dbName: 'forest',
+            dbPort: 4242,
+          };
+          const databaseUrl = buildDatabaseUrl(config);
+
+          expect(databaseUrl).toBe('mongodb://localhost:4242/forest');
+        });
+      });
+
       describe('providing a dbConnectionUrl', () => {
         it('should return it', () => {
           expect.assertions(1);
