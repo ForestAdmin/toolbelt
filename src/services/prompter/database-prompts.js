@@ -57,6 +57,11 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handleDialect(forSql = true, forNosql = true) {
+    if (forNosql && !forSql) {
+      this.knownAnswers.databaseDialect = 'mongodb';
+      return;
+    }
+
     if (!this.knownAnswers.databaseDialect) {
       this.knownAnswers.databaseDialect = this.programArguments.databaseDialect;
     }
