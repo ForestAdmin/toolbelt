@@ -1,8 +1,5 @@
-import type {
-  Config,
-  DbConfig,
-  ProcessedArguments,
-} from '../../../interfaces/project-create-interface';
+import type { CreateCommandArguments } from '../../../interfaces/command-create-project-arguments-interface';
+import type { Config, DbConfig } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type CommandGenerateConfigGetter from '../../../services/projects/create/command-generate-config-getter';
 import type DatabaseAnalyzer from '../../../services/schema/update/analyzer/database-analyzer';
@@ -56,8 +53,8 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
     this.commandGenerateConfigGetter = commandGenerateConfigGetter;
   }
 
-  protected async processArguments(programArguments: { [name: string]: any }): Promise<{
-    config: ProcessedArguments;
+  protected async getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{
+    config: CreateCommandArguments;
     specificDatabaseConfig: { [name: string]: any };
   }> {
     const config = await this.commandGenerateConfigGetter.get(programArguments, false, true);
