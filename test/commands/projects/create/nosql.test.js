@@ -101,7 +101,19 @@ describe('projects:create:nosql', () => {
           api: [() => loginValidOidc()],
           prompts: [
             {
-              in: makePromptInputList(),
+              in: makePromptInputList({
+                only: [
+                  'databaseName',
+                  'databaseSchema',
+                  'databaseHost',
+                  'databasePort',
+                  'databaseUser',
+                  'databasePassword',
+                  'mongoDBSRV',
+                  'applicationHost',
+                  'applicationPort',
+                ],
+              }),
               out: {
                 databaseDialect: 'mongodb',
                 databaseName: 'unknown_db',
@@ -134,7 +146,19 @@ describe('projects:create:nosql', () => {
           token: 'any',
           prompts: [
             {
-              in: makePromptInputList(),
+              in: makePromptInputList({
+                only: [
+                  'databaseName',
+                  'databaseSchema',
+                  'databaseHost',
+                  'databasePort',
+                  'databaseUser',
+                  'databasePassword',
+                  'mongoDBSRV',
+                  'applicationHost',
+                  'applicationPort',
+                ],
+              }),
               out: {
                 confirm: true,
                 databaseDialect: 'mongodb',
@@ -183,62 +207,19 @@ describe('projects:create:nosql', () => {
             ],
             prompts: [
               {
-                in: makePromptInputList(),
-                out: {
-                  confirm: true,
-                  databaseDialect: 'mongodb',
-                  databaseName: 'unknown_db',
-                  databaseHost: 'unknown_host',
-                  databasePort: 424242,
-                  databaseUser: 'no_such_user',
-                  databasePassword: 'wrong_password',
-                  databaseSSL: false,
-                },
-              },
-            ],
-            std: [
-              { spinner: '√ Creating your project on Forest Admin' },
-              { spinner: '× Testing connection to your database' },
-            ],
-            // This only validates login, options are missing thus the error.
-            exitCode: 1,
-          }));
-      });
-    });
-
-    describe('when "databaseDialect"', () => {
-      describe('is missing', () => {
-        it('should fail', () =>
-          testCli({
-            commandClass: NosqlCommand,
-            commandArgs: ['name'],
-            env: testEnvWithSecret,
-            token: 'any',
-            prompts: [
-              {
-                in: makePromptInputList(),
-                out: {},
-              },
-            ],
-            std: [{ err: '× Missing database dialect option value' }],
-            exitCode: 1,
-          }));
-      });
-
-      describe('is provided', () => {
-        it('should execute command', () =>
-          testCli({
-            commandClass: NosqlCommand,
-            commandArgs: ['name'],
-            env: testEnvWithSecret,
-            token: 'any',
-            api: [
-              () => createProject({ databaseType: 'mongodb', agent: Agents.NodeJS }),
-              () => updateNewEnvironmentEndpoint(),
-            ],
-            prompts: [
-              {
-                in: makePromptInputList(),
+                in: makePromptInputList({
+                  only: [
+                    'databaseName',
+                    'databaseSchema',
+                    'databaseHost',
+                    'databasePort',
+                    'databaseUser',
+                    'databasePassword',
+                    'mongoDBSRV',
+                    'applicationHost',
+                    'applicationPort',
+                  ],
+                }),
                 out: {
                   confirm: true,
                   databaseDialect: 'mongodb',
@@ -275,7 +256,19 @@ describe('projects:create:nosql', () => {
             ],
             prompts: [
               {
-                in: makePromptInputList(),
+                in: makePromptInputList({
+                  only: [
+                    'databaseName',
+                    'databaseSchema',
+                    'databaseHost',
+                    'databasePort',
+                    'databaseUser',
+                    'databasePassword',
+                    'mongoDBSRV',
+                    'applicationHost',
+                    'applicationPort',
+                  ],
+                }),
                 out: {
                   confirm: true,
                   databaseDialect: 'mongodb',
@@ -369,7 +362,19 @@ describe('projects:create:nosql', () => {
           ],
           prompts: [
             {
-              in: makePromptInputList(),
+              in: makePromptInputList({
+                only: [
+                  'databaseName',
+                  'databaseSchema',
+                  'databaseHost',
+                  'databasePort',
+                  'databaseUser',
+                  'databasePassword',
+                  'mongoDBSRV',
+                  'applicationHost',
+                  'applicationPort',
+                ],
+              }),
               out: {
                 databaseDialect: 'mongodb',
                 databaseName: 'forest-test',
