@@ -189,11 +189,24 @@ describe('services > prompter > database prompts', () => {
   describe('handling dialect', () => {
     describe('when the dbDialect option is requested', () => {
       describe('not using windows', () => {
-        function initTestWithDatabaseDialect() {
+        function initTestWithDatabaseDialect(noSql) {
           requests.push('dbDialect');
           const databasePrompts = new DatabasePrompts(requests, env, prompts, program);
-          databasePrompts.handleDialect();
+          if (noSql) {
+            databasePrompts.handleDialect(false, noSql);
+          } else {
+            databasePrompts.handleDialect();
+          }
         }
+
+        describe('when noSql option is passed', () => {
+          it('should not request dialect and use `mongodb` directly', () => {
+            expect.assertions(1);
+            initTestWithDatabaseDialect(true);
+            expect(prompts).toHaveLength(0);
+            resetParams();
+          });
+        });
 
         it('should add a prompt to ask for the database dialect', () => {
           expect.assertions(1);
