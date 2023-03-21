@@ -4,15 +4,6 @@ const { createSqlDataSource } = require('@forestadmin/datasource-sql');
 
 const dialectOptions = {};
 
-dialectOptions.typeCast = (field, useDefaultTypeCasting) => {
-  if (field.type === 'BIT' && field.length === 1) {
-    const bytes = field.buffer();
-    return bytes ? bytes[0] === 1 : bytes;
-  }
-
-  return useDefaultTypeCasting();
-};
-
 if (process.env.DATABASE_SSL && JSON.parse(process.env.DATABASE_SSL.toLowerCase())) {
   // Set to false to bypass SSL certificate verification (useful for self-signed certificates).
   const rejectUnauthorized =
