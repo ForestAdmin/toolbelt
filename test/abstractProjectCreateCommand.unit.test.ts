@@ -1,5 +1,5 @@
 /* eslint-disable max-classes-per-file */
-import type { createCommandArguments } from '../src/interfaces/command-create-project-arguments-interface';
+import type { CreateCommandArguments } from '../src/interfaces/command-create-project-arguments-interface';
 import type CommandGenerateConfigGetter from '../src/services/projects/create/command-generate-config-getter';
 import type * as ConfigType from '@oclif/config';
 
@@ -121,7 +121,7 @@ describe('abstractProjectCreateCommand command', () => {
       }
 
       protected async getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{
-        config: createCommandArguments;
+        config: CreateCommandArguments;
         specificDatabaseConfig: { [name: string]: any };
       }> {
         const config = await this.commandGenerateConfigGetter.get(programArguments, true, true);

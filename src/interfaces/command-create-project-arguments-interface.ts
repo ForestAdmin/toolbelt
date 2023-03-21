@@ -1,11 +1,11 @@
-interface createCommandDbArgumentsBase {
+interface CreateCommandDbArgumentsBase {
   databaseDialect: string;
   databaseSSL: boolean;
   databaseSchema?: string;
   mongoDBSRV?: boolean;
 }
 
-interface createCommandDbArgumentsWithConnectionUrl extends createCommandDbArgumentsBase {
+interface CreateCommandDbArgumentsWithConnectionUrl extends CreateCommandDbArgumentsBase {
   databaseConnectionURL: string;
   databaseName?: never;
   databaseHost?: never;
@@ -14,7 +14,7 @@ interface createCommandDbArgumentsWithConnectionUrl extends createCommandDbArgum
   databasePassword?: never;
 }
 
-interface createCommandDbArgumentsWithConnectionParams extends createCommandDbArgumentsBase {
+interface CreateCommandDbArgumentsWithConnectionParams extends CreateCommandDbArgumentsBase {
   databaseConnectionURL?: never;
   databaseName: string;
   databaseHost: string;
@@ -23,11 +23,11 @@ interface createCommandDbArgumentsWithConnectionParams extends createCommandDbAr
   databasePassword: string;
 }
 
-type createCommandDbArguments =
-  | createCommandDbArgumentsWithConnectionUrl
-  | createCommandDbArgumentsWithConnectionParams;
+type CreateCommandDbArguments =
+  | CreateCommandDbArgumentsWithConnectionUrl
+  | CreateCommandDbArgumentsWithConnectionParams;
 
-export type createCommandArguments = createCommandDbArguments & {
+export type CreateCommandArguments = CreateCommandDbArguments & {
   applicationName: string;
   applicationHost: string;
   applicationPort: number;

@@ -1,4 +1,4 @@
-import type { createCommandArguments } from './interfaces/command-create-project-arguments-interface';
+import type { CreateCommandArguments } from './interfaces/command-create-project-arguments-interface';
 import type { AppConfig, Config, DbConfig } from './interfaces/project-create-interface';
 import type { ProjectMeta } from './services/projects/create/project-creator';
 import type ProjectCreator from './services/projects/create/project-creator';
@@ -169,7 +169,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   }
 
   protected abstract getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{
-    config: createCommandArguments;
+    config: CreateCommandArguments;
     specificDatabaseConfig: { [name: string]: any };
   }>;
 
