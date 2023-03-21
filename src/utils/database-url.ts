@@ -12,7 +12,6 @@ export default function buildDatabaseUrl(dbConfig: DbConfig): string | null {
   } else {
     let protocol = dbConfig.dbDialect;
     let port = `:${dbConfig.dbPort}`;
-
     let password = '';
 
     if (dbConfig.dbDialect === 'mongodb' && dbConfig.mongodbSrv) {
