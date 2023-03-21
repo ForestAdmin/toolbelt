@@ -4,6 +4,32 @@ import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
 
 describe('services > dumpers > AgentNodeJs', () => {
   const createDumper = (dependencies = {}) => {
+    const schemaSample = {
+      collectionA: {
+        fields: [
+          {
+            field: 'aField',
+            ref: 'a-collection',
+          },
+        ],
+        options: {
+          timestamps: true,
+        },
+      },
+      collectionB: {
+        fields: [],
+        options: {
+          timestamps: false,
+        },
+      },
+      'collection-c': {
+        fields: [],
+        options: {
+          timestamps: true,
+        },
+      },
+    };
+
     const context = {
       assertPresent: jest.fn(),
       env: {
@@ -25,6 +51,10 @@ describe('services > dumpers > AgentNodeJs', () => {
       },
       lodash: {
         snakeCase: jest.fn().mockImplementation(name => name),
+        kebabCase: jest.fn().mockImplementation(name => name),
+      },
+      strings: {
+        transformToCamelCaseSafeString: jest.fn().mockImplementation(name => name),
       },
       mkdirp: jest.fn(),
       buildDatabaseUrl: jest.fn(() => 'localhost'),
@@ -65,6 +95,7 @@ describe('services > dumpers > AgentNodeJs', () => {
       dumper: new AgentNodeJs(context),
       context,
       defaultConfig,
+      schemaSample,
     };
   };
 
@@ -369,7 +400,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
     describe('when handling datasource', () => {
       describe('when dbDialect is mongodb', () => {
-        it('should use mongoose data source', async () => {
+        it('should use mongoose data source with flattener auto', async () => {
           expect.assertions(1);
 
           const { dumper, context, defaultConfig } = createDumper();
@@ -384,9 +415,8 @@ describe('services > dumpers > AgentNodeJs', () => {
               isMongoose: true,
               isMySQL: false,
               isMSSQL: false,
-              datasourceCreation: 'createMongooseDataSource(connection, {})',
-              datasourceImport:
-                "const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst connection = require('./mongoose-models');",
+              datasourceImport: `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst primaryConnection = require('./models/primary');`,
+              datasourceCreation: `createMongooseDataSource(primaryConnection, { flattenMode: 'auto' })`,
             }),
           );
         });
@@ -490,6 +520,21 @@ describe('services > dumpers > AgentNodeJs', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             '/test/anApplication/package.json',
             expect.stringContaining('"@forestadmin/datasource-mongoose": "^1.0.0"'),
+          );
+        });
+
+        it('should add mongoose dependency', async () => {
+          expect.assertions(1);
+
+          const { dumper, context, defaultConfig } = createDumper();
+
+          defaultConfig.dbConfig.dbDialect = 'mongodb';
+
+          await dumper.dump(defaultConfig);
+
+          expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+            '/test/anApplication/package.json',
+            expect.stringContaining('"mongoose": "^6.10.3"'),
           );
         });
       });
@@ -605,6 +650,223 @@ describe('services > dumpers > AgentNodeJs', () => {
         await expect(dumper.dump(defaultConfig)).rejects.toThrow(
           'Invalid value for FOREST_SERVER_URL: "invalidUrl"',
         );
+      });
+    });
+  });
+
+  describe('when handling mongoSchema', () => {
+    describe('when schema is empty', () => {
+      it('should not write models nor index', async () => {
+        expect.assertions(1);
+
+        const { defaultConfig, dumper, context } = createDumper();
+
+        defaultConfig.dbConfig.dbDialect = 'mongodb';
+
+        await dumper.dump(defaultConfig);
+
+        expect(context.mkdirp).not.toHaveBeenCalledWith('/test/anApplication/models/primary');
+      });
+    });
+
+    describe('when schema is not empty', () => {
+      describe('when dbDialect is mongodb', () => {
+        it('should create models/ and models/primary directories', async () => {
+          expect.assertions(1);
+
+          const { defaultConfig, dumper, context } = createDumper();
+
+          defaultConfig.dbConfig.dbDialect = 'mongodb';
+
+          await dumper.dump(defaultConfig, {});
+
+          expect(context.mkdirp).toHaveBeenCalledWith('/test/anApplication/models/primary');
+        });
+
+        describe('when schema does not have any models', () => {
+          it('should write only the index file', async () => {
+            expect.assertions(2);
+
+            const { defaultConfig, dumper, context } = createDumper();
+
+            defaultConfig.dbConfig.dbDialect = 'mongodb';
+
+            await dumper.dump(defaultConfig, {});
+
+            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+              '/test/anApplication/models/primary/index.js',
+              'mockedContent',
+            );
+
+            expect(context.fs.writeFileSync).toHaveBeenCalledTimes(9);
+          });
+        });
+
+        describe('when schema does have models', () => {
+          it('should write as many files as models', async () => {
+            expect.assertions(3);
+
+            const { defaultConfig, dumper, context, schemaSample } = createDumper();
+
+            defaultConfig.dbConfig.dbDialect = 'mongodb';
+
+            await dumper.dump(defaultConfig, schemaSample);
+
+            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+              '/test/anApplication/models/primary/collectionA.js',
+              expect.objectContaining({
+                collectionName: 'collectionA',
+              }),
+            );
+
+            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+              '/test/anApplication/models/primary/collectionB.js',
+              expect.objectContaining({
+                collectionName: 'collectionB',
+              }),
+            );
+
+            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+              '/test/anApplication/models/primary/collection-c.js',
+              expect.objectContaining({
+                collectionName: 'collection-c',
+              }),
+            );
+          });
+
+          it('should compute a safe camel cased model name', async () => {
+            expect.assertions(2);
+
+            const { defaultConfig, dumper, context, schemaSample } = createDumper();
+
+            defaultConfig.dbConfig.dbDialect = 'mongodb';
+
+            context.strings.transformToCamelCaseSafeString.mockImplementation(
+              name => `${name}camelCased`,
+            );
+
+            await dumper.dump(defaultConfig, schemaSample);
+
+            expect(context.strings.transformToCamelCaseSafeString).toHaveBeenCalledWith(
+              'collection-c',
+            );
+            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+              '/test/anApplication/models/primary/collection-c.js',
+              expect.objectContaining({
+                modelName: 'collection-ccamelCased',
+              }),
+            );
+          });
+
+          it('should pass adequate configuration', async () => {
+            expect.assertions(3);
+
+            const { defaultConfig, dumper, context, schemaSample } = createDumper();
+
+            defaultConfig.dbConfig.dbDialect = 'mongodb';
+
+            await dumper.dump(defaultConfig, schemaSample);
+
+            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+              '/test/anApplication/models/primary/collection-c.js',
+              {
+                modelName: 'collection-c',
+                collectionName: 'collection-c',
+                fields: [],
+                timestamps: true,
+              },
+            );
+            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+              '/test/anApplication/models/primary/collectionA.js',
+              {
+                modelName: 'collectionA',
+                collectionName: 'collectionA',
+                fields: [
+                  {
+                    field: 'aField',
+                    ref: 'a-collection',
+                  },
+                ],
+                timestamps: true,
+              },
+            );
+            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+              '/test/anApplication/models/primary/collectionB.js',
+              {
+                modelName: 'collectionB',
+                collectionName: 'collectionB',
+                fields: [],
+                timestamps: false,
+              },
+            );
+          });
+
+          it('should should compute safe camel cased references', async () => {
+            expect.assertions(2);
+
+            const { defaultConfig, dumper, context, schemaSample } = createDumper();
+
+            defaultConfig.dbConfig.dbDialect = 'mongodb';
+
+            context.strings.transformToCamelCaseSafeString.mockImplementation(
+              name => `${name}camelCased`,
+            );
+
+            await dumper.dump(defaultConfig, schemaSample);
+
+            expect(context.strings.transformToCamelCaseSafeString).toHaveBeenCalledWith(
+              'a-collection',
+            );
+            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+              '/test/anApplication/models/primary/collectionA.js',
+              {
+                modelName: 'collectionAcamelCased',
+                collectionName: 'collectionA',
+                fields: [
+                  {
+                    field: 'aField',
+                    ref: 'a-collectioncamelCased',
+                  },
+                ],
+                timestamps: true,
+              },
+            );
+          });
+
+          it('should compute kebab cased file name', async () => {
+            expect.assertions(2);
+
+            const { defaultConfig, dumper, context, schemaSample } = createDumper();
+
+            defaultConfig.dbConfig.dbDialect = 'mongodb';
+
+            context.lodash.kebabCase.mockImplementation(name => `${name}kebab_cased`);
+
+            await dumper.dump(defaultConfig, schemaSample);
+
+            expect(context.lodash.kebabCase).toHaveBeenCalledWith('collectionA');
+            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+              '/test/anApplication/models/primary/collectionAkebab_cased.js',
+              expect.objectContaining({
+                collectionName: 'collectionA',
+              }),
+            );
+          });
+        });
+      });
+
+      describe('when dbDialect is not mongodb', () => {
+        it('should not write models nor index', async () => {
+          expect.assertions(1);
+
+          const { defaultConfig, dumper, context } = createDumper();
+
+          defaultConfig.dbConfig.dbDialect = 'postgres';
+
+          await dumper.dump(defaultConfig);
+
+          expect(context.mkdirp).not.toHaveBeenCalledWith('/test/anApplication/models/primary');
+        });
       });
     });
   });
