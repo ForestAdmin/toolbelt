@@ -12,6 +12,7 @@ export default function buildDatabaseUrl(dbConfig: DbConfig): string | null {
   } else {
     let protocol = dbConfig.dbDialect;
     let port = `:${dbConfig.dbPort}`;
+
     let password = '';
 
     if (dbConfig.dbDialect === 'mongodb' && dbConfig.mongodbSrv) {
@@ -24,7 +25,9 @@ export default function buildDatabaseUrl(dbConfig: DbConfig): string | null {
       password = `:${encodeURIComponent(dbConfig.dbPassword)}`;
     }
 
-    connectionString = `${protocol}://${dbConfig.dbUser}${password}@${dbConfig.dbHostname}${port}/${dbConfig.dbName}`;
+    connectionString = `${protocol}://${dbConfig.dbUser || ''}${password}${
+      dbConfig.dbUser || password ? '@' : ''
+    }${dbConfig.dbHostname}${port}/${dbConfig.dbName}`;
   }
 
   return connectionString;
