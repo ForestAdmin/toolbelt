@@ -213,7 +213,11 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handleMongodbSrv() {
-    if (this.isOptionRequested('mongodbSrv') && this.programArguments.mongoDBSRV === undefined) {
+    if (
+      this.isOptionRequested('mongodbSrv') &&
+      this.programArguments.mongoDBSRV === undefined &&
+      !this.knownAnswers.databaseConnectionURL
+    ) {
       this.prompts.push({
         type: 'confirm',
         name: 'mongoDBSRV',
