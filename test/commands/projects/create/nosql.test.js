@@ -178,7 +178,6 @@ describe('projects:create:nosql', () => {
                 in: makePromptInputList(),
                 out: {
                   confirm: true,
-
                   databaseName: 'unknown_db',
                   databaseHost: 'unknown_host',
                   databasePort: 424242,
@@ -215,7 +214,6 @@ describe('projects:create:nosql', () => {
                 in: makePromptInputList(),
                 out: {
                   confirm: true,
-
                   databaseName: 'unknown_db',
                   databaseHost: 'unknown_host',
                   databasePort: 424242,
@@ -262,7 +260,6 @@ describe('projects:create:nosql', () => {
                 }),
                 out: {
                   confirm: true,
-
                   databaseName: 'unknown_db',
                   databaseHost: 'unknown_host',
                   databasePort: 424242,
