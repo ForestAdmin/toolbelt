@@ -454,7 +454,7 @@ describe('services > prompter > database prompts', () => {
       }
 
       describe('when the dbDialect is already known', () => {
-        it('should consider the know value to compute default port', () => {
+        it('should consider the known value to compute default port', () => {
           expect.assertions(1);
 
           const knownAnswers = {
@@ -525,37 +525,53 @@ describe('services > prompter > database prompts', () => {
 
   describe('handling User', () => {
     describe('when the dbUser option is requested', () => {
-      function initTestWithDatabaseUser() {
+      function initTestWithDatabaseUser(knownAnswers = {}) {
         requests.push('dbUser');
-        const databasePrompts = new DatabasePrompts(requests, env, prompts, program);
+        const databasePrompts = new DatabasePrompts(requests, knownAnswers, prompts, program);
         databasePrompts.handleUser();
       }
 
-      it('should add a prompt to ask for the database user', () => {
-        expect.assertions(1);
-        initTestWithDatabaseUser();
-        expect(prompts).toHaveLength(1);
-        resetParams();
+      describe('when the dbDialect is already known', () => {
+        it('should consider the known value to compute default user', () => {
+          expect.assertions(1);
+
+          const knownAnswers = {
+            databaseDialect: 'mongodb',
+          };
+
+          initTestWithDatabaseUser(knownAnswers);
+          expect(prompts[0].default({ databaseDialect: 'mongodb' })).toBeUndefined();
+          resetParams();
+        });
       });
 
-      it('should add a database user prompt with the correct configuration', () => {
-        expect.assertions(4);
-        initTestWithDatabaseUser();
-        expect(prompts[0].type).toBe('input');
-        expect(prompts[0].name).toBe('databaseUser');
-        expect(prompts[0].message).toBe("What's the database user?");
-        expect(prompts[0].default).toBeInstanceOf(Function);
-        resetParams();
-      });
+      describe('when the dbDialect is not known', () => {
+        it('should add a prompt to ask for the database user', () => {
+          expect.assertions(1);
+          initTestWithDatabaseUser();
+          expect(prompts).toHaveLength(1);
+          resetParams();
+        });
 
-      it('should set the correct default database user values', () => {
-        expect.assertions(4);
-        initTestWithDatabaseUser();
-        expect(prompts[0].default({ databaseDialect: 'mongodb' })).toBeUndefined();
-        expect(prompts[0].default({ databaseDialect: 'mysql' })).toBe('root');
-        expect(prompts[0].default({ databaseDialect: 'mssql' })).toBe('root');
-        expect(prompts[0].default({ databaseDialect: 'postgres' })).toBe('root');
-        resetParams();
+        it('should add a database user prompt with the correct configuration', () => {
+          expect.assertions(4);
+          initTestWithDatabaseUser();
+          expect(prompts[0].type).toBe('input');
+          expect(prompts[0].name).toBe('databaseUser');
+          expect(prompts[0].message).toBe("What's the database user?");
+          expect(prompts[0].default).toBeInstanceOf(Function);
+          resetParams();
+        });
+
+        it('should set the correct default database user values', () => {
+          expect.assertions(4);
+          initTestWithDatabaseUser();
+          expect(prompts[0].default({ databaseDialect: 'mongodb' })).toBeUndefined();
+          expect(prompts[0].default({ databaseDialect: 'mysql' })).toBe('root');
+          expect(prompts[0].default({ databaseDialect: 'mssql' })).toBe('root');
+          expect(prompts[0].default({ databaseDialect: 'postgres' })).toBe('root');
+          resetParams();
+        });
       });
     });
 
@@ -676,38 +692,68 @@ describe('services > prompter > database prompts', () => {
 
   describe('handling Mongodb Srv', () => {
     describe('when the mongodbSrv option is requested', () => {
-      function initTestWithMongoSrv() {
+      function initTestWithMongoSrv(knownAnswers = {}) {
         requests.push('mongodbSrv');
-        const databasePrompts = new DatabasePrompts(requests, env, prompts, program);
+        const databasePrompts = new DatabasePrompts(requests, knownAnswers, prompts, program);
         databasePrompts.handleMongodbSrv();
       }
 
-      it('should add a prompt to ask for the MongodbSrv configuration', () => {
-        expect.assertions(1);
-        initTestWithMongoSrv();
-        expect(prompts).toHaveLength(1);
-        resetParams();
+      describe('when the dbDialect is already known', () => {
+        describe('when dbDialect is mongodb', () => {
+          it('should consider the known value and prompt', () => {
+            expect.assertions(1);
+
+            initTestWithMongoSrv({
+              databaseDialect: 'mongodb',
+            });
+            expect(prompts[0].when({})).toBe(true);
+
+            resetParams();
+          });
+        });
+
+        describe('when dbDialect is not mongodb', () => {
+          it('should consider the known value and not prompt', () => {
+            expect.assertions(1);
+
+            initTestWithMongoSrv({
+              databaseDialect: 'postgres',
+            });
+            expect(prompts[0].when({})).toBe(false);
+
+            resetParams();
+          });
+        });
       });
 
-      it('should add a MongodbSrv prompt with the correct configuration', () => {
-        expect.assertions(5);
-        initTestWithMongoSrv();
-        expect(prompts[0].type).toBe('confirm');
-        expect(prompts[0].name).toBe('mongoDBSRV');
-        expect(prompts[0].message).toBe('Use a SRV connection string?');
-        expect(prompts[0].default).toBe(false);
-        expect(prompts[0].when).toBeInstanceOf(Function);
-        resetParams();
-      });
+      describe('when the databaseDialect is not known', () => {
+        it('should add a prompt to ask for the MongodbSrv configuration', () => {
+          expect.assertions(1);
+          initTestWithMongoSrv();
+          expect(prompts).toHaveLength(1);
+          resetParams();
+        });
 
-      it('should only be prompted if using mongodb', () => {
-        expect.assertions(4);
-        initTestWithMongoSrv();
-        expect(prompts[0].when({ databaseDialect: 'mongodb' })).toBe(true);
-        expect(prompts[0].when({ databaseDialect: 'mssql' })).toBe(false);
-        expect(prompts[0].when({ databaseDialect: 'mysql' })).toBe(false);
-        expect(prompts[0].when({ databaseDialect: 'postgres' })).toBe(false);
-        resetParams();
+        it('should add a MongodbSrv prompt with the correct configuration', () => {
+          expect.assertions(5);
+          initTestWithMongoSrv();
+          expect(prompts[0].type).toBe('confirm');
+          expect(prompts[0].name).toBe('mongoDBSRV');
+          expect(prompts[0].message).toBe('Use a SRV connection string?');
+          expect(prompts[0].default).toBe(false);
+          expect(prompts[0].when).toBeInstanceOf(Function);
+          resetParams();
+        });
+
+        it('should only be prompted if using mongodb', () => {
+          expect.assertions(4);
+          initTestWithMongoSrv();
+          expect(prompts[0].when({ databaseDialect: 'mongodb' })).toBe(true);
+          expect(prompts[0].when({ databaseDialect: 'mssql' })).toBe(false);
+          expect(prompts[0].when({ databaseDialect: 'mysql' })).toBe(false);
+          expect(prompts[0].when({ databaseDialect: 'postgres' })).toBe(false);
+          resetParams();
+        });
       });
     });
 

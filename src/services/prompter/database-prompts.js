@@ -178,7 +178,7 @@ class DatabasePrompts extends AbstractPrompter {
         name: 'databaseUser',
         message: "What's the database user?",
         default: args => {
-          if (args.databaseDialect === 'mongodb') {
+          if ([args.databaseDialect, this.knownAnswers.databaseDialect].includes('mongodb')) {
             return undefined;
           }
           return 'root';
@@ -218,7 +218,8 @@ class DatabasePrompts extends AbstractPrompter {
         type: 'confirm',
         name: 'mongoDBSRV',
         message: 'Use a SRV connection string?',
-        when: answers => answers.databaseDialect === 'mongodb',
+        when: answers =>
+          [answers.databaseDialect, this.knownAnswers.databaseDialect].includes('mongodb'),
         default: false,
       });
     }
