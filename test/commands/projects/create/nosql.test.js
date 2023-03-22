@@ -14,12 +14,12 @@ const { default: Agents } = require('../../../../src/utils/agents');
 
 const makePromptInputList = ({ except = null, only = null } = {}) => {
   const allPromptInputs = [
-    {
-      name: 'databaseDialect',
-      message: "What's the database type?",
-      type: 'list',
-      choices: [{ name: 'mongodb', value: 'mongodb' }],
-    },
+    // {
+    //   name: 'databaseDialect',
+    //   message: "What's the database type?",
+    //   type: 'list',
+    //   choices: [{ name: 'mongodb', value: 'mongodb' }],
+    // },
     {
       name: 'databaseName',
       type: 'input',
@@ -101,19 +101,7 @@ describe('projects:create:nosql', () => {
           api: [() => loginValidOidc()],
           prompts: [
             {
-              in: makePromptInputList({
-                only: [
-                  'databaseName',
-                  'databaseSchema',
-                  'databaseHost',
-                  'databasePort',
-                  'databaseUser',
-                  'databasePassword',
-                  'mongoDBSRV',
-                  'applicationHost',
-                  'applicationPort',
-                ],
-              }),
+              in: makePromptInputList(),
               out: {
                 databaseDialect: 'mongodb',
                 databaseName: 'unknown_db',
@@ -146,19 +134,7 @@ describe('projects:create:nosql', () => {
           token: 'any',
           prompts: [
             {
-              in: makePromptInputList({
-                only: [
-                  'databaseName',
-                  'databaseSchema',
-                  'databaseHost',
-                  'databasePort',
-                  'databaseUser',
-                  'databasePassword',
-                  'mongoDBSRV',
-                  'applicationHost',
-                  'applicationPort',
-                ],
-              }),
+              in: makePromptInputList(),
               out: {
                 confirm: true,
                 databaseDialect: 'mongodb',
@@ -207,19 +183,7 @@ describe('projects:create:nosql', () => {
             ],
             prompts: [
               {
-                in: makePromptInputList({
-                  only: [
-                    'databaseName',
-                    'databaseSchema',
-                    'databaseHost',
-                    'databasePort',
-                    'databaseUser',
-                    'databasePassword',
-                    'mongoDBSRV',
-                    'applicationHost',
-                    'applicationPort',
-                  ],
-                }),
+                in: makePromptInputList(),
                 out: {
                   confirm: true,
                   databaseDialect: 'mongodb',
@@ -256,19 +220,7 @@ describe('projects:create:nosql', () => {
             ],
             prompts: [
               {
-                in: makePromptInputList({
-                  only: [
-                    'databaseName',
-                    'databaseSchema',
-                    'databaseHost',
-                    'databasePort',
-                    'databaseUser',
-                    'databasePassword',
-                    'mongoDBSRV',
-                    'applicationHost',
-                    'applicationPort',
-                  ],
-                }),
+                in: makePromptInputList(),
                 out: {
                   confirm: true,
                   databaseDialect: 'mongodb',
@@ -362,19 +314,7 @@ describe('projects:create:nosql', () => {
           ],
           prompts: [
             {
-              in: makePromptInputList({
-                only: [
-                  'databaseName',
-                  'databaseSchema',
-                  'databaseHost',
-                  'databasePort',
-                  'databaseUser',
-                  'databasePassword',
-                  'mongoDBSRV',
-                  'applicationHost',
-                  'applicationPort',
-                ],
-              }),
+              in: makePromptInputList(),
               out: {
                 databaseDialect: 'mongodb',
                 databaseName: 'forest-test',
