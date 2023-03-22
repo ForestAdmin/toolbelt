@@ -154,7 +154,8 @@ class DatabasePrompts extends AbstractPrompter {
         type: 'input',
         name: 'databasePort',
         message: "What's the database port?",
-        default: args => MAPPING_DIALECT_TO_PORT[args.databaseDialect],
+        default: args =>
+          MAPPING_DIALECT_TO_PORT[args.databaseDialect || this.knownAnswers.databaseDialect],
         validate: port => {
           if (!/^\d+$/.test(port)) {
             return 'The port must be a number.';
@@ -177,7 +178,7 @@ class DatabasePrompts extends AbstractPrompter {
         name: 'databaseUser',
         message: "What's the database user?",
         default: args => {
-          if (args.databaseDialect === 'mongodb') {
+          if ([args.databaseDialect, this.knownAnswers.databaseDialect].includes('mongodb')) {
             return undefined;
           }
           return 'root';
@@ -217,7 +218,8 @@ class DatabasePrompts extends AbstractPrompter {
         type: 'confirm',
         name: 'mongoDBSRV',
         message: 'Use a SRV connection string?',
-        when: answers => answers.databaseDialect === 'mongodb',
+        when: answers =>
+          [answers.databaseDialect, this.knownAnswers.databaseDialect].includes('mongodb'),
         default: false,
       });
     }
