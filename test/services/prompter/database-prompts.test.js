@@ -447,47 +447,63 @@ describe('services > prompter > database prompts', () => {
 
   describe('handling port', () => {
     describe('when the dbPort option is requested', () => {
-      function initTestWithDatabasePort() {
+      function initTestWithDatabasePort(knownAnswers = {}) {
         requests.push('dbPort');
-        const databasePrompts = new DatabasePrompts(requests, env, prompts, program);
+        const databasePrompts = new DatabasePrompts(requests, knownAnswers, prompts, program);
         databasePrompts.handlePort();
       }
 
-      it('should add a prompt to ask for the database port', () => {
-        expect.assertions(1);
-        initTestWithDatabasePort();
-        expect(prompts).toHaveLength(1);
-        resetParams();
+      describe('when the dbDialect is already known', () => {
+        it('should consider the know value to compute default port', () => {
+          expect.assertions(1);
+
+          const knownAnswers = {
+            databaseDialect: 'mongodb',
+          };
+
+          initTestWithDatabasePort(knownAnswers);
+          expect(prompts[0].default({ databaseDialect: 'mongodb' })).toBe('27017');
+          resetParams();
+        });
       });
 
-      it('should add a database port prompt with the correct configuration', () => {
-        expect.assertions(5);
-        initTestWithDatabasePort();
-        expect(prompts[0].type).toBe('input');
-        expect(prompts[0].name).toBe('databasePort');
-        expect(prompts[0].message).toBe("What's the database port?");
-        expect(prompts[0].default).toBeInstanceOf(Function);
-        expect(prompts[0].validate).toBeInstanceOf(Function);
-        resetParams();
-      });
+      describe('when the dbDialect is not known', () => {
+        it('should add a prompt to ask for the database port', () => {
+          expect.assertions(1);
+          initTestWithDatabasePort();
+          expect(prompts).toHaveLength(1);
+          resetParams();
+        });
 
-      it('should set the correct default port values', () => {
-        expect.assertions(4);
-        initTestWithDatabasePort();
-        expect(prompts[0].default({ databaseDialect: 'postgres' })).toBe('5432');
-        expect(prompts[0].default({ databaseDialect: 'mysql' })).toBe('3306');
-        expect(prompts[0].default({ databaseDialect: 'mssql' })).toBe('1433');
-        expect(prompts[0].default({ databaseDialect: 'mongodb' })).toBe('27017');
-        resetParams();
-      });
+        it('should add a database port prompt with the correct configuration', () => {
+          expect.assertions(5);
+          initTestWithDatabasePort();
+          expect(prompts[0].type).toBe('input');
+          expect(prompts[0].name).toBe('databasePort');
+          expect(prompts[0].message).toBe("What's the database port?");
+          expect(prompts[0].default).toBeInstanceOf(Function);
+          expect(prompts[0].validate).toBeInstanceOf(Function);
+          resetParams();
+        });
 
-      it('should validate the value filed', () => {
-        expect.assertions(3);
-        initTestWithDatabasePort();
-        expect(prompts[0].validate('not a number')).toBe('The port must be a number.');
-        expect(prompts[0].validate(70000)).toBe('This is not a valid port.');
-        expect(prompts[0].validate(60000)).toBe(true);
-        resetParams();
+        it('should set the correct default port values', () => {
+          expect.assertions(4);
+          initTestWithDatabasePort();
+          expect(prompts[0].default({ databaseDialect: 'postgres' })).toBe('5432');
+          expect(prompts[0].default({ databaseDialect: 'mysql' })).toBe('3306');
+          expect(prompts[0].default({ databaseDialect: 'mssql' })).toBe('1433');
+          expect(prompts[0].default({ databaseDialect: 'mongodb' })).toBe('27017');
+          resetParams();
+        });
+
+        it('should validate the value filed', () => {
+          expect.assertions(3);
+          initTestWithDatabasePort();
+          expect(prompts[0].validate('not a number')).toBe('The port must be a number.');
+          expect(prompts[0].validate(70000)).toBe('This is not a valid port.');
+          expect(prompts[0].validate(60000)).toBe(true);
+          resetParams();
+        });
       });
     });
 

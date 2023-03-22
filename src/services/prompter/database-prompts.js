@@ -154,7 +154,8 @@ class DatabasePrompts extends AbstractPrompter {
         type: 'input',
         name: 'databasePort',
         message: "What's the database port?",
-        default: args => MAPPING_DIALECT_TO_PORT[args.databaseDialect],
+        default: args =>
+          MAPPING_DIALECT_TO_PORT[args.databaseDialect || this.knownAnswers.databaseDialect],
         validate: port => {
           if (!/^\d+$/.test(port)) {
             return 'The port must be a number.';
