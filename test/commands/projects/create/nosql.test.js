@@ -14,12 +14,6 @@ const { default: Agents } = require('../../../../src/utils/agents');
 
 const makePromptInputList = ({ except = null, only = null } = {}) => {
   const allPromptInputs = [
-    // {
-    //   name: 'databaseDialect',
-    //   message: "What's the database type?",
-    //   type: 'list',
-    //   choices: [{ name: 'mongodb', value: 'mongodb' }],
-    // },
     {
       name: 'databaseName',
       type: 'input',
