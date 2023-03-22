@@ -97,7 +97,6 @@ describe('projects:create:nosql', () => {
             {
               in: makePromptInputList(),
               out: {
-                databaseDialect: 'mongodb',
                 databaseName: 'unknown_db',
                 databaseHost: 'unknown_host',
                 databasePort: 424242,
@@ -131,7 +130,6 @@ describe('projects:create:nosql', () => {
               in: makePromptInputList(),
               out: {
                 confirm: true,
-                databaseDialect: 'mongodb',
                 databaseName: 'unknown_db',
                 databaseHost: 'unknown_host',
                 databasePort: 424242,
@@ -180,7 +178,7 @@ describe('projects:create:nosql', () => {
                 in: makePromptInputList(),
                 out: {
                   confirm: true,
-                  databaseDialect: 'mongodb',
+
                   databaseName: 'unknown_db',
                   databaseHost: 'unknown_host',
                   databasePort: 424242,
@@ -217,7 +215,7 @@ describe('projects:create:nosql', () => {
                 in: makePromptInputList(),
                 out: {
                   confirm: true,
-                  databaseDialect: 'mongodb',
+
                   databaseName: 'unknown_db',
                   databaseHost: 'unknown_host',
                   databasePort: 424242,
@@ -264,7 +262,7 @@ describe('projects:create:nosql', () => {
                 }),
                 out: {
                   confirm: true,
-                  databaseDialect: 'mongodb',
+
                   databaseName: 'unknown_db',
                   databaseHost: 'unknown_host',
                   databasePort: 424242,
@@ -310,7 +308,6 @@ describe('projects:create:nosql', () => {
             {
               in: makePromptInputList(),
               out: {
-                databaseDialect: 'mongodb',
                 databaseName: 'forest-test',
                 databaseHost: 'localhost',
                 databasePort: 27016,
