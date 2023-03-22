@@ -22,14 +22,6 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
 
   static override readonly flags = {
     ...AbstractProjectCreateCommand.flags,
-    databaseDialect: flags.string({
-      char: 'd',
-      dependsOn: [],
-      description: 'Enter your database dialect.',
-      exclusive: ['databaseConnectionURL'],
-      options: nosqlDbDialectOptions.map(option => option.value),
-      required: false,
-    }),
     mongoDBSRV: flags.boolean({
       dependsOn: [],
       description: 'Use SRV DNS record for mongoDB connection.',

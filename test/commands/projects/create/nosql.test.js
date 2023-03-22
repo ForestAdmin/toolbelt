@@ -15,12 +15,6 @@ const { default: Agents } = require('../../../../src/utils/agents');
 const makePromptInputList = ({ except = null, only = null } = {}) => {
   const allPromptInputs = [
     {
-      name: 'databaseDialect',
-      message: "What's the database type?",
-      type: 'list',
-      choices: [{ name: 'mongodb', value: 'mongodb' }],
-    },
-    {
       name: 'databaseName',
       type: 'input',
       message: "What's the database name?",
@@ -101,21 +95,8 @@ describe('projects:create:nosql', () => {
           api: [() => loginValidOidc()],
           prompts: [
             {
-              in: makePromptInputList({
-                only: [
-                  'databaseName',
-                  'databaseSchema',
-                  'databaseHost',
-                  'databasePort',
-                  'databaseUser',
-                  'databasePassword',
-                  'mongoDBSRV',
-                  'applicationHost',
-                  'applicationPort',
-                ],
-              }),
+              in: makePromptInputList(),
               out: {
-                databaseDialect: 'mongodb',
                 databaseName: 'unknown_db',
                 databaseHost: 'unknown_host',
                 databasePort: 424242,
@@ -146,22 +127,9 @@ describe('projects:create:nosql', () => {
           token: 'any',
           prompts: [
             {
-              in: makePromptInputList({
-                only: [
-                  'databaseName',
-                  'databaseSchema',
-                  'databaseHost',
-                  'databasePort',
-                  'databaseUser',
-                  'databasePassword',
-                  'mongoDBSRV',
-                  'applicationHost',
-                  'applicationPort',
-                ],
-              }),
+              in: makePromptInputList(),
               out: {
                 confirm: true,
-                databaseDialect: 'mongodb',
                 databaseName: 'unknown_db',
                 databaseHost: 'unknown_host',
                 databasePort: 424242,
@@ -207,22 +175,9 @@ describe('projects:create:nosql', () => {
             ],
             prompts: [
               {
-                in: makePromptInputList({
-                  only: [
-                    'databaseName',
-                    'databaseSchema',
-                    'databaseHost',
-                    'databasePort',
-                    'databaseUser',
-                    'databasePassword',
-                    'mongoDBSRV',
-                    'applicationHost',
-                    'applicationPort',
-                  ],
-                }),
+                in: makePromptInputList(),
                 out: {
                   confirm: true,
-                  databaseDialect: 'mongodb',
                   databaseName: 'unknown_db',
                   databaseHost: 'unknown_host',
                   databasePort: 424242,
@@ -256,22 +211,9 @@ describe('projects:create:nosql', () => {
             ],
             prompts: [
               {
-                in: makePromptInputList({
-                  only: [
-                    'databaseName',
-                    'databaseSchema',
-                    'databaseHost',
-                    'databasePort',
-                    'databaseUser',
-                    'databasePassword',
-                    'mongoDBSRV',
-                    'applicationHost',
-                    'applicationPort',
-                  ],
-                }),
+                in: makePromptInputList(),
                 out: {
                   confirm: true,
-                  databaseDialect: 'mongodb',
                   databaseName: 'unknown_db',
                   databaseHost: 'unknown_host',
                   databasePort: 424242,
@@ -318,7 +260,6 @@ describe('projects:create:nosql', () => {
                 }),
                 out: {
                   confirm: true,
-                  databaseDialect: 'mongodb',
                   databaseName: 'unknown_db',
                   databaseHost: 'unknown_host',
                   databasePort: 424242,
@@ -362,21 +303,8 @@ describe('projects:create:nosql', () => {
           ],
           prompts: [
             {
-              in: makePromptInputList({
-                only: [
-                  'databaseName',
-                  'databaseSchema',
-                  'databaseHost',
-                  'databasePort',
-                  'databaseUser',
-                  'databasePassword',
-                  'mongoDBSRV',
-                  'applicationHost',
-                  'applicationPort',
-                ],
-              }),
+              in: makePromptInputList(),
               out: {
-                databaseDialect: 'mongodb',
                 databaseName: 'forest-test',
                 databaseHost: 'localhost',
                 databasePort: 27016,
