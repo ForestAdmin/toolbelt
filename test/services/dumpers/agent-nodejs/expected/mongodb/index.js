@@ -19,7 +19,7 @@ const agent = createAgent({
   .addDataSource(createMongooseDataSource(primaryConnection, { flattenMode: 'auto' }));
 
 // Add customizations here.
-// agent.addCustomization('collectionName', collection => ...);
+// agent.customizeCollection('collectionName', collection => ...);
 
 agent
   // Expose an HTTP endpoint.
