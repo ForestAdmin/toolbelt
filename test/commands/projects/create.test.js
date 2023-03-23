@@ -319,13 +319,7 @@ describe('projects:create', () => {
             prompts: [
               {
                 in: makePromptInputList({
-                  only: [
-                    'databaseSchema',
-                    'databaseSSL',
-                    'mongoDBSRV',
-                    'applicationHost',
-                    'applicationPort',
-                  ],
+                  only: ['databaseSchema', 'databaseSSL', 'applicationHost', 'applicationPort'],
                 }),
                 out: {
                   confirm: true,
