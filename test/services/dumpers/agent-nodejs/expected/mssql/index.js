@@ -37,7 +37,7 @@ const agent = createAgent({
   );
 
 // Add customizations here.
-// agent.addCustomization('collectionName', collection => ...);
+// agent.customizeCollection('collectionName', collection => ...);
 
 agent
   // Expose an HTTP endpoint.
