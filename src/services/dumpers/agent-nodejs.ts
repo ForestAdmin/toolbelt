@@ -1,8 +1,8 @@
 import type { Config, DbConfig } from '../../interfaces/project-create-interface';
-import type Languages from '../../utils/languages';
 import type Strings from '../../utils/strings';
 import type Lodash from 'lodash';
 
+import Languages from '../../utils/languages';
 import AbstractDumper from './abstract-dumper';
 
 export default class AgentNodeJs extends AbstractDumper {
@@ -131,7 +131,8 @@ export default class AgentNodeJs extends AbstractDumper {
   `;
     }
 
-    this.copyHandleBarsTemplate(`${language}/index.hbs`, 'index.js', context);
+    const extension = language === Languages.Typescript ? 'ts' : 'js';
+    this.copyHandleBarsTemplate(`${language}/index.hbs`, `index.${extension}`, context);
   }
 
   private writeDotEnv(
