@@ -70,7 +70,10 @@ class Database {
       if (options.dbPassword) {
         connectionUrl += `:${options.dbPassword}`;
       }
-      connectionUrl += `@${options.dbHostname}`;
+      if (options.dbUser || options.dbPassword) {
+        connectionUrl += '@';
+      }
+      connectionUrl += options.dbHostname;
       if (!options.mongodbSrv) {
         connectionUrl += `:${options.dbPort}`;
       }
