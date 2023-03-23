@@ -1,4 +1,5 @@
 import type { Config, DbConfig } from '../../interfaces/project-create-interface';
+import type Languages from '../../utils/languages';
 import type Strings from '../../utils/strings';
 import type Lodash from 'lodash';
 
@@ -102,7 +103,7 @@ export default class AgentNodeJs extends AbstractDumper {
     this.writeFile('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
   }
 
-  writeIndex(dbDialect: string, dbSchema: string) {
+  writeIndex(language: Languages, dbDialect: string, dbSchema: string) {
     const isMongoose = dbDialect === 'mongodb';
 
     const context = {
@@ -130,7 +131,7 @@ export default class AgentNodeJs extends AbstractDumper {
   `;
     }
 
-    this.copyHandleBarsTemplate('index.hbs', 'index.js', context);
+    this.copyHandleBarsTemplate(`${language}/index.hbs`, 'index.js', context);
   }
 
   private writeDotEnv(
@@ -157,7 +158,7 @@ export default class AgentNodeJs extends AbstractDumper {
       context.dockerDbUrl = dbUrl.replace('localhost', 'host.docker.internal');
     }
 
-    this.copyHandleBarsTemplate('env.hbs', '.env', context);
+    this.copyHandleBarsTemplate('common/env.hbs', '.env', context);
   }
 
   private writeGitignore() {
@@ -173,7 +174,7 @@ export default class AgentNodeJs extends AbstractDumper {
   }
 
   private writeDockerfile() {
-    this.copyHandleBarsTemplate('Dockerfile.hbs', 'Dockerfile');
+    this.copyHandleBarsTemplate('common/Dockerfile.hbs', 'Dockerfile');
   }
 
   private writeDockerCompose(config: Config) {
@@ -188,7 +189,7 @@ export default class AgentNodeJs extends AbstractDumper {
       }
     }
 
-    this.copyHandleBarsTemplate('docker-compose.hbs', 'docker-compose.yml', {
+    this.copyHandleBarsTemplate('common/docker-compose.hbs', 'docker-compose.yml', {
       containerName: this.lodash.snakeCase(config.appConfig.appName),
       forestExtraHost,
       isLinuxOs: this.isLinuxOs,
@@ -196,10 +197,10 @@ export default class AgentNodeJs extends AbstractDumper {
     });
   }
 
-  private async writeMongooseModels(schema) {
+  private async writeMongooseModels(language: Languages, schema) {
     await this.mkdirp(`${this.projectPath}/models`);
 
-    this.copyHandleBarsTemplate('models/index.hbs', 'models/index.js');
+    this.copyHandleBarsTemplate(`${language}/models/index.hbs`, 'models/index.js');
 
     const collectionNamesSorted = Object.keys(schema).sort();
 
@@ -214,7 +215,7 @@ export default class AgentNodeJs extends AbstractDumper {
         };
       });
 
-      this.copyHandleBarsTemplate(`models/model.hbs`, modelPath, {
+      this.copyHandleBarsTemplate(`${language}/models/model.hbs`, modelPath, {
         modelName: this.strings.transformToCamelCaseSafeString(collectionName),
         collectionName,
         fields: fieldsDefinition,
@@ -225,7 +226,11 @@ export default class AgentNodeJs extends AbstractDumper {
 
   protected async createFiles(dumpConfig: Config, mongoSchema?: any) {
     this.writePackageJson(dumpConfig.dbConfig.dbDialect, dumpConfig.appConfig.appName);
-    this.writeIndex(dumpConfig.dbConfig.dbDialect, dumpConfig.dbConfig.dbSchema);
+    this.writeIndex(
+      dumpConfig.language,
+      dumpConfig.dbConfig.dbDialect,
+      dumpConfig.dbConfig.dbSchema,
+    );
     this.writeDotEnv(
       dumpConfig.dbConfig,
       dumpConfig.appConfig.appPort || this.DEFAULT_PORT,
@@ -239,7 +244,7 @@ export default class AgentNodeJs extends AbstractDumper {
     this.writeDockerCompose(dumpConfig);
 
     if (dumpConfig.dbConfig.dbDialect === 'mongodb' && mongoSchema) {
-      await this.writeMongooseModels(mongoSchema);
+      await this.writeMongooseModels(dumpConfig.language, mongoSchema);
     }
   }
 }

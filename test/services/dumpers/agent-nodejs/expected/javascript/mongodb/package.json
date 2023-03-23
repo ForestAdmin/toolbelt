@@ -1,11 +1,10 @@
 {
-  "name": "test-output-mssql",
+  "name": "test-output-javascript-mongodb",
   "version": "0.0.1",
   "private": true,
-  "main": "index.js",
   "scripts": {
-    "start:watch": "nodemon",
-    "start": "node ./index.js"
+    "start": "node ./index.js",
+    "start:watch": "nodemon --exec yarn start"
   },
   "nodemonConfig": {
     "ignore": [
@@ -15,8 +14,8 @@
   "dependencies": {
     "dotenv": "^16.0.1",
     "@forestadmin/agent": "^1.0.0",
-    "@forestadmin/datasource-sql": "^1.0.0",
-    "tedious": "^15.1.2"
+    "@forestadmin/datasource-mongoose": "^1.0.0",
+    "mongoose": "^6.10.3"
   },
   "devDependencies": {
     "nodemon": "^2.0.12"

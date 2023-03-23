@@ -4,7 +4,7 @@ services:
     build:
       context: .
       network: host
-    container_name: test_output_mariadb
+    container_name: test_output_javascript_mariadb
     env_file:
       - .env
     ports:

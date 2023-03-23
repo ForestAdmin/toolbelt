@@ -8,14 +8,15 @@ import rimraf from 'rimraf';
 
 import defaultPlan from '../../../../src/context/plan';
 import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
+import Languages from '../../../../src/utils/languages';
 
 describe('services > dumpers > agentNodejs', () => {
   describe('dump', () => {
-    const configs: Array<Config & { name: string }> = [
+    const getConfigs = (language: Languages): Array<Config & { name: string }> => [
       {
         name: 'mongodb',
         appConfig: {
-          appName: 'test-output/mongodb',
+          appName: `test-output/${language}/mongodb`,
           appHostname: 'localhost',
           appPort: 1654,
         },
@@ -27,11 +28,12 @@ describe('services > dumpers > agentNodejs', () => {
         },
         forestAuthSecret: 'forestAuthSecret',
         forestEnvSecret: 'forestEnvSecret',
+        language,
       },
       {
         name: 'postgres',
         appConfig: {
-          appName: 'test-output/postgres',
+          appName: `test-output/${language}/postgres`,
           appHostname: 'localhost',
           appPort: 1654,
         },
@@ -43,11 +45,12 @@ describe('services > dumpers > agentNodejs', () => {
         },
         forestAuthSecret: 'forestAuthSecret',
         forestEnvSecret: 'forestEnvSecret',
+        language,
       },
       {
         name: 'mysql',
         appConfig: {
-          appName: 'test-output/mysql',
+          appName: `test-output/${language}/mysql`,
           appHostname: 'localhost',
           appPort: 1654,
         },
@@ -59,11 +62,12 @@ describe('services > dumpers > agentNodejs', () => {
         },
         forestAuthSecret: 'forestAuthSecret',
         forestEnvSecret: 'forestEnvSecret',
+        language,
       },
       {
         name: 'mariadb',
         appConfig: {
-          appName: 'test-output/mariadb',
+          appName: `test-output/${language}/mariadb`,
           appHostname: 'localhost',
           appPort: 1654,
         },
@@ -75,11 +79,12 @@ describe('services > dumpers > agentNodejs', () => {
         },
         forestAuthSecret: 'forestAuthSecret',
         forestEnvSecret: 'forestEnvSecret',
+        language,
       },
       {
         name: 'mssql',
         appConfig: {
-          appName: 'test-output/mssql',
+          appName: `test-output/${language}/mssql`,
           appHostname: 'localhost',
           appPort: 1654,
         },
@@ -91,11 +96,11 @@ describe('services > dumpers > agentNodejs', () => {
         },
         forestAuthSecret: 'forestAuthSecret',
         forestEnvSecret: 'forestEnvSecret',
+        language,
       },
     ];
 
-    const files = [
-      'index.js',
+    const commonFiles = [
       'package.json',
       'Dockerfile',
       'docker-compose.yml',
@@ -105,41 +110,46 @@ describe('services > dumpers > agentNodejs', () => {
       '.dockerignore',
     ];
 
-    describe.each(configs)('database $name', ({ name, appConfig, dbConfig }) => {
-      async function dump() {
-        const injectedContext = Context.execute(defaultPlan);
-        const dumper = new AgentNodeJs(injectedContext);
-        await dumper.dump(
-          {
-            appConfig,
-            dbConfig,
-            forestAuthSecret: 'forestAuthSecret',
-            forestEnvSecret: 'forestEnvSecret',
-          },
-          {},
-        );
-      }
+    const languages = [{ name: Languages.Javascript, files: [...commonFiles, 'index.js'] }];
 
-      it.each(files)('should properly dump %s', async fileName => {
-        expect.assertions(1);
+    describe.each(languages)('language: $name', ({ name: language, files }) => {
+      describe.each(getConfigs(language))('database: $name', ({ name, appConfig, dbConfig }) => {
+        async function dump() {
+          const injectedContext = Context.execute(defaultPlan);
+          const dumper = new AgentNodeJs(injectedContext);
+          await dumper.dump(
+            {
+              appConfig,
+              dbConfig,
+              forestAuthSecret: 'forestAuthSecret',
+              forestEnvSecret: 'forestEnvSecret',
+              language,
+            },
+            {},
+          );
+        }
 
-        const osStub = jest.spyOn(os, 'platform').mockReturnValue('linux');
+        it.each(files)('should properly dump %s', async fileName => {
+          expect.assertions(1);
 
-        await dump();
+          const osStub = jest.spyOn(os, 'platform').mockReturnValue('linux');
 
-        const generatedFile = fs.readFileSync(
-          `${appRoot}/${appConfig.appName}/${fileName}`,
-          'utf-8',
-        );
+          await dump();
 
-        const expectedFile = fs.readFileSync(
-          `${__dirname}/expected/${name}/${fileName === '.env' ? 'env' : fileName}`,
-          'utf-8',
-        );
+          const generatedFile = fs.readFileSync(
+            `${appRoot}/${appConfig.appName}/${fileName}`,
+            'utf-8',
+          );
 
-        expect(generatedFile).toStrictEqual(expectedFile);
-        rimraf.sync(`${appRoot}/${appConfig.appName}`);
-        osStub.mockRestore();
+          const expectedFile = fs.readFileSync(
+            `${__dirname}/expected/${language}/${name}/${fileName === '.env' ? 'env' : fileName}`,
+            'utf-8',
+          );
+
+          expect(generatedFile).toStrictEqual(expectedFile);
+          rimraf.sync(`${appRoot}/${appConfig.appName}`);
+          osStub.mockRestore();
+        });
       });
     });
 
@@ -160,18 +170,11 @@ describe('services > dumpers > agentNodejs', () => {
           },
           forestAuthSecret: 'forestAuthSecret',
           forestEnvSecret: 'forestEnvSecret',
+          language: Languages.Javascript,
         };
         const injectedContext = Context.execute(defaultPlan);
         const dumper = new AgentNodeJs(injectedContext);
-        await dumper.dump(
-          {
-            appConfig: postgresConfig.appConfig,
-            dbConfig: postgresConfig.dbConfig,
-            forestAuthSecret: 'forestAuthSecret',
-            forestEnvSecret: 'forestEnvSecret',
-          },
-          {},
-        );
+        await dumper.dump(postgresConfig, {});
 
         return { osStub, postgresConfig };
       };
@@ -251,18 +254,11 @@ describe('services > dumpers > agentNodejs', () => {
           },
           forestAuthSecret: 'forestAuthSecret',
           forestEnvSecret: 'forestEnvSecret',
+          language: Languages.Javascript,
         };
         const injectedContext = Context.execute(defaultPlan);
         const dumper = new AgentNodeJs(injectedContext);
-        await dumper.dump(
-          {
-            appConfig: postgresConfig.appConfig,
-            dbConfig: postgresConfig.dbConfig,
-            forestAuthSecret: 'forestAuthSecret',
-            forestEnvSecret: 'forestEnvSecret',
-          },
-          {},
-        );
+        await dumper.dump(postgresConfig, {});
 
         return { osStub, postgresConfig };
       };
@@ -341,6 +337,7 @@ describe('services > dumpers > agentNodejs', () => {
           },
           forestAuthSecret: 'forestAuthSecret',
           forestEnvSecret: 'forestEnvSecret',
+          language: Languages.Javascript,
         };
         const injectedContext: any = Context.execute(defaultPlan);
         const dumper = new AgentNodeJs({
@@ -351,15 +348,7 @@ describe('services > dumpers > agentNodejs', () => {
             FOREST_URL_IS_DEFAULT: false,
           },
         });
-        await dumper.dump(
-          {
-            appConfig: postgresConfig.appConfig,
-            dbConfig: postgresConfig.dbConfig,
-            forestAuthSecret: 'forestAuthSecret',
-            forestEnvSecret: 'forestEnvSecret',
-          },
-          {},
-        );
+        await dumper.dump(postgresConfig, {});
 
         return postgresConfig;
       };
@@ -417,6 +406,7 @@ describe('services > dumpers > agentNodejs', () => {
           },
           forestAuthSecret: 'forestAuthSecret',
           forestEnvSecret: 'forestEnvSecret',
+          language: Languages.Javascript,
         };
         const injectedContext: any = Context.execute(defaultPlan);
         const dumper = new AgentNodeJs({
@@ -426,15 +416,7 @@ describe('services > dumpers > agentNodejs', () => {
             FOREST_URL_IS_DEFAULT: true,
           },
         });
-        await dumper.dump(
-          {
-            appConfig: postgresConfig.appConfig,
-            dbConfig: postgresConfig.dbConfig,
-            forestAuthSecret: 'forestAuthSecret',
-            forestEnvSecret: 'forestEnvSecret',
-          },
-          {},
-        );
+        await dumper.dump(postgresConfig, {});
 
         return postgresConfig;
       };
@@ -491,20 +473,13 @@ describe('services > dumpers > agentNodejs', () => {
           },
           forestAuthSecret: 'forestAuthSecret',
           forestEnvSecret: 'forestEnvSecret',
+          language: Languages.Javascript,
         };
         const injectedContext: any = Context.execute(defaultPlan);
         const dumper = new AgentNodeJs({
           ...injectedContext,
         });
-        await dumper.dump(
-          {
-            appConfig: postgresConfig.appConfig,
-            dbConfig: postgresConfig.dbConfig,
-            forestAuthSecret: 'forestAuthSecret',
-            forestEnvSecret: 'forestEnvSecret',
-          },
-          {},
-        );
+        await dumper.dump(postgresConfig, {});
 
         return postgresConfig;
       };
@@ -545,20 +520,13 @@ describe('services > dumpers > agentNodejs', () => {
           },
           forestAuthSecret: 'forestAuthSecret',
           forestEnvSecret: 'forestEnvSecret',
+          language: Languages.Javascript,
         };
         const injectedContext: any = Context.execute(defaultPlan);
         const dumper = new AgentNodeJs({
           ...injectedContext,
         });
-        await dumper.dump(
-          {
-            appConfig: postgresConfig.appConfig,
-            dbConfig: postgresConfig.dbConfig,
-            forestAuthSecret: 'forestAuthSecret',
-            forestEnvSecret: 'forestEnvSecret',
-          },
-          {},
-        );
+        await dumper.dump(postgresConfig, {});
 
         return postgresConfig;
       };

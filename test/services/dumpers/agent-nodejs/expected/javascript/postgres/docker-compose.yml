@@ -4,7 +4,7 @@ services:
     build:
       context: .
       network: host
-    container_name: test_output_mysql
+    container_name: test_output_javascript_postgres
     env_file:
       - .env
     ports:
