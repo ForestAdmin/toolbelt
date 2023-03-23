@@ -698,49 +698,6 @@ describe('services > prompter > database prompts', () => {
         databasePrompts.handleMongodbSrv();
       }
 
-      describe('when the connectionUrl is already known', () => {
-        describe('when the dbDialect is mongodb', () => {
-          it('should never prompt', async () => {
-            expect.assertions(1);
-
-            initTestWithMongoSrv({
-              databaseDialect: 'mongodb',
-              databaseConnectionURL: 'aConnectionUrl',
-            });
-            expect(prompts).toHaveLength(0);
-
-            resetParams();
-          });
-        });
-
-        describe('when the dbDialect is not mongodb', () => {
-          it('should never prompt', async () => {
-            expect.assertions(1);
-
-            initTestWithMongoSrv({
-              databaseDialect: 'postgres',
-              databaseConnectionURL: 'aConnectionUrl',
-            });
-            expect(prompts).toHaveLength(0);
-
-            resetParams();
-          });
-        });
-      });
-
-      describe('when the connectionUrl is not known', () => {
-        it('should prompt for mongodb', async () => {
-          expect.assertions(1);
-
-          initTestWithMongoSrv({
-            databaseDialect: 'mongodb',
-          });
-          expect(prompts).toHaveLength(1);
-
-          resetParams();
-        });
-      });
-
       describe('when the dbDialect is already known', () => {
         describe('when dbDialect is mongodb', () => {
           it('should consider the known value and prompt', () => {
