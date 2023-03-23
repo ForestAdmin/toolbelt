@@ -250,13 +250,7 @@ describe('projects:create:nosql', () => {
             prompts: [
               {
                 in: makePromptInputList({
-                  only: [
-                    'databaseSchema',
-                    'databaseSSL',
-                    'applicationHost',
-                    'applicationPort',
-                    'mongoDBSRV',
-                  ],
+                  only: ['databaseSchema', 'databaseSSL', 'applicationHost', 'applicationPort'],
                 }),
                 out: {
                   confirm: true,
