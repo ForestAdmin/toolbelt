@@ -2,9 +2,10 @@
   "name": "test-output-javascript-mssql",
   "version": "0.0.1",
   "private": true,
+  "main": "index.js",
   "scripts": {
-    "start": "node ./index.js",
-    "start:watch": "nodemon --exec yarn start"
+    "start:watch": "nodemon",
+    "start": "node ./index.js"
   },
   "nodemonConfig": {
     "ignore": [

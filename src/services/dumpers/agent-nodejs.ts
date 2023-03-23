@@ -199,15 +199,20 @@ export default class AgentNodeJs extends AbstractDumper {
   }
 
   private async writeMongooseModels(language: Languages, schema) {
+    const extension = language === Languages.Typescript ? 'ts' : 'js';
+
     await this.mkdirp(`${this.projectPath}/models`);
 
-    this.copyHandleBarsTemplate(`${language}/models/index.hbs`, 'models/index.js');
+    this.copyHandleBarsTemplate(
+      `${language}/models/index.hbs`,
+      `models/index.${extension}`,
+    );
 
     const collectionNamesSorted = Object.keys(schema).sort();
 
     collectionNamesSorted.forEach(collectionName => {
       const { fields, options } = schema[collectionName];
-      const modelPath = `models/${this.lodash.kebabCase(collectionName)}.js`;
+      const modelPath = `models/${this.lodash.kebabCase(collectionName)}.${extension}`;
 
       const fieldsDefinition = fields.map(field => {
         return {
