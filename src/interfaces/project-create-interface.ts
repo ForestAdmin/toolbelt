@@ -2,7 +2,6 @@ interface DbConfigBase {
   dbDialect: string;
   dbSsl: boolean;
   dbSchema?: string;
-  mongodbSrv?: boolean;
 }
 
 interface DbConfigWithConnectionUrl extends DbConfigBase {
@@ -12,6 +11,7 @@ interface DbConfigWithConnectionUrl extends DbConfigBase {
   dbPort?: never;
   dbUser?: never;
   dbPassword?: never;
+  mongodbSrv?: never;
 }
 
 interface DbConfigWithConnectionParams extends DbConfigBase {
@@ -21,6 +21,7 @@ interface DbConfigWithConnectionParams extends DbConfigBase {
   dbPort: number;
   dbUser: string;
   dbPassword: string;
+  mongodbSrv?: boolean;
 }
 
 export type DbConfig = DbConfigWithConnectionUrl | DbConfigWithConnectionParams;
