@@ -5,7 +5,7 @@ import rimraf from 'rimraf';
 
 import defaultPlan from '../../../../src/context/plan';
 import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs';
-import Languages from '../../../../src/utils/languages';
+import languages from '../../../../src/utils/languages';
 import deepNested from '../../analyzer/expected/mongo/db-analysis-output/deep-nested-fields.expected.json';
 import hasMany from '../../analyzer/expected/mongo/db-analysis-output/hasmany.expected.json';
 import manyObjectIdFields from '../../analyzer/expected/mongo/db-analysis-output/many-objectid-fields.expected.json';
@@ -46,7 +46,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
     await dumper.dump(config, schema);
   }
 
-  describe.each([Languages.Javascript])('language: $name', language => {
+  describe.each([languages.Javascript])('language: $name', language => {
     describe('dump model files', () => {
       describe('dumping schema', () => {
         const testCases = [
