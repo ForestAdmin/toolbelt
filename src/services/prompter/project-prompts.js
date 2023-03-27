@@ -21,22 +21,13 @@ class ProjectPrompts extends AbstractPrompter {
       const projectName = this.programArguments.applicationName;
 
       if (!projectName) {
-        throw new PrompterError(
+        throw new PrompterError(messages.ERROR_MISSING_PROJECT_NAME, [
           messages.ERROR_MISSING_PROJECT_NAME,
-          [
-            messages.ERROR_MISSING_PROJECT_NAME,
-            messages.HINT_MISSING_PROJECT_NAME,
-          ],
-        );
+          messages.HINT_MISSING_PROJECT_NAME,
+        ]);
       } else if (new DirectoryExistenceChecker(projectName).perform()) {
         const message = `File or directory "${chalk.red(`${projectName}`)}" already exists.`;
-        throw new PrompterError(
-          message,
-          [
-            message,
-            messages.HINT_DIRECTORY_ALREADY_EXISTS,
-          ],
-        );
+        throw new PrompterError(message, [message, messages.HINT_DIRECTORY_ALREADY_EXISTS]);
       } else {
         this.knownAnswers.applicationName = projectName;
       }

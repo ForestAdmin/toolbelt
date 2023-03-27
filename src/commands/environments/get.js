@@ -1,22 +1,18 @@
+const { flags } = require('@oclif/command');
 const EnvironmentManager = require('../../services/environment-manager');
-const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command').default;
 
 class GetCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
-    const {
-      assertPresent,
-      chalk,
-      env,
-      environmentRenderer,
-    } = this.context;
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
+    const { assertPresent, chalk, env, environmentRenderer } = this.context;
     assertPresent({ chalk, env });
     this.chalk = chalk;
     this.env = env;
     this.environmentRenderer = environmentRenderer;
   }
 
-  async runIfAuthenticated() {
+  async runAuthenticated() {
     const parsed = this.parse(GetCommand);
     const config = { ...this.env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
@@ -33,7 +29,7 @@ class GetCommand extends AbstractAuthenticatedCommand {
 GetCommand.description = 'Get the configuration of an environment.';
 
 GetCommand.flags = {
-  format: AbstractAuthenticatedCommand.flags.string({
+  format: flags.string({
     char: 'format',
     description: 'Output format.',
     options: ['table', 'json'],
@@ -41,8 +37,12 @@ GetCommand.flags = {
   }),
 };
 
-GetCommand.args = [{
-  name: 'environmentId', required: true, description: 'ID of an environment.',
-}];
+GetCommand.args = [
+  {
+    name: 'environmentId',
+    required: true,
+    description: 'ID of an environment.',
+  },
+];
 
 module.exports = GetCommand;

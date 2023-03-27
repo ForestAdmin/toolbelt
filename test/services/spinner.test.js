@@ -27,7 +27,9 @@ describe('spinner', () => {
     describe('when promise fails', () => {
       const spinnnerOptions = { text: 'invalid' };
       const error = new Error('wrong');
-      const promise = async () => { throw error; };
+      const promise = async () => {
+        throw error;
+      };
 
       // NOTICE: Cannot use jest expect().toThrow() on promises
       it('should display the error content and throw an error', async () => {

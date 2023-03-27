@@ -58,6 +58,7 @@ With the Development Workflow activated.
 Manage Forest Admin schema.
 
 - `schema:apply` apply the current schema of your repository to the specified environment (using your `.forestadmin-schema.json` file).
+- `schema:diff` allow to compare two environment schemas.
 - `schema:update` refresh your schema by generating files that do not currently exist.
 
 ## Docker

@@ -8,12 +8,11 @@ module.exports = {
         // Prevents unwanted sketchy `../../` prefix in lcov report.
         // This lead to error when sharing coverage with CodeClimate.
         projectRoot: appRoot.path,
-      }],
+      },
+    ],
   ],
 
-  collectCoverageFrom: [
-    '**/*.{js,ts,tsx}',
-  ],
+  collectCoverageFrom: ['**/*.{js,ts,tsx}'],
 
   coveragePathIgnorePatterns: [
     '/coverage',
@@ -25,6 +24,10 @@ module.exports = {
     '/.*rc.js',
     '/.dependency-cruiser.js',
   ],
+
+  transform: {
+    '^.+\\.(j|t)s$': '@swc/jest',
+  },
 
   testEnvironment: 'node',
 };

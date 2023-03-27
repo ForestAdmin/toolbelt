@@ -21,10 +21,7 @@ describe('services > database', () => {
 
       expect(terminatorMock.terminate).toHaveBeenCalledTimes(1);
       expect(terminatorMock.terminate).toHaveBeenCalledWith(1, {
-        logs: [
-          'Cannot connect to the database due to the following error:',
-          error,
-        ],
+        logs: ['Cannot connect to the database due to the following error:', error],
         errorCode: 'database_authentication_error',
         errorMessage: error.message,
       });
@@ -233,9 +230,7 @@ describe('services > database', () => {
         expect.assertions(1);
 
         const database = setupDatabase();
-        const connectToMongodbSpy = jest
-          .spyOn(database, 'connectToMongodb')
-          .mockImplementation();
+        const connectToMongodbSpy = jest.spyOn(database, 'connectToMongodb').mockImplementation();
 
         const options = { dbDialect: 'mongodb' };
         await database.connect(options);
@@ -271,9 +266,7 @@ describe('services > database', () => {
           const database = setupDatabase({
             Sequelize: SequelizeMock,
           });
-          jest
-            .spyOn(database, 'sequelizeAuthenticate')
-            .mockImplementation();
+          jest.spyOn(database, 'sequelizeAuthenticate').mockImplementation();
 
           const options = {
             dbDialect: 'mysql',
@@ -308,9 +301,7 @@ describe('services > database', () => {
           const database = setupDatabase({
             Sequelize: SequelizeMock,
           });
-          jest
-            .spyOn(database, 'sequelizeAuthenticate')
-            .mockImplementation();
+          jest.spyOn(database, 'sequelizeAuthenticate').mockImplementation();
 
           const options = {
             dbDialect: 'mysql',
@@ -320,10 +311,7 @@ describe('services > database', () => {
           await database.connect(options);
 
           expect(SequelizeMock).toHaveBeenCalledTimes(1);
-          expect(SequelizeMock).toHaveBeenCalledWith(
-            options.dbConnectionUrl,
-            { logging: false },
-          );
+          expect(SequelizeMock).toHaveBeenCalledWith(options.dbConnectionUrl, { logging: false });
         });
       });
     });
@@ -331,9 +319,11 @@ describe('services > database', () => {
 
   describe('connectFromDatabasesConfig', () => {
     const database = setupDatabase();
-    const connectSpy = jest.spyOn(database, 'connect').mockImplementation(({ dbConnectionUrl }) => ({
-      url: dbConnectionUrl,
-    }));
+    const connectSpy = jest
+      .spyOn(database, 'connect')
+      .mockImplementation(({ dbConnectionUrl }) => ({
+        url: dbConnectionUrl,
+      }));
 
     const databaseUrl1 = 'mysql://user:password@forest:3306/db';
     const databaseConfig1 = {
@@ -372,13 +362,16 @@ describe('services > database', () => {
 
       const databasesConnections = await database.connectFromDatabasesConfig(databasesConfig);
 
-      expect(databasesConnections).toStrictEqual([{
-        ...databaseConfig1,
-        connectionInstance: { url: databaseUrl1 },
-      }, {
-        ...databaseConfig2,
-        connectionInstance: { url: databaseUrl2 },
-      }]);
+      expect(databasesConnections).toStrictEqual([
+        {
+          ...databaseConfig1,
+          connectionInstance: { url: databaseUrl1 },
+        },
+        {
+          ...databaseConfig2,
+          connectionInstance: { url: databaseUrl2 },
+        },
+      ]);
     });
   });
 
@@ -387,15 +380,18 @@ describe('services > database', () => {
       expect.assertions(1);
 
       const database = setupDatabase();
-      const databasesConfig = [{
-        connection: {
-          url: 'mysql://user:password@forest:3306/db',
+      const databasesConfig = [
+        {
+          connection: {
+            url: 'mysql://user:password@forest:3306/db',
+          },
         },
-      }, {
-        connection: {
-          url: 'postgres://user:password@forest:3323/mydb',
+        {
+          connection: {
+            url: 'postgres://user:password@forest:3323/mydb',
+          },
         },
-      }];
+      ];
 
       expect(database.areAllDatabasesOfTheSameType(databasesConfig)).toBe(true);
     });
@@ -404,15 +400,18 @@ describe('services > database', () => {
       expect.assertions(1);
 
       const database = setupDatabase();
-      const databasesConfig = [{
-        connection: {
-          url: 'mysql://user:password@forest:3306/mydb',
+      const databasesConfig = [
+        {
+          connection: {
+            url: 'mysql://user:password@forest:3306/mydb',
+          },
         },
-      }, {
-        connection: {
-          url: 'mongodb://user:password@forest:27017/mydb',
+        {
+          connection: {
+            url: 'mongodb://user:password@forest:27017/mydb',
+          },
         },
-      }];
+      ];
 
       expect(database.areAllDatabasesOfTheSameType(databasesConfig)).toBe(false);
     });

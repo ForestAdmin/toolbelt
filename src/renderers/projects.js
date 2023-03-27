@@ -1,12 +1,7 @@
 const { chars } = require('./defaults');
 
 class ProjectsRenderer {
-  constructor({
-    assertPresent,
-    chalk,
-    logger,
-    Table,
-  }) {
+  constructor({ assertPresent, chalk, logger, Table }) {
     assertPresent({
       chalk,
       logger,
@@ -29,13 +24,10 @@ class ProjectsRenderer {
         this.logger.log(JSON.stringify(projects, null, 2));
         break;
       case 'table':
-        projects.forEach((project) => {
+        projects.forEach(project => {
           table.push([project.id, project.name]);
         });
-        this.logger.log(
-          `${this.chalk.bold('PROJECTS')}`,
-          ...table.toString().split('\n'),
-        );
+        this.logger.log(`${this.chalk.bold('PROJECTS')}`, ...table.toString().split('\n'));
         break;
       default:
     }

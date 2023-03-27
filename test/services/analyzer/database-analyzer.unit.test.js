@@ -16,12 +16,12 @@ describe('unit > DatabaseAnalyzer', () => {
     const context = setupConstructorTest();
     const databaseAnalyzer = new DatabaseAnalyzer(context);
 
-    const {
-      assertPresent, terminator, mongoAnalyzer, sequelizeAnalyzer,
-    } = context;
+    const { assertPresent, terminator, mongoAnalyzer, sequelizeAnalyzer } = context;
 
     expect(assertPresent).toHaveBeenCalledWith({
-      terminator, mongoAnalyzer, sequelizeAnalyzer,
+      terminator,
+      mongoAnalyzer,
+      sequelizeAnalyzer,
     });
     expect(databaseAnalyzer.terminator).toBe(terminator);
     expect(databaseAnalyzer.mongoAnalyzer).toBe(mongoAnalyzer);
@@ -53,7 +53,10 @@ describe('unit > DatabaseAnalyzer', () => {
 
       expect(bind).toHaveBeenCalledWith(mongoAnalyzer);
       expect(databaseAnalyzer._analyze).toHaveBeenCalledWith(
-        analyze, dbInstance, config, allowWarning,
+        analyze,
+        dbInstance,
+        config,
+        allowWarning,
       );
     });
   });

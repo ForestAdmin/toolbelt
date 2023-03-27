@@ -4,11 +4,12 @@ class OidcAuthenticator {
   /**
    * @param {import('../../context/plan').Context} context
    */
-  constructor({
-    assertPresent, openIdClient, env, process, open,
-  }) {
+  constructor({ assertPresent, openIdClient, env, process, open }) {
     assertPresent({
-      openIdClient, env, process, open,
+      openIdClient,
+      env,
+      process,
+      open,
     });
     /** @private @readonly */
     this.openIdClient = openIdClient;
@@ -26,7 +27,9 @@ class OidcAuthenticator {
    */
   async register() {
     try {
-      const issuer = await this.openIdClient.Issuer.discover(`${this.env.FOREST_URL}/oidc/.well-known/openid-configuration`);
+      const issuer = await this.openIdClient.Issuer.discover(
+        `${this.env.FOREST_SERVER_URL}/oidc/.well-known/openid-configuration`,
+      );
 
       return await issuer.Client.register({
         name: 'forest-cli',
@@ -37,10 +40,7 @@ class OidcAuthenticator {
         response_types: ['none'],
       });
     } catch (e) {
-      throw new OidcError(
-        'Unable to register against the Forest Admin server',
-        e,
-      );
+      throw new OidcError('Unable to register against the Forest Admin server', e);
     }
   }
 
@@ -55,10 +55,7 @@ class OidcAuthenticator {
         scopes: ['openid', 'email', 'profile'],
       });
     } catch (e) {
-      throw new OidcError(
-        'Error while starting the authentication flow',
-        e,
-      );
+      throw new OidcError('Error while starting the authentication flow', e);
     }
   }
 
@@ -70,7 +67,9 @@ class OidcAuthenticator {
   async waitForAuthentication(flow) {
     const expiresIn = flow.expires_in;
     try {
-      this.process.stdout.write(`Click on "Log in" on the browser tab which opened automatically or open this link: ${flow.verification_uri_complete}\n`);
+      this.process.stdout.write(
+        `Click on "Log in" on the browser tab which opened automatically or open this link: ${flow.verification_uri_complete}\n`,
+      );
       this.process.stdout.write(`Your confirmation code: ${flow.user_code}\n`);
 
       await this.open(flow.verification_uri_complete);
@@ -85,10 +84,7 @@ class OidcAuthenticator {
         );
       }
 
-      throw new OidcError(
-        'Error during the authentication',
-        e,
-      );
+      throw new OidcError('Error during the authentication', e);
     }
   }
 

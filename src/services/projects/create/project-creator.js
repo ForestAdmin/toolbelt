@@ -7,7 +7,7 @@
  * }} ProjectMeta
  *
  * @typedef {{
- *  applicationName: string
+ *  appName: string
  *  appHostname: string
  *  appPort: number
  * }} ProjectConfig
@@ -23,14 +23,7 @@ class ProjectCreator {
    *   terminator: import('../../../utils/terminator')
    * }} dependencies
    */
-  constructor({
-    assertPresent,
-    api,
-    chalk,
-    keyGenerator,
-    messages,
-    terminator,
-  }) {
+  constructor({ assertPresent, api, chalk, keyGenerator, messages, terminator }) {
     assertPresent({
       api,
       chalk,
@@ -56,7 +49,7 @@ class ProjectCreator {
   async create(sessionToken, config, meta) {
     try {
       const newProjectPayload = {
-        name: config.applicationName,
+        name: config.appName,
         agent: meta.agent,
         architecture: meta.architecture,
         databaseType: meta.dbDialect,
@@ -70,18 +63,11 @@ class ProjectCreator {
         authSecret: this.keyGenerator.generate(),
       };
     } catch (error) {
-      let message;
-      if (error.message === 'Unauthorized') {
-        message = `Your session has expired. Please log back in with the command \`${this.chalk.cyan('forest login')}\`.`;
-      } else if (error.message === 'Conflict') {
-        message = 'A project with this name already exists. Please choose another name.';
-      } else {
-        message = `${this.messages.ERROR_UNEXPECTED} ${this.chalk.red(error)}`;
+      if (error.message === 'Conflict') {
+        error.message = 'A project with this name already exists. Please choose another name.';
       }
 
-      return this.terminator.terminate(1, {
-        logs: [message],
-      });
+      throw error;
     }
   }
 }

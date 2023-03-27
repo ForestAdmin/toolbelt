@@ -1,8 +1,5 @@
 class KeyGenerator {
-  constructor({
-    assertPresent,
-    crypto,
-  }) {
+  constructor({ assertPresent, crypto }) {
     assertPresent({
       crypto,
     });

@@ -2,68 +2,63 @@ const Context = require('@forestadmin/context');
 
 const branchDeserializer = require('../deserializers/branch');
 const EnvironmentSerializer = require('../serializers/environment');
-const { handleError } = require('../utils/error');
+const { handleErrorWithMeta } = require('../utils/error');
+const DiffCommand = require('../commands/schema/diff');
 
-const ERROR_MESSAGE_PROJECT_IN_V1 = 'This project does not support branches yet. Please migrate your environments from your Project settings first.';
-const ERROR_MESSAGE_ENV_SECRET_ISSUE = 'Your development environment is not properly set up. Please run `forest init` first and retry.';
+const ERROR_MESSAGE_PROJECT_IN_V1 =
+  'This project does not support branches yet. Please migrate your environments from your Project settings first.';
+const ERROR_MESSAGE_ENV_SECRET_ISSUE =
+  'Your development environment is not properly set up. Please run `forest init` first and retry.';
 const ERROR_MESSAGE_BRANCH_ALREADY_EXISTS = 'This branch already exists.';
-const ERROR_MESSAGE_ADDITIONAL_REMOTE_BRANCHES = 'The remote environments can\'t have additional branches.';
-const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT = 'You cannot run branch commands until this project has either a remote or a production environment.';
-const ERROR_MESSAGE_NO_REMOTE_ENVIRONMENT = 'You cannot run this command until this project has a remote non-production environment.';
-const ERROR_MESSAGE_BRANCH_DOES_NOT_EXIST = 'This branch doesn\'t exist.';
+const ERROR_MESSAGE_ADDITIONAL_REMOTE_BRANCHES =
+  "The remote environments can't have additional branches.";
+const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT =
+  'You cannot run branch commands until this project has either a remote or a production environment.';
+const ERROR_MESSAGE_NO_REMOTE_ENVIRONMENT =
+  'You cannot run this command until this project has a remote non-production environment.';
+const ERROR_MESSAGE_BRANCH_DOES_NOT_EXIST = "This branch doesn't exist.";
 const ERROR_MESSAGE_REMOVE_BRANCH_FAILED = 'Failed to delete branch.';
-const ERROR_MESSAGE_NOT_RIGHT_PERMISSION_LEVEL = 'You need the \'Admin\' or \'Developer\' permission level on this project to use branches.';
-const ERROR_MESSAGE_ENVIRONMENT_NOT_FOUND = 'The environment provided doesn\'t exist.';
-const ERROR_MESSAGE_NO_CURRENT_BRANCH = 'You don\'t have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.';
-const ERROR_MESSAGE_WRONG_ENVIRONMENT_TYPE = 'The environment on which you are trying to push your modifications is not a remote environment.';
-const ERROR_MESSAGE_NO_DESTINATION_BRANCH = 'The environment on which you are trying to push your modifications doesn\'t have current branch.';
+const ERROR_MESSAGE_NOT_RIGHT_PERMISSION_LEVEL =
+  "You need the 'Admin' or 'Developer' permission level on this project to use branches.";
+const ERROR_MESSAGE_ENVIRONMENT_NOT_FOUND = "The environment provided doesn't exist.";
+const ERROR_MESSAGE_NO_CURRENT_BRANCH =
+  "You don't have any branch to push. Use `forest branch` to create one or use `forest switch` to set your current branch.";
+const ERROR_MESSAGE_WRONG_ENVIRONMENT_TYPE =
+  'The environment on which you are trying to push your modifications is not a remote environment.';
+const ERROR_MESSAGE_NO_DESTINATION_BRANCH =
+  "The environment on which you are trying to push your modifications doesn't have current branch.";
 
 function getBranches(envSecret) {
-  const {
-    assertPresent,
-    authenticator,
-    env,
-    superagent: agent,
-  } = Context.inject();
+  const { assertPresent, authenticator, env, superagent: agent } = Context.inject();
   assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
   return agent
-    .get(`${env.FOREST_URL}/api/branches`)
+    .get(`${env.FOREST_SERVER_URL}/api/branches`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', envSecret)
     .send()
-    .then((response) => branchDeserializer.deserialize(response.body));
+    .then(response => branchDeserializer.deserialize(response.body));
 }
 
 function deleteBranch(branchName, environmentSecret) {
-  const {
-    assertPresent,
-    authenticator,
-    env,
-    superagent: agent,
-  } = Context.inject();
+  const { assertPresent, authenticator, env, superagent: agent } = Context.inject();
   assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .del(`${env.FOREST_URL}/api/branches/${encodeURIComponent(branchName)}`)
+    .del(`${env.FOREST_SERVER_URL}/api/branches/${encodeURIComponent(branchName)}`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send();
 }
 
 function createBranch(branchName, environmentSecret, originName) {
-  const {
-    assertPresent,
-    authenticator,
-    env,
-    superagent: agent,
-  } = Context.inject();
+  const { assertPresent, authenticator, env, superagent: agent } = Context.inject();
   assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .post(`${env.FOREST_URL}/api/branches`)
+    .post(`${env.FOREST_SERVER_URL}/api/branches`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send({
@@ -73,59 +68,44 @@ function createBranch(branchName, environmentSecret, originName) {
 }
 
 function pushBranch(environmentSecret) {
-  const {
-    assertPresent,
-    authenticator,
-    env,
-    superagent: agent,
-  } = Context.inject();
+  const { assertPresent, authenticator, env, superagent: agent } = Context.inject();
   assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .post(`${env.FOREST_URL}/api/branches/push`)
+    .post(`${env.FOREST_SERVER_URL}/api/branches/push`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send();
 }
 
 function switchBranch({ id }, environmentSecret) {
-  const {
-    assertPresent,
-    authenticator,
-    env,
-    superagent: agent,
-  } = Context.inject();
+  const { assertPresent, authenticator, env, superagent: agent } = Context.inject();
   assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .put(`${env.FOREST_URL}/api/environments`)
+    .put(`${env.FOREST_SERVER_URL}/api/environments`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send(EnvironmentSerializer.serialize({ currentBranchId: id }));
 }
 
 function setOrigin(originEnvironmentName, environmentSecret) {
-  const {
-    assertPresent,
-    authenticator,
-    env,
-    superagent: agent,
-  } = Context.inject();
+  const { assertPresent, authenticator, env, superagent: agent } = Context.inject();
   assertPresent({ authenticator, env, superagent: agent });
   const authToken = authenticator.getAuthToken();
 
   return agent
-    .post(`${env.FOREST_URL}/api/branches/set-origin`)
+    .post(`${env.FOREST_SERVER_URL}/api/branches/set-origin`)
     .set('Authorization', `Bearer ${authToken}`)
     .set('forest-secret-key', `${environmentSecret}`)
     .send({ originEnvironmentName: encodeURIComponent(originEnvironmentName) });
 }
 
-function handleBranchError(rawError) {
-  const error = handleError(rawError);
-  switch (error) {
+async function handleBranchError(rawError) {
+  const { message, meta } = handleErrorWithMeta(rawError);
+  switch (message) {
     // NOTICE: When no env/project can be found through envSecret
     case 'Not Found':
       return ERROR_MESSAGE_ENV_SECRET_ISSUE;
@@ -153,8 +133,14 @@ function handleBranchError(rawError) {
       return ERROR_MESSAGE_WRONG_ENVIRONMENT_TYPE;
     case 'No destination branch.':
       return ERROR_MESSAGE_NO_DESTINATION_BRANCH;
+    case 'Source and destination environments must have the same schema. Please check your environments code is synchronized.':
+      await new DiffCommand([
+        `${meta.environmentIdSource}`,
+        `${meta.environmentIdDestination}`,
+      ]).runAuthenticated();
+      return `Source and destination environments must have the same schema. Please check your environments code is synchronized.\n You can run "schema:diff ${meta.environmentIdSource} ${meta.environmentIdDestination}" to see the schemas differences.`;
     default:
-      return error;
+      return message;
   }
 }
 

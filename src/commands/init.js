@@ -1,5 +1,5 @@
-const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
-const { buildDatabaseUrl } = require('../utils/database-url');
+const { flags } = require('@oclif/command');
+const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
 const withCurrentProject = require('../services/with-current-project');
 const ProjectManager = require('../services/project-manager');
 const EnvironmentManager = require('../services/environment-manager');
@@ -14,37 +14,36 @@ const {
 } = require('../services/init-manager');
 
 const SUCCESS_MESSAGE_ALL_SET_AND_READY = "You're now set up and ready to develop on Forest Admin";
-const SUCCESS_MESSAGE_LEARN_MORE_ON_CLI_USAGE = 'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/documentation/reference-guide/how-it-works/developing-on-forest-admin/forest-cli-commands.';
+const SUCCESS_MESSAGE_LEARN_MORE_ON_CLI_USAGE =
+  'To learn more about the recommended usage of this CLI, please visit https://docs.forestadmin.com/documentation/reference-guide/how-it-works/developing-on-forest-admin/forest-cli-commands.';
 
-const PROMPT_MESSAGE_AUTO_FILLING_ENV_FILE = 'Do you want your current folder `.env` file to be completed automatically with your environment variables?';
-const PROMPT_MESSAGE_AUTO_CREATING_ENV_FILE = 'Do you want a new `.env` file (containing your environment variables) to be automatically created in your current folder?';
+const PROMPT_MESSAGE_AUTO_FILLING_ENV_FILE =
+  'Do you want your current folder `.env` file to be completed automatically with your environment variables?';
+const PROMPT_MESSAGE_AUTO_CREATING_ENV_FILE =
+  'Do you want a new `.env` file (containing your environment variables) to be automatically created in your current folder?';
 
 class InitCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
-    const {
-      assertPresent,
-      env,
-      fs,
-      inquirer,
-      spinner,
-    } = this.context;
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
+    const { assertPresent, env, fs, inquirer, spinner, buildDatabaseUrl } = this.context;
     assertPresent({
       env,
       fs,
       inquirer,
       spinner,
+      buildDatabaseUrl,
     });
 
     this.env = env;
     this.fs = fs;
     this.inquirer = inquirer;
     this.spinner = spinner;
+    this.buildDatabaseUrl = buildDatabaseUrl;
 
     this.environmentVariables = {};
   }
 
-  async runIfAuthenticated() {
+  async runAuthenticated() {
     try {
       this.spinner.start({ text: 'Selecting your project' });
       await this.spinner.attachToPromise(this.projectSelection());
@@ -93,7 +92,19 @@ class InitCommand extends AbstractAuthenticatedCommand {
         const databaseConfiguration = await handleDatabaseConfiguration();
         this.spinner.continue();
         if (databaseConfiguration) {
-          this.environmentVariables.databaseUrl = buildDatabaseUrl(databaseConfiguration);
+          const dbConfig = {
+            dbConnectionUrl: databaseConfiguration.dbConnectionUrl,
+            dbDialect: databaseConfiguration.databaseDialect,
+            dbHostname: databaseConfiguration.databaseHost,
+            dbName: databaseConfiguration.databaseName,
+            dbPassword: databaseConfiguration.databasePassword,
+            dbPort: databaseConfiguration.databasePort,
+            dbSchema: databaseConfiguration.databaseSchema,
+            dbUser: databaseConfiguration.databaseUser,
+            mongodbSrv: databaseConfiguration.mongodbSrv,
+            ssl: databaseConfiguration.databaseSSL,
+          };
+          this.environmentVariables.databaseUrl = this.buildDatabaseUrl(dbConfig);
           this.environmentVariables.databaseSchema = databaseConfiguration.databaseSchema;
           this.environmentVariables.databaseSSL = databaseConfiguration.ssl;
         }
@@ -104,25 +115,29 @@ class InitCommand extends AbstractAuthenticatedCommand {
   async developmentEnvironmentCreation() {
     let developmentEnvironment;
     try {
-      developmentEnvironment = await new ProjectManager(this.config)
-        .getDevelopmentEnvironmentForUser(this.config.projectId);
+      developmentEnvironment = await new ProjectManager(
+        this.config,
+      ).getDevelopmentEnvironmentForUser(this.config.projectId);
     } catch (error) {
       developmentEnvironment = null;
     }
 
     if (!developmentEnvironment) {
       this.spinner.pause();
-      const prompter = await this.inquirer.prompt([{
-        name: 'endpoint',
-        message: 'Enter your local admin backend endpoint:',
-        type: 'input',
-        default: 'http://localhost:3310',
-        validate: validateEndpoint,
-      }]);
+      const prompter = await this.inquirer.prompt([
+        {
+          name: 'endpoint',
+          message: 'Enter your local admin backend endpoint:',
+          type: 'input',
+          default: 'http://localhost:3310',
+          validate: validateEndpoint,
+        },
+      ]);
       this.spinner.continue();
 
-      developmentEnvironment = await new EnvironmentManager(this.config)
-        .createDevelopmentEnvironment(this.config.projectId, prompter.endpoint);
+      developmentEnvironment = await new EnvironmentManager(
+        this.config,
+      ).createDevelopmentEnvironment(this.config.projectId, prompter.endpoint);
     }
     this.environmentVariables.forestEnvSecret = developmentEnvironment.secretKey;
     this.environmentVariables.applicationPort = getApplicationPortFromCompleteEndpoint(
@@ -133,14 +148,15 @@ class InitCommand extends AbstractAuthenticatedCommand {
   async environmentVariablesAutoFilling() {
     if (this.environmentVariables.projectOrigin !== 'In-app') {
       const existingEnvFile = this.fs.existsSync('.env');
-      const response = await this.inquirer
-        .prompt([{
+      const response = await this.inquirer.prompt([
+        {
           type: 'confirm',
           name: 'autoFillOrCreationConfirmation',
           message: existingEnvFile
             ? PROMPT_MESSAGE_AUTO_FILLING_ENV_FILE
             : PROMPT_MESSAGE_AUTO_CREATING_ENV_FILE,
-        }]);
+        },
+      ]);
       if (response.autoFillOrCreationConfirmation) {
         try {
           return existingEnvFile
@@ -160,7 +176,7 @@ InitCommand.aliases = ['environments:init'];
 InitCommand.description = 'Set up your development environment in your current folder.';
 
 InitCommand.flags = {
-  projectId: AbstractAuthenticatedCommand.flags.integer({
+  projectId: flags.integer({
     char: 'p',
     description: 'The id of the project you want to init.',
   }),

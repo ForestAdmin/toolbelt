@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "target": "es2019",
+    "allowJs": true,
+    "outDir": "./dist/",
+    "skipLibCheck": true,
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "declaration": true,
+    "declarationMap": true,
+    "inlineSourceMap": true,
+    "noImplicitOverride": true,
+    "sourceMap": false,
+    "stripInternal": true
+  },
+  "include": ["./src/"],
+  "exclude": ["node_modules"],
+
+  "ts-node": {
+    "swc": true // For ultra fast compilation in dev mode
+  }
+}

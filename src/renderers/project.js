@@ -1,12 +1,7 @@
 const { chars } = require('./defaults');
 
 class ProjectRenderer {
-  constructor({
-    assertPresent,
-    chalk,
-    logger,
-    Table,
-  }) {
+  constructor({ assertPresent, chalk, logger, Table }) {
     assertPresent({
       chalk,
       logger,
@@ -32,10 +27,7 @@ class ProjectRenderer {
           { name: project.name || '' },
           { 'default environment': project.defaultEnvironment.type || '' },
         );
-        this.logger.log(
-          `${this.chalk.bold('PROJECT')}`,
-          ...table.toString().split('\n'),
-        );
+        this.logger.log(`${this.chalk.bold('PROJECT')}`, ...table.toString().split('\n'));
         break;
       default:
     }

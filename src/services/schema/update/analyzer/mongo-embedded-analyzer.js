@@ -14,10 +14,10 @@ function getMongooseEmbeddedSchema(embeddedObject, handleId = false) {
   var keysToAnalyse = Object.keys(embeddedObject);
 
   if (!handleId) {
-    keysToAnalyse = keysToAnalyse.filter((value) => value !== '_id');
+    keysToAnalyse = keysToAnalyse.filter(value => value !== '_id');
   }
 
-  keysToAnalyse.forEach((key) => {
+  keysToAnalyse.forEach(key => {
     const analysis = getMongooseSchema(embeddedObject[key]);
 
     if (analysis) {
@@ -40,7 +40,7 @@ function getMongooseArraySchema(arrayValue) {
 
   const analyses = [];
 
-  arrayValue.forEach((value) => {
+  arrayValue.forEach(value => {
     const analysis = getMongooseSchema(value, true);
 
     if (analysis) {
@@ -73,12 +73,11 @@ function hasEmbeddedTypes(analyses) {
   if (!analyses || !analyses.length) {
     return false;
   }
-  return analyses.filter((analysis) => analysis.type === 'embedded').length > 0;
+  return analyses.filter(analysis => analysis.type === 'embedded').length > 0;
 }
 
 function haveSameEmbeddedType(type1, type2) {
-  return typeof type1 === typeof type2
-    && Array.isArray(type1) === Array.isArray(type2);
+  return typeof type1 === typeof type2 && Array.isArray(type1) === Array.isArray(type2);
 }
 
 function areSchemaTypesMixed(type1, type2) {
@@ -138,7 +137,7 @@ function detectSubDocumentsIdUsage(schema1, schema2) {
 }
 
 function iterateOnTypeKeysToAddNestedSchemas(type, schema, isArray) {
-  Object.keys(type).forEach((key) => {
+  Object.keys(type).forEach(key => {
     addNestedSchemaToParentSchema(type[key], schema, isArray ? 0 : key);
   });
 }
@@ -203,7 +202,7 @@ function mergeAnalyzedSchemas(keyAnalyses) {
     isNestedArray = false;
   }
 
-  keyAnalyses.forEach((keyAnalysis) => {
+  keyAnalyses.forEach(keyAnalysis => {
     iterateOnTypeKeysToAddNestedSchemas(keyAnalysis, schema, isNestedArray);
   });
 

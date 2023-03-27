@@ -1,3 +1,110 @@
+# [3.2.0](https://github.com/ForestAdmin/toolbelt/compare/v3.1.11...v3.2.0) (2023-03-27)
+
+
+### Features
+
+* **create-command:** add commands to generate agent-nodejs projects ([#532](https://github.com/ForestAdmin/toolbelt/issues/532)) ([c791e87](https://github.com/ForestAdmin/toolbelt/commit/c791e87044579fe2a190305401b8fd151f3fdcff))
+
+## [3.1.11](https://github.com/ForestAdmin/toolbelt/compare/v3.1.10...v3.1.11) (2023-03-15)
+
+
+### Bug Fixes
+
+* **schema:update:** properly retrieve the export path of the models when using multiple databases ([#555](https://github.com/ForestAdmin/toolbelt/issues/555)) ([0e676b9](https://github.com/ForestAdmin/toolbelt/commit/0e676b98a532d890e3ec1f0a925c743801177264))
+
+## [3.1.10](https://github.com/ForestAdmin/toolbelt/compare/v3.1.9...v3.1.10) (2023-03-14)
+
+## [3.1.9](https://github.com/ForestAdmin/toolbelt/compare/v3.1.8...v3.1.9) (2023-03-13)
+
+
+### Bug Fixes
+
+* **node10:** change build target to correctly support node10 ([#549](https://github.com/ForestAdmin/toolbelt/issues/549)) ([5fd2a6c](https://github.com/ForestAdmin/toolbelt/commit/5fd2a6c5f2b39e10c62693304a2822033b109285))
+
+## [3.1.8](https://github.com/ForestAdmin/toolbelt/compare/v3.1.7...v3.1.8) (2023-03-13)
+
+## [3.1.7](https://github.com/ForestAdmin/toolbelt/compare/v3.1.6...v3.1.7) (2023-03-13)
+
+
+### Bug Fixes
+
+* **update:** add back support of outputDirectory option ([#550](https://github.com/ForestAdmin/toolbelt/issues/550)) ([d691100](https://github.com/ForestAdmin/toolbelt/commit/d691100626c75eef7d708913a7f5400d976897e2))
+
+## [3.1.6](https://github.com/ForestAdmin/toolbelt/compare/v3.1.5...v3.1.6) (2023-03-13)
+
+
+### Features
+
+* run diff command when push or deploy fails ([#529](https://github.com/ForestAdmin/toolbelt/issues/529)) ([40a236f](https://github.com/ForestAdmin/toolbelt/commit/40a236fdd9c2cb399e794c1a0423f9d24efdb0c6))
+
+## [3.1.5](https://github.com/ForestAdmin/toolbelt/compare/v3.1.4...v3.1.5) (2023-03-09)
+
+## [3.1.4](https://github.com/ForestAdmin/toolbelt/compare/v3.1.3...v3.1.4) (2023-03-08)
+
+
+### Bug Fixes
+
+* **docker:** correctly build docker image to prevent execution error ([#541](https://github.com/ForestAdmin/toolbelt/issues/541)) ([39be1bd](https://github.com/ForestAdmin/toolbelt/commit/39be1bd21565c255f46bef2e8de5f75d4823cea2))
+
+## [3.1.3](https://github.com/ForestAdmin/toolbelt/compare/v3.1.2...v3.1.3) (2023-03-08)
+
+## [3.1.2](https://github.com/ForestAdmin/toolbelt/compare/v3.1.1...v3.1.2) (2023-03-01)
+
+
+### Bug Fixes
+
+* **mongo:** don't use spinner when analyzing the database ([#535](https://github.com/ForestAdmin/toolbelt/issues/535)) ([db29809](https://github.com/ForestAdmin/toolbelt/commit/db29809121ccba46f77fb3b43972d40f1abc8d18))
+
+## [3.1.1](https://github.com/ForestAdmin/toolbelt/compare/v3.1.0...v3.1.1) (2023-02-28)
+
+# [3.1.0](https://github.com/ForestAdmin/toolbelt/compare/v3.0.12...v3.1.0) (2023-02-13)
+
+
+### Features
+
+* **schema-diff:** compare two environments api map ([#476](https://github.com/ForestAdmin/toolbelt/issues/476)) ([170da5d](https://github.com/ForestAdmin/toolbelt/commit/170da5da0f9fefe31e0d1f954885c5e4b011bce7))
+
+## [3.0.12](https://github.com/ForestAdmin/toolbelt/compare/v3.0.11...v3.0.12) (2023-02-09)
+
+## [3.0.12-beta.2](https://github.com/ForestAdmin/toolbelt/compare/v3.0.12-beta.1...v3.0.12-beta.2) (2023-02-08)
+
+## [3.0.12-beta.1](https://github.com/ForestAdmin/toolbelt/compare/v3.0.11...v3.0.12-beta.1) (2023-02-08)
+
+## [3.0.11](https://github.com/ForestAdmin/toolbelt/compare/v3.0.10...v3.0.11) (2023-02-03)
+
+
+### Bug Fixes
+
+* **security:** patch http-cache-semantics dependencies vulnerabilities ([#500](https://github.com/ForestAdmin/toolbelt/issues/500)) ([8dd4998](https://github.com/ForestAdmin/toolbelt/commit/8dd49986bab9b391cb080f49a65d93ce15b82044))
+
+## [3.0.10](https://github.com/ForestAdmin/toolbelt/compare/v3.0.9...v3.0.10) (2023-01-24)
+
+
+### Bug Fixes
+
+* **security:** patch cookiejar dependency vulnerabilities ([#490](https://github.com/ForestAdmin/toolbelt/issues/490)) ([5020460](https://github.com/ForestAdmin/toolbelt/commit/5020460aaa69828ff5ffa4670382b126615c3e9c))
+
+## [3.0.9](https://github.com/ForestAdmin/toolbelt/compare/v3.0.8...v3.0.9) (2023-01-19)
+
+
+### Bug Fixes
+
+* **security:** patch got dependency vulnerability ([#488](https://github.com/ForestAdmin/toolbelt/issues/488)) ([635df16](https://github.com/ForestAdmin/toolbelt/commit/635df16ca6cc2fbd4b913b70e9d096effbcb9903))
+
+## [3.0.8](https://github.com/ForestAdmin/toolbelt/compare/v3.0.7...v3.0.8) (2023-01-19)
+
+
+### Bug Fixes
+
+* **security:** patch qs dependency vulnerabilities ([#489](https://github.com/ForestAdmin/toolbelt/issues/489)) ([9384928](https://github.com/ForestAdmin/toolbelt/commit/9384928a3c1beccaa0af9dad6542465cc4b5a443))
+
+## [3.0.7](https://github.com/ForestAdmin/toolbelt/compare/v3.0.6...v3.0.7) (2023-01-19)
+
+
+### Bug Fixes
+
+* **security:** patch jose dependency vulnerability ([#487](https://github.com/ForestAdmin/toolbelt/issues/487)) ([4c658c3](https://github.com/ForestAdmin/toolbelt/commit/4c658c330bdfa52de90c384ff3c0a9232cd2b069))
+
 ## [3.0.6](https://github.com/ForestAdmin/toolbelt/compare/v3.0.5...v3.0.6) (2022-11-30)
 
 

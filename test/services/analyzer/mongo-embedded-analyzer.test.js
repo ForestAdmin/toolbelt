@@ -35,7 +35,9 @@ describe('services > Mongo Embedded Analyser', () => {
         expect(getMongooseSchema(1)).toBe('Number');
         expect(getMongooseSchema(true)).toBe('Boolean');
         expect(getMongooseSchema(new Date())).toBe('Date');
-        expect(getMongooseSchema(new ObjectId('objectIdFake'))).toStrictEqual(MONGOOSE_SCHEMA_TYPE_OBJECTID);
+        expect(getMongooseSchema(new ObjectId('objectIdFake'))).toStrictEqual(
+          MONGOOSE_SCHEMA_TYPE_OBJECTID,
+        );
       });
     });
 
@@ -58,7 +60,9 @@ describe('services > Mongo Embedded Analyser', () => {
         expect(getMongooseSchema(true)).toBe('Boolean');
         expect(getMongooseSchema(false)).toBe('Boolean');
         expect(getMongooseSchema(new Date())).toBe('Date');
-        expect(getMongooseSchema(new ObjectId('objectIdFake'))).toStrictEqual(MONGOOSE_SCHEMA_TYPE_OBJECTID);
+        expect(getMongooseSchema(new ObjectId('objectIdFake'))).toStrictEqual(
+          MONGOOSE_SCHEMA_TYPE_OBJECTID,
+        );
       });
     });
 
@@ -77,14 +81,19 @@ describe('services > Mongo Embedded Analyser', () => {
         const arrayOfNumberTypeDetection = getMongooseArraySchema([1, 2, 3]);
         const arrayOfBooleanTypeDetection = getMongooseArraySchema([true, false, true]);
         const arrayOfDateTypeDetection = getMongooseArraySchema([new Date(), new Date()]);
-        const arrayOfObjectIdsTypeDetection = getMongooseArraySchema([new ObjectId('objectIdFake'), new ObjectId('objectIdFake')]);
+        const arrayOfObjectIdsTypeDetection = getMongooseArraySchema([
+          new ObjectId('objectIdFake'),
+          new ObjectId('objectIdFake'),
+        ]);
 
         expect(arrayOfStringTypeDetection).toStrictEqual(['String', 'String', 'String']);
         expect(arrayOfNumberTypeDetection).toStrictEqual(['Number', 'Number', 'Number']);
         expect(arrayOfBooleanTypeDetection).toStrictEqual(['Boolean', 'Boolean', 'Boolean']);
         expect(arrayOfDateTypeDetection).toStrictEqual(['Date', 'Date']);
-        expect(arrayOfObjectIdsTypeDetection)
-          .toStrictEqual([MONGOOSE_SCHEMA_TYPE_OBJECTID, MONGOOSE_SCHEMA_TYPE_OBJECTID]);
+        expect(arrayOfObjectIdsTypeDetection).toStrictEqual([
+          MONGOOSE_SCHEMA_TYPE_OBJECTID,
+          MONGOOSE_SCHEMA_TYPE_OBJECTID,
+        ]);
       });
 
       it('should return an array of whole schema if array contains subDocuments', () => {
@@ -129,8 +138,9 @@ describe('services > Mongo Embedded Analyser', () => {
         expect(embeddedOfPrimitiveTypeDetection.number).toBe('Number');
         expect(embeddedOfPrimitiveTypeDetection.boolean).toBe('Boolean');
         expect(embeddedOfPrimitiveTypeDetection.date).toBe('Date');
-        expect(embeddedOfPrimitiveTypeDetection.objectId)
-          .toStrictEqual(MONGOOSE_SCHEMA_TYPE_OBJECTID);
+        expect(embeddedOfPrimitiveTypeDetection.objectId).toStrictEqual(
+          MONGOOSE_SCHEMA_TYPE_OBJECTID,
+        );
       });
 
       it('should return object with nested level as object', () => {
@@ -219,7 +229,7 @@ describe('services > Mongo Embedded Analyser', () => {
       it('should add an array as nested Key type', () => {
         expect.assertions(1);
         const type = ['String', 'String'];
-        const keySchema = { };
+        const keySchema = {};
         const nestedKey = 'nestedKey';
         addNestedSchemaToParentSchema(type, keySchema, nestedKey);
         expect(keySchema[nestedKey]).toBeInstanceOf(Array);
@@ -228,7 +238,7 @@ describe('services > Mongo Embedded Analyser', () => {
       it('should add an object as nested Key type', () => {
         expect.assertions(1);
         const type = [{ nestedKeyLevel2: 'String' }, { nestedKeyLevel2: 'Number' }];
-        const keySchema = { };
+        const keySchema = {};
         const nestedKey = 'nestedKey';
         addNestedSchemaToParentSchema(type, keySchema, nestedKey);
         expect(keySchema[nestedKey]).toBeInstanceOf(Object);
@@ -237,7 +247,7 @@ describe('services > Mongo Embedded Analyser', () => {
       it('should add a mongoose type as nested Key key', () => {
         expect.assertions(1);
         const type = 'String';
-        const keySchema = { };
+        const keySchema = {};
         const nestedKey = 'nestedKey';
         addNestedSchemaToParentSchema(type, keySchema, nestedKey);
         expect(keySchema[nestedKey]).toBe('String');
@@ -315,7 +325,9 @@ describe('services > Mongo Embedded Analyser', () => {
 
           addObjectSchema(type, parentSchema, currentKey);
 
-          expect(parentSchema).toStrictEqual({ myKey: { nestedKey: 'String', nestedKey2: 'Number' } });
+          expect(parentSchema).toStrictEqual({
+            myKey: { nestedKey: 'String', nestedKey2: 'Number' },
+          });
         });
       });
 
@@ -372,7 +384,7 @@ describe('services > Mongo Embedded Analyser', () => {
           it('should detect that the _id usage is ambiguous', () => {
             expect.assertions(1);
 
-            const parentSchema = { };
+            const parentSchema = {};
             const currentKey = 'myKey';
             const type = [{ _id: MONGOOSE_SCHEMA_TYPE_OBJECTID }, { noId: 'String' }];
 
@@ -384,7 +396,7 @@ describe('services > Mongo Embedded Analyser', () => {
           it('should detect that no _ids are used', () => {
             expect.assertions(1);
 
-            const parentSchema = { };
+            const parentSchema = {};
             const currentKey = 'myKey';
             const type = [{ noId: 'String' }, { noId: 'String' }];
 
@@ -396,13 +408,16 @@ describe('services > Mongo Embedded Analyser', () => {
           it('should detect that _ids are used', () => {
             expect.assertions(1);
 
-            const parentSchema = { };
+            const parentSchema = {};
             const currentKey = 'myKey';
-            const type = [{
-              _id: MONGOOSE_SCHEMA_TYPE_OBJECTID,
-            }, {
-              _id: MONGOOSE_SCHEMA_TYPE_OBJECTID,
-            }];
+            const type = [
+              {
+                _id: MONGOOSE_SCHEMA_TYPE_OBJECTID,
+              },
+              {
+                _id: MONGOOSE_SCHEMA_TYPE_OBJECTID,
+              },
+            ];
 
             addObjectSchema(type, parentSchema, currentKey);
 
@@ -490,7 +505,9 @@ describe('services > Mongo Embedded Analyser', () => {
         expect(haveSameEmbeddedType(1, 2)).toBe(true);
         expect(haveSameEmbeddedType(true, false)).toBe(true);
         expect(haveSameEmbeddedType(new Date(), new Date())).toBe(true);
-        expect(haveSameEmbeddedType(new ObjectId('objectIdFake'), new ObjectId('objectIdFake'))).toBe(true);
+        expect(
+          haveSameEmbeddedType(new ObjectId('objectIdFake'), new ObjectId('objectIdFake')),
+        ).toBe(true);
         expect(haveSameEmbeddedType({}, {})).toBe(true);
         expect(haveSameEmbeddedType([], [])).toBe(true);
       });
@@ -577,10 +594,10 @@ describe('services > Mongo Embedded Analyser', () => {
         const alReadyAmbiguous = { _id: 'ambiguous' };
         let result;
 
-        result = detectSubDocumentsIdUsage(alReadyAmbiguous, { });
+        result = detectSubDocumentsIdUsage(alReadyAmbiguous, {});
         expect(result).toBe('ambiguous');
 
-        result = detectSubDocumentsIdUsage({ }, alReadyAmbiguous);
+        result = detectSubDocumentsIdUsage({}, alReadyAmbiguous);
         expect(result).toBe('ambiguous');
 
         result = detectSubDocumentsIdUsage(alReadyAmbiguous, alReadyAmbiguous);
@@ -591,7 +608,7 @@ describe('services > Mongo Embedded Analyser', () => {
         expect.assertions(2);
 
         const usingId = { _id: MONGOOSE_SCHEMA_TYPE_OBJECTID };
-        const notUsingId = { };
+        const notUsingId = {};
         let result;
 
         result = detectSubDocumentsIdUsage(usingId, notUsingId);
@@ -612,7 +629,7 @@ describe('services > Mongo Embedded Analyser', () => {
       it('should return false if we can assert that _id is not used', () => {
         expect.assertions(1);
 
-        const notUsingId = { };
+        const notUsingId = {};
 
         expect(detectSubDocumentsIdUsage(notUsingId, notUsingId)).toBe(false);
       });

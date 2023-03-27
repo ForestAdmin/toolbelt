@@ -1,17 +1,18 @@
+const { flags } = require('@oclif/command');
 const EnvironmentManager = require('../../services/environment-manager');
-const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command');
+const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command').default;
 const withCurrentProject = require('../../services/with-current-project');
 
 class CreateCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, env, environmentRenderer } = this.context;
     assertPresent({ env, environmentRenderer });
     this.env = env;
     this.environmentRenderer = environmentRenderer;
   }
 
-  async runIfAuthenticated() {
+  async runAuthenticated() {
     const parsed = this.parse(CreateCommand);
     const config = await withCurrentProject({ ...this.env, ...parsed.flags });
     const manager = new EnvironmentManager(config);
@@ -22,8 +23,13 @@ class CreateCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       if (error.response && error.status !== 403) {
         const errorData = JSON.parse(error.response.text);
-        if (errorData && errorData.errors && errorData.errors.length
-          && errorData.errors[0] && errorData.errors[0].detail) {
+        if (
+          errorData &&
+          errorData.errors &&
+          errorData.errors.length &&
+          errorData.errors[0] &&
+          errorData.errors[0].detail
+        ) {
           this.logger.error(errorData.errors[0].detail);
           this.exit(1);
         }
@@ -36,22 +42,22 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 CreateCommand.description = 'Create a new environment.';
 
 CreateCommand.flags = {
-  projectId: AbstractAuthenticatedCommand.flags.integer({
+  projectId: flags.integer({
     char: 'p',
     description: 'Forest project ID.',
     default: null,
   }),
-  name: AbstractAuthenticatedCommand.flags.string({
+  name: flags.string({
     char: 'n',
     description: 'Environment name.',
     required: true,
   }),
-  url: AbstractAuthenticatedCommand.flags.string({
+  url: flags.string({
     char: 'u',
     description: 'Application URL.',
     required: true,
   }),
-  format: AbstractAuthenticatedCommand.flags.string({
+  format: flags.string({
     char: 'format',
     description: 'Ouput format.',
     options: ['table', 'json'],

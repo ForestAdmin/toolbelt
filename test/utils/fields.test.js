@@ -1,6 +1,10 @@
+const Context = require('@forestadmin/context');
 const { isUnderscored } = require('../../src/utils/fields');
+const defaultPlan = require('../../src/context/plan');
 
 describe('utils > fields', () => {
+  Context.init(defaultPlan);
+
   describe('without wrong parameters', () => {
     it('should return false', () => {
       expect.assertions(2);
@@ -14,9 +18,11 @@ describe('utils > fields', () => {
     it('should return true', () => {
       expect.assertions(1);
 
-      const fields = [{
-        nameColumn: 'id',
-      }];
+      const fields = [
+        {
+          nameColumn: 'id',
+        },
+      ];
 
       expect(isUnderscored(fields)).toBe(true);
     });
@@ -27,11 +33,14 @@ describe('utils > fields', () => {
       it('should return true', () => {
         expect.assertions(1);
 
-        const fields = [{
-          nameColumn: 'id',
-        }, {
-          nameColumn: 'first_name',
-        }];
+        const fields = [
+          {
+            nameColumn: 'id',
+          },
+          {
+            nameColumn: 'first_name',
+          },
+        ];
 
         expect(isUnderscored(fields)).toBe(true);
       });
@@ -41,11 +50,14 @@ describe('utils > fields', () => {
       it('should return false', () => {
         expect.assertions(1);
 
-        const fields = [{
-          nameColumn: 'id',
-        }, {
-          nameColumn: 'firstName',
-        }];
+        const fields = [
+          {
+            nameColumn: 'id',
+          },
+          {
+            nameColumn: 'firstName',
+          },
+        ];
 
         expect(isUnderscored(fields)).toBe(false);
       });

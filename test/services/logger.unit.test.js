@@ -6,17 +6,16 @@ describe('services > Logger', () => {
     jest.restoreAllMocks();
   });
 
-  const makeContext = () =>
-    ({
-      env: jest.fn(),
-      stderr: {
-        write: jest.fn(),
-      },
-      stdout: {
-        write: jest.fn(),
-      },
-      assertPresent: jest.fn(),
-    });
+  const makeContext = () => ({
+    env: jest.fn(),
+    stderr: {
+      write: jest.fn(),
+    },
+    stdout: {
+      write: jest.fn(),
+    },
+    assertPresent: jest.fn(),
+  });
 
   describe('log', () => {
     it('should display a message to the stdout without a prefix', () => {

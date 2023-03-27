@@ -4,8 +4,8 @@ const defaultPlan = require('../../../src/context/plan');
 
 // FIXME: Need to override things here (fs...)
 
-const replaceProcessFunctions = (plan) => plan
-  .replace('process/exit/exitProcess', (exitCode) => {
+const replaceProcessFunctions = plan =>
+  plan.replace('process/exit/exitProcess', exitCode => {
     const error = {
       message: `Unwanted "process.exit" call with exit code ${exitCode}`,
       oclif: {
@@ -15,8 +15,8 @@ const replaceProcessFunctions = (plan) => plan
     throw error;
   });
 
-const makeEnvironmentVariablesReplacement = (env) => (plan) => plan
-  .replace('env/variables/env', {
+const makeEnvironmentVariablesReplacement = env => plan =>
+  plan.replace('env/variables/env', {
     // FIXME: Default values.
     // APPLICATION_PORT: undefined,
     // CORS_ORIGIN: undefined,
@@ -28,7 +28,7 @@ const makeEnvironmentVariablesReplacement = (env) => (plan) => plan
     // FOREST_EMAIL: undefined,
     // FOREST_ENV_SECRET: undefined,
     // FOREST_PASSWORD: undefined,
-    // FOREST_URL: undefined,
+    // FOREST_SERVER_URL: undefined,
     // NODE_ENV: undefined,
     // PORT: undefined,
     // TOKEN_PATH: undefined,
@@ -38,41 +38,32 @@ const makeEnvironmentVariablesReplacement = (env) => (plan) => plan
     ...env,
   });
 
-const jwtDecodeMock = jest.fn().mockImplementation(
-  (token) => {
-    if (token === '__invalid_token__') throw new Error('Invalid token');
-    return token;
-  },
-);
+const jwtDecodeMock = jest.fn().mockImplementation(token => {
+  if (token === '__invalid_token__') throw new Error('Invalid token');
+  return token;
+});
 
-const makeDependenciesReplacement = () => (plan) => plan
-  .replace('dependencies/open/open', jest.fn())
-  .replace('dependencies/jwtDecode/jwtDecode', jwtDecodeMock);
+const makeDependenciesReplacement = () => plan =>
+  plan
+    .replace('dependencies/open/open', jest.fn())
+    .replace('dependencies/jwtDecode/jwtDecode', jwtDecodeMock);
 
-const makeAuthenticatorReplacement = (tokenBehavior) => {
-  if (tokenBehavior === null) return (plan) => plan;
-  return (plan) => plan.replace(
-    'services/authenticator/authenticator',
-    makeAuthenticatorMock(tokenBehavior),
-  );
+const makeAuthenticatorReplacement = tokenBehavior => {
+  if (tokenBehavior === null) return plan => plan;
+  return plan =>
+    plan.replace('services/authenticator/authenticator', makeAuthenticatorMock(tokenBehavior));
 };
 
-const makeInquirerMock = (prompts) => {
+const makeInquirerMock = prompts => {
   const dummyPrompt = jest.fn();
-  prompts.forEach((prompt) => dummyPrompt.mockReturnValueOnce(prompt.out));
+  prompts.forEach(prompt => dummyPrompt.mockReturnValueOnce(prompt.out));
   return { prompt: dummyPrompt };
 };
 
-const makeInquirerReplacement = (dummyInquirer) => (plan) => plan
-  .replace('dependencies/inquirer/inquirer', dummyInquirer);
+const makeInquirerReplacement = dummyInquirer => plan =>
+  plan.replace('dependencies/inquirer/inquirer', dummyInquirer);
 
-const preparePlan = ({
-  testCommandPlan,
-  env,
-  prompts,
-  tokenBehavior,
-  additionnalStep,
-}) => {
+const preparePlan = ({ testCommandPlan, env, prompts, tokenBehavior, additionnalStep }) => {
   if (testCommandPlan) return { plan: testCommandPlan };
   const inquirerMock = makeInquirerMock(prompts);
 

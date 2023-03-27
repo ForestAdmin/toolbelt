@@ -10,12 +10,13 @@ const MAPPING_DIALECT_TO_PORT = {
   mongodb: '27017',
 };
 
-const dbDialectOptions = [
-  { name: 'mongodb', value: 'mongodb' },
+const sqlDbDialectOptions = [
   { name: 'mssql', value: 'mssql' },
   { name: 'mysql / mariadb', value: 'mysql' },
   { name: 'postgres', value: 'postgres' },
 ];
+
+const nosqlDbDialectOptions = [{ name: 'mongodb', value: 'mongodb' }];
 
 class DatabasePrompts extends AbstractPrompter {
   constructor(requests, knownAnswers, prompts, programArguments) {
@@ -25,9 +26,9 @@ class DatabasePrompts extends AbstractPrompter {
     this.programArguments = programArguments;
   }
 
-  async handlePrompts() {
+  async handlePrompts(forSql = true, forNosql = true) {
     this.handleConnectionUrl();
-    this.handleDialect();
+    this.handleDialect(forSql, forNosql);
     this.handleName();
     this.handleSchema();
     this.handleHostname();
@@ -42,29 +43,40 @@ class DatabasePrompts extends AbstractPrompter {
     if (this.isOptionRequested('dbConnectionUrl')) {
       this.knownAnswers.databaseConnectionURL = this.programArguments.databaseConnectionURL;
       try {
-        [, this.knownAnswers.databaseDialect] = this.knownAnswers.databaseConnectionURL.match(/(.*):\/\//);
-        if (this.knownAnswers.databaseDialect === 'mongodb+srv') { this.knownAnswers.databaseDialect = 'mongodb'; }
+        [, this.knownAnswers.databaseDialect] =
+          this.knownAnswers.databaseConnectionURL.match(/(.*):\/\//);
+        if (this.knownAnswers.databaseDialect === 'mongodb+srv') {
+          this.knownAnswers.databaseDialect = 'mongodb';
+        }
       } catch (error) {
-        throw new PrompterError(
+        throw new PrompterError(messages.ERROR_NOT_PARSABLE_CONNECTION_URL, [
           messages.ERROR_NOT_PARSABLE_CONNECTION_URL,
-          [
-            messages.ERROR_NOT_PARSABLE_CONNECTION_URL,
-          ],
-        );
+        ]);
       }
     }
   }
 
-  handleDialect() {
+  handleDialect(forSql = true, forNosql = true) {
+    if (forNosql && !forSql) {
+      this.knownAnswers.databaseDialect = 'mongodb';
+      return;
+    }
+
     if (!this.knownAnswers.databaseDialect) {
       this.knownAnswers.databaseDialect = this.programArguments.databaseDialect;
     }
-    if (this.isOptionRequested('dbDialect') && this.programArguments.databaseDialect === undefined) {
+    if (
+      this.isOptionRequested('dbDialect') &&
+      this.programArguments.databaseDialect === undefined
+    ) {
       const prompt = {
         type: 'list',
         name: 'databaseDialect',
-        message: 'What\'s the database type?',
-        choices: dbDialectOptions,
+        message: "What's the database type?",
+        choices: [
+          ...(forNosql ? nosqlDbDialectOptions : []),
+          ...(forSql ? sqlDbDialectOptions : []),
+        ],
       };
 
       // NOTICE: use a rawlist on Windows because of this issue:
@@ -82,9 +94,11 @@ class DatabasePrompts extends AbstractPrompter {
       this.prompts.push({
         type: 'input',
         name: 'databaseName',
-        message: 'What\'s the database name?',
-        validate: (dbName) => {
-          if (dbName) { return true; }
+        message: "What's the database name?",
+        validate: dbName => {
+          if (dbName) {
+            return true;
+          }
           return 'Please specify the database name.';
         },
       });
@@ -100,17 +114,20 @@ class DatabasePrompts extends AbstractPrompter {
         this.prompts.push({
           type: 'input',
           name: 'databaseSchema',
-          message: 'What\'s the database schema? [optional]',
+          message: "What's the database schema? [optional]",
           description: 'Leave blank by default',
-          when: (answers) => {
+          when: answers => {
             // NOTICE: MongoDB and MySQL do not require a Schema.
             const skipDatabases = ['mongodb', 'mysql'];
             return !skipDatabases.includes(
               answers.databaseDialect || this.knownAnswers.databaseDialect,
             );
           },
-          default: (answers) => {
-            if (answers.databaseDialect === 'postgres' || this.knownAnswers.databaseDialect === 'postgres') {
+          default: answers => {
+            if (
+              answers.databaseDialect === 'postgres' ||
+              this.knownAnswers.databaseDialect === 'postgres'
+            ) {
               return 'public';
             }
             return '';
@@ -125,7 +142,7 @@ class DatabasePrompts extends AbstractPrompter {
       this.prompts.push({
         type: 'input',
         name: 'databaseHost',
-        message: 'What\'s the database hostname?',
+        message: "What's the database hostname?",
         default: 'localhost',
       });
     }
@@ -136,15 +153,18 @@ class DatabasePrompts extends AbstractPrompter {
       this.prompts.push({
         type: 'input',
         name: 'databasePort',
-        message: 'What\'s the database port?',
-        default: (args) => MAPPING_DIALECT_TO_PORT[args.databaseDialect],
-        validate: (port) => {
+        message: "What's the database port?",
+        default: args =>
+          MAPPING_DIALECT_TO_PORT[args.databaseDialect || this.knownAnswers.databaseDialect],
+        validate: port => {
           if (!/^\d+$/.test(port)) {
             return 'The port must be a number.';
           }
 
           const parsedPort = parseInt(port, 10);
-          if (parsedPort > 0 && parsedPort < 65536) { return true; }
+          if (parsedPort > 0 && parsedPort < 65536) {
+            return true;
+          }
           return 'This is not a valid port.';
         },
       });
@@ -156,9 +176,9 @@ class DatabasePrompts extends AbstractPrompter {
       this.prompts.push({
         type: 'input',
         name: 'databaseUser',
-        message: 'What\'s the database user?',
-        default: (args) => {
-          if (args.databaseDialect === 'mongodb') {
+        message: "What's the database user?",
+        default: args => {
+          if ([args.databaseDialect, this.knownAnswers.databaseDialect].includes('mongodb')) {
             return undefined;
           }
           return 'root';
@@ -168,11 +188,14 @@ class DatabasePrompts extends AbstractPrompter {
   }
 
   handlePassword() {
-    if (this.isOptionRequested('dbPassword') && this.programArguments.databasePassword === undefined) {
+    if (
+      this.isOptionRequested('dbPassword') &&
+      this.programArguments.databasePassword === undefined
+    ) {
       this.prompts.push({
         type: 'password',
         name: 'databasePassword',
-        message: 'What\'s the database password? [optional]',
+        message: "What's the database password? [optional]",
       });
     }
   }
@@ -195,7 +218,8 @@ class DatabasePrompts extends AbstractPrompter {
         type: 'confirm',
         name: 'mongoDBSRV',
         message: 'Use a SRV connection string?',
-        when: (answers) => answers.databaseDialect === 'mongodb',
+        when: answers =>
+          [answers.databaseDialect, this.knownAnswers.databaseDialect].includes('mongodb'),
         default: false,
       });
     }
@@ -204,5 +228,6 @@ class DatabasePrompts extends AbstractPrompter {
 
 module.exports = {
   DatabasePrompts,
-  dbDialectOptions,
+  sqlDbDialectOptions,
+  nosqlDbDialectOptions,
 };

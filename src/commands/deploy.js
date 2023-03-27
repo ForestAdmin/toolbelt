@@ -1,4 +1,5 @@
-const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
+const { flags } = require('@oclif/command');
+const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
 const EnvironmentManager = require('../services/environment-manager');
 const ProjectManager = require('../services/project-manager');
 const { handleBranchError } = require('../services/branch-manager');
@@ -6,8 +7,8 @@ const withCurrentProject = require('../services/with-current-project');
 
 /** Deploy layout changes of an environment to the reference one. */
 class DeployCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, env, inquirer } = this.context;
     assertPresent({ env, inquirer });
     this.env = env;
@@ -25,8 +26,9 @@ class DeployCommand extends AbstractAuthenticatedCommand {
     const config = await withCurrentProject({ ...this.env, ...commandOptions });
 
     if (!config.envSecret) {
-      const environment = await new ProjectManager(config)
-        .getDevelopmentEnvironmentForUser(config.projectId);
+      const environment = await new ProjectManager(config).getDevelopmentEnvironmentForUser(
+        config.projectId,
+      );
       config.envSecret = environment.secretKey;
     }
 
@@ -39,12 +41,13 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * @returns {Boolean} Return true if user has confirmed.
    */
   async confirm() {
-    const response = await this.inquirer
-      .prompt([{
+    const response = await this.inquirer.prompt([
+      {
         type: 'confirm',
         name: 'confirm',
         message: 'Deploy layout changes to reference?',
-      }]);
+      },
+    ]);
     return response.confirm;
   }
 
@@ -52,7 +55,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    * The "deploy" command procedure itself.
    * @returns {void}
    */
-  async runIfAuthenticated() {
+  async runAuthenticated() {
     try {
       const config = await this.getConfig();
 
@@ -62,7 +65,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
 
       this.logger.success('Deployed layout changes to reference environment.');
     } catch (error) {
-      this.logger.error(handleBranchError(error));
+      this.logger.error(await handleBranchError(error));
       this.exit(2);
     }
   }
@@ -73,14 +76,14 @@ DeployCommand.aliases = ['environments:deploy'];
 DeployCommand.description = 'Deploy layout changes of the current branch to the reference one.';
 
 DeployCommand.flags = {
-  help: AbstractAuthenticatedCommand.flags.boolean({
+  help: flags.boolean({
     description: 'Display usage information.',
   }),
-  force: AbstractAuthenticatedCommand.flags.boolean({
+  force: flags.boolean({
     char: 'f',
     description: 'Skip deploy confirmation.',
   }),
-  projectId: AbstractAuthenticatedCommand.flags.integer({
+  projectId: flags.integer({
     char: 'p',
     description: 'The id of the project you want to deploy.',
     default: null,

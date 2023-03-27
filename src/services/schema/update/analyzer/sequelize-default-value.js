@@ -38,8 +38,8 @@ class DefaultValueExpression {
 
   parseGeneric() {
     const nulls = ['NULL'];
-    const falses = ['false', 'FALSE', 'b\'0\'', '((0))'];
-    const trues = ['true', 'TRUE', 'b\'1\'', '((1))'];
+    const falses = ['false', 'FALSE', "b'0'", '((0))'];
+    const trues = ['true', 'TRUE', "b'1'", '((1))'];
     const isDate = ['TIMESTAMP', 'DATETIME', 'DATE', 'TIME'];
 
     let result;
@@ -57,7 +57,9 @@ class DefaultValueExpression {
     } else if (/^'.*'$/.test(this.expression)) {
       result = this.expression.substr(1, this.expression.length - 2).replace(/''/g, "'");
     } else if (isDate) {
-      result = this.literalUnlessMatch(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})|(\d{4}-\d{2}-\d{2})|(\d{2}:\d{2}:\d{2})$/);
+      result = this.literalUnlessMatch(
+        /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})|(\d{4}-\d{2}-\d{2})|(\d{2}:\d{2}:\d{2})$/,
+      );
     }
 
     return result;
@@ -66,7 +68,8 @@ class DefaultValueExpression {
   parseMysql() {
     // We have no way of differenciating expressions from constants
     // => Just make some guesses and default to Sequelize.literal to pass the tests.
-    const isString = this.type.startsWith('VARCHAR') || this.type === 'TEXT' || this.type === 'CHAR';
+    const isString =
+      this.type.startsWith('VARCHAR') || this.type === 'TEXT' || this.type === 'CHAR';
 
     let result;
     if (this.type.startsWith('ENUM')) {

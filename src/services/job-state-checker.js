@@ -9,23 +9,18 @@ const jobDeserializer = require('../deserializers/job');
 const setTimeoutAsync = promisify(setTimeout);
 
 function JobStateChecker(message, oclifExit) {
-  const {
-    assertPresent,
-    authenticator,
-    env,
-    logger,
-  } = Context.inject();
+  const { assertPresent, authenticator, env, logger } = Context.inject();
   assertPresent({ authenticator, env, logger });
 
   const bar = new ProgressBar(`${message} [:bar] :percent `, { total: 100 });
   bar.update(0);
 
-  this.check = async (jobId) => {
+  this.check = async jobId => {
     try {
       const jobResponse = await agent
-        .get(`${env.FOREST_URL}/api/jobs/${jobId}`)
+        .get(`${env.FOREST_SERVER_URL}/api/jobs/${jobId}`)
         .set('Authorization', `Bearer ${authenticator.getAuthToken()}`)
-        .then((response) => jobDeserializer.deserialize(response.body));
+        .then(response => jobDeserializer.deserialize(response.body));
 
       if (jobResponse && jobResponse.state) {
         let isBarComplete = false;

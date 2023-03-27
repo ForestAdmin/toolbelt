@@ -7,23 +7,32 @@ const Context = require('@forestadmin/context');
 const { handleError } = require('../utils/error');
 const { DatabasePrompts } = require('./prompter/database-prompts');
 
-const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE = 'Copying the environment variables in your `.env` file';
-const SUCCESS_MESSAGE_ENV_FILE_CREATED_AND_FILLED = 'Creating a new `.env` file containing your environment variables';
-const SUCCESS_MESSAGE_DISPLAY_ENV_VARIABLES = 'Here are the environment variables you need to copy in your configuration file:\n';
+const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE =
+  'Copying the environment variables in your `.env` file';
+const SUCCESS_MESSAGE_ENV_FILE_CREATED_AND_FILLED =
+  'Creating a new `.env` file containing your environment variables';
+const SUCCESS_MESSAGE_DISPLAY_ENV_VARIABLES =
+  'Here are the environment variables you need to copy in your configuration file:\n';
 const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_TO_CLIPBOARD = 'Automatically copied to your clipboard!';
 
-const ERROR_MESSAGE_PROJECT_IN_V1 = 'This project does not support branches yet. Please migrate your environments from your Project settings first.';
-const ERROR_MESSAGE_NOT_RIGHT_PERMISSION_LEVEL = 'You need the \'Admin\' or \'Developer\' permission level on this project to use branches.';
-const ERROR_MESSAGE_PROJECT_BY_ENV_NOT_FOUND = 'Your project was not found. Please check your environment secret.';
+const ERROR_MESSAGE_PROJECT_IN_V1 =
+  'This project does not support branches yet. Please migrate your environments from your Project settings first.';
+const ERROR_MESSAGE_NOT_RIGHT_PERMISSION_LEVEL =
+  "You need the 'Admin' or 'Developer' permission level on this project to use branches.";
+const ERROR_MESSAGE_PROJECT_BY_ENV_NOT_FOUND =
+  'Your project was not found. Please check your environment secret.';
 const ERROR_MESSAGE_PROJECT_BY_OPTION_NOT_FOUND = 'The project you specified does not exist.';
-const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT = 'You cannot create your development environment until this project has either a remote or a production environment.';
-const ERROR_MESSAGE_ENVIRONMENT_OWNER_UNICITY = 'You already have a development environment on this project.';
+const ERROR_MESSAGE_NO_PRODUCTION_OR_REMOTE_ENVIRONMENT =
+  'You cannot create your development environment until this project has either a remote or a production environment.';
+const ERROR_MESSAGE_ENVIRONMENT_OWNER_UNICITY =
+  'You already have a development environment on this project.';
 
 const VALIDATION_REGEX_URL = /^https?:\/\/.*/i;
 const VALIDATION_REGEX_HTTPS = /^http((s:\/\/.*)|(s?:\/\/(localhost|127\.0\.0\.1).*))/i;
 const SPLIT_URL_REGEX = new RegExp('(\\w+)://([\\w\\-\\.]+)(:(\\d+))?');
 
-const ENV_VARIABLES_AUTO_FILLING_PREFIX = '\n\n# ℹ️ The content below was automatically added by the `forest init` command ⤵️\n';
+const ENV_VARIABLES_AUTO_FILLING_PREFIX =
+  '\n\n# ℹ️ The content below was automatically added by the `forest init` command ⤵️\n';
 
 const OPTIONS_DATABASE = [
   'dbDialect',
@@ -62,17 +71,18 @@ function handleInitError(rawError) {
 async function handleDatabaseConfiguration() {
   const { env, inquirer } = Context.inject();
 
-  const response = await inquirer
-    .prompt([{
+  const response = await inquirer.prompt([
+    {
       type: 'confirm',
       name: 'confirm',
-      message: 'You don\'t have a DATABASE_URL yet. Do you need help setting it?',
-    }]);
+      message: "You don't have a DATABASE_URL yet. Do you need help setting it?",
+    },
+  ]);
 
   if (!response.confirm) return null;
 
   const promptContent = [];
-  await new DatabasePrompts(OPTIONS_DATABASE, env, promptContent, { }).handlePrompts();
+  await new DatabasePrompts(OPTIONS_DATABASE, env, promptContent, {}).handlePrompts();
   return inquirer.prompt(promptContent);
 }
 
@@ -128,10 +138,12 @@ function commentExistingVariablesInAFile(fileData, environmentVariables) {
     variablesToComment['DATABASE_SSL='] = '# DATABASE_SSL=';
   }
   const variablesToCommentRegex = new RegExp(
-    Object.keys(variablesToComment).map((key) => `((?<!# )${key})`).join('|'),
+    Object.keys(variablesToComment)
+      .map(key => `((?<!# )${key})`)
+      .join('|'),
     'g',
   );
-  return fileData.replace(variablesToCommentRegex, (match) => variablesToComment[match]);
+  return fileData.replace(variablesToCommentRegex, match => variablesToComment[match]);
 }
 
 function amendDotenvFile(environmentVariables) {
@@ -167,7 +179,8 @@ async function displayEnvironmentVariablesAndCopyToClipboard(environmentVariable
   const { logger } = Context.inject();
   const variablesToDisplay = getContentToAddInDotenvFile(environmentVariables);
   logger.info(SUCCESS_MESSAGE_DISPLAY_ENV_VARIABLES + chalk.black.bgCyan(variablesToDisplay));
-  await clipboardy.write(variablesToDisplay)
+  await clipboardy
+    .write(variablesToDisplay)
     .then(() => logger.info(chalk.italic(SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_TO_CLIPBOARD)))
     .catch(() => null);
 }

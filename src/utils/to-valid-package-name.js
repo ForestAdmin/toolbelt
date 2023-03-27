@@ -8,7 +8,8 @@ module.exports = function toValidPackageName(packageName) {
 
   if (!isValid(packageName)) {
     // NOTICE: Create an always valid package name (disallow almost everything)
-    const validPackageName = packageName.toLowerCase()
+    const validPackageName = packageName
+      .toLowerCase()
       // Remove all non "a-z", "0-9", "-" characters with hyphen.
       .replace(/[^a-z0-9\\-]/g, '-')
       // Remove hyphen sequence (> 1).

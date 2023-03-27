@@ -10,8 +10,8 @@ class MongoHelper {
 
   connect() {
     this.client = new MongoClient(this.url, { useNewUrlParser: true, useUnifiedTopology: true });
-    return new Promise((resolve) => {
-      this.client.connect((err) => {
+    return new Promise(resolve => {
+      this.client.connect(err => {
         assert.equal(null, err);
         this.db = this.client.db();
         resolve(this.client);
@@ -20,14 +20,15 @@ class MongoHelper {
   }
 
   given(fixtures) {
-    return Promise.all(Object.keys(fixtures).map((collectionName) =>
-      this.insertDocs(collectionName, fixtures[collectionName])));
+    return Promise.all(
+      Object.keys(fixtures).map(collectionName =>
+        this.insertDocs(collectionName, fixtures[collectionName]),
+      ),
+    );
   }
 
   insertDocs(collectionName, docs) {
-    return this.db
-      .collection(collectionName)
-      .insertMany(docs, { ordered: false });
+    return this.db.collection(collectionName).insertMany(docs, { ordered: false });
   }
 
   close() {
@@ -37,11 +38,13 @@ class MongoHelper {
 
   async dropAllCollections() {
     const collections = await this.db.listCollections().toArray();
-    return Promise.all(collections
-      // System collections are not droppable…
-      .filter(({ name }) => !name.startsWith('system.'))
-      // …other collections are.
-      .map(({ name }) => this.db.collection(name).drop()));
+    return Promise.all(
+      collections
+        // System collections are not droppable…
+        .filter(({ name }) => !name.startsWith('system.'))
+        // …other collections are.
+        .map(({ name }) => this.db.collection(name).drop()),
+    );
   }
 }
 

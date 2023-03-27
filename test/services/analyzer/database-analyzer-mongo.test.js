@@ -53,13 +53,13 @@ async function getAnalyzerOutput(mongoUrl, callback) {
 }
 
 async function getAnalyzerOutputWithModel(mongoUrl, model) {
-  return getAnalyzerOutput(mongoUrl, async (mongoHelper) => mongoHelper.given(model));
+  return getAnalyzerOutput(mongoUrl, async mongoHelper => mongoHelper.given(model));
 }
 
 describe('services > database analyser > MongoDB', () => {
   Context.init(defaultPlan);
 
-  describeMongoDatabases((mongoUrl) => () => {
+  describeMongoDatabases(mongoUrl => () => {
     it('should connect and insert a document.', async () => {
       expect.assertions(1);
       const mongoHelper = await getMongoHelper(mongoUrl);
@@ -169,15 +169,18 @@ describe('services > database analyser > MongoDB', () => {
   it('should ignore `system.*` collections created via views using Mongo Database > 3', async () => {
     expect.assertions(2);
 
-    const outputModel = await getAnalyzerOutput(DATABASE_URL_MONGODB_MAX, async (mongoHelper) => {
+    const outputModel = await getAnalyzerOutput(DATABASE_URL_MONGODB_MAX, async mongoHelper => {
       await mongoHelper.given(complexModel);
       await mongoHelper.db.createCollection('myView', { viewOn: 'films' });
 
       // Expect that system.views collection is actually present in database:
       // the purpose of this test is to ensure it has not been imported nor analyzed.
       // Still, listCollections() returns unauthorized views only since 4.0.
-      expect((await mongoHelper.db.listCollections().toArray())
-        .find((collection) => collection.name === 'system.views')).toBeDefined();
+      expect(
+        (await mongoHelper.db.listCollections().toArray()).find(
+          collection => collection.name === 'system.views',
+        ),
+      ).toBeDefined();
     });
 
     // The output is expected to contain the view but not its system.view attached table.

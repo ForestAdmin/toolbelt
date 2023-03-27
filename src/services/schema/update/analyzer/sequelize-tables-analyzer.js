@@ -1,12 +1,10 @@
 const { inject } = require('@forestadmin/context');
 const P = require('bluebird');
-const _ = require('lodash');
 const { plural, singular } = require('pluralize');
 const ColumnTypeGetter = require('./sequelize-column-type-getter');
 const DefaultValueExpression = require('./sequelize-default-value');
 const TableConstraintsGetter = require('./sequelize-table-constraints-getter');
 const EmptyDatabaseError = require('../../../../errors/database/empty-database-error');
-const stringUtils = require('../../../../utils/strings');
 const { isUnderscored } = require('../../../../utils/fields');
 
 const ASSOCIATION_TYPE_BELONGS_TO = 'belongsTo';
@@ -31,13 +29,9 @@ async function getDefaultSchema(connection, userProvidedSchema) {
   };
 
   if (queries[dialect]) {
-    const rows = await connection.query(
-      queries[dialect],
-      { type: connection.QueryTypes.SELECT },
-    );
+    const rows = await connection.query(queries[dialect], { type: connection.QueryTypes.SELECT });
 
-    return rows.length && rows[0].default_schema
-      ? rows[0].default_schema : 'public';
+    return rows.length && rows[0].default_schema ? rows[0].default_schema : 'public';
   }
 
   return 'public';
@@ -69,12 +63,12 @@ async function analyzeFields(queryInterface, tableName, config) {
       type: queryInterface.sequelize.QueryTypes.SELECT,
       replacements: [config.dbSchema, tableName],
     });
-    rows.forEach((row) => {
+    rows.forEach(row => {
       columnsByName[row.colname].defaultValue = row.coldefault;
     });
   }
 
-  Object.values(columnsByName).forEach((column) => {
+  Object.values(columnsByName).forEach(column => {
     const defaultValue = new DefaultValueExpression(dialect, column.type, column.defaultValue);
     // eslint-disable-next-line no-param-reassign
     column.defaultValue = defaultValue.parse();
@@ -84,7 +78,7 @@ async function analyzeFields(queryInterface, tableName, config) {
 }
 
 async function analyzePrimaryKeys(schema) {
-  return Object.keys(schema).filter((column) => schema[column].primaryKey);
+  return Object.keys(schema).filter(column => schema[column].primaryKey);
 }
 
 /** Retrieve table names from the provided schema. */
@@ -96,18 +90,18 @@ async function showAllTables(queryInterface, databaseConnection, schema) {
   }
 
   const tables = await queryInterface.sequelize.query(
-    'SELECT table_name as table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = ? AND table_type LIKE \'%TABLE\' AND table_name != \'spatial_ref_sys\'',
+    "SELECT table_name as table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = ? AND table_type LIKE '%TABLE' AND table_name != 'spatial_ref_sys'",
     { type: queryInterface.sequelize.QueryTypes.SELECT, replacements: [schema] },
   );
 
-  return tables.map((table) => table.table_name);
+  return tables.map(table => table.table_name);
 }
 
 function hasTimestamps(fields) {
   let hasCreatedAt = false;
   let hasUpdatedAt = false;
 
-  fields.forEach((field) => {
+  fields.forEach(field => {
     if (field.name === 'createdAt') {
       hasCreatedAt = true;
     }
@@ -121,7 +115,10 @@ function hasTimestamps(fields) {
 }
 
 function formatAliasName(columnName) {
-  const alias = _.camelCase(columnName);
+  const { assertPresent, lodash } = inject();
+  assertPresent({ lodash });
+
+  const alias = lodash.camelCase(columnName);
   if (alias.endsWith('Id') && alias.length > 2) {
     return alias.substring(0, alias.length - 2);
   }
@@ -133,16 +130,23 @@ function formatAliasName(columnName) {
 
 // NOTICE: Look for the id column in both fields and primary keys.
 function hasIdColumn(fields, primaryKeys) {
-  return fields.some((field) => field.name === 'id' || field.nameColumn === 'id')
-    || _.includes(primaryKeys, 'id');
+  return (
+    fields.some(field => field.name === 'id' || field.nameColumn === 'id') ||
+    primaryKeys?.includes('id')
+  );
 }
 
 function isTechnicalTimestamp({ type, name }) {
   // NOTICE: Ignore technical timestamp fields.
   const FIELDS_TO_IGNORE = [
-    'createdAt', 'updatedAt', 'deletedAt',
-    'createDate', 'updateDate', 'deleteDate',
-    'creationDate', 'deletionDate',
+    'createdAt',
+    'updatedAt',
+    'deletedAt',
+    'createDate',
+    'updateDate',
+    'deleteDate',
+    'creationDate',
+    'deletionDate',
   ];
 
   return type === 'DATE' && FIELDS_TO_IGNORE.includes(name);
@@ -158,35 +162,42 @@ function isJunctionTable(fields, constraints) {
     }
   }
 
-  const foreignKeys = constraints.filter((constraint) => constraint.foreignTableName
-    && constraint.columnName
-    && constraint.columnType === FOREIGN_KEY);
+  const foreignKeys = constraints.filter(
+    constraint =>
+      constraint.foreignTableName && constraint.columnName && constraint.columnType === FOREIGN_KEY,
+  );
   // NOTICE: To be a junction table it means you have 2 foreignKeys, no more no less
   return foreignKeys.length === 2;
 }
 
 // NOTICE: Check the foreign key's reference unicity
 function checkUnicity(primaryKeys, uniqueIndexes, columnName) {
-  const isUnique = uniqueIndexes !== null
-    && uniqueIndexes.find((indexColumnName) =>
-      indexColumnName.length === 1 && indexColumnName.includes(columnName));
+  const { assertPresent, lodash } = inject();
+  assertPresent({ lodash });
 
-  const isPrimary = _.isEqual([columnName], primaryKeys);
+  const isUnique =
+    uniqueIndexes !== null &&
+    uniqueIndexes.find(
+      indexColumnName => indexColumnName.length === 1 && indexColumnName.includes(columnName),
+    );
+
+  const isPrimary = lodash.isEqual([columnName], primaryKeys);
 
   return isPrimary || isUnique;
 }
 
 function associationNameAlreadyExists(existingReferences, newReference) {
-  return existingReferences.some((reference) => reference && reference.as === newReference.as);
+  return existingReferences.some(reference => reference && reference.as === newReference.as);
 }
 
 function referenceAlreadyExists(existingReferences, newReference) {
-  return existingReferences.some((reference) => (
-    reference
-    && reference.ref === newReference.ref
-    && reference.association === newReference.association
-    && reference.foreignKey === newReference.foreignKey
-  ));
+  return existingReferences.some(
+    reference =>
+      reference &&
+      reference.ref === newReference.ref &&
+      reference.association === newReference.association &&
+      reference.foreignKey === newReference.foreignKey,
+  );
 }
 
 // NOTICE: Format the references depending on the type of the association
@@ -197,7 +208,10 @@ function createReference(
   foreignKey,
   manyToManyForeignKey,
 ) {
-  const foreignKeyName = _.camelCase(foreignKey.columnName);
+  const { assertPresent, lodash, strings } = inject();
+  assertPresent({ lodash, strings });
+
+  const foreignKeyName = lodash.camelCase(foreignKey.columnName);
   const reference = {
     foreignKey: foreignKey.columnName,
     foreignKeyName: `${foreignKeyName}Key`,
@@ -213,28 +227,29 @@ function createReference(
   } else if (association === ASSOCIATION_TYPE_BELONGS_TO_MANY) {
     reference.ref = manyToManyForeignKey.foreignTableName;
     reference.otherKey = manyToManyForeignKey.columnName;
-    reference.through = stringUtils.camelCase(
-      stringUtils.transformToSafeString(foreignKey.tableName),
+    reference.through = lodash.camelCase(strings.transformToSafeString(foreignKey.tableName));
+    reference.as = lodash.camelCase(
+      plural(`${manyToManyForeignKey.foreignTableName}_through_${foreignKey.tableName}`),
     );
-    reference.as = _.camelCase(plural(`${manyToManyForeignKey.foreignTableName}_through_${foreignKey.tableName}`));
   } else {
     reference.ref = foreignKey.tableName;
 
     const formater = association === ASSOCIATION_TYPE_HAS_MANY ? plural : singular;
-    const prefix = (singular(tableName) === formatAliasName(foreignKeyName))
-      ? ''
-      : `${formatAliasName(foreignKeyName)}_`;
+    const prefix =
+      singular(tableName) === formatAliasName(foreignKeyName)
+        ? ''
+        : `${formatAliasName(foreignKeyName)}_`;
 
     if (foreignKey.foreignColumnName !== 'id') {
       reference.sourceKey = foreignKey.foreignColumnName;
     }
-    reference.as = _.camelCase(formater(`${prefix}${foreignKey.tableName}`));
+    reference.as = lodash.camelCase(formater(`${prefix}${foreignKey.tableName}`));
   }
 
   if (referenceAlreadyExists(existingsReferences, reference)) return null;
 
   if (associationNameAlreadyExists(existingsReferences, reference)) {
-    reference.as = _.camelCase(`${reference.as} ${reference.foreignKey}`);
+    reference.as = lodash.camelCase(`${reference.as} ${reference.foreignKey}`);
   }
 
   return reference;
@@ -253,8 +268,9 @@ async function analyzeTable(queryInterface, tableConstraintsGetter, table, confi
 function createBelongsToReference(referenceTable, tableReferences, constraint) {
   const referenceColumnName = constraint.foreignColumnName;
   const referencePrimaryKeys = referenceTable.primaryKeys;
-  const referenceUniqueConstraint = referenceTable.constraints
-    .find(({ columnType }) => ['UNIQUE', 'PRIMARY KEY'].includes(columnType));
+  const referenceUniqueConstraint = referenceTable.constraints.find(({ columnType }) =>
+    ['UNIQUE', 'PRIMARY KEY'].includes(columnType),
+  );
   const referenceUniqueIndexes = referenceUniqueConstraint
     ? referenceUniqueConstraint.uniqueIndexes
     : null;
@@ -265,12 +281,7 @@ function createBelongsToReference(referenceTable, tableReferences, constraint) {
   );
 
   if (isReferencePrimaryOrUnique) {
-    return createReference(
-      null,
-      tableReferences,
-      ASSOCIATION_TYPE_BELONGS_TO,
-      constraint,
-    );
+    return createReference(null, tableReferences, ASSOCIATION_TYPE_BELONGS_TO, constraint);
   }
   return null;
 }
@@ -279,18 +290,21 @@ function createBelongsToReference(referenceTable, tableReferences, constraint) {
 //         and push them as references of the table.
 function createAllReferences(databaseSchema, schemaGenerated) {
   const references = {};
-  Object.keys(databaseSchema).forEach((tableName) => { references[tableName] = []; });
+  Object.keys(databaseSchema).forEach(tableName => {
+    references[tableName] = [];
+  });
 
-  Object.keys(databaseSchema).forEach((tableName) => {
+  Object.keys(databaseSchema).forEach(tableName => {
     const table = databaseSchema[tableName];
     const { constraints, primaryKeys } = table;
     const { isJunction } = schemaGenerated[tableName].options;
 
-    const foreignKeysWithExistingTable = constraints
-      .filter((constraint) => constraint.columnType === FOREIGN_KEY
-        && databaseSchema[constraint.foreignTableName]);
+    const foreignKeysWithExistingTable = constraints.filter(
+      constraint =>
+        constraint.columnType === FOREIGN_KEY && databaseSchema[constraint.foreignTableName],
+    );
 
-    foreignKeysWithExistingTable.forEach((constraint) => {
+    foreignKeysWithExistingTable.forEach(constraint => {
       const { columnName } = constraint;
       const uniqueIndexes = constraint.uniqueIndexes || null;
 
@@ -299,10 +313,11 @@ function createAllReferences(databaseSchema, schemaGenerated) {
       const referenceTableName = constraint.foreignTableName;
 
       if (isJunction) {
-        const manyToManyKeys = foreignKeysWithExistingTable
-          .filter((otherKey) => otherKey.columnName !== constraint.columnName);
+        const manyToManyKeys = foreignKeysWithExistingTable.filter(
+          otherKey => otherKey.columnName !== constraint.columnName,
+        );
 
-        manyToManyKeys.forEach((manyToManyKey) => {
+        manyToManyKeys.forEach(manyToManyKey => {
           references[referenceTableName].push(
             createReference(
               referenceTableName,
@@ -335,49 +350,57 @@ function createAllReferences(databaseSchema, schemaGenerated) {
   });
 
   // remove null references
-  return Object.entries(references)
-    .reduce(
-      (accumulator, [tableName, tableReferences]) => {
-        accumulator[tableName] = tableReferences.filter(Boolean);
-        return accumulator;
-      },
-      {},
-    );
+  return Object.entries(references).reduce((accumulator, [tableName, tableReferences]) => {
+    accumulator[tableName] = tableReferences.filter(Boolean);
+    return accumulator;
+  }, {});
 }
 
 function isOnlyJoinTableWithId(schema, constraints) {
-  const idColumn = Object.keys(schema).find((columnName) => columnName === 'id');
+  const idColumn = Object.keys(schema).find(columnName => columnName === 'id');
 
   if (!idColumn) return false;
 
-  const possibleForeignColumnNames = Object.keys(schema)
-    .filter((columnName) => !isTechnicalTimestamp(schema[columnName]) && columnName !== 'id');
+  const possibleForeignColumnNames = Object.keys(schema).filter(
+    columnName => !isTechnicalTimestamp(schema[columnName]) && columnName !== 'id',
+  );
 
-  const columnWithoutForeignKey = possibleForeignColumnNames
-    .find((columnName) => !_.find(constraints, { columnName, columnType: FOREIGN_KEY }));
+  const columnWithoutForeignKey = possibleForeignColumnNames.find(
+    columnName =>
+      !constraints.find(
+        constraint => constraint.columnName === columnName && constraint.columnType === FOREIGN_KEY,
+      ),
+  );
 
   return !columnWithoutForeignKey;
 }
 
-async function createTableSchema(columnTypeGetter, {
-  schema,
-  constraints,
-  primaryKeys,
-}, tableName) {
+async function createTableSchema(
+  columnTypeGetter,
+  { schema, constraints, primaryKeys },
+  tableName,
+) {
+  const { assertPresent, lodash } = inject();
+  assertPresent({ lodash });
+
   const fields = [];
 
-  await P.each(Object.keys(schema), async (columnName) => {
+  await P.each(Object.keys(schema), async columnName => {
     const columnInfo = schema[columnName];
     const type = await columnTypeGetter.perform(columnInfo, columnName, tableName);
-    const foreignKey = _.find(constraints, { columnName, columnType: FOREIGN_KEY });
-    const isValidField = type && (!foreignKey
-      || !foreignKey.foreignTableName
-      || !foreignKey.columnName || columnInfo.primaryKey);
+    const foreignKey = constraints.find(
+      constraint => constraint.columnName === columnName && constraint.columnType === FOREIGN_KEY,
+    );
+    const isValidField =
+      type &&
+      (!foreignKey ||
+        !foreignKey.foreignTableName ||
+        !foreignKey.columnName ||
+        columnInfo.primaryKey);
     // NOTICE: If the column is of integer type, named "id" and primary, Sequelize will handle it
     //         automatically without necessary declaration.
-    const isIdIntegerPrimaryColumn = columnName === 'id'
-      && ['INTEGER', 'BIGINT'].includes(type)
-      && columnInfo.primaryKey;
+    const isIdIntegerPrimaryColumn =
+      columnName === 'id' && ['INTEGER', 'BIGINT'].includes(type) && columnInfo.primaryKey;
     // NOTICE: But in some cases we want to force the id to be still generated.
     //         For example, Sequelize will not use a default id field on a model
     //         that has only foreign keys, so if the id primary key is present, we need to force it.
@@ -387,7 +410,7 @@ async function createTableSchema(columnTypeGetter, {
       // NOTICE: sequelize considers column name with parenthesis as raw Attributes
       // do not try to camelCase the name for avoiding sequelize issues
       const hasParenthesis = columnName.includes('(') || columnName.includes(')');
-      const name = hasParenthesis ? columnName : _.camelCase(columnName);
+      const name = hasParenthesis ? columnName : lodash.camelCase(columnName);
       let isRequired = !columnInfo.allowNull;
       if (isTechnicalTimestamp({ name, type })) {
         isRequired = false;
@@ -410,7 +433,7 @@ async function createTableSchema(columnTypeGetter, {
     underscored: isUnderscored(fields),
     timestamps: hasTimestamps(fields),
     hasIdColumn: hasIdColumn(fields, primaryKeys),
-    hasPrimaryKeys: !_.isEmpty(primaryKeys),
+    hasPrimaryKeys: Boolean(primaryKeys?.length),
     isJunction: isJunctionTable(fields, constraints),
   };
 
@@ -425,19 +448,24 @@ async function createTableSchema(columnTypeGetter, {
 //         and rename reference's alias as `Linked${collectionReferenced}` to prevent Sequelize
 //         from crashing at startup.
 function fixAliasConflicts(wholeSchema) {
+  const { assertPresent, lodash } = inject();
+  assertPresent({ lodash });
+
   const tablesName = Object.keys(wholeSchema);
 
-  if (!tablesName.length) { return; }
+  if (!tablesName.length) {
+    return;
+  }
 
-  tablesName.forEach((tableName) => {
+  tablesName.forEach(tableName => {
     const table = wholeSchema[tableName];
 
     if (table.references.length && table.fields.length) {
-      const fieldNames = table.fields.map((field) => field.name);
+      const fieldNames = table.fields.map(field => field.name);
 
       table.references.forEach((reference, index) => {
         if (fieldNames.includes(reference.as)) {
-          table.references[index].as = `linked${_.upperFirst(reference.as)}`;
+          table.references[index].as = `linked${lodash.upperFirst(reference.as)}`;
         }
       });
     }
@@ -445,6 +473,9 @@ function fixAliasConflicts(wholeSchema) {
 }
 
 async function analyzeSequelizeTables(connection, config, allowWarning) {
+  const { assertPresent, lodash } = inject();
+  assertPresent({ lodash });
+
   // User provided a schema, check if it exists
   if (config.dbSchema) {
     const schemas = await connection.query(
@@ -476,22 +507,28 @@ async function analyzeSequelizeTables(connection, config, allowWarning) {
   const tableNames = await showAllTables(queryInterface, connection, configWithSchema.dbSchema);
   const constraintsGetter = new TableConstraintsGetter(connection, configWithSchema.dbSchema);
 
-  await P.each(tableNames, async (tableName) => {
-    const {
+  await P.each(tableNames, async tableName => {
+    const { schema, constraints, primaryKeys } = await analyzeTable(
+      queryInterface,
+      constraintsGetter,
+      tableName,
+      configWithSchema,
+    );
+    databaseSchema[tableName] = {
       schema,
       constraints,
       primaryKeys,
-    } = await analyzeTable(queryInterface, constraintsGetter, tableName, configWithSchema);
-    databaseSchema[tableName] = {
-      schema, constraints, primaryKeys, references: [],
+      references: [],
     };
   });
 
   const columnTypeGetter = new ColumnTypeGetter(
-    connection, configWithSchema.dbSchema, allowWarning,
+    connection,
+    configWithSchema.dbSchema,
+    allowWarning,
   );
 
-  await P.each(tableNames, async (tableName) => {
+  await P.each(tableNames, async tableName => {
     schemaAllTables[tableName] = await createTableSchema(
       columnTypeGetter,
       databaseSchema[tableName],
@@ -501,8 +538,11 @@ async function analyzeSequelizeTables(connection, config, allowWarning) {
 
   // NOTICE: Fill the references field for each table schema
   const referencesPerTable = createAllReferences(databaseSchema, schemaAllTables);
-  Object.keys(referencesPerTable).forEach((tableName) => {
-    schemaAllTables[tableName].references = _.sortBy(referencesPerTable[tableName], 'association');
+  Object.keys(referencesPerTable).forEach(tableName => {
+    schemaAllTables[tableName].references = lodash.sortBy(
+      referencesPerTable[tableName],
+      'association',
+    );
 
     // NOTE: When a table contains no field, it will be considered camelCased
     //       by default, so we need to check its references to ensure whether
@@ -514,7 +554,7 @@ async function analyzeSequelizeTables(connection, config, allowWarning) {
     }
   });
 
-  if (_.isEmpty(schemaAllTables)) {
+  if (Object.keys(schemaAllTables).length === 0) {
     throw new EmptyDatabaseError('no tables found', {
       orm: 'sequelize',
       dialect: connection.getDialect(),

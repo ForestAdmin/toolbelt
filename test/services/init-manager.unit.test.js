@@ -1,6 +1,4 @@
-const {
-  validateEndpoint,
-} = require('../../src/services/init-manager');
+const { validateEndpoint } = require('../../src/services/init-manager');
 
 describe('services > init-manager', () => {
   describe('validateEndpoint', () => {
@@ -19,7 +17,9 @@ describe('services > init-manager', () => {
     it('should return an error message with a non HTTPs URL', () => {
       expect.assertions(1);
 
-      expect(validateEndpoint('http://domain.com')).toBe('HTTPS protocol is mandatory, except for localhost and 127.0.0.1.');
+      expect(validateEndpoint('http://domain.com')).toBe(
+        'HTTPS protocol is mandatory, except for localhost and 127.0.0.1.',
+      );
     });
 
     it('should allow HTTP on localhost', () => {

@@ -1,3 +1,4 @@
+const { default: Agents } = require('../../src/utils/agents');
 const EventSender = require('../../src/utils/event-sender');
 
 describe('utils > EventSender', () => {
@@ -8,7 +9,7 @@ describe('utils > EventSender', () => {
     };
 
     const env = {
-      FOREST_URL: 'https://api.test.forestadmin.com',
+      FOREST_SERVER_URL: 'https://api.test.forestadmin.com',
     };
 
     const context = {
@@ -44,21 +45,29 @@ describe('utils > EventSender', () => {
         eventSender.meta = {
           projectId: 42,
           dbDialect: 'postgres',
-          agent: 'express-sequelize',
+          agent: Agents.ExpressSequelize,
           isLocal: true,
         };
         eventSender.sessionToken = 'SESSION-TOKEN';
 
         await eventSender.notifySuccess();
 
-        expect(superagent.post).toHaveBeenCalledWith('https://api.test.forestadmin.com/api/lumber/success', {
-          data: {
-            attributes: {
-              agent: 'express-sequelize', command: 'projects:create', db_dialect: 'postgres', is_local: true, project_id: 42, project_name: 'name',
+        expect(superagent.post).toHaveBeenCalledWith(
+          'https://api.test.forestadmin.com/api/lumber/success',
+          {
+            data: {
+              attributes: {
+                agent: Agents.ExpressSequelize,
+                command: 'projects:create',
+                db_dialect: 'postgres',
+                is_local: true,
+                project_id: 42,
+                project_name: 'name',
+              },
+              type: 'events',
             },
-            type: 'events',
           },
-        });
+        );
 
         expect(superagent.set).toHaveBeenCalledWith('Authorization', 'Bearer SESSION-TOKEN');
       });
@@ -90,14 +99,21 @@ describe('utils > EventSender', () => {
 
           await eventSender.notifyError();
 
-          expect(superagent.post).toHaveBeenCalledWith('https://api.test.forestadmin.com/api/lumber/error', {
-            data: {
-              attributes: {
-                code: 'unknown_error', command: 'schema:update', project_name: 'name', context: undefined, message: null,
+          expect(superagent.post).toHaveBeenCalledWith(
+            'https://api.test.forestadmin.com/api/lumber/error',
+            {
+              data: {
+                attributes: {
+                  code: 'unknown_error',
+                  command: 'schema:update',
+                  project_name: 'name',
+                  context: undefined,
+                  message: null,
+                },
+                type: 'events',
               },
-              type: 'events',
             },
-          });
+          );
 
           expect(superagent.set).not.toHaveBeenCalled();
         });
@@ -114,14 +130,21 @@ describe('utils > EventSender', () => {
 
           await eventSender.notifyError();
 
-          expect(superagent.post).toHaveBeenCalledWith('https://api.test.forestadmin.com/api/lumber/error', {
-            data: {
-              attributes: {
-                code: 'unknown_error', command: 'schema:update', project_name: 'name', context: undefined, message: null,
+          expect(superagent.post).toHaveBeenCalledWith(
+            'https://api.test.forestadmin.com/api/lumber/error',
+            {
+              data: {
+                attributes: {
+                  code: 'unknown_error',
+                  command: 'schema:update',
+                  project_name: 'name',
+                  context: undefined,
+                  message: null,
+                },
+                type: 'events',
               },
-              type: 'events',
             },
-          });
+          );
 
           expect(superagent.set).toHaveBeenCalledWith('Authorization', 'Bearer SESSION-TOKEN');
         });
@@ -140,28 +163,34 @@ describe('utils > EventSender', () => {
           eventSender.meta = {
             projectId: 42,
             dbDialect: 'postgres',
-            agent: 'express-sequelize',
+            agent: Agents.ExpressSequelize,
             isLocal: true,
           };
 
-          await eventSender.notifyError('database_authentication_error', 'Database Connection Failed');
+          await eventSender.notifyError(
+            'database_authentication_error',
+            'Database Connection Failed',
+          );
 
-          expect(superagent.post).toHaveBeenCalledWith('https://api.test.forestadmin.com/api/lumber/error', {
-            data: {
-              attributes: {
-                agent: 'express-sequelize',
-                code: 'database_authentication_error',
-                command: 'projects:create',
-                context: undefined,
-                db_dialect: 'postgres',
-                is_local: true,
-                message: 'Database Connection Failed',
-                project_id: 42,
-                project_name: 'name',
+          expect(superagent.post).toHaveBeenCalledWith(
+            'https://api.test.forestadmin.com/api/lumber/error',
+            {
+              data: {
+                attributes: {
+                  agent: Agents.ExpressSequelize,
+                  code: 'database_authentication_error',
+                  command: 'projects:create',
+                  context: undefined,
+                  db_dialect: 'postgres',
+                  is_local: true,
+                  message: 'Database Connection Failed',
+                  project_id: 42,
+                  project_name: 'name',
+                },
+                type: 'events',
               },
-              type: 'events',
             },
-          });
+          );
 
           expect(superagent.set).not.toHaveBeenCalled();
         });
@@ -178,28 +207,34 @@ describe('utils > EventSender', () => {
           eventSender.meta = {
             projectId: 42,
             dbDialect: 'postgres',
-            agent: 'express-sequelize',
+            agent: Agents.ExpressSequelize,
             isLocal: true,
           };
 
-          await eventSender.notifyError('database_authentication_error', 'Database Connection Failed');
+          await eventSender.notifyError(
+            'database_authentication_error',
+            'Database Connection Failed',
+          );
 
-          expect(superagent.post).toHaveBeenCalledWith('https://api.test.forestadmin.com/api/lumber/error', {
-            data: {
-              attributes: {
-                agent: 'express-sequelize',
-                code: 'database_authentication_error',
-                command: 'projects:create',
-                context: undefined,
-                db_dialect: 'postgres',
-                is_local: true,
-                message: 'Database Connection Failed',
-                project_id: 42,
-                project_name: 'name',
+          expect(superagent.post).toHaveBeenCalledWith(
+            'https://api.test.forestadmin.com/api/lumber/error',
+            {
+              data: {
+                attributes: {
+                  agent: Agents.ExpressSequelize,
+                  code: 'database_authentication_error',
+                  command: 'projects:create',
+                  context: undefined,
+                  db_dialect: 'postgres',
+                  is_local: true,
+                  message: 'Database Connection Failed',
+                  project_id: 42,
+                  project_name: 'name',
+                },
+                type: 'events',
               },
-              type: 'events',
             },
-          });
+          );
           expect(superagent.set).toHaveBeenCalledWith('Authorization', 'Bearer SESSION-TOKEN');
         });
       });

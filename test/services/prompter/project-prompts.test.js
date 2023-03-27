@@ -62,7 +62,9 @@ describe('services > prompter > project prompts', () => {
             const handleName = projectPrompts.handleName();
 
             await expect(handleName).rejects.toThrow(PrompterError);
-            const expectedErrorMessage = `File or directory "${chalk.red(`${program.applicationName}`)}" already exists.`;
+            const expectedErrorMessage = `File or directory "${chalk.red(
+              `${program.applicationName}`,
+            )}" already exists.`;
             await expect(handleName).rejects.toThrow(expectedErrorMessage);
           });
         });

@@ -1,16 +1,17 @@
+const { flags } = require('@oclif/command');
 const ProjectManager = require('../services/project-manager');
-const AbstractAuthenticatedCommand = require('../abstract-authenticated-command');
+const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
 
 class ProjectCommand extends AbstractAuthenticatedCommand {
-  init(plan) {
-    super.init(plan);
+  constructor(argv, config, plan) {
+    super(argv, config, plan);
     const { assertPresent, env, projectsRenderer } = this.context;
     assertPresent({ env, projectsRenderer });
     this.env = env;
     this.projectsRenderer = projectsRenderer;
   }
 
-  async runIfAuthenticated() {
+  async runAuthenticated() {
     const parsed = this.parse(ProjectCommand);
     const config = { ...this.env, ...parsed.flags };
     const manager = new ProjectManager(config);
@@ -25,7 +26,7 @@ ProjectCommand.aliases = ['projects:list'];
 ProjectCommand.description = 'Manage projects.';
 
 ProjectCommand.flags = {
-  format: AbstractAuthenticatedCommand.flags.string({
+  format: flags.string({
     char: 'format',
     description: 'Ouput format.',
     options: ['table', 'json'],

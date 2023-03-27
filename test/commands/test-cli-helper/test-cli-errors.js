@@ -1,10 +1,8 @@
-const AbstractCommand = require('../../../src/abstract-command');
+const AbstractCommand = require('../../../src/abstract-command').default;
 
 function errorIfBadFile(file) {
   if (!file) return;
-  const {
-    chdir, directory, name, content, temporaryDirectory, ...rest
-  } = file;
+  const { chdir, directory, name, content, temporaryDirectory, ...rest } = file;
   if (Object.keys(rest).length > 0) {
     throw new Error(`Unknown testCli.file parameter(s): ${Object.keys(rest).join(', ')}.
     Valids are: chdir, name, content`);
@@ -25,15 +23,15 @@ function errorIfBadFile(file) {
 }
 
 function errorIfBadFiles(files) {
-  files.forEach((file) => errorIfBadFile(file));
+  files.forEach(file => errorIfBadFile(file));
 }
 
 function errorIfBadPrompts(prompts) {
-  prompts.forEach((prompt) => {
+  prompts.forEach(prompt => {
     if (!Array.isArray(prompt.in) || prompt.in.length === 0) {
       throw new Error('Prompt input undefined or empty');
     }
-    prompt.in.forEach((input) => {
+    prompt.in.forEach(input => {
       if (['confirm', 'input', 'list', 'password'].indexOf(input.type) === -1) {
         throw new Error(`Invalid prompt type "${input.type}"`);
       }
@@ -50,18 +48,16 @@ function errorIfRest(rest) {
 
 function errorIfStdRest(stds) {
   const valids = ['in', 'out', 'err', 'spinner'];
-  const rest = stds.filter((type) =>
-    !valids.find((valid) =>
-      Object.prototype.hasOwnProperty.call(type, valid)));
+  const rest = stds.filter(
+    type => !valids.find(valid => Object.prototype.hasOwnProperty.call(type, valid)),
+  );
   if (rest.length > 0) {
     throw new Error(`testCli configuration error: Invalid "std" attribute(s).
       Valids are: ${valids.join(', ')}`);
   }
 }
 
-function errorIfBadCommand({
-  commandClass, commandArgs, commandPlan, additionnalStep,
-}) {
+function errorIfBadCommand({ commandClass, commandArgs, commandPlan, additionnalStep }) {
   if (commandClass) {
     if (!(commandClass.prototype instanceof AbstractCommand)) {
       throw new Error('"commandClass" must inherit "AbstractCommand"');
@@ -93,9 +89,7 @@ function errorIfNoStd(stds) {
 
 function validateInput(
   files,
-  {
-    commandClass, commandArgs, commandPlan, additionnalStep,
-  },
+  { commandClass, commandArgs, commandPlan, additionnalStep },
   stds,
   prompts,
   expectedExitCode,
@@ -106,10 +100,13 @@ function validateInput(
   errorIfBadPrompts(prompts);
   errorIfRest(rest);
   errorIfBadCommand({
-    commandClass, commandArgs, commandPlan, additionnalStep,
+    commandClass,
+    commandArgs,
+    commandPlan,
+    additionnalStep,
   });
-  const noExitExpected = (expectedExitCode === null || expectedExitCode === undefined)
-    && !expectedExitMessage;
+  const noExitExpected =
+    (expectedExitCode === null || expectedExitCode === undefined) && !expectedExitMessage;
   if (stds || noExitExpected) {
     errorIfNoStd(stds);
     errorIfStdRest(stds);
@@ -131,9 +128,7 @@ function assertExitCode(actualError, expectedExitCode) {
   if (!expectedExitCode) return;
 
   const actualExitCode = (actualError && actualError.oclif && actualError.oclif.exit) || -1;
-  const actualMessage = actualError
-    ? `Exit code: '${actualExitCode}'`
-    : 'No exit code.';
+  const actualMessage = actualError ? `Exit code: '${actualExitCode}'` : 'No exit code.';
 
   expect(actualMessage).toStrictEqual(`Exit code: '${expectedExitCode}'`);
 }

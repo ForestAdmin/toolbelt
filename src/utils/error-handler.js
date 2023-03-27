@@ -4,12 +4,7 @@ class ErrorHandler {
   /**
    * @param {import('../context/plan').Context} context
    */
-  constructor({
-    assertPresent,
-    chalk,
-    messages,
-    terminator,
-  }) {
+  constructor({ assertPresent, chalk, messages, terminator }) {
     assertPresent({
       chalk,
       messages,

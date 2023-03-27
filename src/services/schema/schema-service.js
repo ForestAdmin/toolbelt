@@ -6,7 +6,7 @@ module.exports = class SchemaService {
     constants,
     database,
     databaseAnalyzer,
-    dumper,
+    forestExpressDumper,
     env,
     errorHandler,
     fs,
@@ -18,7 +18,7 @@ module.exports = class SchemaService {
       constants,
       database,
       databaseAnalyzer,
-      dumper,
+      forestExpressDumper,
       env,
       errorHandler,
       fs,
@@ -29,7 +29,7 @@ module.exports = class SchemaService {
     this.constants = constants;
     this.database = database;
     this.databaseAnalyzer = databaseAnalyzer;
-    this.dumper = dumper;
+    this.dumper = forestExpressDumper;
     this.env = env;
     this.errorHandler = errorHandler;
     this.fs = fs;
@@ -75,62 +75,66 @@ module.exports = class SchemaService {
   async _analyzeDatabases(databasesConnection, dbSchema) {
     this.spinner.start({ text: 'Analyzing the database(s)' });
     const databasesSchemaPromise = Promise.all(
-      databasesConnection
-        .map(async (databaseConnection) => {
-          const analyzerOptions = {
-            dbDialect: this.database.getDialect(databaseConnection.connection.url),
-            dbSchema,
-          };
+      databasesConnection.map(async databaseConnection => {
+        const analyzerOptions = {
+          dbDialect: this.database.getDialect(databaseConnection.connection.url),
+          dbSchema,
+        };
 
-          const schema = await this.databaseAnalyzer
-            .analyze(databaseConnection.connectionInstance, analyzerOptions, true);
+        const schema = await this.databaseAnalyzer.analyze(
+          databaseConnection.connectionInstance,
+          analyzerOptions,
+          true,
+        );
 
-          return {
-            ...databaseConnection,
-            schema,
-            analyzerOptions,
-          };
-        }),
+        return {
+          ...databaseConnection,
+          schema,
+          analyzerOptions,
+        };
+      }),
     );
     return this.spinner.attachToPromise(databasesSchemaPromise);
   }
 
-  async _dumpSchemas(databasesSchema, applicationName, isUpdate, useMultiDatabase) {
+  async _dumpSchemas(databasesSchema, appName, isUpdate, useMultiDatabase) {
     this.spinner.start({ text: 'Generating your files' });
 
-    const dumperOptions = {
-      applicationName,
-      isUpdate,
-      useMultiDatabase,
-      modelsExportPath: '', // Value is defined below, it's different for each schema
-      dbDialect: null, // Value is defined below, it's coming from each analyzerOptions
-      dbSchema: null, // Value is defined below, it's coming from each analyzerOptions
-    };
-
-    const dumpPromise = Promise.all(databasesSchema.map((databaseSchema) =>
-      this.dumper.dump(databaseSchema.schema, {
-        ...dumperOptions,
-        modelsExportPath: this.path.relative('models', databaseSchema.modelsDir),
-        dbDialect: databaseSchema.analyzerOptions.dbDialect,
-        dbSchema: databaseSchema.analyzerOptions.dbSchema,
-      })));
+    const dumpPromise = Promise.all(
+      databasesSchema.map(databaseSchema =>
+        this.dumper.dump(
+          {
+            appConfig: {
+              appName,
+              isUpdate,
+              useMultiDatabase,
+              modelsExportPath: this.path.relative('models', databaseSchema.modelsDir),
+            },
+            dbConfig: {
+              dbDialect: databaseSchema.analyzerOptions.dbDialect,
+              dbSchema: databaseSchema.analyzerOptions.dbSchema,
+            },
+          },
+          databaseSchema.schema,
+        ),
+      ),
+    );
     return this.spinner.attachToPromise(dumpPromise);
   }
 
   _warnIfSingleToMulti(outputDirectory, useMultiDatabase) {
-    const fromSingleToMultipleDatabases = !outputDirectory
-      && useMultiDatabase
-      && !this.dumper.hasMultipleDatabaseStructure();
+    const fromSingleToMultipleDatabases =
+      !outputDirectory && useMultiDatabase && !this.dumper.hasMultipleDatabaseStructure();
     if (fromSingleToMultipleDatabases) {
       this.logger.warn('It looks like you are switching from a single to a multiple databases.');
-      this.logger.log('You will need to move the models files from your existing database to'
-        + ' the dedicated folder, or simply remove them.');
+      this.logger.log(
+        'You will need to move the models files from your existing database to' +
+          ' the dedicated folder, or simply remove them.',
+      );
     }
   }
 
-  async _update({
-    isUpdate, outputDirectory, dbSchema, dbConfigPath,
-  }) {
+  async _update({ isUpdate, outputDirectory, dbSchema, dbConfigPath }) {
     this.dumper.checkLianaCompatiblityForUpdate();
     this._assertOutputDirectory(outputDirectory);
     const databasesConfig = this._getDatabasesConfig(dbConfigPath);

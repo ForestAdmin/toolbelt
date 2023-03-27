@@ -1,8 +1,7 @@
 const MysqlTableConstraintsGetter = require('../../../src/services/schema/update/analyzer/mysql-table-constraints-getter');
 
 const databaseConnectionMock = {
-  getQueryInterface: () => {
-  },
+  getQueryInterface: () => {},
 };
 
 describe('services > mysql table constraints getter', () => {
@@ -27,7 +26,11 @@ describe('services > mysql table constraints getter', () => {
         { columnType: 'PRIMARY_KEY', constraintName: 'PRIMARY' },
         { columnType: 'UNIQUE', constraintName: 'one_unique_index', columnName: 'one' },
         { columnType: 'FOREIGN_KEY', constraintName: 'test_fkey' },
-        { columnType: 'UNIQUE', constraintName: 'anotherOne_unique_index', columnName: 'anotherOne' },
+        {
+          columnType: 'UNIQUE',
+          constraintName: 'anotherOne_unique_index',
+          columnName: 'anotherOne',
+        },
       ];
       const constraintGetter = new MysqlTableConstraintsGetter(databaseConnectionMock);
       const actual = constraintGetter.convertToUniqueIndexArray(fixture);

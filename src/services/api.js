@@ -18,7 +18,7 @@ function Api({
   projectDeserializer,
   projectSerializer,
 }) {
-  this.endpoint = () => env.FOREST_URL;
+  this.endpoint = () => env.FOREST_SERVER_URL;
   this.userAgent = `forest-cli@${pkg.version}`;
   const headers = {
     [HEADER_FOREST_ORIGIN]: 'forest-cli',
@@ -26,35 +26,38 @@ function Api({
     [HEADER_USER_AGENT]: this.userAgent,
   };
 
-  this.login = async (email, password) => agent
-    .post(`${this.endpoint()}/api/sessions`)
-    .set(headers)
-    .send({ email, password })
-    .then((response) => response.body.token);
+  this.login = async (email, password) =>
+    agent
+      .post(`${this.endpoint()}/api/sessions`)
+      .set(headers)
+      .send({ email, password })
+      .then(response => response.body.token);
 
   /**
    * @param {import('../serializers/application-token').InputApplicationToken} applicationToken
    * @param {string} sessionToken
    * @returns {Promise<import('../deserializers/application-token').ApplicationToken>}
    */
-  this.createApplicationToken = async (applicationToken, sessionToken) => agent
-    .post(`${this.endpoint()}/api/application-tokens`)
-    .set(headers)
-    .set('Authorization', `Bearer ${sessionToken}`)
-    .send(applicationTokenSerializer.serialize(applicationToken))
-    .then((response) => applicationTokenDeserializer.deserialize(response.body));
+  this.createApplicationToken = async (applicationToken, sessionToken) =>
+    agent
+      .post(`${this.endpoint()}/api/application-tokens`)
+      .set(headers)
+      .set('Authorization', `Bearer ${sessionToken}`)
+      .send(applicationTokenSerializer.serialize(applicationToken))
+      .then(response => applicationTokenDeserializer.deserialize(response.body));
 
   /**
    * @param {string} sessionToken
    * @returns {Promise<import('../deserializers/application-token').ApplicationToken>}
    */
-  this.deleteApplicationToken = async (sessionToken) => agent
-    .delete(`${this.endpoint()}/api/application-tokens`)
-    .set(HEADER_FOREST_ORIGIN, 'forest-cli')
-    .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
-    .set(HEADER_USER_AGENT, this.userAgent)
-    .set('Authorization', `Bearer ${sessionToken}`)
-    .send();
+  this.deleteApplicationToken = async sessionToken =>
+    agent
+      .delete(`${this.endpoint()}/api/application-tokens`)
+      .set(HEADER_FOREST_ORIGIN, 'forest-cli')
+      .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
+      .set(HEADER_USER_AGENT, this.userAgent)
+      .set('Authorization', `Bearer ${sessionToken}`)
+      .send();
 
   this.createProject = async (config, sessionToken, project) => {
     let newProject;
@@ -66,7 +69,7 @@ function Api({
         .set(HEADER_USER_AGENT, this.userAgent)
         .set('Authorization', `Bearer ${sessionToken}`)
         .send(projectSerializer.serialize(project))
-        .then((response) => projectDeserializer.deserialize(response.body));
+        .then(response => projectDeserializer.deserialize(response.body));
     } catch (error) {
       if (error.message === 'Conflict') {
         const { projectId } = error.response.body.errors[0].meta;
@@ -80,10 +83,12 @@ function Api({
           .set('Authorization', `Bearer ${sessionToken}`)
           .set(HEADER_USER_AGENT, this.userAgent)
           .send()
-          .then((response) => projectDeserializer.deserialize(response.body));
+          .then(response => projectDeserializer.deserialize(response.body));
 
         // NOTICE: Avoid to erase an existing project that has been already initialized.
-        if (newProject.initializedAt) { throw error; }
+        if (newProject.initializedAt) {
+          throw error;
+        }
       } else {
         throw error;
       }
@@ -99,7 +104,7 @@ function Api({
       .set(HEADER_USER_AGENT, this.userAgent)
       .set('Authorization', `Bearer ${sessionToken}`)
       .send(environmentSerializer.serialize(newProject.defaultEnvironment))
-      .then((response) => environmentDeserializer.deserialize(response.body));
+      .then(response => environmentDeserializer.deserialize(response.body));
 
     newProject.defaultEnvironment.secretKey = updatedEnvironment.secretKey;
 

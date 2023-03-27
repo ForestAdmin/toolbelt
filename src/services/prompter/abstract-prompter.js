@@ -4,7 +4,9 @@ class AbstractPrompter {
   }
 
   isOptionRequested(option) {
-    if (!option) { return false; }
+    if (!option) {
+      return false;
+    }
 
     return this.requests.includes(option);
   }

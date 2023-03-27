@@ -12,22 +12,31 @@ class GeneralPrompter {
     this.knownAnswers = {};
 
     this.projectPrompt = new ProjectPrompts(
-      requests, this.knownAnswers, this.prompts, programArguments,
+      requests,
+      this.knownAnswers,
+      this.prompts,
+      programArguments,
     );
     this.databasePrompt = new DatabasePrompts(
-      requests, this.knownAnswers, this.prompts, programArguments,
+      requests,
+      this.knownAnswers,
+      this.prompts,
+      programArguments,
     );
     this.applicationPrompt = new ApplicationPrompts(
-      requests, this.knownAnswers, this.prompts, programArguments,
+      requests,
+      this.knownAnswers,
+      this.prompts,
+      programArguments,
     );
   }
 
-  async getConfig() {
+  async getConfig(forSql, forNosql) {
     const { inquirer, terminator } = Context.inject();
 
     try {
       await this.projectPrompt.handlePrompts();
-      await this.databasePrompt.handlePrompts();
+      await this.databasePrompt.handlePrompts(forSql, forNosql);
       await this.applicationPrompt.handlePrompts();
     } catch (error) {
       if (error instanceof PromptError) {
@@ -49,7 +58,9 @@ class GeneralPrompter {
   }
 
   cleanConfigOptions() {
-    if (!this.promptAnswers) { return; }
+    if (!this.promptAnswers) {
+      return;
+    }
 
     // NOTICE: Remove the database password if not set.
     if (!this.promptAnswers.databasePassword) {

@@ -18,7 +18,7 @@ function SchemaSender(serializedSchema, secret, authenticationToken, oclifExit) 
     const { env, logger } = Context.inject();
 
     return agent
-      .post(`${env.FOREST_URL}/forest/apimaps`)
+      .post(`${env.FOREST_SERVER_URL}/forest/apimaps`)
       .set('forest-secret-key', secret)
       .set('Authorization', `Bearer ${authenticationToken}`)
       .send(serializedSchema)
@@ -29,7 +29,7 @@ function SchemaSender(serializedSchema, secret, authenticationToken, oclifExit) 
 
         return null;
       })
-      .catch((error) => {
+      .catch(error => {
         if ([200, 202, 204].indexOf(error.status) !== -1) {
           if (error.body && error.body.warning) {
             logger.error(error.body.warning);
@@ -42,10 +42,14 @@ function SchemaSender(serializedSchema, secret, authenticationToken, oclifExit) 
           logger.error('Cannot find the project related to the environment secret you configured.');
           oclifExit(4);
         } else if (error.status === 503) {
-          logger.error('Forest is in maintenance for a few minutes. We are upgrading your experience in the forest. We just need a few more minutes to get it right.');
+          logger.error(
+            'Forest is in maintenance for a few minutes. We are upgrading your experience in the forest. We just need a few more minutes to get it right.',
+          );
           oclifExit(5);
         } else {
-          logger.error('An error occured with the schema sent to Forest. Please contact support@forestadmin.com for further investigations.');
+          logger.error(
+            'An error occured with the schema sent to Forest. Please contact support@forestadmin.com for further investigations.',
+          );
           oclifExit(6);
         }
       });

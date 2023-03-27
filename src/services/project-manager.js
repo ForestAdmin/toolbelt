@@ -1,4 +1,3 @@
-const _ = require('lodash');
 const querystring = require('querystring');
 const P = require('bluebird');
 const agent = require('superagent-promise')(require('superagent'), P);
@@ -9,24 +8,20 @@ const ProjectDeserializer = require('../deserializers/project');
 const EnvironmentDeserializer = require('../deserializers/environment');
 
 function ProjectManager(config) {
-  const {
-    assertPresent, authenticator, env, jwtDecode,
-  } = Context.inject();
-  assertPresent({ authenticator, env, jwtDecode });
+  const { assertPresent, authenticator, env, jwtDecode, lodash } = Context.inject();
+  assertPresent({ authenticator, env, jwtDecode, lodash });
 
   function deserialize(response) {
-    const attrs = _.clone(ProjectSerializer.opts.attributes);
+    const attrs = Object.assign(ProjectSerializer.opts.attributes);
     attrs.push('id');
 
-    return ProjectDeserializer
-      .deserialize(response.body)
-      .then((deserialized) => {
-        if (_.isArray(deserialized)) {
-          return deserialized.map((d) => _.pick(d, attrs));
-        }
+    return ProjectDeserializer.deserialize(response.body).then(deserialized => {
+      if (Array.isArray(deserialized)) {
+        return deserialized.map(d => lodash.pick(d, attrs));
+      }
 
-        return _.pick(deserialized, attrs);
-      });
+      return lodash.pick(deserialized, attrs);
+    });
   }
 
   this.listProjects = async () => {
@@ -37,10 +32,10 @@ function ProjectManager(config) {
     });
 
     return agent
-      .get(`${env.FOREST_URL}/api/projects${queryParams ? (`?${queryParams}`) : ''}`)
+      .get(`${env.FOREST_SERVER_URL}/api/projects${queryParams ? `?${queryParams}` : ''}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
-      .then((response) => deserialize(response));
+      .then(response => deserialize(response));
   };
 
   this.getByEnvSecret = async (envSecret, includeLegacy = false) => {
@@ -48,41 +43,41 @@ function ProjectManager(config) {
     const includeLegacyParameter = includeLegacy ? '&includeLegacy' : '';
 
     return agent
-      .get(`${env.FOREST_URL}/api/projects?envSecret${includeLegacyParameter}`)
+      .get(`${env.FOREST_SERVER_URL}/api/projects?envSecret${includeLegacyParameter}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-secret-key', envSecret)
       .send()
-      .then((response) => deserialize(response));
+      .then(response => deserialize(response));
   };
 
   this.getProject = async () => {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${env.FOREST_URL}/api/projects/${config.projectId}`)
+      .get(`${env.FOREST_SERVER_URL}/api/projects/${config.projectId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
-      .then((response) => deserialize(response));
+      .then(response => deserialize(response));
   };
 
   this.getProjectForDevWorkflow = async () => {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${env.FOREST_URL}/api/projects/${config.projectId}/dev-workflow`)
+      .get(`${env.FOREST_SERVER_URL}/api/projects/${config.projectId}/dev-workflow`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
-      .then((response) => deserialize(response));
+      .then(response => deserialize(response));
   };
 
-  this.getDevelopmentEnvironmentForUser = async (projectId) => {
+  this.getDevelopmentEnvironmentForUser = async projectId => {
     const authToken = authenticator.getAuthToken();
 
     return agent
-      .get(`${env.FOREST_URL}/api/projects/${projectId}/development-environment-for-user`)
+      .get(`${env.FOREST_SERVER_URL}/api/projects/${projectId}/development-environment-for-user`)
       .set('Authorization', `Bearer ${authToken}`)
       .send()
-      .then((response) => EnvironmentDeserializer.deserialize(response.body));
+      .then(response => EnvironmentDeserializer.deserialize(response.body));
   };
 }
 
