@@ -116,8 +116,8 @@ export default class AgentNodeJs extends AbstractDumper {
     };
 
     if (isMongoose) {
-      context.datasourceImport = `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst primaryConnection = require('./models/primary');`;
-      context.datasourceCreation = `createMongooseDataSource(primaryConnection, { flattenMode: 'auto' })`;
+      context.datasourceImport = `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst connection = require('./models');`;
+      context.datasourceCreation = `createMongooseDataSource(connection, { flattenMode: 'auto' })`;
     } else {
       context.datasourceImport = `const { createSqlDataSource } = require('@forestadmin/datasource-sql');`;
       context.datasourceCreation = `
@@ -197,15 +197,15 @@ export default class AgentNodeJs extends AbstractDumper {
   }
 
   private async writeMongooseModels(schema) {
-    await this.mkdirp(`${this.projectPath}/models/primary`);
+    await this.mkdirp(`${this.projectPath}/models`);
 
-    this.copyHandleBarsTemplate('models/index.hbs', 'models/primary/index.js');
+    this.copyHandleBarsTemplate('models/index.hbs', 'models/index.js');
 
     const collectionNamesSorted = Object.keys(schema).sort();
 
     collectionNamesSorted.forEach(collectionName => {
       const { fields, options } = schema[collectionName];
-      const modelPath = `models/primary/${this.lodash.kebabCase(collectionName)}.js`;
+      const modelPath = `models/${this.lodash.kebabCase(collectionName)}.js`;
 
       const fieldsDefinition = fields.map(field => {
         return {

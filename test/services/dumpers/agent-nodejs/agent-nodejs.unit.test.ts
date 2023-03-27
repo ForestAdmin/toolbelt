@@ -415,8 +415,8 @@ describe('services > dumpers > AgentNodeJs', () => {
               isMongoose: true,
               isMySQL: false,
               isMSSQL: false,
-              datasourceImport: `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst primaryConnection = require('./models/primary');`,
-              datasourceCreation: `createMongooseDataSource(primaryConnection, { flattenMode: 'auto' })`,
+              datasourceImport: `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst connection = require('./models');`,
+              datasourceCreation: `createMongooseDataSource(connection, { flattenMode: 'auto' })`,
             }),
           );
         });
@@ -665,13 +665,13 @@ describe('services > dumpers > AgentNodeJs', () => {
 
         await dumper.dump(defaultConfig);
 
-        expect(context.mkdirp).not.toHaveBeenCalledWith('/test/anApplication/models/primary');
+        expect(context.mkdirp).not.toHaveBeenCalledWith('/test/anApplication/models');
       });
     });
 
     describe('when schema is not empty', () => {
       describe('when dbDialect is mongodb', () => {
-        it('should create models/ and models/primary directories', async () => {
+        it('should create models directory', async () => {
           expect.assertions(1);
 
           const { defaultConfig, dumper, context } = createDumper();
@@ -680,7 +680,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
           await dumper.dump(defaultConfig, {});
 
-          expect(context.mkdirp).toHaveBeenCalledWith('/test/anApplication/models/primary');
+          expect(context.mkdirp).toHaveBeenCalledWith('/test/anApplication/models');
         });
 
         describe('when schema does not have any models', () => {
@@ -694,7 +694,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig, {});
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/models/primary/index.js',
+              '/test/anApplication/models/index.js',
               'mockedContent',
             );
 
@@ -713,21 +713,21 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig, schemaSample);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/models/primary/collectionA.js',
+              '/test/anApplication/models/collectionA.js',
               expect.objectContaining({
                 collectionName: 'collectionA',
               }),
             );
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/models/primary/collectionB.js',
+              '/test/anApplication/models/collectionB.js',
               expect.objectContaining({
                 collectionName: 'collectionB',
               }),
             );
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/models/primary/collection-c.js',
+              '/test/anApplication/models/collection-c.js',
               expect.objectContaining({
                 collectionName: 'collection-c',
               }),
@@ -751,7 +751,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               'collection-c',
             );
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/models/primary/collection-c.js',
+              '/test/anApplication/models/collection-c.js',
               expect.objectContaining({
                 modelName: 'collection-ccamelCased',
               }),
@@ -768,7 +768,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig, schemaSample);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/models/primary/collection-c.js',
+              '/test/anApplication/models/collection-c.js',
               {
                 modelName: 'collection-c',
                 collectionName: 'collection-c',
@@ -777,7 +777,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               },
             );
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/models/primary/collectionA.js',
+              '/test/anApplication/models/collectionA.js',
               {
                 modelName: 'collectionA',
                 collectionName: 'collectionA',
@@ -791,7 +791,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               },
             );
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/models/primary/collectionB.js',
+              '/test/anApplication/models/collectionB.js',
               {
                 modelName: 'collectionB',
                 collectionName: 'collectionB',
@@ -818,7 +818,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               'a-collection',
             );
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/models/primary/collectionA.js',
+              '/test/anApplication/models/collectionA.js',
               {
                 modelName: 'collectionAcamelCased',
                 collectionName: 'collectionA',
@@ -846,7 +846,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
             expect(context.lodash.kebabCase).toHaveBeenCalledWith('collectionA');
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/models/primary/collectionAkebab_cased.js',
+              '/test/anApplication/models/collectionAkebab_cased.js',
               expect.objectContaining({
                 collectionName: 'collectionA',
               }),
@@ -865,7 +865,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
           await dumper.dump(defaultConfig);
 
-          expect(context.mkdirp).not.toHaveBeenCalledWith('/test/anApplication/models/primary');
+          expect(context.mkdirp).not.toHaveBeenCalledWith('/test/anApplication/models');
         });
       });
     });
