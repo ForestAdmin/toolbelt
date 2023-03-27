@@ -90,7 +90,7 @@ export default class AgentNodeJs extends AbstractDumper {
       nodemon: '^2.0.12',
     };
 
-    if (language === Languages.Typescript) {
+    if (language === languages.Typescript) {
       scripts = {
         build: 'tsc',
         'build:watch': 'tsc --watch',
