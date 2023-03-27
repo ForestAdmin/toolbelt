@@ -105,7 +105,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
         },
       ];
 
-      it.each(testCases)(`yeah $name`, async ({ schema, file }) => {
+      it.each(testCases)(`$name`, async ({ schema, file }) => {
         expect.hasAssertions();
 
         rimraf.sync(`${appRoot}/test-output/mongodb/`);
@@ -114,7 +114,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
 
         const expectedFile = fs.readFileSync(file.expectedFilePath, 'utf-8');
         const generatedFile = fs.readFileSync(
-          `${appRoot}/test-output/mongodb/models/primary/${file.model}.js`,
+          `${appRoot}/test-output/mongodb/models/${file.model}.js`,
           'utf8',
         );
 
@@ -129,7 +129,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
         await dump(simple);
 
         const generatedFile = fs.readFileSync(
-          `${appRoot}/test-output/mongodb/models/primary/films.js`,
+          `${appRoot}/test-output/mongodb/models/films.js`,
           'utf8',
         );
 
@@ -150,7 +150,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
         'utf-8',
       );
       const generatedFile = fs.readFileSync(
-        `${appRoot}/test-output/mongodb/models/primary/index.js`,
+        `${appRoot}/test-output/mongodb/models/index.js`,
         'utf8',
       );
 
