@@ -5,6 +5,8 @@ const InvalidForestCLIProjectStructureError = require('../../errors/dumper/inval
 const AbstractDumper = require('./abstract-dumper').default;
 
 class ForestExpress extends AbstractDumper {
+  templateFolder = 'forest-express';
+
   constructor(context) {
     super(context);
 
@@ -65,11 +67,6 @@ class ForestExpress extends AbstractDumper {
   //       Forest Admin internal route (session or stats creation).
   static shouldSkipRouteGenerationForModel(modelName) {
     return ['sessions', 'stats'].includes(modelName.toLowerCase());
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  get templateFolder() {
-    return 'forest-express';
   }
 
   writePackageJson(dbDialect, appName) {

@@ -5,8 +5,9 @@ const REQUESTS_DATABASE_MANDATORY = [
   'dbPort',
   'dbUser',
   'dbPassword',
+  'mongodbSrv',
 ];
-const REQUESTS_DATABASE_OPTIONAL = ['dbSchema', 'ssl', 'mongodbSrv'];
+const REQUESTS_DATABASE_OPTIONAL = ['dbSchema', 'ssl'];
 const REQUESTS_APPLICATION = ['applicationName', 'appHostname', 'appPort'];
 
 const REQUESTS = {

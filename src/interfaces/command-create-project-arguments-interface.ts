@@ -2,7 +2,6 @@ interface CreateCommandDbArgumentsBase {
   databaseDialect: string;
   databaseSSL: boolean;
   databaseSchema?: string;
-  mongoDBSRV?: boolean;
 }
 
 interface CreateCommandDbArgumentsWithConnectionUrl extends CreateCommandDbArgumentsBase {
@@ -12,6 +11,7 @@ interface CreateCommandDbArgumentsWithConnectionUrl extends CreateCommandDbArgum
   databasePort?: never;
   databaseUser?: never;
   databasePassword?: never;
+  mongoDBSRV?: never;
 }
 
 interface CreateCommandDbArgumentsWithConnectionParams extends CreateCommandDbArgumentsBase {
@@ -21,6 +21,7 @@ interface CreateCommandDbArgumentsWithConnectionParams extends CreateCommandDbAr
   databasePort: number;
   databaseUser: string;
   databasePassword: string;
+  mongoDBSRV?: boolean;
 }
 
 type CreateCommandDbArguments =

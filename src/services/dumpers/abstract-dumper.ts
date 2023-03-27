@@ -18,6 +18,8 @@ export default abstract class AbstractDumper {
 
   private readonly Handlebars;
 
+  protected abstract readonly templateFolder: string;
+
   protected constructor({ assertPresent, fs, logger, chalk, constants, mkdirp, Handlebars }) {
     assertPresent({
       fs,
@@ -35,8 +37,6 @@ export default abstract class AbstractDumper {
     this.mkdirp = mkdirp;
     this.Handlebars = Handlebars;
   }
-
-  protected abstract get templateFolder(): string;
 
   protected abstract createFiles(dumperConfig: Config, schema?: any);
 

@@ -3,7 +3,7 @@ const CommandGenerateConfigGetter = require('../../src/services/projects/create/
 
 describe('services > command generate config getter', () => {
   describe('with a command with a "connectionUrl" option', () => {
-    it('should require [dbConnectionUrl, dbSchema, ssl, mongodbSrv, applicationName, appHostname, appPort]', () => {
+    it('should require [dbConnectionUrl, dbSchema, ssl, applicationName, appHostname, appPort]', () => {
       expect.assertions(1);
       const commandGenerateConfigGetter = new CommandGenerateConfigGetter({
         assertPresent: () => true,
@@ -16,7 +16,6 @@ describe('services > command generate config getter', () => {
         'dbConnectionUrl',
         'dbSchema',
         'ssl',
-        'mongodbSrv',
         'applicationName',
         'appHostname',
         'appPort',
@@ -39,9 +38,9 @@ describe('services > command generate config getter', () => {
         'dbPort',
         'dbUser',
         'dbPassword',
+        'mongodbSrv',
         'dbSchema',
         'ssl',
-        'mongodbSrv',
         'applicationName',
         'appHostname',
         'appPort',
