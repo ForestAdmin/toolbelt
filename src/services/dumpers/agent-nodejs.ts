@@ -82,7 +82,7 @@ export default class AgentNodeJs extends AbstractDumper {
       }
     }
 
-    let scripts: { [name: string]: string } = {
+    const scripts: { [name: string]: string } = {
       start: 'node ./index.js',
       'start:watch': 'nodemon --exec yarn start',
     };
@@ -205,10 +205,7 @@ export default class AgentNodeJs extends AbstractDumper {
 
     await this.mkdirp(`${this.projectPath}/models`);
 
-    this.copyHandleBarsTemplate(
-      `${language}/models/index.hbs`,
-      `models/index.${extension}`,
-    );
+    this.copyHandleBarsTemplate(`${language}/models/index.hbs`, `models/index.${extension}`);
 
     const collectionNamesSorted = Object.keys(schema).sort();
 

@@ -110,8 +110,8 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
           },
         ];
 
-      it.each(testCases)(`$name`, async ({ schema, file }) => {
-        expect.hasAssertions();
+        it.each(testCases)(`$name`, async ({ schema, file }) => {
+          expect.hasAssertions();
 
           rimraf.sync(`${appRoot}/test-output/mongodb/`);
 
