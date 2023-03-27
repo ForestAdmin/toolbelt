@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node ./index.js",
-    "start:watch": "nodemon --exec yarn start"
+    "start": "nodemon ./index.js",
+    "start:agent": "node ./index.js"
   },
   "nodemonConfig": {
     "ignore": [

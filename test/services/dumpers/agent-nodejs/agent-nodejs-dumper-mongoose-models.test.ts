@@ -38,25 +38,15 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
       },
       forestAuthSecret: 'forestAuthSecret',
       forestEnvSecret: 'forestEnvSecret',
+      language,
     };
 
     const injectedContext = Context.execute(defaultPlan);
     const dumper = new AgentNodeJsDumper(injectedContext);
-    await dumper.dump(
-      {
-        appConfig: config.appConfig,
-        dbConfig: config.dbConfig,
-        forestAuthSecret: 'forestAuthSecret',
-        forestEnvSecret: 'forestEnvSecret',
-        language: Languages.Javascript,
-      },
-      schema,
-    );
+    await dumper.dump(config, schema);
   }
 
-  const languages = [{ name: Languages.Javascript, extension: 'js' }];
-
-  describe.each(languages)('language: %s', ({ name: language, extension }) => {
+  describe.each([Languages.Javascript])('language: $name', language => {
     describe('dump model files', () => {
       describe('dumping schema', () => {
         const testCases = [
@@ -65,7 +55,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
             schema: deepNested,
             file: {
               model: 'persons',
-              expectedFilePath: `${__dirname}/expected/${language}/mongo-models/deep-nested.expected.${extension}`,
+              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/deep-nested.expected.${language.fileExtension}`,
             },
           },
           {
@@ -73,7 +63,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
             schema: hasMany,
             file: {
               model: 'films',
-              expectedFilePath: `${__dirname}/expected/${language}/mongo-models/hasmany.expected.${extension}`,
+              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/hasmany.expected.${language.fileExtension}`,
             },
           },
           {
@@ -81,7 +71,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
             schema: subDocsAmbiguousIds,
             file: {
               model: 'persons',
-              expectedFilePath: `${__dirname}/expected/${language}/mongo-models/sub-documents-ambiguous-ids.expected.${extension}`,
+              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/sub-documents-ambiguous-ids.expected.${language.fileExtension}`,
             },
           },
           {
@@ -89,7 +79,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
             schema: subDocumentsNoIds,
             file: {
               model: 'persons',
-              expectedFilePath: `${__dirname}/expected/${language}/mongo-models/sub-documents-no-ids.expected.${extension}`,
+              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/sub-documents-no-ids.expected.${language.fileExtension}`,
             },
           },
           {
@@ -97,7 +87,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
             schema: manyObjectIdFields,
             file: {
               model: 'persons',
-              expectedFilePath: `${__dirname}/expected/${language}/mongo-models/many-object-id-fields.expected.${extension}`,
+              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/many-object-id-fields.expected.${language.fileExtension}`,
             },
           },
           {
@@ -105,7 +95,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
             schema: subDocumentsWithIds,
             file: {
               model: 'persons',
-              expectedFilePath: `${__dirname}/expected/${language}/mongo-models/sub-documents-with-ids.expected.${extension}`,
+              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/sub-documents-with-ids.expected.${language.fileExtension}`,
             },
           },
         ];
@@ -119,7 +109,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
 
           const expectedFile = fs.readFileSync(file.expectedFilePath, 'utf-8');
           const generatedFile = fs.readFileSync(
-            `${appRoot}/test-output/mongodb/models/${file.model}.${extension}`,
+            `${appRoot}/test-output/mongodb/models/${file.model}.${language.fileExtension}`,
             'utf8',
           );
 
@@ -134,7 +124,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
           await dump(language, simple);
 
           const generatedFile = fs.readFileSync(
-            `${appRoot}/test-output/mongodb/models/films.${extension}`,
+            `${appRoot}/test-output/mongodb/models/films.${language.fileExtension}`,
             'utf8',
           );
 
@@ -144,18 +134,18 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
       });
     });
 
-    describe('dump index.js', () => {
-      it('should dump an index.js file', async () => {
+    describe(`dump index.${language.fileExtension}`, () => {
+      it(`should dump an index.${language.fileExtension} file`, async () => {
         expect.assertions(1);
 
         await dump(language, simple);
 
         const expectedFile = fs.readFileSync(
-          `${__dirname}/expected/${language}/mongo-models/index.expected.${extension}`,
+          `${__dirname}/expected/${language.name}/mongo-models/index.expected.${language.fileExtension}`,
           'utf-8',
         );
         const generatedFile = fs.readFileSync(
-          `${appRoot}/test-output/mongodb/models/index.${extension}`,
+          `${appRoot}/test-output/mongodb/models/index.${language.fileExtension}`,
           'utf8',
         );
 

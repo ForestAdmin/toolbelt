@@ -1,8 +1,8 @@
 import type { Config, DbConfig } from '../../interfaces/project-create-interface';
+import type { Language } from '../../utils/languages';
 import type Strings from '../../utils/strings';
 import type Lodash from 'lodash';
 
-import Languages from '../../utils/languages';
 import AbstractDumper from './abstract-dumper';
 
 export default class AgentNodeJs extends AbstractDumper {
@@ -83,8 +83,8 @@ export default class AgentNodeJs extends AbstractDumper {
     }
 
     const scripts: { [name: string]: string } = {
-      start: 'node ./index.js',
-      'start:watch': 'nodemon --exec yarn start',
+      start: 'nodemon ./index.js',
+      'start:agent': 'node ./index.js',
     };
     const devDependencies: { [name: string]: string } = {
       nodemon: '^2.0.12',
@@ -105,7 +105,7 @@ export default class AgentNodeJs extends AbstractDumper {
     this.writeFile('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
   }
 
-  writeIndex(language: Languages, dbDialect: string, dbSchema: string) {
+  writeIndex(language: Language, dbDialect: string, dbSchema: string) {
     const isMongoose = dbDialect === 'mongodb';
 
     const context = {
@@ -133,8 +133,11 @@ export default class AgentNodeJs extends AbstractDumper {
   `;
     }
 
-    const extension = language === Languages.Typescript ? 'ts' : 'js';
-    this.copyHandleBarsTemplate(`${language}/index.hbs`, `index.${extension}`, context);
+    this.copyHandleBarsTemplate(
+      `${language.name}/index.hbs`,
+      `index.${language.fileExtension}`,
+      context,
+    );
   }
 
   private writeDotEnv(
@@ -200,18 +203,19 @@ export default class AgentNodeJs extends AbstractDumper {
     });
   }
 
-  private async writeMongooseModels(language: Languages, schema) {
-    const extension = language === Languages.Typescript ? 'ts' : 'js';
-
+  private async writeMongooseModels(language: Language, schema) {
     await this.mkdirp(`${this.projectPath}/models`);
 
-    this.copyHandleBarsTemplate(`${language}/models/index.hbs`, `models/index.${extension}`);
+    this.copyHandleBarsTemplate(
+      `${language.name}/models/index.hbs`,
+      `models/index.${language.fileExtension}`,
+    );
 
     const collectionNamesSorted = Object.keys(schema).sort();
 
     collectionNamesSorted.forEach(collectionName => {
       const { fields, options } = schema[collectionName];
-      const modelPath = `models/${this.lodash.kebabCase(collectionName)}.${extension}`;
+      const modelPath = `models/${this.lodash.kebabCase(collectionName)}.${language.fileExtension}`;
 
       const fieldsDefinition = fields.map(field => {
         return {
@@ -220,7 +224,7 @@ export default class AgentNodeJs extends AbstractDumper {
         };
       });
 
-      this.copyHandleBarsTemplate(`${language}/models/model.hbs`, modelPath, {
+      this.copyHandleBarsTemplate(`${language.name}/models/model.hbs`, modelPath, {
         modelName: this.strings.transformToCamelCaseSafeString(collectionName),
         collectionName,
         fields: fieldsDefinition,

@@ -1,4 +1,4 @@
-import type Languages from '../utils/languages';
+import type { Language } from '../utils/languages';
 
 interface DbConfigBase {
   dbDialect: string;
@@ -42,5 +42,5 @@ export interface Config {
   appConfig: AppConfig;
   forestAuthSecret: string;
   forestEnvSecret: string;
-  language?: Languages;
+  language?: Language;
 }
