@@ -12,6 +12,7 @@ import type { Input } from '@oclif/parser';
 import { flags } from '@oclif/command';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
+import Languages from './utils/languages';
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
   private readonly eventSender: EventSender;
@@ -153,6 +154,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
         appConfig,
         forestAuthSecret: authSecret as string,
         forestEnvSecret: envSecret as string,
+        language: Languages.Javascript,
       });
 
       await this.notifySuccess();
