@@ -3,6 +3,7 @@ import type { Language } from '../../utils/languages';
 import type Strings from '../../utils/strings';
 import type Lodash from 'lodash';
 
+import languages from '../../utils/languages';
 import AbstractDumper from './abstract-dumper';
 
 export default class AgentNodeJs extends AbstractDumper {
@@ -57,7 +58,7 @@ export default class AgentNodeJs extends AbstractDumper {
     this.toValidPackageName = toValidPackageName;
   }
 
-  writePackageJson(language: Languages, dbDialect: string, appName: string) {
+  writePackageJson(language: Language, dbDialect: string, appName: string) {
     const dependencies: { [name: string]: string } = {
       dotenv: '^16.0.1',
       '@forestadmin/agent': '^1.0.0',
@@ -82,24 +83,26 @@ export default class AgentNodeJs extends AbstractDumper {
       }
     }
 
-    const scripts: { [name: string]: string } = {
+    let scripts: { [name: string]: string } = {
       start: 'nodemon ./index.js',
       'start:agent': 'node ./index.js',
     };
     const devDependencies: { [name: string]: string } = {
       nodemon: '^2.0.12',
     };
+    const nodemonConfig = {
+      ignore: ['./forestadmin-schema.json'],
+    };
 
     if (language === languages.Typescript) {
       scripts = {
         build: 'tsc',
-        'build:watch': 'tsc --watch',
-        clean: 'rm -rf dist',
-        start:
-          'node --enable-source-maps --async-stack-traces -e "require(\'./dist/index.js\').default()"',
-        'start:watch': "nodemon --delay 250ms --watch '../*/dist/' --exec yarn start",
+        start: 'nodemon ./index.ts',
+        'start:agent': 'node ./dist/index.js',
       };
       devDependencies.typescript = '^4.9.4';
+      devDependencies['ts-node'] = '^10.9.1';
+      nodemonConfig.ignore.push('./typings.ts');
     }
 
     const pkg = {
@@ -107,9 +110,7 @@ export default class AgentNodeJs extends AbstractDumper {
       version: '0.0.1',
       private: true,
       scripts,
-      nodemonConfig: {
-        ignore: ['./forestadmin-schema.json'],
-      },
+      nodemonConfig,
       dependencies,
       devDependencies,
     };
@@ -216,8 +217,8 @@ export default class AgentNodeJs extends AbstractDumper {
     this.writeFile('.dockerignore', 'node_modules\nnpm-debug.log\n.env\n');
   }
 
-  private writeDockerfile() {
-    this.copyHandleBarsTemplate('common/Dockerfile.hbs', 'Dockerfile');
+  private writeDockerfile(language: Language) {
+    this.copyHandleBarsTemplate(`${language.name}/Dockerfile.hbs`, 'Dockerfile');
   }
 
   private writeDockerCompose(config: Config) {
@@ -276,7 +277,7 @@ export default class AgentNodeJs extends AbstractDumper {
       dumpConfig.dbConfig.dbDialect,
       dumpConfig.appConfig.appName,
     );
-    if (dumpConfig.language === Languages.Typescript) {
+    if (dumpConfig.language === languages.Typescript) {
       this.writeTsConfigJson();
     }
     this.writeIndex(
@@ -293,11 +294,11 @@ export default class AgentNodeJs extends AbstractDumper {
     this.writeTypings();
     this.writeGitignore();
     this.writeDockerignore();
-    this.writeDockerfile();
+    this.writeDockerfile(dumpConfig.language);
     this.writeDockerCompose(dumpConfig);
 
     if (dumpConfig.dbConfig.dbDialect === 'mongodb' && mongoSchema) {
-      await this.writeMongooseModels(dumpConfig.language, mongoSchema);
+      // await this.writeMongooseModels(dumpConfig.language, mongoSchema);
     }
   }
 }

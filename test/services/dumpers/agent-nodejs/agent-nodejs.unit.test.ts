@@ -103,7 +103,7 @@ describe('services > dumpers > AgentNodeJs', () => {
     };
   };
 
-  describe.each([languages.Javascript])('when dumping in $name', language => {
+  describe.each([languages.Javascript, languages.Typescript])('when dumping in $name', language => {
     describe('when writing common files', () => {
       it('should write a .gitignore file', async () => {
         expect.assertions(1);
@@ -477,11 +477,13 @@ describe('services > dumpers > AgentNodeJs', () => {
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             `/test/a${language.name}Application/package.json`,
-            expect.stringContaining('"start": "nodemon ./index.js'),
+            expect.stringContaining(`"start": "nodemon ./index.${language.fileExtension}"`),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             `/test/a${language.name}Application/package.json`,
-            expect.stringContaining('"start:agent": "node ./index.js"'),
+            expect.stringContaining(
+              `"start:agent": "node ./${language === languages.Typescript ? 'dist/' : ''}index.js"`,
+            ),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             `/test/a${language.name}Application/package.json`,

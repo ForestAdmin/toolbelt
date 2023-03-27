@@ -2,10 +2,9 @@ import type { Schema } from './typings';
 
 import dotenv from 'dotenv';
 import { createAgent, CollectionCustomizer } from '@forestadmin/agent';
-{{datasourceImport}}
+const { createSqlDataSource } = require('@forestadmin/datasource-sql');
 
 dotenv.config();
-{{#unless isMongoose}}
 
 const dialectOptions: { [name: string]: any } = {};
 
@@ -14,29 +13,14 @@ if (process.env.DATABASE_SSL && JSON.parse(process.env.DATABASE_SSL.toLowerCase(
   const rejectUnauthorized =
     process.env.DATABASE_REJECT_UNAUTHORIZED &&
     JSON.parse(process.env.DATABASE_REJECT_UNAUTHORIZED.toLowerCase());
-{{#if isMySQL}}
   dialectOptions.ssl = { rejectUnauthorized };
-{{else if isMSSQL}}
-  dialectOptions.options = {
-    encrypt: true,
-    trustServerCertificate: !rejectUnauthorized,
-  };
-{{else if isMariaDB}}
-  dialectOptions.ssl = rejectUnauthorized ? true: { rejectUnauthorized };
-{{else}}
-  dialectOptions.ssl = rejectUnauthorized ? true : { require: true, rejectUnauthorized };
-{{/if}}
 }
-{{/unless}}
 
 // This object allows to configure your Forest Admin admin panel
 const agent = createAgent<Schema>({
   // Security tokens
   authSecret: process.env.FOREST_AUTH_SECRET!,
   envSecret: process.env.FOREST_ENV_SECRET!,
-  {{#if forestServerUrl}}
-  forestServerUrl: process.env.FOREST_SERVER_URL!,
-  {{/if}}
 
   // Make sure to set NODE_ENV to 'production' when you deploy your project
   isProduction: process.env.NODE_ENV === 'production',
@@ -48,7 +32,13 @@ const agent = createAgent<Schema>({
 
 // Connect your datasources
 // All options are documented at https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
-agent.addDataSource({{datasourceCreation}});
+agent.addDataSource(
+    createSqlDataSource({
+      uri: process.env.DATABASE_URL,
+      schema: process.env.DATABASE_SCHEMA,
+      ...dialectOptions,
+    }),
+  );
 
 // Add customizations here.
 // For instance, you can code custom actions, charts, create new fields or relationships, load plugins.

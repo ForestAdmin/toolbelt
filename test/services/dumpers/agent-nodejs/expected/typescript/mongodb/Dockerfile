@@ -11,6 +11,8 @@ RUN npm install
 # Bundle app source
 COPY . .
 
+CMD ["npm", "build"]
+
 EXPOSE ${APPLICATION_PORT}
 
 CMD ["npm", "start"]
