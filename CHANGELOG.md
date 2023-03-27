@@ -1,3 +1,10 @@
+# [3.2.0](https://github.com/ForestAdmin/toolbelt/compare/v3.1.11...v3.2.0) (2023-03-27)
+
+
+### Features
+
+* **create-command:** add commands to generate agent-nodejs projects ([#532](https://github.com/ForestAdmin/toolbelt/issues/532)) ([c791e87](https://github.com/ForestAdmin/toolbelt/commit/c791e87044579fe2a190305401b8fd151f3fdcff))
+
 ## [3.1.11](https://github.com/ForestAdmin/toolbelt/compare/v3.1.10...v3.1.11) (2023-03-15)
 
 
