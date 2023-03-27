@@ -2,10 +2,9 @@
   "name": "test-output-javascript-mariadb",
   "version": "0.0.1",
   "private": true,
-  "main": "index.js",
   "scripts": {
-    "start:watch": "nodemon",
-    "start": "node ./index.js"
+    "start": "node ./index.js",
+    "start:watch": "nodemon --exec yarn start"
   },
   "nodemonConfig": {
     "ignore": [

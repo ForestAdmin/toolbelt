@@ -82,22 +82,24 @@ export default class AgentNodeJs extends AbstractDumper {
       }
     }
 
+    let scripts: { [name: string]: string } = {
+      start: 'node ./index.js',
+      'start:watch': 'nodemon --exec yarn start',
+    };
+    const devDependencies: { [name: string]: string } = {
+      nodemon: '^2.0.12',
+    };
+
     const pkg = {
       name: this.toValidPackageName(appName),
       version: '0.0.1',
       private: true,
-      main: 'index.js',
-      scripts: {
-        'start:watch': 'nodemon',
-        start: 'node ./index.js',
-      },
+      scripts,
       nodemonConfig: {
         ignore: ['./forestadmin-schema.json'],
       },
       dependencies,
-      devDependencies: {
-        nodemon: '^2.0.12',
-      },
+      devDependencies,
     };
 
     this.writeFile('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
