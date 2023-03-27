@@ -78,7 +78,7 @@ describe('services > dumpers > AgentNodeJs', () => {
         // @ts-expect-error
         appPort: null,
         appHostname: 'http://localhost',
-        appName: 'anApplication',
+        appName: `a${language.name}Application`,
       },
       dbConfig: {
         dbSsl: false,
@@ -113,7 +113,7 @@ describe('services > dumpers > AgentNodeJs', () => {
         await dumper.dump(defaultConfig);
 
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-          '/test/anApplication/.gitignore',
+          `/test/a${language.name}Application/.gitignore`,
           'node_modules\n.env\n',
         );
       });
@@ -126,7 +126,7 @@ describe('services > dumpers > AgentNodeJs', () => {
         await dumper.dump(defaultConfig);
 
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-          '/test/anApplication/.dockerignore',
+          `/test/a${language.name}Application/.dockerignore`,
           'node_modules\nnpm-debug.log\n.env\n',
         );
       });
@@ -139,7 +139,7 @@ describe('services > dumpers > AgentNodeJs', () => {
         await dumper.dump(defaultConfig);
 
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-          '/test/anApplication/typings.ts',
+          `/test/a${language.name}Application/typings.ts`,
           '/* eslint-disable */\nexport type Schema = any;\n',
         );
       });
@@ -152,7 +152,7 @@ describe('services > dumpers > AgentNodeJs', () => {
         await dumper.dump(defaultConfig);
 
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-          '/test/anApplication/Dockerfile',
+          `/test/a${language.name}Application/Dockerfile`,
           'mockedContent',
         );
       });
@@ -167,17 +167,20 @@ describe('services > dumpers > AgentNodeJs', () => {
 
           await dumper.dump(defaultConfig);
 
-          expect(context.fs.writeFileSync).toHaveBeenCalledWith('/test/anApplication/.env', {
-            dbUrl: 'localhost',
-            dbSsl: false,
-            dbSchema: 'public',
-            appPort: 3310,
-            forestServerUrl: false,
-            forestEnvSecret: 'aForestEnvSecret',
-            forestAuthSecret: 'aForestAuthSecret',
-            hasDockerDbUrl: true,
-            dockerDbUrl: 'host.docker.internal',
-          });
+          expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+            `/test/a${language.name}Application/.env`,
+            {
+              dbUrl: 'localhost',
+              dbSsl: false,
+              dbSchema: 'public',
+              appPort: 3310,
+              forestServerUrl: false,
+              forestEnvSecret: 'aForestEnvSecret',
+              forestAuthSecret: 'aForestAuthSecret',
+              hasDockerDbUrl: true,
+              dockerDbUrl: 'host.docker.internal',
+            },
+          );
         });
       });
 
@@ -191,7 +194,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/.env',
+              `/test/a${language.name}Application/.env`,
               expect.objectContaining({
                 appPort: 3310,
               }),
@@ -210,7 +213,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/.env',
+              `/test/a${language.name}Application/.env`,
               expect.objectContaining({
                 appPort: 3000,
               }),
@@ -233,7 +236,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/.env',
+              `/test/a${language.name}Application/.env`,
               expect.objectContaining({
                 dbSsl: false,
               }),
@@ -252,7 +255,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               await dumper.dump(defaultConfig);
 
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                '/test/anApplication/.env',
+                `/test/a${language.name}Application/.env`,
                 expect.objectContaining({
                   dbSsl: true,
                 }),
@@ -269,7 +272,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               await dumper.dump(defaultConfig);
 
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                '/test/anApplication/.env',
+                `/test/a${language.name}Application/.env`,
                 expect.objectContaining({
                   dbSsl: false,
                 }),
@@ -291,7 +294,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/.env',
+              `/test/a${language.name}Application/.env`,
               expect.objectContaining({
                 dockerDbUrl: '',
                 hasDockerDbUrl: false,
@@ -309,7 +312,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/.env',
+              `/test/a${language.name}Application/.env`,
               expect.objectContaining({
                 dockerDbUrl: 'host.docker.internal',
                 hasDockerDbUrl: true,
@@ -334,7 +337,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/.env',
+              `/test/a${language.name}Application/.env`,
               expect.objectContaining({
                 forestServerUrl: 'https://api.development.forestadmin.com',
               }),
@@ -351,7 +354,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/.env',
+              `/test/a${language.name}Application/.env`,
               expect.objectContaining({
                 forestServerUrl: false,
               }),
@@ -377,7 +380,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              `/test/anApplication/index.${language.fileExtension}`,
+              `/test/a${language.name}Application/index.${language.fileExtension}`,
               expect.objectContaining({
                 forestServerUrl: 'http://localhost:3001',
               }),
@@ -394,7 +397,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              `/test/anApplication/index.${language.fileExtension}`,
+              `/test/a${language.name}Application/index.${language.fileExtension}`,
               expect.objectContaining({
                 forestServerUrl: false,
               }),
@@ -415,7 +418,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              `/test/anApplication/index.${language.fileExtension}`,
+              `/test/a${language.name}Application/index.${language.fileExtension}`,
               expect.objectContaining({
                 isMongoose: true,
                 isMySQL: false,
@@ -438,7 +441,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              `/test/anApplication/index.${language.fileExtension}`,
+              `/test/a${language.name}Application/index.${language.fileExtension}`,
               expect.objectContaining({
                 isMongoose: false,
                 isMySQL: true,
@@ -469,39 +472,39 @@ describe('services > dumpers > AgentNodeJs', () => {
           await dumper.dump(defaultConfig);
 
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-            '/test/anApplication/package.json',
-            expect.stringContaining('"name": "anApplication"'),
+            `/test/a${language.name}Application/package.json`,
+            expect.stringContaining(`"name": "a${language.name}Application"`),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-            '/test/anApplication/package.json',
+            `/test/a${language.name}Application/package.json`,
             expect.stringContaining('"start": "nodemon ./index.js'),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-            '/test/anApplication/package.json',
+            `/test/a${language.name}Application/package.json`,
             expect.stringContaining('"start:agent": "node ./index.js"'),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-            '/test/anApplication/package.json',
+            `/test/a${language.name}Application/package.json`,
             expect.stringContaining('"version": "0.0.1"'),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-            '/test/anApplication/package.json',
+            `/test/a${language.name}Application/package.json`,
             expect.stringContaining('"private": true'),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-            '/test/anApplication/package.json',
+            `/test/a${language.name}Application/package.json`,
             expect.stringContaining('"@forestadmin/agent": "^1.0.0"'),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-            '/test/anApplication/package.json',
+            `/test/a${language.name}Application/package.json`,
             expect.stringContaining('"dotenv": "^16.0.1"'),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-            '/test/anApplication/package.json',
+            `/test/a${language.name}Application/package.json`,
             expect.stringContaining('"nodemon": "^2.0.12"'),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-            '/test/anApplication/package.json',
+            `/test/a${language.name}Application/package.json`,
             expect.stringContaining('nodemonConfig'),
           );
         });
@@ -519,7 +522,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/package.json',
+              `/test/a${language.name}Application/package.json`,
               expect.stringContaining('"@forestadmin/datasource-mongoose": "^1.0.0"'),
             );
           });
@@ -534,7 +537,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/package.json',
+              `/test/a${language.name}Application/package.json`,
               expect.stringContaining('"mongoose": "^6.10.3"'),
             );
           });
@@ -549,7 +552,7 @@ describe('services > dumpers > AgentNodeJs', () => {
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              '/test/anApplication/package.json',
+              `/test/a${language.name}Application/package.json`,
               expect.stringContaining('"@forestadmin/datasource-sql": "^1.0.0"'),
             );
           });
@@ -565,7 +568,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               await dumper.dump(defaultConfig);
 
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                '/test/anApplication/package.json',
+                `/test/a${language.name}Application/package.json`,
                 expect.stringContaining('"pg": "^8.8.0"'),
               );
             });
@@ -580,7 +583,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               await dumper.dump(defaultConfig);
 
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                '/test/anApplication/package.json',
+                `/test/a${language.name}Application/package.json`,
                 expect.stringContaining('"mysql2": "^3.0.1"'),
               );
             });
@@ -595,7 +598,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               await dumper.dump(defaultConfig);
 
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                '/test/anApplication/package.json',
+                `/test/a${language.name}Application/package.json`,
                 expect.stringContaining('"mariadb": "^3.0.2"'),
               );
             });
@@ -610,7 +613,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               await dumper.dump(defaultConfig);
 
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                '/test/anApplication/package.json',
+                `/test/a${language.name}Application/package.json`,
                 expect.stringContaining('"tedious": "^15.1.2"'),
               );
             });
@@ -628,9 +631,9 @@ describe('services > dumpers > AgentNodeJs', () => {
         await dumper.dump(defaultConfig);
 
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-          '/test/anApplication/docker-compose.yml',
+          `/test/a${language.name}Application/docker-compose.yml`,
           expect.objectContaining({
-            containerName: 'anApplication',
+            containerName: `a${language.name}Application`,
             forestExtraHost: '',
             isLinuxOs: false,
             network: null,
@@ -666,7 +669,9 @@ describe('services > dumpers > AgentNodeJs', () => {
 
           await dumper.dump(defaultConfig);
 
-          expect(context.mkdirp).not.toHaveBeenCalledWith('/test/anApplication/models');
+          expect(context.mkdirp).not.toHaveBeenCalledWith(
+            `/test/a${language.name}Application/models`,
+          );
         });
       });
 
@@ -681,7 +686,9 @@ describe('services > dumpers > AgentNodeJs', () => {
 
             await dumper.dump(defaultConfig, {});
 
-            expect(context.mkdirp).toHaveBeenCalledWith('/test/anApplication/models');
+            expect(context.mkdirp).toHaveBeenCalledWith(
+              `/test/a${language.name}Application/models`,
+            );
           });
 
           describe('when schema does not have any models', () => {
@@ -695,7 +702,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               await dumper.dump(defaultConfig, {});
 
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                `/test/anApplication/models/index.${language.fileExtension}`,
+                `/test/a${language.name}Application/models/index.${language.fileExtension}`,
                 'mockedContent',
               );
 
@@ -714,21 +721,21 @@ describe('services > dumpers > AgentNodeJs', () => {
               await dumper.dump(defaultConfig, schemaSample);
 
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                `/test/anApplication/models/collectionA.${language.fileExtension}`,
+                `/test/a${language.name}Application/models/collectionA.${language.fileExtension}`,
                 expect.objectContaining({
                   collectionName: 'collectionA',
                 }),
               );
 
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                `/test/anApplication/models/collectionB.${language.fileExtension}`,
+                `/test/a${language.name}Application/models/collectionB.${language.fileExtension}`,
                 expect.objectContaining({
                   collectionName: 'collectionB',
                 }),
               );
 
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                `/test/anApplication/models/collection-c.${language.fileExtension}`,
+                `/test/a${language.name}Application/models/collection-c.${language.fileExtension}`,
                 expect.objectContaining({
                   collectionName: 'collection-c',
                 }),
@@ -752,7 +759,7 @@ describe('services > dumpers > AgentNodeJs', () => {
                 'collection-c',
               );
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                `/test/anApplication/models/collection-c.${language.fileExtension}`,
+                `/test/a${language.name}Application/models/collection-c.${language.fileExtension}`,
                 expect.objectContaining({
                   modelName: 'collection-ccamelCased',
                 }),
@@ -769,7 +776,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               await dumper.dump(defaultConfig, schemaSample);
 
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                `/test/anApplication/models/collection-c.${language.fileExtension}`,
+                `/test/a${language.name}Application/models/collection-c.${language.fileExtension}`,
                 {
                   modelName: 'collection-c',
                   collectionName: 'collection-c',
@@ -778,7 +785,7 @@ describe('services > dumpers > AgentNodeJs', () => {
                 },
               );
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                `/test/anApplication/models/collectionA.${language.fileExtension}`,
+                `/test/a${language.name}Application/models/collectionA.${language.fileExtension}`,
                 {
                   modelName: 'collectionA',
                   collectionName: 'collectionA',
@@ -792,7 +799,7 @@ describe('services > dumpers > AgentNodeJs', () => {
                 },
               );
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                `/test/anApplication/models/collectionB.${language.fileExtension}`,
+                `/test/a${language.name}Application/models/collectionB.${language.fileExtension}`,
                 {
                   modelName: 'collectionB',
                   collectionName: 'collectionB',
@@ -819,7 +826,7 @@ describe('services > dumpers > AgentNodeJs', () => {
                 'a-collection',
               );
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                `/test/anApplication/models/collectionA.${language.fileExtension}`,
+                `/test/a${language.name}Application/models/collectionA.${language.fileExtension}`,
                 {
                   modelName: 'collectionAcamelCased',
                   collectionName: 'collectionA',
@@ -847,7 +854,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
               expect(context.lodash.kebabCase).toHaveBeenCalledWith('collectionA');
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-                `/test/anApplication/models/collectionAkebab_cased.${language.fileExtension}`,
+                `/test/a${language.name}Application/models/collectionAkebab_cased.${language.fileExtension}`,
                 expect.objectContaining({
                   collectionName: 'collectionA',
                 }),
@@ -866,7 +873,9 @@ describe('services > dumpers > AgentNodeJs', () => {
 
             await dumper.dump(defaultConfig);
 
-            expect(context.mkdirp).not.toHaveBeenCalledWith('/test/anApplication/models');
+            expect(context.mkdirp).not.toHaveBeenCalledWith(
+              `/test/a${language.name}Application/models`,
+            );
           });
         });
       });

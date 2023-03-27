@@ -15,18 +15,13 @@ import subDocumentsNoIds from '../../analyzer/expected/mongo/db-analysis-output/
 import subDocumentsWithIds from '../../analyzer/expected/mongo/db-analysis-output/sub-documents-using-ids.expected.json';
 
 describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
-  // eslint-disable-next-line jest/no-hooks
-  afterAll(() => {
-    rimraf.sync(`${appRoot}/test-output/mongodb/`);
-  });
-
   async function dump(language, schema) {
-    rimraf.sync(`${appRoot}/test-output/mongodb/`);
+    rimraf.sync(`${appRoot}/test-output/${language.name}/mongodb/`);
 
     const config = {
       name: 'mongodb',
       appConfig: {
-        appName: 'test-output/mongodb',
+        appName: `test-output/${language.name}/mongodb`,
         appHostname: 'localhost',
         appPort: 1654,
       },
@@ -47,6 +42,11 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
   }
 
   describe.each([languages.Javascript])('language: $name', language => {
+    // eslint-disable-next-line jest/no-hooks
+    afterAll(() => {
+      rimraf.sync(`${appRoot}/test-output/${language.name}/mongodb/`);
+    });
+
     describe('dump model files', () => {
       describe('dumping schema', () => {
         const testCases = [
@@ -103,13 +103,13 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
         it.each(testCases)(`$name`, async ({ schema, file }) => {
           expect.hasAssertions();
 
-          rimraf.sync(`${appRoot}/test-output/mongodb/`);
+          rimraf.sync(`${appRoot}/test-output/${language.name}/mongodb/`);
 
           await dump(language, schema);
 
           const expectedFile = fs.readFileSync(file.expectedFilePath, 'utf-8');
           const generatedFile = fs.readFileSync(
-            `${appRoot}/test-output/mongodb/models/${file.model}.${language.fileExtension}`,
+            `${appRoot}/test-output/${language.name}/mongodb/models/${file.model}.${language.fileExtension}`,
             'utf8',
           );
 
@@ -124,7 +124,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
           await dump(language, simple);
 
           const generatedFile = fs.readFileSync(
-            `${appRoot}/test-output/mongodb/models/films.${language.fileExtension}`,
+            `${appRoot}/test-output/${language.name}/mongodb/models/films.${language.fileExtension}`,
             'utf8',
           );
 
@@ -145,7 +145,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
           'utf-8',
         );
         const generatedFile = fs.readFileSync(
-          `${appRoot}/test-output/mongodb/models/index.${language.fileExtension}`,
+          `${appRoot}/test-output/${language.name}/mongodb/models/index.${language.fileExtension}`,
           'utf8',
         );
 

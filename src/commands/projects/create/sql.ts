@@ -67,6 +67,7 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
       appConfig: config.appConfig,
       forestAuthSecret: config.forestAuthSecret,
       forestEnvSecret: config.forestEnvSecret,
+      language: config.language,
     };
     const dumpPromise = this.dumper.dump(dumperConfig);
     await this.spinner.attachToPromise(dumpPromise);

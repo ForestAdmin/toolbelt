@@ -83,6 +83,7 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
       appConfig: config.appConfig,
       forestAuthSecret: config.forestAuthSecret,
       forestEnvSecret: config.forestEnvSecret,
+      language: config.language,
     };
     const dumpPromise = this.dumper.dump(dumperConfig, schema);
     await this.spinner.attachToPromise(dumpPromise);
