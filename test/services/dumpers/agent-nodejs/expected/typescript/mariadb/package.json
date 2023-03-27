@@ -1,0 +1,27 @@
+{
+  "name": "test-output-typescript-mariadb",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "start": "node --enable-source-maps --async-stack-traces -e \"require('./dist/index.js').default()\"",
+    "start:watch": "nodemon --delay 250ms --watch '../*/dist/' --exec yarn start"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "./forestadmin-schema.json"
+    ]
+  },
+  "dependencies": {
+    "dotenv": "^16.0.1",
+    "@forestadmin/agent": "^1.0.0",
+    "@forestadmin/datasource-sql": "^1.0.0",
+    "mariadb": "^3.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12",
+    "typescript": "^4.9.4"
+  }
+}

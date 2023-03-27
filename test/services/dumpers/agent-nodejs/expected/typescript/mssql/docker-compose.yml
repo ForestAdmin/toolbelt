@@ -1,0 +1,14 @@
+version: '3.4'
+services:
+  app:
+    build:
+      context: .
+      network: host
+    container_name: test_output_typescript_mssql
+    env_file:
+      - .env
+    ports:
+      - "${APPLICATION_PORT}:${APPLICATION_PORT}"
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules

@@ -57,7 +57,7 @@ export default class AgentNodeJs extends AbstractDumper {
     this.toValidPackageName = toValidPackageName;
   }
 
-  writePackageJson(dbDialect: string, appName: string) {
+  writePackageJson(language: Languages, dbDialect: string, appName: string) {
     const dependencies: { [name: string]: string } = {
       dotenv: '^16.0.1',
       '@forestadmin/agent': '^1.0.0',
@@ -90,6 +90,18 @@ export default class AgentNodeJs extends AbstractDumper {
       nodemon: '^2.0.12',
     };
 
+    if (language === Languages.Typescript) {
+      scripts = {
+        build: 'tsc',
+        'build:watch': 'tsc --watch',
+        clean: 'rm -rf dist',
+        start:
+          'node --enable-source-maps --async-stack-traces -e "require(\'./dist/index.js\').default()"',
+        'start:watch': "nodemon --delay 250ms --watch '../*/dist/' --exec yarn start",
+      };
+      devDependencies.typescript = '^4.9.4';
+    }
+
     const pkg = {
       name: this.toValidPackageName(appName),
       version: '0.0.1',
@@ -103,6 +115,31 @@ export default class AgentNodeJs extends AbstractDumper {
     };
 
     this.writeFile('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
+  }
+
+  writeTsConfigJson() {
+    this.writeFile(
+      'tsconfig.json',
+      `${JSON.stringify(
+        {
+          compilerOptions: {
+            experimentalDecorators: true,
+            target: 'ES2020',
+            module: 'CommonJS',
+            moduleResolution: 'Node',
+            esModuleInterop: true,
+            declaration: true,
+            declarationMap: true,
+            inlineSourceMap: true,
+            noImplicitOverride: true,
+            stripInternal: true,
+            outDir: 'dist',
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    );
   }
 
   writeIndex(language: Language, dbDialect: string, dbSchema: string) {
@@ -234,7 +271,14 @@ export default class AgentNodeJs extends AbstractDumper {
   }
 
   protected async createFiles(dumpConfig: Config, mongoSchema?: any) {
-    this.writePackageJson(dumpConfig.dbConfig.dbDialect, dumpConfig.appConfig.appName);
+    this.writePackageJson(
+      dumpConfig.language,
+      dumpConfig.dbConfig.dbDialect,
+      dumpConfig.appConfig.appName,
+    );
+    if (dumpConfig.language === Languages.Typescript) {
+      this.writeTsConfigJson();
+    }
     this.writeIndex(
       dumpConfig.language,
       dumpConfig.dbConfig.dbDialect,
