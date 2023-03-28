@@ -5,7 +5,7 @@ import rimraf from 'rimraf';
 
 import defaultPlan from '../../../../src/context/plan';
 import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs';
-import Languages from '../../../../src/utils/languages';
+import languages from '../../../../src/utils/languages';
 import deepNested from '../../analyzer/expected/mongo/db-analysis-output/deep-nested-fields.expected.json';
 import hasMany from '../../analyzer/expected/mongo/db-analysis-output/hasmany.expected.json';
 import manyObjectIdFields from '../../analyzer/expected/mongo/db-analysis-output/many-objectid-fields.expected.json';
@@ -41,7 +41,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
     await dumper.dump(config, schema);
   }
 
-  describe.each([Languages.Typescript])('language: $name', language => {
+  describe.each([languages.Typescript])('language: $name', language => {
     // eslint-disable-next-line jest/no-hooks
     afterAll(() => {
       rimraf.sync(`${appRoot}/test-output/${language.name}/mongodb/`);
@@ -143,7 +143,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
       it('should export expected values', async () => {
         expect.assertions(2);
 
-        const language = Languages.Javascript;
+        const language = languages.Javascript;
 
         await dump(language, simple);
 
@@ -161,7 +161,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
       it('should export expected values', async () => {
         expect.assertions(1);
 
-        const language = Languages.Typescript;
+        const language = languages.Typescript;
 
         await dump(language, simple);
 
