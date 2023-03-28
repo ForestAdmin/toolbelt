@@ -1,3 +1,10 @@
+## [3.2.1](https://github.com/ForestAdmin/toolbelt/compare/v3.2.0...v3.2.1) (2023-03-28)
+
+
+### Bug Fixes
+
+* **security:** patch xmldom dependency vulnerability ([#479](https://github.com/ForestAdmin/toolbelt/issues/479)) ([06c2909](https://github.com/ForestAdmin/toolbelt/commit/06c290909f2bcb813c377e1bde48048a03d66642))
+
 # [3.2.0](https://github.com/ForestAdmin/toolbelt/compare/v3.1.11...v3.2.0) (2023-03-27)
 
 
