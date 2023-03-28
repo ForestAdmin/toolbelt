@@ -1,3 +1,4 @@
+const { default: languages } = require('../../utils/languages');
 const AbstractPrompter = require('./abstract-prompter');
 
 class ApplicationPrompts extends AbstractPrompter {
@@ -11,6 +12,7 @@ class ApplicationPrompts extends AbstractPrompter {
   async handlePrompts() {
     this.handleHostname();
     this.handlePort();
+    this.handleLanguage();
   }
 
   handleHostname() {
@@ -56,6 +58,28 @@ class ApplicationPrompts extends AbstractPrompter {
             }
             return 'This is not a valid port.';
           },
+        });
+      }
+    }
+  }
+
+  handleLanguage() {
+    if (this.isOptionRequested('javascript')) {
+      this.knownAnswers.language =
+        typeof this.programArguments.typescript === 'boolean' && this.programArguments.typescript
+          ? languages.Typescript
+          : languages.Javascript;
+
+      if (!this.knownAnswers.language) {
+        this.prompts.push({
+          type: 'list',
+          name: 'language',
+          message: 'What language do you want to use?',
+          choices: [
+            { name: 'javascript', value: languages.Javascript },
+            { name: 'typescript', value: languages.Typescript },
+          ],
+          default: languages.Javascript,
         });
       }
     }

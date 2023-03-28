@@ -34,6 +34,16 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
       exclusive: [],
       required: false,
     }),
+    javascript: flags.boolean({
+      description: 'Generate your project in javascript.',
+      exclusive: ['typescript'],
+      default: context => !context.flags.typescript,
+    }),
+    typescript: flags.boolean({
+      description: 'Generate your project in typescript.',
+      exclusive: ['javascript'],
+      default: false,
+    }),
   };
 
   static override readonly args = [...AbstractProjectCreateCommand.args];
