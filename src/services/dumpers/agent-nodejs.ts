@@ -6,6 +6,15 @@ import type Lodash from 'lodash';
 import languages from '../../utils/languages';
 import AbstractDumper from './abstract-dumper';
 
+interface ModelConfiguration {
+  collectionName: string;
+  modelName: string;
+  modelFileName: string;
+  timestamps: boolean;
+  fields: Array<object>;
+  modelPath: string;
+}
+
 export default class AgentNodeJs extends AbstractDumper {
   private env: { FOREST_SERVER_URL: string; FOREST_URL_IS_DEFAULT: boolean };
 
@@ -231,19 +240,13 @@ export default class AgentNodeJs extends AbstractDumper {
     });
   }
 
-  private async writeMongooseModels(language: Language, schema) {
-    await this.mkdirp(`${this.projectPath}/models`);
-
-    this.copyHandleBarsTemplate(
-      `${language.name}/models/index.hbs`,
-      `models/index.${language.fileExtension}`,
-    );
-
+  private computeModelsConfiguration(schema: any, language: Language): Array<ModelConfiguration> {
     const collectionNamesSorted = Object.keys(schema).sort();
 
-    collectionNamesSorted.forEach(collectionName => {
+    return collectionNamesSorted.map(collectionName => {
       const { fields, options } = schema[collectionName];
-      const modelPath = `models/${this.lodash.kebabCase(collectionName)}.${language.fileExtension}`;
+      const modelFileName = `${this.lodash.kebabCase(collectionName)}`;
+      const modelPath = `models/${modelFileName}.${language.fileExtension}`;
 
       const fieldsDefinition = fields.map(field => {
         return {
@@ -252,12 +255,39 @@ export default class AgentNodeJs extends AbstractDumper {
         };
       });
 
-      this.copyHandleBarsTemplate(`${language.name}/models/model.hbs`, modelPath, {
+      return {
         modelName: this.strings.transformToCamelCaseSafeString(collectionName),
         collectionName,
         fields: fieldsDefinition,
         timestamps: options.timestamps,
-      });
+        modelFileName,
+        modelPath,
+      };
+    });
+  }
+
+  private async writeMongooseModels(language: Language, schema) {
+    await this.mkdirp(`${this.projectPath}/models`);
+
+    const modelsConfiguration = this.computeModelsConfiguration(schema, language);
+
+    this.copyHandleBarsTemplate(
+      `${language.name}/models/index.hbs`,
+      `models/index.${language.fileExtension}`,
+      { models: modelsConfiguration },
+    );
+
+    modelsConfiguration.forEach(modelConfiguration => {
+      this.copyHandleBarsTemplate(
+        `${language.name}/models/model.hbs`,
+        modelConfiguration.modelPath,
+        {
+          modelName: modelConfiguration.modelName,
+          collectionName: modelConfiguration.collectionName,
+          fields: modelConfiguration.fields,
+          timestamps: modelConfiguration.timestamps,
+        },
+      );
     });
   }
 
@@ -288,7 +318,7 @@ export default class AgentNodeJs extends AbstractDumper {
     this.writeDockerCompose(dumpConfig);
 
     if (dumpConfig.dbConfig.dbDialect === 'mongodb' && mongoSchema) {
-      // await this.writeMongooseModels(dumpConfig.language, mongoSchema);
+      await this.writeMongooseModels(dumpConfig.language, mongoSchema);
     }
   }
 }

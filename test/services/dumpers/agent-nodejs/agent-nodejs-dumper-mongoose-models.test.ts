@@ -5,7 +5,7 @@ import rimraf from 'rimraf';
 
 import defaultPlan from '../../../../src/context/plan';
 import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs';
-import languages from '../../../../src/utils/languages';
+import Languages from '../../../../src/utils/languages';
 import deepNested from '../../analyzer/expected/mongo/db-analysis-output/deep-nested-fields.expected.json';
 import hasMany from '../../analyzer/expected/mongo/db-analysis-output/hasmany.expected.json';
 import manyObjectIdFields from '../../analyzer/expected/mongo/db-analysis-output/many-objectid-fields.expected.json';
@@ -41,7 +41,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
     await dumper.dump(config, schema);
   }
 
-  describe.each([languages.Javascript])('language: $name', language => {
+  describe.each([Languages.Typescript])('language: $name', language => {
     // eslint-disable-next-line jest/no-hooks
     afterAll(() => {
       rimraf.sync(`${appRoot}/test-output/${language.name}/mongodb/`);
@@ -116,22 +116,6 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
           expect(generatedFile).toStrictEqual(expectedFile);
         });
       });
-
-      describe('dumping export', () => {
-        it('should export expected values', async () => {
-          expect.assertions(2);
-
-          await dump(language, simple);
-
-          const generatedFile = fs.readFileSync(
-            `${appRoot}/test-output/${language.name}/mongodb/models/films.${language.fileExtension}`,
-            'utf8',
-          );
-
-          expect(generatedFile).toContain(`collectionName: 'films'`);
-          expect(generatedFile).toContain(`modelName: 'films'`);
-        });
-      });
     });
 
     describe(`dump index.${language.fileExtension}`, () => {
@@ -150,6 +134,43 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
         );
 
         expect(generatedFile).toStrictEqual(expectedFile);
+      });
+    });
+  });
+
+  describe('dumping export', () => {
+    describe('javascript', () => {
+      it('should export expected values', async () => {
+        expect.assertions(2);
+
+        const language = Languages.Javascript;
+
+        await dump(language, simple);
+
+        const generatedFile = fs.readFileSync(
+          `${appRoot}/test-output/${language.name}/mongodb/models/films.${language.fileExtension}`,
+          'utf8',
+        );
+
+        expect(generatedFile).toContain(`collectionName: 'films'`);
+        expect(generatedFile).toContain(`modelName: 'films'`);
+      });
+    });
+
+    describe('typescript', () => {
+      it('should export expected values', async () => {
+        expect.assertions(1);
+
+        const language = Languages.Typescript;
+
+        await dump(language, simple);
+
+        const generatedFile = fs.readFileSync(
+          `${appRoot}/test-output/${language.name}/mongodb/models/films.${language.fileExtension}`,
+          'utf8',
+        );
+
+        expect(generatedFile).toContain(`export { FilmsInterface, filmsSchema }`);
       });
     });
   });
