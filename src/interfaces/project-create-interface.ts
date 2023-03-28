@@ -1,3 +1,5 @@
+import type { Language } from '../utils/languages';
+
 interface DbConfigBase {
   dbDialect: string;
   dbSsl: boolean;
@@ -40,4 +42,5 @@ export interface Config {
   appConfig: AppConfig;
   forestAuthSecret: string;
   forestEnvSecret: string;
+  language?: Language;
 }

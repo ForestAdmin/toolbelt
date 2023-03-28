@@ -1,11 +1,10 @@
 {
-  "name": "test-output-mariadb",
+  "name": "test-output-javascript-mysql",
   "version": "0.0.1",
   "private": true,
-  "main": "index.js",
   "scripts": {
-    "start:watch": "nodemon",
-    "start": "node ./index.js"
+    "start": "nodemon ./index.js",
+    "start:agent": "node ./index.js"
   },
   "nodemonConfig": {
     "ignore": [
@@ -16,7 +15,7 @@
     "dotenv": "^16.0.1",
     "@forestadmin/agent": "^1.0.0",
     "@forestadmin/datasource-sql": "^1.0.0",
-    "mariadb": "^3.0.2"
+    "mysql2": "^3.0.1"
   },
   "devDependencies": {
     "nodemon": "^2.0.12"

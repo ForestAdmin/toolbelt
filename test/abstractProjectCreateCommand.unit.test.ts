@@ -12,6 +12,7 @@ import {
   sqlDbDialectOptions,
 } from '../src/services/prompter/database-prompts';
 import Agents from '../src/utils/agents';
+import languages from '../src/utils/languages';
 
 describe('abstractProjectCreateCommand command', () => {
   const makePlanAndStubs = () => {
@@ -393,6 +394,7 @@ describe('abstractProjectCreateCommand command', () => {
           },
           forestAuthSecret: 'this is an authSecret',
           forestEnvSecret: 'this an envSecret',
+          language: languages.Javascript,
         });
       });
     });
@@ -463,6 +465,7 @@ describe('abstractProjectCreateCommand command', () => {
           },
           forestAuthSecret: 'this is an authSecret',
           forestEnvSecret: 'this an envSecret',
+          language: languages.Javascript,
         });
       });
     });

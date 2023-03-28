@@ -5,6 +5,7 @@ import rimraf from 'rimraf';
 
 import defaultPlan from '../../../../src/context/plan';
 import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs';
+import languages from '../../../../src/utils/languages';
 import deepNested from '../../analyzer/expected/mongo/db-analysis-output/deep-nested-fields.expected.json';
 import hasMany from '../../analyzer/expected/mongo/db-analysis-output/hasmany.expected.json';
 import manyObjectIdFields from '../../analyzer/expected/mongo/db-analysis-output/many-objectid-fields.expected.json';
@@ -14,18 +15,13 @@ import subDocumentsNoIds from '../../analyzer/expected/mongo/db-analysis-output/
 import subDocumentsWithIds from '../../analyzer/expected/mongo/db-analysis-output/sub-documents-using-ids.expected.json';
 
 describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
-  // eslint-disable-next-line jest/no-hooks
-  afterAll(() => {
-    rimraf.sync(`${appRoot}/test-output/mongodb/`);
-  });
-
-  async function dump(schema) {
-    rimraf.sync(`${appRoot}/test-output/mongodb/`);
+  async function dump(language, schema) {
+    rimraf.sync(`${appRoot}/test-output/${language.name}/mongodb/`);
 
     const config = {
       name: 'mongodb',
       appConfig: {
-        appName: 'test-output/mongodb',
+        appName: `test-output/${language.name}/mongodb`,
         appHostname: 'localhost',
         appPort: 1654,
       },
@@ -37,124 +33,124 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
       },
       forestAuthSecret: 'forestAuthSecret',
       forestEnvSecret: 'forestEnvSecret',
+      language,
     };
 
     const injectedContext = Context.execute(defaultPlan);
     const dumper = new AgentNodeJsDumper(injectedContext);
-    await dumper.dump(
-      {
-        appConfig: config.appConfig,
-        dbConfig: config.dbConfig,
-        forestAuthSecret: 'forestAuthSecret',
-        forestEnvSecret: 'forestEnvSecret',
-      },
-      schema,
-    );
+    await dumper.dump(config, schema);
   }
 
-  describe('dump model files', () => {
-    describe('dumping schema', () => {
-      const testCases = [
-        {
-          name: 'should handle deep nested fields',
-          schema: deepNested,
-          file: {
-            model: 'persons',
-            expectedFilePath: `${__dirname}/expected/mongo-models/deep-nested.expected.js`,
-          },
-        },
-        {
-          name: 'should handle has many fields',
-          schema: hasMany,
-          file: {
-            model: 'films',
-            expectedFilePath: `${__dirname}/expected/mongo-models/hasmany.expected.js`,
-          },
-        },
-        {
-          name: 'should handle ambiguous ids in sub documents',
-          schema: subDocsAmbiguousIds,
-          file: {
-            model: 'persons',
-            expectedFilePath: `${__dirname}/expected/mongo-models/sub-documents-ambiguous-ids.expected.js`,
-          },
-        },
-        {
-          name: 'should handle sub document not using ids',
-          schema: subDocumentsNoIds,
-          file: {
-            model: 'persons',
-            expectedFilePath: `${__dirname}/expected/mongo-models/sub-documents-no-ids.expected.js`,
-          },
-        },
-        {
-          name: 'should handle many objectId fields',
-          schema: manyObjectIdFields,
-          file: {
-            model: 'persons',
-            expectedFilePath: `${__dirname}/expected/mongo-models/many-object-id-fields.expected.js`,
-          },
-        },
-        {
-          name: 'should handle sub documents using ids',
-          schema: subDocumentsWithIds,
-          file: {
-            model: 'persons',
-            expectedFilePath: `${__dirname}/expected/mongo-models/sub-documents-with-ids.expected.js`,
-          },
-        },
-      ];
+  describe.each([languages.Javascript])('language: $name', language => {
+    // eslint-disable-next-line jest/no-hooks
+    afterAll(() => {
+      rimraf.sync(`${appRoot}/test-output/${language.name}/mongodb/`);
+    });
 
-      it.each(testCases)(`$name`, async ({ schema, file }) => {
-        expect.hasAssertions();
+    describe('dump model files', () => {
+      describe('dumping schema', () => {
+        const testCases = [
+          {
+            name: 'should handle deep nested fields',
+            schema: deepNested,
+            file: {
+              model: 'persons',
+              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/deep-nested.expected.${language.fileExtension}`,
+            },
+          },
+          {
+            name: 'should handle has many fields',
+            schema: hasMany,
+            file: {
+              model: 'films',
+              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/hasmany.expected.${language.fileExtension}`,
+            },
+          },
+          {
+            name: 'should handle ambiguous ids in sub documents',
+            schema: subDocsAmbiguousIds,
+            file: {
+              model: 'persons',
+              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/sub-documents-ambiguous-ids.expected.${language.fileExtension}`,
+            },
+          },
+          {
+            name: 'should handle sub document not using ids',
+            schema: subDocumentsNoIds,
+            file: {
+              model: 'persons',
+              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/sub-documents-no-ids.expected.${language.fileExtension}`,
+            },
+          },
+          {
+            name: 'should handle many objectId fields',
+            schema: manyObjectIdFields,
+            file: {
+              model: 'persons',
+              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/many-object-id-fields.expected.${language.fileExtension}`,
+            },
+          },
+          {
+            name: 'should handle sub documents using ids',
+            schema: subDocumentsWithIds,
+            file: {
+              model: 'persons',
+              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/sub-documents-with-ids.expected.${language.fileExtension}`,
+            },
+          },
+        ];
 
-        rimraf.sync(`${appRoot}/test-output/mongodb/`);
+        it.each(testCases)(`$name`, async ({ schema, file }) => {
+          expect.hasAssertions();
 
-        await dump(schema);
+          rimraf.sync(`${appRoot}/test-output/${language.name}/mongodb/`);
 
-        const expectedFile = fs.readFileSync(file.expectedFilePath, 'utf-8');
+          await dump(language, schema);
+
+          const expectedFile = fs.readFileSync(file.expectedFilePath, 'utf-8');
+          const generatedFile = fs.readFileSync(
+            `${appRoot}/test-output/${language.name}/mongodb/models/${file.model}.${language.fileExtension}`,
+            'utf8',
+          );
+
+          expect(generatedFile).toStrictEqual(expectedFile);
+        });
+      });
+
+      describe('dumping export', () => {
+        it('should export expected values', async () => {
+          expect.assertions(2);
+
+          await dump(language, simple);
+
+          const generatedFile = fs.readFileSync(
+            `${appRoot}/test-output/${language.name}/mongodb/models/films.${language.fileExtension}`,
+            'utf8',
+          );
+
+          expect(generatedFile).toContain(`collectionName: 'films'`);
+          expect(generatedFile).toContain(`modelName: 'films'`);
+        });
+      });
+    });
+
+    describe(`dump index.${language.fileExtension}`, () => {
+      it(`should dump an index.${language.fileExtension} file`, async () => {
+        expect.assertions(1);
+
+        await dump(language, simple);
+
+        const expectedFile = fs.readFileSync(
+          `${__dirname}/expected/${language.name}/mongo-models/index.expected.${language.fileExtension}`,
+          'utf-8',
+        );
         const generatedFile = fs.readFileSync(
-          `${appRoot}/test-output/mongodb/models/${file.model}.js`,
+          `${appRoot}/test-output/${language.name}/mongodb/models/index.${language.fileExtension}`,
           'utf8',
         );
 
         expect(generatedFile).toStrictEqual(expectedFile);
       });
-    });
-
-    describe('dumping export', () => {
-      it('should export expected values', async () => {
-        expect.assertions(2);
-
-        await dump(simple);
-
-        const generatedFile = fs.readFileSync(
-          `${appRoot}/test-output/mongodb/models/films.js`,
-          'utf8',
-        );
-
-        expect(generatedFile).toContain(`collectionName: 'films'`);
-        expect(generatedFile).toContain(`modelName: 'films'`);
-      });
-    });
-  });
-
-  describe('dump index.js', () => {
-    it('should dump an index.js file', async () => {
-      expect.assertions(1);
-
-      await dump(simple);
-
-      const expectedFile = fs.readFileSync(
-        `${__dirname}/expected/mongo-models/index.expected.js`,
-        'utf-8',
-      );
-      const generatedFile = fs.readFileSync(
-        `${appRoot}/test-output/mongodb/models/index.js`,
-        'utf8',
-      );
-
-      expect(generatedFile).toStrictEqual(expectedFile);
     });
   });
 });

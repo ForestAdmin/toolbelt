@@ -1,11 +1,10 @@
 {
-  "name": "test-output-mongodb",
+  "name": "test-output-javascript-mongodb",
   "version": "0.0.1",
   "private": true,
-  "main": "index.js",
   "scripts": {
-    "start:watch": "nodemon",
-    "start": "node ./index.js"
+    "start": "nodemon ./index.js",
+    "start:agent": "node ./index.js"
   },
   "nodemonConfig": {
     "ignore": [
