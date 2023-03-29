@@ -640,7 +640,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
           describe('when schema does not have any models', () => {
             it('should write only the index file', async () => {
-              expect.assertions(2);
+              expect.assertions(1);
 
               const { defaultConfig, dumper, context } = createDumper(language);
 
@@ -648,12 +648,12 @@ describe('services > dumpers > AgentNodeJs', () => {
 
               await dumper.dump(defaultConfig, {});
 
-              expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+              expect(context.fs.writeFileSync).toHaveBeenLastCalledWith(
                 `/test/a${language.name}Application/models/index.${language.fileExtension}`,
-                'mockedContent',
+                {
+                  models: [],
+                },
               );
-
-              expect(context.fs.writeFileSync).toHaveBeenCalledTimes(9);
             });
           });
 
