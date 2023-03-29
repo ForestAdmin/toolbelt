@@ -1,10 +1,10 @@
 const Mongoose = require('mongoose');
 
 const schema = new Mongoose.Schema({
-  'name': String,
-  'propArrayOfObjects': [{
+  name: String,
+  propArrayOfObjects: [{
     _id: false,
-    'sampleValue': String,
+    sampleValue: String,
     'complex name': String,
   }],
 }, {

@@ -2,7 +2,7 @@ const Mongoose = require('mongoose');
 
 const schema = new Mongoose.Schema({
 {{#each fields as |field|}}
-  {{wq field.name}}: {{#if field.ref}}{ type: {{field.type}}, ref: '{{field.ref}}' }{{else if (isObject field.type)}}{{>renderNested type=field.type level=1}}{{else}}{{field.type}}{{/if}},
+  {{wsc field.name}}: {{#if field.ref}}{ type: {{field.type}}, ref: '{{field.ref}}' }{{else if (isObject field.type)}}{{>renderNested type=field.type level=1}}{{else}}{{field.type}}{{/if}},
 {{/each}}
 }, {
   timestamps: {{timestamps}},
