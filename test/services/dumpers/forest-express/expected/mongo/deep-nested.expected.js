@@ -5,33 +5,33 @@ module.exports = (mongoose, Mongoose) => {
   // This section contains the properties of your model, mapped to your collection's properties.
   // Learn more here: https://docs.forestadmin.com/documentation/reference-guide/models/enrich-your-models#declaring-a-new-field-in-a-model
   const schema = Mongoose.Schema({
-    'name': String,
-    'very': {
-      'deep': {
-        'model': {
-          'arrayOfNumber': [Number],
-          'arrayMixed': [Object],
-          'arrayOfObjectIds': [Mongoose.Schema.Types.ObjectId],
-          'arrayWithComplexObject': [{
-            'name': String,
-            'propGroup': {
-              'answer': Boolean,
-              'date': Date,
-              'sentence': String,
-              'number': Number,
+    name: String,
+    very: {
+      deep: {
+        model: {
+          arrayOfNumber: [Number],
+          arrayMixed: [Object],
+          arrayOfObjectIds: [Mongoose.Schema.Types.ObjectId],
+          arrayWithComplexObject: [{
+            name: String,
+            propGroup: {
+              answer: Boolean,
+              date: Date,
+              sentence: String,
+              number: Number,
             },
           }],
-          'arrayOfComplexObjects': [{
-            'propGroup': {
-              'answer': Boolean,
-              'date': Date,
-              'sentence': String,
-              'number': Number,
+          arrayOfComplexObjects: [{
+            propGroup: {
+              answer: Boolean,
+              date: Date,
+              sentence: String,
+              number: Number,
             },
-            'so': {
-              'nested': {
-                'arrayMixed': [Object],
-                'arrayOfNumber': [Number],
+            so: {
+              nested: {
+                arrayMixed: [Object],
+                arrayOfNumber: [Number],
               },
             },
           }],

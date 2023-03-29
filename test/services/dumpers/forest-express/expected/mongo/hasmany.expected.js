@@ -5,9 +5,9 @@ module.exports = (mongoose, Mongoose) => {
   // This section contains the properties of your model, mapped to your collection's properties.
   // Learn more here: https://docs.forestadmin.com/documentation/reference-guide/models/enrich-your-models#declaring-a-new-field-in-a-model
   const schema = Mongoose.Schema({
-    'actors': { type: [Mongoose.Schema.Types.ObjectId], ref: 'persons' },
-    'author': { type: Mongoose.Schema.Types.ObjectId, ref: 'persons' },
-    'title': String,
+    actors: { type: [Mongoose.Schema.Types.ObjectId], ref: 'persons' },
+    author: { type: Mongoose.Schema.Types.ObjectId, ref: 'persons' },
+    title: String,
   }, {
     timestamps: false,
   });
