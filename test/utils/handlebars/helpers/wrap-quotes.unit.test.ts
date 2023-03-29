@@ -16,6 +16,6 @@ describe('wrap-special-characters', () => {
     expect(wrapSpecialCharacters('notSpecialName')).toBe('notSpecialName');
     expect(wrapSpecialCharacters('notSpecialName12')).toBe('notSpecialName12');
     expect(wrapSpecialCharacters('_notSpecialName12')).toBe('_notSpecialName12');
-    expect(wrapSpecialCharacters('1234')).toBe("'1234'");
+    expect(wrapSpecialCharacters('1234')).toBe('1234');
   });
 });
