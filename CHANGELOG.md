@@ -1,3 +1,10 @@
+## [3.2.2](https://github.com/ForestAdmin/toolbelt/compare/v3.2.1...v3.2.2) (2023-03-30)
+
+
+### Bug Fixes
+
+* **mongoose-models:** don't use quote on model attributes that do not have special characters ([#577](https://github.com/ForestAdmin/toolbelt/issues/577)) ([1b1a3fc](https://github.com/ForestAdmin/toolbelt/commit/1b1a3fce48ef315665c3427a32ab78dae7594782))
+
 ## [3.2.1](https://github.com/ForestAdmin/toolbelt/compare/v3.2.0...v3.2.1) (2023-03-28)
 
 
