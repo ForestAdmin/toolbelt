@@ -41,7 +41,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
     await dumper.dump(config, schema);
   }
 
-  describe.each([languages.Typescript])('language: $name', language => {
+  describe.each([languages.Javascript, languages.Typescript])('language: $name', language => {
     // eslint-disable-next-line jest/no-hooks
     afterAll(() => {
       rimraf.sync(`${appRoot}/test-output/${language.name}/mongodb/`);
