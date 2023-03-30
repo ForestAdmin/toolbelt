@@ -114,7 +114,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
           `/test/a${language.name}Application/.gitignore`,
-          'node_modules\n.env\n',
+          `node_modules\n.env\n${language === languages.Typescript ? 'dist\n' : ''}`,
         );
       });
 
@@ -127,7 +127,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
           `/test/a${language.name}Application/.dockerignore`,
-          'node_modules\nnpm-debug.log\n.env\n',
+          `node_modules\nnpm-debug.log\n.env\n${language === languages.Typescript ? 'dist\n' : ''}`,
         );
       });
 

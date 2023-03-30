@@ -205,16 +205,22 @@ export default class AgentNodeJs extends AbstractDumper {
     this.copyHandleBarsTemplate('common/env.hbs', '.env', context);
   }
 
-  private writeGitignore() {
-    this.writeFile('.gitignore', 'node_modules\n.env\n');
+  private writeGitignore(language: Language) {
+    this.writeFile(
+      '.gitignore',
+      `node_modules\n.env\n${language === languages.Typescript ? 'dist\n' : ''}`,
+    );
   }
 
   private writeTypings() {
     this.writeFile('typings.ts', '/* eslint-disable */\nexport type Schema = any;\n');
   }
 
-  private writeDockerignore() {
-    this.writeFile('.dockerignore', 'node_modules\nnpm-debug.log\n.env\n');
+  private writeDockerignore(language: Language) {
+    this.writeFile(
+      '.dockerignore',
+      `node_modules\nnpm-debug.log\n.env\n${language === languages.Typescript ? 'dist\n' : ''}`,
+    );
   }
 
   private writeDockerfile(language: Language) {
@@ -292,8 +298,8 @@ export default class AgentNodeJs extends AbstractDumper {
       dumpConfig.forestAuthSecret,
     );
     this.writeTypings();
-    this.writeGitignore();
-    this.writeDockerignore();
+    this.writeGitignore(dumpConfig.language);
+    this.writeDockerignore(dumpConfig.language);
     this.writeDockerfile(dumpConfig.language);
     this.writeDockerCompose(dumpConfig);
 
