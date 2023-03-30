@@ -1,6 +1,6 @@
 import wrapSpecialCharacters from '../../../../src/utils/handlebars/helpers/wrap-special-characters';
 
-describe('wrap-special-characters', () => {
+describe('helpers > wrap-special-characters', () => {
   it('should wrap special characters', () => {
     expect.assertions(4);
 

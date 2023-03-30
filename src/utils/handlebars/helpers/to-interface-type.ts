@@ -21,3 +21,5 @@ const toInterfaceType = type => {
 };
 
 Handlebars.registerHelper('toInterfaceType', toInterfaceType);
+
+export default toInterfaceType;

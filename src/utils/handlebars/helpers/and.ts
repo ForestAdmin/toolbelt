@@ -1,3 +1,9 @@
 import Handlebars from 'handlebars';
 
-Handlebars.registerHelper('and', (value1, value2) => Boolean(value1 && value2));
+function and(value1, value2) {
+  return Boolean(value1 && value2);
+}
+
+Handlebars.registerHelper('and', and);
+
+export default and;
