@@ -103,6 +103,8 @@ describe('projects:create:nosql', () => {
                 databaseUser: 'no_such_user',
                 databasePassword: 'wrong_password',
                 databaseSSL: false,
+                javascript: true,
+                typescript: false,
               },
             },
           ],
@@ -136,6 +138,8 @@ describe('projects:create:nosql', () => {
                 databaseUser: 'no_such_user',
                 databasePassword: 'wrong_password',
                 databaseSSL: false,
+                javascript: true,
+                typescript: false,
               },
             },
           ],
@@ -184,6 +188,8 @@ describe('projects:create:nosql', () => {
                   databaseUser: 'no_such_user',
                   databasePassword: 'wrong_password',
                   databaseSSL: false,
+                  javascript: true,
+                  typescript: false,
                 },
               },
             ],
@@ -272,6 +278,121 @@ describe('projects:create:nosql', () => {
           }));
       });
     });
+    describe('when "javascript"', () => {
+      describe('is provided', () => {
+        it('should fail', () =>
+          testCli({
+            commandClass: NosqlCommand,
+            commandArgs: ['name', '--javascript'],
+            env: testEnvWithSecret,
+            token: 'any',
+            prompts: [
+              {
+                in: makePromptInputList(),
+                out: {
+                  confirm: true,
+                  databaseDialect: 'postgres',
+                  databaseName: 'unknown_db',
+                  databaseSchema: 'public',
+                  databaseHost: 'unknown_host',
+                  databasePort: 424242,
+                  databaseUser: 'no_such_user',
+                  databasePassword: 'wrong_password',
+                  databaseSSL: false,
+                  javascript: true,
+                  typescript: false,
+                },
+              },
+            ],
+            std: [{ spinner: '× Creating your project on Forest Admin' }],
+            // This only validates login, options are missing thus the error.
+            exitCode: 1,
+          }));
+      });
+    });
+
+    describe('when "typescript"', () => {
+      describe('is provided', () => {
+        it('should fail', () =>
+          testCli({
+            commandClass: NosqlCommand,
+            commandArgs: ['name', '--typescript'],
+            env: testEnvWithSecret,
+            token: 'any',
+            prompts: [
+              {
+                in: makePromptInputList(),
+                out: {
+                  confirm: true,
+                  databaseDialect: 'postgres',
+                  databaseName: 'unknown_db',
+                  databaseSchema: 'public',
+                  databaseHost: 'unknown_host',
+                  databasePort: 424242,
+                  databaseUser: 'no_such_user',
+                  databasePassword: 'wrong_password',
+                  databaseSSL: false,
+                  javascript: false,
+                  typescript: true,
+                },
+              },
+            ],
+            std: [{ spinner: '× Creating your project on Forest Admin' }],
+            // This only validates login, options are missing thus the error.
+            exitCode: 1,
+          }));
+      });
+    });
+
+    describe('when "javascript and typescript"', () => {
+      describe('are both missing', () => {
+        it('should default to javascript', () =>
+          testCli({
+            commandClass: NosqlCommand,
+            commandArgs: ['name'],
+            env: testEnvWithSecret,
+            token: 'any',
+            prompts: [
+              {
+                in: makePromptInputList(),
+                out: {
+                  confirm: true,
+                  databaseDialect: 'postgres',
+                  databaseName: 'unknown_db',
+                  databaseSchema: 'public',
+                  databaseHost: 'unknown_host',
+                  databasePort: 424242,
+                  databaseUser: 'no_such_user',
+                  databasePassword: 'wrong_password',
+                  databaseSSL: false,
+                  javascript: false,
+                  typescript: true,
+                },
+              },
+            ],
+            std: [{ spinner: '× Creating your project on Forest Admin' }],
+            // This only validates login, options are missing thus the error.
+            exitCode: 1,
+          }));
+      });
+
+      describe('are both provided', () => {
+        it('should fail', () =>
+          testCli({
+            commandClass: NosqlCommand,
+            commandArgs: ['name', '--javascript', '--typescript'],
+            env: testEnvWithSecret,
+            token: 'any',
+            std: [
+              {
+                err: '× ["Cannot generate your project.","An unexpected error occurred. Please reach out for help in our Developers community (https://community.forestadmin.com/) or create a Github issue with following error:"]',
+              },
+              { out: 'Error: --typescript= cannot also be provided when using --javascript=' },
+            ],
+            exitCode: 1,
+          }));
+      });
+    });
   });
 
   describe('execution', () => {
@@ -305,6 +426,8 @@ describe('projects:create:nosql', () => {
                 databaseUser: '',
                 databasePassword: '',
                 databaseSSL: false,
+                javascript: true,
+                typescript: false,
               },
             },
           ],
