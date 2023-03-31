@@ -103,6 +103,7 @@ describe('services > dumpers > AgentNodeJs', () => {
     };
   };
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   describe.each([languages.Javascript, languages.Typescript])('when dumping in $name', language => {
     describe('when writing common files', () => {
       it('should write a .gitignore file', async () => {
