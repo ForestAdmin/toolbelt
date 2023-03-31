@@ -1,10 +1,8 @@
 import type { Schema } from './typings';
 
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import { createAgent, CollectionCustomizer } from '@forestadmin/agent';
-const { createSqlDataSource } = require('@forestadmin/datasource-sql');
-
-dotenv.config();
+import { createSqlDataSource } from '@forestadmin/datasource-sql';
 
 const dialectOptions: { [name: string]: any } = {};
 
@@ -19,7 +17,7 @@ if (process.env.DATABASE_SSL && JSON.parse(process.env.DATABASE_SSL.toLowerCase(
   };
 }
 
-// This object allows to configure your Forest Admin admin panel
+// This object allows to configure your Forest Admin panel
 const agent = createAgent<Schema>({
   // Security tokens
   authSecret: process.env.FOREST_AUTH_SECRET!,

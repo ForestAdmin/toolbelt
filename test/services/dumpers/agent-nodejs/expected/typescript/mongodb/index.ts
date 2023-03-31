@@ -1,13 +1,11 @@
 import type { Schema } from './typings';
 
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import { createAgent, CollectionCustomizer } from '@forestadmin/agent';
-const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');
-const connection = require('./models');
+import { createMongooseDataSource } from '@forestadmin/datasource-mongoose';
+import connection from './models';
 
-dotenv.config();
-
-// This object allows to configure your Forest Admin admin panel
+// This object allows to configure your Forest Admin panel
 const agent = createAgent<Schema>({
   // Security tokens
   authSecret: process.env.FOREST_AUTH_SECRET!,
