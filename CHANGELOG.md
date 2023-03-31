@@ -1,3 +1,10 @@
+## [3.2.3](https://github.com/ForestAdmin/toolbelt/compare/v3.2.2...v3.2.3) (2023-03-31)
+
+
+### Bug Fixes
+
+* **agent-nodejs:** remove deprecated connection options on mongoose dumper ([#578](https://github.com/ForestAdmin/toolbelt/issues/578)) ([41c365c](https://github.com/ForestAdmin/toolbelt/commit/41c365ca73a03b4cbb2229f7bff1c04bc3e38bf2))
+
 ## [3.2.2](https://github.com/ForestAdmin/toolbelt/compare/v3.2.1...v3.2.2) (2023-03-30)
 
 
