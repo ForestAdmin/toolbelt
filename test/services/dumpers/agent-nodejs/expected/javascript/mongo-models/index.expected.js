@@ -2,11 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const Mongoose = require('mongoose');
 
-const connectionOptions = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-};
-const connection = Mongoose.createConnection(process.env.DATABASE_URL, connectionOptions);
+const connection = Mongoose.createConnection(process.env.DATABASE_URL);
 
 fs
   .readdirSync(__dirname)
