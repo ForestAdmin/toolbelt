@@ -8,11 +8,7 @@ import * as Mongoose from 'mongoose';
 import { {{model.collectionName}}Schema } from './{{model.modelFileName}}';
 {{/each}}
 
-const connectionOptions = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-};
-const connection = Mongoose.createConnection(process.env.DATABASE_URL, connectionOptions);
+const connection = Mongoose.createConnection(process.env.DATABASE_URL);
 
 {{#each models as |model|}}
 export const {{model.modelName}} = connection.model<{{capitalise model.collectionName}}Interface>('{{model.modelName}}', {{model.collectionName}}Schema, '{{model.collectionName}}');
