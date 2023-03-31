@@ -157,16 +157,18 @@ export default class AgentNodeJs extends AbstractDumper {
     };
 
     if (isMongoose) {
-      context.datasourceImport =
-        language === languages.Javascript
-          ? `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst connection = require('./models');`
-          : `import { createMongooseDataSource } from '@forestadmin/datasource-mongoose';\nimport connection from './models';`;
+      if (language === languages.Typescript) {
+        context.datasourceImport = `import { createMongooseDataSource } from '@forestadmin/datasource-mongoose';\nimport connection from './models';`;
+      } else {
+        context.datasourceImport = `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst connection = require('./models');`;
+      }
       context.datasourceCreation = `createMongooseDataSource(connection, { flattenMode: 'auto' })`;
     } else {
-      context.datasourceImport =
-        language === languages.Javascript
-          ? `const { createSqlDataSource } = require('@forestadmin/datasource-sql');`
-          : `import { createSqlDataSource } from '@forestadmin/datasource-sql';`;
+      if (language === languages.Typescript) {
+        context.datasourceImport = `import { createSqlDataSource } from '@forestadmin/datasource-sql';`;
+      } else {
+        context.datasourceImport = `const { createSqlDataSource } = require('@forestadmin/datasource-sql');`;
+      }
       context.datasourceCreation = `
     createSqlDataSource({
       uri: process.env.DATABASE_URL,${

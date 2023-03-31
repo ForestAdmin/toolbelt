@@ -454,7 +454,9 @@ describe('services > dumpers > AgentNodeJs', () => {
     }),
   `,
                 datasourceImport:
-                  "const { createSqlDataSource } = require('@forestadmin/datasource-sql');",
+                  language === languages.Javascript
+                    ? "const { createSqlDataSource } = require('@forestadmin/datasource-sql');"
+                    : "import { createSqlDataSource } from '@forestadmin/datasource-sql';",
               }),
             );
           });
