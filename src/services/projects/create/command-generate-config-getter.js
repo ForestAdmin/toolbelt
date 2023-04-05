@@ -35,6 +35,8 @@ class CommandGenerateConfigGetter {
       requestList = REQUESTS.forFullPrompt;
     }
 
+    // This is the only way we can know if the command is for agent-nodejs project.
+    // For other commands, the language is not supported.
     return forSql !== forNosql ? [...requestList, 'language'] : requestList;
   }
 
