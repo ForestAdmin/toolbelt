@@ -12,7 +12,7 @@ import {
   sqlDbDialectOptions,
 } from '../src/services/prompter/database-prompts';
 import Agents from '../src/utils/agents';
-import languages from '../src/utils/languages';
+import languages, { languageList } from '../src/utils/languages';
 
 describe('abstractProjectCreateCommand command', () => {
   const makePlanAndStubs = () => {
@@ -106,7 +106,7 @@ describe('abstractProjectCreateCommand command', () => {
         language: flags.string({
           char: 'l',
           description: 'Choose the language you wna tot use for your project.',
-          options: Object.values(languages).map(language => language.name),
+          options: languageList.map(language => language.name),
           default: 'required',
           required: false,
         }),

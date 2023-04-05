@@ -9,7 +9,7 @@ import { flags } from '@oclif/command';
 
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
 import Agents from '../../../utils/agents';
-import languages from '../../../utils/languages';
+import { languageList } from '../../../utils/languages';
 
 export default class NosqlCommand extends AbstractProjectCreateCommand {
   private readonly dumper: AgentNodeJs;
@@ -31,7 +31,7 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
     language: flags.string({
       char: 'l',
       description: 'In which language would you like to generate your sources?',
-      options: Object.values(languages).map(language => language.name),
+      options: languageList.map(language => language.name),
       required: true,
     }),
   };

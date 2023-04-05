@@ -9,7 +9,7 @@ import { flags } from '@oclif/command';
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
 import { sqlDbDialectOptions } from '../../../services/prompter/database-prompts';
 import Agents from '../../../utils/agents';
-import languages from '../../../utils/languages';
+import { languageList } from '../../../utils/languages';
 
 export default class SqlCommand extends AbstractProjectCreateCommand {
   private readonly dumper: AgentNodeJs;
@@ -38,7 +38,7 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
     language: flags.string({
       char: 'l',
       description: 'Choose the language you want to use for your project.',
-      options: Object.values(languages).map(language => language.name),
+      options: languageList.map(language => language.name),
       required: true,
     }),
   };

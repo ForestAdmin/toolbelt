@@ -1,4 +1,4 @@
-const { default: languages } = require('../../utils/languages');
+const { default: languages, languageList } = require('../../utils/languages');
 const AbstractPrompter = require('./abstract-prompter');
 
 class ApplicationPrompts extends AbstractPrompter {
@@ -65,7 +65,7 @@ class ApplicationPrompts extends AbstractPrompter {
 
   handleLanguage() {
     if (this.isOptionRequested('language')) {
-      this.knownAnswers.language = Object.values(languages).find(
+      this.knownAnswers.language = languageList.find(
         language => language.name === this.programArguments.language,
       );
 
@@ -74,7 +74,7 @@ class ApplicationPrompts extends AbstractPrompter {
           type: 'list',
           name: 'language',
           message: 'In which language would you like to generate your sources?',
-          choices: Object.values(languages).map(language => ({
+          choices: languageList.map(language => ({
             name: language.name,
             value: language,
           })),
