@@ -27,7 +27,7 @@ class CommandGenerateConfigGetter {
     this.GeneralPrompter = GeneralPrompter;
   }
 
-  static getRequestList(programArguments) {
+  static getRequestList(programArguments, forSql, forNosql) {
     let requestList;
     if (programArguments.databaseConnectionURL) {
       requestList = REQUESTS.forConnectionUrl;
@@ -35,13 +35,11 @@ class CommandGenerateConfigGetter {
       requestList = REQUESTS.forFullPrompt;
     }
 
-    return typeof programArguments.language === 'string'
-      ? [...requestList, 'language']
-      : requestList;
+    return forSql !== forNosql ? [...requestList, 'language'] : requestList;
   }
 
   async get(programArguments, forSql, forNosql) {
-    const requests = CommandGenerateConfigGetter.getRequestList(programArguments);
+    const requests = CommandGenerateConfigGetter.getRequestList(programArguments, forSql, forNosql);
     return new this.GeneralPrompter(requests, programArguments).getConfig(forSql, forNosql);
   }
 }
