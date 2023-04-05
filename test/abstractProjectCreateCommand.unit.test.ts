@@ -103,15 +103,12 @@ describe('abstractProjectCreateCommand command', () => {
           exclusive: ['databaseConnectionURL'],
           required: false,
         }),
-        javascript: flags.boolean({
-          description: 'Generate your project in javascript.',
-          exclusive: ['typescript'],
-          default: context => !context.flags.typescript,
-        }),
-        typescript: flags.boolean({
-          description: 'Generate your project in typescript.',
-          exclusive: ['javascript'],
-          default: false,
+        language: flags.string({
+          char: 'l',
+          description: 'Choose the language you wna tot use for your project.',
+          options: Object.values(languages).map(language => language.name),
+          default: 'required',
+          required: false,
         }),
       };
 

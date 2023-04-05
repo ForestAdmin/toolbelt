@@ -9,7 +9,6 @@ const REQUESTS_DATABASE_MANDATORY = [
 ];
 const REQUESTS_DATABASE_OPTIONAL = ['dbSchema', 'ssl'];
 const REQUESTS_APPLICATION = ['applicationName', 'appHostname', 'appPort'];
-const REQUESTS_LANGUAGE = ['javascript', 'typescript'];
 
 const REQUESTS = {
   forConnectionUrl: ['dbConnectionUrl', ...REQUESTS_DATABASE_OPTIONAL, ...REQUESTS_APPLICATION],
@@ -20,20 +19,6 @@ const REQUESTS = {
   ],
 };
 
-const REQUESTS_WITH_LANGUAGE = {
-  forConnectionUrl: [
-    'dbConnectionUrl',
-    ...REQUESTS_DATABASE_OPTIONAL,
-    ...REQUESTS_APPLICATION,
-    ...REQUESTS_LANGUAGE,
-  ],
-  forFullPrompt: [
-    ...REQUESTS_DATABASE_MANDATORY,
-    ...REQUESTS_DATABASE_OPTIONAL,
-    ...REQUESTS_APPLICATION,
-    ...REQUESTS_LANGUAGE,
-  ],
-};
 class CommandGenerateConfigGetter {
   constructor({ assertPresent, GeneralPrompter }) {
     assertPresent({
@@ -43,13 +28,16 @@ class CommandGenerateConfigGetter {
   }
 
   static getRequestList(programArguments) {
-    const AVAILABLE_REQUESTS =
-      typeof programArguments.javascript === 'boolean' ? REQUESTS_WITH_LANGUAGE : REQUESTS;
-
+    let requestList;
     if (programArguments.databaseConnectionURL) {
-      return AVAILABLE_REQUESTS.forConnectionUrl;
+      requestList = REQUESTS.forConnectionUrl;
+    } else {
+      requestList = REQUESTS.forFullPrompt;
     }
-    return AVAILABLE_REQUESTS.forFullPrompt;
+
+    return typeof programArguments.language === 'string'
+      ? [...requestList, 'language']
+      : requestList;
   }
 
   async get(programArguments, forSql, forNosql) {

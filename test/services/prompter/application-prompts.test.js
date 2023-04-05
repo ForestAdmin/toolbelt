@@ -1,4 +1,5 @@
 const ApplicationPrompts = require('../../../src/services/prompter/application-prompts');
+const { default: languages } = require('../../../src/utils/languages');
 
 const FAKE_APP_HOST = 'fakeApplicationHost';
 const FAKE_APP_PORT = '1234';
@@ -177,6 +178,68 @@ describe('services > prompter > application prompts', () => {
         expect(env.applicationPort).toBeUndefined();
         expect(env.applicationPort).not.toStrictEqual(FAKE_APP_PORT);
         expect(prompts).toHaveLength(0);
+        resetParams();
+      });
+    });
+  });
+
+  describe('handling language', () => {
+    describe('when the language option is not requested', () => {
+      it('should add a prompt to ask for it', () => {
+        expect.assertions(1);
+        requests.push('language');
+        const applicationPrompts = new ApplicationPrompts(requests, env, prompts, program);
+        applicationPrompts.handleLanguage();
+
+        expect(prompts).toHaveLength(1);
+      });
+
+      it('should add a prompt with the correct configuration', () => {
+        expect.assertions(5);
+        expect(prompts[0].type).toBe('list');
+        expect(prompts[0].name).toBe('language');
+        expect(prompts[0].message).toBe(
+          'In which language would you like to generate your sources?',
+        );
+        expect(prompts[0].default).toBe(languages.Javascript);
+        expect(prompts[0].choices).toStrictEqual([
+          { name: languages.Javascript.name, value: languages.Javascript },
+          { name: languages.Typescript.name, value: languages.Typescript },
+        ]);
+      });
+
+      it('should not change the configuration', () => {
+        expect.assertions(1);
+        expect(env.language).toBeUndefined();
+        resetParams();
+      });
+    });
+
+    describe('when the language option is requested', () => {
+      describe('and the language has not been passed in', () => {
+        it('should add a prompt', () => {
+          expect.assertions(1);
+          requests.push('language');
+          program.language = 'javascript';
+          const applicationPrompts = new ApplicationPrompts(requests, env, prompts, program);
+          applicationPrompts.handleLanguage();
+
+          expect(applicationPrompts.knownAnswers.language).toBe(languages.Javascript);
+          resetParams();
+        });
+      });
+
+      describe('and the language has already been passed in', () => {
+        it('should set the language to the matching object', () => {
+          expect.assertions(1);
+          requests.push('language');
+          program.language = 'javascript';
+          const applicationPrompts = new ApplicationPrompts(requests, env, prompts, program);
+          applicationPrompts.handleLanguage();
+
+          expect(applicationPrompts.knownAnswers.language).toBe(languages.Javascript);
+          resetParams();
+        });
       });
     });
   });

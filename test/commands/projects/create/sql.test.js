@@ -10,6 +10,7 @@ const {
 const SequelizeHelper = require('../../../services/analyzer/helpers/sequelize-helper');
 const { DATABASE_URL_POSTGRESQL_MAX } = require('../../../services/analyzer/helpers/database-urls');
 const { default: Agents } = require('../../../../src/utils/agents');
+const { default: languages } = require('../../../../src/utils/languages');
 
 const makePromptInputList = ({ except = null, only = null } = {}) => {
   const allPromptInputs = [
@@ -83,9 +84,19 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
       default: '3310',
       validate: expect.any(Function),
     },
+    {
+      name: 'language',
+      message: 'In which language would you like to generate your sources?',
+      type: 'list',
+      choices: [
+        { name: languages.Javascript.name, value: languages.Javascript },
+        { name: languages.Typescript.name, value: languages.Typescript },
+      ],
+      default: languages.Javascript,
+    },
   ];
   let inputs = allPromptInputs;
-  if (Array.isArray(expect) && except.length > 0) {
+  if (Array.isArray(except) && except.length > 0) {
     inputs = inputs.filter(input => except.indexOf(input.name) === -1);
   }
   if (Array.isArray(only) && only.length > 0) {
@@ -115,8 +126,7 @@ describe('projects:create:sql', () => {
                 databaseUser: 'no_such_user',
                 databasePassword: 'wrong_password',
                 databaseSSL: false,
-                javascript: true,
-                typescript: false,
+                language: languages.Javascript,
               },
             },
           ],
@@ -152,8 +162,7 @@ describe('projects:create:sql', () => {
                 databaseUser: 'no_such_user',
                 databasePassword: 'wrong_password',
                 databaseSSL: false,
-                javascript: true,
-                typescript: false,
+                language: languages.Javascript,
               },
             },
           ],
@@ -204,8 +213,7 @@ describe('projects:create:sql', () => {
                   databaseUser: 'no_such_user',
                   databasePassword: 'wrong_password',
                   databaseSSL: false,
-                  javascript: true,
-                  typescript: false,
+                  language: languages.Javascript,
                 },
               },
             ],
@@ -262,8 +270,7 @@ describe('projects:create:sql', () => {
                   databaseUser: 'no_such_user',
                   databasePassword: 'wrong_password',
                   databaseSSL: false,
-                  javascript: true,
-                  typescript: false,
+                  language: languages.Javascript,
                 },
               },
             ],
@@ -302,8 +309,7 @@ describe('projects:create:sql', () => {
                   databaseUser: 'no_such_user',
                   databasePassword: 'wrong_password',
                   databaseSSL: false,
-                  javascript: true,
-                  typescript: false,
+                  language: languages.Javascript,
                 },
               },
             ],
@@ -330,7 +336,13 @@ describe('projects:create:sql', () => {
             prompts: [
               {
                 in: makePromptInputList({
-                  only: ['databaseSchema', 'databaseSSL', 'applicationHost', 'applicationPort'],
+                  only: [
+                    'databaseSchema',
+                    'databaseSSL',
+                    'applicationHost',
+                    'applicationPort',
+                    'language',
+                  ],
                 }),
                 out: {
                   confirm: true,
@@ -342,8 +354,7 @@ describe('projects:create:sql', () => {
                   databaseUser: 'no_such_user',
                   databasePassword: 'wrong_password',
                   databaseSSL: false,
-                  javascript: true,
-                  typescript: false,
+                  language: languages.Javascript,
                 },
               },
             ],
@@ -352,122 +363,6 @@ describe('projects:create:sql', () => {
               { spinner: '× Testing connection to your database' },
             ],
             // This only validates login, options are missing thus the error.
-            exitCode: 1,
-          }));
-      });
-    });
-
-    describe('when "javascript"', () => {
-      describe('is provided', () => {
-        it('should fail', () =>
-          testCli({
-            commandClass: SqlCommand,
-            commandArgs: ['name', '--javascript'],
-            env: testEnvWithSecret,
-            token: 'any',
-            prompts: [
-              {
-                in: makePromptInputList(),
-                out: {
-                  confirm: true,
-                  databaseDialect: 'postgres',
-                  databaseName: 'unknown_db',
-                  databaseSchema: 'public',
-                  databaseHost: 'unknown_host',
-                  databasePort: 424242,
-                  databaseUser: 'no_such_user',
-                  databasePassword: 'wrong_password',
-                  databaseSSL: false,
-                  javascript: true,
-                  typescript: false,
-                },
-              },
-            ],
-            std: [{ spinner: '× Creating your project on Forest Admin' }],
-            // This only validates login, options are missing thus the error.
-            exitCode: 1,
-          }));
-      });
-    });
-
-    describe('when "typescript"', () => {
-      describe('is provided', () => {
-        it('should fail', () =>
-          testCli({
-            commandClass: SqlCommand,
-            commandArgs: ['name', '--typescript'],
-            env: testEnvWithSecret,
-            token: 'any',
-            prompts: [
-              {
-                in: makePromptInputList(),
-                out: {
-                  confirm: true,
-                  databaseDialect: 'postgres',
-                  databaseName: 'unknown_db',
-                  databaseSchema: 'public',
-                  databaseHost: 'unknown_host',
-                  databasePort: 424242,
-                  databaseUser: 'no_such_user',
-                  databasePassword: 'wrong_password',
-                  databaseSSL: false,
-                  javascript: false,
-                  typescript: true,
-                },
-              },
-            ],
-            std: [{ spinner: '× Creating your project on Forest Admin' }],
-            // This only validates login, options are missing thus the error.
-            exitCode: 1,
-          }));
-      });
-    });
-
-    describe('when "javascript and typescript"', () => {
-      describe('are both missing', () => {
-        it('should default to javascript', () =>
-          testCli({
-            commandClass: SqlCommand,
-            commandArgs: ['name'],
-            env: testEnvWithSecret,
-            token: 'any',
-            prompts: [
-              {
-                in: makePromptInputList(),
-                out: {
-                  confirm: true,
-                  databaseDialect: 'postgres',
-                  databaseName: 'unknown_db',
-                  databaseSchema: 'public',
-                  databaseHost: 'unknown_host',
-                  databasePort: 424242,
-                  databaseUser: 'no_such_user',
-                  databasePassword: 'wrong_password',
-                  databaseSSL: false,
-                  javascript: false,
-                  typescript: true,
-                },
-              },
-            ],
-            std: [{ spinner: '× Creating your project on Forest Admin' }],
-            // This only validates login, options are missing thus the error.
-            exitCode: 1,
-          }));
-      });
-
-      describe('are both provided', () => {
-        it('should fail', () =>
-          testCli({
-            commandClass: SqlCommand,
-            commandArgs: ['name', '--javascript', '--typescript'],
-            env: testEnvWithSecret,
-            token: 'any',
-            std: [
-              {
-                err: '× ["Cannot generate your project.","An unexpected error occurred. Please reach out for help in our Developers community (https://community.forestadmin.com/) or create a Github issue with following error:"]',
-              },
-              { out: 'Error: --typescript= cannot also be provided when using --javascript=' },
-            ],
             exitCode: 1,
           }));
       });
@@ -506,8 +401,7 @@ describe('projects:create:sql', () => {
                 databaseUser: 'forest',
                 databasePassword: 'secret',
                 databaseSSL: false,
-                javascript: true,
-                typescript: false,
+                language: languages.Javascript,
               },
             },
           ],
@@ -515,10 +409,85 @@ describe('projects:create:sql', () => {
             { spinner: '√ Creating your project on Forest Admin' },
             { spinner: '√ Testing connection to your database' },
             { spinner: '√ Creating your project files' },
+            { out: 'create index.js' },
             { out: '> Hooray, installation success!' },
           ],
           exitCode: 0,
         }));
+
+      describe('with language flag set to typescript', () => {
+        it('should generate a project in typescript', () =>
+          testCli({
+            commandClass: SqlCommand,
+            commandArgs: ['name', '--language', 'typescript'],
+            env: testEnvWithSecret,
+            token: 'any',
+            api: [
+              () => createProject({ databaseType: 'postgres', agent: Agents.NodeJS }),
+              () => updateNewEnvironmentEndpoint(),
+            ],
+            prompts: [
+              {
+                in: makePromptInputList({ except: ['language'] }),
+                out: {
+                  databaseDialect: 'postgres',
+                  databaseName: 'forestadmin_test_toolbelt-sequelize',
+                  databaseSchema: 'public',
+                  databaseHost: 'localhost',
+                  databasePort: 54369,
+                  databaseUser: 'forest',
+                  databasePassword: 'secret',
+                  databaseSSL: false,
+                },
+              },
+            ],
+            std: [
+              { spinner: '√ Creating your project on Forest Admin' },
+              { spinner: '√ Testing connection to your database' },
+              { spinner: '√ Creating your project files' },
+              { out: 'create index.ts' },
+              { out: '> Hooray, installation success!' },
+            ],
+            exitCode: 0,
+          }));
+      });
+
+      describe('with language flag set to javascript', () => {
+        it('should generate a project in javascript', () =>
+          testCli({
+            commandClass: SqlCommand,
+            commandArgs: ['name', '--language', 'javascript'],
+            env: testEnvWithSecret,
+            token: 'any',
+            api: [
+              () => createProject({ databaseType: 'postgres', agent: Agents.NodeJS }),
+              () => updateNewEnvironmentEndpoint(),
+            ],
+            prompts: [
+              {
+                in: makePromptInputList({ except: ['language'] }),
+                out: {
+                  databaseDialect: 'postgres',
+                  databaseName: 'forestadmin_test_toolbelt-sequelize',
+                  databaseSchema: 'public',
+                  databaseHost: 'localhost',
+                  databasePort: 54369,
+                  databaseUser: 'forest',
+                  databasePassword: 'secret',
+                  databaseSSL: false,
+                },
+              },
+            ],
+            std: [
+              { spinner: '√ Creating your project on Forest Admin' },
+              { spinner: '√ Testing connection to your database' },
+              { spinner: '√ Creating your project files' },
+              { out: 'create index.js' },
+              { out: '> Hooray, installation success!' },
+            ],
+            exitCode: 0,
+          }));
+      });
     });
   });
 });

@@ -8,8 +8,8 @@ import type * as OclifConfig from '@oclif/config';
 import { flags } from '@oclif/command';
 
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
-import { nosqlDbDialectOptions } from '../../../services/prompter/database-prompts';
 import Agents from '../../../utils/agents';
+import languages from '../../../utils/languages';
 
 export default class NosqlCommand extends AbstractProjectCreateCommand {
   private readonly dumper: AgentNodeJs;
@@ -28,15 +28,12 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
       exclusive: ['databaseConnectionURL'],
       required: false,
     }),
-    javascript: flags.boolean({
-      description: 'Generate your project in javascript.',
-      exclusive: ['typescript'],
-      default: context => !context.flags.typescript,
-    }),
-    typescript: flags.boolean({
-      description: 'Generate your project in typescript.',
-      exclusive: ['javascript'],
-      default: false,
+    language: flags.string({
+      char: 'l',
+      description: 'In which language would you like to generate your sources?',
+      options: Object.values(languages).map(language => language.name),
+      default: 'required',
+      required: false,
     }),
   };
 

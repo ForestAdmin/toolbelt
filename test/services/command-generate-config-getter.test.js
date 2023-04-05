@@ -1,4 +1,5 @@
 const CommandGenerateConfigGetter = require('../../src/services/projects/create/command-generate-config-getter');
+const { default: languages } = require('../../src/utils/languages');
 
 describe('services > command generate config getter', () => {
   describe('with a command with a "connectionUrl" option', () => {
@@ -39,10 +40,13 @@ describe('services > command generate config getter', () => {
     });
   });
 
-  describe('with a command with javascript argument', () => {
-    it('should require [dbDialect, dbName, dbHostname, dbPort, dbUser, dbPassword, dbSchema, email, ssl, mongodbSrv, applicationName, appHostname, appPort, javascript, typescript]', () => {
+  describe('with a command with language flag', () => {
+    it('should require [dbDialect, dbName, dbHostname, dbPort, dbUser, dbPassword, dbSchema, email, ssl, mongodbSrv, applicationName, appHostname, appPort, language]', () => {
       expect.assertions(1);
-      const options = CommandGenerateConfigGetter.getRequestList({ db: true, javascript: true });
+      const options = CommandGenerateConfigGetter.getRequestList({
+        db: true,
+        language: languages.Javascript.name,
+      });
       expect(options).toStrictEqual([
         'dbDialect',
         'dbName',
@@ -56,8 +60,7 @@ describe('services > command generate config getter', () => {
         'applicationName',
         'appHostname',
         'appPort',
-        'javascript',
-        'typescript',
+        'language',
       ]);
     });
   });

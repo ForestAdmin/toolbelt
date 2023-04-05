@@ -64,13 +64,23 @@ class ApplicationPrompts extends AbstractPrompter {
   }
 
   handleLanguage() {
-    if (
-      this.isOptionRequested('javascript') &&
-      typeof this.programArguments.typescript === 'boolean'
-    ) {
-      this.knownAnswers.language = this.programArguments.typescript
-        ? languages.Typescript
-        : languages.Javascript;
+    if (this.isOptionRequested('language')) {
+      this.knownAnswers.language = Object.values(languages).find(
+        language => language.name === this.programArguments.language,
+      );
+
+      if (!this.knownAnswers.language) {
+        this.prompts.push({
+          type: 'list',
+          name: 'language',
+          message: 'In which language would you like to generate your sources?',
+          choices: Object.values(languages).map(language => ({
+            name: language.name,
+            value: language,
+          })),
+          default: languages.Javascript,
+        });
+      }
     } else {
       this.knownAnswers.language = null;
     }
