@@ -39,7 +39,7 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
       char: 'l',
       description: 'Choose the language you want to use for your project.',
       options: languageList.map(language => language.name),
-      required: true,
+      required: false,
     }),
   };
 

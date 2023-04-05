@@ -32,7 +32,7 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
       char: 'l',
       description: 'In which language would you like to generate your sources?',
       options: languageList.map(language => language.name),
-      required: true,
+      required: false,
     }),
   };
 
