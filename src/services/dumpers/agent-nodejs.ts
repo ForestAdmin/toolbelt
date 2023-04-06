@@ -240,7 +240,7 @@ export default class AgentNodeJs extends AbstractDumper {
     });
   }
 
-  private computeModelsConfiguration(schema: any, language: Language): Array<ModelConfiguration> {
+  private computeModelsConfiguration(language: Language, schema: any): Array<ModelConfiguration> {
     const collectionNamesSorted = Object.keys(schema).sort();
 
     return collectionNamesSorted.map(collectionName => {
@@ -269,7 +269,7 @@ export default class AgentNodeJs extends AbstractDumper {
   private async writeMongooseModels(language: Language, schema) {
     await this.mkdirp(`${this.projectPath}/models`);
 
-    const modelsConfiguration = this.computeModelsConfiguration(schema, language);
+    const modelsConfiguration = this.computeModelsConfiguration(language, schema);
 
     this.copyHandleBarsTemplate(
       `${language.name}/models/index.hbs`,
