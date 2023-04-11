@@ -29,7 +29,7 @@ const agent = createAgent({
     createSqlDataSource({
       uri: process.env.DATABASE_URL,
       schema: process.env.DATABASE_SCHEMA,
-      ...dialectOptions,
+      dialectOptions,
     }),
   );
 
