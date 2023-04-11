@@ -151,33 +151,9 @@ export default class AgentNodeJs extends AbstractDumper {
       isMySQL: dbDialect === 'mysql',
       isMSSQL: dbDialect === 'mssql',
       isMariaDB: dbDialect === 'mariadb',
+      dbSchema,
       forestServerUrl: this.env.FOREST_URL_IS_DEFAULT ? false : this.env.FOREST_SERVER_URL,
-      datasourceImport: null,
-      datasourceCreation: null,
     };
-
-    if (isMongoose) {
-      if (language === languages.Typescript) {
-        context.datasourceImport = `import { createMongooseDataSource } from '@forestadmin/datasource-mongoose';\nimport connection from './models';`;
-      } else {
-        context.datasourceImport = `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst connection = require('./models');`;
-      }
-      context.datasourceCreation = `createMongooseDataSource(connection, { flattenMode: 'auto' })`;
-    } else {
-      if (language === languages.Typescript) {
-        context.datasourceImport = `import { createSqlDataSource } from '@forestadmin/datasource-sql';`;
-      } else {
-        context.datasourceImport = `const { createSqlDataSource } = require('@forestadmin/datasource-sql');`;
-      }
-      context.datasourceCreation = `
-    createSqlDataSource({
-      uri: process.env.DATABASE_URL,${
-        dbSchema ? '\n      schema: process.env.DATABASE_SCHEMA,' : ''
-      }
-      dialectOptions,
-    }),
-  `;
-    }
 
     this.copyHandleBarsTemplate(
       `${language.name}/index.hbs`,
