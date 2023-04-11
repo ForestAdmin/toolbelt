@@ -128,7 +128,7 @@ export default class AgentNodeJs extends AbstractDumper {
       uri: process.env.DATABASE_URL,${
         dbSchema ? '\n      schema: process.env.DATABASE_SCHEMA,' : ''
       }
-      ...dialectOptions,
+      dialectOptions,
     }),
   `;
     }
