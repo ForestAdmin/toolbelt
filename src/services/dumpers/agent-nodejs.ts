@@ -151,6 +151,7 @@ export default class AgentNodeJs extends AbstractDumper {
       isMySQL: dbDialect === 'mysql',
       isMSSQL: dbDialect === 'mssql',
       isMariaDB: dbDialect === 'mariadb',
+      dbSchema,
       forestServerUrl: this.env.FOREST_URL_IS_DEFAULT ? false : this.env.FOREST_SERVER_URL,
       datasourceImport: null,
       datasourceCreation: null,

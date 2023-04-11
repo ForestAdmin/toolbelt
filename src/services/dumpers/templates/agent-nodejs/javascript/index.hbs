@@ -1,6 +1,11 @@
 require('dotenv').config();
 const { createAgent } = require('@forestadmin/agent');
-{{datasourceImport}}
+{{#if isMongoose}}
+const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');
+const connection = require('./models');
+{{else}}
+const { createSqlDataSource } = require('@forestadmin/datasource-sql');
+{{/if}}
 {{#unless isMongoose}}
 
 const dialectOptions = {};
@@ -46,7 +51,19 @@ const agent = createAgent({
   typingsMaxDepth: 5,
 })
   // Connect your datasources.
-  .addDataSource({{datasourceCreation}});
+{{#if isMongoose}}
+  .addDataSource(createMongooseDataSource(connection, { flattenMode: 'auto' }));
+{{else}}
+  .addDataSource(
+    createSqlDataSource({
+      uri: process.env.DATABASE_URL,
+{{#if dbSchema}}
+      schema: process.env.DATABASE_SCHEMA,
+{{/if}}
+      ...dialectOptions,
+    }),
+  );
+{{/if}}
 
 // Add customizations here.
 // agent.customizeCollection('collectionName', collection => ...);
