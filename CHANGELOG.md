@@ -1,3 +1,10 @@
+## [3.2.4](https://github.com/ForestAdmin/toolbelt/compare/v3.2.3...v3.2.4) (2023-04-11)
+
+
+### Bug Fixes
+
+* **agent-nodejs:** properly pass the dialect options ([#582](https://github.com/ForestAdmin/toolbelt/issues/582)) ([759c39f](https://github.com/ForestAdmin/toolbelt/commit/759c39f51ca799c74920611618c5177126f7764d))
+
 ## [3.2.3](https://github.com/ForestAdmin/toolbelt/compare/v3.2.2...v3.2.3) (2023-03-31)
 
 
