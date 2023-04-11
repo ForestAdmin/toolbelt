@@ -41,7 +41,7 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
     await dumper.dump(config, schema);
   }
 
-  describe.each([languages.Javascript])('language: $name', language => {
+  describe.each([languages.Javascript, languages.Typescript])('language: $name', language => {
     // eslint-disable-next-line jest/no-hooks
     afterAll(() => {
       rimraf.sync(`${appRoot}/test-output/${language.name}/mongodb/`);
@@ -116,22 +116,6 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
           expect(generatedFile).toStrictEqual(expectedFile);
         });
       });
-
-      describe('dumping export', () => {
-        it('should export expected values', async () => {
-          expect.assertions(2);
-
-          await dump(language, simple);
-
-          const generatedFile = fs.readFileSync(
-            `${appRoot}/test-output/${language.name}/mongodb/models/films.${language.fileExtension}`,
-            'utf8',
-          );
-
-          expect(generatedFile).toContain(`collectionName: 'films'`);
-          expect(generatedFile).toContain(`modelName: 'films'`);
-        });
-      });
     });
 
     describe(`dump index.${language.fileExtension}`, () => {
@@ -150,6 +134,43 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
         );
 
         expect(generatedFile).toStrictEqual(expectedFile);
+      });
+    });
+  });
+
+  describe('dumping export', () => {
+    describe('javascript', () => {
+      it('should export expected values', async () => {
+        expect.assertions(2);
+
+        const language = languages.Javascript;
+
+        await dump(language, simple);
+
+        const generatedFile = fs.readFileSync(
+          `${appRoot}/test-output/${language.name}/mongodb/models/films.${language.fileExtension}`,
+          'utf8',
+        );
+
+        expect(generatedFile).toContain(`collectionName: 'films'`);
+        expect(generatedFile).toContain(`modelName: 'films'`);
+      });
+    });
+
+    describe('typescript', () => {
+      it('should export expected values', async () => {
+        expect.assertions(1);
+
+        const language = languages.Typescript;
+
+        await dump(language, simple);
+
+        const generatedFile = fs.readFileSync(
+          `${appRoot}/test-output/${language.name}/mongodb/models/films.${language.fileExtension}`,
+          'utf8',
+        );
+
+        expect(generatedFile).toContain(`export { FilmsInterface, filmsSchema }`);
       });
     });
   });
