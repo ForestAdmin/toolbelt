@@ -405,62 +405,6 @@ describe('services > dumpers > AgentNodeJs', () => {
           });
         });
       });
-
-      describe.skip('when handling datasource', () => {
-        describe('when dbDialect is mongodb', () => {
-          it('should use mongoose data source with flattener auto', async () => {
-            expect.assertions(1);
-
-            const { dumper, context, defaultConfig } = createDumper(language);
-
-            defaultConfig.dbConfig.dbDialect = 'mongodb';
-
-            await dumper.dump(defaultConfig);
-
-            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              `/test/a${language.name}Application/index.${language.fileExtension}`,
-              expect.objectContaining({
-                isMongoose: true,
-                isMySQL: false,
-                isMSSQL: false,
-                dbSchema: undefined,
-              }),
-            );
-          });
-        });
-
-        describe('when dbDialect is not mongodb', () => {
-          it('should use sql data source', async () => {
-            expect.assertions(1);
-
-            const { dumper, context, defaultConfig } = createDumper(language);
-
-            defaultConfig.dbConfig.dbDialect = 'mysql';
-
-            await dumper.dump(defaultConfig);
-
-            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              `/test/a${language.name}Application/index.${language.fileExtension}`,
-              expect.objectContaining({
-                isMongoose: false,
-                isMySQL: true,
-                isMSSQL: false,
-                datasourceCreation: `
-    createSqlDataSource({
-      uri: process.env.DATABASE_URL,
-      schema: process.env.DATABASE_SCHEMA,
-      dialectOptions,
-    }),
-  `,
-                datasourceImport:
-                  language === languages.Javascript
-                    ? "const { createSqlDataSource } = require('@forestadmin/datasource-sql');"
-                    : "import { createSqlDataSource } from '@forestadmin/datasource-sql';",
-              }),
-            );
-          });
-        });
-      });
     });
 
     describe('when writing package.json', () => {
