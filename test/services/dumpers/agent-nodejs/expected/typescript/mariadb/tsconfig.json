@@ -10,8 +10,10 @@
     "inlineSourceMap": true,
     "noImplicitOverride": true,
     "stripInternal": true,
-    "outDir": "dist"
-  },  "ts-node": {
+    "outDir": "dist",
+    "skipLibCheck": true
+  },
+  "ts-node": {
     "transpileOnly": true,
   }
 }
