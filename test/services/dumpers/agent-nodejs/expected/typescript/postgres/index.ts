@@ -1,7 +1,7 @@
 import type { Schema } from './typings';
 
 import 'dotenv/config';
-import { createAgent, CollectionCustomizer } from '@forestadmin/agent';
+import { createAgent } from '@forestadmin/agent';
 import { createSqlDataSource } from '@forestadmin/datasource-sql';
 
 const dialectOptions: { [name: string]: any } = {};
