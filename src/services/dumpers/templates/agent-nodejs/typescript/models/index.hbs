@@ -2,7 +2,7 @@
 import type { {{capitalise model.collectionName}}Interface } from './{{model.modelFileName}}';
 {{/each}}
 
-import * as Mongoose from 'mongoose';
+import Mongoose from 'mongoose';
 
 {{#each models as |model|}}
 import { {{model.collectionName}}Schema } from './{{model.modelFileName}}';

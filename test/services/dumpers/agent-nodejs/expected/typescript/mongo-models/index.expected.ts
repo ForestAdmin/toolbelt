@@ -1,7 +1,7 @@
 import type { FilmsInterface } from './films';
 import type { PersonsInterface } from './persons';
 
-import * as Mongoose from 'mongoose';
+import Mongoose from 'mongoose';
 
 import { filmsSchema } from './films';
 import { personsSchema } from './persons';
