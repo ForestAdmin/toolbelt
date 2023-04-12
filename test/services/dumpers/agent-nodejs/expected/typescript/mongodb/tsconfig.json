@@ -11,5 +11,8 @@
     "noImplicitOverride": true,
     "stripInternal": true,
     "outDir": "dist"
+  },
+  "ts-node": {
+    "transpileOnly": true,
   }
 }

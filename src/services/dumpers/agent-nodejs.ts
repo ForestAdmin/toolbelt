@@ -145,6 +145,9 @@ export default class AgentNodeJs extends AbstractDumper {
             stripInternal: true,
             outDir: 'dist',
           },
+          'ts-node': {
+            transpileOnly: true,
+          },
         },
         null,
         2,
