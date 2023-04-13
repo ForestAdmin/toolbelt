@@ -35,8 +35,9 @@ class CommandGenerateConfigGetter {
       requestList = REQUESTS.forFullPrompt;
     }
 
-    // This is the only way we can know if the command is for agent-nodejs project.
-    // For other commands, the language is not supported.
+    // This is the only way we can know if the command is for an agent-nodejs project.
+    // The legacy command is the only one that both supports SQL and NoSQL.
+    // Only the legacy command does not have the language flag.
     return forSql !== forNosql ? [...requestList, 'language'] : requestList;
   }
 
