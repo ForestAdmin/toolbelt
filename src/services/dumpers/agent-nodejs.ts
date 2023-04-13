@@ -236,12 +236,16 @@ export default class AgentNodeJs extends AbstractDumper {
       }
     }
 
-    this.copyHandleBarsTemplate('common/docker-compose.hbs', 'docker-compose.yml', {
-      containerName: this.lodash.snakeCase(config.appConfig.appName),
-      forestExtraHost,
-      isLinuxOs: this.isLinuxOs,
-      network: this.isLinuxOs && this.isDatabaseLocal(config.dbConfig) ? 'host' : null,
-    });
+    this.copyHandleBarsTemplate(
+      `${config.language.name}/docker-compose.hbs`,
+      'docker-compose.yml',
+      {
+        containerName: this.lodash.snakeCase(config.appConfig.appName),
+        forestExtraHost,
+        isLinuxOs: this.isLinuxOs,
+        network: this.isLinuxOs && this.isDatabaseLocal(config.dbConfig) ? 'host' : null,
+      },
+    );
   }
 
   private computeModelsConfiguration(language: Language, schema: any): Array<ModelConfiguration> {

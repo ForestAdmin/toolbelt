@@ -11,4 +11,5 @@ services:
       - "${APPLICATION_PORT}:${APPLICATION_PORT}"
     volumes:
       - ./:/usr/src/app
+      - /usr/src/app/dist
       - /usr/src/app/node_modules

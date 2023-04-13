@@ -1,0 +1,25 @@
+version: '3.4'
+services:
+  app:
+    build:
+      context: .
+{{#if network}}
+      network: {{network}}
+{{/if}}
+    container_name: {{ containerName }}
+    env_file:
+      - .env
+{{#unless isLinuxOs}}
+    environment:
+      - DATABASE_URL=${DOCKER_DATABASE_URL}
+{{/unless}}
+{{#if forestExtraHost}}
+    extra_hosts:
+      - {{forestExtraHost}}:host-gateway
+{{/if}}
+    ports:
+      - "${APPLICATION_PORT}:${APPLICATION_PORT}"
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/dist
+      - /usr/src/app/node_modules
