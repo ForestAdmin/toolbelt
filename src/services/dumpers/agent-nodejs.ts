@@ -93,8 +93,8 @@ export default class AgentNodeJs extends AbstractDumper {
     }
 
     let scripts: { [name: string]: string } = {
-      start: 'nodemon ./index.js',
-      'start:agent': 'node ./index.js',
+      start: 'node ./index.js',
+      'start:watch': 'nodemon ./index.js',
     };
     const devDependencies: { [name: string]: string } = {
       nodemon: '^2.0.12',
@@ -106,8 +106,8 @@ export default class AgentNodeJs extends AbstractDumper {
     if (language === languages.Typescript) {
       scripts = {
         build: 'tsc',
-        start: 'nodemon ./index.ts',
-        'start:agent': 'node ./dist/index.js',
+        start: 'node ./dist/index.js',
+        'start:watch': 'nodemon ./index.ts',
       };
       devDependencies.typescript = '^4.9.4';
       devDependencies['ts-node'] = '^10.9.1';

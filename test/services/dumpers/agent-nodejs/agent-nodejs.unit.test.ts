@@ -422,12 +422,12 @@ describe('services > dumpers > AgentNodeJs', () => {
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             `/test/a${language.name}Application/package.json`,
-            expect.stringContaining(`"start": "nodemon ./index.${language.fileExtension}"`),
+            expect.stringContaining(`"start:watch": "nodemon ./index.${language.fileExtension}"`),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             `/test/a${language.name}Application/package.json`,
             expect.stringContaining(
-              `"start:agent": "node ./${language === languages.Typescript ? 'dist/' : ''}index.js"`,
+              `"start": "node ./${language === languages.Typescript ? 'dist/' : ''}index.js"`,
             ),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
