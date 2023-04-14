@@ -80,7 +80,7 @@ agent.mountOnStandaloneServer(Number(process.env.APPLICATION_PORT));
 
 // Start the agent.
 agent.start().catch(error => {
-  console.error('\x1b[31merror:\x1b[0m Forest Admin agent failed to start');
+  console.error('\x1b[31merror:\x1b[0m Forest Admin agent failed to start\n');
   console.error('');
   console.error(error.stack);
   process.exit(1);
