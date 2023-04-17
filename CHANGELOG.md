@@ -1,3 +1,10 @@
+# [3.3.0](https://github.com/ForestAdmin/toolbelt/compare/v3.2.4...v3.3.0) (2023-04-17)
+
+
+### Features
+
+* **typescript:** users can now generate agent-nodejs projects in typescript ([#571](https://github.com/ForestAdmin/toolbelt/issues/571)) ([58972d7](https://github.com/ForestAdmin/toolbelt/commit/58972d7f5cb98b068dde626c25c14e36208d385f))
+
 ## [3.2.4](https://github.com/ForestAdmin/toolbelt/compare/v3.2.3...v3.2.4) (2023-04-11)
 
 
