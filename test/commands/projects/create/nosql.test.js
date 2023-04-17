@@ -11,6 +11,7 @@ const MongoHelper = require('../../../services/analyzer/helpers/mongo-helper');
 const { DATABASE_URL_MONGODB_MAX } = require('../../../services/analyzer/helpers/database-urls');
 
 const { default: Agents } = require('../../../../src/utils/agents');
+const { default: languages } = require('../../../../src/utils/languages');
 
 const makePromptInputList = ({ except = null, only = null } = {}) => {
   const allPromptInputs = [
@@ -73,9 +74,19 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
       default: '3310',
       validate: expect.any(Function),
     },
+    {
+      name: 'language',
+      message: 'In which language would you like to generate your sources?',
+      type: 'list',
+      choices: [
+        { name: languages.Javascript.name, value: languages.Javascript },
+        { name: languages.Typescript.name, value: languages.Typescript },
+      ],
+      default: languages.Javascript,
+    },
   ];
   let inputs = allPromptInputs;
-  if (Array.isArray(expect) && except.length > 0) {
+  if (Array.isArray(except) && except.length > 0) {
     inputs = inputs.filter(input => except.indexOf(input.name) === -1);
   }
   if (Array.isArray(only) && only.length > 0) {
@@ -103,6 +114,7 @@ describe('projects:create:nosql', () => {
                 databaseUser: 'no_such_user',
                 databasePassword: 'wrong_password',
                 databaseSSL: false,
+                language: languages.Javascript,
               },
             },
           ],
@@ -136,6 +148,7 @@ describe('projects:create:nosql', () => {
                 databaseUser: 'no_such_user',
                 databasePassword: 'wrong_password',
                 databaseSSL: false,
+                language: languages.Javascript,
               },
             },
           ],
@@ -184,6 +197,7 @@ describe('projects:create:nosql', () => {
                   databaseUser: 'no_such_user',
                   databasePassword: 'wrong_password',
                   databaseSSL: false,
+                  language: languages.Javascript,
                 },
               },
             ],
@@ -220,6 +234,7 @@ describe('projects:create:nosql', () => {
                   databaseUser: 'no_such_user',
                   databasePassword: 'wrong_password',
                   databaseSSL: false,
+                  language: languages.Javascript,
                 },
               },
             ],
@@ -250,7 +265,13 @@ describe('projects:create:nosql', () => {
             prompts: [
               {
                 in: makePromptInputList({
-                  only: ['databaseSchema', 'databaseSSL', 'applicationHost', 'applicationPort'],
+                  only: [
+                    'databaseSchema',
+                    'databaseSSL',
+                    'applicationHost',
+                    'applicationPort',
+                    'language',
+                  ],
                 }),
                 out: {
                   confirm: true,
@@ -260,6 +281,7 @@ describe('projects:create:nosql', () => {
                   databaseUser: 'no_such_user',
                   databasePassword: 'wrong_password',
                   databaseSSL: false,
+                  language: languages.Javascript,
                 },
               },
             ],
@@ -305,6 +327,7 @@ describe('projects:create:nosql', () => {
                 databaseUser: '',
                 databasePassword: '',
                 databaseSSL: false,
+                language: languages.Javascript,
               },
             },
           ],
@@ -312,10 +335,84 @@ describe('projects:create:nosql', () => {
             { spinner: '√ Creating your project on Forest Admin' },
             { spinner: '√ Testing connection to your database' },
             { spinner: '√ Creating your project files' },
+            { out: 'create index.js' },
+            { out: 'create models/index.js' },
             { out: '> Hooray, installation success!' },
           ],
           exitCode: 0,
         }));
+
+      describe('with language flag set to typescript', () => {
+        it('should generate a project in typescript', () =>
+          testCli({
+            commandClass: NosqlCommand,
+            commandArgs: ['name', '--language', 'typescript'],
+            env: testEnvWithSecret,
+            token: 'any',
+            api: [
+              () => createProject({ databaseType: 'mongodb', agent: Agents.NodeJS }),
+              () => updateNewEnvironmentEndpoint(),
+            ],
+            prompts: [
+              {
+                in: makePromptInputList({ except: ['language'] }),
+                out: {
+                  databaseName: 'forest-test',
+                  databaseHost: 'localhost',
+                  databasePort: 27016,
+                  databaseUser: '',
+                  databasePassword: '',
+                  databaseSSL: false,
+                },
+              },
+            ],
+            std: [
+              { spinner: '√ Creating your project on Forest Admin' },
+              { spinner: '√ Testing connection to your database' },
+              { spinner: '√ Creating your project files' },
+              { out: 'create index.ts' },
+              { out: 'create models/index.ts' },
+              { out: '> Hooray, installation success!' },
+            ],
+            exitCode: 0,
+          }));
+      });
+
+      describe('with language flag set to javascript', () => {
+        it('should generate a project in javascript', () =>
+          testCli({
+            commandClass: NosqlCommand,
+            commandArgs: ['name', '--language', 'javascript'],
+            env: testEnvWithSecret,
+            token: 'any',
+            api: [
+              () => createProject({ databaseType: 'mongodb', agent: Agents.NodeJS }),
+              () => updateNewEnvironmentEndpoint(),
+            ],
+            prompts: [
+              {
+                in: makePromptInputList({ except: ['language'] }),
+                out: {
+                  databaseName: 'forest-test',
+                  databaseHost: 'localhost',
+                  databasePort: 27016,
+                  databaseUser: '',
+                  databasePassword: '',
+                  databaseSSL: false,
+                },
+              },
+            ],
+            std: [
+              { spinner: '√ Creating your project on Forest Admin' },
+              { spinner: '√ Testing connection to your database' },
+              { spinner: '√ Creating your project files' },
+              { out: 'create index.js' },
+              { out: 'create models/index.js' },
+              { out: '> Hooray, installation success!' },
+            ],
+            exitCode: 0,
+          }));
+      });
     });
   });
 });

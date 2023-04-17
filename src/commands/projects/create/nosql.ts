@@ -8,8 +8,8 @@ import type * as OclifConfig from '@oclif/config';
 import { flags } from '@oclif/command';
 
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
-import { nosqlDbDialectOptions } from '../../../services/prompter/database-prompts';
 import Agents from '../../../utils/agents';
+import { languageList } from '../../../utils/languages';
 
 export default class NosqlCommand extends AbstractProjectCreateCommand {
   private readonly dumper: AgentNodeJs;
@@ -26,6 +26,12 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
       dependsOn: [],
       description: 'Use SRV DNS record for mongoDB connection.',
       exclusive: ['databaseConnectionURL'],
+      required: false,
+    }),
+    language: flags.string({
+      char: 'l',
+      description: 'In which language would you like to generate your sources?',
+      options: languageList.map(language => language.name),
       required: false,
     }),
   };

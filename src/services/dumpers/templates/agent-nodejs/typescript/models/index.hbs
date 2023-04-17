@@ -1,0 +1,17 @@
+{{#each models as |model|}}
+import type { {{capitalise model.collectionName}}Interface } from './{{model.modelFileName}}';
+{{/each}}
+
+import Mongoose from 'mongoose';
+
+{{#each models as |model|}}
+import { {{model.collectionName}}Schema } from './{{model.modelFileName}}';
+{{/each}}
+
+const connection = Mongoose.createConnection(process.env.DATABASE_URL);
+
+{{#each models as |model|}}
+export const {{model.modelName}} = connection.model<{{capitalise model.collectionName}}Interface>('{{model.modelName}}', {{model.collectionName}}Schema, '{{model.collectionName}}');
+{{/each}}
+
+export default connection;

@@ -13,4 +13,8 @@ const Typescript: Language = {
   fileExtension: 'ts',
 };
 
-export default { Javascript, Typescript };
+const languages = { Javascript, Typescript };
+
+export default languages;
+
+export const languageList = Object.values({ Javascript, Typescript });

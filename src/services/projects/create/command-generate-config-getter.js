@@ -18,24 +18,31 @@ const REQUESTS = {
     ...REQUESTS_APPLICATION,
   ],
 };
+
 class CommandGenerateConfigGetter {
   constructor({ assertPresent, GeneralPrompter }) {
     assertPresent({
       GeneralPrompter,
     });
     this.GeneralPrompter = GeneralPrompter;
-    this.AVAILABLE_REQUESTS = REQUESTS;
   }
 
-  getRequestList(programArguments) {
+  static getRequestList(programArguments, forSql, forNosql) {
+    let requestList;
     if (programArguments.databaseConnectionURL) {
-      return this.AVAILABLE_REQUESTS.forConnectionUrl;
+      requestList = REQUESTS.forConnectionUrl;
+    } else {
+      requestList = REQUESTS.forFullPrompt;
     }
-    return this.AVAILABLE_REQUESTS.forFullPrompt;
+
+    // This is the only way we can know if the command is for an agent-nodejs project.
+    // The legacy command is the only one that both supports SQL and NoSQL.
+    // Only the legacy command does not have the language flag.
+    return forSql !== forNosql ? [...requestList, 'language'] : requestList;
   }
 
   async get(programArguments, forSql, forNosql) {
-    const requests = this.getRequestList(programArguments);
+    const requests = CommandGenerateConfigGetter.getRequestList(programArguments, forSql, forNosql);
     return new this.GeneralPrompter(requests, programArguments).getConfig(forSql, forNosql);
   }
 }

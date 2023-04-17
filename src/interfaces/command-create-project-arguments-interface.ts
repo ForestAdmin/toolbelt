@@ -1,3 +1,5 @@
+import type { Language } from '../utils/languages';
+
 interface CreateCommandDbArgumentsBase {
   databaseDialect: string;
   databaseSSL: boolean;
@@ -32,4 +34,5 @@ export type CreateCommandArguments = CreateCommandDbArguments & {
   applicationName: string;
   applicationHost: string;
   applicationPort: number;
+  language: Language | null;
 };

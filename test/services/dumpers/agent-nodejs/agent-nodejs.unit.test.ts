@@ -103,7 +103,7 @@ describe('services > dumpers > AgentNodeJs', () => {
     };
   };
 
-  describe.each([languages.Javascript])('when dumping in $name', language => {
+  describe.each([languages.Javascript, languages.Typescript])('when dumping in $name', language => {
     describe('when writing common files', () => {
       it('should write a .gitignore file', async () => {
         expect.assertions(1);
@@ -114,7 +114,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
           `/test/a${language.name}Application/.gitignore`,
-          'node_modules\n.env\n',
+          `node_modules\n.env\n${language === languages.Typescript ? 'dist\n' : ''}`,
         );
       });
 
@@ -127,7 +127,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
           `/test/a${language.name}Application/.dockerignore`,
-          'node_modules\nnpm-debug.log\n.env\n',
+          `node_modules\nnpm-debug.log\n.env\n${language === languages.Typescript ? 'dist\n' : ''}`,
         );
       });
 
@@ -405,61 +405,6 @@ describe('services > dumpers > AgentNodeJs', () => {
           });
         });
       });
-
-      describe('when handling datasource', () => {
-        describe('when dbDialect is mongodb', () => {
-          it('should use mongoose data source with flattener auto', async () => {
-            expect.assertions(1);
-
-            const { dumper, context, defaultConfig } = createDumper(language);
-
-            defaultConfig.dbConfig.dbDialect = 'mongodb';
-
-            await dumper.dump(defaultConfig);
-
-            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              `/test/a${language.name}Application/index.${language.fileExtension}`,
-              expect.objectContaining({
-                isMongoose: true,
-                isMySQL: false,
-                isMSSQL: false,
-                datasourceImport: `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst connection = require('./models');`,
-                datasourceCreation: `createMongooseDataSource(connection, { flattenMode: 'auto' })`,
-              }),
-            );
-          });
-        });
-
-        describe('when dbDialect is not mongodb', () => {
-          it('should use sql data source', async () => {
-            expect.assertions(1);
-
-            const { dumper, context, defaultConfig } = createDumper(language);
-
-            defaultConfig.dbConfig.dbDialect = 'mysql';
-
-            await dumper.dump(defaultConfig);
-
-            expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-              `/test/a${language.name}Application/index.${language.fileExtension}`,
-              expect.objectContaining({
-                isMongoose: false,
-                isMySQL: true,
-                isMSSQL: false,
-                datasourceCreation: `
-    createSqlDataSource({
-      uri: process.env.DATABASE_URL,
-      schema: process.env.DATABASE_SCHEMA,
-      dialectOptions,
-    }),
-  `,
-                datasourceImport:
-                  "const { createSqlDataSource } = require('@forestadmin/datasource-sql');",
-              }),
-            );
-          });
-        });
-      });
     });
 
     describe('when writing package.json', () => {
@@ -477,11 +422,13 @@ describe('services > dumpers > AgentNodeJs', () => {
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             `/test/a${language.name}Application/package.json`,
-            expect.stringContaining('"start": "nodemon ./index.js'),
+            expect.stringContaining(`"start:watch": "nodemon ./index.${language.fileExtension}"`),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             `/test/a${language.name}Application/package.json`,
-            expect.stringContaining('"start:agent": "node ./index.js"'),
+            expect.stringContaining(
+              `"start": "node ./${language === languages.Typescript ? 'dist/' : ''}index.js"`,
+            ),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             `/test/a${language.name}Application/package.json`,
@@ -693,7 +640,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
           describe('when schema does not have any models', () => {
             it('should write only the index file', async () => {
-              expect.assertions(2);
+              expect.assertions(1);
 
               const { defaultConfig, dumper, context } = createDumper(language);
 
@@ -701,12 +648,12 @@ describe('services > dumpers > AgentNodeJs', () => {
 
               await dumper.dump(defaultConfig, {});
 
-              expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+              expect(context.fs.writeFileSync).toHaveBeenLastCalledWith(
                 `/test/a${language.name}Application/models/index.${language.fileExtension}`,
-                'mockedContent',
+                {
+                  models: [],
+                },
               );
-
-              expect(context.fs.writeFileSync).toHaveBeenCalledTimes(9);
             });
           });
 

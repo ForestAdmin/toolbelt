@@ -112,7 +112,7 @@ describe('services > dumpers > agentNodejs', () => {
       `index.${language.fileExtension}`,
     ];
 
-    describe.each([languages.Javascript])('language: $name', language => {
+    describe.each([languages.Javascript, languages.Typescript])('language: $name', language => {
       const files = getFiles(language);
       describe.each(getConfigs(language))('database: $name', ({ name, appConfig, dbConfig }) => {
         async function dump() {

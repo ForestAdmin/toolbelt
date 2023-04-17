@@ -3,7 +3,17 @@ import type { Language } from '../../utils/languages';
 import type Strings from '../../utils/strings';
 import type Lodash from 'lodash';
 
+import languages from '../../utils/languages';
 import AbstractDumper from './abstract-dumper';
+
+interface ModelConfiguration {
+  collectionName: string;
+  modelName: string;
+  modelFileName: string;
+  timestamps: boolean;
+  fields: Array<object>;
+  modelPath: string;
+}
 
 export default class AgentNodeJs extends AbstractDumper {
   private env: { FOREST_SERVER_URL: string; FOREST_URL_IS_DEFAULT: boolean };
@@ -57,7 +67,7 @@ export default class AgentNodeJs extends AbstractDumper {
     this.toValidPackageName = toValidPackageName;
   }
 
-  writePackageJson(dbDialect: string, appName: string) {
+  writePackageJson(language: Language, dbDialect: string, appName: string) {
     const dependencies: { [name: string]: string } = {
       dotenv: '^16.0.1',
       '@forestadmin/agent': '^1.0.0',
@@ -82,27 +92,68 @@ export default class AgentNodeJs extends AbstractDumper {
       }
     }
 
-    const scripts: { [name: string]: string } = {
-      start: 'nodemon ./index.js',
-      'start:agent': 'node ./index.js',
+    let scripts: { [name: string]: string } = {
+      start: 'node ./index.js',
+      'start:watch': 'nodemon ./index.js',
     };
     const devDependencies: { [name: string]: string } = {
       nodemon: '^2.0.12',
     };
+    const nodemonConfig = {
+      ignore: ['./forestadmin-schema.json'],
+    };
+
+    if (language === languages.Typescript) {
+      scripts = {
+        build: 'tsc',
+        start: 'node ./dist/index.js',
+        'start:watch': 'nodemon ./index.ts',
+      };
+      devDependencies.typescript = '^4.9.4';
+      devDependencies['ts-node'] = '^10.9.1';
+      nodemonConfig.ignore.push('./typings.ts');
+    }
 
     const pkg = {
       name: this.toValidPackageName(appName),
       version: '0.0.1',
       private: true,
       scripts,
-      nodemonConfig: {
-        ignore: ['./forestadmin-schema.json'],
-      },
+      nodemonConfig,
       dependencies,
       devDependencies,
     };
 
     this.writeFile('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
+  }
+
+  writeTsConfigJson() {
+    this.writeFile(
+      'tsconfig.json',
+      `${JSON.stringify(
+        {
+          compilerOptions: {
+            experimentalDecorators: true,
+            target: 'ES2020',
+            module: 'CommonJS',
+            moduleResolution: 'Node',
+            esModuleInterop: true,
+            declaration: true,
+            declarationMap: true,
+            inlineSourceMap: true,
+            noImplicitOverride: true,
+            stripInternal: true,
+            outDir: 'dist',
+            skipLibCheck: true,
+          },
+          'ts-node': {
+            transpileOnly: true,
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    );
   }
 
   writeIndex(language: Language, dbDialect: string, dbSchema: string) {
@@ -113,25 +164,9 @@ export default class AgentNodeJs extends AbstractDumper {
       isMySQL: dbDialect === 'mysql',
       isMSSQL: dbDialect === 'mssql',
       isMariaDB: dbDialect === 'mariadb',
+      dbSchema,
       forestServerUrl: this.env.FOREST_URL_IS_DEFAULT ? false : this.env.FOREST_SERVER_URL,
-      datasourceImport: null,
-      datasourceCreation: null,
     };
-
-    if (isMongoose) {
-      context.datasourceImport = `const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');\nconst connection = require('./models');`;
-      context.datasourceCreation = `createMongooseDataSource(connection, { flattenMode: 'auto' })`;
-    } else {
-      context.datasourceImport = `const { createSqlDataSource } = require('@forestadmin/datasource-sql');`;
-      context.datasourceCreation = `
-    createSqlDataSource({
-      uri: process.env.DATABASE_URL,${
-        dbSchema ? '\n      schema: process.env.DATABASE_SCHEMA,' : ''
-      }
-      dialectOptions,
-    }),
-  `;
-    }
 
     this.copyHandleBarsTemplate(
       `${language.name}/index.hbs`,
@@ -167,20 +202,26 @@ export default class AgentNodeJs extends AbstractDumper {
     this.copyHandleBarsTemplate('common/env.hbs', '.env', context);
   }
 
-  private writeGitignore() {
-    this.writeFile('.gitignore', 'node_modules\n.env\n');
+  private writeGitignore(language: Language) {
+    this.writeFile(
+      '.gitignore',
+      `node_modules\n.env\n${language === languages.Typescript ? 'dist\n' : ''}`,
+    );
   }
 
   private writeTypings() {
     this.writeFile('typings.ts', '/* eslint-disable */\nexport type Schema = any;\n');
   }
 
-  private writeDockerignore() {
-    this.writeFile('.dockerignore', 'node_modules\nnpm-debug.log\n.env\n');
+  private writeDockerignore(language: Language) {
+    this.writeFile(
+      '.dockerignore',
+      `node_modules\nnpm-debug.log\n.env\n${language === languages.Typescript ? 'dist\n' : ''}`,
+    );
   }
 
-  private writeDockerfile() {
-    this.copyHandleBarsTemplate('common/Dockerfile.hbs', 'Dockerfile');
+  private writeDockerfile(language: Language) {
+    this.copyHandleBarsTemplate(`${language.name}/Dockerfile.hbs`, 'Dockerfile');
   }
 
   private writeDockerCompose(config: Config) {
@@ -195,27 +236,25 @@ export default class AgentNodeJs extends AbstractDumper {
       }
     }
 
-    this.copyHandleBarsTemplate('common/docker-compose.hbs', 'docker-compose.yml', {
-      containerName: this.lodash.snakeCase(config.appConfig.appName),
-      forestExtraHost,
-      isLinuxOs: this.isLinuxOs,
-      network: this.isLinuxOs && this.isDatabaseLocal(config.dbConfig) ? 'host' : null,
-    });
+    this.copyHandleBarsTemplate(
+      `${config.language.name}/docker-compose.hbs`,
+      'docker-compose.yml',
+      {
+        containerName: this.lodash.snakeCase(config.appConfig.appName),
+        forestExtraHost,
+        isLinuxOs: this.isLinuxOs,
+        network: this.isLinuxOs && this.isDatabaseLocal(config.dbConfig) ? 'host' : null,
+      },
+    );
   }
 
-  private async writeMongooseModels(language: Language, schema) {
-    await this.mkdirp(`${this.projectPath}/models`);
-
-    this.copyHandleBarsTemplate(
-      `${language.name}/models/index.hbs`,
-      `models/index.${language.fileExtension}`,
-    );
-
+  private computeModelsConfiguration(language: Language, schema: any): Array<ModelConfiguration> {
     const collectionNamesSorted = Object.keys(schema).sort();
 
-    collectionNamesSorted.forEach(collectionName => {
+    return collectionNamesSorted.map(collectionName => {
       const { fields, options } = schema[collectionName];
-      const modelPath = `models/${this.lodash.kebabCase(collectionName)}.${language.fileExtension}`;
+      const modelFileName = `${this.lodash.kebabCase(collectionName)}`;
+      const modelPath = `models/${modelFileName}.${language.fileExtension}`;
 
       const fieldsDefinition = fields.map(field => {
         return {
@@ -224,17 +263,51 @@ export default class AgentNodeJs extends AbstractDumper {
         };
       });
 
-      this.copyHandleBarsTemplate(`${language.name}/models/model.hbs`, modelPath, {
+      return {
         modelName: this.strings.transformToCamelCaseSafeString(collectionName),
         collectionName,
         fields: fieldsDefinition,
         timestamps: options.timestamps,
-      });
+        modelFileName,
+        modelPath,
+      };
+    });
+  }
+
+  private async writeMongooseModels(language: Language, schema) {
+    await this.mkdirp(`${this.projectPath}/models`);
+
+    const modelsConfiguration = this.computeModelsConfiguration(language, schema);
+
+    this.copyHandleBarsTemplate(
+      `${language.name}/models/index.hbs`,
+      `models/index.${language.fileExtension}`,
+      { models: modelsConfiguration },
+    );
+
+    modelsConfiguration.forEach(modelConfiguration => {
+      this.copyHandleBarsTemplate(
+        `${language.name}/models/model.hbs`,
+        modelConfiguration.modelPath,
+        {
+          modelName: modelConfiguration.modelName,
+          collectionName: modelConfiguration.collectionName,
+          fields: modelConfiguration.fields,
+          timestamps: modelConfiguration.timestamps,
+        },
+      );
     });
   }
 
   protected async createFiles(dumpConfig: Config, mongoSchema?: any) {
-    this.writePackageJson(dumpConfig.dbConfig.dbDialect, dumpConfig.appConfig.appName);
+    this.writePackageJson(
+      dumpConfig.language,
+      dumpConfig.dbConfig.dbDialect,
+      dumpConfig.appConfig.appName,
+    );
+    if (dumpConfig.language === languages.Typescript) {
+      this.writeTsConfigJson();
+    }
     this.writeIndex(
       dumpConfig.language,
       dumpConfig.dbConfig.dbDialect,
@@ -247,9 +320,9 @@ export default class AgentNodeJs extends AbstractDumper {
       dumpConfig.forestAuthSecret,
     );
     this.writeTypings();
-    this.writeGitignore();
-    this.writeDockerignore();
-    this.writeDockerfile();
+    this.writeGitignore(dumpConfig.language);
+    this.writeDockerignore(dumpConfig.language);
+    this.writeDockerfile(dumpConfig.language);
     this.writeDockerCompose(dumpConfig);
 
     if (dumpConfig.dbConfig.dbDialect === 'mongodb' && mongoSchema) {
