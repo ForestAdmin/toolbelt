@@ -5,6 +5,7 @@ import type ProjectCreator from './services/projects/create/project-creator';
 import type Database from './services/schema/update/database';
 import type Spinner from './services/spinner';
 import type EventSender from './utils/event-sender';
+import type { Language } from './utils/languages';
 import type Messages from './utils/messages';
 import type * as OclifConfig from '@oclif/config';
 import type { Input } from '@oclif/parser';
@@ -12,7 +13,6 @@ import type { Input } from '@oclif/parser';
 import { flags } from '@oclif/command';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
-import languages from './utils/languages';
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
   private readonly eventSender: EventSender;
@@ -133,7 +133,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected async runAuthenticated(): Promise<void> {
     try {
-      const { appConfig, dbConfig, meta, authenticationToken } = await this.getConfig();
+      const { appConfig, dbConfig, language, meta, authenticationToken } = await this.getConfig();
 
       this.spinner.start({ text: 'Creating your project on Forest Admin' });
       const projectCreationPromise = this.projectCreator.create(
@@ -154,7 +154,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
         appConfig,
         forestAuthSecret: authSecret as string,
         forestEnvSecret: envSecret as string,
-        language: languages.Javascript,
+        language,
       });
 
       await this.notifySuccess();
@@ -180,6 +180,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   private async getConfig(): Promise<{
     appConfig: AppConfig;
     dbConfig: DbConfig;
+    language: Language | null;
     meta: ProjectMeta;
     authenticationToken: string;
   }> {
@@ -237,7 +238,13 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     this.eventSender.sessionToken = authenticationToken;
     this.eventSender.meta = meta;
 
-    return { appConfig, dbConfig, meta, authenticationToken };
+    return {
+      appConfig,
+      dbConfig,
+      language: config.language,
+      meta,
+      authenticationToken,
+    };
   }
 
   private async testDatabaseConnection(dbConfig: DbConfig) {

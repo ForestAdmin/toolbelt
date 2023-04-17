@@ -1,3 +1,4 @@
+const { default: languages, languageList } = require('../../utils/languages');
 const AbstractPrompter = require('./abstract-prompter');
 
 class ApplicationPrompts extends AbstractPrompter {
@@ -11,6 +12,7 @@ class ApplicationPrompts extends AbstractPrompter {
   async handlePrompts() {
     this.handleHostname();
     this.handlePort();
+    this.handleLanguage();
   }
 
   handleHostname() {
@@ -58,6 +60,29 @@ class ApplicationPrompts extends AbstractPrompter {
           },
         });
       }
+    }
+  }
+
+  handleLanguage() {
+    if (this.isOptionRequested('language')) {
+      this.knownAnswers.language = languageList.find(
+        language => language.name === this.programArguments.language,
+      );
+
+      if (!this.knownAnswers.language) {
+        this.prompts.push({
+          type: 'list',
+          name: 'language',
+          message: 'In which language would you like to generate your sources?',
+          choices: languageList.map(language => ({
+            name: language.name,
+            value: language,
+          })),
+          default: languages.Javascript,
+        });
+      }
+    } else {
+      this.knownAnswers.language = null;
     }
   }
 }
