@@ -30,17 +30,17 @@ const agent = createAgent({
   // Autocompletion of collection names and fields
   typingsPath: './typings.ts',
   typingsMaxDepth: 5,
-})
+});
 
 // Connect your datasources
 // All options are documented at https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
 agent.addDataSource(
-    createSqlDataSource({
-      uri: process.env.DATABASE_URL,
-      schema: process.env.DATABASE_SCHEMA,
-      dialectOptions,
-    }),
-  );
+  createSqlDataSource({
+    uri: process.env.DATABASE_URL,
+    schema: process.env.DATABASE_SCHEMA,
+    dialectOptions,
+  }),
+);
 
 // Add customizations here.
 // For instance, you can code custom actions, charts, create new fields or relationships, load plugins.

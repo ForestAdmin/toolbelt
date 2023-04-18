@@ -18,7 +18,7 @@ const agent = createAgent({
   // Autocompletion of collection names and fields
   typingsPath: './typings.ts',
   typingsMaxDepth: 5,
-})
+});
 
 // Connect your datasources
 // All options are documented at https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
