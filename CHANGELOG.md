@@ -1,3 +1,10 @@
+# [3.4.0](https://github.com/ForestAdmin/toolbelt/compare/v3.3.0...v3.4.0) (2023-04-24)
+
+
+### Features
+
+* **agent-nodejs:** unify javascript and typescript generated code and .env ([#589](https://github.com/ForestAdmin/toolbelt/issues/589)) ([2001308](https://github.com/ForestAdmin/toolbelt/commit/200130884ca47d58a81a528484c848f5fa05a091))
+
 # [3.3.0](https://github.com/ForestAdmin/toolbelt/compare/v3.2.4...v3.3.0) (2023-04-17)
 
 
