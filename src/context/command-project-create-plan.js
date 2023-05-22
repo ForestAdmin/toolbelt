@@ -7,9 +7,5 @@ module.exports = plan =>
     .addUsingClass('database', () => require('../services/schema/update/database'))
     .addUsingClass('agentNodejsDumper', () => require('../services/dumpers/agent-nodejs').default)
     .addUsingClass('forestExpressDumper', () => require('../services/dumpers/forest-express'))
-    .addValue('GeneralPrompter', () => require('../services/prompter/general-prompter'))
-    .addUsingClass('commandGenerateConfigGetter', () =>
-      require('../services/projects/create/command-generate-config-getter'),
-    )
     .addUsingClass('projectCreator', () => require('../services/projects/create/project-creator'))
     .addUsingClass('spinner', () => require('../services/spinner'));

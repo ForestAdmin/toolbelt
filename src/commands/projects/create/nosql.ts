@@ -1,54 +1,55 @@
 import type { CreateCommandArguments } from '../../../interfaces/command-create-project-arguments-interface';
 import type { Config, DbConfig } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
-import type CommandGenerateConfigGetter from '../../../services/projects/create/command-generate-config-getter';
 import type DatabaseAnalyzer from '../../../services/schema/update/analyzer/database-analyzer';
 import type * as OclifConfig from '@oclif/config';
 
-import { flags } from '@oclif/command';
-
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
 import Agents from '../../../utils/agents';
-import { languageList } from '../../../utils/languages';
+import languages from '../../../utils/languages';
+import { optionsToArgs, optionsToFlags } from '../../../utils/option-parser';
 
 export default class NosqlCommand extends AbstractProjectCreateCommand {
   private readonly dumper: AgentNodeJs;
 
   private readonly databaseAnalyzer: DatabaseAnalyzer;
 
-  private readonly commandGenerateConfigGetter: CommandGenerateConfigGetter;
-
   private readonly _agent: string = Agents.NodeJS;
 
-  static override readonly flags = {
-    ...AbstractProjectCreateCommand.flags,
-    mongoDBSRV: flags.boolean({
-      dependsOn: [],
+  protected static override readonly options: CommandOptions = {
+    ...AbstractProjectCreateCommand.options,
+    mongoDBSRV: {
       description: 'Use SRV DNS record for mongoDB connection.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    language: flags.string({
-      char: 'l',
-      description: 'In which language would you like to generate your sources?',
-      options: languageList.map(language => language.name),
-      required: false,
-    }),
+      choices: ['yes', 'no'],
+      exclusive: ['dbConnectionUrl'],
+      oclif: { use: 'flag', name: 'mongoDBSRV' },
+    },
+    language: {
+      description: 'Choose the language you want to use for your project.',
+      choices: Object.values(languages).map(l => l.name),
+      default: () => Object.values(languages)[0].name,
+      oclif: { use: 'flag', char: 'l' },
+    },
   };
 
-  static override readonly args = [...AbstractProjectCreateCommand.args];
+  /** @see https://oclif.io/docs/commands */
+  static override description = AbstractProjectCreateCommand.description;
+
+  /** @see https://oclif.io/docs/args */
+  static override readonly args = optionsToArgs(this.options);
+
+  /** @see https://oclif.io/docs/flags */
+  static override readonly flags = optionsToFlags(this.options);
 
   constructor(argv: string[], config: OclifConfig.IConfig, plan?) {
     super(argv, config, plan);
 
-    const { assertPresent, agentNodejsDumper, databaseAnalyzer, commandGenerateConfigGetter } =
-      this.context;
+    const { assertPresent, agentNodejsDumper, databaseAnalyzer } = this.context;
 
-    assertPresent({ agentNodejsDumper, databaseAnalyzer, commandGenerateConfigGetter });
+    assertPresent({ agentNodejsDumper, databaseAnalyzer });
 
     this.dumper = agentNodejsDumper;
     this.databaseAnalyzer = databaseAnalyzer;
-    this.commandGenerateConfigGetter = commandGenerateConfigGetter;
   }
 
   protected async getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{

@@ -1,16 +1,11 @@
 /* eslint-disable max-classes-per-file */
 import type { CreateCommandArguments } from '../src/interfaces/command-create-project-arguments-interface';
-import type CommandGenerateConfigGetter from '../src/services/projects/create/command-generate-config-getter';
 import type * as ConfigType from '@oclif/config';
 
 import { flags } from '@oclif/command';
 import { Config } from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../src/abstract-project-create-command';
-import {
-  nosqlDbDialectOptions,
-  sqlDbDialectOptions,
-} from '../src/services/prompter/database-prompts';
 import Agents from '../src/utils/agents';
 import languages, { languageList } from '../src/utils/languages';
 

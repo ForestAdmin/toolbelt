@@ -1,59 +1,59 @@
 import type { CreateCommandArguments } from '../../../interfaces/command-create-project-arguments-interface';
 import type { Config } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
-import type CommandGenerateConfigGetter from '../../../services/projects/create/command-generate-config-getter';
+import type { CommandOptions } from '../../../utils/option-parser';
 import type * as OclifConfig from '@oclif/config';
 
-import { flags } from '@oclif/command';
-
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
-import { sqlDbDialectOptions } from '../../../services/prompter/database-prompts';
 import Agents from '../../../utils/agents';
-import { languageList } from '../../../utils/languages';
+import languages from '../../../utils/languages';
+import { optionsToArgs, optionsToFlags } from '../../../utils/option-parser';
 
 export default class SqlCommand extends AbstractProjectCreateCommand {
   private readonly dumper: AgentNodeJs;
 
-  private readonly commandGenerateConfigGetter: CommandGenerateConfigGetter;
-
   private readonly _agent: string = Agents.NodeJS;
 
-  static override readonly flags = {
-    ...AbstractProjectCreateCommand.flags,
-    databaseDialect: flags.string({
-      char: 'd',
-      dependsOn: [],
+  protected static override readonly options: CommandOptions = {
+    ...AbstractProjectCreateCommand.options,
+    dbDialect: {
       description: 'Enter your database dialect.',
-      exclusive: ['databaseConnectionURL'],
-      options: sqlDbDialectOptions.map(option => option.value),
-      required: false,
-    }),
-    databaseSchema: flags.string({
-      char: 's',
-      dependsOn: [],
+      choices: ['mariadb', 'mssql', 'mysql', 'postgres'],
+      exclusive: ['dbConnectionUrl'],
+      oclif: { use: 'flag', char: 'd', name: 'databaseDialect' },
+    },
+    dbSchema: {
       description: 'Enter your database schema.',
-      exclusive: [],
-      required: false,
-    }),
-    language: flags.string({
-      char: 'l',
+      exclusive: ['dbConnectionUrl'],
+      // when: (args: Options) => !['mariadb', 'mysql'].includes(this.getDialect(args)),
+      // default: (args: Options) => (this.getDialect(args) === 'postgres' ? 'public' : ''),
+      oclif: { use: 'flag', char: 's', name: 'databaseSchema' },
+    },
+    language: {
       description: 'Choose the language you want to use for your project.',
-      options: languageList.map(language => language.name),
-      required: false,
-    }),
+      choices: Object.values(languages).map(l => l.name),
+      default: () => Object.values(languages)[0].name,
+      oclif: { use: 'flag', char: 'l' },
+    },
   };
 
-  static override readonly args = [...AbstractProjectCreateCommand.args];
+  /** @see https://oclif.io/docs/commands */
+  static override description = AbstractProjectCreateCommand.description;
+
+  /** @see https://oclif.io/docs/args */
+  static override readonly args = optionsToArgs(this.options);
+
+  /** @see https://oclif.io/docs/flags */
+  static override readonly flags = optionsToFlags(this.options);
 
   constructor(argv: string[], config: OclifConfig.IConfig, plan?) {
     super(argv, config, plan);
 
-    const { assertPresent, agentNodejsDumper, commandGenerateConfigGetter } = this.context;
+    const { assertPresent, agentNodejsDumper } = this.context;
 
-    assertPresent({ agentNodejsDumper, commandGenerateConfigGetter });
+    assertPresent({ agentNodejsDumper });
 
     this.dumper = agentNodejsDumper;
-    this.commandGenerateConfigGetter = commandGenerateConfigGetter;
   }
 
   protected async getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{

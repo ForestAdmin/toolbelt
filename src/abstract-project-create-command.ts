@@ -1,20 +1,100 @@
 import type { CreateCommandArguments } from './interfaces/command-create-project-arguments-interface';
 import type { AppConfig, Config, DbConfig } from './interfaces/project-create-interface';
-import type { ProjectMeta } from './services/projects/create/project-creator';
 import type ProjectCreator from './services/projects/create/project-creator';
+import type { ProjectMeta } from './services/projects/create/project-creator';
 import type Database from './services/schema/update/database';
 import type Spinner from './services/spinner';
 import type EventSender from './utils/event-sender';
 import type { Language } from './utils/languages';
 import type Messages from './utils/messages';
+import type { CommandOptions } from './utils/option-parser';
 import type * as OclifConfig from '@oclif/config';
 import type { Input } from '@oclif/parser';
 
-import { flags } from '@oclif/command';
-
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
+import { validateAppHostname, validateDbName, validatePort } from './utils/validators';
+
+export type AbstractProjectCreateOptions = {
+  appName: string;
+  appHostname: string;
+  appPort: string;
+  dbConnectionUrl?: string;
+  dbName?: string;
+  dbHostname?: string;
+  // dbPort?: string;
+  // dbUser?: string;
+  dbPassword?: string;
+  dbSsl?: string;
+};
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
+  protected static options: CommandOptions = {
+    dbName: {
+      description: 'Enter your database name.',
+      exclusive: ['dbConnectionUrl'],
+      validate: validateDbName,
+      oclif: { use: 'flag', char: 'n', name: 'databaseName' },
+    },
+    dbHostname: {
+      description: 'Enter your database host.',
+      exclusive: ['dbConnectionUrl'],
+      default: () => 'localhost',
+      oclif: { use: 'flag', char: 'h', name: 'databaseHost' },
+    },
+    dbPort: {
+      description: 'Enter your database port.',
+      exclusive: ['dbConnectionUrl'],
+      // default: (args: AbstractProjectCreateOptions) => {
+      //   const dialect = this.getDialect(args);
+      //   if (dialect === 'postgres') return '5432';
+      //   if (dialect === 'mysql' || dialect === 'mariadb') return '3306';
+      //   if (dialect === 'mssql') return '1433';
+      //   return undefined;
+      // },
+      validate: validatePort,
+      oclif: { use: 'flag', char: 'p', name: 'databasePort' },
+    },
+    dbUser: {
+      description: 'Enter your database user.',
+      exclusive: ['dbConnectionUrl'],
+      // default: (args: AbstractProjectCreateOptions) =>
+      //   this.getDialect(args) === 'mongodb' ? undefined : 'root',
+      oclif: { use: 'flag', char: 'u', name: 'databaseUser' },
+    },
+    dbPassword: {
+      description: 'Enter your database password.',
+      exclusive: ['dbConnectionUrl'],
+      oclif: { use: 'flag', name: 'databasePassword' },
+    },
+    dbConnectionUrl: {
+      description: 'Enter the database credentials with a connection URL.',
+      exclusive: ['dbDialect', 'dbHost', 'dbPort', 'dbUser', 'dbPassword', 'dbName', 'dbSchema'],
+      oclif: { use: 'flag', char: 'c', name: 'databaseConnectionURL' },
+    },
+    dbSsl: {
+      description: 'Use SSL for database connection.',
+      choices: ['yes', 'no'],
+      default: () => 'no',
+      oclif: { use: 'flag', name: 'databaseSSL' },
+    },
+    appName: {
+      description: 'Name of the project to create.',
+      oclif: { use: 'arg' },
+    },
+    appHostname: {
+      description: 'Hostname of your admin backend application.',
+      default: () => 'http://localhost',
+      validate: validateAppHostname,
+      oclif: { use: 'flag', char: 'H', name: 'applicationHost' },
+    },
+    appPort: {
+      description: 'Port of your admin backend application.',
+      default: () => '3310',
+      validate: validatePort,
+      oclif: { use: 'flag', char: 'P', name: 'applicationPort' },
+    },
+  };
+
   private readonly eventSender: EventSender;
 
   private readonly projectCreator: ProjectCreator;
@@ -27,80 +107,8 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected abstract readonly agent: string | null;
 
-  static override flags = {
-    applicationHost: flags.string({
-      char: 'H',
-      dependsOn: [],
-      description: 'Hostname of your admin backend application.',
-      exclusive: [],
-      required: false,
-    }),
-    applicationPort: flags.integer({
-      char: 'P',
-      dependsOn: [],
-      description: 'Port of your admin backend application.',
-      exclusive: [],
-      required: false,
-    }),
-    databaseConnectionURL: flags.string({
-      char: 'c',
-      dependsOn: [],
-      description: 'Enter the database credentials with a connection URL.',
-      exclusive: ['ssl'],
-      required: false,
-    }),
-    databaseName: flags.string({
-      char: 'n',
-      dependsOn: [],
-      description: 'Enter your database name.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databaseHost: flags.string({
-      char: 'h',
-      dependsOn: [],
-      description: 'Enter your database host.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databasePort: flags.integer({
-      char: 'p',
-      dependsOn: [],
-      description: 'Enter your database port.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databaseUser: flags.string({
-      char: 'u',
-      dependsOn: [],
-      description: 'Enter your database user.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databasePassword: flags.string({
-      dependsOn: [],
-      description: 'Enter your database password.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databaseSSL: flags.boolean({
-      default: false,
-      dependsOn: [],
-      description: 'Use SSL for database connection.',
-      exclusive: [],
-      required: false,
-    }),
-  };
-
-  static override args = [
-    {
-      name: 'applicationName',
-      required: true,
-      description: 'Name of the project to create.',
-    },
-  ];
-
-  static override description = 'Create a new Forest Admin project.';
+  /** @see https://oclif.io/docs/commands */
+  static override description = 'Create a new Forest Admin project with agent-nodejs.';
 
   constructor(argv: string[], config: OclifConfig.IConfig, plan) {
     super(argv, config, plan);
