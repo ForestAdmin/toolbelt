@@ -44,7 +44,7 @@ class ProjectCreator {
    *
    * }} config
    * @param {ProjectMeta} meta
-   * @returns {Promise<void>}
+   * @returns {Promise<{id: number, envSecret: string, authSecret: string}>}
    */
   async create(sessionToken, config, meta) {
     try {
