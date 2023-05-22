@@ -41,7 +41,7 @@ services:
       MYSQL_USER: forest
       MYSQL_PASSWORD: secret
     ports:
-      - "127.0.0.1:8998:3306"
+      - "8998:3306"
 
   MySQL-MAX:
     image: mysql:8.0
@@ -52,7 +52,7 @@ services:
       MYSQL_USER: forest
       MYSQL_PASSWORD: secret
     ports:
-      - "127.0.0.1:8999:3306"
+      - "8999:3306"
 
   MS-SQL-MIN:
     image: mcr.microsoft.com/mssql/server:2017-latest
