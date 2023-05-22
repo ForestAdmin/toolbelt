@@ -2,6 +2,7 @@ const os = require('os');
 const AbstractPrompter = require('./abstract-prompter');
 const PrompterError = require('./prompter-error');
 const messages = require('../../utils/messages');
+const { validateDbName } = require('../../utils/validators');
 
 const MAPPING_DIALECT_TO_PORT = {
   postgres: '5432',
@@ -95,12 +96,7 @@ class DatabasePrompts extends AbstractPrompter {
         type: 'input',
         name: 'databaseName',
         message: "What's the database name?",
-        validate: dbName => {
-          if (dbName) {
-            return true;
-          }
-          return 'Please specify the database name.';
-        },
+        validate: validateDbName,
       });
     }
   }
