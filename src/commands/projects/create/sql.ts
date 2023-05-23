@@ -1,3 +1,4 @@
+import type { ProjectCreateOptions } from '../../../abstract-project-create-command';
 import type { Config } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type { CommandOptions } from '../../../utils/option-parser';
@@ -6,7 +7,7 @@ import type * as OclifConfig from '@oclif/config';
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
 import Agents from '../../../utils/agents';
 import languages from '../../../utils/languages';
-import { optionsToArgs, optionsToFlags } from '../../../utils/option-parser';
+import { optionsToFlags } from '../../../utils/option-parser';
 
 export default class SqlCommand extends AbstractProjectCreateCommand {
   private readonly dumper: AgentNodeJs;
@@ -24,8 +25,9 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
     databaseSchema: {
       description: 'Enter your database schema.',
       exclusive: ['dbConnectionUrl'],
-      // when: (args: Options) => !['mariadb', 'mysql'].includes(this.getDialect(args)),
-      // default: (args: Options) => (this.getDialect(args) === 'postgres' ? 'public' : ''),
+      when: (args: ProjectCreateOptions) => !['mariadb', 'mysql'].includes(this.getDialect(args)),
+      default: (args: ProjectCreateOptions) =>
+        this.getDialect(args) === 'postgres' ? 'public' : '',
       oclif: { use: 'flag', char: 's' },
     },
     language: {
@@ -38,9 +40,6 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
 
   /** @see https://oclif.io/docs/commands */
   static override description = AbstractProjectCreateCommand.description;
-
-  /** @see https://oclif.io/docs/args */
-  static override readonly args = optionsToArgs(this.options);
 
   /** @see https://oclif.io/docs/flags */
   static override readonly flags = optionsToFlags(this.options);

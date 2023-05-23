@@ -12,7 +12,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-await-in-loop,no-continue */
 
 import type { Command } from '@oclif/command';
-import type { IArg } from '@oclif/parser/lib/args';
 
 import { inject } from '@forestadmin/context';
 import { flags as oflags } from '@oclif/command';
@@ -107,13 +106,6 @@ export async function getCommandOptions<T>(instance: Command): Promise<T> {
   const values = getCliOptions(instance, options);
   await queryMissing(options, values);
   return values as T;
-}
-
-/** Convert generic options to oclif arguments */
-export function optionsToArgs(options: CommandOptions): IArg[] {
-  return Object.entries(options)
-    .filter(([, value]) => value?.oclif.use === 'arg')
-    .map(([key, value]) => ({ name: key, required: true, description: value.description }));
 }
 
 /** Convert generic options to oclif flags */

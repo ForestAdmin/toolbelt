@@ -7,7 +7,7 @@ import type * as OclifConfig from '@oclif/config';
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
 import Agents from '../../../utils/agents';
 import languages from '../../../utils/languages';
-import { optionsToArgs, optionsToFlags } from '../../../utils/option-parser';
+import { optionsToFlags } from '../../../utils/option-parser';
 
 export default class NosqlCommand extends AbstractProjectCreateCommand {
   private readonly dumper: AgentNodeJs;
@@ -34,9 +34,6 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
 
   /** @see https://oclif.io/docs/commands */
   static override description = AbstractProjectCreateCommand.description;
-
-  /** @see https://oclif.io/docs/args */
-  static override readonly args = optionsToArgs(this.options);
 
   /** @see https://oclif.io/docs/flags */
   static override readonly flags = optionsToFlags(this.options);

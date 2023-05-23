@@ -50,21 +50,21 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     databasePort: {
       description: 'Enter your database port.',
       exclusive: ['dbConnectionUrl'],
-      // default: (args: AbstractProjectCreateOptions) => {
-      //   const dialect = this.getDialect(args);
-      //   if (dialect === 'postgres') return '5432';
-      //   if (dialect === 'mysql' || dialect === 'mariadb') return '3306';
-      //   if (dialect === 'mssql') return '1433';
-      //   return undefined;
-      // },
+      default: (args: ProjectCreateOptions) => {
+        const dialect = this.getDialect(args);
+        if (dialect === 'postgres') return '5432';
+        if (dialect === 'mysql' || dialect === 'mariadb') return '3306';
+        if (dialect === 'mssql') return '1433';
+        return undefined;
+      },
       validate: validatePort,
       oclif: { use: 'flag', char: 'p' },
     },
     databaseUser: {
       description: 'Enter your database user.',
       exclusive: ['dbConnectionUrl'],
-      // default: (args: AbstractProjectCreateOptions) =>
-      //   this.getDialect(args) === 'mongodb' ? undefined : 'root',
+      default: (args: ProjectCreateOptions) =>
+        this.getDialect(args) === 'mongodb' ? undefined : 'root',
       oclif: { use: 'flag', char: 'u' },
     },
     databasePassword: {
@@ -113,8 +113,27 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected abstract readonly agent: string | null;
 
+  /** @see https://oclif.io/docs/args */
+  static override readonly args = [
+    { name: 'applicationName', required: true, description: 'Name of the project to create.' },
+  ];
+
   /** @see https://oclif.io/docs/commands */
   static override description = 'Create a new Forest Admin project with agent-nodejs.';
+
+  protected static getDialect(
+    options: ProjectCreateOptions,
+  ): 'mariadb' | 'mssql' | 'mysql' | 'postgres' | 'mongodb' {
+    const { databaseDialect, databaseConnectionURL } = options;
+
+    if (databaseDialect) return databaseDialect;
+    if (databaseConnectionURL?.startsWith('postgres://')) return 'postgres';
+    if (databaseConnectionURL?.startsWith('mysql://')) return 'mysql';
+    if (databaseConnectionURL?.startsWith('mssql://')) return 'mssql';
+    if (databaseConnectionURL?.startsWith('mongodb')) return 'mongodb';
+
+    throw new Error('Cannot determine database dialect');
+  }
 
   constructor(argv: string[], config: OclifConfig.IConfig, plan) {
     super(argv, config, plan);
