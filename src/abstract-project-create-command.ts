@@ -34,23 +34,23 @@ export type ProjectCreateOptions = {
 };
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
-  protected static options: CommandOptions = {
+  protected static options: CommandOptions<ProjectCreateOptions> = {
     databaseName: {
       description: 'Enter your database name.',
       exclusive: ['dbConnectionUrl'],
       validate: validateDbName,
-      oclif: { use: 'flag', char: 'n' },
+      oclif: { char: 'n' },
     },
     databaseHost: {
       description: 'Enter your database host.',
       exclusive: ['dbConnectionUrl'],
       default: () => 'localhost',
-      oclif: { use: 'flag', char: 'h' },
+      oclif: { char: 'h' },
     },
     databasePort: {
       description: 'Enter your database port.',
       exclusive: ['dbConnectionUrl'],
-      default: (args: ProjectCreateOptions) => {
+      default: args => {
         const dialect = this.getDialect(args);
         if (dialect === 'postgres') return '5432';
         if (dialect === 'mysql' || dialect === 'mariadb') return '3306';
@@ -58,46 +58,39 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
         return undefined;
       },
       validate: validatePort,
-      oclif: { use: 'flag', char: 'p' },
+      oclif: { char: 'p' },
     },
     databaseUser: {
       description: 'Enter your database user.',
       exclusive: ['dbConnectionUrl'],
-      default: (args: ProjectCreateOptions) =>
-        this.getDialect(args) === 'mongodb' ? undefined : 'root',
-      oclif: { use: 'flag', char: 'u' },
+      default: args => (this.getDialect(args) === 'mongodb' ? undefined : 'root'),
+      oclif: { char: 'u' },
     },
     databasePassword: {
       description: 'Enter your database password.',
       exclusive: ['dbConnectionUrl'],
-      oclif: { use: 'flag' },
     },
     databaseConnectionURL: {
       description: 'Enter the database credentials with a connection URL.',
       exclusive: ['dbDialect', 'dbHost', 'dbPort', 'dbUser', 'dbPassword', 'dbName', 'dbSchema'],
-      oclif: { use: 'flag', char: 'c' },
+      oclif: { char: 'c' },
     },
     databaseSSL: {
       description: 'Use SSL for database connection.',
       choices: ['yes', 'no'],
       default: () => 'no',
-      oclif: { use: 'flag' },
-    },
-    applicationName: {
-      description: 'Name of the project to create.',
-      oclif: { use: 'arg' },
     },
     applicationHost: {
       description: 'Hostname of your admin backend application.',
       default: () => 'http://localhost',
       validate: validateAppHostname,
-      oclif: { use: 'flag', char: 'H' },
+      oclif: { char: 'H' },
     },
     applicationPort: {
       description: 'Port of your admin backend application.',
       default: () => '3310',
       validate: validatePort,
-      oclif: { use: 'flag', char: 'P' },
+      oclif: { char: 'P' },
     },
   };
 
@@ -119,7 +112,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   ];
 
   /** @see https://oclif.io/docs/commands */
-  static override description = 'Create a new Forest Admin project with agent-nodejs.';
+  static override description = 'Create a new Forest Admin project.';
 
   protected static getDialect(
     options: ProjectCreateOptions,

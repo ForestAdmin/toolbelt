@@ -17,15 +17,16 @@ import { inject } from '@forestadmin/context';
 import { flags as oflags } from '@oclif/command';
 
 /** Option which can be used both as argument, flag or prompt */
-export type CommandOptions = {
+export type CommandOptions<T = Record<string, unknown>> = {
   [name: string]: {
     description: string;
     exclusive?: string[];
     choices?: string[];
-    when?: (v: Record<string, unknown>) => boolean;
+    when?: (v: T) => boolean;
     validate?: (v: string) => boolean | string;
-    default?: (v: Record<string, unknown>) => unknown;
-    oclif: { use: 'arg' | 'flag'; char?: string; name?: string };
+    default?: (v: T) => unknown;
+    oclif?: { char?: string; name?: string; order?: number };
+    prompter?: { order?: number };
   };
 };
 
@@ -110,17 +111,15 @@ export async function getCommandOptions<T>(instance: Command): Promise<T> {
 
 /** Convert generic options to oclif flags */
 export function optionsToFlags(options: CommandOptions): oflags.Input<unknown> {
-  const entries = Object.entries(options)
-    .filter(([, value]) => value?.oclif.use === 'flag')
-    .map(([key, value]) => [
-      value.oclif.name || key,
-      oflags.string({
-        char: value.oclif.char as 'a',
-        description: value.description,
-        exclusive: value.exclusive,
-        required: false,
-      }),
-    ]);
+  const entries = Object.entries(options).map(([key, value]) => [
+    value.oclif.name || key,
+    oflags.string({
+      char: value.oclif.char as 'a',
+      description: value.description,
+      exclusive: value.exclusive,
+      required: false,
+    }),
+  ]);
 
   return Object.fromEntries(entries);
 }

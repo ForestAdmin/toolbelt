@@ -13,7 +13,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
 
   private readonly dumper: ForestExpress;
 
-  protected readonly agent: string | null = null;
+  protected readonly agent = null;
 
   protected static override readonly options: CommandOptions = {
     ...AbstractProjectCreateCommand.options,
@@ -21,7 +21,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
       description: 'Enter your database dialect.',
       choices: ['mssql', 'mysql', 'postgres'],
       exclusive: ['dbConnectionUrl'],
-      oclif: { use: 'flag', char: 'd', name: 'databaseDialect' },
+      oclif: { char: 'd', name: 'databaseDialect' },
     },
     databaseSchema: {
       description: 'Enter your database schema.',
@@ -29,13 +29,13 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
       when: (args: ProjectCreateOptions) => !['mariadb', 'mysql'].includes(this.getDialect(args)),
       default: (args: ProjectCreateOptions) =>
         this.getDialect(args) === 'postgres' ? 'public' : '',
-      oclif: { use: 'flag', char: 's', name: 'databaseSchema' },
+      oclif: { char: 's', name: 'databaseSchema' },
     },
     mongoDBSRV: {
       description: 'Use SRV DNS record for mongoDB connection.',
       choices: ['yes', 'no'],
       exclusive: ['dbConnectionUrl'],
-      oclif: { use: 'flag', name: 'mongoDBSRV' },
+      oclif: { name: 'mongoDBSRV' },
     },
   };
 

@@ -1,3 +1,4 @@
+import type { ProjectCreateOptions } from '../../../abstract-project-create-command';
 import type { Config, DbConfig } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type DatabaseAnalyzer from '../../../services/schema/update/analyzer/database-analyzer';
@@ -14,21 +15,20 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
 
   private readonly databaseAnalyzer: DatabaseAnalyzer;
 
-  private readonly _agent: string = Agents.NodeJS;
+  protected readonly agent = Agents.NodeJS;
 
-  protected static override readonly options: CommandOptions = {
+  protected static override readonly options: CommandOptions<ProjectCreateOptions> = {
     ...AbstractProjectCreateCommand.options,
     mongoDBSRV: {
       description: 'Use SRV DNS record for mongoDB connection.',
       choices: ['yes', 'no'],
       exclusive: ['dbConnectionUrl'],
-      oclif: { use: 'flag' },
     },
     language: {
       description: 'Choose the language you want to use for your project.',
       choices: Object.values(languages).map(l => l.name),
       default: () => Object.values(languages)[0].name,
-      oclif: { use: 'flag', char: 'l' },
+      oclif: { char: 'l' },
     },
   };
 
@@ -52,10 +52,6 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
   protected async generateProject(config: Config): Promise<void> {
     const schema = await this.analyzeDatabase(config.dbConfig);
     await this.createFiles(config, schema);
-  }
-
-  protected get agent(): string {
-    return this._agent;
   }
 
   private async analyzeDatabase(dbConfig: DbConfig) {

@@ -12,29 +12,28 @@ import { optionsToFlags } from '../../../utils/option-parser';
 export default class SqlCommand extends AbstractProjectCreateCommand {
   private readonly dumper: AgentNodeJs;
 
-  private readonly _agent: string = Agents.NodeJS;
+  protected readonly agent = Agents.NodeJS;
 
-  protected static override readonly options: CommandOptions = {
+  protected static override readonly options: CommandOptions<ProjectCreateOptions> = {
     ...AbstractProjectCreateCommand.options,
     databaseDialect: {
       description: 'Enter your database dialect.',
       choices: ['mariadb', 'mssql', 'mysql', 'postgres'],
       exclusive: ['dbConnectionUrl'],
-      oclif: { use: 'flag', char: 'd' },
+      oclif: { char: 'd' },
     },
     databaseSchema: {
       description: 'Enter your database schema.',
       exclusive: ['dbConnectionUrl'],
-      when: (args: ProjectCreateOptions) => !['mariadb', 'mysql'].includes(this.getDialect(args)),
-      default: (args: ProjectCreateOptions) =>
-        this.getDialect(args) === 'postgres' ? 'public' : '',
-      oclif: { use: 'flag', char: 's' },
+      when: args => !['mariadb', 'mysql'].includes(this.getDialect(args)),
+      default: args => (this.getDialect(args) === 'postgres' ? 'public' : ''),
+      oclif: { char: 's' },
     },
     language: {
       description: 'Choose the language you want to use for your project.',
       choices: Object.values(languages).map(l => l.name),
       default: () => Object.values(languages)[0].name,
-      oclif: { use: 'flag', char: 'l' },
+      oclif: { char: 'l' },
     },
   };
 
@@ -65,9 +64,5 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
     };
     const dumpPromise = this.dumper.dump(dumperConfig);
     await this.spinner.attachToPromise(dumpPromise);
-  }
-
-  protected get agent(): string {
-    return this._agent;
   }
 }
