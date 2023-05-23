@@ -1,13 +1,14 @@
-import type { CreateCommandArguments } from '../../../interfaces/command-create-project-arguments-interface';
+import type { ProjectCreateOptions } from '../../../abstract-project-create-command';
 import type { Config, DbConfig } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type DatabaseAnalyzer from '../../../services/schema/update/analyzer/database-analyzer';
+import type { CommandOptions } from '../../../utils/option-parser';
 import type * as OclifConfig from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
 import Agents from '../../../utils/agents';
 import languages from '../../../utils/languages';
-import { optionsToArgs, optionsToFlags } from '../../../utils/option-parser';
+import { getCommandOptions, optionsToArgs, optionsToFlags } from '../../../utils/option-parser';
 
 export default class NosqlCommand extends AbstractProjectCreateCommand {
   private readonly dumper: AgentNodeJs;
@@ -22,7 +23,7 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
       description: 'Use SRV DNS record for mongoDB connection.',
       choices: ['yes', 'no'],
       exclusive: ['dbConnectionUrl'],
-      oclif: { use: 'flag', name: 'mongoDBSRV' },
+      oclif: { use: 'flag' },
     },
     language: {
       description: 'Choose the language you want to use for your project.',
@@ -52,17 +53,17 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
     this.databaseAnalyzer = databaseAnalyzer;
   }
 
-  protected async getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{
-    config: CreateCommandArguments;
-    specificDatabaseConfig: { [name: string]: any };
+  protected async getConfigFromArguments(): Promise<{
+    config: ProjectCreateOptions;
+    specificDatabaseConfig: { [name: string]: unknown };
   }> {
-    const config = await this.commandGenerateConfigGetter.get(programArguments, false, true);
+    const config: ProjectCreateOptions = await getCommandOptions(this);
+    config.databaseDialect = 'mongodb';
 
-    const specificDatabaseConfig = {
-      mongodbSrv: config.mongoDBSRV,
+    return {
+      config,
+      specificDatabaseConfig: { mongodbSrv: config.mongoDBSRV },
     };
-
-    return { config, specificDatabaseConfig };
   }
 
   protected async generateProject(config: Config): Promise<void> {

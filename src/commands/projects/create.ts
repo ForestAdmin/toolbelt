@@ -1,4 +1,4 @@
-import type { CreateCommandArguments } from '../../interfaces/command-create-project-arguments-interface';
+import type { ProjectCreateOptions } from '../../abstract-project-create-command';
 import type { Config, DbConfig } from '../../interfaces/project-create-interface';
 import type ForestExpress from '../../services/dumpers/forest-express';
 import type DatabaseAnalyzer from '../../services/schema/update/analyzer/database-analyzer';
@@ -6,7 +6,7 @@ import type { CommandOptions } from '../../utils/option-parser';
 import type * as OclifConfig from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../../abstract-project-create-command';
-import { optionsToArgs, optionsToFlags } from '../../utils/option-parser';
+import { getCommandOptions, optionsToArgs, optionsToFlags } from '../../utils/option-parser';
 
 export default class CreateCommand extends AbstractProjectCreateCommand {
   private readonly databaseAnalyzer: DatabaseAnalyzer;
@@ -17,13 +17,13 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
 
   protected static override readonly options: CommandOptions = {
     ...AbstractProjectCreateCommand.options,
-    dbDialect: {
+    databaseDialect: {
       description: 'Enter your database dialect.',
-      choices: ['mariadb', 'mssql', 'mysql', 'postgres'],
+      choices: ['mssql', 'mysql', 'postgres'],
       exclusive: ['dbConnectionUrl'],
       oclif: { use: 'flag', char: 'd', name: 'databaseDialect' },
     },
-    dbSchema: {
+    databaseSchema: {
       description: 'Enter your database schema.',
       exclusive: ['dbConnectionUrl'],
       // when: (args: Options) => !['mariadb', 'mysql'].includes(this.getDialect(args)),
@@ -50,30 +50,20 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
   constructor(argv: string[], config: OclifConfig.IConfig, plan?) {
     super(argv, config, plan);
 
-    const { assertPresent, databaseAnalyzer, forestExpressDumper, commandGenerateConfigGetter } =
-      this.context;
-
-    assertPresent({
-      databaseAnalyzer,
-      forestExpressDumper,
-      commandGenerateConfigGetter,
-    });
+    const { assertPresent, databaseAnalyzer, forestExpressDumper } = this.context;
+    assertPresent({ databaseAnalyzer, forestExpressDumper });
 
     this.databaseAnalyzer = databaseAnalyzer;
     this.dumper = forestExpressDumper;
   }
 
-  protected async getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{
-    config: CreateCommandArguments;
-    specificDatabaseConfig: { [name: string]: any };
+  protected async getConfigFromArguments(): Promise<{
+    config: ProjectCreateOptions;
+    specificDatabaseConfig: { [name: string]: unknown };
   }> {
-    const config = await this.commandGenerateConfigGetter.get(programArguments, true, true);
+    const config: ProjectCreateOptions = await getCommandOptions(this);
 
-    const specificDatabaseConfig = {
-      mongodbSrv: config.mongoDBSRV,
-    };
-
-    return { config, specificDatabaseConfig };
+    return { config, specificDatabaseConfig: { mongodbSrv: config.mongoDBSRV } };
   }
 
   protected async generateProject(config: Config): Promise<void> {

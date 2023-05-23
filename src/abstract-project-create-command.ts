@@ -1,4 +1,3 @@
-import type { CreateCommandArguments } from './interfaces/command-create-project-arguments-interface';
 import type { AppConfig, Config, DbConfig } from './interfaces/project-create-interface';
 import type ProjectCreator from './services/projects/create/project-creator';
 import type { ProjectMeta } from './services/projects/create/project-creator';
@@ -9,39 +8,45 @@ import type { Language } from './utils/languages';
 import type Messages from './utils/messages';
 import type { CommandOptions } from './utils/option-parser';
 import type * as OclifConfig from '@oclif/config';
-import type { Input } from '@oclif/parser';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
+import { languageList } from './utils/languages';
 import { validateAppHostname, validateDbName, validatePort } from './utils/validators';
 
-export type AbstractProjectCreateOptions = {
-  appName: string;
-  appHostname: string;
-  appPort: string;
-  dbConnectionUrl?: string;
-  dbName?: string;
-  dbHostname?: string;
-  // dbPort?: string;
-  // dbUser?: string;
-  dbPassword?: string;
-  dbSsl?: string;
+export type ProjectCreateOptions = {
+  applicationName: string;
+  applicationHost: string;
+  applicationPort: string;
+  databaseConnectionURL?: string;
+  databaseName?: string;
+  databaseHost?: string;
+  databasePort?: string;
+  databaseUser?: string;
+  databasePassword?: string;
+  databaseSSL?: boolean;
+
+  databaseDialect?: 'mariadb' | 'mssql' | 'mysql' | 'postgres' | 'mongodb';
+  databaseSchema?: string;
+  mongoDBSRV?: boolean;
+
+  language?: 'typescript' | 'javascript';
 };
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
   protected static options: CommandOptions = {
-    dbName: {
+    databaseName: {
       description: 'Enter your database name.',
       exclusive: ['dbConnectionUrl'],
       validate: validateDbName,
-      oclif: { use: 'flag', char: 'n', name: 'databaseName' },
+      oclif: { use: 'flag', char: 'n' },
     },
-    dbHostname: {
+    databaseHost: {
       description: 'Enter your database host.',
       exclusive: ['dbConnectionUrl'],
       default: () => 'localhost',
-      oclif: { use: 'flag', char: 'h', name: 'databaseHost' },
+      oclif: { use: 'flag', char: 'h' },
     },
-    dbPort: {
+    databasePort: {
       description: 'Enter your database port.',
       exclusive: ['dbConnectionUrl'],
       // default: (args: AbstractProjectCreateOptions) => {
@@ -52,46 +57,46 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       //   return undefined;
       // },
       validate: validatePort,
-      oclif: { use: 'flag', char: 'p', name: 'databasePort' },
+      oclif: { use: 'flag', char: 'p' },
     },
-    dbUser: {
+    databaseUser: {
       description: 'Enter your database user.',
       exclusive: ['dbConnectionUrl'],
       // default: (args: AbstractProjectCreateOptions) =>
       //   this.getDialect(args) === 'mongodb' ? undefined : 'root',
-      oclif: { use: 'flag', char: 'u', name: 'databaseUser' },
+      oclif: { use: 'flag', char: 'u' },
     },
-    dbPassword: {
+    databasePassword: {
       description: 'Enter your database password.',
       exclusive: ['dbConnectionUrl'],
-      oclif: { use: 'flag', name: 'databasePassword' },
+      oclif: { use: 'flag' },
     },
-    dbConnectionUrl: {
+    databaseConnectionURL: {
       description: 'Enter the database credentials with a connection URL.',
       exclusive: ['dbDialect', 'dbHost', 'dbPort', 'dbUser', 'dbPassword', 'dbName', 'dbSchema'],
-      oclif: { use: 'flag', char: 'c', name: 'databaseConnectionURL' },
+      oclif: { use: 'flag', char: 'c' },
     },
-    dbSsl: {
+    databaseSSL: {
       description: 'Use SSL for database connection.',
       choices: ['yes', 'no'],
       default: () => 'no',
-      oclif: { use: 'flag', name: 'databaseSSL' },
+      oclif: { use: 'flag' },
     },
-    appName: {
+    applicationName: {
       description: 'Name of the project to create.',
       oclif: { use: 'arg' },
     },
-    appHostname: {
+    applicationHost: {
       description: 'Hostname of your admin backend application.',
       default: () => 'http://localhost',
       validate: validateAppHostname,
-      oclif: { use: 'flag', char: 'H', name: 'applicationHost' },
+      oclif: { use: 'flag', char: 'H' },
     },
-    appPort: {
+    applicationPort: {
       description: 'Port of your admin backend application.',
       default: () => '3310',
       validate: validatePort,
-      oclif: { use: 'flag', char: 'P', name: 'applicationPort' },
+      oclif: { use: 'flag', char: 'P' },
     },
   };
 
@@ -178,9 +183,9 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     }
   }
 
-  protected abstract getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{
-    config: CreateCommandArguments;
-    specificDatabaseConfig: { [name: string]: any };
+  protected abstract getConfigFromArguments(): Promise<{
+    config: ProjectCreateOptions;
+    specificDatabaseConfig: { [name: string]: unknown };
   }>;
 
   protected abstract generateProject(config: Config): Promise<void>;
@@ -192,18 +197,11 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     meta: ProjectMeta;
     authenticationToken: string;
   }> {
-    const { args: parsedArgs, flags: parsedFlags } = this.parse(
-      this.constructor as Input<typeof AbstractProjectCreateCommand.flags>,
-    );
+    const { config, specificDatabaseConfig } = await this.getConfigFromArguments();
 
     // FIXME: Works as only one instance at execution time. Not ideal.
     this.eventSender.command = 'projects:create';
-    this.eventSender.applicationName = parsedArgs.applicationName;
-
-    const { config, specificDatabaseConfig } = await this.getConfigFromArguments({
-      ...parsedArgs,
-      ...parsedFlags,
-    });
+    this.eventSender.applicationName = config.applicationName;
 
     if (!config.databaseDialect && !config.databaseConnectionURL) {
       this.logger.error('Missing database dialect option value');
@@ -213,7 +211,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     const appConfig = {
       appName: config.applicationName,
       appHostname: config.applicationHost,
-      appPort: config.applicationPort,
+      appPort: Number(config.applicationPort),
     } as AppConfig;
     const dbConfig = {
       dbConnectionUrl: config.databaseConnectionURL,
@@ -249,7 +247,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     return {
       appConfig,
       dbConfig,
-      language: config.language,
+      language: languageList.find(l => l.name === config.language),
       meta,
       authenticationToken,
     };

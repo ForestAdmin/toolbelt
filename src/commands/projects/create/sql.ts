@@ -1,4 +1,4 @@
-import type { CreateCommandArguments } from '../../../interfaces/command-create-project-arguments-interface';
+import type { ProjectCreateOptions } from '../../../abstract-project-create-command';
 import type { Config } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type { CommandOptions } from '../../../utils/option-parser';
@@ -7,7 +7,7 @@ import type * as OclifConfig from '@oclif/config';
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
 import Agents from '../../../utils/agents';
 import languages from '../../../utils/languages';
-import { optionsToArgs, optionsToFlags } from '../../../utils/option-parser';
+import { getCommandOptions, optionsToArgs, optionsToFlags } from '../../../utils/option-parser';
 
 export default class SqlCommand extends AbstractProjectCreateCommand {
   private readonly dumper: AgentNodeJs;
@@ -16,18 +16,18 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
 
   protected static override readonly options: CommandOptions = {
     ...AbstractProjectCreateCommand.options,
-    dbDialect: {
+    databaseDialect: {
       description: 'Enter your database dialect.',
       choices: ['mariadb', 'mssql', 'mysql', 'postgres'],
       exclusive: ['dbConnectionUrl'],
-      oclif: { use: 'flag', char: 'd', name: 'databaseDialect' },
+      oclif: { use: 'flag', char: 'd' },
     },
-    dbSchema: {
+    databaseSchema: {
       description: 'Enter your database schema.',
       exclusive: ['dbConnectionUrl'],
       // when: (args: Options) => !['mariadb', 'mysql'].includes(this.getDialect(args)),
       // default: (args: Options) => (this.getDialect(args) === 'postgres' ? 'public' : ''),
-      oclif: { use: 'flag', char: 's', name: 'databaseSchema' },
+      oclif: { use: 'flag', char: 's' },
     },
     language: {
       description: 'Choose the language you want to use for your project.',
@@ -56,15 +56,13 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
     this.dumper = agentNodejsDumper;
   }
 
-  protected async getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{
-    config: CreateCommandArguments;
-    specificDatabaseConfig: { [name: string]: any };
+  protected async getConfigFromArguments(): Promise<{
+    config: ProjectCreateOptions;
+    specificDatabaseConfig: { [name: string]: unknown };
   }> {
-    const config = await this.commandGenerateConfigGetter.get(programArguments, true, false);
+    const config: ProjectCreateOptions = await getCommandOptions(this);
 
-    const specificDatabaseConfig = {};
-
-    return { config, specificDatabaseConfig };
+    return { config, specificDatabaseConfig: {} };
   }
 
   protected async generateProject(config: Config): Promise<void> {
