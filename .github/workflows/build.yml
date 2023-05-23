@@ -17,7 +17,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v3
         with:
-          node-version: 14.17.6
+          node-version: 14.21.2
           cache: 'yarn'
 
       - name: Cache node_modules
@@ -47,7 +47,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 14.17.6
+          node-version: 14.21.2
           cache: 'yarn'
 
       - name: Cache node_modules
@@ -67,7 +67,6 @@ jobs:
     strategy:
       matrix:
         node: [14, 16]
-        # node: [14, 16, 18, 20]
         include:
           - node: 14
             withCoverage: ${{ true }}
@@ -121,7 +120,7 @@ jobs:
           persist-credentials: false # GITHUB_TOKEN must not be set for the semantic release
       - uses: actions/setup-node@v3
         with:
-          node-version: 14.17.6
+          node-version: 14.21.2
           cache: 'yarn'
 
       - uses: actions/cache@v3
