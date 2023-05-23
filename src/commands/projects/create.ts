@@ -1,4 +1,3 @@
-import type { ProjectCreateOptions } from '../../abstract-project-create-command';
 import type { Config, DbConfig } from '../../interfaces/project-create-interface';
 import type ForestExpress from '../../services/dumpers/forest-express';
 import type DatabaseAnalyzer from '../../services/schema/update/analyzer/database-analyzer';
@@ -6,7 +5,7 @@ import type { CommandOptions } from '../../utils/option-parser';
 import type * as OclifConfig from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../../abstract-project-create-command';
-import { getCommandOptions, optionsToArgs, optionsToFlags } from '../../utils/option-parser';
+import { optionsToArgs, optionsToFlags } from '../../utils/option-parser';
 
 export default class CreateCommand extends AbstractProjectCreateCommand {
   private readonly databaseAnalyzer: DatabaseAnalyzer;
@@ -55,15 +54,6 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
 
     this.databaseAnalyzer = databaseAnalyzer;
     this.dumper = forestExpressDumper;
-  }
-
-  protected async getConfigFromArguments(): Promise<{
-    config: ProjectCreateOptions;
-    specificDatabaseConfig: { [name: string]: unknown };
-  }> {
-    const config: ProjectCreateOptions = await getCommandOptions(this);
-
-    return { config, specificDatabaseConfig: { mongodbSrv: config.mongoDBSRV } };
   }
 
   protected async generateProject(config: Config): Promise<void> {

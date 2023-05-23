@@ -1,4 +1,3 @@
-import type { ProjectCreateOptions } from '../../../abstract-project-create-command';
 import type { Config, DbConfig } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type DatabaseAnalyzer from '../../../services/schema/update/analyzer/database-analyzer';
@@ -8,7 +7,7 @@ import type * as OclifConfig from '@oclif/config';
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
 import Agents from '../../../utils/agents';
 import languages from '../../../utils/languages';
-import { getCommandOptions, optionsToArgs, optionsToFlags } from '../../../utils/option-parser';
+import { optionsToArgs, optionsToFlags } from '../../../utils/option-parser';
 
 export default class NosqlCommand extends AbstractProjectCreateCommand {
   private readonly dumper: AgentNodeJs;
@@ -51,19 +50,6 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
 
     this.dumper = agentNodejsDumper;
     this.databaseAnalyzer = databaseAnalyzer;
-  }
-
-  protected async getConfigFromArguments(): Promise<{
-    config: ProjectCreateOptions;
-    specificDatabaseConfig: { [name: string]: unknown };
-  }> {
-    const config: ProjectCreateOptions = await getCommandOptions(this);
-    config.databaseDialect = 'mongodb';
-
-    return {
-      config,
-      specificDatabaseConfig: { mongodbSrv: config.mongoDBSRV },
-    };
   }
 
   protected async generateProject(config: Config): Promise<void> {

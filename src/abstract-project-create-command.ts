@@ -11,6 +11,7 @@ import type * as OclifConfig from '@oclif/config';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
 import { languageList } from './utils/languages';
+import { getCommandOptions } from './utils/option-parser';
 import { validateAppHostname, validateDbName, validatePort } from './utils/validators';
 
 export type ProjectCreateOptions = {
@@ -183,11 +184,6 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     }
   }
 
-  protected abstract getConfigFromArguments(): Promise<{
-    config: ProjectCreateOptions;
-    specificDatabaseConfig: { [name: string]: unknown };
-  }>;
-
   protected abstract generateProject(config: Config): Promise<void>;
 
   private async getConfig(): Promise<{
@@ -197,7 +193,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     meta: ProjectMeta;
     authenticationToken: string;
   }> {
-    const { config, specificDatabaseConfig } = await this.getConfigFromArguments();
+    const config: ProjectCreateOptions = await getCommandOptions(this);
 
     // FIXME: Works as only one instance at execution time. Not ideal.
     this.eventSender.command = 'projects:create';
@@ -223,7 +219,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       dbSsl: config.databaseSSL,
       dbUser: config.databaseUser,
       dbPassword: config.databasePassword,
-      ...specificDatabaseConfig,
+      mongodbSrv: config.mongoDBSRV,
     } as DbConfig;
 
     const meta: ProjectMeta = {

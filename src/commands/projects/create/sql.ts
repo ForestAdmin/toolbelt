@@ -1,4 +1,3 @@
-import type { ProjectCreateOptions } from '../../../abstract-project-create-command';
 import type { Config } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type { CommandOptions } from '../../../utils/option-parser';
@@ -7,7 +6,7 @@ import type * as OclifConfig from '@oclif/config';
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
 import Agents from '../../../utils/agents';
 import languages from '../../../utils/languages';
-import { getCommandOptions, optionsToArgs, optionsToFlags } from '../../../utils/option-parser';
+import { optionsToArgs, optionsToFlags } from '../../../utils/option-parser';
 
 export default class SqlCommand extends AbstractProjectCreateCommand {
   private readonly dumper: AgentNodeJs;
@@ -54,15 +53,6 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
     assertPresent({ agentNodejsDumper });
 
     this.dumper = agentNodejsDumper;
-  }
-
-  protected async getConfigFromArguments(): Promise<{
-    config: ProjectCreateOptions;
-    specificDatabaseConfig: { [name: string]: unknown };
-  }> {
-    const config: ProjectCreateOptions = await getCommandOptions(this);
-
-    return { config, specificDatabaseConfig: {} };
   }
 
   protected async generateProject(config: Config): Promise<void> {

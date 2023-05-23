@@ -1,6 +1,4 @@
 /* eslint-disable max-classes-per-file */
-import type { CreateCommandArguments } from '../src/interfaces/command-create-project-arguments-interface';
-import type * as ConfigType from '@oclif/config';
 
 import { flags } from '@oclif/command';
 import { Config } from '@oclif/config';
@@ -73,8 +71,6 @@ describe('abstractProjectCreateCommand command', () => {
     class TestAbstractClass extends AbstractProjectCreateCommand {
       public agent: string | null = null;
 
-      private readonly commandGenerateConfigGetter: CommandGenerateConfigGetter;
-
       static override readonly flags = {
         ...AbstractProjectCreateCommand.flags,
         databaseDialect: flags.string({
@@ -109,31 +105,10 @@ describe('abstractProjectCreateCommand command', () => {
 
       static override readonly args = [...AbstractProjectCreateCommand.args];
 
-      constructor(argv: string[], config: ConfigType.IConfig, plan?) {
-        super(argv, config, plan);
-
-        const { commandGenerateConfigGetter } = this.context;
-
-        this.commandGenerateConfigGetter = commandGenerateConfigGetter;
-      }
-
       generateProject = jest.fn().mockResolvedValue(null);
 
       run() {
         return this.runAuthenticated();
-      }
-
-      protected async getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{
-        config: CreateCommandArguments;
-        specificDatabaseConfig: { [name: string]: any };
-      }> {
-        const config = await this.commandGenerateConfigGetter.get(programArguments, true, true);
-
-        const specificDatabaseConfig = {
-          mongodbSrv: config.mongoDBSRV,
-        };
-
-        return { config, specificDatabaseConfig };
       }
     }
 
