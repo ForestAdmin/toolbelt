@@ -25,7 +25,7 @@ export type CommandOptions<T = Record<string, unknown>> = {
     when?: (v: T) => boolean;
     validate?: (v: string) => boolean | string;
     default?: (v: T) => unknown;
-    oclif?: { char?: string; name?: string; order?: number };
+    oclif?: { char?: string; order?: number };
     prompter?: { order?: number };
   };
 };
@@ -58,14 +58,8 @@ function getCliOptions(instance: Command, options: CommandOptions): Record<strin
   const { args, flags } = instance.parse(instance.constructor) as any;
   const values = { ...args, ...flags };
 
+  // Validate
   Object.entries(options).forEach(([k, v]) => {
-    // Rename aliases
-    if (v.oclif.name) {
-      values[k] = values[v.oclif.name];
-      delete values[v.oclif.name];
-    }
-
-    // Validate
     if (values[k] !== undefined && v.validate) {
       const validation = v.validate(values[k]);
       if (typeof validation === 'string') throw new Error(`Invalid value for ${k}: ${validation}`);
@@ -81,7 +75,9 @@ async function queryMissing(
   values: Record<string, unknown>,
 ): Promise<void> {
   const { inquirer } = inject() as any;
-  const optionsList = Object.entries(options);
+  const optionsList = Object.entries(options).sort(
+    ([, a], [, b]) => (a.prompter?.order ?? 0) - (b.prompter?.order ?? 0),
+  );
 
   // Missing data is requested interactively.
   for (let i = 0; i < optionsList.length; i += 1) {
@@ -111,15 +107,17 @@ export async function getCommandOptions<T>(instance: Command): Promise<T> {
 
 /** Convert generic options to oclif flags */
 export function optionsToFlags(options: CommandOptions): oflags.Input<unknown> {
-  const entries = Object.entries(options).map(([key, value]) => [
-    value.oclif.name || key,
-    oflags.string({
-      char: value.oclif.char as 'a',
-      description: value.description,
-      exclusive: value.exclusive,
-      required: false,
-    }),
-  ]);
+  const entries = Object.entries(options)
+    .sort(([, value1], [, value2]) => (value2.oclif?.order ?? 0) - (value1.oclif?.order ?? 0))
+    .map(([key, value]) => [
+      key,
+      oflags.string({
+        char: value.oclif?.char as 'a',
+        description: value.description,
+        exclusive: value.exclusive,
+        required: false,
+      }),
+    ]);
 
   return Object.fromEntries(entries);
 }

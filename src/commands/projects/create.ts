@@ -21,7 +21,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
       description: 'Enter your database dialect.',
       choices: ['mssql', 'mysql', 'postgres'],
       exclusive: ['dbConnectionUrl'],
-      oclif: { char: 'd', name: 'databaseDialect' },
+      oclif: { char: 'd' },
     },
     databaseSchema: {
       description: 'Enter your database schema.',
@@ -29,13 +29,12 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
       when: (args: ProjectCreateOptions) => !['mariadb', 'mysql'].includes(this.getDialect(args)),
       default: (args: ProjectCreateOptions) =>
         this.getDialect(args) === 'postgres' ? 'public' : '',
-      oclif: { char: 's', name: 'databaseSchema' },
+      oclif: { char: 's' },
     },
     mongoDBSRV: {
       description: 'Use SRV DNS record for mongoDB connection.',
       choices: ['yes', 'no'],
       exclusive: ['dbConnectionUrl'],
-      oclif: { name: 'mongoDBSRV' },
     },
   };
 
