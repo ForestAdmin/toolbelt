@@ -1,4 +1,3 @@
-import type { ProjectCreateOptions } from '../../../abstract-project-create-command';
 import type { Config } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type { CommandOptions } from '../../../utils/option-parser';
@@ -6,42 +5,34 @@ import type * as OclifConfig from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
 import Agents from '../../../utils/agents';
-import languages from '../../../utils/languages';
 import { optionsToFlags } from '../../../utils/option-parser';
+import * as projectCreateOptions from '../../../utils/options';
 
 export default class SqlCommand extends AbstractProjectCreateCommand {
-  private readonly dumper: AgentNodeJs;
-
-  protected readonly agent = Agents.NodeJS;
-
-  protected static override readonly options: CommandOptions<ProjectCreateOptions> = {
-    ...AbstractProjectCreateCommand.options,
-    databaseDialect: {
-      description: 'Enter your database dialect.',
-      choices: ['mariadb', 'mssql', 'mysql', 'postgres'],
-      exclusive: ['dbConnectionUrl'],
-      oclif: { char: 'd' },
-    },
-    databaseSchema: {
-      description: 'Enter your database schema.',
-      exclusive: ['dbConnectionUrl'],
-      when: args => !['mariadb', 'mysql'].includes(this.getDialect(args)),
-      default: args => (this.getDialect(args) === 'postgres' ? 'public' : ''),
-      oclif: { char: 's' },
-    },
-    language: {
-      description: 'Choose the language you want to use for your project.',
-      choices: Object.values(languages).map(l => l.name),
-      default: () => Object.values(languages)[0].name,
-      oclif: { char: 'l' },
-    },
+  protected static options: CommandOptions = {
+    databaseConnectionURL: projectCreateOptions.databaseConnectionURL,
+    databaseDialect: projectCreateOptions.databaseDialectSqlV2,
+    databaseName: projectCreateOptions.databaseName,
+    databaseSchema: projectCreateOptions.databaseSchema,
+    databaseHost: projectCreateOptions.databaseHost,
+    databasePort: projectCreateOptions.databasePort,
+    databaseUser: projectCreateOptions.databaseUser,
+    databasePassword: projectCreateOptions.databasePassword,
+    databaseSSL: projectCreateOptions.databaseSSL,
+    applicationHost: projectCreateOptions.applicationHost,
+    applicationPort: projectCreateOptions.applicationPort,
+    language: projectCreateOptions.language,
   };
 
-  /** @see https://oclif.io/docs/commands */
-  static override description = AbstractProjectCreateCommand.description;
+  /** @see https://oclif.io/docs/args */
+  static override readonly args = AbstractProjectCreateCommand.args;
 
   /** @see https://oclif.io/docs/flags */
   static override readonly flags = optionsToFlags(this.options);
+
+  private readonly dumper: AgentNodeJs;
+
+  protected readonly agent = Agents.NodeJS;
 
   constructor(argv: string[], config: OclifConfig.IConfig, plan?) {
     super(argv, config, plan);

@@ -1,4 +1,3 @@
-import type { ProjectCreateOptions } from '../../abstract-project-create-command';
 import type { Config, DbConfig } from '../../interfaces/project-create-interface';
 import type ForestExpress from '../../services/dumpers/forest-express';
 import type DatabaseAnalyzer from '../../services/schema/update/analyzer/database-analyzer';
@@ -7,42 +6,35 @@ import type * as OclifConfig from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../../abstract-project-create-command';
 import { optionsToFlags } from '../../utils/option-parser';
+import * as projectCreateOptions from '../../utils/options';
 
 export default class CreateCommand extends AbstractProjectCreateCommand {
+  protected static readonly options: CommandOptions = {
+    databaseConnectionURL: projectCreateOptions.databaseConnectionURL,
+    databaseDialect: projectCreateOptions.databaseDialectV1,
+    databaseName: projectCreateOptions.databaseName,
+    databaseSchema: projectCreateOptions.databaseSchema,
+    databaseHost: projectCreateOptions.databaseHost,
+    databasePort: projectCreateOptions.databasePort,
+    databaseUser: projectCreateOptions.databaseUser,
+    databasePassword: projectCreateOptions.databasePassword,
+    databaseSSL: projectCreateOptions.databaseSSL,
+    applicationHost: projectCreateOptions.applicationHost,
+    applicationPort: projectCreateOptions.applicationPort,
+    mongoDBSRV: projectCreateOptions.mongoDBSRV,
+  };
+
+  /** @see https://oclif.io/docs/args */
+  static override readonly args = AbstractProjectCreateCommand.args;
+
+  /** @see https://oclif.io/docs/flags */
+  static override readonly flags = optionsToFlags(this.options);
+
   private readonly databaseAnalyzer: DatabaseAnalyzer;
 
   private readonly dumper: ForestExpress;
 
   protected readonly agent = null;
-
-  protected static override readonly options: CommandOptions = {
-    ...AbstractProjectCreateCommand.options,
-    databaseDialect: {
-      description: 'Enter your database dialect.',
-      choices: ['mssql', 'mysql', 'postgres'],
-      exclusive: ['dbConnectionUrl'],
-      oclif: { char: 'd' },
-    },
-    databaseSchema: {
-      description: 'Enter your database schema.',
-      exclusive: ['dbConnectionUrl'],
-      when: (args: ProjectCreateOptions) => !['mariadb', 'mysql'].includes(this.getDialect(args)),
-      default: (args: ProjectCreateOptions) =>
-        this.getDialect(args) === 'postgres' ? 'public' : '',
-      oclif: { char: 's' },
-    },
-    mongoDBSRV: {
-      description: 'Use SRV DNS record for mongoDB connection.',
-      choices: ['yes', 'no'],
-      exclusive: ['dbConnectionUrl'],
-    },
-  };
-
-  /** @see https://oclif.io/docs/commands */
-  static override description = AbstractProjectCreateCommand.description;
-
-  /** @see https://oclif.io/docs/flags */
-  static override readonly flags = optionsToFlags(this.options);
 
   constructor(argv: string[], config: OclifConfig.IConfig, plan?) {
     super(argv, config, plan);

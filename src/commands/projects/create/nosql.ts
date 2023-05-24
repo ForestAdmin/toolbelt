@@ -1,4 +1,3 @@
-import type { ProjectCreateOptions } from '../../../abstract-project-create-command';
 import type { Config, DbConfig } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type DatabaseAnalyzer from '../../../services/schema/update/analyzer/database-analyzer';
@@ -7,36 +6,34 @@ import type * as OclifConfig from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
 import Agents from '../../../utils/agents';
-import languages from '../../../utils/languages';
 import { optionsToFlags } from '../../../utils/option-parser';
+import * as projectCreateOptions from '../../../utils/options';
 
 export default class NosqlCommand extends AbstractProjectCreateCommand {
+  protected static readonly options: CommandOptions = {
+    databaseConnectionURL: projectCreateOptions.databaseConnectionURL,
+    databaseName: projectCreateOptions.databaseName,
+    databaseHost: projectCreateOptions.databaseHost,
+    databasePort: projectCreateOptions.databasePort,
+    databaseUser: projectCreateOptions.databaseUser,
+    databasePassword: projectCreateOptions.databasePassword,
+    mongoDBSRV: projectCreateOptions.mongoDBSRV,
+    applicationHost: projectCreateOptions.applicationHost,
+    applicationPort: projectCreateOptions.applicationPort,
+    language: projectCreateOptions.language,
+  };
+
+  /** @see https://oclif.io/docs/args */
+  static override readonly args = AbstractProjectCreateCommand.args;
+
+  /** @see https://oclif.io/docs/flags */
+  static override readonly flags = optionsToFlags(this.options);
+
   private readonly dumper: AgentNodeJs;
 
   private readonly databaseAnalyzer: DatabaseAnalyzer;
 
   protected readonly agent = Agents.NodeJS;
-
-  protected static override readonly options: CommandOptions<ProjectCreateOptions> = {
-    ...AbstractProjectCreateCommand.options,
-    mongoDBSRV: {
-      description: 'Use SRV DNS record for mongoDB connection.',
-      choices: ['yes', 'no'],
-      exclusive: ['dbConnectionUrl'],
-    },
-    language: {
-      description: 'Choose the language you want to use for your project.',
-      choices: Object.values(languages).map(l => l.name),
-      default: () => Object.values(languages)[0].name,
-      oclif: { char: 'l' },
-    },
-  };
-
-  /** @see https://oclif.io/docs/commands */
-  static override description = AbstractProjectCreateCommand.description;
-
-  /** @see https://oclif.io/docs/flags */
-  static override readonly flags = optionsToFlags(this.options);
 
   constructor(argv: string[], config: OclifConfig.IConfig, plan?) {
     super(argv, config, plan);

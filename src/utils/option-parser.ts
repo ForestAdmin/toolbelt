@@ -19,40 +19,59 @@ import { flags as oflags } from '@oclif/command';
 /** Option which can be used both as argument, flag or prompt */
 export type CommandOptions<T = Record<string, unknown>> = {
   [name: string]: {
+    type?: 'string' | 'boolean';
     description: string;
     exclusive?: string[];
     choices?: string[];
     when?: (v: T) => boolean;
     validate?: (v: string) => boolean | string;
     default?: (v: T) => unknown;
-    oclif?: { char?: string; order?: number };
-    prompter?: { order?: number };
+    oclif?: { char?: string };
+    prompter?: { skip?: boolean };
   };
 };
 
-/** Convert Option to inquiry prompt */
-function optionToPrompt(
-  name: string,
-  option: CommandOptions[string],
+/** Query missing options using inquiry */
+async function queryMissing(
+  options: CommandOptions,
   values: Record<string, unknown>,
-): unknown {
-  // Use rawlist on windows because of https://github.com/SBoudrias/Inquirer.js/issues/303
-  const { os } = inject() as any;
-  const listType = /^win/.test(os.platform()) ? 'rawlist' : 'list';
-  const inputType = name.match(/(password|secret)/i) ? 'password' : 'input';
+): Promise<void> {
+  const { inquirer, os } = inject() as any;
 
-  return {
-    name,
-    type: option.choices ? listType : inputType,
-    choices: option.choices,
-    message: option.description,
-    validate: option.validate,
-    default: option.default?.(values),
-  };
+  const questions = Object.entries(options)
+    .filter(([, opt]) => !opt?.prompter?.skip)
+    .map(([name, option]) => {
+      // Use rawlist on windows because of https://github.com/SBoudrias/Inquirer.js/issues/303
+      const listType = /^win/.test(os.platform()) ? 'rawlist' : 'list';
+      const inputType = name.match(/(password|secret)/i) ? 'password' : 'input';
+      let type = option.choices ? listType : inputType;
+      if (option.type === 'boolean') type = 'confirm';
+
+      return {
+        name,
+        type,
+        choices: option.choices,
+        message: option.description,
+        validate: option.validate,
+        default: answers => option.default?.(answers),
+        when: answers => {
+          if (answers[name] !== undefined) return false;
+          if (option.exclusive?.some(e => values[e] !== undefined)) return false;
+          if (option.when && !option.when(answers)) return false;
+
+          return true;
+        },
+      };
+    });
+
+  const result = await inquirer.prompt(questions, values);
+  Object.assign(values, result);
 }
 
-/** Get options from the cli command and validate them */
-function getCliOptions(instance: Command, options: CommandOptions): Record<string, unknown> {
+/** Get command configuration from both CLI arguments, flags and user prompts */
+export async function getCommandOptions<T>(instance: Command): Promise<T> {
+  const { options } = instance.constructor as unknown as { options: CommandOptions };
+
   // Parse the command line arguments and flags.
   // @ts-expect-error: calling the argument parser from oclif is protected.
   const { args, flags } = instance.parse(instance.constructor) as any;
@@ -66,58 +85,21 @@ function getCliOptions(instance: Command, options: CommandOptions): Record<strin
     }
   });
 
-  return values;
-}
-
-/** Query missing options using inquiry */
-async function queryMissing(
-  options: CommandOptions,
-  values: Record<string, unknown>,
-): Promise<void> {
-  const { inquirer } = inject() as any;
-  const optionsList = Object.entries(options).sort(
-    ([, a], [, b]) => (a.prompter?.order ?? 0) - (b.prompter?.order ?? 0),
-  );
-
-  // Missing data is requested interactively.
-  for (let i = 0; i < optionsList.length; i += 1) {
-    const [key, option] = optionsList[i];
-    const shouldPrompt =
-      values[key] === undefined && // Already provided
-      !option.exclusive?.some(e => values[e] !== undefined) && // Exclusive option provided
-      (!option.when || option.when(values)); // Condition met
-
-    if (shouldPrompt) {
-      const prompt = [optionToPrompt(key, option, values)];
-      const answers = await inquirer.prompt(prompt);
-
-      Object.assign(values, answers);
-    }
-  }
-}
-
-/** Get command configuration from both CLI arguments, flags and user prompts */
-export async function getCommandOptions<T>(instance: Command): Promise<T> {
-  const { options } = instance.constructor as unknown as { options: CommandOptions };
-
-  const values = getCliOptions(instance, options);
   await queryMissing(options, values);
   return values as T;
 }
 
 /** Convert generic options to oclif flags */
 export function optionsToFlags(options: CommandOptions): oflags.Input<unknown> {
-  const entries = Object.entries(options)
-    .sort(([, value1], [, value2]) => (value2.oclif?.order ?? 0) - (value1.oclif?.order ?? 0))
-    .map(([key, value]) => [
-      key,
-      oflags.string({
-        char: value.oclif?.char as 'a',
-        description: value.description,
-        exclusive: value.exclusive,
-        required: false,
-      }),
-    ]);
+  const entries = Object.entries(options).map(([key, value]) => [
+    key,
+    (value.type === 'boolean' ? oflags.boolean : oflags.string)({
+      char: value.oclif?.char as 'a',
+      description: value.description,
+      exclusive: value.exclusive,
+      required: false,
+    }),
+  ]);
 
   return Object.fromEntries(entries);
 }
