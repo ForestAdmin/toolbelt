@@ -16,7 +16,12 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
       name: 'databaseDialect',
       message: "What's the database type?",
       type: 'list',
-      choices: ['mongodb', 'mssql', 'mysql', 'postgres'],
+      choices: [
+        { name: 'mongodb', value: 'mongodb' },
+        { name: 'mssql', value: 'mssql' },
+        { name: 'mysql / mariadb', value: 'mysql' },
+        { name: 'postgres', value: 'postgres' },
+      ],
     },
     {
       name: 'databaseName',

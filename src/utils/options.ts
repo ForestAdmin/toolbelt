@@ -1,3 +1,4 @@
+import type { Language } from './languages';
 import type { CommandOptions } from './option-parser';
 
 import languages from './languages';
@@ -19,7 +20,7 @@ export type ProjectCreateOptions = {
   databaseSchema?: string;
   mongoDBSRV?: boolean;
 
-  language?: 'typescript' | 'javascript';
+  language?: Language;
 };
 
 type Option = CommandOptions<ProjectCreateOptions>[string];

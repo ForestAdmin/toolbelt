@@ -10,7 +10,6 @@ import type { ProjectCreateOptions } from './utils/options';
 import type * as OclifConfig from '@oclif/config';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
-import { languageList } from './utils/languages';
 import { getCommandLineOptions } from './utils/option-parser';
 import { getDialect } from './utils/options';
 
@@ -162,7 +161,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     return {
       appConfig,
       dbConfig,
-      language: languageList.find(l => l.name === config.language),
+      language: config.language,
       meta,
       authenticationToken,
     };
