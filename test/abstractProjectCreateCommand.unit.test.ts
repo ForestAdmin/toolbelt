@@ -124,7 +124,7 @@ describe('abstractProjectCreateCommand command', () => {
         databaseSchema: 'public',
         databaseSSL: false,
         databaseDialect: 'postgres',
-        language: languages.Javascript.name,
+        language: languages.Javascript,
         ...config,
       });
 
@@ -372,7 +372,7 @@ describe('abstractProjectCreateCommand command', () => {
           },
           forestAuthSecret: 'this is an authSecret',
           forestEnvSecret: 'this an envSecret',
-          language: languages.Javascript.name,
+          language: languages.Javascript,
         });
       });
     });
@@ -443,7 +443,7 @@ describe('abstractProjectCreateCommand command', () => {
           },
           forestAuthSecret: 'this is an authSecret',
           forestEnvSecret: 'this an envSecret',
-          language: languages.Javascript.name,
+          language: languages.Javascript,
         });
       });
     });
