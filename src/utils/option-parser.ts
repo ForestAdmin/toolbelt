@@ -1,11 +1,3 @@
-/**
- * This file contains a new implementation of the option parser.
- *
- * The idea is to have a single source of truth for the options, and then use it to:
- * - parse the command line arguments and flags
- * - prompt the user for missing options
- */
-
 // Note that we're using inject() in the functions because we can't create an injectable class...
 // Doing so prevents us from using optionsToArgs() and optionsToFlags() at startup
 
@@ -14,7 +6,7 @@ import type { Command } from '@oclif/command';
 import { inject } from '@forestadmin/context';
 import { flags as oflags } from '@oclif/command';
 
-/** Option which can be used both as argument, flag or prompt */
+/** Option which can be used both as  flag or prompt */
 export type CommandOptions<T = Record<string, unknown>> = {
   [name: string]: {
     type?: 'string' | 'boolean';
