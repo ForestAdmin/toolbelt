@@ -71,26 +71,28 @@ export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
   // Parse the command line arguments and flags.
   // @ts-expect-error: calling the argument parser from oclif is protected.
   const { args, flags } = instance.parse(instance.constructor) as any;
-  const values = { ...args, ...flags };
+  const optionsFromCli = { ...args, ...flags };
 
   // Replace choices with their value
   Object.entries(options).forEach(([k, v]) => {
-    if (values[k] !== undefined && v.choices) {
-      const choice = v.choices.find(c => c.name === values[k]);
-      if (choice) values[k] = choice.value;
+    if (optionsFromCli[k] !== undefined && v.choices) {
+      const choice = v.choices.find(c => c.name === optionsFromCli[k]);
+      if (choice) optionsFromCli[k] = choice.value;
     }
   });
 
   // Validate
   Object.entries(options).forEach(([k, v]) => {
-    if (values[k] !== undefined && v.validate) {
-      const validation = v.validate(values[k]);
+    if (optionsFromCli[k] !== undefined && v.validate) {
+      const validation = v.validate(optionsFromCli[k]);
       if (typeof validation === 'string') throw new Error(`Invalid value for ${k}: ${validation}`);
     }
   });
 
   // Query missing options interactively
-  return getInteractiveOptions<T>(options, values);
+  const optionsFromPrompt = await getInteractiveOptions<T>(options, optionsFromCli);
+
+  return { ...optionsFromCli, ...optionsFromPrompt };
 }
 
 /** Convert generic options to oclif flags */

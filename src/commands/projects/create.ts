@@ -19,9 +19,9 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
     databaseUser: projectCreateOptions.databaseUser,
     databasePassword: projectCreateOptions.databasePassword,
     databaseSSL: projectCreateOptions.databaseSSL,
+    mongoDBSRV: projectCreateOptions.mongoDBSRV,
     applicationHost: projectCreateOptions.applicationHost,
     applicationPort: projectCreateOptions.applicationPort,
-    mongoDBSRV: projectCreateOptions.mongoDBSRV,
   };
 
   /** @see https://oclif.io/docs/args */

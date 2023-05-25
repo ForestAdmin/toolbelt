@@ -116,10 +116,10 @@ export const language: Option = {
 
 export const databaseDialectV1: Option = {
   choices: [
+    { name: 'mongodb', value: 'mongodb' },
     { name: 'mssql', value: 'mssql' },
     { name: 'mysql / mariadb', value: 'mysql' },
     { name: 'postgres', value: 'postgres' },
-    { name: 'mongodb', value: 'mongodb' },
   ],
   exclusive: ['databaseConnectionURL'],
   oclif: { char: 'd', description: 'Enter your database dialect.' },

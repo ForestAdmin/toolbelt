@@ -18,6 +18,7 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
     databasePort: projectCreateOptions.databasePort,
     databaseUser: projectCreateOptions.databaseUser,
     databasePassword: projectCreateOptions.databasePassword,
+    databaseSSL: projectCreateOptions.databaseSSL,
     mongoDBSRV: projectCreateOptions.mongoDBSRV,
     applicationHost: projectCreateOptions.applicationHost,
     applicationPort: projectCreateOptions.applicationPort,
