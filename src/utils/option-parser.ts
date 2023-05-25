@@ -9,8 +9,6 @@
 // Note that we're using inject() in the functions because we can't create an injectable class...
 // Doing so prevents us from using optionsToArgs() and optionsToFlags() at startup
 
-/* eslint-disable @typescript-eslint/no-explicit-any,no-await-in-loop,no-continue */
-
 import type { Command } from '@oclif/command';
 
 import { inject } from '@forestadmin/context';
@@ -35,7 +33,7 @@ export async function getInteractiveOptions<T>(
   options: CommandOptions,
   values: Record<string, unknown> = {},
 ): Promise<T> {
-  const { inquirer, os } = inject() as any;
+  const { inquirer, os } = inject() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   const questions = Object.entries(options)
     .filter(
@@ -70,6 +68,7 @@ export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
 
   // Parse the command line arguments and flags.
   // @ts-expect-error: calling the argument parser from oclif is protected.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { args, flags } = instance.parse(instance.constructor) as any;
   const optionsFromCli = { ...args, ...flags };
 
