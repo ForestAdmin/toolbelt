@@ -77,6 +77,7 @@ export const databasePort: Option = {
     if (dialect === 'postgres') return '5432';
     if (dialect === 'mysql' || dialect === 'mariadb') return '3306';
     if (dialect === 'mssql') return '1433';
+    if (dialect === 'mongodb') return '27017';
     return undefined;
   },
   validate: validatePort,
@@ -138,7 +139,7 @@ export const databaseDialectSqlV2: Option = {
 };
 
 export const databaseSchema: Option = {
-  when: args => !['mariadb', 'mysql'].includes(getDialect(args)),
+  when: args => !['mariadb', 'mysql', 'mongodb'].includes(getDialect(args)),
   default: args => (getDialect(args) === 'postgres' ? 'public' : ''),
   oclif: { char: 's', description: 'Enter your database schema.' },
   prompter: {

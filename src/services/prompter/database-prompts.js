@@ -1,4 +1,5 @@
 const os = require('os');
+const AbstractPrompter = require('./abstract-prompter');
 const PrompterError = require('./prompter-error');
 const messages = require('../../utils/messages');
 const { validateDbName } = require('../../utils/validators');
@@ -18,17 +19,9 @@ const sqlDbDialectOptions = [
 
 const nosqlDbDialectOptions = [{ name: 'mongodb', value: 'mongodb' }];
 
-class DatabasePrompts {
-  isOptionRequested(option) {
-    if (!option) {
-      return false;
-    }
-
-    return this.requests.includes(option);
-  }
-
+class DatabasePrompts extends AbstractPrompter {
   constructor(requests, knownAnswers, prompts, programArguments) {
-    this.requests = requests;
+    super(requests);
     this.knownAnswers = knownAnswers;
     this.prompts = prompts;
     this.programArguments = programArguments;
