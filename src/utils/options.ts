@@ -100,25 +100,37 @@ export const databaseSSL: Option = {
   type: 'boolean',
   default: false,
   oclif: { description: 'Use SSL for database connection.' },
-  prompter: { question: 'Does your database require a SSL connection?' },
+
+  // Replicate bug from previous version of the CLI where this variable was never prompted
+  // this should be: prompter: { question: 'Does your database require a SSL connection?' }
+  prompter: null,
 };
 
 export const language: Option = {
-  choices: Object.values(languages).map(l => l.name),
-  default: Object.values(languages)[0].name,
+  choices: Object.values(languages).map(l => ({ name: l.name, value: l })),
+  default: Object.values(languages)[0],
   oclif: { char: 'l', description: 'Choose the language you want to use for your project.' },
   prompter: { question: 'In which language would you like to generate your sources?' },
 };
 
 export const databaseDialectV1: Option = {
-  choices: ['mssql', 'mysql', 'postgres', 'mongodb'],
+  choices: [
+    { name: 'mssql', value: 'mssql' },
+    { name: 'mysql / mariadb', value: 'mysql' },
+    { name: 'postgres', value: 'postgres' },
+    { name: 'mongodb', value: 'mongodb' },
+  ],
   exclusive: ['databaseConnectionURL'],
   oclif: { char: 'd', description: 'Enter your database dialect.' },
   prompter: { question: "What's the database type?" },
 };
 
 export const databaseDialectSqlV2: Option = {
-  choices: ['mssql', 'mysql', 'postgres'],
+  choices: [
+    { name: 'mssql', value: 'mssql' },
+    { name: 'mysql / mariadb', value: 'mysql' },
+    { name: 'postgres', value: 'postgres' },
+  ],
   exclusive: ['databaseConnectionURL'],
   oclif: { char: 'd', description: 'Enter your database dialect.' },
   prompter: { question: "What's the database type?" },
@@ -128,7 +140,10 @@ export const databaseSchema: Option = {
   when: args => !['mariadb', 'mysql'].includes(getDialect(args)),
   default: args => (getDialect(args) === 'postgres' ? 'public' : ''),
   oclif: { char: 's', description: 'Enter your database schema.' },
-  prompter: { question: "What's the database schema? [optional]" },
+  prompter: {
+    question: "What's the database schema? [optional]",
+    description: 'Leave blank by default',
+  },
 };
 
 export const mongoDBSRV: Option = {

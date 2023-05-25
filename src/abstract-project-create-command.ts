@@ -170,6 +170,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected async getCommandOptions(): Promise<ProjectCreateOptions> {
     const options = await getCommandLineOptions<ProjectCreateOptions>(this);
+
     options.databaseDialect = getDialect(options);
 
     return options;

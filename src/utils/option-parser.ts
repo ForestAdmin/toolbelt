@@ -21,20 +21,20 @@ export type CommandOptions<T = Record<string, unknown>> = {
   [name: string]: {
     type?: 'string' | 'boolean';
     exclusive?: string[];
-    choices?: string[];
+    choices?: Array<{ name: string; value: unknown }>;
     when?: (v: T) => boolean;
     validate?: (v: string) => boolean | string;
     default?: unknown | ((v: T) => unknown);
     oclif: { char?: string; description: string };
-    prompter?: { question?: string };
+    prompter?: { question: string; description?: string };
   };
 };
 
 /** Query options interactively */
-export async function getInteractiveOptions(
+export async function getInteractiveOptions<T>(
   options: CommandOptions,
   values: Record<string, unknown> = {},
-): Promise<void> {
+): Promise<T> {
   const { inquirer, os } = inject() as any;
 
   const questions = Object.entries(options)
@@ -52,6 +52,7 @@ export async function getInteractiveOptions(
       if (option.type === 'boolean') type = 'confirm';
 
       const result: Record<string, unknown> = { name, type, message: option.prompter.question };
+      if (option.prompter.description) result.description = option.prompter.description;
       if (option.choices) result.choices = option.choices;
       if (option.validate) result.validate = option.validate;
       if (option.default !== undefined) result.default = option.default;
@@ -60,8 +61,7 @@ export async function getInteractiveOptions(
       return result;
     });
 
-  const result = await inquirer.prompt(questions, values);
-  Object.assign(values, result);
+  return inquirer.prompt(questions, values);
 }
 
 /** Get options that were passed in the command line */
@@ -73,6 +73,14 @@ export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
   const { args, flags } = instance.parse(instance.constructor) as any;
   const values = { ...args, ...flags };
 
+  // Replace choices with their value
+  Object.entries(options).forEach(([k, v]) => {
+    if (values[k] !== undefined && v.choices) {
+      const choice = v.choices.find(c => c.name === values[k]);
+      if (choice) values[k] = choice.value;
+    }
+  });
+
   // Validate
   Object.entries(options).forEach(([k, v]) => {
     if (values[k] !== undefined && v.validate) {
@@ -81,8 +89,8 @@ export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
     }
   });
 
-  await getInteractiveOptions(options, values);
-  return values as T;
+  // Query missing options interactively
+  return getInteractiveOptions<T>(options, values);
 }
 
 /** Convert generic options to oclif flags */
@@ -94,6 +102,7 @@ export function optionsToFlags(options: CommandOptions): oflags.Input<unknown> {
       description: value.oclif.description,
       exclusive: value.exclusive,
       required: false,
+      options: value.choices?.map(c => c.name),
     };
 
     return [key, constructor(flag)];

@@ -147,7 +147,7 @@ function assertPromptCalled(prompts, inquirer) {
   expect(inquirer.prompt).toHaveBeenCalledTimes(prompts.length);
 
   for (let i = 0; i < prompts.length; i += 1) {
-    expect(inquirer.prompt).toHaveBeenNthCalledWith(i + 1, prompts[i].in);
+    expect(inquirer.prompt).toHaveBeenNthCalledWith(i + 1, prompts[i].in, expect.anything());
   }
 }
 
