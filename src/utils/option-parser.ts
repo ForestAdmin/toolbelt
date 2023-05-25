@@ -21,7 +21,7 @@ export type CommandOptions<T = Record<string, unknown>> = {
 };
 
 /** Query options interactively */
-export async function getInteractiveOptions<T>(
+async function getInteractiveOptions<T>(
   options: CommandOptions,
   values: Record<string, unknown> = {},
 ): Promise<T> {
