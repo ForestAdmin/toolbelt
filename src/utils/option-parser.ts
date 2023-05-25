@@ -97,7 +97,10 @@ export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
 
 /** Convert generic options to oclif flags */
 export function optionsToFlags(options: CommandOptions): oflags.Input<unknown> {
-  const entries = Object.entries(options).map(([key, value]) => {
+  // Not using Object.fromEntries() for compatibility with node 10
+  const result = {};
+
+  Object.entries(options).forEach(([key, value]) => {
     const constructor = value.type === 'boolean' ? oflags.boolean : oflags.string;
     const flag = {
       char: value.oclif?.char as 'a',
@@ -107,8 +110,8 @@ export function optionsToFlags(options: CommandOptions): oflags.Input<unknown> {
       options: value.choices?.map(c => c.name),
     };
 
-    return [key, constructor(flag)];
+    result[key] = constructor(flag);
   });
 
-  return Object.fromEntries(entries);
+  return result;
 }
