@@ -139,7 +139,7 @@ export const databaseDialectSqlV2: Option = {
 };
 
 export const databaseSchema: Option = {
-  when: args => !['mariadb', 'mysql', 'mongodb'].includes(getDialect(args)),
+  when: args => ['postgres', 'mssql'].includes(getDialect(args)),
   default: args => (getDialect(args) === 'postgres' ? 'public' : ''),
   oclif: { char: 's', description: 'Enter your database schema.' },
   prompter: {

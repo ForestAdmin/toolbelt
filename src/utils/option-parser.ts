@@ -73,20 +73,14 @@ export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
   const { args, flags } = instance.parse(instance.constructor) as any;
   const optionsFromCli = { ...args, ...flags };
 
-  // Replace choices with their value
   Object.entries(options).forEach(([k, v]) => {
-    if (optionsFromCli[k] !== undefined && v.choices) {
-      const choice = v.choices.find(c => c.name === optionsFromCli[k]);
-      if (choice) optionsFromCli[k] = choice.value;
-    }
-  });
+    // Replace choices with their value
+    const choice = v.choices?.find(c => c.name === optionsFromCli[k]);
+    if (choice) optionsFromCli[k] = choice.value;
 
-  // Validate
-  Object.entries(options).forEach(([k, v]) => {
-    if (optionsFromCli[k] !== undefined && v.validate) {
-      const validation = v.validate(optionsFromCli[k]);
-      if (typeof validation === 'string') throw new Error(`Invalid value for ${k}: ${validation}`);
-    }
+    // Validate
+    const error = optionsFromCli[k] !== undefined && v.validate?.(optionsFromCli[k]);
+    if (typeof error === 'string') throw new Error(`Invalid value for ${k}: ${error}`);
   });
 
   // Query missing options interactively
