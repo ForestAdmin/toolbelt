@@ -2,6 +2,7 @@ import type { Config, DbConfig } from '../../../interfaces/project-create-interf
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type DatabaseAnalyzer from '../../../services/schema/update/analyzer/database-analyzer';
 import type { CommandOptions } from '../../../utils/option-parser';
+import type { ProjectCreateOptions } from '../../../utils/options';
 import type * as OclifConfig from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
@@ -49,6 +50,13 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
   protected async generateProject(config: Config): Promise<void> {
     const schema = await this.analyzeDatabase(config.dbConfig);
     await this.createFiles(config, schema);
+  }
+
+  protected override async getCommandOptions(): Promise<ProjectCreateOptions> {
+    const options = await super.getCommandOptions();
+    options.databaseDialect = 'mongodb';
+
+    return options;
   }
 
   private async analyzeDatabase(dbConfig: DbConfig) {

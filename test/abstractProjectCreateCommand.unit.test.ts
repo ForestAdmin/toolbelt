@@ -78,7 +78,7 @@ describe('abstractProjectCreateCommand command', () => {
           dependsOn: [],
           description: 'Enter your database dialect.',
           exclusive: ['databaseConnectionURL'],
-          options: [...sqlDbDialectOptions, ...nosqlDbDialectOptions].map(option => option.value),
+          options: ['mssql', 'mysql', 'postgres', 'mongodb'],
           required: false,
         }),
         databaseSchema: flags.string({
@@ -124,7 +124,7 @@ describe('abstractProjectCreateCommand command', () => {
         databaseSchema: 'public',
         databaseSSL: false,
         databaseDialect: 'postgres',
-        language: languages.Javascript,
+        language: languages.Javascript.name,
         ...config,
       });
 
@@ -372,7 +372,7 @@ describe('abstractProjectCreateCommand command', () => {
           },
           forestAuthSecret: 'this is an authSecret',
           forestEnvSecret: 'this an envSecret',
-          language: languages.Javascript,
+          language: languages.Javascript.name,
         });
       });
     });
@@ -443,7 +443,7 @@ describe('abstractProjectCreateCommand command', () => {
           },
           forestAuthSecret: 'this is an authSecret',
           forestEnvSecret: 'this an envSecret',
-          language: languages.Javascript,
+          language: languages.Javascript.name,
         });
       });
     });

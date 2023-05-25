@@ -11,7 +11,8 @@ import type * as OclifConfig from '@oclif/config';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
 import { languageList } from './utils/languages';
-import { getCommandOptions } from './utils/option-parser';
+import { getCommandLineOptions } from './utils/option-parser';
+import { getDialect } from './utils/options';
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
   private readonly eventSender: EventSender;
@@ -111,7 +112,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     meta: ProjectMeta;
     authenticationToken: string;
   }> {
-    const config: ProjectCreateOptions = await getCommandOptions(this);
+    const config = await this.getCommandOptions();
 
     // FIXME: Works as only one instance at execution time. Not ideal.
     this.eventSender.command = 'projects:create';
@@ -141,8 +142,8 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     } as DbConfig;
 
     const meta: ProjectMeta = {
+      // FIXME: Remove the condition when the agent v1 command is dropped
       agent:
-        // FIXME: Remove the condition when the agent v1 command is dropped
         this.agent || (dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize'),
       dbDialect: dbConfig.dbDialect,
       architecture: 'microservice',
@@ -165,6 +166,13 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       meta,
       authenticationToken,
     };
+  }
+
+  protected async getCommandOptions(): Promise<ProjectCreateOptions> {
+    const options = await getCommandLineOptions<ProjectCreateOptions>(this);
+    options.databaseDialect = getDialect(options);
+
+    return options;
   }
 
   private async testDatabaseConnection(dbConfig: DbConfig) {
