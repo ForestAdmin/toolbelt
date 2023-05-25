@@ -1,14 +1,14 @@
 import type { Config, DbConfig } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
+import type { ProjectCreateOptions } from '../../../services/projects/create/options';
 import type DatabaseAnalyzer from '../../../services/schema/update/analyzer/database-analyzer';
 import type { CommandOptions } from '../../../utils/option-parser';
-import type { ProjectCreateOptions } from '../../../utils/options';
 import type * as OclifConfig from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
+import * as projectCreateOptions from '../../../services/projects/create/options';
 import Agents from '../../../utils/agents';
 import { optionsToFlags } from '../../../utils/option-parser';
-import * as projectCreateOptions from '../../../utils/options';
 
 export default class NosqlCommand extends AbstractProjectCreateCommand {
   protected static readonly options: CommandOptions = {

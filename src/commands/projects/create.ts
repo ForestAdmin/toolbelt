@@ -5,8 +5,8 @@ import type { CommandOptions } from '../../utils/option-parser';
 import type * as OclifConfig from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../../abstract-project-create-command';
+import * as projectCreateOptions from '../../services/projects/create/options';
 import { optionsToFlags } from '../../utils/option-parser';
-import * as projectCreateOptions from '../../utils/options';
 
 export default class CreateCommand extends AbstractProjectCreateCommand {
   protected static readonly options: CommandOptions = {

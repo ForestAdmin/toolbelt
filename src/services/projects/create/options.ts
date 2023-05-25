@@ -1,8 +1,8 @@
-import type { Language } from './languages';
-import type { CommandOptions } from './option-parser';
+import type { Language } from '../../../utils/languages';
+import type { CommandOptions } from '../../../utils/option-parser';
 
-import languages from './languages';
-import { validateAppHostname, validateDbName, validatePort } from './validators';
+import languages from '../../../utils/languages';
+import { validateAppHostname, validateDbName, validatePort } from '../../../utils/validators';
 
 export type ProjectCreateOptions = {
   applicationName: string;

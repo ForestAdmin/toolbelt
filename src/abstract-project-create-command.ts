@@ -1,4 +1,5 @@
 import type { AppConfig, Config, DbConfig } from './interfaces/project-create-interface';
+import type { ProjectCreateOptions } from './services/projects/create/options';
 import type ProjectCreator from './services/projects/create/project-creator';
 import type { ProjectMeta } from './services/projects/create/project-creator';
 import type Database from './services/schema/update/database';
@@ -6,12 +7,11 @@ import type Spinner from './services/spinner';
 import type EventSender from './utils/event-sender';
 import type { Language } from './utils/languages';
 import type Messages from './utils/messages';
-import type { ProjectCreateOptions } from './utils/options';
 import type * as OclifConfig from '@oclif/config';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
+import { getDialect } from './services/projects/create/options';
 import { getCommandLineOptions } from './utils/option-parser';
-import { getDialect } from './utils/options';
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
   private readonly eventSender: EventSender;
