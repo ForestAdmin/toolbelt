@@ -7,14 +7,16 @@ import type Spinner from './services/spinner';
 import type EventSender from './utils/event-sender';
 import type { Language } from './utils/languages';
 import type Messages from './utils/messages';
+import type * as OptionParser from './utils/option-parser';
 import type * as OclifConfig from '@oclif/config';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
 import { getDialect } from './services/projects/create/options';
-import { getCommandLineOptions } from './utils/option-parser';
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
   private readonly eventSender: EventSender;
+
+  private readonly optionParser: typeof OptionParser;
 
   private readonly projectCreator: ProjectCreator;
 
@@ -41,6 +43,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       assertPresent,
       authenticator,
       eventSender,
+      optionParser,
       projectCreator,
       database,
       messages,
@@ -50,6 +53,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     assertPresent({
       authenticator,
       eventSender,
+      optionParser,
       projectCreator,
       database,
       messages,
@@ -57,6 +61,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     });
 
     this.eventSender = eventSender;
+    this.optionParser = optionParser;
     this.projectCreator = projectCreator;
     this.database = database;
     this.messages = messages;
@@ -153,6 +158,8 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       ),
     };
 
+    // This `await` seems to be useless but removing it breaks the tests.
+    // Leaving it here for now until we figure out why the mocks are not compatible with the implementation.
     const authenticationToken = (await this.authenticator.getAuthToken()) || '';
 
     this.eventSender.sessionToken = authenticationToken;
@@ -168,8 +175,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   }
 
   protected async getCommandOptions(): Promise<ProjectCreateOptions> {
-    const options = await getCommandLineOptions<ProjectCreateOptions>(this);
-
+    const options = await this.optionParser.getCommandLineOptions<ProjectCreateOptions>(this);
     options.databaseDialect = getDialect(options);
 
     return options;

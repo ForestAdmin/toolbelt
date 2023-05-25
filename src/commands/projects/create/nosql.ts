@@ -54,10 +54,10 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
   }
 
   protected override async getCommandOptions(): Promise<ProjectCreateOptions> {
-    const options = await super.getCommandOptions();
-    options.databaseDialect = 'mongodb';
-
-    return options;
+    return {
+      ...(await super.getCommandOptions()),
+      databaseDialect: 'mongodb',
+    };
   }
 
   private async analyzeDatabase(dbConfig: DbConfig) {

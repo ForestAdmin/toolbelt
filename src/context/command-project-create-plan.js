@@ -7,5 +7,6 @@ module.exports = plan =>
     .addUsingClass('database', () => require('../services/schema/update/database'))
     .addUsingClass('agentNodejsDumper', () => require('../services/dumpers/agent-nodejs').default)
     .addUsingClass('forestExpressDumper', () => require('../services/dumpers/forest-express'))
+    .addModule('optionParser', () => require('../utils/option-parser'))
     .addUsingClass('projectCreator', () => require('../services/projects/create/project-creator'))
     .addUsingClass('spinner', () => require('../services/spinner'));

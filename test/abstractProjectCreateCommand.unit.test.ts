@@ -31,8 +31,8 @@ describe('abstractProjectCreateCommand command', () => {
         applicationName: null,
         sessionToken: null,
       },
-      commandGenerateConfigGetter: {
-        get: jest.fn(),
+      optionParser: {
+        getCommandLineOptions: jest.fn(),
       },
       projectCreator: {
         create: jest.fn(),
@@ -56,7 +56,7 @@ describe('abstractProjectCreateCommand command', () => {
         .addInstance('logger', stubs.logger)
         .addInstance('authenticator', stubs.authenticator)
         .addInstance('eventSender', stubs.eventSender)
-        .addInstance('commandGenerateConfigGetter', stubs.commandGenerateConfigGetter)
+        .addInstance('optionParser', stubs.optionParser)
         .addInstance('projectCreator', stubs.projectCreator)
         .addInstance('database', stubs.database)
         .addInstance('messages', stubs.messages)
@@ -116,7 +116,7 @@ describe('abstractProjectCreateCommand command', () => {
 
     function setup(config = {}, commandArgs?) {
       const planAndStubs = makePlanAndStubs();
-      planAndStubs.stubs.commandGenerateConfigGetter.get.mockReturnValue({
+      planAndStubs.stubs.optionParser.getCommandLineOptions.mockReturnValue({
         applicationName: 'testApp',
         databaseConnectionURL: 'postgres://testUser:testPwd@localhost:5432/testDb',
         applicationHost: 'localhost',
