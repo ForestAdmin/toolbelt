@@ -19,7 +19,7 @@ const hook: Hook<'init'> = async function (options) {
           `The Forest Admin toolbelt is not compatible with your current Node.js version (v${nodeVersion} detected). Please use Node.js v${NODE_VERSION_MINIMUM}+.`,
         ),
       );
-      process.exit(0);
+      process.exit(1);
     }
   } catch (error) {
     // NOTICE: Fails silently and considers that Node.js version is greater than 14.
