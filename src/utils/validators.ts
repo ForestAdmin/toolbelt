@@ -11,13 +11,10 @@ export function validatePort(port: string): string | true {
 }
 
 export function validateAppHostname(hostname: string): string | true {
-  if (!/^https?:\/\/.*/i.test(hostname)) {
-    return 'Application hostname must be a valid url.';
+  if (hostname) {
+    return true;
   }
-  if (!/^http((s:\/\/.*)|(s?:\/\/(localhost|127\.0\.0\.1).*))/i.test(hostname)) {
-    return 'HTTPS protocol is mandatory, except for localhost and 127.0.0.1.';
-  }
-  return true;
+  return 'Please specify the application hostname.';
 }
 
 export function validateDbName(dbName: string): string | true {
