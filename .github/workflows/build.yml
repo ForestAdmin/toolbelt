@@ -138,7 +138,7 @@ jobs:
           echo "::set-output name=version::$VERSION"
 
       - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v2
+        uses: cycjimmy/semantic-release-action@7f0c0e4904fb36f980686dda081f2f258500f3ea
         id: semantic
         with:
           semantic_version: ${{ steps.semantic_version.outputs.version }}
