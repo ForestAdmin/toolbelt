@@ -1,21 +1,22 @@
-import type { CreateCommandArguments } from './interfaces/command-create-project-arguments-interface';
 import type { AppConfig, Config, DbConfig } from './interfaces/project-create-interface';
-import type { ProjectMeta } from './services/projects/create/project-creator';
+import type { ProjectCreateOptions } from './services/projects/create/options';
 import type ProjectCreator from './services/projects/create/project-creator';
+import type { ProjectMeta } from './services/projects/create/project-creator';
 import type Database from './services/schema/update/database';
 import type Spinner from './services/spinner';
 import type EventSender from './utils/event-sender';
 import type { Language } from './utils/languages';
 import type Messages from './utils/messages';
+import type * as OptionParser from './utils/option-parser';
 import type * as OclifConfig from '@oclif/config';
-import type { Input } from '@oclif/parser';
-
-import { flags } from '@oclif/command';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
+import { getDialect } from './services/projects/create/options';
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
   private readonly eventSender: EventSender;
+
+  private readonly optionParser: typeof OptionParser;
 
   private readonly projectCreator: ProjectCreator;
 
@@ -27,79 +28,12 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected abstract readonly agent: string | null;
 
-  static override flags = {
-    applicationHost: flags.string({
-      char: 'H',
-      dependsOn: [],
-      description: 'Hostname of your admin backend application.',
-      exclusive: [],
-      required: false,
-    }),
-    applicationPort: flags.integer({
-      char: 'P',
-      dependsOn: [],
-      description: 'Port of your admin backend application.',
-      exclusive: [],
-      required: false,
-    }),
-    databaseConnectionURL: flags.string({
-      char: 'c',
-      dependsOn: [],
-      description: 'Enter the database credentials with a connection URL.',
-      exclusive: ['ssl'],
-      required: false,
-    }),
-    databaseName: flags.string({
-      char: 'n',
-      dependsOn: [],
-      description: 'Enter your database name.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databaseHost: flags.string({
-      char: 'h',
-      dependsOn: [],
-      description: 'Enter your database host.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databasePort: flags.integer({
-      char: 'p',
-      dependsOn: [],
-      description: 'Enter your database port.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databaseUser: flags.string({
-      char: 'u',
-      dependsOn: [],
-      description: 'Enter your database user.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databasePassword: flags.string({
-      dependsOn: [],
-      description: 'Enter your database password.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    databaseSSL: flags.boolean({
-      default: false,
-      dependsOn: [],
-      description: 'Use SSL for database connection.',
-      exclusive: [],
-      required: false,
-    }),
-  };
-
-  static override args = [
-    {
-      name: 'applicationName',
-      required: true,
-      description: 'Name of the project to create.',
-    },
+  /** @see https://oclif.io/docs/args */
+  static override readonly args = [
+    { name: 'applicationName', required: true, description: 'Name of the project to create.' },
   ];
 
+  /** @see https://oclif.io/docs/commands */
   static override description = 'Create a new Forest Admin project.';
 
   constructor(argv: string[], config: OclifConfig.IConfig, plan) {
@@ -109,6 +43,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       assertPresent,
       authenticator,
       eventSender,
+      optionParser,
       projectCreator,
       database,
       messages,
@@ -118,6 +53,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     assertPresent({
       authenticator,
       eventSender,
+      optionParser,
       projectCreator,
       database,
       messages,
@@ -125,6 +61,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     });
 
     this.eventSender = eventSender;
+    this.optionParser = optionParser;
     this.projectCreator = projectCreator;
     this.database = database;
     this.messages = messages;
@@ -170,11 +107,6 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     }
   }
 
-  protected abstract getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{
-    config: CreateCommandArguments;
-    specificDatabaseConfig: { [name: string]: any };
-  }>;
-
   protected abstract generateProject(config: Config): Promise<void>;
 
   private async getConfig(): Promise<{
@@ -184,18 +116,11 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     meta: ProjectMeta;
     authenticationToken: string;
   }> {
-    const { args: parsedArgs, flags: parsedFlags } = this.parse(
-      this.constructor as Input<typeof AbstractProjectCreateCommand.flags>,
-    );
+    const config = await this.getCommandOptions();
 
     // FIXME: Works as only one instance at execution time. Not ideal.
     this.eventSender.command = 'projects:create';
-    this.eventSender.applicationName = parsedArgs.applicationName;
-
-    const { config, specificDatabaseConfig } = await this.getConfigFromArguments({
-      ...parsedArgs,
-      ...parsedFlags,
-    });
+    this.eventSender.applicationName = config.applicationName;
 
     if (!config.databaseDialect && !config.databaseConnectionURL) {
       this.logger.error('Missing database dialect option value');
@@ -205,7 +130,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     const appConfig = {
       appName: config.applicationName,
       appHostname: config.applicationHost,
-      appPort: config.applicationPort,
+      appPort: Number(config.applicationPort),
     } as AppConfig;
     const dbConfig = {
       dbConnectionUrl: config.databaseConnectionURL,
@@ -217,12 +142,12 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       dbSsl: config.databaseSSL,
       dbUser: config.databaseUser,
       dbPassword: config.databasePassword,
-      ...specificDatabaseConfig,
+      mongodbSrv: config.mongoDBSRV,
     } as DbConfig;
 
     const meta: ProjectMeta = {
+      // FIXME: Remove the condition when the agent v1 command is dropped
       agent:
-        // FIXME: Remove the condition when the agent v1 command is dropped
         this.agent || (dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize'),
       dbDialect: dbConfig.dbDialect,
       architecture: 'microservice',
@@ -233,6 +158,8 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       ),
     };
 
+    // This `await` seems to be useless but removing it breaks the tests.
+    // Leaving it here for now until we figure out why the mocks are not compatible with the implementation.
     const authenticationToken = (await this.authenticator.getAuthToken()) || '';
 
     this.eventSender.sessionToken = authenticationToken;
@@ -245,6 +172,13 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       meta,
       authenticationToken,
     };
+  }
+
+  protected async getCommandOptions(): Promise<ProjectCreateOptions> {
+    const options = await this.optionParser.getCommandLineOptions<ProjectCreateOptions>(this);
+    options.databaseDialect = getDialect(options);
+
+    return options;
   }
 
   private async testDatabaseConnection(dbConfig: DbConfig) {

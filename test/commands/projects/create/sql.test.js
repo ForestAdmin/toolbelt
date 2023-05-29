@@ -62,14 +62,6 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
       message: "What's the database password? [optional]",
       type: 'password',
     },
-    // The `when` function for this prompt is the one that compute if the flag is required. It will always be false for this command.
-    {
-      name: 'mongoDBSRV',
-      message: 'Use a SRV connection string?',
-      type: 'confirm',
-      default: false,
-      when: expect.any(Function),
-    },
     {
       name: 'applicationHost',
       message: "What's the IP/hostname on which your application will be running?",
