@@ -183,9 +183,10 @@ export default class AgentNodeJs extends AbstractDumper {
   ) {
     const dbUrl = this.buildDatabaseUrl(dbConfig);
     const context = {
+      isMongoose: dbConfig.dbDialect === 'mongodb',
       dbUrl,
-      dbSsl: dbConfig.dbSsl || false,
       dbSchema: dbConfig.dbSchema,
+      dbSslMode: dbConfig.dbSslMode ?? 'disabled',
       appPort,
       forestServerUrl: this.env.FOREST_URL_IS_DEFAULT ? false : this.env.FOREST_SERVER_URL,
       forestEnvSecret,

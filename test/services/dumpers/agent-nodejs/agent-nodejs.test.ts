@@ -25,7 +25,6 @@ describe('services > dumpers > agentNodejs', () => {
           dbDialect: 'mongodb',
           dbConnectionUrl: 'mongodb://localhost:27016',
           dbSsl: false,
-          dbSchema: 'public',
         },
         forestAuthSecret: 'forestAuthSecret',
         forestEnvSecret: 'forestEnvSecret',
@@ -40,9 +39,8 @@ describe('services > dumpers > agentNodejs', () => {
         },
         dbConfig: {
           dbDialect: 'postgres',
-          dbConnectionUrl: 'postgres://localhost:54369',
-          dbSsl: false,
-          dbSchema: 'public',
+          dbConnectionUrl: 'postgres://localhost:54369/database?schema=public',
+          dbSslMode: 'disabled',
         },
         forestAuthSecret: 'forestAuthSecret',
         forestEnvSecret: 'forestEnvSecret',
@@ -57,9 +55,8 @@ describe('services > dumpers > agentNodejs', () => {
         },
         dbConfig: {
           dbDialect: 'mysql',
-          dbConnectionUrl: 'mysql://localhost:8999',
-          dbSsl: false,
-          dbSchema: 'public',
+          dbConnectionUrl: 'mysql://localhost:8999/database',
+          dbSslMode: 'disabled',
         },
         forestAuthSecret: 'forestAuthSecret',
         forestEnvSecret: 'forestEnvSecret',
@@ -74,8 +71,8 @@ describe('services > dumpers > agentNodejs', () => {
         },
         dbConfig: {
           dbDialect: 'mariadb',
-          dbConnectionUrl: 'mariadb://localhost:3305',
-          dbSsl: false,
+          dbConnectionUrl: 'mariadb://localhost:3305/database',
+          dbSslMode: 'disabled',
           dbSchema: 'public',
         },
         forestAuthSecret: 'forestAuthSecret',
@@ -91,8 +88,8 @@ describe('services > dumpers > agentNodejs', () => {
         },
         dbConfig: {
           dbDialect: 'mssql',
-          dbConnectionUrl: 'mssql://localhost:1432',
-          dbSsl: false,
+          dbConnectionUrl: 'mssql://localhost:1432/database?schema=public',
+          dbSslMode: 'disabled',
           dbSchema: 'public',
         },
         forestAuthSecret: 'forestAuthSecret',
@@ -167,7 +164,7 @@ describe('services > dumpers > agentNodejs', () => {
             dbConfig: {
               dbDialect: 'postgres',
               dbConnectionUrl: dbConnectionUrl || 'postgres://localhost:54369',
-              dbSsl: false,
+              dbSslMode: 'disabled',
               dbSchema: 'public',
             },
             forestAuthSecret: 'forestAuthSecret',
@@ -251,7 +248,7 @@ describe('services > dumpers > agentNodejs', () => {
             dbConfig: {
               dbDialect: 'postgres',
               dbConnectionUrl: dbConnectionUrl || 'postgres://localhost:54369',
-              dbSsl: false,
+              dbSslMode: 'disabled',
               dbSchema: 'public',
             },
             forestAuthSecret: 'forestAuthSecret',
@@ -334,7 +331,7 @@ describe('services > dumpers > agentNodejs', () => {
             dbConfig: {
               dbDialect: 'postgres',
               dbConnectionUrl: 'postgres://localhost:54369',
-              dbSsl: false,
+              dbSslMode: 'disabled',
               dbSchema: 'public',
             },
             forestAuthSecret: 'forestAuthSecret',
@@ -403,7 +400,7 @@ describe('services > dumpers > agentNodejs', () => {
             dbConfig: {
               dbDialect: 'postgres',
               dbConnectionUrl: 'postgres://localhost:54369',
-              dbSsl: false,
+              dbSslMode: 'disabled',
               dbSchema: 'public',
             },
             forestAuthSecret: 'forestAuthSecret',
@@ -455,99 +452,6 @@ describe('services > dumpers > agentNodejs', () => {
 
           expect(dockerComposeFile).not.toContain('extra_hosts:');
           expect(dockerComposeFile).not.toContain('- localhost:host-gateway');
-
-          rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
-        });
-      });
-
-      describe('without a schema', () => {
-        const setupAndDump = async () => {
-          const postgresConfig: Config = {
-            appConfig: {
-              appName: 'test-output/postgres',
-              appHostname: 'localhost',
-              appPort: 1654,
-            },
-            dbConfig: {
-              dbDialect: 'postgres',
-              dbConnectionUrl: 'postgres://localhost:54369',
-              dbSsl: false,
-            },
-            forestAuthSecret: 'forestAuthSecret',
-            forestEnvSecret: 'forestEnvSecret',
-            language,
-          };
-          const injectedContext: any = Context.execute(defaultPlan);
-          const dumper = new AgentNodeJs({
-            ...injectedContext,
-          });
-          await dumper.dump(postgresConfig, {});
-
-          return postgresConfig;
-        };
-
-        it(`should not set \`DATABASE_SCHEMA\` in \`.env\` and \`index.${language.fileExtension}\``, async () => {
-          expect.assertions(2);
-
-          const postgresConfig = await setupAndDump();
-          const indexFile = fs.readFileSync(
-            `${appRoot}/${postgresConfig.appConfig.appName}/index.${language.fileExtension}`,
-            'utf-8',
-          );
-          const dotEnvFile = fs.readFileSync(
-            `${appRoot}/${postgresConfig.appConfig.appName}/.env`,
-            'utf-8',
-          );
-
-          expect(dotEnvFile).not.toContain('DATABASE_SCHEMA=');
-          expect(indexFile).not.toContain('schema: process.env.DATABASE_SCHEMA');
-
-          rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
-        });
-      });
-
-      describe('with a schema', () => {
-        const setupAndDump = async () => {
-          const postgresConfig: Config = {
-            appConfig: {
-              appName: 'test-output/postgres',
-              appHostname: 'localhost',
-              appPort: 1654,
-            },
-            dbConfig: {
-              dbDialect: 'postgres',
-              dbConnectionUrl: 'postgres://localhost:54369',
-              dbSsl: false,
-              dbSchema: 'aSchema',
-            },
-            forestAuthSecret: 'forestAuthSecret',
-            forestEnvSecret: 'forestEnvSecret',
-            language,
-          };
-          const injectedContext: any = Context.execute(defaultPlan);
-          const dumper = new AgentNodeJs({
-            ...injectedContext,
-          });
-          await dumper.dump(postgresConfig, {});
-
-          return postgresConfig;
-        };
-
-        it(`should set \`DATABASE_SCHEMA\` in \`.env\`, \`index.${language.fileExtension}\``, async () => {
-          expect.assertions(2);
-
-          const postgresConfig = await setupAndDump();
-          const indexFile = fs.readFileSync(
-            `${appRoot}/${postgresConfig.appConfig.appName}/index.${language.fileExtension}`,
-            'utf-8',
-          );
-          const dotEnvFile = fs.readFileSync(
-            `${appRoot}/${postgresConfig.appConfig.appName}/.env`,
-            'utf-8',
-          );
-
-          expect(dotEnvFile).toContain('DATABASE_SCHEMA=aSchema');
-          expect(indexFile).toContain('schema: process.env.DATABASE_SCHEMA');
 
           rimraf.sync(`${appRoot}/${postgresConfig.appConfig.appName}`);
         });

@@ -1,18 +1,9 @@
+import type { SslMode } from '@forestadmin/datasource-sql';
 import type { Schema } from './typings';
 
 import 'dotenv/config';
 import { createAgent } from '@forestadmin/agent';
 import { createSqlDataSource } from '@forestadmin/datasource-sql';
-
-const dialectOptions: { [name: string]: any } = {};
-
-if (process.env.DATABASE_SSL && JSON.parse(process.env.DATABASE_SSL.toLowerCase())) {
-  // Set to false to bypass SSL certificate verification (useful for self-signed certificates).
-  const rejectUnauthorized =
-    process.env.DATABASE_REJECT_UNAUTHORIZED &&
-    JSON.parse(process.env.DATABASE_REJECT_UNAUTHORIZED.toLowerCase());
-  dialectOptions.ssl = rejectUnauthorized ? true : { require: true, rejectUnauthorized };
-}
 
 // This object allows to configure your Forest Admin panel
 const agent = createAgent<Schema>({
@@ -33,8 +24,7 @@ const agent = createAgent<Schema>({
 agent.addDataSource(
   createSqlDataSource({
     uri: process.env.DATABASE_URL,
-    schema: process.env.DATABASE_SCHEMA,
-    dialectOptions,
+    sslMode: process.env.DATABASE_SSL_MODE as SslMode,
   }),
 );
 

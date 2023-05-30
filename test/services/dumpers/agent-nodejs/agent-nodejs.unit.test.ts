@@ -81,7 +81,7 @@ describe('services > dumpers > AgentNodeJs', () => {
         appName: `a${language.name}Application`,
       },
       dbConfig: {
-        dbSsl: false,
+        dbSslMode: 'disabled',
         dbSchema: 'public',
         dbPort: 5432,
         dbPassword: 'aPassword',
@@ -170,8 +170,9 @@ describe('services > dumpers > AgentNodeJs', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             `/test/a${language.name}Application/.env`,
             {
+              isMongoose: false,
               dbUrl: 'localhost',
-              dbSsl: false,
+              dbSslMode: 'disabled',
               dbSchema: 'public',
               appPort: 3310,
               forestServerUrl: false,
@@ -223,47 +224,47 @@ describe('services > dumpers > AgentNodeJs', () => {
       });
 
       describe('when handling ssl', () => {
-        describe('when ssl is not provided', () => {
-          it('should set ssl to false', async () => {
+        describe('when sslMode is not provided', () => {
+          it('should set sslMode to disabled', async () => {
             expect.assertions(1);
 
             const { dumper, context, defaultConfig } = createDumper(language);
 
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-expect-error
-            defaultConfig.dbConfig.dbSsl = null;
+            defaultConfig.dbConfig.dbSslMode = null;
 
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
               `/test/a${language.name}Application/.env`,
               expect.objectContaining({
-                dbSsl: false,
+                dbSslMode: 'disabled',
               }),
             );
           });
         });
 
         describe('when ssl is provided', () => {
-          describe('when ssl is true', () => {
+          describe('when ssl is required', () => {
             it('should specify to use SSL', async () => {
               expect.assertions(1);
 
               const { dumper, context, defaultConfig } = createDumper(language);
 
-              defaultConfig.dbConfig.dbSsl = true;
+              defaultConfig.dbConfig.dbSslMode = 'required';
               await dumper.dump(defaultConfig);
 
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
                 `/test/a${language.name}Application/.env`,
                 expect.objectContaining({
-                  dbSsl: true,
+                  dbSslMode: 'required',
                 }),
               );
             });
           });
 
-          describe('when ssl is false', () => {
+          describe('when sslMode is disabled', () => {
             it('should specify to not use SSL', async () => {
               expect.assertions(1);
 
@@ -274,7 +275,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
                 `/test/a${language.name}Application/.env`,
                 expect.objectContaining({
-                  dbSsl: false,
+                  dbSslMode: 'disabled',
                 }),
               );
             });

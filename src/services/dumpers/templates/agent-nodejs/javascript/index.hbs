@@ -6,29 +6,6 @@ const connection = require('./models');
 {{else}}
 const { createSqlDataSource } = require('@forestadmin/datasource-sql');
 {{/if}}
-{{#unless isMongoose}}
-
-const dialectOptions = {};
-
-if (process.env.DATABASE_SSL && JSON.parse(process.env.DATABASE_SSL.toLowerCase())) {
-  // Set to false to bypass SSL certificate verification (useful for self-signed certificates).
-  const rejectUnauthorized =
-    process.env.DATABASE_REJECT_UNAUTHORIZED &&
-    JSON.parse(process.env.DATABASE_REJECT_UNAUTHORIZED.toLowerCase());
-{{#if isMySQL}}
-  dialectOptions.ssl = { rejectUnauthorized };
-{{else if isMSSQL}}
-  dialectOptions.options = {
-    encrypt: true,
-    trustServerCertificate: !rejectUnauthorized,
-  };
-{{else if isMariaDB}}
-  dialectOptions.ssl = rejectUnauthorized ? true: { rejectUnauthorized };
-{{else}}
-  dialectOptions.ssl = rejectUnauthorized ? true : { require: true, rejectUnauthorized };
-{{/if}}
-}
-{{/unless}}
 
 // Create the Forest Admin agent.
 /**
@@ -58,10 +35,7 @@ agent.addDataSource(createMongooseDataSource(connection, { flattenMode: 'auto' }
 agent.addDataSource(
   createSqlDataSource({
     uri: process.env.DATABASE_URL,
-{{#if dbSchema}}
-    schema: process.env.DATABASE_SCHEMA,
-{{/if}}
-    dialectOptions,
+    sslMode: process.env.DATABASE_SSL_MODE,
   }),
 );
 {{/if}}
