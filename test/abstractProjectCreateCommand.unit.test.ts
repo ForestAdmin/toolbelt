@@ -1,16 +1,9 @@
 /* eslint-disable max-classes-per-file */
-import type { CreateCommandArguments } from '../src/interfaces/command-create-project-arguments-interface';
-import type CommandGenerateConfigGetter from '../src/services/projects/create/command-generate-config-getter';
-import type * as ConfigType from '@oclif/config';
 
 import { flags } from '@oclif/command';
 import { Config } from '@oclif/config';
 
 import AbstractProjectCreateCommand from '../src/abstract-project-create-command';
-import {
-  nosqlDbDialectOptions,
-  sqlDbDialectOptions,
-} from '../src/services/prompter/database-prompts';
 import Agents from '../src/utils/agents';
 import languages, { languageList } from '../src/utils/languages';
 
@@ -38,8 +31,8 @@ describe('abstractProjectCreateCommand command', () => {
         applicationName: null,
         sessionToken: null,
       },
-      commandGenerateConfigGetter: {
-        get: jest.fn(),
+      optionParser: {
+        getCommandLineOptions: jest.fn(),
       },
       projectCreator: {
         create: jest.fn(),
@@ -63,7 +56,7 @@ describe('abstractProjectCreateCommand command', () => {
         .addInstance('logger', stubs.logger)
         .addInstance('authenticator', stubs.authenticator)
         .addInstance('eventSender', stubs.eventSender)
-        .addInstance('commandGenerateConfigGetter', stubs.commandGenerateConfigGetter)
+        .addInstance('optionParser', stubs.optionParser)
         .addInstance('projectCreator', stubs.projectCreator)
         .addInstance('database', stubs.database)
         .addInstance('messages', stubs.messages)
@@ -78,8 +71,6 @@ describe('abstractProjectCreateCommand command', () => {
     class TestAbstractClass extends AbstractProjectCreateCommand {
       public agent: string | null = null;
 
-      private readonly commandGenerateConfigGetter: CommandGenerateConfigGetter;
-
       static override readonly flags = {
         ...AbstractProjectCreateCommand.flags,
         databaseDialect: flags.string({
@@ -87,7 +78,7 @@ describe('abstractProjectCreateCommand command', () => {
           dependsOn: [],
           description: 'Enter your database dialect.',
           exclusive: ['databaseConnectionURL'],
-          options: [...sqlDbDialectOptions, ...nosqlDbDialectOptions].map(option => option.value),
+          options: ['mssql', 'mysql', 'postgres', 'mongodb'],
           required: false,
         }),
         databaseSchema: flags.string({
@@ -114,31 +105,10 @@ describe('abstractProjectCreateCommand command', () => {
 
       static override readonly args = [...AbstractProjectCreateCommand.args];
 
-      constructor(argv: string[], config: ConfigType.IConfig, plan?) {
-        super(argv, config, plan);
-
-        const { commandGenerateConfigGetter } = this.context;
-
-        this.commandGenerateConfigGetter = commandGenerateConfigGetter;
-      }
-
       generateProject = jest.fn().mockResolvedValue(null);
 
       run() {
         return this.runAuthenticated();
-      }
-
-      protected async getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{
-        config: CreateCommandArguments;
-        specificDatabaseConfig: { [name: string]: any };
-      }> {
-        const config = await this.commandGenerateConfigGetter.get(programArguments, true, true);
-
-        const specificDatabaseConfig = {
-          mongodbSrv: config.mongoDBSRV,
-        };
-
-        return { config, specificDatabaseConfig };
       }
     }
 
@@ -146,7 +116,7 @@ describe('abstractProjectCreateCommand command', () => {
 
     function setup(config = {}, commandArgs?) {
       const planAndStubs = makePlanAndStubs();
-      planAndStubs.stubs.commandGenerateConfigGetter.get.mockReturnValue({
+      planAndStubs.stubs.optionParser.getCommandLineOptions.mockReturnValue({
         applicationName: 'testApp',
         databaseConnectionURL: 'postgres://testUser:testPwd@localhost:5432/testDb',
         applicationHost: 'localhost',

@@ -5,7 +5,8 @@ const { EOL } = require('os');
 const Context = require('@forestadmin/context');
 
 const { handleError } = require('../utils/error');
-const { DatabasePrompts } = require('./prompter/database-prompts');
+const { getInteractiveOptions } = require('../utils/option-parser');
+const projectCreateOptions = require('./projects/create/options');
 
 const SUCCESS_MESSAGE_ENV_VARIABLES_COPIED_IN_ENV_FILE =
   'Copying the environment variables in your `.env` file';
@@ -34,18 +35,6 @@ const SPLIT_URL_REGEX = new RegExp('(\\w+)://([\\w\\-\\.]+)(:(\\d+))?');
 const ENV_VARIABLES_AUTO_FILLING_PREFIX =
   '\n\n# ℹ️ The content below was automatically added by the `forest init` command ⤵️\n';
 
-const OPTIONS_DATABASE = [
-  'dbDialect',
-  'dbName',
-  'dbHostname',
-  'dbPort',
-  'dbUser',
-  'dbPassword',
-  'dbSchema',
-  'ssl',
-  'mongodbSrv',
-];
-
 function handleInitError(rawError) {
   const error = handleError(rawError);
   switch (error) {
@@ -69,7 +58,7 @@ function handleInitError(rawError) {
 }
 
 async function handleDatabaseConfiguration() {
-  const { env, inquirer } = Context.inject();
+  const { inquirer, env } = Context.inject();
 
   const response = await inquirer.prompt([
     {
@@ -81,9 +70,20 @@ async function handleDatabaseConfiguration() {
 
   if (!response.confirm) return null;
 
-  const promptContent = [];
-  await new DatabasePrompts(OPTIONS_DATABASE, env, promptContent, {}).handlePrompts();
-  return inquirer.prompt(promptContent);
+  return getInteractiveOptions(
+    {
+      databaseDialect: projectCreateOptions.databaseDialectV1,
+      databaseName: projectCreateOptions.databaseName,
+      databaseSchema: projectCreateOptions.databaseSchema,
+      databaseHost: projectCreateOptions.databaseHost,
+      databasePort: projectCreateOptions.databasePort,
+      databaseUser: projectCreateOptions.databaseUser,
+      databasePassword: projectCreateOptions.databasePassword,
+      databaseSSL: projectCreateOptions.databaseSSL,
+      mongoDBSRV: projectCreateOptions.mongoDBSRV,
+    },
+    env,
+  );
 }
 
 function validateEndpoint(input) {

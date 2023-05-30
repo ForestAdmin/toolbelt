@@ -1,67 +1,51 @@
-import type { CreateCommandArguments } from '../../../interfaces/command-create-project-arguments-interface';
 import type { Config, DbConfig } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
-import type CommandGenerateConfigGetter from '../../../services/projects/create/command-generate-config-getter';
+import type { ProjectCreateOptions } from '../../../services/projects/create/options';
 import type DatabaseAnalyzer from '../../../services/schema/update/analyzer/database-analyzer';
+import type { CommandOptions } from '../../../utils/option-parser';
 import type * as OclifConfig from '@oclif/config';
 
-import { flags } from '@oclif/command';
-
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
+import * as projectCreateOptions from '../../../services/projects/create/options';
 import Agents from '../../../utils/agents';
-import { languageList } from '../../../utils/languages';
+import { optionsToFlags } from '../../../utils/option-parser';
 
 export default class NosqlCommand extends AbstractProjectCreateCommand {
+  protected static readonly options: CommandOptions = {
+    databaseConnectionURL: projectCreateOptions.databaseConnectionURL,
+    databaseName: projectCreateOptions.databaseName,
+    databaseHost: projectCreateOptions.databaseHost,
+    databasePort: projectCreateOptions.databasePort,
+    databaseUser: projectCreateOptions.databaseUser,
+    databasePassword: projectCreateOptions.databasePassword,
+    databaseSSL: { ...projectCreateOptions.databaseSSL, prompter: null }, // Replicating a bug from previous version
+    mongoDBSRV: projectCreateOptions.mongoDBSRV,
+    applicationHost: projectCreateOptions.applicationHost,
+    applicationPort: projectCreateOptions.applicationPort,
+    language: projectCreateOptions.language,
+  };
+
+  /** @see https://oclif.io/docs/args */
+  static override readonly args = AbstractProjectCreateCommand.args;
+
+  /** @see https://oclif.io/docs/flags */
+  static override readonly flags = optionsToFlags(this.options);
+
   private readonly dumper: AgentNodeJs;
 
   private readonly databaseAnalyzer: DatabaseAnalyzer;
 
-  private readonly commandGenerateConfigGetter: CommandGenerateConfigGetter;
-
-  private readonly _agent: string = Agents.NodeJS;
-
-  static override readonly flags = {
-    ...AbstractProjectCreateCommand.flags,
-    mongoDBSRV: flags.boolean({
-      dependsOn: [],
-      description: 'Use SRV DNS record for mongoDB connection.',
-      exclusive: ['databaseConnectionURL'],
-      required: false,
-    }),
-    language: flags.string({
-      char: 'l',
-      description: 'In which language would you like to generate your sources?',
-      options: languageList.map(language => language.name),
-      required: false,
-    }),
-  };
-
-  static override readonly args = [...AbstractProjectCreateCommand.args];
+  protected readonly agent = Agents.NodeJS;
 
   constructor(argv: string[], config: OclifConfig.IConfig, plan?) {
     super(argv, config, plan);
 
-    const { assertPresent, agentNodejsDumper, databaseAnalyzer, commandGenerateConfigGetter } =
-      this.context;
+    const { assertPresent, agentNodejsDumper, databaseAnalyzer } = this.context;
 
-    assertPresent({ agentNodejsDumper, databaseAnalyzer, commandGenerateConfigGetter });
+    assertPresent({ agentNodejsDumper, databaseAnalyzer });
 
     this.dumper = agentNodejsDumper;
     this.databaseAnalyzer = databaseAnalyzer;
-    this.commandGenerateConfigGetter = commandGenerateConfigGetter;
-  }
-
-  protected async getConfigFromArguments(programArguments: { [name: string]: any }): Promise<{
-    config: CreateCommandArguments;
-    specificDatabaseConfig: { [name: string]: any };
-  }> {
-    const config = await this.commandGenerateConfigGetter.get(programArguments, false, true);
-
-    const specificDatabaseConfig = {
-      mongodbSrv: config.mongoDBSRV,
-    };
-
-    return { config, specificDatabaseConfig };
   }
 
   protected async generateProject(config: Config): Promise<void> {
@@ -69,8 +53,11 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
     await this.createFiles(config, schema);
   }
 
-  protected get agent(): string {
-    return this._agent;
+  protected override async getCommandOptions(): Promise<ProjectCreateOptions> {
+    return {
+      ...(await super.getCommandOptions()),
+      databaseDialect: 'mongodb',
+    };
   }
 
   private async analyzeDatabase(dbConfig: DbConfig) {

@@ -22,14 +22,6 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
       validate: expect.any(Function),
     },
     {
-      name: 'databaseSchema',
-      type: 'input',
-      message: "What's the database schema? [optional]",
-      description: 'Leave blank by default',
-      default: expect.any(Function),
-      when: expect.any(Function),
-    },
-    {
       name: 'databaseHost',
       message: "What's the database hostname?",
       type: 'input',

@@ -19,21 +19,14 @@ describe('validator', () => {
   });
 
   describe('validateAppHostname', () => {
-    it('should return true if hostname is valid', () => {
+    it('should return true if db name is valid', () => {
       expect.assertions(1);
-      expect(validateAppHostname('https://localhost')).toBe(true);
+      expect(validateAppHostname('test')).toBe(true);
     });
 
-    it('should return error message if hostname is not a valid url', () => {
+    it('should return error message if db name is not valid', () => {
       expect.assertions(1);
-      expect(validateAppHostname('abc')).toBe('Application hostname must be a valid url.');
-    });
-
-    it('should return error message if hostname is remote and http', () => {
-      expect.assertions(1);
-      expect(validateAppHostname('http://host.com')).toBe(
-        'HTTPS protocol is mandatory, except for localhost and 127.0.0.1.',
-      );
+      expect(validateAppHostname('')).toBe('Please specify the application hostname.');
     });
   });
 
