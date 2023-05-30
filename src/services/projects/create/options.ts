@@ -102,10 +102,7 @@ export const databaseSSL: Option = {
   type: 'boolean',
   default: false,
   oclif: { description: 'Use SSL for database connection.' },
-
-  // Replicate bug from previous version of the CLI where this variable was never prompted
-  // this should be: prompter: { question: 'Does your database require a SSL connection?' }
-  prompter: null,
+  prompter: { question: 'Does your database require a SSL connection?' },
 };
 
 export const language: Option = {

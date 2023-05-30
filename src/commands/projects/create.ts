@@ -18,7 +18,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
     databasePort: projectCreateOptions.databasePort,
     databaseUser: projectCreateOptions.databaseUser,
     databasePassword: projectCreateOptions.databasePassword,
-    databaseSSL: projectCreateOptions.databaseSSL,
+    databaseSSL: { ...projectCreateOptions.databaseSSL, prompter: null }, // Replicating a bug from previous version
     mongoDBSRV: projectCreateOptions.mongoDBSRV,
     applicationHost: projectCreateOptions.applicationHost,
     applicationPort: projectCreateOptions.applicationPort,
