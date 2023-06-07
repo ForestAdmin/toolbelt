@@ -140,6 +140,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       dbHostname: config.databaseHost,
       dbPort: config.databasePort,
       dbSsl: config.databaseSSL,
+      dbSslMode: config.databaseSslMode,
       dbUser: config.databaseUser,
       dbPassword: config.databasePassword,
       mongodbSrv: config.mongoDBSRV,
@@ -185,12 +186,15 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       options.databaseSslMode = options.databaseSSL ? 'preferred' : 'disabled';
     } else if (options.databaseSSL === undefined && options.databaseSslMode !== undefined) {
       options.databaseSSL = options.databaseSslMode !== 'disabled';
+    } else {
+      options.databaseSslMode = 'preferred';
+      options.databaseSSL = true;
     }
 
     return options;
   }
 
-  private async testDatabaseConnection(dbConfig: DbConfig) {
+  protected async testDatabaseConnection(dbConfig: DbConfig) {
     this.spinner.start({ text: 'Testing connection to your database' });
     const connectionPromise = this.database
       .connect(dbConfig)

@@ -323,6 +323,7 @@ describe('abstractProjectCreateCommand command', () => {
           dbUser: undefined,
           mongodbSrv: undefined,
           dbSsl: false,
+          dbSslMode: 'disabled',
         });
       });
 
@@ -369,6 +370,7 @@ describe('abstractProjectCreateCommand command', () => {
             dbUser: undefined,
             mongodbSrv: undefined,
             dbSsl: false,
+            dbSslMode: 'disabled',
           },
           forestAuthSecret: 'this is an authSecret',
           forestEnvSecret: 'this an envSecret',
@@ -395,6 +397,7 @@ describe('abstractProjectCreateCommand command', () => {
           dbUser: undefined,
           mongodbSrv: undefined,
           dbSsl: false,
+          dbSslMode: 'disabled',
         });
       });
       it('should call generate project with correct arguments', async () => {
@@ -440,6 +443,7 @@ describe('abstractProjectCreateCommand command', () => {
             dbUser: undefined,
             mongodbSrv: undefined,
             dbSsl: false,
+            dbSslMode: 'disabled',
           },
           forestAuthSecret: 'this is an authSecret',
           forestEnvSecret: 'this an envSecret',

@@ -151,7 +151,10 @@ export const databaseDialectSqlV2: Option = {
 };
 
 export const databaseSchema: Option = {
-  when: args => ['postgres', 'mssql'].includes(getDialect(args)),
+  when: async args => {
+    await new Promise(resolve => setTimeout(resolve, 0));
+    return ['postgres', 'mssql'].includes(getDialect(args));
+  },
   default: args => (getDialect(args) === 'postgres' ? 'public' : ''),
   oclif: { char: 's', description: 'Enter your database schema.' },
   prompter: {

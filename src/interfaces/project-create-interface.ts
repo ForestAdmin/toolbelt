@@ -1,7 +1,7 @@
 import type { Language } from '../utils/languages';
 
 interface DbConfigBase {
-  dbDialect: string;
+  dbDialect: 'mysql' | 'postgres' | 'mssql' | 'mongodb';
   dbSsl: boolean;
   dbSslMode: 'preferred' | 'disabled' | 'required' | 'verify';
   dbSchema?: string;

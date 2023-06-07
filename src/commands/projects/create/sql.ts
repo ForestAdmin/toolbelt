@@ -1,7 +1,9 @@
-import type { Config } from '../../../interfaces/project-create-interface';
+import type { Config, DbConfig } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type { CommandOptions } from '../../../utils/option-parser';
 import type * as OclifConfig from '@oclif/config';
+
+import { introspect } from '@forestadmin/datasource-sql';
 
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
 import * as projectCreateOptions from '../../../services/projects/create/options';
@@ -59,5 +61,21 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
     };
     const dumpPromise = this.dumper.dump(dumperConfig);
     await this.spinner.attachToPromise(dumpPromise);
+  }
+
+  protected override async testDatabaseConnection(dbConfig: DbConfig) {
+    this.spinner.start({ text: 'Testing connection to your database' });
+    const connectionPromise = introspect({
+      database: dbConfig.dbName,
+      dialect: dbConfig.dbDialect as Exclude<DbConfig['dbDialect'], 'mongodb'>,
+      host: dbConfig.dbHostname,
+      password: dbConfig.dbPassword,
+      port: dbConfig.dbPort,
+      schema: dbConfig.dbSchema,
+      sslMode: dbConfig.dbSslMode,
+      uri: dbConfig.dbConnectionUrl,
+    });
+
+    await this.spinner.attachToPromise(connectionPromise);
   }
 }
