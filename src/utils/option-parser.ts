@@ -34,7 +34,7 @@ export async function getInteractiveOptions<T>(
         values[name] === undefined && // Not already set
         (option.exclusive ?? []).every(e => values[e] === undefined), // Not exclusive with another option
     )
-    .map(([name, option]) => {
+    .map(([name, option], index) => {
       // Use rawlist on windows because of https://github.com/SBoudrias/Inquirer.js/issues/303
       const listType = /^win/.test(os.platform()) ? 'rawlist' : 'list';
       const inputType = name.match(/(password|secret)/i) ? 'password' : 'input';
@@ -46,12 +46,28 @@ export async function getInteractiveOptions<T>(
       if (option.choices) result.choices = option.choices;
       if (option.validate) result.validate = option.validate;
       if (option.default !== undefined) result.default = option.default;
-      if (option.when) result.when = option.when;
+      if (option.when)
+        // Make sure that the first question when() is evaluated after one tick (see hack below)
+        result.when =
+          index === 0
+            ? async (args: Record<string, unknown>) => {
+                await new Promise(resolve => setTimeout(resolve, 0));
+                return option.when(args);
+              }
+            : options.when;
 
       return result;
     });
 
-  return inquirer.prompt(questions, values);
+  const promise = inquirer.prompt(questions);
+
+  // Passing answers we already have to inquirer is not supported in the legacy version we use
+  // To work around this, we inject them in the inquirer ui object that is conveniently accessible
+  // from the promise.
+  // To fix this, we should upgrade to a newer version of inquirer.
+  Object.assign(promise.ui.answers, values);
+
+  return promise;
 }
 
 /** Get options that were passed in the command line */
