@@ -3,7 +3,7 @@ FOREST_ENV_SECRET=forestEnvSecret
 
 APPLICATION_PORT=1654
 
-DATABASE_URL=postgres://localhost:54369/database?schema=public
+DATABASE_URL=postgres://localhost:54369
 DATABASE_SSL_MODE=disabled
 DATABASE_SCHEMA=public
 

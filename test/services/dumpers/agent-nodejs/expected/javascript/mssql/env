@@ -3,7 +3,7 @@ FOREST_ENV_SECRET=forestEnvSecret
 
 APPLICATION_PORT=1654
 
-DATABASE_URL=mssql://localhost:1432/database?schema=public
+DATABASE_URL=mssql://localhost:1432
 DATABASE_SSL_MODE=disabled
 DATABASE_SCHEMA=public
 

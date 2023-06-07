@@ -3,7 +3,7 @@ FOREST_ENV_SECRET=forestEnvSecret
 
 APPLICATION_PORT=1654
 
-DATABASE_URL=mariadb://localhost:3305/database
+DATABASE_URL=mariadb://localhost:3305
 DATABASE_SSL_MODE=disabled
 DATABASE_SCHEMA=public
 

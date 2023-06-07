@@ -172,7 +172,6 @@ describe('services > dumpers > AgentNodeJs', () => {
             `/test/a${language.name}Application/.env`,
             {
               dbUrl: 'localhost',
-              dbSsl: false,
               dbSslMode: 'disabled',
               dbSchema: 'public',
               appPort: 3310,
@@ -181,6 +180,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               forestAuthSecret: 'aForestAuthSecret',
               hasDockerDbUrl: true,
               dockerDbUrl: 'host.docker.internal',
+              isMongoose: false,
             },
           );
         });
@@ -234,13 +234,15 @@ describe('services > dumpers > AgentNodeJs', () => {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-expect-error
             defaultConfig.dbConfig.dbSsl = null;
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-expect-error
+            defaultConfig.dbConfig.dbSslMode = null;
 
             await dumper.dump(defaultConfig);
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
               `/test/a${language.name}Application/.env`,
               expect.objectContaining({
-                dbSsl: false,
                 dbSslMode: 'disabled',
               }),
             );
@@ -255,12 +257,13 @@ describe('services > dumpers > AgentNodeJs', () => {
               const { dumper, context, defaultConfig } = createDumper(language);
 
               defaultConfig.dbConfig.dbSsl = true;
+              defaultConfig.dbConfig.dbSslMode = 'preferred';
               await dumper.dump(defaultConfig);
 
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
                 `/test/a${language.name}Application/.env`,
                 expect.objectContaining({
-                  dbSsl: true,
+                  dbSslMode: 'preferred',
                 }),
               );
             });
@@ -277,7 +280,6 @@ describe('services > dumpers > AgentNodeJs', () => {
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
                 `/test/a${language.name}Application/.env`,
                 expect.objectContaining({
-                  dbSsl: false,
                   dbSslMode: 'disabled',
                 }),
               );
