@@ -15,6 +15,7 @@ export type ProjectCreateOptions = {
   databaseUser?: string;
   databasePassword?: string;
   databaseSSL?: boolean;
+  databaseSslMode?: 'preferred' | 'disabled' | 'required' | 'verify';
 
   databaseDialect?: 'mariadb' | 'mssql' | 'mysql' | 'postgres' | 'mongodb';
   databaseSchema?: string;
@@ -99,10 +100,24 @@ export const databasePassword: Option = {
 };
 
 export const databaseSSL: Option = {
+  exclusive: ['databaseSslMode'],
   type: 'boolean',
   default: false,
   oclif: { description: 'Use SSL for database connection.' },
   prompter: { question: 'Does your database require a SSL connection?' },
+};
+
+export const databaseSslMode: Option = {
+  exclusive: ['databaseSSL'],
+  choices: [
+    { name: 'Preferred: Use SSL if available', value: 'preferred' },
+    { name: 'Verify: Use SSL, and check the certificate', value: 'verify' },
+    { name: "Required: Use SSL, but don't check the certificate", value: 'required' },
+    { name: 'Disabled: do not use SSL', value: 'disabled' },
+  ],
+  default: 'preferred',
+  oclif: { description: 'SSL mode.' },
+  prompter: { question: 'What SSL mode do you want to use?' },
 };
 
 export const language: Option = {

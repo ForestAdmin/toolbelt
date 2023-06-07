@@ -176,7 +176,16 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected async getCommandOptions(): Promise<ProjectCreateOptions> {
     const options = await this.optionParser.getCommandLineOptions<ProjectCreateOptions>(this);
+
+    // Dialect must be set for the project creator to work even if the connection URL is provided
     options.databaseDialect = getDialect(options);
+
+    // Support both `databaseSSL` and `databaseSslMode` options
+    if (options.databaseSSL !== undefined && options.databaseSslMode === undefined) {
+      options.databaseSslMode = options.databaseSSL ? 'preferred' : 'disabled';
+    } else if (options.databaseSSL === undefined && options.databaseSslMode !== undefined) {
+      options.databaseSSL = options.databaseSslMode !== 'disabled';
+    }
 
     return options;
   }

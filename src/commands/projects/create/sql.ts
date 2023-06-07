@@ -18,7 +18,11 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
     databasePort: projectCreateOptions.databasePort,
     databaseUser: projectCreateOptions.databaseUser,
     databasePassword: projectCreateOptions.databasePassword,
-    databaseSSL: { ...projectCreateOptions.databaseSSL, prompter: null }, // Replicating a bug from previous version
+
+    // Set prompter to null to replicate bug from previous version (we don't ask for SSL there).
+    databaseSslMode: { ...projectCreateOptions.databaseSslMode, prompter: null },
+    databaseSSL: { ...projectCreateOptions.databaseSSL, prompter: null },
+
     applicationHost: projectCreateOptions.applicationHost,
     applicationPort: projectCreateOptions.applicationPort,
     language: projectCreateOptions.language,
