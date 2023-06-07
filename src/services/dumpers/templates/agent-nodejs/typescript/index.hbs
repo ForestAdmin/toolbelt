@@ -37,6 +37,9 @@ agent.addDataSource(createMongooseDataSource(connection, { flattenMode: 'auto' }
 agent.addDataSource(
   createSqlDataSource({
     uri: process.env.DATABASE_URL,
+{{#if dbSchema}}
+    schema: process.env.DATABASE_SCHEMA,
+{{/if}}
     sslMode: process.env.DATABASE_SSL_MODE as SslMode,
   }),
 );

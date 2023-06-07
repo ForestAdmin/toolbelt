@@ -4,5 +4,6 @@ FOREST_ENV_SECRET=forestEnvSecret
 APPLICATION_PORT=1654
 
 DATABASE_URL=mongodb://localhost:27016
+DATABASE_SCHEMA=public
 
 NODE_ENV=development

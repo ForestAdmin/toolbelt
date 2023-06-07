@@ -5,5 +5,6 @@ APPLICATION_PORT=1654
 
 DATABASE_URL=postgres://localhost:54369/database?schema=public
 DATABASE_SSL_MODE=disabled
+DATABASE_SCHEMA=public
 
 NODE_ENV=development

@@ -3,7 +3,7 @@ import type { Language } from '../utils/languages';
 interface DbConfigBase {
   dbDialect: string;
   dbSsl: boolean;
-  dbSslMode: boolean;
+  dbSslMode: 'preferred' | 'disabled' | 'required' | 'verify';
   dbSchema?: string;
 }
 
