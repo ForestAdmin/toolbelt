@@ -54,7 +54,7 @@ export async function getInteractiveOptions<T>(
                 await new Promise(resolve => setTimeout(resolve, 0));
                 return option.when(args);
               }
-            : options.when;
+            : option.when;
 
       return result;
     });
@@ -65,7 +65,9 @@ export async function getInteractiveOptions<T>(
   // To work around this, we inject them in the inquirer ui object that is conveniently accessible
   // from the promise.
   // To fix this, we should upgrade to a newer version of inquirer.
-  Object.assign(promise.ui.answers, values);
+  // Note that the if condition is always true, but not having it breaks the tests which are all
+  // based on an inquirer.mock that returns a value (instead of a promise).
+  if (promise?.ui?.answers) Object.assign(promise.ui.answers, values);
 
   return promise;
 }
