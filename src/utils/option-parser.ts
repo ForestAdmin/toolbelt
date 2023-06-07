@@ -20,7 +20,7 @@ export type CommandOptions<T = Record<string, unknown>> = {
   };
 };
 
-function optionToInquirer(name: string, option: CommandOptions[string], index: number): unknown {
+function optionToInquirer(name: string, option: CommandOptions[string]): unknown {
   const { os } = inject() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   // Use rawlist on windows because of https://github.com/SBoudrias/Inquirer.js/issues/303
@@ -36,13 +36,10 @@ function optionToInquirer(name: string, option: CommandOptions[string], index: n
   if (option.default !== undefined) result.default = option.default;
   if (option.when)
     // Make sure that the first question when() is evaluated after one tick (see hack below)
-    result.when =
-      index === 0
-        ? async (args: Record<string, unknown>) => {
-            await new Promise(resolve => setTimeout(resolve, 0));
-            return option.when(args);
-          }
-        : option.when;
+    result.when = async (args: Record<string, unknown>) => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+      return option.when(args);
+    };
 
   return result;
 }
@@ -61,7 +58,7 @@ export async function getInteractiveOptions<T>(
         values[name] === undefined && // Not already set
         (option.exclusive ?? []).every(e => values[e] === undefined), // Not exclusive with another option
     )
-    .map(([name, option], index) => optionToInquirer(name, option, index));
+    .map(([name, option]) => optionToInquirer(name, option));
 
   const promise = inquirer.prompt(questions);
 
