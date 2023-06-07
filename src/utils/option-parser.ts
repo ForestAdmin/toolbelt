@@ -20,12 +20,39 @@ export type CommandOptions<T = Record<string, unknown>> = {
   };
 };
 
+function optionToInquirer(name: string, option: CommandOptions[string], index: number): unknown {
+  const { os } = inject() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  // Use rawlist on windows because of https://github.com/SBoudrias/Inquirer.js/issues/303
+  const listType = /^win/.test(os.platform()) ? 'rawlist' : 'list';
+  const inputType = name.match(/(password|secret)/i) ? 'password' : 'input';
+  let type = option.choices ? listType : inputType;
+  if (option.type === 'boolean') type = 'confirm';
+
+  const result: Record<string, unknown> = { name, type, message: option.prompter.question };
+  if (option.prompter.description) result.description = option.prompter.description;
+  if (option.choices) result.choices = option.choices;
+  if (option.validate) result.validate = option.validate;
+  if (option.default !== undefined) result.default = option.default;
+  if (option.when)
+    // Make sure that the first question when() is evaluated after one tick (see hack below)
+    result.when =
+      index === 0
+        ? async (args: Record<string, unknown>) => {
+            await new Promise(resolve => setTimeout(resolve, 0));
+            return option.when(args);
+          }
+        : option.when;
+
+  return result;
+}
+
 /** Query options interactively */
 export async function getInteractiveOptions<T>(
   options: CommandOptions,
   values: Record<string, unknown> = {},
 ): Promise<T> {
-  const { inquirer, os } = inject() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const { inquirer } = inject() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   const questions = Object.entries(options)
     .filter(
@@ -34,30 +61,7 @@ export async function getInteractiveOptions<T>(
         values[name] === undefined && // Not already set
         (option.exclusive ?? []).every(e => values[e] === undefined), // Not exclusive with another option
     )
-    .map(([name, option], index) => {
-      // Use rawlist on windows because of https://github.com/SBoudrias/Inquirer.js/issues/303
-      const listType = /^win/.test(os.platform()) ? 'rawlist' : 'list';
-      const inputType = name.match(/(password|secret)/i) ? 'password' : 'input';
-      let type = option.choices ? listType : inputType;
-      if (option.type === 'boolean') type = 'confirm';
-
-      const result: Record<string, unknown> = { name, type, message: option.prompter.question };
-      if (option.prompter.description) result.description = option.prompter.description;
-      if (option.choices) result.choices = option.choices;
-      if (option.validate) result.validate = option.validate;
-      if (option.default !== undefined) result.default = option.default;
-      if (option.when)
-        // Make sure that the first question when() is evaluated after one tick (see hack below)
-        result.when =
-          index === 0
-            ? async (args: Record<string, unknown>) => {
-                await new Promise(resolve => setTimeout(resolve, 0));
-                return option.when(args);
-              }
-            : option.when;
-
-      return result;
-    });
+    .map(([name, option], index) => optionToInquirer(name, option, index));
 
   const promise = inquirer.prompt(questions);
 
