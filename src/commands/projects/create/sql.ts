@@ -1,7 +1,9 @@
-import type { Config } from '../../../interfaces/project-create-interface';
+import type { Config, DbConfig } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type { CommandOptions } from '../../../utils/option-parser';
 import type * as OclifConfig from '@oclif/config';
+
+import { introspect } from '@forestadmin/datasource-sql';
 
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
 import * as projectCreateOptions from '../../../services/projects/create/options';
@@ -18,7 +20,11 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
     databasePort: projectCreateOptions.databasePort,
     databaseUser: projectCreateOptions.databaseUser,
     databasePassword: projectCreateOptions.databasePassword,
-    databaseSSL: { ...projectCreateOptions.databaseSSL, prompter: null }, // Replicating a bug from previous version
+
+    // Set prompter to null to replicate bug from previous version (we don't ask for SSL there).
+    databaseSslMode: { ...projectCreateOptions.databaseSslMode, prompter: null },
+    databaseSSL: { ...projectCreateOptions.databaseSSL, prompter: null },
+
     applicationHost: projectCreateOptions.applicationHost,
     applicationPort: projectCreateOptions.applicationPort,
     language: projectCreateOptions.language,
@@ -55,5 +61,23 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
     };
     const dumpPromise = this.dumper.dump(dumperConfig);
     await this.spinner.attachToPromise(dumpPromise);
+  }
+
+  protected override async testDatabaseConnection(dbConfig: DbConfig) {
+    this.spinner.start({ text: 'Testing connection to your database' });
+
+    const connectionPromise = introspect({
+      uri: dbConfig.dbConnectionUrl,
+      dialect: dbConfig.dbDialect as Exclude<DbConfig['dbDialect'], 'mongodb'>,
+      host: dbConfig.dbHostname,
+      database: dbConfig.dbName,
+      password: dbConfig.dbPassword,
+      port: dbConfig.dbPort,
+      schema: dbConfig.dbSchema,
+      sslMode: dbConfig.dbSslMode,
+      username: dbConfig.dbUser,
+    });
+
+    await this.spinner.attachToPromise(connectionPromise);
   }
 }

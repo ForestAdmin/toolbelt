@@ -4,9 +4,7 @@ FOREST_ENV_SECRET=forestEnvSecret
 APPLICATION_PORT=1654
 
 DATABASE_URL=mysql://localhost:8999
-DATABASE_SSL=false
-# This should be true in production environment. When false, it allows to bypass SSL certificate verification.
-DATABASE_REJECT_UNAUTHORIZED=false
+DATABASE_SSL_MODE=disabled
 DATABASE_SCHEMA=public
 
 NODE_ENV=development

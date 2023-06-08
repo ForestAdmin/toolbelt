@@ -10,7 +10,7 @@ export default function buildDatabaseUrl(dbConfig: DbConfig): string | null {
   if (dbConfig.dbConnectionUrl) {
     connectionString = dbConfig.dbConnectionUrl;
   } else {
-    let protocol = dbConfig.dbDialect;
+    let protocol: string = dbConfig.dbDialect;
     let port = `:${dbConfig.dbPort}`;
     let password = '';
 
