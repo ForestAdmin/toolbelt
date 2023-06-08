@@ -1,3 +1,10 @@
+## [3.4.3](https://github.com/ForestAdmin/toolbelt/compare/v3.4.2...v3.4.3) (2023-06-08)
+
+
+### Bug Fixes
+
+* **project-creation:** prompt for database schema when only --databaseConnectionURL flag is given ([#602](https://github.com/ForestAdmin/toolbelt/issues/602)) ([ddec281](https://github.com/ForestAdmin/toolbelt/commit/ddec281b82d1d638bb1059af651bddaded5dba16))
+
 # [4.0.0-beta.1](https://github.com/ForestAdmin/toolbelt/compare/v3.4.2...v4.0.0-beta.1) (2023-05-31)
 
 
@@ -9,6 +16,7 @@
 ### BREAKING CHANGES
 
 * **node:** users will have to upgrade to Node.js version 14+ to ensure a full compatibility
+
 
 ## [3.4.2](https://github.com/ForestAdmin/toolbelt/compare/v3.4.1...v3.4.2) (2023-05-30)
 
