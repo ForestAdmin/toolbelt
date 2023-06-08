@@ -111,12 +111,7 @@ export const databaseSSL: Option = {
 export const databaseSslMode: Option = {
   exclusive: ['databaseSSL'],
   when: args => args.databaseSSL === undefined,
-  choices: [
-    { name: 'Preferred: Use SSL if available', value: 'preferred' },
-    { name: 'Verify: Use SSL, and check the certificate', value: 'verify' },
-    { name: "Required: Use SSL, but don't check the certificate", value: 'required' },
-    { name: 'Disabled: do not use SSL', value: 'disabled' },
-  ],
+  choices: ['preferred', 'verify', 'required', 'disabled'].map(value => ({ name: value, value })),
   default: 'preferred',
   oclif: { description: 'SSL mode.' },
   prompter: { question: 'Which SSL mode do you want to use?' },
