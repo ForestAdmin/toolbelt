@@ -187,8 +187,8 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     } else if (options.databaseSSL === undefined && options.databaseSslMode !== undefined) {
       options.databaseSSL = options.databaseSslMode !== 'disabled';
     } else {
-      options.databaseSslMode = 'preferred';
-      options.databaseSSL = true;
+      options.databaseSslMode = 'preferred'; // Default is preferred for agent-nodejs
+      options.databaseSSL = false; // Default is false for forest-express
     }
 
     return options;

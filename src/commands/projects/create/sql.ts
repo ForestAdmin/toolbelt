@@ -65,15 +65,17 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
 
   protected override async testDatabaseConnection(dbConfig: DbConfig) {
     this.spinner.start({ text: 'Testing connection to your database' });
+
     const connectionPromise = introspect({
-      database: dbConfig.dbName,
+      uri: dbConfig.dbConnectionUrl,
       dialect: dbConfig.dbDialect as Exclude<DbConfig['dbDialect'], 'mongodb'>,
       host: dbConfig.dbHostname,
+      database: dbConfig.dbName,
       password: dbConfig.dbPassword,
       port: dbConfig.dbPort,
       schema: dbConfig.dbSchema,
       sslMode: dbConfig.dbSslMode,
-      uri: dbConfig.dbConnectionUrl,
+      username: dbConfig.dbUser,
     });
 
     await this.spinner.attachToPromise(connectionPromise);
