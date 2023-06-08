@@ -56,7 +56,14 @@ const makeAuthenticatorReplacement = tokenBehavior => {
 
 const makeInquirerMock = prompts => {
   const dummyPrompt = jest.fn();
-  prompts.forEach(prompt => dummyPrompt.mockReturnValueOnce(prompt.out));
+  prompts.forEach(prompt => {
+    dummyPrompt.mockImplementationOnce(questions => {
+      questions = Array.isArray(questions) ? questions : [questions];
+      questions.forEach(question => question?.when?.({}));
+
+      return prompt.out;
+    });
+  });
   return { prompt: dummyPrompt };
 };
 
