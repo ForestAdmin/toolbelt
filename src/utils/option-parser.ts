@@ -12,7 +12,7 @@ export type CommandOptions<T = Record<string, unknown>> = {
     type?: 'string' | 'boolean';
     exclusive?: string[];
     choices?: Array<{ name: string; value: unknown }>;
-    when?: ((v: T) => boolean) | ((v: T) => Promise<boolean>);
+    when?: (v: T) => boolean;
     validate?: (v: string) => boolean | string;
     default?: unknown | ((v: T) => unknown);
     oclif: { char?: string; description: string };
