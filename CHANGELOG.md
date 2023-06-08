@@ -1,3 +1,10 @@
+# [4.0.0-beta.2](https://github.com/ForestAdmin/toolbelt/compare/v4.0.0-beta.1...v4.0.0-beta.2) (2023-06-08)
+
+
+### Bug Fixes
+
+* **project-creation:** prompt for database schema when only --databaseConnectionURL flag is given ([#602](https://github.com/ForestAdmin/toolbelt/issues/602)) ([ddec281](https://github.com/ForestAdmin/toolbelt/commit/ddec281b82d1d638bb1059af651bddaded5dba16))
+
 ## [3.4.3](https://github.com/ForestAdmin/toolbelt/compare/v3.4.2...v3.4.3) (2023-06-08)
 
 
