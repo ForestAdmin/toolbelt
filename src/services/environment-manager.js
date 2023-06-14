@@ -4,8 +4,6 @@ const Context = require('@forestadmin/context');
 
 const EnvironmentSerializer = require('../serializers/environment');
 const environmentDeserializer = require('../deserializers/environment');
-const DeploymentRequestSerializer = require('../serializers/deployment-request');
-const JobStateChecker = require('./job-state-checker');
 const { handleError } = require('../utils/error');
 
 function EnvironmentManager(config) {
@@ -95,37 +93,6 @@ function EnvironmentManager(config) {
       .del(`${env.FOREST_SERVER_URL}/api/environments/${environmentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-environment-id', environmentId);
-  };
-
-  this.copyLayout = async (fromEnvironmentId, toEnvironmentId, oclifExit) => {
-    const authToken = authenticator.getAuthToken();
-    const deploymentRequest = {
-      id: Math.random().toString(26).slice(2),
-      type: 'environment',
-      from: fromEnvironmentId,
-      to: toEnvironmentId,
-    };
-
-    const jobStateChecker = new JobStateChecker('Copying layout', oclifExit);
-
-    const deploymentRequestResponse = await agent
-      .post(`${env.FOREST_SERVER_URL}/api/deployment-requests`)
-      .set('Authorization', `Bearer ${authToken}`)
-      .set('forest-project-id', config.projectId)
-      .send(DeploymentRequestSerializer.serialize(deploymentRequest));
-
-    if (
-      !deploymentRequestResponse ||
-      !deploymentRequestResponse.body ||
-      !deploymentRequestResponse.body.meta ||
-      !deploymentRequestResponse.body.meta.job_id
-    ) {
-      return false;
-    }
-
-    const jobId = deploymentRequestResponse.body.meta.job_id;
-
-    return jobStateChecker.check(jobId, config.projectId);
   };
 
   this.reset = async (environmentName, environmentSecret) => {
