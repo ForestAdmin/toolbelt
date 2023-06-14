@@ -63,6 +63,10 @@ CreateCommand.flags = {
     options: ['table', 'json'],
     default: 'table',
   }),
+  disableRoles: flags.boolean({
+    description: 'Disable roles on new environment.',
+    default: false,
+  }),
 };
 
 module.exports = CreateCommand;

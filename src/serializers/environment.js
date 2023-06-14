@@ -12,6 +12,7 @@ module.exports = new JSONAPISerializer('environments', {
     'project',
     'secretKey',
     'currentBranchId',
+    'areRolesDisabled',
   ],
   project: {
     ref: 'id',

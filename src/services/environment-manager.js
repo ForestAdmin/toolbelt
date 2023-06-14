@@ -55,6 +55,7 @@ function EnvironmentManager(config) {
           name: config.name,
           apiEndpoint: config.url,
           project: { id: config.projectId },
+          areRolesDisabled: config.disableRoles,
         }),
       );
     const environment = await environmentDeserializer.deserialize(response.body);
