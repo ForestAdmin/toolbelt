@@ -1,3 +1,10 @@
+# [4.0.0-beta.3](https://github.com/ForestAdmin/toolbelt/compare/v4.0.0-beta.2...v4.0.0-beta.3) (2023-06-14)
+
+
+### Bug Fixes
+
+* **project-create:** do not crash when SQL databases use self-signed certificates ([#591](https://github.com/ForestAdmin/toolbelt/issues/591)) ([36e8674](https://github.com/ForestAdmin/toolbelt/commit/36e867437ec04da9e0af566a8ff770e1f51256fa))
+
 # [4.0.0-beta.2](https://github.com/ForestAdmin/toolbelt/compare/v4.0.0-beta.1...v4.0.0-beta.2) (2023-06-08)
 
 
