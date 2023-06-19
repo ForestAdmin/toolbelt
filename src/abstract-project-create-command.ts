@@ -140,6 +140,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       dbHostname: config.databaseHost,
       dbPort: config.databasePort,
       dbSsl: config.databaseSSL,
+      dbSslMode: config.databaseSslMode,
       dbUser: config.databaseUser,
       dbPassword: config.databasePassword,
       mongodbSrv: config.mongoDBSRV,
@@ -176,12 +177,24 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected async getCommandOptions(): Promise<ProjectCreateOptions> {
     const options = await this.optionParser.getCommandLineOptions<ProjectCreateOptions>(this);
+
+    // Dialect must be set for the project creator to work even if the connection URL is provided
     options.databaseDialect = getDialect(options);
+
+    // Support both `databaseSSL` and `databaseSslMode` options
+    if (options.databaseSSL !== undefined && options.databaseSslMode === undefined) {
+      options.databaseSslMode = options.databaseSSL ? 'preferred' : 'disabled';
+    } else if (options.databaseSSL === undefined && options.databaseSslMode !== undefined) {
+      options.databaseSSL = options.databaseSslMode !== 'disabled';
+    } else {
+      options.databaseSslMode = 'preferred'; // Default is preferred for agent-nodejs
+      options.databaseSSL = false; // Default is false for forest-express
+    }
 
     return options;
   }
 
-  private async testDatabaseConnection(dbConfig: DbConfig) {
+  protected async testDatabaseConnection(dbConfig: DbConfig) {
     this.spinner.start({ text: 'Testing connection to your database' });
     const connectionPromise = this.database
       .connect(dbConfig)

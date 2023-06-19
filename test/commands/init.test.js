@@ -415,6 +415,7 @@ describe('init command', () => {
                       message: 'Does your database require a SSL connection?',
                       type: 'confirm',
                       default: false,
+                      when: expect.any(Function),
                     },
                     {
                       name: 'mongoDBSRV',
