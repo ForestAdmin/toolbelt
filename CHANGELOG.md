@@ -1,3 +1,21 @@
+# [4.0.0](https://github.com/ForestAdmin/toolbelt/compare/v3.4.3...v4.0.0) (2023-06-19)
+
+
+### Bug Fixes
+
+* **project-create:** do not crash when SQL databases use self-signed certificates ([#591](https://github.com/ForestAdmin/toolbelt/issues/591)) ([36e8674](https://github.com/ForestAdmin/toolbelt/commit/36e867437ec04da9e0af566a8ff770e1f51256fa))
+
+
+### Features
+
+* **agent-nodejs:** toolbelt can now connect to SSL database via connection URI ([#604](https://github.com/ForestAdmin/toolbelt/issues/604)) ([58b0856](https://github.com/ForestAdmin/toolbelt/commit/58b08565486a680c0360073eab8fca7699db581f))
+* **node:** end the support of Node.js versions 10, 11, 12, 13 ([#592](https://github.com/ForestAdmin/toolbelt/issues/592)) ([9c17132](https://github.com/ForestAdmin/toolbelt/commit/9c171329cb038f98448249b780e97da4859b7a0d))
+
+
+### BREAKING CHANGES
+
+* **node:** users will have to upgrade to Node.js version 14+ to ensure a full compatibility
+
 # [4.0.0-beta.3](https://github.com/ForestAdmin/toolbelt/compare/v4.0.0-beta.2...v4.0.0-beta.3) (2023-06-14)
 
 
