@@ -1,3 +1,10 @@
+## [4.0.2](https://github.com/ForestAdmin/toolbelt/compare/v4.0.1...v4.0.2) (2023-06-30)
+
+
+### Bug Fixes
+
+* **security:** patch word-wrap dependency vulnerabilities ([#610](https://github.com/ForestAdmin/toolbelt/issues/610)) ([79796e7](https://github.com/ForestAdmin/toolbelt/commit/79796e7d2e142e8f206df3597e50bcaba477dc39))
+
 ## [4.0.1](https://github.com/ForestAdmin/toolbelt/compare/v4.0.0...v4.0.1) (2023-06-23)
 
 
