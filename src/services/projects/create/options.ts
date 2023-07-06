@@ -31,9 +31,9 @@ export function getDialect(options: ProjectCreateOptions): ProjectCreateOptions[
 
   if (dialect) return dialect;
 
-  const [, extractedDialect] = /(.*):\/\//.exec(url);
+  if (!url) return null;
 
-  console.log(extractedDialect);
+  const [, extractedDialect] = /(.*):\/\//.exec(url);
 
   if (['mysql2', 'mysql', 'mariadb'].includes(extractedDialect)) return 'mysql';
   if (['mssql', 'tedious'].includes(extractedDialect)) return 'mssql';
