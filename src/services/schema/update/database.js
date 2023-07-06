@@ -1,3 +1,5 @@
+const { getDialect } = require('../../projects/create/options');
+
 class Database {
   constructor({ assertPresent, mongodb, Sequelize, terminator }) {
     assertPresent({
@@ -27,22 +29,7 @@ class Database {
 
   // eslint-disable-next-line class-methods-use-this
   getDialect(dbConnectionUrl, dbDialect) {
-    if (dbConnectionUrl) {
-      if (dbConnectionUrl.startsWith('postgres://')) {
-        return 'postgres';
-      }
-      if (dbConnectionUrl.startsWith('mysql://')) {
-        return 'mysql';
-      }
-      if (dbConnectionUrl.startsWith('mssql://')) {
-        return 'mssql';
-      }
-      // NOTICE: For MongoDB can be "mongodb://" or "mongodb+srv://"
-      if (dbConnectionUrl.startsWith('mongodb')) {
-        return 'mongodb';
-      }
-    }
-    return dbDialect;
+    return getDialect({ databaseConnectionURL: dbConnectionUrl, databaseDialect: dbDialect });
   }
 
   connectToMongodb(options, isSSL) {

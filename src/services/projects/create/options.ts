@@ -30,10 +30,15 @@ export function getDialect(options: ProjectCreateOptions): ProjectCreateOptions[
   const { databaseDialect: dialect, databaseConnectionURL: url } = options;
 
   if (dialect) return dialect;
-  if (url?.startsWith('postgres://')) return 'postgres';
-  if (url?.startsWith('mssql://')) return 'mssql';
-  if (url?.startsWith('mongodb')) return 'mongodb';
-  if (url?.startsWith('mysql://') || url?.startsWith('mariadb://')) return 'mysql';
+
+  const [, extractedDialect] = /(.*):\/\//.exec(url);
+
+  console.log(extractedDialect);
+
+  if (['mysql2', 'mysql', 'mariadb'].includes(extractedDialect)) return 'mysql';
+  if (['mssql', 'tedious'].includes(extractedDialect)) return 'mssql';
+  if (['pg', 'postgres', 'postgresql'].includes(extractedDialect)) return 'postgres';
+  if (extractedDialect === 'mongodb') return 'mongodb';
 
   return null;
 }
