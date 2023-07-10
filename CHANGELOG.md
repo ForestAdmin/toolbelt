@@ -1,3 +1,10 @@
+# [4.1.0](https://github.com/ForestAdmin/toolbelt/compare/v4.0.2...v4.1.0) (2023-07-10)
+
+
+### Features
+
+* **environments:** allow to disable roles when creating an environment ([#605](https://github.com/ForestAdmin/toolbelt/issues/605)) ([bf5d9fa](https://github.com/ForestAdmin/toolbelt/commit/bf5d9fa85ee20c4b17fa3dbc2133a43ae62b26af))
+
 ## [4.0.2](https://github.com/ForestAdmin/toolbelt/compare/v4.0.1...v4.0.2) (2023-06-30)
 
 
