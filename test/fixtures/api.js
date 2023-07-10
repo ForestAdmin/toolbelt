@@ -450,7 +450,11 @@ module.exports = {
       .post('/api/environments', {
         data: {
           type: 'environments',
-          attributes: { name: 'Test', 'api-endpoint': 'https://test.forestadmin.com' },
+          attributes: {
+            name: 'Test',
+            'api-endpoint': 'https://test.forestadmin.com',
+            'are-roles-disabled': false,
+          },
           relationships: { project: { data: { type: 'projects', id: '2' } } },
         },
       })
