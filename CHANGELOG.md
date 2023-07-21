@@ -1,3 +1,10 @@
+## [4.1.1](https://github.com/ForestAdmin/toolbelt/compare/v4.1.0...v4.1.1) (2023-07-21)
+
+
+### Bug Fixes
+
+* orm_version and database_type are now optionnal on schema:apply to ensure v2 compatibility ([#612](https://github.com/ForestAdmin/toolbelt/issues/612)) ([5abc776](https://github.com/ForestAdmin/toolbelt/commit/5abc776cc6d7b04595ee61e81f18d6cb0e614a26))
+
 # [4.1.0](https://github.com/ForestAdmin/toolbelt/compare/v4.0.2...v4.1.0) (2023-07-10)
 
 
