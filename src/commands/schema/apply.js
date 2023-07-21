@@ -64,8 +64,8 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
     }
 
     const stack = this.joi.object().keys({
-      orm_version: this.joi.string().required(),
-      database_type: this.joi.string().required(),
+      orm_version: this.joi.string(),
+      database_type: this.joi.string(),
       framework_version: this.joi.string().allow(null),
       engine: this.joi.string().allow(null),
       engine_version: this.joi.string().allow(null),
