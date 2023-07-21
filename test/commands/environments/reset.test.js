@@ -49,7 +49,7 @@ describe('environments:reset', () => {
                   name: 'environment',
                   message: 'Select the remote environment you want to reset',
                   type: 'list',
-                  choices: ['name1'],
+                  choices: ['name1', 'test'],
                 },
               ],
               out: {
