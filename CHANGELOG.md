@@ -1,3 +1,10 @@
+## [4.1.2](https://github.com/ForestAdmin/toolbelt/compare/v4.1.1...v4.1.2) (2023-07-24)
+
+
+### Bug Fixes
+
+* **environments-list:** correctly display test environments ([#613](https://github.com/ForestAdmin/toolbelt/issues/613)) ([30acdc1](https://github.com/ForestAdmin/toolbelt/commit/30acdc1d6f45f243d41e2940b15062b96d85c1a2))
+
 ## [4.1.1](https://github.com/ForestAdmin/toolbelt/compare/v4.1.0...v4.1.1) (2023-07-21)
 
 
