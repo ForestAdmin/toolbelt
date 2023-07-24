@@ -29,7 +29,12 @@ class EnvironmentRenderer {
           { name: environment.name || '' },
           { url: environment.apiEndpoint || '' },
           { active: environment.isActive || '' },
-          { type: environment.type || '' },
+          {
+            type:
+              environment.type === 'remote' && environment.areRolesDisabled
+                ? 'test'
+                : environment.type || '',
+          },
           { liana: environment.lianaName || '' },
           { version: environment.lianaVersion || '' },
           { FOREST_ENV_SECRET: environment.secretKey || '' },

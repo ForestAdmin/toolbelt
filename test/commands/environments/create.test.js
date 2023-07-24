@@ -36,6 +36,39 @@ describe('environments:create', () => {
             },
           ],
         }));
+
+      it('should display test environment correctly', () =>
+        testCli({
+          env: testEnvWithoutSecret,
+          token: 'any',
+          commandClass: EnvironmentCreateCommand,
+          commandArgs: [
+            '-p',
+            '2',
+            '-n',
+            'Test',
+            '-u',
+            'https://test.forestadmin.com',
+            '--disableRoles',
+          ],
+          additionnalStep: plan =>
+            plan.replace('utils/keyGenerator', { generate: () => 'myAuthSecret' }),
+          api: [() => createEnvironmentValid(true)],
+          std: [
+            { out: 'ENVIRONMENT' },
+            { out: 'id' },
+            { out: 'name                Test' },
+            { out: 'url                 https://test.forestadmin.com' },
+            { out: 'active' },
+            { out: 'type                test' },
+            { out: 'liana' },
+            { out: 'version' },
+            { out: 'FOREST_AUTH_SECRET  myAuthSecret' },
+            {
+              out: 'FOREST_ENV_SECRET   2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
+            },
+          ],
+        }));
     });
 
     describe('with JSON format option', () => {
@@ -62,8 +95,10 @@ describe('environments:create', () => {
               out: {
                 name: 'Test',
                 apiEndpoint: 'https://test.forestadmin.com',
+                areRolesDisabled: false,
                 authSecret: 'myAuthSecret',
                 secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
+                type: 'remote',
               },
             },
           ],
