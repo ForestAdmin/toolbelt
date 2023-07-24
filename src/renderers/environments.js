@@ -30,7 +30,9 @@ class EnvironmentsRenderer {
             environment.name,
             // The table-cli library does not handle null values.
             environment.apiEndpoint || '',
-            environment.type,
+            environment.type === 'remote' && environment.areRolesDisabled
+              ? 'test'
+              : environment.type,
           ]);
         });
         this.logger.log(`${this.chalk.bold('ENVIRONMENTS')}`, ...table.toString().split('\n'));

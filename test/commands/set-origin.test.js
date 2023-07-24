@@ -46,7 +46,7 @@ describe('set origin', () => {
                 name: 'environment',
                 message: 'Select the environment you want to set as origin',
                 type: 'list',
-                choices: ['name1', 'name2'],
+                choices: ['name1', 'name2', 'test'],
               },
             ],
             out: {

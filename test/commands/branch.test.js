@@ -129,7 +129,7 @@ describe('branch', () => {
                   name: 'environment',
                   message: 'Select the remote environment you want as origin',
                   type: 'list',
-                  choices: ['name1', 'name2'],
+                  choices: ['name1', 'name2', 'test'],
                 },
               ],
               out: {
