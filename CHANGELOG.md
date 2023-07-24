@@ -1,3 +1,10 @@
+## [4.1.3](https://github.com/ForestAdmin/toolbelt/compare/v4.1.2...v4.1.3) (2023-07-24)
+
+
+### Bug Fixes
+
+* test environments being created are correctly flagged in the terminal ([#614](https://github.com/ForestAdmin/toolbelt/issues/614)) ([99a796a](https://github.com/ForestAdmin/toolbelt/commit/99a796a70e227fbbfd5341216581ce08228ffba5))
+
 ## [4.1.2](https://github.com/ForestAdmin/toolbelt/compare/v4.1.1...v4.1.2) (2023-07-24)
 
 
