@@ -45,7 +45,7 @@
     "mysql2": "2.3.0",
     "open": "7.3.0",
     "openid-client": "4.2.2",
-    "pg": "8.2.1",
+    "pg": "8.11.2",
     "pluralize": "8.0.0",
     "progress": "2.0.3",
     "saslprep": "1.0.3",
@@ -59,8 +59,8 @@
     "validate-npm-package-name": "3.0.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "14.1.0",
-    "@commitlint/config-conventional": "13.2.0",
+    "@commitlint/cli": "17.4.2",
+    "@commitlint/config-conventional": "17.4.2",
     "@oclif/dev-cli": "1.22.2",
     "@semantic-release/changelog": "6.0.1",
     "@semantic-release/git": "10.0.1",
