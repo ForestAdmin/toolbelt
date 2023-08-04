@@ -1,3 +1,10 @@
+## [4.1.5](https://github.com/ForestAdmin/toolbelt/compare/v4.1.4...v4.1.5) (2023-08-04)
+
+
+### Bug Fixes
+
+* **security:** patch semver dependency vulnerabilities ([#619](https://github.com/ForestAdmin/toolbelt/issues/619)) ([a65fdf5](https://github.com/ForestAdmin/toolbelt/commit/a65fdf5fafed8416a8a865950e3f7b1701e164f2))
+
 ## [4.1.4](https://github.com/ForestAdmin/toolbelt/compare/v4.1.3...v4.1.4) (2023-08-04)
 
 
