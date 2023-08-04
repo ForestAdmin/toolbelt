@@ -1,3 +1,13 @@
+## [4.1.4](https://github.com/ForestAdmin/toolbelt/compare/v4.1.3...v4.1.4) (2023-08-04)
+
+
+### Bug Fixes
+
+* **security:** patch dottie dependency vulnerabilities ([#618](https://github.com/ForestAdmin/toolbelt/issues/618)) ([827fde2](https://github.com/ForestAdmin/toolbelt/commit/827fde2a04bbc65a58dc379a571c14e9582a058e))
+* **security:** patch semver dependency vulnerabilities ([#615](https://github.com/ForestAdmin/toolbelt/issues/615)) ([2b598b3](https://github.com/ForestAdmin/toolbelt/commit/2b598b319543861d77bbb83b527059ce340ad39c))
+* **security:** patch tough-cookie dependency vulnerabilities ([#616](https://github.com/ForestAdmin/toolbelt/issues/616)) ([002bb89](https://github.com/ForestAdmin/toolbelt/commit/002bb89d0df4a4f9a9af141c2818b31ba9a6c9ca))
+* **security:** patch word-wrap dependency vulnerabilities ([#617](https://github.com/ForestAdmin/toolbelt/issues/617)) ([f20b6dc](https://github.com/ForestAdmin/toolbelt/commit/f20b6dc62d9a129a1ab541b6b0e50be2d996f2aa))
+
 ## [4.1.3](https://github.com/ForestAdmin/toolbelt/compare/v4.1.2...v4.1.3) (2023-07-24)
 
 
