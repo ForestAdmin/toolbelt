@@ -41,7 +41,7 @@
     "jwt-decode": "2.2.0",
     "lodash": "4.17.21",
     "mkdirp": "1.0.4",
-    "mongodb": "3.6.3",
+    "mongodb": "3.6.12",
     "mysql2": "2.3.0",
     "open": "7.3.0",
     "openid-client": "4.2.2",
