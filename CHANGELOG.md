@@ -1,3 +1,15 @@
+# [4.2.0](https://github.com/ForestAdmin/toolbelt/compare/v4.1.7...v4.2.0) (2023-09-01)
+
+
+### Bug Fixes
+
+* **security:** generate projects with sequelize version 6 ([#623](https://github.com/ForestAdmin/toolbelt/issues/623)) ([343ac7c](https://github.com/ForestAdmin/toolbelt/commit/343ac7c20eb24d293f9741d3aba79b24a81ffd63))
+
+
+### Features
+
+* generate old project with latest version of forest-express-xxx ([#626](https://github.com/ForestAdmin/toolbelt/issues/626)) ([2d2d023](https://github.com/ForestAdmin/toolbelt/commit/2d2d0238abf3a3bd1235cab4d57aa0e6525bdb8c))
+
 ## [4.1.7](https://github.com/ForestAdmin/toolbelt/compare/v4.1.6...v4.1.7) (2023-09-01)
 
 
