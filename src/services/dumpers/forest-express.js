@@ -83,7 +83,7 @@ class ForestExpress extends AbstractDumper {
       [`forest-express-${orm}`]: '^8.0.0',
       morgan: '1.9.1',
       'require-all': '^3.0.0',
-      sequelize: '~5.15.1',
+      sequelize: '~6.29.0',
     };
 
     if (dbDialect) {
