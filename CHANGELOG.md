@@ -1,3 +1,10 @@
+## [4.1.6](https://github.com/ForestAdmin/toolbelt/compare/v4.1.5...v4.1.6) (2023-09-01)
+
+
+### Bug Fixes
+
+* **security:** patch mongodb dependency vulnerabilities ([#620](https://github.com/ForestAdmin/toolbelt/issues/620)) ([a14b619](https://github.com/ForestAdmin/toolbelt/commit/a14b61956d1cd87ca778c52d6e77a63a9ca55bee))
+
 ## [4.1.5](https://github.com/ForestAdmin/toolbelt/compare/v4.1.4...v4.1.5) (2023-08-04)
 
 
