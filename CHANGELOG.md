@@ -1,3 +1,10 @@
+## [4.1.7](https://github.com/ForestAdmin/toolbelt/compare/v4.1.6...v4.1.7) (2023-09-01)
+
+
+### Bug Fixes
+
+* **schema:update:** correct a typo in an instruction ([#622](https://github.com/ForestAdmin/toolbelt/issues/622)) ([e22191f](https://github.com/ForestAdmin/toolbelt/commit/e22191f0141aca4ca8dbc0502b4026e0b928195e))
+
 ## [4.1.6](https://github.com/ForestAdmin/toolbelt/compare/v4.1.5...v4.1.6) (2023-09-01)
 
 
