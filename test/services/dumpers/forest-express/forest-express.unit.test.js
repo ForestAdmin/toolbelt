@@ -809,7 +809,7 @@ describe('services > dumper (unit)', () => {
 
       expect(() => dumper.checkLianaCompatiblityForUpdate()).toThrow(
         new IncompatibleLianaForUpdateError(
-          'Your project is not compatible with the `lforest schema:update` command. You need to use an agent version greater than 7.0.0.',
+          'Your project is not compatible with the `forest schema:update` command. You need to use an agent version greater than 7.0.0.',
         ),
       );
     });
@@ -826,7 +826,7 @@ describe('services > dumper (unit)', () => {
 
       expect(() => dumper.checkLianaCompatiblityForUpdate()).toThrow(
         new IncompatibleLianaForUpdateError(
-          'Your project is not compatible with the `lforest schema:update` command. You need to use an agent version greater than 7.0.0.',
+          'Your project is not compatible with the `forest schema:update` command. You need to use an agent version greater than 7.0.0.',
         ),
       );
     });
