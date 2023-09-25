@@ -54,7 +54,7 @@
     "stdout-stderr": "0.1.13",
     "superagent": "5.1.0",
     "superagent-promise": "1.1.0",
-    "tedious": "11.8.0",
+    "tedious": "16.4.1",
     "uuid": "8.0.0",
     "validate-npm-package-name": "3.0.0"
   },
