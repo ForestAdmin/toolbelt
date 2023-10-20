@@ -1,3 +1,10 @@
+## [4.2.1](https://github.com/ForestAdmin/toolbelt/compare/v4.2.0...v4.2.1) (2023-10-20)
+
+
+### Bug Fixes
+
+* **security:** patch @babel/traverse dependency vulnerabilities ([#641](https://github.com/ForestAdmin/toolbelt/issues/641)) ([577308f](https://github.com/ForestAdmin/toolbelt/commit/577308f4ab83a506076088e84feb9d860c73dfc0))
+
 # [4.2.0](https://github.com/ForestAdmin/toolbelt/compare/v4.1.7...v4.2.0) (2023-09-01)
 
 
