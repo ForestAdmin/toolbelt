@@ -1,3 +1,10 @@
+## [4.2.2](https://github.com/ForestAdmin/toolbelt/compare/v4.2.1...v4.2.2) (2023-10-20)
+
+
+### Bug Fixes
+
+* fix schema serialization on schema:apply for SA field hook property ([#642](https://github.com/ForestAdmin/toolbelt/issues/642)) ([16e6d7b](https://github.com/ForestAdmin/toolbelt/commit/16e6d7bcbde15c58ec3c7e08608b718fc0e3b676))
+
 ## [4.2.1](https://github.com/ForestAdmin/toolbelt/compare/v4.2.0...v4.2.1) (2023-10-20)
 
 
