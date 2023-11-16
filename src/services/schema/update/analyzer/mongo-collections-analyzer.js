@@ -186,7 +186,7 @@ class MongoCollectionsAnalyzer {
       if (err) {
         if (
           err.message &&
-          (err.message.startsWith('CMD_NOT_ALLOWED') || err.message.startsWith('MapReduce'))
+          (err.message.startsWith('CMD_NOT_ALLOWED') || /mapreduce/gim.test(err.message))
         ) {
           return resolve(MAP_REDUCE_ERROR_STRING);
         }
