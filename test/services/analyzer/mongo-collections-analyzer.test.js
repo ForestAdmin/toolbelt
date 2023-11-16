@@ -1206,6 +1206,26 @@ describe('services > mongoCollectionsAnalyzer', () => {
         });
       });
 
+      describe('when there is a message containing mapReduce', () => {
+        it('should resolve an error and display a log', async () => {
+          expect.assertions(2);
+
+          const analyzer = new MongoCollectionsAnalyzer(makeContext());
+
+          const resolve = jest.fn();
+          const reject = jest.fn();
+
+          const callback = analyzer.mapReduceErrors(resolve, reject);
+
+          // Cosmos db from Azure error message
+          const error = { message: 'MongoError: Command mapReduce not supported.' };
+          callback(error, null);
+
+          expect(resolve).toHaveBeenCalledTimes(1);
+          expect(resolve).toHaveBeenLastCalledWith('MapReduceError');
+        });
+      });
+
       describe('when there is "CommandNotSupportedOnView" codeName', () => {
         it('should resolve an error', async () => {
           expect.assertions(2);
