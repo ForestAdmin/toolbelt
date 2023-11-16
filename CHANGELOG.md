@@ -1,3 +1,10 @@
+## [4.2.3](https://github.com/ForestAdmin/toolbelt/compare/v4.2.2...v4.2.3) (2023-11-16)
+
+
+### Bug Fixes
+
+* **onboarding:** users can now onboard on cosmos nosql databases ([#648](https://github.com/ForestAdmin/toolbelt/issues/648)) ([d67c5e2](https://github.com/ForestAdmin/toolbelt/commit/d67c5e2b8e5496e903bf614fdeb33bdfccbd74ec))
+
 ## [4.2.2](https://github.com/ForestAdmin/toolbelt/compare/v4.2.1...v4.2.2) (2023-10-20)
 
 
