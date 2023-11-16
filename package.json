@@ -52,7 +52,7 @@
     "sequelize": "6.32.1",
     "spinnies": "0.5.1",
     "stdout-stderr": "0.1.13",
-    "superagent": "5.1.0",
+    "superagent": "8.1.2",
     "superagent-promise": "1.1.0",
     "tedious": "11.8.0",
     "uuid": "8.0.0",
