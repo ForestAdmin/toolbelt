@@ -10,7 +10,7 @@ export default abstract class AbstractDumper {
 
   private readonly fs;
 
-  private readonly logger: Logger;
+  protected readonly logger: Logger;
 
   private readonly chalk: Chalk;
 

@@ -6,6 +6,7 @@ import rimraf from 'rimraf';
 import defaultPlan from '../../../../src/context/plan';
 import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs';
 import languages from '../../../../src/utils/languages';
+import deepNestedSemiColumn from '../../analyzer/expected/mongo/db-analysis-output/deep-nested-fields-semicolumn.expected.json';
 import deepNested from '../../analyzer/expected/mongo/db-analysis-output/deep-nested-fields.expected.json';
 import hasMany from '../../analyzer/expected/mongo/db-analysis-output/hasmany.expected.json';
 import manyObjectIdFields from '../../analyzer/expected/mongo/db-analysis-output/many-objectid-fields.expected.json';
@@ -96,6 +97,14 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
             file: {
               model: 'persons',
               expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/sub-documents-with-ids.expected.${language.fileExtension}`,
+            },
+          },
+          {
+            name: 'should not dump any fields containing semicolumn',
+            schema: deepNestedSemiColumn,
+            file: {
+              model: 'persons',
+              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/deep-nested-semicolumn.expected.${language.fileExtension}`,
             },
           },
         ];

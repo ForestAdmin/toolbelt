@@ -44,6 +44,7 @@ export default class AgentNodeJs extends AbstractDumper {
       lodash,
       strings,
       toValidPackageName,
+      logger,
     } = context;
 
     assertPresent({
@@ -54,6 +55,7 @@ export default class AgentNodeJs extends AbstractDumper {
       lodash,
       strings,
       toValidPackageName,
+      logger,
     });
 
     super(context);
@@ -249,6 +251,28 @@ export default class AgentNodeJs extends AbstractDumper {
     );
   }
 
+  removeNonCompliantFields(collectionName: string, fieldsDefinition: any) {
+    if (typeof fieldsDefinition !== 'string') {
+      if (Array.isArray(fieldsDefinition)) {
+        fieldsDefinition.forEach(fieldDefinition => {
+          this.removeNonCompliantFields(collectionName, fieldDefinition);
+        });
+      } else {
+        Object.entries(fieldsDefinition).forEach(([key, fieldDefinition]) => {
+          if (key.includes(':')) {
+            this.logger.warn(
+              `Ignoring field ${key} from collection ${collectionName} as it contains semi column and is not valid.`,
+            );
+
+            delete fieldsDefinition[key];
+          } else {
+            this.removeNonCompliantFields(collectionName, fieldDefinition);
+          }
+        });
+      }
+    }
+  }
+
   private computeModelsConfiguration(language: Language, schema: any): Array<ModelConfiguration> {
     const collectionNamesSorted = Object.keys(schema).sort();
 
@@ -257,11 +281,23 @@ export default class AgentNodeJs extends AbstractDumper {
       const modelFileName = `${this.lodash.kebabCase(collectionName)}`;
       const modelPath = `models/${modelFileName}.${language.fileExtension}`;
 
+      // use reducer
       const fieldsDefinition = fields.map(field => {
         return {
           ...field,
           ref: field.ref && this.strings.transformToCamelCaseSafeString(field.ref),
         };
+      });
+
+      fieldsDefinition.forEach((fieldDefinition, index) => {
+        if (fieldDefinition.name.includes(':')) {
+          this.logger.warn(
+            `Ignoring field ${fieldDefinition.name} from collection ${collectionName} as it contains semi column and is not valid.`,
+          );
+          delete fieldsDefinition[index];
+        } else if (typeof fieldDefinition.type !== 'string') {
+          this.removeNonCompliantFields(collectionName, fieldDefinition.type);
+        }
       });
 
       return {
