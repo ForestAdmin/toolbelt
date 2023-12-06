@@ -251,11 +251,11 @@ export default class AgentNodeJs extends AbstractDumper {
     );
   }
 
-  removeNonCompliantFields(collectionName: string, fieldsDefinition: any) {
+  private removeNonCompliantNestedFields(collectionName: string, fieldsDefinition: any) {
     if (typeof fieldsDefinition !== 'string') {
       if (Array.isArray(fieldsDefinition)) {
         fieldsDefinition.forEach(fieldDefinition => {
-          this.removeNonCompliantFields(collectionName, fieldDefinition);
+          this.removeNonCompliantNestedFields(collectionName, fieldDefinition);
         });
       } else {
         Object.entries(fieldsDefinition).forEach(([key, fieldDefinition]) => {
@@ -266,11 +266,31 @@ export default class AgentNodeJs extends AbstractDumper {
 
             delete fieldsDefinition[key];
           } else {
-            this.removeNonCompliantFields(collectionName, fieldDefinition);
+            this.removeNonCompliantNestedFields(collectionName, fieldDefinition);
           }
         });
       }
     }
+  }
+
+  private removeNonCompliantFields(collectionName, fieldsDefinition) {
+    const compliantFieldsDefinition = JSON.parse(JSON.stringify(fieldsDefinition));
+
+    return compliantFieldsDefinition.reduce((correctFieldsDefinitions, definition) => {
+      if (definition.name.includes(':')) {
+        this.logger.warn(
+          `Ignoring field ${definition.name} from collection ${collectionName} as it contains semi column and is not valid.`,
+        );
+      } else {
+        correctFieldsDefinitions.push(definition);
+
+        if (typeof definition.type !== 'string') {
+          this.removeNonCompliantNestedFields(collectionName, definition.type);
+        }
+      }
+
+      return correctFieldsDefinitions;
+    }, []);
   }
 
   private computeModelsConfiguration(language: Language, schema: any): Array<ModelConfiguration> {
@@ -289,21 +309,15 @@ export default class AgentNodeJs extends AbstractDumper {
         };
       });
 
-      fieldsDefinition.forEach((fieldDefinition, index) => {
-        if (fieldDefinition.name.includes(':')) {
-          this.logger.warn(
-            `Ignoring field ${fieldDefinition.name} from collection ${collectionName} as it contains semi column and is not valid.`,
-          );
-          delete fieldsDefinition[index];
-        } else if (typeof fieldDefinition.type !== 'string') {
-          this.removeNonCompliantFields(collectionName, fieldDefinition.type);
-        }
-      });
+      const compliantFieldsDefinition = this.removeNonCompliantFields(
+        collectionName,
+        fieldsDefinition,
+      );
 
       return {
         modelName: this.strings.transformToCamelCaseSafeString(collectionName),
         collectionName,
-        fields: fieldsDefinition,
+        fields: compliantFieldsDefinition,
         timestamps: options.timestamps,
         modelFileName,
         modelPath,

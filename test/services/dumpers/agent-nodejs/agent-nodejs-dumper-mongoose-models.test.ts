@@ -37,9 +37,16 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
       language,
     };
 
-    const injectedContext = Context.execute(defaultPlan);
+    const injectedContext = Context.execute(defaultPlan) as any;
+
+    const loggerWarnSpy = jest.spyOn(injectedContext.logger, 'warn');
+
     const dumper = new AgentNodeJsDumper(injectedContext);
     await dumper.dump(config, schema);
+
+    return {
+      loggerWarnSpy,
+    };
   }
 
   describe.each([languages.Javascript, languages.Typescript])('language: $name', language => {
@@ -123,6 +130,25 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
           );
 
           expect(generatedFile).toStrictEqual(expectedFile);
+        });
+
+        it('should warn information when a field containing semicolumn has been ignored', async () => {
+          expect.assertions(4);
+
+          rimraf.sync(`${appRoot}/test-output/${language.name}/mongodb/`);
+
+          const { loggerWarnSpy } = await dump(language, deepNestedSemiColumn);
+
+          expect(loggerWarnSpy).toHaveBeenCalledTimes(3);
+          expect(loggerWarnSpy).toHaveBeenCalledWith(
+            'Ignoring field name:semicolumn from collection persons as it contains semi column and is not valid.',
+          );
+          expect(loggerWarnSpy).toHaveBeenCalledWith(
+            'Ignoring field answer:semicolumn from collection persons as it contains semi column and is not valid.',
+          );
+          expect(loggerWarnSpy).toHaveBeenCalledWith(
+            'Ignoring field so:semicolumn from collection persons as it contains semi column and is not valid.',
+          );
         });
       });
     });
