@@ -284,7 +284,7 @@ export default class AgentNodeJs extends AbstractDumper {
       } else {
         correctFieldsDefinitions.push(definition);
 
-        if (typeof definition.type !== 'string') {
+        if (definition.type && typeof definition.type !== 'string') {
           this.removeNonCompliantNestedFields(collectionName, definition.type);
         }
       }
