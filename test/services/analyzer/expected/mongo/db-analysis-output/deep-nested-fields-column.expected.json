@@ -2,7 +2,7 @@
   "persons": {
     "fields": [
       {
-        "name": "name:semicolumn",
+        "name": "name:column",
         "type": "String"
       },
       {
@@ -24,7 +24,7 @@
                   "_id": "Mongoose.Schema.Types.ObjectId",
                   "name": "String",
                   "propGroup": {
-                    "answer:semicolumn": "Boolean",
+                    "answer:column": "Boolean",
                     "date": "Date",
                     "sentence": "String",
                     "number": "Number"
@@ -40,7 +40,7 @@
                     "sentence": "String",
                     "number": "Number"
                   },
-                  "so:semicolumn": {
+                  "so:column": {
                     "nested": {
                       "arrayMixed": [
                         "Object"

@@ -6,7 +6,7 @@ import rimraf from 'rimraf';
 import defaultPlan from '../../../../src/context/plan';
 import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs';
 import languages from '../../../../src/utils/languages';
-import deepNestedSemiColumn from '../../analyzer/expected/mongo/db-analysis-output/deep-nested-fields-semicolumn.expected.json';
+import deepNestedColumn from '../../analyzer/expected/mongo/db-analysis-output/deep-nested-fields-column.expected.json';
 import deepNested from '../../analyzer/expected/mongo/db-analysis-output/deep-nested-fields.expected.json';
 import hasMany from '../../analyzer/expected/mongo/db-analysis-output/hasmany.expected.json';
 import manyObjectIdFields from '../../analyzer/expected/mongo/db-analysis-output/many-objectid-fields.expected.json';
@@ -107,11 +107,11 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
             },
           },
           {
-            name: 'should not dump any fields containing semicolumn',
-            schema: deepNestedSemiColumn,
+            name: 'should not dump any fields containing column',
+            schema: deepNestedColumn,
             file: {
               model: 'persons',
-              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/deep-nested-semicolumn.expected.${language.fileExtension}`,
+              expectedFilePath: `${__dirname}/expected/${language.name}/mongo-models/deep-nested-column.expected.${language.fileExtension}`,
             },
           },
         ];
@@ -132,22 +132,22 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
           expect(generatedFile).toStrictEqual(expectedFile);
         });
 
-        it('should warn information when a field containing semicolumn has been ignored', async () => {
+        it('should warn information when a field containing column has been ignored', async () => {
           expect.assertions(4);
 
           rimraf.sync(`${appRoot}/test-output/${language.name}/mongodb/`);
 
-          const { loggerWarnSpy } = await dump(language, deepNestedSemiColumn);
+          const { loggerWarnSpy } = await dump(language, deepNestedColumn);
 
           expect(loggerWarnSpy).toHaveBeenCalledTimes(3);
           expect(loggerWarnSpy).toHaveBeenCalledWith(
-            'Ignoring field name:semicolumn from collection persons as it contains semi column and is not valid.',
+            'Ignoring field name:column from collection persons as it contains semi column and is not valid.',
           );
           expect(loggerWarnSpy).toHaveBeenCalledWith(
-            'Ignoring field answer:semicolumn from collection persons as it contains semi column and is not valid.',
+            'Ignoring field answer:column from collection persons as it contains semi column and is not valid.',
           );
           expect(loggerWarnSpy).toHaveBeenCalledWith(
-            'Ignoring field so:semicolumn from collection persons as it contains semi column and is not valid.',
+            'Ignoring field so:column from collection persons as it contains semi column and is not valid.',
           );
         });
       });
