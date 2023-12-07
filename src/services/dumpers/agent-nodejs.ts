@@ -301,7 +301,6 @@ export default class AgentNodeJs extends AbstractDumper {
       const modelFileName = `${this.lodash.kebabCase(collectionName)}`;
       const modelPath = `models/${modelFileName}.${language.fileExtension}`;
 
-      // use reducer
       const fieldsDefinition = fields.map(field => {
         return {
           ...field,
