@@ -1,12 +1,12 @@
 import Mongoose from 'mongoose';
 
-interface {{capitalise modelName}}Interface {
+interface {{capitalise collectionName}}Interface {
 {{#each fields as |field|}}
   {{wsc field.name}}: {{#if (isObject field.type)}}{{>renderNestedInterface type=field.type level=1}}{{else}}{{toInterfaceType field.type}}{{/if}};
 {{/each}}
 }
 
-const {{modelName}}Schema = new Mongoose.Schema({
+const {{collectionName}}Schema = new Mongoose.Schema({
 {{#each fields as |field|}}
   {{wsc field.name}}: {{#if field.ref}}{ type: {{field.type}}, ref: '{{field.ref}}' }{{else if (isObject field.type)}}{{>renderNested type=field.type level=1}}{{else}}{{field.type}}{{/if}},
 {{/each}}
@@ -14,4 +14,4 @@ const {{modelName}}Schema = new Mongoose.Schema({
   timestamps: {{timestamps}},
 });
 
-export { {{capitalise modelName}}Interface, {{modelName}}Schema };
+export { {{capitalise collectionName}}Interface, {{collectionName}}Schema };
