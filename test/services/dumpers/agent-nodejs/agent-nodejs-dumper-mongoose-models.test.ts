@@ -141,13 +141,13 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
 
           expect(loggerWarnSpy).toHaveBeenCalledTimes(3);
           expect(loggerWarnSpy).toHaveBeenCalledWith(
-            'Ignoring field name:column from collection persons as it contains semi column and is not valid.',
+            'Ignoring field name:column from collection persons as it contains column and is not valid.',
           );
           expect(loggerWarnSpy).toHaveBeenCalledWith(
-            'Ignoring field answer:column from collection persons as it contains semi column and is not valid.',
+            'Ignoring field answer:column from collection persons as it contains column and is not valid.',
           );
           expect(loggerWarnSpy).toHaveBeenCalledWith(
-            'Ignoring field so:column from collection persons as it contains semi column and is not valid.',
+            'Ignoring field so:column from collection persons as it contains column and is not valid.',
           );
         });
       });
