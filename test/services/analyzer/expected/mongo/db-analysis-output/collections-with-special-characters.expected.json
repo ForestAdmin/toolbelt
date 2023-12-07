@@ -1,0 +1,28 @@
+{
+  "_special:character": {
+    "fields": [{
+        "name": "name",
+        "type": "String"
+    }],
+    "options": {
+      "timestamps": false
+    },
+    "primaryKeys": [
+      "_id"
+    ],
+    "references": []
+  },
+  ":otherSpecial*character": {
+    "fields": [{
+      "name": "age",
+      "type": "Number"
+    }],
+    "options": {
+      "timestamps": false
+    },
+    "primaryKeys": [
+      "_id"
+    ],
+    "references": []
+  }
+}

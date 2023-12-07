@@ -6,6 +6,7 @@ import rimraf from 'rimraf';
 import defaultPlan from '../../../../src/context/plan';
 import AgentNodeJsDumper from '../../../../src/services/dumpers/agent-nodejs';
 import languages from '../../../../src/utils/languages';
+import collectionsWithSpecialCharacters from '../../analyzer/expected/mongo/db-analysis-output/collections-with-special-characters.expected.json';
 import deepNestedColumn from '../../analyzer/expected/mongo/db-analysis-output/deep-nested-fields-column.expected.json';
 import deepNested from '../../analyzer/expected/mongo/db-analysis-output/deep-nested-fields.expected.json';
 import hasMany from '../../analyzer/expected/mongo/db-analysis-output/hasmany.expected.json';
@@ -149,6 +150,43 @@ describe('services > dumpers > agentNodejsDumper > mongoose models', () => {
           expect(loggerWarnSpy).toHaveBeenCalledWith(
             'Ignoring field so:column from collection persons as it contains column and is not valid.',
           );
+        });
+
+        it('should correctly dump interfaces and classes when collection has special characters', async () => {
+          expect.assertions(3);
+
+          rimraf.sync(`${appRoot}/test-output/${language.name}/mongodb/`);
+
+          await dump(language, collectionsWithSpecialCharacters);
+
+          const expectedIndex = fs.readFileSync(
+            `${__dirname}/expected/${language.name}/mongo-models/collection-special-characters/index.${language.fileExtension}`,
+            'utf-8',
+          );
+          const generatedIndex = fs.readFileSync(
+            `${appRoot}/test-output/${language.name}/mongodb/models/index.${language.fileExtension}`,
+            'utf8',
+          );
+          const expectedOtherSpecialCharacter = fs.readFileSync(
+            `${__dirname}/expected/${language.name}/mongo-models/collection-special-characters/other-special-character.expected.${language.fileExtension}`,
+            'utf-8',
+          );
+          const generatedOtherSpecialCharacter = fs.readFileSync(
+            `${appRoot}/test-output/${language.name}/mongodb/models/other-special-character.${language.fileExtension}`,
+            'utf8',
+          );
+          const expectedSpecialCharacter = fs.readFileSync(
+            `${__dirname}/expected/${language.name}/mongo-models/collection-special-characters/special-character.expected.${language.fileExtension}`,
+            'utf-8',
+          );
+          const generatedSpecialCharacter = fs.readFileSync(
+            `${appRoot}/test-output/${language.name}/mongodb/models/special-character.${language.fileExtension}`,
+            'utf8',
+          );
+
+          expect(generatedIndex).toStrictEqual(expectedIndex);
+          expect(generatedSpecialCharacter).toStrictEqual(expectedSpecialCharacter);
+          expect(generatedOtherSpecialCharacter).toStrictEqual(expectedOtherSpecialCharacter);
         });
       });
     });
