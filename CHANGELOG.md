@@ -1,3 +1,10 @@
+## [4.2.5](https://github.com/ForestAdmin/toolbelt/compare/v4.2.4...v4.2.5) (2023-12-07)
+
+
+### Bug Fixes
+
+* **dumper:** ignore mongodb fields that includes column and log warning ([#652](https://github.com/ForestAdmin/toolbelt/issues/652)) ([e940447](https://github.com/ForestAdmin/toolbelt/commit/e940447ce76d2a0ca4708c293e0b2a897675e136))
+
 ## [4.2.4](https://github.com/ForestAdmin/toolbelt/compare/v4.2.3...v4.2.4) (2023-12-07)
 
 
