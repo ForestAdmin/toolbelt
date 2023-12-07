@@ -1,3 +1,10 @@
+## [4.2.4](https://github.com/ForestAdmin/toolbelt/compare/v4.2.3...v4.2.4) (2023-12-07)
+
+
+### Bug Fixes
+
+* **dumper:** wrap some special character within quotes when dumping mongoose schema ([#651](https://github.com/ForestAdmin/toolbelt/issues/651)) ([d998bf1](https://github.com/ForestAdmin/toolbelt/commit/d998bf1cb45becaf722e95c935a70415d3c31942))
+
 ## [4.2.3](https://github.com/ForestAdmin/toolbelt/compare/v4.2.2...v4.2.3) (2023-11-16)
 
 
