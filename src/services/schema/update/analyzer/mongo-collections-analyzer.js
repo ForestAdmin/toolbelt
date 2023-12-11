@@ -314,6 +314,10 @@ class MongoCollectionsAnalyzer {
   }
 
   static sortFieldsInAnalysis(fields) {
+    if (!Array.isArray(fields)) {
+      return fields;
+    }
+
     return fields.sort((a, b) => {
       if (a.name < b.name) {
         return -1;
