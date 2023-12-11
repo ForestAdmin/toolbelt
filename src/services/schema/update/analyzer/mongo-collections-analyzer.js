@@ -313,6 +313,18 @@ class MongoCollectionsAnalyzer {
     return this.analyzeMongoCollections(databaseConnection);
   }
 
+  static sortFieldsInAnalysis(fields) {
+    return fields.sort((a, b) => {
+      if (a.name < b.name) {
+        return -1;
+      }
+      if (a.name > b.name) {
+        return 1;
+      }
+      return 0;
+    });
+  }
+
   async analyzeMongoCollections(databaseConnection) {
     const collections = await databaseConnection.collections();
     if (collections.length === 0) {
@@ -353,7 +365,9 @@ class MongoCollectionsAnalyzer {
         }
 
         analysis = await this.applyRelationships(databaseConnection, analysis, collectionName);
-        schema[collectionName] = this.buildSchema(analysis);
+        schema[collectionName] = this.buildSchema(
+          MongoCollectionsAnalyzer.sortFieldsInAnalysis(analysis),
+        );
         return schema;
       },
       {},
