@@ -1,3 +1,15 @@
+# [4.3.0](https://github.com/ForestAdmin/toolbelt/compare/v4.2.5...v4.3.0) (2023-12-14)
+
+
+### Bug Fixes
+
+* **typescript:** correctly dump typescript files when collections name are complexe ([#653](https://github.com/ForestAdmin/toolbelt/issues/653)) ([269fc41](https://github.com/ForestAdmin/toolbelt/commit/269fc411985e754be7c9f9528de8c508c4567b39))
+
+
+### Features
+
+* **onboarding:** users can now generate project on mongodb serverless instances ([#654](https://github.com/ForestAdmin/toolbelt/issues/654)) ([d421a09](https://github.com/ForestAdmin/toolbelt/commit/d421a09df3ce9524e3491e6604dade2bc628296d))
+
 ## [4.2.5](https://github.com/ForestAdmin/toolbelt/compare/v4.2.4...v4.2.5) (2023-12-07)
 
 
