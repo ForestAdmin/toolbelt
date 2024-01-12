@@ -1,3 +1,10 @@
+## [4.3.1](https://github.com/ForestAdmin/toolbelt/compare/v4.3.0...v4.3.1) (2024-01-12)
+
+
+### Bug Fixes
+
+* **security:** patch follow-redirects dependency vulnerabilities ([#656](https://github.com/ForestAdmin/toolbelt/issues/656)) ([41444cd](https://github.com/ForestAdmin/toolbelt/commit/41444cdbec8dee883cee4c867c5ec3e17253ff28))
+
 # [4.3.0](https://github.com/ForestAdmin/toolbelt/compare/v4.2.5...v4.3.0) (2023-12-14)
 
 
