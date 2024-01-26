@@ -1,3 +1,10 @@
+## [4.3.2](https://github.com/ForestAdmin/toolbelt/compare/v4.3.1...v4.3.2) (2024-01-26)
+
+
+### Bug Fixes
+
+* **security:** patch lodash.set dependency vulnerabilities ([#657](https://github.com/ForestAdmin/toolbelt/issues/657)) ([4945ec8](https://github.com/ForestAdmin/toolbelt/commit/4945ec8acdfbd6404791b1a4d2c471b8f80de0ff))
+
 ## [4.3.1](https://github.com/ForestAdmin/toolbelt/compare/v4.3.0...v4.3.1) (2024-01-12)
 
 
