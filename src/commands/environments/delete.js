@@ -1,4 +1,4 @@
-const { Flags } = require('@oclif/core');
+const { Flags, Args } = require('@oclif/core');
 const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command').default;
 
@@ -82,11 +82,11 @@ DeleteCommand.flags = {
 };
 
 DeleteCommand.args = {
-  environmentId: {
+  environmentId: Args.string({
     name: 'environmentId',
     required: true,
     description: 'ID of an environment.',
-  },
+  }),
 };
 
 module.exports = DeleteCommand;
