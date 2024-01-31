@@ -126,7 +126,7 @@
   "scripts": {
     "lint": "eslint src test",
     "prepare": "husky install",
-    "prepack": "oclif-dev manifest",
+    "prepack": "yarn build && oclif manifest && oclif readme",
     "postpack": "rm -f oclif.manifest.json",
     "build": "tsc",
     "build:watch": "tsc-watch --onSuccess 'yarn postbuild'",
