@@ -32,6 +32,17 @@ services:
       - POSTGRES_USER=forest
       - POSTGRES_PASSWORD=secret
 
+  MySQL-MIN:
+    image: mysql:5.6
+    container_name: forestadmin_test_toolbelt_mysql_min
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: forestadmin_test_toolbelt-sequelize
+      MYSQL_USER: forest
+      MYSQL_PASSWORD: secret
+    ports:
+      - "8998:3306"
+
   MySQL-MAX:
     image: mysql:8.0
     container_name: forestadmin_test_toolbelt_mysql_max
