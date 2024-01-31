@@ -14,7 +14,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(PushCommand);
+    const parsed = await this.parse(PushCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
     let config;

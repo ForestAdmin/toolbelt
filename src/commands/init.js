@@ -70,7 +70,7 @@ class InitCommand extends AbstractAuthenticatedCommand {
   }
 
   async projectSelection() {
-    const parsed = this.parse(InitCommand);
+    const parsed = await this.parse(InitCommand);
     this.config = await withCurrentProject({
       ...this.env,
       ...parsed.flags,

@@ -1,4 +1,4 @@
-const { Flags } = require('@oclif/core');
+const { Flags, Args } = require('@oclif/core');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
@@ -68,7 +68,7 @@ class BranchCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(BranchCommand);
+    const parsed = await this.parse(BranchCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
     let config;
@@ -136,12 +136,12 @@ BranchCommand.flags = {
   }),
 };
 
-BranchCommand.args = [
-  {
+BranchCommand.args = {
+  BRANCH_NAME: Args.string({
     name: 'BRANCH_NAME',
     required: false,
     description: 'The name of the branch to create.',
-  },
-];
+  }),
+};
 
 module.exports = BranchCommand;

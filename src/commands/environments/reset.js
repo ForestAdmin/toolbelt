@@ -16,7 +16,7 @@ class ResetCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(ResetCommand);
+    const parsed = await this.parse(ResetCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
     let config;

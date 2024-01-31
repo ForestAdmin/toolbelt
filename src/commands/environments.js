@@ -14,7 +14,7 @@ class EnvironmentCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(EnvironmentCommand);
+    const parsed = await this.parse(EnvironmentCommand);
     const config = await withCurrentProject({ ...this.env, ...parsed.flags });
     const manager = new EnvironmentManager(config);
     const environments = await manager.listEnvironments();

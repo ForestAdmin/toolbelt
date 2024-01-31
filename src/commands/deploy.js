@@ -21,7 +21,7 @@ class DeployCommand extends AbstractAuthenticatedCommand {
    */
   async getConfig() {
     const envSecret = this.env.FOREST_ENV_SECRET;
-    const parsed = this.parse(DeployCommand);
+    const parsed = await this.parse(DeployCommand);
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
     const config = await withCurrentProject({ ...this.env, ...commandOptions });
 

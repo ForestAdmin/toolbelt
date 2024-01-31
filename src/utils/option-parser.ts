@@ -80,7 +80,7 @@ export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
   // Parse the command line arguments and flags.
   // @ts-expect-error: calling the argument parser from oclif is protected.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { args, flags } = instance.parse(instance.constructor) as any;
+  const { args, flags } = (await instance.parse(instance.constructor)) as any;
   const optionsFromCli = { ...args, ...flags };
 
   Object.entries(options).forEach(([k, v]) => {

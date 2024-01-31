@@ -1,3 +1,2 @@
-import core from '@oclif/core';
-
-module.exports = core.Command;
+// eslint-disable-next-line import/prefer-default-export
+export { run } from '@oclif/core';

@@ -44,7 +44,7 @@ export default class GetCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(GetCommand);
+    const parsed = await this.parse(GetCommand);
 
     const config = { ...this.env, ...(await parsed).flags, ...(await parsed).args };
 

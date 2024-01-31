@@ -16,7 +16,7 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
 
   async runAuthenticated() {
     const oclifExit = this.exit.bind(this);
-    const { flags: parsedFlags } = this.parse(ApplyCommand);
+    const { flags: parsedFlags } = await this.parse(ApplyCommand);
     const serializedSchema = this.readSchema();
     const secret = this.getEnvironmentSecret(parsedFlags);
     const authenticationToken = this.authenticator.getAuthToken();

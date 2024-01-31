@@ -17,7 +17,7 @@ class UpdateCommand extends AbstractCommand {
   }
 
   async run() {
-    const parsed = this.parse(UpdateCommand);
+    const parsed = await this.parse(UpdateCommand);
     const commandOptions = { ...parsed.flags, ...parsed.args };
 
     const options = {
@@ -58,6 +58,6 @@ UpdateCommand.flags = (() => {
   };
 })();
 
-UpdateCommand.args = [];
+UpdateCommand.args = {};
 
 module.exports = UpdateCommand;

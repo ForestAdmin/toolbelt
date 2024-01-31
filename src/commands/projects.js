@@ -12,7 +12,7 @@ class ProjectCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(ProjectCommand);
+    const parsed = await this.parse(ProjectCommand);
     const config = { ...this.env, ...parsed.flags };
     const manager = new ProjectManager(config);
     const projects = await manager.listProjects();

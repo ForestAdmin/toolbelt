@@ -17,7 +17,7 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(DeleteCommand);
+    const parsed = await this.parse(DeleteCommand);
     const config = { ...this.env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
 

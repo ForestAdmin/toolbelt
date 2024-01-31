@@ -1,4 +1,4 @@
-const { Flags } = require('@oclif/core');
+const { Flags, Args } = require('@oclif/core');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
@@ -15,7 +15,7 @@ class SetOriginCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(SetOriginCommand);
+    const parsed = await this.parse(SetOriginCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
     let config;
@@ -59,12 +59,12 @@ SetOriginCommand.flags = {
   }),
 };
 
-SetOriginCommand.args = [
-  {
+SetOriginCommand.args = {
+  ENVIRONMENT_NAME: Args.string({
     name: 'ENVIRONMENT_NAME',
     required: false,
     description: 'The environment to set as origin.',
-  },
-];
+  }),
+};
 
 module.exports = SetOriginCommand;

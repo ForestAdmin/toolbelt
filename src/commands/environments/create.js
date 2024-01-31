@@ -13,7 +13,7 @@ class CreateCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(CreateCommand);
+    const parsed = await this.parse(CreateCommand);
     const config = await withCurrentProject({ ...this.env, ...parsed.flags });
     const manager = new EnvironmentManager(config);
 

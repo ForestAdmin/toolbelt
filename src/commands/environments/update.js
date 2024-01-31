@@ -11,7 +11,7 @@ class UpdateCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(UpdateCommand);
+    const parsed = await this.parse(UpdateCommand);
     const config = { ...this.env, ...parsed.flags };
 
     if (config.name || config.url) {

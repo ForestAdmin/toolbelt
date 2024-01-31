@@ -1,4 +1,4 @@
-const { Flags } = require('@oclif/core');
+const { Flags, Args } = require('@oclif/core');
 const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command').default;
 
@@ -13,7 +13,7 @@ class GetCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(GetCommand);
+    const parsed = await this.parse(GetCommand);
     const config = { ...this.env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
 
@@ -37,12 +37,12 @@ GetCommand.flags = {
   }),
 };
 
-GetCommand.args = [
-  {
+GetCommand.args = {
+  environmentId: Args.string({
     name: 'environmentId',
     required: true,
     description: 'ID of an environment.',
-  },
-];
+  }),
+};
 
 module.exports = GetCommand;
