@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags } = require('@oclif/core');
 
 const EnvironmentManager = require('../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
@@ -27,12 +27,12 @@ EnvironmentCommand.aliases = ['environments:list'];
 EnvironmentCommand.description = 'Manage environments.';
 
 EnvironmentCommand.flags = {
-  projectId: flags.integer({
+  projectId: Flags.integer({
     char: 'p',
     description: 'Forest project ID.',
     default: null,
   }),
-  format: flags.string({
+  format: Flags.string({
     char: 'format',
     description: 'Ouput format.',
     options: ['table', 'json'],

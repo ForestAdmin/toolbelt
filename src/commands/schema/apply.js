@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags } = require('@oclif/core');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
 const JobStateChecker = require('../../services/job-state-checker');
@@ -139,7 +139,7 @@ ApplyCommand.description =
   'Apply the current schema of your repository to the specified environment (using your ".forestadmin-schema.json" file).';
 
 ApplyCommand.flags = {
-  secret: flags.string({
+  secret: Flags.string({
     char: 's',
     description: 'Environment secret of the project (FOREST_ENV_SECRET).',
     required: false,

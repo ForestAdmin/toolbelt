@@ -1,7 +1,7 @@
 import type ProjectRenderer from '../../renderers/project';
-import type * as Config from '@oclif/config';
+import type { Config } from '@oclif/core';
 
-import { flags } from '@oclif/command';
+import { Args, Flags } from '@oclif/core';
 
 import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
 import ProjectManager from '../../services/project-manager';
@@ -12,7 +12,7 @@ export default class GetCommand extends AbstractAuthenticatedCommand {
   private projectRenderer: ProjectRenderer;
 
   static override flags = {
-    format: flags.string({
+    format: Flags.string({
       char: 'f',
       description: 'Ouput format.',
       options: ['table', 'json'],
@@ -20,17 +20,17 @@ export default class GetCommand extends AbstractAuthenticatedCommand {
     }),
   };
 
-  static override args = [
-    {
+  static override args = {
+    projectId: Args.integer({
       name: 'projectId',
       required: true,
       description: 'ID of a project.',
-    },
-  ];
+    }),
+  };
 
   static override description = 'Get the configuration of a project.';
 
-  constructor(argv: string[], config: Config.IConfig, plan?) {
+  constructor(argv: string[], config: Config, plan?) {
     super(argv, config, plan);
 
     const { assertPresent, env, projectRenderer } = this.context;
@@ -46,7 +46,7 @@ export default class GetCommand extends AbstractAuthenticatedCommand {
   async runAuthenticated() {
     const parsed = this.parse(GetCommand);
 
-    const config = { ...this.env, ...parsed.flags, ...(parsed.args as { projectId: string }) };
+    const config = { ...this.env, ...(await parsed).flags, ...(await parsed).args };
 
     const manager = new ProjectManager(config);
     try {

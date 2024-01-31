@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags } = require('@oclif/core');
 const AbstractCommand = require('../../abstract-command').default;
 const StaticContext = require('../../context/static');
 
@@ -40,7 +40,7 @@ UpdateCommand.flags = (() => {
   });
 
   return {
-    config: flags.string({
+    config: Flags.string({
       char: 'c',
       default: () => path.join('config', 'databases.js'),
       dependsOn: [],
@@ -48,7 +48,7 @@ UpdateCommand.flags = (() => {
       exclusive: [],
       required: false,
     }),
-    outputDirectory: flags.string({
+    outputDirectory: Flags.string({
       char: 'o',
       dependsOn: [],
       description: 'Output directory where to generate new files.',

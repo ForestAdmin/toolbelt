@@ -1,4 +1,4 @@
-const { Config } = require('@oclif/config');
+const { Config } = require('@oclif/core');
 
 const AbstractCommand = require('../src/abstract-command').default;
 

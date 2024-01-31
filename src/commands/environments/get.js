@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags } = require('@oclif/core');
 const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command').default;
 
@@ -29,7 +29,7 @@ class GetCommand extends AbstractAuthenticatedCommand {
 GetCommand.description = 'Get the configuration of an environment.';
 
 GetCommand.flags = {
-  format: flags.string({
+  format: Flags.string({
     char: 'format',
     description: 'Output format.',
     options: ['table', 'json'],

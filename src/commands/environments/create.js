@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags } = require('@oclif/core');
 const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command').default;
 const withCurrentProject = require('../../services/with-current-project');
@@ -42,28 +42,28 @@ class CreateCommand extends AbstractAuthenticatedCommand {
 CreateCommand.description = 'Create a new environment.';
 
 CreateCommand.flags = {
-  projectId: flags.integer({
+  projectId: Flags.integer({
     char: 'p',
     description: 'Forest project ID.',
     default: null,
   }),
-  name: flags.string({
+  name: Flags.string({
     char: 'n',
     description: 'Environment name.',
     required: true,
   }),
-  url: flags.string({
+  url: Flags.string({
     char: 'u',
     description: 'Application URL.',
     required: true,
   }),
-  format: flags.string({
+  format: Flags.string({
     char: 'format',
     description: 'Ouput format.',
     options: ['table', 'json'],
     default: 'table',
   }),
-  disableRoles: flags.boolean({
+  disableRoles: Flags.boolean({
     description: 'Disable roles on new environment.',
     default: false,
   }),

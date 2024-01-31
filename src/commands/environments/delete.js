@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags } = require('@oclif/core');
 const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command').default;
 
@@ -75,18 +75,18 @@ class DeleteCommand extends AbstractAuthenticatedCommand {
 DeleteCommand.description = 'Delete an environment.';
 
 DeleteCommand.flags = {
-  force: flags.boolean({
+  force: Flags.boolean({
     char: 'force',
     description: 'Force delete.',
   }),
 };
 
-DeleteCommand.args = [
-  {
+DeleteCommand.args = {
+  environmentId: {
     name: 'environmentId',
     required: true,
     description: 'ID of an environment.',
   },
-];
+};
 
 module.exports = DeleteCommand;
