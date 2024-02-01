@@ -152,7 +152,6 @@ async function testCli({
     cleanMockedFile({ directory: temporaryDirectory });
   }
   process.chdir(oldcwd);
-  process.exitCode = 0;
 
   try {
     assertExitCode(actualError, expectedExitCode);
@@ -166,6 +165,8 @@ async function testCli({
     logStdOut();
     throw e;
   }
+
+  process.exitCode = 0;
 }
 
 module.exports = testCli;
