@@ -124,6 +124,7 @@ jobs:
         uses: cycjimmy/semantic-release-action@v3.4.2
         id: semantic
         with:
+          node-version: 18.14.0
           semantic_version: ${{ steps.semantic_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
