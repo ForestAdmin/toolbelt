@@ -1,3 +1,10 @@
+## [4.3.3](https://github.com/ForestAdmin/toolbelt/compare/v4.3.2...v4.3.3) (2024-02-05)
+
+
+### Bug Fixes
+
+* upgrade deprecated dependencies ([#658](https://github.com/ForestAdmin/toolbelt/issues/658)) ([bb8b30a](https://github.com/ForestAdmin/toolbelt/commit/bb8b30a2861f274ccff2d12bc8e695a2ac2c0570))
+
 ## [4.3.2](https://github.com/ForestAdmin/toolbelt/compare/v4.3.1...v4.3.2) (2024-01-26)
 
 
