@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags, Args } = require('@oclif/core');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
@@ -15,7 +15,7 @@ class SetOriginCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(SetOriginCommand);
+    const parsed = await this.parse(SetOriginCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
     let config;
@@ -54,17 +54,17 @@ SetOriginCommand.description =
   "Set an environment as your branch's origin. Your branch will build on top of that environment's layout.";
 
 SetOriginCommand.flags = {
-  help: flags.boolean({
+  help: Flags.boolean({
     description: 'Display usage information.',
   }),
 };
 
-SetOriginCommand.args = [
-  {
+SetOriginCommand.args = {
+  ENVIRONMENT_NAME: Args.string({
     name: 'ENVIRONMENT_NAME',
     required: false,
     description: 'The environment to set as origin.',
-  },
-];
+  }),
+};
 
 module.exports = SetOriginCommand;

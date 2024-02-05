@@ -1,12 +1,12 @@
 import type Authenticator from './services/authenticator';
-import type * as Config from '@oclif/config';
+import type { Config } from '@oclif/core';
 
 import AbstractCommand from './abstract-command';
 
 export default abstract class AbstractAuthenticatedCommand extends AbstractCommand {
   protected readonly authenticator: Authenticator;
 
-  constructor(argv: string[], config: Config.IConfig, plan?) {
+  constructor(argv: string[], config: Config, plan?) {
     super(argv, config, plan);
 
     const { assertPresent, authenticator } = this.context;

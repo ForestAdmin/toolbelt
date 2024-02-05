@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags } = require('@oclif/core');
 const AbstractCommand = require('../../abstract-command').default;
 const StaticContext = require('../../context/static');
 
@@ -17,7 +17,7 @@ class UpdateCommand extends AbstractCommand {
   }
 
   async run() {
-    const parsed = this.parse(UpdateCommand);
+    const parsed = await this.parse(UpdateCommand);
     const commandOptions = { ...parsed.flags, ...parsed.args };
 
     const options = {
@@ -40,7 +40,7 @@ UpdateCommand.flags = (() => {
   });
 
   return {
-    config: flags.string({
+    config: Flags.string({
       char: 'c',
       default: () => path.join('config', 'databases.js'),
       dependsOn: [],
@@ -48,7 +48,7 @@ UpdateCommand.flags = (() => {
       exclusive: [],
       required: false,
     }),
-    outputDirectory: flags.string({
+    outputDirectory: Flags.string({
       char: 'o',
       dependsOn: [],
       description: 'Output directory where to generate new files.',
@@ -58,6 +58,6 @@ UpdateCommand.flags = (() => {
   };
 })();
 
-UpdateCommand.args = [];
+UpdateCommand.args = {};
 
 module.exports = UpdateCommand;

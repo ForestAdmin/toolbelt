@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags, Args } = require('@oclif/core');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
@@ -52,7 +52,7 @@ class SwitchCommand extends AbstractAuthenticatedCommand {
 
   async getConfig() {
     const envSecret = this.env.FOREST_ENV_SECRET;
-    const parsed = this.parse(SwitchCommand);
+    const parsed = await this.parse(SwitchCommand);
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
 
     const config = await withCurrentProject({ ...this.env, ...commandOptions });
@@ -109,18 +109,18 @@ SwitchCommand.aliases = ['branches:switch'];
 SwitchCommand.description = 'Switch to another branch in your local development environment.';
 
 SwitchCommand.flags = {
-  help: flags.boolean({
+  help: Flags.boolean({
     description: 'Display usage information.',
   }),
 };
 
-SwitchCommand.args = [
-  {
+SwitchCommand.args = {
+  BRANCH_NAME: Args.string({
     name: 'BRANCH_NAME',
     required: false,
     description: 'The name of the local branch to set as current.',
-  },
-];
+  }),
+};
 
 SwitchCommand.aliases = ['branch:switch'];
 

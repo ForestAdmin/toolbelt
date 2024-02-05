@@ -1,7 +1,5 @@
 /* eslint-disable max-classes-per-file */
-import type { IConfig } from '@oclif/config';
-
-import { Config } from '@oclif/config';
+import { Config } from '@oclif/core';
 
 import AbstractAuthenticatedCommand from '../src/abstract-authenticated-command';
 
@@ -39,7 +37,7 @@ describe('abstractAuthenticated command', () => {
       const { commandPlan, stubs } = makePlanAndStubs();
 
       class TestAbstractClass extends AbstractAuthenticatedCommand {
-        constructor(argv: string[], config: IConfig, plan) {
+        constructor(argv: string[], config: Config, plan) {
           super(argv, config, plan);
 
           // protected properties are not accessible outside the class
@@ -66,7 +64,7 @@ describe('abstractAuthenticated command', () => {
     class TestAbstractClass extends AbstractAuthenticatedCommand {
       // eslint-disable-next-line class-methods-use-this
       runAuthenticated(): Promise<void> {
-        return null;
+        return null as unknown as Promise<void>;
       }
     }
 

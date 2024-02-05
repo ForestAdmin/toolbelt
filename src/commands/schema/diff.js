@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags, Args } = require('@oclif/core');
 const EnvironmentManager = require('../../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command').default;
 
@@ -14,7 +14,7 @@ class DiffCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(DiffCommand);
+    const parsed = await this.parse(DiffCommand);
     const config = { ...this.env, ...parsed.flags, ...parsed.args };
     const manager = new EnvironmentManager(config);
 
@@ -40,13 +40,22 @@ class DiffCommand extends AbstractAuthenticatedCommand {
 DiffCommand.description = 'Allow to compare two environment schemas';
 
 DiffCommand.flags = {
-  help: flags.boolean({
+  help: Flags.boolean({
     description: 'Display usage information.',
   }),
 };
 
-DiffCommand.args = [
-  { name: 'environmentIdFrom', required: true, description: 'ID of an environment to compare.' },
-  { name: 'environmentIdTo', required: true, description: 'ID of an environment to compare.' },
-];
+DiffCommand.args = {
+  environmentIdFrom: Args.string({
+    name: 'environmentIdFrom',
+    required: true,
+    description: 'ID of an environment to compare.',
+  }),
+  environmentIdTo: Args.string({
+    name: 'environmentIdFrom',
+    required: true,
+    description: 'ID of an environment to compare.',
+  }),
+};
+
 module.exports = DiffCommand;
