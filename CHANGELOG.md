@@ -1,3 +1,10 @@
+## [4.3.4](https://github.com/ForestAdmin/toolbelt/compare/v4.3.3...v4.3.4) (2024-02-05)
+
+
+### Bug Fixes
+
+* bump semantic release to support node 18 ([#659](https://github.com/ForestAdmin/toolbelt/issues/659)) ([1ab6974](https://github.com/ForestAdmin/toolbelt/commit/1ab6974f1498f198e66b655b366cab3b9c72abb7))
+
 ## [4.3.3](https://github.com/ForestAdmin/toolbelt/compare/v4.3.2...v4.3.3) (2024-02-05)
 
 
