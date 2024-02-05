@@ -1,3 +1,20 @@
+# [5.0.0](https://github.com/ForestAdmin/toolbelt/compare/v4.3.4...v5.0.0) (2024-02-05)
+
+
+### Bug Fixes
+
+* bump semantic release to allow node version 18 ([#660](https://github.com/ForestAdmin/toolbelt/issues/660)) ([76d81e8](https://github.com/ForestAdmin/toolbelt/commit/76d81e86c131071a33800230ce16b792dcbe2244))
+* bump semantic release to allow node version 18 ([#661](https://github.com/ForestAdmin/toolbelt/issues/661)) ([11fefcd](https://github.com/ForestAdmin/toolbelt/commit/11fefcd0b348bbfff430400538d479b62f59b737))
+* upgrade semantic-release ([#662](https://github.com/ForestAdmin/toolbelt/issues/662)) ([d019f35](https://github.com/ForestAdmin/toolbelt/commit/d019f35cc1d40cd171d79a77f1f7d42244448a52))
+
+
+### BREAKING CHANGES
+
+* users will have to upgrade to Node.js version 18 or above to ensure a full compatibility
+Co-authored-by: Nicolas Moreau <nicolas.moreau76@gmail.com>
+* users will have to upgrade to Node.js version 18+ to ensure a full compatibility
+* users will have to upgrade to Node.js version 18+ to ensure a full compatibility
+
 ## [4.3.4](https://github.com/ForestAdmin/toolbelt/compare/v4.3.3...v4.3.4) (2024-02-05)
 
 
