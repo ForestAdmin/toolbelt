@@ -60,7 +60,7 @@ jobs:
     needs: [lint]
     strategy:
       matrix:
-        node: [18, 20]
+        node: [16, 18, 20]
         include:
           - node: 18
             withCoverage: ${{ true }}
@@ -81,7 +81,7 @@ jobs:
         run: docker-compose up -d; sleep 15
       - name: Test with Node ${{ matrix.node }}
         if: ${{ !matrix.withCoverage }}
-        run: yarn test
+        run: yarn test --ignore-engines
       - name: Test with Node ${{ matrix.node }} & Send coverage
         uses: paambaati/codeclimate-action@5f637ccd517bc8960de0fe59379dd922bcba9486
         if: matrix.withCoverage && matrix.node == 18
@@ -90,9 +90,9 @@ jobs:
         with:
           coverageCommand: yarn test:coverage
       - name: Test prepack
-        run: yarn prepack
+        run: yarn prepack --ignore-engines
       - name: Test postpack
-        run: yarn postpack
+        run: yarn postpack --ignore-engines
 
   deploy:
     name: Release package
