@@ -121,7 +121,7 @@ jobs:
           VERSION=`node -p "require('./package.json').devDependencies['semantic-release']"`
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@7f0c0e4904fb36f980686dda081f2f258500f3ea
+        uses: cycjimmy/semantic-release-action@61680d0e9b02ff86f5648ade99e01be17f0260a4
         id: semantic
         with:
           semantic_version: ${{ steps.semantic_version.outputs.version }}
