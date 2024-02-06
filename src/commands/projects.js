@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags } = require('@oclif/core');
 const ProjectManager = require('../services/project-manager');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
 
@@ -12,7 +12,7 @@ class ProjectCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(ProjectCommand);
+    const parsed = await this.parse(ProjectCommand);
     const config = { ...this.env, ...parsed.flags };
     const manager = new ProjectManager(config);
     const projects = await manager.listProjects();
@@ -26,7 +26,7 @@ ProjectCommand.aliases = ['projects:list'];
 ProjectCommand.description = 'Manage projects.';
 
 ProjectCommand.flags = {
-  format: flags.string({
+  format: Flags.string({
     char: 'format',
     description: 'Ouput format.',
     options: ['table', 'json'],

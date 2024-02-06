@@ -9,7 +9,7 @@ const hook: Hook<'init'> = async function (options) {
   const { assertPresent, logger, chalk } = context;
   assertPresent({ logger, chalk });
 
-  const NODE_VERSION_MINIMUM = 14;
+  const NODE_VERSION_MINIMUM = 18;
 
   try {
     const nodeVersion = Number(process.version.split('.')[0].split('v')[1]);
@@ -22,7 +22,7 @@ const hook: Hook<'init'> = async function (options) {
       process.exit(1);
     }
   } catch (error) {
-    // NOTICE: Fails silently and considers that Node.js version is greater than 14.
+    // NOTICE: Fails silently and considers that Node.js version is greater than 18.
   }
 };
 

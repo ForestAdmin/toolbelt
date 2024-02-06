@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags } = require('@oclif/core');
 const EnvironmentManager = require('../../services/environment-manager');
 const ProjectManager = require('../../services/project-manager');
 const AbstractAuthenticatedCommand = require('../../abstract-authenticated-command').default;
@@ -16,7 +16,7 @@ class ResetCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(ResetCommand);
+    const parsed = await this.parse(ResetCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
     let config;
@@ -70,14 +70,14 @@ class ResetCommand extends AbstractAuthenticatedCommand {
 ResetCommand.description = 'Reset a remote environment by removing all layout changes';
 
 ResetCommand.flags = {
-  environment: flags.string({
+  environment: Flags.string({
     char: 'e',
     description: 'The remote environment name to reset.',
   }),
-  force: flags.boolean({
+  force: Flags.boolean({
     description: 'Skip reset changes confirmation.',
   }),
-  projectId: flags.integer({
+  projectId: Flags.integer({
     char: 'p',
     description: 'The id of the project to work on.',
     default: null,

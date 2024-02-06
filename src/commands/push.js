@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags } = require('@oclif/core');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
 const BranchManager = require('../services/branch-manager');
 const ProjectManager = require('../services/project-manager');
@@ -14,7 +14,7 @@ class PushCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(PushCommand);
+    const parsed = await this.parse(PushCommand);
     const envSecret = this.env.FOREST_ENV_SECRET;
     const commandOptions = { ...parsed.flags, ...parsed.args, envSecret };
     let config;
@@ -66,13 +66,13 @@ PushCommand.aliases = ['branches:push'];
 PushCommand.description = 'Push layout changes of your current branch to the branch origin.';
 
 PushCommand.flags = {
-  force: flags.boolean({
+  force: Flags.boolean({
     description: 'Skip push changes confirmation.',
   }),
-  help: flags.boolean({
+  help: Flags.boolean({
     description: 'Display usage information.',
   }),
-  projectId: flags.integer({
+  projectId: Flags.integer({
     char: 'p',
     description: 'The id of the project to work on.',
     default: null,

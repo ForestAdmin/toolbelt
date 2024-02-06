@@ -3,7 +3,7 @@ import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type { ProjectCreateOptions } from '../../../services/projects/create/options';
 import type DatabaseAnalyzer from '../../../services/schema/update/analyzer/database-analyzer';
 import type { CommandOptions } from '../../../utils/option-parser';
-import type * as OclifConfig from '@oclif/config';
+import type { Config as OclifConfig } from '@oclif/core';
 
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
 import * as projectCreateOptions from '../../../services/projects/create/options';
@@ -41,7 +41,7 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
 
   protected readonly agent = Agents.NodeJS;
 
-  constructor(argv: string[], config: OclifConfig.IConfig, plan?) {
+  constructor(argv: string[], config: OclifConfig, plan?) {
     super(argv, config, plan);
 
     const { assertPresent, agentNodejsDumper, databaseAnalyzer } = this.context;

@@ -8,7 +8,9 @@ import type EventSender from './utils/event-sender';
 import type { Language } from './utils/languages';
 import type Messages from './utils/messages';
 import type * as OptionParser from './utils/option-parser';
-import type * as OclifConfig from '@oclif/config';
+import type { Config as OclifConfig } from '@oclif/core';
+
+import { Args } from '@oclif/core';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
 import { getDialect } from './services/projects/create/options';
@@ -28,15 +30,18 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected abstract readonly agent: string | null;
 
-  /** @see https://oclif.io/docs/args */
-  static override readonly args = [
-    { name: 'applicationName', required: true, description: 'Name of the project to create.' },
-  ];
+  static override args = {
+    applicationName: Args.string({
+      name: 'applicationName',
+      required: true,
+      description: 'Name of the project to create.',
+    }),
+  };
 
   /** @see https://oclif.io/docs/commands */
   static override description = 'Create a new Forest Admin project.';
 
-  constructor(argv: string[], config: OclifConfig.IConfig, plan) {
+  constructor(argv: string[], config: OclifConfig, plan) {
     super(argv, config, plan);
 
     const {
