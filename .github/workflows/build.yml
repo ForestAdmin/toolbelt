@@ -81,7 +81,7 @@ jobs:
         run: docker-compose up -d; sleep 15
       - name: Test with Node ${{ matrix.node }}
         if: ${{ !matrix.withCoverage }}
-        run: yarn test --ignore-engines
+        run: yarn --ignore-engines test
       - name: Test with Node ${{ matrix.node }} & Send coverage
         uses: paambaati/codeclimate-action@5f637ccd517bc8960de0fe59379dd922bcba9486
         if: matrix.withCoverage && matrix.node == 18
@@ -90,9 +90,9 @@ jobs:
         with:
           coverageCommand: yarn test:coverage
       - name: Test prepack
-        run: yarn prepack --ignore-engines
+        run: yarn --ignore-engines prepack
       - name: Test postpack
-        run: yarn postpack --ignore-engines
+        run: yarn --ignore-engines postpack
 
   deploy:
     name: Release package
