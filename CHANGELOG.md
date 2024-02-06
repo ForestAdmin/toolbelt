@@ -1,3 +1,15 @@
+# [5.0.0](https://github.com/ForestAdmin/toolbelt/compare/v4.3.2...v5.0.0) (2024-02-06)
+
+
+### Bug Fixes
+
+* upgrade deprecated dependencies ([#658](https://github.com/ForestAdmin/toolbelt/issues/658)) ([9da7752](https://github.com/ForestAdmin/toolbelt/commit/9da7752e6f4701ea3161c6cc48d7b12cc43455ae))
+
+
+### BREAKING CHANGES
+
+* requires node>=18
+
 ## [4.3.2](https://github.com/ForestAdmin/toolbelt/compare/v4.3.1...v4.3.2) (2024-01-26)
 
 
