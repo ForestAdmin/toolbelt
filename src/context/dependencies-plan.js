@@ -20,7 +20,7 @@ module.exports = plan =>
         .addModule('chalk', () => require('chalk'))
         .addModule('crypto', () => require('crypto'))
         .addModule('fs', () => require('fs'))
-        .addModule('joi', () => require('joi'))
+        .addModule('joi', () => require('@hapi/joi'))
         .addModule('openIdClient', () => require('openid-client'))
         .addModule('os', () => require('os'))
         .addModule('superagent', () => require('superagent'))
