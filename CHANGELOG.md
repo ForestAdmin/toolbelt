@@ -1,3 +1,10 @@
+## [5.0.1](https://github.com/ForestAdmin/toolbelt/compare/v5.0.0...v5.0.1) (2024-02-19)
+
+
+### Bug Fixes
+
+* warning logs during install due to joi ([#665](https://github.com/ForestAdmin/toolbelt/issues/665)) ([2edff18](https://github.com/ForestAdmin/toolbelt/commit/2edff18df8130399524e9b071a223f78e0dac613))
+
 # [5.0.0](https://github.com/ForestAdmin/toolbelt/compare/v4.3.2...v5.0.0) (2024-02-06)
 
 
