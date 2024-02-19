@@ -83,9 +83,9 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
       otherwise: this.joi.string().allow(null),
     });
 
-    const { error } = this.joi.validate(
-      schema,
-      this.joi.object().keys({
+    const { error } = this.joi
+      .object()
+      .keys({
         collections: this.joi.array().items(this.joi.object()).required(),
         meta: this.joi
           .object()
@@ -101,9 +101,8 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
           })
           .unknown()
           .required(),
-      }),
-      { convert: false },
-    );
+      })
+      .validate(schema);
 
     if (error) {
       this.logger.error('Cannot properly read the ".forestadmin-schema.json" file:');

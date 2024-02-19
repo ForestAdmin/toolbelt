@@ -244,7 +244,7 @@ describe('schema:apply', () => {
               commandClass: ApplySchemaCommand,
               std: [
                 { err: '× Cannot properly read the ".forestadmin-schema.json" file:' },
-                { err: '× | "orm_version" is not allowed' },
+                { err: '× | "meta.orm_version" is not allowed' },
               ],
               exitCode: 20,
             }));
