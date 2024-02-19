@@ -1,5 +1,4 @@
-const P = require('bluebird');
-const agent = require('superagent-promise')(require('superagent'), P);
+const agent = require('superagent');
 const ProgressBar = require('progress');
 const { promisify } = require('util');
 const Context = require('@forestadmin/context');
