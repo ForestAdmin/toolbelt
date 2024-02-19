@@ -1,3 +1,10 @@
+## [5.0.2](https://github.com/ForestAdmin/toolbelt/compare/v5.0.1...v5.0.2) (2024-02-19)
+
+
+### Bug Fixes
+
+* warning during install due to superagent ([#666](https://github.com/ForestAdmin/toolbelt/issues/666)) ([bc44f18](https://github.com/ForestAdmin/toolbelt/commit/bc44f18d96dc173f5376cc52b49fbc53571f85d3))
+
 ## [5.0.1](https://github.com/ForestAdmin/toolbelt/compare/v5.0.0...v5.0.1) (2024-02-19)
 
 
