@@ -1,3 +1,10 @@
+## [5.0.3](https://github.com/ForestAdmin/toolbelt/compare/v5.0.2...v5.0.3) (2024-02-22)
+
+
+### Bug Fixes
+
+* **security:** patch ip dependency vulnerabilities ([#667](https://github.com/ForestAdmin/toolbelt/issues/667)) ([f440647](https://github.com/ForestAdmin/toolbelt/commit/f44064774fa4b42bc55432b6fec110f0119f8664))
+
 ## [5.0.2](https://github.com/ForestAdmin/toolbelt/compare/v5.0.1...v5.0.2) (2024-02-19)
 
 
