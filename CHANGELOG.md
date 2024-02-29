@@ -1,3 +1,10 @@
+## [5.0.4](https://github.com/ForestAdmin/toolbelt/compare/v5.0.3...v5.0.4) (2024-02-29)
+
+
+### Bug Fixes
+
+* **security:** patch es5-ext dependency vulnerabilities ([#668](https://github.com/ForestAdmin/toolbelt/issues/668)) ([994a34a](https://github.com/ForestAdmin/toolbelt/commit/994a34adad9d8fbe6500cd566e831193fb325fd0))
+
 ## [5.0.3](https://github.com/ForestAdmin/toolbelt/compare/v5.0.2...v5.0.3) (2024-02-22)
 
 
