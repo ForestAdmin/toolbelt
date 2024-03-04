@@ -1,13 +1,9 @@
-const openIdClient = require('openid-client');
-const ApplicationError = require('../../errors/application-error');
+import openIdClient from 'openid-client';
 
-class OidcError extends ApplicationError {
-  /**
-   * @param {string} message
-   * @param {Error|undefined} origin
-   * @param {string} [possibleSolution]
-   */
-  constructor(message, origin, possibleSolution) {
+import ApplicationError from '../../errors/application-error';
+
+export default class OidcError extends ApplicationError {
+  constructor(message: string, origin?: Error, possibleSolution?: string) {
     let reason;
 
     if (origin instanceof openIdClient.errors.OPError) {
@@ -28,5 +24,3 @@ class OidcError extends ApplicationError {
     Error.captureStackTrace(this, OidcError);
   }
 }
-
-module.exports = OidcError;
