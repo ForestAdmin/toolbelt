@@ -1,3 +1,10 @@
+## [5.0.5](https://github.com/ForestAdmin/toolbelt/compare/v5.0.4...v5.0.5) (2024-03-04)
+
+
+### Bug Fixes
+
+* continue the login process when a browser cannot be opened (WSL) ([#670](https://github.com/ForestAdmin/toolbelt/issues/670)) ([01e2ac4](https://github.com/ForestAdmin/toolbelt/commit/01e2ac4f2ccc2d7c92fc613a75080f0289c7e246))
+
 ## [5.0.4](https://github.com/ForestAdmin/toolbelt/compare/v5.0.3...v5.0.4) (2024-02-29)
 
 
