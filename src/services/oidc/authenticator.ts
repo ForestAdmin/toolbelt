@@ -13,7 +13,6 @@ export default class OidcAuthenticator {
   private readonly open: typeof Open;
 
   private readonly logger: Logger;
-
   constructor({
     assertPresent,
     openIdClient,
