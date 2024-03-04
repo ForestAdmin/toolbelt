@@ -1,5 +1,5 @@
-const OidcAuthenticator = require('../../../src/services/oidc/authenticator');
-const OidcError = require('../../../src/services/oidc/error');
+import OidcAuthenticator from '../../../src/services/oidc/authenticator';
+import OidcError from '../../../src/services/oidc/error';
 
 describe('services > Oidc > Authenticator', () => {
   describe('authenticate', () => {
@@ -43,7 +43,9 @@ describe('services > Oidc > Authenticator', () => {
         open,
       };
 
-      const authenticator = new OidcAuthenticator(context);
+      const authenticator = new OidcAuthenticator(
+        context as unknown as ConstructorParameters<typeof OidcAuthenticator>[0],
+      );
       return {
         ...context,
         authenticator,

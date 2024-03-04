@@ -1,37 +1,50 @@
-const OidcError = require('./error');
+import type Open from 'open';
+import type { Client, DeviceFlowHandle, Issuer } from 'openid-client';
 
-class OidcAuthenticator {
-  /**
-   * @param {import('../../context/plan').Context} context
-   */
-  constructor({ assertPresent, openIdClient, env, process, open }) {
+import OidcError from './error';
+
+export default class OidcAuthenticator {
+  private readonly openIdClient: Client;
+
+  private readonly env: Record<string, string>;
+
+  private readonly process: NodeJS.Process;
+
+  private readonly open: typeof Open;
+
+  constructor({
+    assertPresent,
+    openIdClient,
+    env,
+    process,
+    open,
+  }: {
+    assertPresent: (args: unknown) => void;
+    openIdClient: Client;
+    env: Record<string, string>;
+    process: NodeJS.Process;
+    open: typeof Open;
+  }) {
     assertPresent({
       openIdClient,
       env,
       process,
       open,
     });
-    /** @private @readonly */
+
     this.openIdClient = openIdClient;
-    /** @private @readonly */
     this.env = env;
-    /** @private @readonly */
     this.process = process;
-    /** @private @readonly */
     this.open = open;
   }
 
-  /**
-   * @private
-   * @returns {Promise<import('openid-client').Client>}
-   */
-  async register() {
+  private async register() {
     try {
-      const issuer = await this.openIdClient.Issuer.discover(
+      const issuer = await (this.openIdClient.Issuer as typeof Issuer<Client>).discover(
         `${this.env.FOREST_SERVER_URL}/oidc/.well-known/openid-configuration`,
       );
 
-      return await issuer.Client.register({
+      return await (issuer.Client as unknown as typeof Client).register({
         name: 'forest-cli',
         application_type: 'native',
         redirect_uris: ['com.forestadmin.cli://authenticate'],
@@ -44,12 +57,7 @@ class OidcAuthenticator {
     }
   }
 
-  /**
-   * @private
-   * @param {import('openid-client').Client} client
-   * @returns {Promise<import('openid-client').DeviceFlowHandle>}
-   */
-  static async launchDeviceAuthorization(client) {
+  private static async launchDeviceAuthorization(client: Client) {
     try {
       return await client.deviceAuthorization({
         scopes: ['openid', 'email', 'profile'],
@@ -59,12 +67,7 @@ class OidcAuthenticator {
     }
   }
 
-  /**
-   * @private
-   * @param {import('openid-client').DeviceFlowHandle} flow
-   * @returns {Promise<import('openid-client').TokenSet>}
-   */
-  async waitForAuthentication(flow) {
+  private async waitForAuthentication(flow: DeviceFlowHandle<Client>) {
     const expiresIn = flow.expires_in;
     try {
       this.process.stdout.write(
@@ -88,10 +91,7 @@ class OidcAuthenticator {
     }
   }
 
-  /**
-   * @returns {Promise<string>}
-   */
-  async authenticate() {
+  public async authenticate() {
     const client = await this.register();
 
     const flow = await OidcAuthenticator.launchDeviceAuthorization(client);
@@ -101,5 +101,3 @@ class OidcAuthenticator {
     return tokenSet.access_token;
   }
 }
-
-module.exports = OidcAuthenticator;
