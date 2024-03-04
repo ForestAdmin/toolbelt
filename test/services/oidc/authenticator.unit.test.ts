@@ -2,73 +2,75 @@ import OidcAuthenticator from '../../../src/services/oidc/authenticator';
 import OidcError from '../../../src/services/oidc/error';
 
 describe('services > Oidc > Authenticator', () => {
-  describe('authenticate', () => {
-    function setupTest() {
-      const flow = {
-        poll: jest.fn(),
-        expired: jest.fn(),
-        verification_uri: 'https://verification.forest',
-        verification_uri_complete: 'https://verification.forest?user_code=ABCD',
-        user_code: 'ABC',
-        expires_in: 100,
-      };
+  function setupTest() {
+    const flow = {
+      poll: jest.fn(),
+      expired: jest.fn(),
+      verification_uri: 'https://verification.forest',
+      verification_uri_complete: 'https://verification.forest?user_code=ABCD',
+      user_code: 'ABC',
+      expires_in: 100,
+    };
 
-      const client = {
-        deviceAuthorization: jest.fn(),
-      };
+    const client = {
+      deviceAuthorization: jest.fn(),
+    };
 
-      const issuer = {
-        Client: {
-          register: jest.fn(),
+    const issuer = {
+      Client: {
+        register: jest.fn(),
+      },
+    };
+
+    const open = jest.fn();
+
+    const context = {
+      assertPresent: jest.fn(),
+      env: {
+        FOREST_SERVER_URL: 'https://forest.admin',
+      },
+      process: {
+        stdout: {
+          write: jest.fn(),
         },
-      };
-
-      const open = jest.fn();
-
-      const context = {
-        assertPresent: jest.fn(),
-        env: {
-          FOREST_SERVER_URL: 'https://forest.admin',
+      },
+      openIdClient: {
+        Issuer: {
+          discover: jest.fn().mockReturnValue(issuer),
         },
-        process: {
-          stdout: {
-            write: jest.fn(),
-          },
-        },
-        openIdClient: {
-          Issuer: {
-            discover: jest.fn().mockReturnValue(issuer),
-          },
-        },
-        open,
-      };
+      },
+      open,
+      logger: {
+        log: jest.fn(),
+        WARN: Symbol('warn'),
+      },
+    };
 
-      const authenticator = new OidcAuthenticator(
-        context as unknown as ConstructorParameters<typeof OidcAuthenticator>[0],
-      );
-      return {
-        ...context,
-        authenticator,
-        client,
-        issuer,
-        flow,
-      };
-    }
+    const authenticator = new OidcAuthenticator(
+      context as unknown as ConstructorParameters<typeof OidcAuthenticator>[0],
+    );
 
-    it('should call assertPresent within constructor', async () => {
+    return {
+      ...context,
+      authenticator,
+      client,
+      issuer,
+      flow,
+      context,
+    };
+  }
+
+  describe('dependencies', () => {
+    it('should assert that all dependencies are present', () => {
       expect.assertions(1);
+      const { context } = setupTest();
+      const { assertPresent, ...dependencies } = context;
 
-      const context = setupTest();
-      const { openIdClient, env, process, open } = context;
-
-      expect(context.assertPresent).toHaveBeenCalledWith({
-        openIdClient,
-        env,
-        process,
-        open,
-      });
+      expect(assertPresent).toHaveBeenCalledWith(dependencies);
     });
+  });
 
+  describe('authenticate', () => {
     it('should successfully authenticate the user', async () => {
       expect.assertions(7);
       const { authenticator, issuer, client, flow, openIdClient, process, open } = setupTest();
@@ -213,6 +215,30 @@ describe('services > Oidc > Authenticator', () => {
         'The authentication request expired. Please try to login a second time, and complete the authentication within 100 seconds.',
       );
       await expect(promise).rejects.toHaveProperty('reason', undefined);
+    });
+
+    it('should log a warning when the browser cannot be opened', async () => {
+      expect.assertions(3);
+
+      const { open, authenticator, logger, openIdClient, issuer, client, flow } = setupTest();
+
+      openIdClient.Issuer.discover.mockResolvedValue(issuer);
+      issuer.Client.register.mockResolvedValue(client);
+      client.deviceAuthorization.mockResolvedValue(flow);
+
+      flow.poll.mockResolvedValue({
+        access_token: 'THE-TOKEN',
+      });
+      open.mockRejectedValue(new Error('The error'));
+
+      await expect(authenticator.authenticate()).resolves.toBe('THE-TOKEN');
+
+      expect(open).toHaveBeenCalledWith('https://verification.forest?user_code=ABCD');
+
+      expect(logger.log).toHaveBeenCalledWith(
+        logger.WARN,
+        'Unable to open the browser: The error. Please open the link manually.',
+      );
     });
   });
 });
