@@ -12,30 +12,36 @@ export default class OidcAuthenticator {
 
   private readonly open: typeof Open;
 
+  private readonly logger: Logger;
+
   constructor({
     assertPresent,
     openIdClient,
     env,
     process,
     open,
+    logger,
   }: {
     assertPresent: (args: unknown) => void;
     openIdClient: Client;
     env: Record<string, string>;
     process: NodeJS.Process;
     open: typeof Open;
+    logger: Logger;
   }) {
     assertPresent({
       openIdClient,
       env,
       process,
       open,
+      logger,
     });
 
     this.openIdClient = openIdClient;
     this.env = env;
     this.process = process;
     this.open = open;
+    this.logger = logger;
   }
 
   private async register() {
@@ -75,7 +81,7 @@ export default class OidcAuthenticator {
       );
       this.process.stdout.write(`Your confirmation code: ${flow.user_code}\n`);
 
-      await this.open(flow.verification_uri_complete);
+      await this.tryOpen(flow.verification_uri_complete);
 
       return await flow.poll();
     } catch (e) {
@@ -88,6 +94,17 @@ export default class OidcAuthenticator {
       }
 
       throw new OidcError('Error during the authentication', e);
+    }
+  }
+
+  private async tryOpen(url: string) {
+    try {
+      await this.open(url);
+    } catch (e) {
+      this.logger.log(
+        this.logger.WARN,
+        `Unable to open the browser: ${e.message}. Please open the link manually.`,
+      );
     }
   }
 
