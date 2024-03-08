@@ -35,7 +35,6 @@
     "json-diff": "1.0.0",
     "jsonapi-serializer": "3.6.2",
     "jsonwebtoken": "8.5.1",
-    "jwt-decode": "2.2.0",
     "lodash": "4.17.21",
     "mkdirp": "1.0.4",
     "mongodb": "4.17.2",
