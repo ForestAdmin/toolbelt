@@ -567,7 +567,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
               expect(context.fs.writeFileSync).toHaveBeenCalledWith(
                 `/test/a${language.name}Application/package.json`,
-                expect.stringContaining('"tedious": "^15.1.2"'),
+                expect.stringContaining('"tedious": "^16.7.1"'),
               );
             });
           });

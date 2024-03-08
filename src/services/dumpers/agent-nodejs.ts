@@ -90,7 +90,7 @@ export default class AgentNodeJs extends AbstractDumper {
       } else if (dbDialect === 'mariadb') {
         dependencies.mariadb = '^3.0.2';
       } else if (dbDialect === 'mssql') {
-        dependencies.tedious = '^15.1.2';
+        dependencies.tedious = '^16.7.1';
       }
     }
 
