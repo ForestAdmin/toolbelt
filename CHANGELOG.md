@@ -1,3 +1,10 @@
+## [5.0.7](https://github.com/ForestAdmin/toolbelt/compare/v5.0.6...v5.0.7) (2024-03-08)
+
+
+### Bug Fixes
+
+* **vulnerability:** bump jsonwebtoken to bypass vulnerability ([#673](https://github.com/ForestAdmin/toolbelt/issues/673)) ([1d5a84d](https://github.com/ForestAdmin/toolbelt/commit/1d5a84df259cae97ecaf4eb4a531c2e57406dee5))
+
 ## [5.0.6](https://github.com/ForestAdmin/toolbelt/compare/v5.0.5...v5.0.6) (2024-03-08)
 
 
