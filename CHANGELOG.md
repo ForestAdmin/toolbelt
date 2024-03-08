@@ -1,3 +1,10 @@
+## [5.0.6](https://github.com/ForestAdmin/toolbelt/compare/v5.0.5...v5.0.6) (2024-03-08)
+
+
+### Bug Fixes
+
+* **security:** fix tedious security issue ([#671](https://github.com/ForestAdmin/toolbelt/issues/671)) ([cebb294](https://github.com/ForestAdmin/toolbelt/commit/cebb294772a87ef007bec8daefb9877b59b9a6e6))
+
 ## [5.0.5](https://github.com/ForestAdmin/toolbelt/compare/v5.0.4...v5.0.5) (2024-03-04)
 
 
