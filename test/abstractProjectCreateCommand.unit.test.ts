@@ -1,7 +1,6 @@
 /* eslint-disable max-classes-per-file */
 
-import { flags } from '@oclif/command';
-import { Config } from '@oclif/config';
+import { Config, Flags } from '@oclif/core';
 
 import AbstractProjectCreateCommand from '../src/abstract-project-create-command';
 import Agents from '../src/utils/agents';
@@ -73,7 +72,7 @@ describe('abstractProjectCreateCommand command', () => {
 
       static override readonly flags = {
         ...AbstractProjectCreateCommand.flags,
-        databaseDialect: flags.string({
+        databaseDialect: Flags.string({
           char: 'd',
           dependsOn: [],
           description: 'Enter your database dialect.',
@@ -81,20 +80,20 @@ describe('abstractProjectCreateCommand command', () => {
           options: ['mssql', 'mysql', 'postgres', 'mongodb'],
           required: false,
         }),
-        databaseSchema: flags.string({
+        databaseSchema: Flags.string({
           char: 's',
           dependsOn: [],
           description: 'Enter your database schema.',
           exclusive: [],
           required: false,
         }),
-        mongoDBSRV: flags.boolean({
+        mongoDBSRV: Flags.boolean({
           dependsOn: [],
           description: 'Use SRV DNS record for mongoDB connection.',
           exclusive: ['databaseConnectionURL'],
           required: false,
         }),
-        language: flags.string({
+        language: Flags.string({
           char: 'l',
           description: 'Choose the language you wna tot use for your project.',
           options: languageList.map(language => language.name),
@@ -102,8 +101,6 @@ describe('abstractProjectCreateCommand command', () => {
           required: false,
         }),
       };
-
-      static override readonly args = [...AbstractProjectCreateCommand.args];
 
       generateProject = jest.fn().mockResolvedValue(null);
 

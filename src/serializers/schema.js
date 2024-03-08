@@ -70,6 +70,7 @@ function SchemaSerializer() {
           'description',
           'position',
           'widget',
+          'hook',
         ],
       },
       hooks: {

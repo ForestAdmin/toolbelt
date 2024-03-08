@@ -44,6 +44,7 @@ export default class AgentNodeJs extends AbstractDumper {
       lodash,
       strings,
       toValidPackageName,
+      logger,
     } = context;
 
     assertPresent({
@@ -54,6 +55,7 @@ export default class AgentNodeJs extends AbstractDumper {
       lodash,
       strings,
       toValidPackageName,
+      logger,
     });
 
     super(context);
@@ -249,6 +251,48 @@ export default class AgentNodeJs extends AbstractDumper {
     );
   }
 
+  private removeNonCompliantNestedFields(collectionName: string, fieldsDefinition: any) {
+    if (typeof fieldsDefinition !== 'string') {
+      if (Array.isArray(fieldsDefinition)) {
+        fieldsDefinition.forEach(fieldDefinition => {
+          this.removeNonCompliantNestedFields(collectionName, fieldDefinition);
+        });
+      } else {
+        Object.entries(fieldsDefinition).forEach(([key, fieldDefinition]) => {
+          if (key.includes(':')) {
+            this.logger.warn(
+              `Ignoring field ${key} from collection ${collectionName} as it contains column and is not valid.`,
+            );
+
+            delete fieldsDefinition[key];
+          } else {
+            this.removeNonCompliantNestedFields(collectionName, fieldDefinition);
+          }
+        });
+      }
+    }
+  }
+
+  private removeNonCompliantFields(collectionName, fieldsDefinition) {
+    const compliantFieldsDefinition = JSON.parse(JSON.stringify(fieldsDefinition));
+
+    return compliantFieldsDefinition.reduce((correctFieldsDefinitions, definition) => {
+      if (definition.name.includes(':')) {
+        this.logger.warn(
+          `Ignoring field ${definition.name} from collection ${collectionName} as it contains column and is not valid.`,
+        );
+      } else {
+        correctFieldsDefinitions.push(definition);
+
+        if (definition.type && typeof definition.type !== 'string') {
+          this.removeNonCompliantNestedFields(collectionName, definition.type);
+        }
+      }
+
+      return correctFieldsDefinitions;
+    }, []);
+  }
+
   private computeModelsConfiguration(language: Language, schema: any): Array<ModelConfiguration> {
     const collectionNamesSorted = Object.keys(schema).sort();
 
@@ -264,10 +308,15 @@ export default class AgentNodeJs extends AbstractDumper {
         };
       });
 
+      const compliantFieldsDefinition = this.removeNonCompliantFields(
+        collectionName,
+        fieldsDefinition,
+      );
+
       return {
         modelName: this.strings.transformToCamelCaseSafeString(collectionName),
         collectionName,
-        fields: fieldsDefinition,
+        fields: compliantFieldsDefinition,
         timestamps: options.timestamps,
         modelFileName,
         modelPath,

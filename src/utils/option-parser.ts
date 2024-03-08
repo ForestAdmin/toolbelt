@@ -1,10 +1,10 @@
 // Note that we're using inject() in the functions because we can't create an injectable class...
 // Doing so prevents us from using optionsToArgs() and optionsToFlags() at startup
 
-import type { Command } from '@oclif/command';
+import type { Command } from '@oclif/core';
 
 import { inject } from '@forestadmin/context';
-import { flags as oflags } from '@oclif/command';
+import { Flags as oflags } from '@oclif/core';
 
 /** Option which can be used both as  flag or prompt */
 export type CommandOptions<T = Record<string, unknown>> = {
@@ -80,7 +80,7 @@ export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
   // Parse the command line arguments and flags.
   // @ts-expect-error: calling the argument parser from oclif is protected.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { args, flags } = instance.parse(instance.constructor) as any;
+  const { args, flags } = (await instance.parse(instance.constructor)) as any;
   const optionsFromCli = { ...args, ...flags };
 
   Object.entries(options).forEach(([k, v]) => {
@@ -100,7 +100,7 @@ export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
 }
 
 /** Convert generic options to oclif flags */
-export function optionsToFlags(options: CommandOptions): oflags.Input<unknown> {
+export function optionsToFlags(options: CommandOptions) {
   // Not using Object.fromEntries() for compatibility with node 10
   const result = {};
 

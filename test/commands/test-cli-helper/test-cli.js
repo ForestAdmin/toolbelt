@@ -165,6 +165,8 @@ async function testCli({
     logStdOut();
     throw e;
   }
+
+  process.exitCode = 0;
 }
 
 module.exports = testCli;

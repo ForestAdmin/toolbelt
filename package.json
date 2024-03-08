@@ -1,7 +1,7 @@
 {
   "name": "forest-cli",
   "description": "The Lumberjacks' toolbelt is the Forest CLI which makes easy to manage your back office application directly from the terminal.",
-  "version": "4.2.0",
+  "version": "5.0.5",
   "author": "Sandro Munda",
   "contributors": [
     "Arnaud Valensi <arnaud.valensi@gmail.com>",
@@ -17,13 +17,11 @@
   "dependencies": {
     "@forestadmin/context": "1.37.1",
     "@forestadmin/datasource-sql": "1.6.4",
-    "@oclif/command": "1.5.4",
-    "@oclif/config": "1.8.8",
-    "@oclif/core": "2.8.5",
-    "@oclif/errors": "1.2.2",
-    "@oclif/plugin-help": "2.1.3",
-    "@oclif/plugin-not-found": "1.2.4",
-    "@oclif/plugin-warn-if-update-available": "1.7.0",
+    "@hapi/joi": "17.1.1",
+    "@oclif/core": "3.18.2",
+    "@oclif/plugin-help": "6.0.12",
+    "@oclif/plugin-not-found": "3.0.10",
+    "@oclif/plugin-warn-if-update-available": "3.0.10",
     "app-root-path": "3.0.0",
     "atob": "2.1.2",
     "bluebird": "3.5.2",
@@ -34,14 +32,13 @@
     "dotenv": "8.2.0",
     "handlebars": "4.7.7",
     "inquirer": "6.2.0",
-    "joi": "14.3.1",
     "json-diff": "1.0.0",
     "jsonapi-serializer": "3.6.2",
     "jsonwebtoken": "8.5.1",
     "jwt-decode": "2.2.0",
     "lodash": "4.17.21",
     "mkdirp": "1.0.4",
-    "mongodb": "3.6.12",
+    "mongodb": "4.17.2",
     "mysql2": "2.3.0",
     "open": "7.3.0",
     "openid-client": "4.2.2",
@@ -52,8 +49,7 @@
     "sequelize": "6.32.1",
     "spinnies": "0.5.1",
     "stdout-stderr": "0.1.13",
-    "superagent": "5.1.0",
-    "superagent-promise": "1.1.0",
+    "superagent": "8.1.2",
     "tedious": "16.7.1",
     "uuid": "8.0.0",
     "validate-npm-package-name": "3.0.0"
@@ -61,7 +57,6 @@
   "devDependencies": {
     "@commitlint/cli": "17.4.2",
     "@commitlint/config-conventional": "17.4.2",
-    "@oclif/dev-cli": "1.22.2",
     "@semantic-release/changelog": "6.0.1",
     "@semantic-release/git": "10.0.1",
     "@swc/core": "1.3.34",
@@ -85,6 +80,7 @@
     "lint-staged": "12.3.7",
     "mock-stdin": "1.0.0",
     "nock": "13.5.4",
+    "oclif": "4.4.2",
     "prettier": "2.8.3",
     "rimraf": "3.0.2",
     "semantic-release": "19.0.3",
@@ -93,7 +89,7 @@
     "typescript": "^4.5.4"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   },
   "files": [
     "/bin",
@@ -130,7 +126,7 @@
   "scripts": {
     "lint": "eslint src test",
     "prepare": "husky install",
-    "prepack": "oclif-dev manifest",
+    "prepack": "yarn build && oclif manifest && oclif readme",
     "postpack": "rm -f oclif.manifest.json",
     "build": "tsc",
     "build:watch": "tsc-watch --onSuccess 'yarn postbuild'",

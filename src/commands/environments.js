@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags } = require('@oclif/core');
 
 const EnvironmentManager = require('../services/environment-manager');
 const AbstractAuthenticatedCommand = require('../abstract-authenticated-command').default;
@@ -14,7 +14,7 @@ class EnvironmentCommand extends AbstractAuthenticatedCommand {
   }
 
   async runAuthenticated() {
-    const parsed = this.parse(EnvironmentCommand);
+    const parsed = await this.parse(EnvironmentCommand);
     const config = await withCurrentProject({ ...this.env, ...parsed.flags });
     const manager = new EnvironmentManager(config);
     const environments = await manager.listEnvironments();
@@ -27,12 +27,12 @@ EnvironmentCommand.aliases = ['environments:list'];
 EnvironmentCommand.description = 'Manage environments.';
 
 EnvironmentCommand.flags = {
-  projectId: flags.integer({
+  projectId: Flags.integer({
     char: 'p',
     description: 'Forest project ID.',
     default: null,
   }),
-  format: flags.string({
+  format: Flags.string({
     char: 'format',
     description: 'Ouput format.',
     options: ['table', 'json'],

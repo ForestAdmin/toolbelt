@@ -1,4 +1,4 @@
-const { flags } = require('@oclif/command');
+const { Flags } = require('@oclif/core');
 const SchemaSerializer = require('../../serializers/schema');
 const SchemaSender = require('../../services/schema-sender');
 const JobStateChecker = require('../../services/job-state-checker');
@@ -16,7 +16,7 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
 
   async runAuthenticated() {
     const oclifExit = this.exit.bind(this);
-    const { flags: parsedFlags } = this.parse(ApplyCommand);
+    const { flags: parsedFlags } = await this.parse(ApplyCommand);
     const serializedSchema = this.readSchema();
     const secret = this.getEnvironmentSecret(parsedFlags);
     const authenticationToken = this.authenticator.getAuthToken();
@@ -83,9 +83,9 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
       otherwise: this.joi.string().allow(null),
     });
 
-    const { error } = this.joi.validate(
-      schema,
-      this.joi.object().keys({
+    const { error } = this.joi
+      .object()
+      .keys({
         collections: this.joi.array().items(this.joi.object()).required(),
         meta: this.joi
           .object()
@@ -101,9 +101,8 @@ class ApplyCommand extends AbstractAuthenticatedCommand {
           })
           .unknown()
           .required(),
-      }),
-      { convert: false },
-    );
+      })
+      .validate(schema);
 
     if (error) {
       this.logger.error('Cannot properly read the ".forestadmin-schema.json" file:');
@@ -139,7 +138,7 @@ ApplyCommand.description =
   'Apply the current schema of your repository to the specified environment (using your ".forestadmin-schema.json" file).';
 
 ApplyCommand.flags = {
-  secret: flags.string({
+  secret: Flags.string({
     char: 's',
     description: 'Environment secret of the project (FOREST_ENV_SECRET).',
     required: false,

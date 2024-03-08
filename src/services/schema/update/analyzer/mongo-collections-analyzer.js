@@ -186,7 +186,7 @@ class MongoCollectionsAnalyzer {
       if (err) {
         if (
           err.message &&
-          (err.message.startsWith('CMD_NOT_ALLOWED') || err.message.startsWith('MapReduce'))
+          (err.message.startsWith('CMD_NOT_ALLOWED') || /mapreduce/gim.test(err.message))
         ) {
           return resolve(MAP_REDUCE_ERROR_STRING);
         }
@@ -313,6 +313,19 @@ class MongoCollectionsAnalyzer {
     return this.analyzeMongoCollections(databaseConnection);
   }
 
+  static sortFieldsInAnalysis(fields) {
+    if (!Array.isArray(fields)) {
+      return fields;
+    }
+
+    return fields.sort((a, b) => {
+      if (a.name < b.name) {
+        return -1;
+      }
+      return 1;
+    });
+  }
+
   async analyzeMongoCollections(databaseConnection) {
     const collections = await databaseConnection.collections();
     if (collections.length === 0) {
@@ -353,7 +366,9 @@ class MongoCollectionsAnalyzer {
         }
 
         analysis = await this.applyRelationships(databaseConnection, analysis, collectionName);
-        schema[collectionName] = this.buildSchema(analysis);
+        schema[collectionName] = this.buildSchema(
+          MongoCollectionsAnalyzer.sortFieldsInAnalysis(analysis),
+        );
         return schema;
       },
       {},

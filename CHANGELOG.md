@@ -1,3 +1,111 @@
+## [5.0.5](https://github.com/ForestAdmin/toolbelt/compare/v5.0.4...v5.0.5) (2024-03-04)
+
+
+### Bug Fixes
+
+* continue the login process when a browser cannot be opened (WSL) ([#670](https://github.com/ForestAdmin/toolbelt/issues/670)) ([01e2ac4](https://github.com/ForestAdmin/toolbelt/commit/01e2ac4f2ccc2d7c92fc613a75080f0289c7e246))
+
+## [5.0.4](https://github.com/ForestAdmin/toolbelt/compare/v5.0.3...v5.0.4) (2024-02-29)
+
+
+### Bug Fixes
+
+* **security:** patch es5-ext dependency vulnerabilities ([#668](https://github.com/ForestAdmin/toolbelt/issues/668)) ([994a34a](https://github.com/ForestAdmin/toolbelt/commit/994a34adad9d8fbe6500cd566e831193fb325fd0))
+
+## [5.0.3](https://github.com/ForestAdmin/toolbelt/compare/v5.0.2...v5.0.3) (2024-02-22)
+
+
+### Bug Fixes
+
+* **security:** patch ip dependency vulnerabilities ([#667](https://github.com/ForestAdmin/toolbelt/issues/667)) ([f440647](https://github.com/ForestAdmin/toolbelt/commit/f44064774fa4b42bc55432b6fec110f0119f8664))
+
+## [5.0.2](https://github.com/ForestAdmin/toolbelt/compare/v5.0.1...v5.0.2) (2024-02-19)
+
+
+### Bug Fixes
+
+* warning during install due to superagent ([#666](https://github.com/ForestAdmin/toolbelt/issues/666)) ([bc44f18](https://github.com/ForestAdmin/toolbelt/commit/bc44f18d96dc173f5376cc52b49fbc53571f85d3))
+
+## [5.0.1](https://github.com/ForestAdmin/toolbelt/compare/v5.0.0...v5.0.1) (2024-02-19)
+
+
+### Bug Fixes
+
+* warning logs during install due to joi ([#665](https://github.com/ForestAdmin/toolbelt/issues/665)) ([2edff18](https://github.com/ForestAdmin/toolbelt/commit/2edff18df8130399524e9b071a223f78e0dac613))
+
+# [5.0.0](https://github.com/ForestAdmin/toolbelt/compare/v4.3.2...v5.0.0) (2024-02-06)
+
+
+### Bug Fixes
+
+* upgrade deprecated dependencies ([#658](https://github.com/ForestAdmin/toolbelt/issues/658)) ([9da7752](https://github.com/ForestAdmin/toolbelt/commit/9da7752e6f4701ea3161c6cc48d7b12cc43455ae))
+
+
+### BREAKING CHANGES
+
+* requires node>=18
+
+## [4.3.2](https://github.com/ForestAdmin/toolbelt/compare/v4.3.1...v4.3.2) (2024-01-26)
+
+
+### Bug Fixes
+
+* **security:** patch lodash.set dependency vulnerabilities ([#657](https://github.com/ForestAdmin/toolbelt/issues/657)) ([4945ec8](https://github.com/ForestAdmin/toolbelt/commit/4945ec8acdfbd6404791b1a4d2c471b8f80de0ff))
+
+## [4.3.1](https://github.com/ForestAdmin/toolbelt/compare/v4.3.0...v4.3.1) (2024-01-12)
+
+
+### Bug Fixes
+
+* **security:** patch follow-redirects dependency vulnerabilities ([#656](https://github.com/ForestAdmin/toolbelt/issues/656)) ([41444cd](https://github.com/ForestAdmin/toolbelt/commit/41444cdbec8dee883cee4c867c5ec3e17253ff28))
+
+# [4.3.0](https://github.com/ForestAdmin/toolbelt/compare/v4.2.5...v4.3.0) (2023-12-14)
+
+
+### Bug Fixes
+
+* **typescript:** correctly dump typescript files when collections name are complexe ([#653](https://github.com/ForestAdmin/toolbelt/issues/653)) ([269fc41](https://github.com/ForestAdmin/toolbelt/commit/269fc411985e754be7c9f9528de8c508c4567b39))
+
+
+### Features
+
+* **onboarding:** users can now generate project on mongodb serverless instances ([#654](https://github.com/ForestAdmin/toolbelt/issues/654)) ([d421a09](https://github.com/ForestAdmin/toolbelt/commit/d421a09df3ce9524e3491e6604dade2bc628296d))
+
+## [4.2.5](https://github.com/ForestAdmin/toolbelt/compare/v4.2.4...v4.2.5) (2023-12-07)
+
+
+### Bug Fixes
+
+* **dumper:** ignore mongodb fields that includes column and log warning ([#652](https://github.com/ForestAdmin/toolbelt/issues/652)) ([e940447](https://github.com/ForestAdmin/toolbelt/commit/e940447ce76d2a0ca4708c293e0b2a897675e136))
+
+## [4.2.4](https://github.com/ForestAdmin/toolbelt/compare/v4.2.3...v4.2.4) (2023-12-07)
+
+
+### Bug Fixes
+
+* **dumper:** wrap some special character within quotes when dumping mongoose schema ([#651](https://github.com/ForestAdmin/toolbelt/issues/651)) ([d998bf1](https://github.com/ForestAdmin/toolbelt/commit/d998bf1cb45becaf722e95c935a70415d3c31942))
+
+## [4.2.3](https://github.com/ForestAdmin/toolbelt/compare/v4.2.2...v4.2.3) (2023-11-16)
+
+
+### Bug Fixes
+
+* **onboarding:** users can now onboard on cosmos nosql databases ([#648](https://github.com/ForestAdmin/toolbelt/issues/648)) ([d67c5e2](https://github.com/ForestAdmin/toolbelt/commit/d67c5e2b8e5496e903bf614fdeb33bdfccbd74ec))
+
+## [4.2.2](https://github.com/ForestAdmin/toolbelt/compare/v4.2.1...v4.2.2) (2023-10-20)
+
+
+### Bug Fixes
+
+* fix schema serialization on schema:apply for SA field hook property ([#642](https://github.com/ForestAdmin/toolbelt/issues/642)) ([16e6d7b](https://github.com/ForestAdmin/toolbelt/commit/16e6d7bcbde15c58ec3c7e08608b718fc0e3b676))
+
+## [4.2.1](https://github.com/ForestAdmin/toolbelt/compare/v4.2.0...v4.2.1) (2023-10-20)
+
+
+### Bug Fixes
+
+* **security:** patch @babel/traverse dependency vulnerabilities ([#641](https://github.com/ForestAdmin/toolbelt/issues/641)) ([577308f](https://github.com/ForestAdmin/toolbelt/commit/577308f4ab83a506076088e84feb9d860c73dfc0))
+
 # [4.2.0](https://github.com/ForestAdmin/toolbelt/compare/v4.1.7...v4.2.0) (2023-09-01)
 
 

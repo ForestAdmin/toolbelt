@@ -11,11 +11,11 @@ const {
 
 const mongoDatabases = [
   {
-    version: '3.2',
+    version: '4.2',
     url: DATABASE_URL_MONGODB_MIN,
   },
   {
-    version: '4.2',
+    version: '5.0',
     url: DATABASE_URL_MONGODB_MAX,
   },
 ];

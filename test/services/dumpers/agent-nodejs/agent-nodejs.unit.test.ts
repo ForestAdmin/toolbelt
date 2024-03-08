@@ -11,7 +11,7 @@ describe('services > dumpers > AgentNodeJs', () => {
       collectionA: {
         fields: [
           {
-            field: 'aField',
+            name: 'aField',
             ref: 'a-collection',
           },
         ],
@@ -744,7 +744,7 @@ describe('services > dumpers > AgentNodeJs', () => {
                   collectionName: 'collectionA',
                   fields: [
                     {
-                      field: 'aField',
+                      name: 'aField',
                       ref: 'a-collection',
                     },
                   ],
@@ -785,7 +785,7 @@ describe('services > dumpers > AgentNodeJs', () => {
                   collectionName: 'collectionA',
                   fields: [
                     {
-                      field: 'aField',
+                      name: 'aField',
                       ref: 'a-collectioncamelCased',
                     },
                   ],

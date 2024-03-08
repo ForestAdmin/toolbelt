@@ -1,7 +1,7 @@
 import type { Config, DbConfig } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type { CommandOptions } from '../../../utils/option-parser';
-import type * as OclifConfig from '@oclif/config';
+import type { Config as OclifConfig } from '@oclif/core';
 
 import { introspect } from '@forestadmin/datasource-sql';
 
@@ -40,7 +40,7 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
 
   protected readonly agent = Agents.NodeJS;
 
-  constructor(argv: string[], config: OclifConfig.IConfig, plan?) {
+  constructor(argv: string[], config: OclifConfig, plan?) {
     super(argv, config, plan);
 
     const { assertPresent, agentNodejsDumper } = this.context;

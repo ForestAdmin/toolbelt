@@ -2,7 +2,7 @@ import type { Config, DbConfig } from '../../interfaces/project-create-interface
 import type ForestExpress from '../../services/dumpers/forest-express';
 import type DatabaseAnalyzer from '../../services/schema/update/analyzer/database-analyzer';
 import type { CommandOptions } from '../../utils/option-parser';
-import type * as OclifConfig from '@oclif/config';
+import type { Config as OclifConfig } from '@oclif/core';
 
 import AbstractProjectCreateCommand from '../../abstract-project-create-command';
 import * as projectCreateOptions from '../../services/projects/create/options';
@@ -36,7 +36,7 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
 
   protected readonly agent = null;
 
-  constructor(argv: string[], config: OclifConfig.IConfig, plan?) {
+  constructor(argv: string[], config: OclifConfig, plan?) {
     super(argv, config, plan);
 
     const { assertPresent, databaseAnalyzer, forestExpressDumper } = this.context;
