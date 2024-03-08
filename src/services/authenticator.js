@@ -1,6 +1,5 @@
 const ApplicationError = require('../errors/application-error');
 const { ERROR_UNEXPECTED } = require('../utils/messages');
-
 /**
  * @class
  * @param {import('../context/plan').Context} context
