@@ -1,10 +1,11 @@
 const nock = require('nock');
-const jwt = require('jsonwebtoken');
 const ProjectSerializer = require('../../src/serializers/project');
 const EnvironmentSerializer = require('../../src/serializers/environment');
 const JobSerializer = require('../../src/serializers/job');
 const { default: Agents } = require('../../src/utils/agents');
 
+const SIGNED_JWT_TOKEN =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MDk5MDUwMTgsImV4cCI6MTcwOTk5MTQxOH0.EuQsuKhEGyEm4MXCZKMuFyk6V9bDM8wnrWcZ05mnp0c';
 /**
  * @param {import('nock').Scope} nockScope
  */
@@ -146,7 +147,7 @@ function authenticationSucceeded(scope) {
       'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code&device_code=DEVICE-CODE&client_id=the-client-id',
     )
     .reply(200, {
-      access_token: jwt.sign({}, 'key', { expiresIn: '1day' }),
+      access_token: SIGNED_JWT_TOKEN,
     });
 }
 
@@ -169,7 +170,7 @@ function createAuthenticationToken(scope) {
       data: {
         id: 42,
         attributes: {
-          token: jwt.sign({}, 'key', { expiresIn: '1day' }),
+          token: SIGNED_JWT_TOKEN,
         },
       },
     });
@@ -203,7 +204,9 @@ module.exports = {
   loginValid: () =>
     nock('http://localhost:3001')
       .post('/api/sessions', { email: 'some@mail.com', password: 'valid_pwd' })
-      .reply(200, { token: jwt.sign({}, 'key', { expiresIn: '1day' }) }),
+      .reply(200, {
+        token: SIGNED_JWT_TOKEN,
+      }),
 
   loginInvalid: () =>
     nock('http://localhost:3001')

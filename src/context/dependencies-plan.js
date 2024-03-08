@@ -11,7 +11,7 @@ module.exports = plan =>
       planInquirer.addInstance('inquirer', () => require('inquirer')),
     )
     .addPackage('jwtDecode', planJWTDecode =>
-      planJWTDecode.addInstance('jwtDecode', () => require('jwt-decode')),
+      planJWTDecode.addInstance('jwtDecode', () => require('jsonwebtoken').decode),
     )
     .addPackage('others', planOthers =>
       planOthers
