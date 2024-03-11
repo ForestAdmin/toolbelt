@@ -1,3 +1,10 @@
+## [5.0.8](https://github.com/ForestAdmin/toolbelt/compare/v5.0.7...v5.0.8) (2024-03-11)
+
+
+### Bug Fixes
+
+* **dependencies:** remove warning caused by @hapi/joi ([#674](https://github.com/ForestAdmin/toolbelt/issues/674)) ([4a7f91e](https://github.com/ForestAdmin/toolbelt/commit/4a7f91e26bfbb3785fcc5e348fb722f474ff10c3))
+
 ## [5.0.7](https://github.com/ForestAdmin/toolbelt/compare/v5.0.6...v5.0.7) (2024-03-08)
 
 
