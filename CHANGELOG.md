@@ -1,3 +1,10 @@
+## [5.0.9](https://github.com/ForestAdmin/toolbelt/compare/v5.0.8...v5.0.9) (2024-03-11)
+
+
+### Bug Fixes
+
+* **security:** patch jose dependency vulnerabilities ([#675](https://github.com/ForestAdmin/toolbelt/issues/675)) ([f5dac97](https://github.com/ForestAdmin/toolbelt/commit/f5dac974adf8e9d2874df0ac5cf2a10f07971325))
+
 ## [5.0.8](https://github.com/ForestAdmin/toolbelt/compare/v5.0.7...v5.0.8) (2024-03-11)
 
 
