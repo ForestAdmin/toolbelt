@@ -1,4 +1,4 @@
-const joi = require('@hapi/joi');
+const joi = require('joi');
 const Authenticator = require('../../src/services/authenticator');
 
 describe('services > authenticator', () => {

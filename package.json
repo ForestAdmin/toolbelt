@@ -17,7 +17,6 @@
   "dependencies": {
     "@forestadmin/context": "1.37.1",
     "@forestadmin/datasource-sql": "1.6.4",
-    "@hapi/joi": "17.1.1",
     "@oclif/core": "3.18.2",
     "@oclif/plugin-help": "6.0.12",
     "@oclif/plugin-not-found": "3.0.10",
@@ -32,6 +31,7 @@
     "dotenv": "8.2.0",
     "handlebars": "4.7.7",
     "inquirer": "6.2.0",
+    "joi": "17.12.2",
     "json-diff": "1.0.0",
     "jsonapi-serializer": "3.6.2",
     "jsonwebtoken": "9.0.2",
