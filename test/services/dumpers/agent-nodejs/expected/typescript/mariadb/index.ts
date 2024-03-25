@@ -35,7 +35,7 @@ agent.addDataSource(
 //
 // Here is some code to get your started
 //
-// agent.customizeCollection('products', (collection: CollectionCustomizer<Schema, 'products'>) => {
+// agent.customizeCollection('products', collection => {
 //   // Actions are documented here:
 //   // https://docs.forestadmin.com/developer-guide-agents-nodejs/agent-customization/actions
 //   collection.addAction('Order new batch from supplier', {
@@ -54,7 +54,7 @@ agent.addDataSource(
 //   // Search customization is documented here:
 //   // https://docs.forestadmin.com/developer-guide-agents-nodejs/agent-customization/search
 //   collection.replaceSearch(searchString => {
-//     // user has typed a product id, let's only that column
+//     // user has most likely typed a product id, let's search only that column
 //     if (searchString.match(/^prdid[\d]{8}/$))
 //       return { field: 'id', operator: 'Equal', value: searchString };
 
