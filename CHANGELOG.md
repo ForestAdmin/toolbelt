@@ -1,3 +1,10 @@
+## [5.0.10](https://github.com/ForestAdmin/toolbelt/compare/v5.0.9...v5.0.10) (2024-03-25)
+
+
+### Bug Fixes
+
+* typos in generated projects ([#676](https://github.com/ForestAdmin/toolbelt/issues/676)) ([890282e](https://github.com/ForestAdmin/toolbelt/commit/890282eab46f5b044c7baf4c12d31d3332ece778))
+
 ## [5.0.9](https://github.com/ForestAdmin/toolbelt/compare/v5.0.8...v5.0.9) (2024-03-11)
 
 
