@@ -50,14 +50,23 @@ function Api({
    * @param {string} sessionToken
    * @returns {Promise<import('../deserializers/application-token').ApplicationToken>}
    */
-  this.deleteApplicationToken = async sessionToken =>
-    agent
-      .delete(`${this.endpoint()}/api/application-tokens`)
-      .set(HEADER_FOREST_ORIGIN, 'forest-cli')
-      .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
-      .set(HEADER_USER_AGENT, this.userAgent)
-      .set('Authorization', `Bearer ${sessionToken}`)
-      .send();
+  this.deleteApplicationToken = async sessionToken => {
+    try {
+      await agent
+        .delete(`${this.endpoint()}/api/application-tokens`)
+        .set(HEADER_FOREST_ORIGIN, 'forest-cli')
+        .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
+        .set(HEADER_USER_AGENT, this.userAgent)
+        .set('Authorization', `Bearer ${sessionToken}`)
+        .send();
+    } catch (error) {
+      if (error.code === 'ERR_INVALID_CHAR' && error?.message.includes('"Authorization"')) {
+        // token is wrong. silencing this error since it cannot be used for auth anyway.
+      } else {
+        throw error;
+      }
+    }
+  };
 
   this.createProject = async (config, sessionToken, project) => {
     let newProject;
