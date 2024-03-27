@@ -112,16 +112,16 @@ describe('services > API', () => {
       expect(superagent.set).toHaveBeenCalledWith('Authorization', 'Bearer THE-TOKEN');
       expect(superagent.send).toHaveBeenCalledWith();
     });
-    // eslint-disable-next-line jest/prefer-expect-assertions
     it('should silence ERR_INVALID_CHAR errors relative to auth token', async () => {
+      expect.assertions(1);
       const { superagent, api } = setup();
       const error = new Error('Invalid character in header content ["Authorization"]');
       error.code = 'ERR_INVALID_CHAR';
       superagent.send.mockRejectedValue(error);
       await expect(api.deleteApplicationToken('THE-TOKEN')).resolves.not.toThrow();
     });
-    // eslint-disable-next-line jest/prefer-expect-assertions
     it('should rethrow other errors', async () => {
+      expect.assertions(1);
       const { superagent, api } = setup();
       const error = new Error('Some other error');
       superagent.send.mockRejectedValue(error);
