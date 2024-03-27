@@ -1,3 +1,10 @@
+# [5.1.0](https://github.com/ForestAdmin/toolbelt/compare/v5.0.10...v5.1.0) (2024-03-27)
+
+
+### Features
+
+* do not fail to re-login if previous token is wrong ([#677](https://github.com/ForestAdmin/toolbelt/issues/677)) ([f67c183](https://github.com/ForestAdmin/toolbelt/commit/f67c1837cebb7d5ce58df33c199d4bbaadecbf39))
+
 ## [5.0.10](https://github.com/ForestAdmin/toolbelt/compare/v5.0.9...v5.0.10) (2024-03-25)
 
 
