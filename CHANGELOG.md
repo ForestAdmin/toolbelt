@@ -1,3 +1,10 @@
+## [5.1.1](https://github.com/ForestAdmin/toolbelt/compare/v5.1.0...v5.1.1) (2024-04-12)
+
+
+### Bug Fixes
+
+* **security:** patch tar dependency vulnerabilities ([#678](https://github.com/ForestAdmin/toolbelt/issues/678)) ([5c4ee7a](https://github.com/ForestAdmin/toolbelt/commit/5c4ee7ad13df152aead03aba701f3c36a145e19b))
+
 # [5.1.0](https://github.com/ForestAdmin/toolbelt/compare/v5.0.10...v5.1.0) (2024-03-27)
 
 
