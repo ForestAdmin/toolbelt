@@ -1,3 +1,10 @@
+## [5.1.3](https://github.com/ForestAdmin/toolbelt/compare/v5.1.2...v5.1.3) (2024-04-25)
+
+
+### Bug Fixes
+
+* **security:** patch mysql2 dependency vulnerabilities ([#680](https://github.com/ForestAdmin/toolbelt/issues/680)) ([cbb9141](https://github.com/ForestAdmin/toolbelt/commit/cbb9141900b228d5698341c32e5a6fbbb1774287))
+
 ## [5.1.2](https://github.com/ForestAdmin/toolbelt/compare/v5.1.1...v5.1.2) (2024-04-15)
 
 
