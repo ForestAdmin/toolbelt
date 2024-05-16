@@ -1,3 +1,10 @@
+## [5.1.4](https://github.com/ForestAdmin/toolbelt/compare/v5.1.3...v5.1.4) (2024-05-16)
+
+
+### Bug Fixes
+
+* **security:** patch ejs dependency vulnerabilities ([#681](https://github.com/ForestAdmin/toolbelt/issues/681)) ([8214090](https://github.com/ForestAdmin/toolbelt/commit/82140906a41235b4e133fca6e49911e8c982fb88))
+
 ## [5.1.3](https://github.com/ForestAdmin/toolbelt/compare/v5.1.2...v5.1.3) (2024-04-25)
 
 
