@@ -1,3 +1,10 @@
+## [5.1.5](https://github.com/ForestAdmin/toolbelt/compare/v5.1.4...v5.1.5) (2024-05-17)
+
+
+### Bug Fixes
+
+* **security:** patch lodash.template dependency vulnerabilities ([#682](https://github.com/ForestAdmin/toolbelt/issues/682)) ([c5fcf06](https://github.com/ForestAdmin/toolbelt/commit/c5fcf065b7b703e72b28bffd532aedc145287631))
+
 ## [5.1.4](https://github.com/ForestAdmin/toolbelt/compare/v5.1.3...v5.1.4) (2024-05-16)
 
 
