@@ -1,3 +1,10 @@
+## [5.1.7](https://github.com/ForestAdmin/toolbelt/compare/v5.1.6...v5.1.7) (2024-06-14)
+
+
+### Bug Fixes
+
+* **security:** patch braces dependency vulnerabilities ([#684](https://github.com/ForestAdmin/toolbelt/issues/684)) ([7839af3](https://github.com/ForestAdmin/toolbelt/commit/7839af30ea7360ce76f737ef2687f889c88cd5c9))
+
 ## [5.1.6](https://github.com/ForestAdmin/toolbelt/compare/v5.1.5...v5.1.6) (2024-06-09)
 
 
