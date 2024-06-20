@@ -1,3 +1,10 @@
+## [5.1.8](https://github.com/ForestAdmin/toolbelt/compare/v5.1.7...v5.1.8) (2024-06-20)
+
+
+### Bug Fixes
+
+* **security:** patch ws dependency vulnerabilities ([#685](https://github.com/ForestAdmin/toolbelt/issues/685)) ([2104ce6](https://github.com/ForestAdmin/toolbelt/commit/2104ce66bf48c444ff3152c19ee1c0e40e2d9af0))
+
 ## [5.1.7](https://github.com/ForestAdmin/toolbelt/compare/v5.1.6...v5.1.7) (2024-06-14)
 
 
