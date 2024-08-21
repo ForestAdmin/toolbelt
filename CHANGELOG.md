@@ -1,3 +1,10 @@
+## [5.1.9](https://github.com/ForestAdmin/toolbelt/compare/v5.1.8...v5.1.9) (2024-08-21)
+
+
+### Bug Fixes
+
+* **security:** patch fast-xml-parser dependency vulnerabilities ([#686](https://github.com/ForestAdmin/toolbelt/issues/686)) ([f22d0a2](https://github.com/ForestAdmin/toolbelt/commit/f22d0a2ab58c54ec26d6e5e489d034af5a472d52))
+
 ## [5.1.8](https://github.com/ForestAdmin/toolbelt/compare/v5.1.7...v5.1.8) (2024-06-20)
 
 
