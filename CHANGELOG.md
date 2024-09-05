@@ -1,3 +1,10 @@
+## [5.1.10](https://github.com/ForestAdmin/toolbelt/compare/v5.1.9...v5.1.10) (2024-09-05)
+
+
+### Bug Fixes
+
+* **security:** patch micromatch dependency vulnerabilities ([#688](https://github.com/ForestAdmin/toolbelt/issues/688)) ([a37d99d](https://github.com/ForestAdmin/toolbelt/commit/a37d99d67904d21f3414833d3b74417effd8d1f4))
+
 ## [5.1.9](https://github.com/ForestAdmin/toolbelt/compare/v5.1.8...v5.1.9) (2024-08-21)
 
 
