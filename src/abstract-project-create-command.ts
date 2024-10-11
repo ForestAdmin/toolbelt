@@ -114,7 +114,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected abstract generateProject(config: Config): Promise<void>;
 
-  private async getConfig(): Promise<{
+  protected async getConfig(): Promise<{
     appConfig: AppConfig;
     dbConfig: DbConfig;
     language: Language | null;
