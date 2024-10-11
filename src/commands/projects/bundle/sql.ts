@@ -1,56 +1,15 @@
-import type { Config, DbConfig } from '../../../interfaces/project-create-interface';
-import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
-import type { CommandOptions } from '../../../utils/option-parser';
-import type { Config as OclifConfig } from '@oclif/core';
-
-import { introspect } from '@forestadmin/datasource-sql';
-
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
-import * as projectCreateOptions from '../../../services/projects/create/options';
-import Agents from '../../../utils/agents';
 import { optionsToFlags } from '../../../utils/option-parser';
+import SqlCommand from '../create/sql';
 
-export default class SqlCommand extends AbstractProjectCreateCommand {
-  protected static options: CommandOptions = {
-    databaseConnectionURL: projectCreateOptions.databaseConnectionURL,
-    databaseDialect: projectCreateOptions.databaseDialectSqlV2,
-    databaseName: projectCreateOptions.databaseName,
-    databaseSchema: projectCreateOptions.databaseSchema,
-    databaseHost: projectCreateOptions.databaseHost,
-    databasePort: projectCreateOptions.databasePort,
-    databaseUser: projectCreateOptions.databaseUser,
-    databasePassword: projectCreateOptions.databasePassword,
-
-    // Set prompter to null to replicate bug from previous version (we don't ask for SSL there).
-    databaseSslMode: { ...projectCreateOptions.databaseSslMode, prompter: null },
-    databaseSSL: { ...projectCreateOptions.databaseSSL, prompter: null },
-
-    applicationHost: projectCreateOptions.applicationHost,
-    applicationPort: projectCreateOptions.applicationPort,
-    language: projectCreateOptions.language,
-  };
-
+export default class SqlBundleCommand extends SqlCommand {
   /** @see https://oclif.io/docs/args */
   static override readonly args = AbstractProjectCreateCommand.args;
 
   /** @see https://oclif.io/docs/flags */
   static override readonly flags = optionsToFlags(this.options);
 
-  private readonly dumper: AgentNodeJs;
-
-  protected readonly agent = Agents.NodeJS;
-
   static override description = 'Bundle files for Forest Admin project.';
-
-  constructor(argv: string[], config: OclifConfig, plan?) {
-    super(argv, config, plan);
-
-    const { assertPresent, agentNodejsDumper } = this.context;
-
-    assertPresent({ agentNodejsDumper });
-
-    this.dumper = agentNodejsDumper;
-  }
 
   protected override async runAuthenticated(): Promise<void> {
     const { appConfig, dbConfig, language } = await this.getConfig();
@@ -66,36 +25,5 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
     });
 
     this.logger.info(`Hooray, ${this.chalk.green('installation success')}!`);
-  }
-
-  protected async generateProject(config: Config): Promise<void> {
-    this.spinner.start({ text: 'Creating your project files' });
-    const dumperConfig = {
-      dbConfig: config.dbConfig,
-      appConfig: config.appConfig,
-      forestAuthSecret: config.forestAuthSecret,
-      forestEnvSecret: config.forestEnvSecret,
-      language: config.language,
-    };
-    const dumpPromise = this.dumper.dump(dumperConfig);
-    await this.spinner.attachToPromise(dumpPromise);
-  }
-
-  protected override async testDatabaseConnection(dbConfig: DbConfig) {
-    this.spinner.start({ text: 'Testing connection to your database' });
-
-    const connectionPromise = introspect({
-      uri: dbConfig.dbConnectionUrl,
-      dialect: dbConfig.dbDialect as Exclude<DbConfig['dbDialect'], 'mongodb'>,
-      host: dbConfig.dbHostname,
-      database: dbConfig.dbName,
-      password: dbConfig.dbPassword,
-      port: dbConfig.dbPort,
-      schema: dbConfig.dbSchema,
-      sslMode: dbConfig.dbSslMode,
-      username: dbConfig.dbUser,
-    });
-
-    await this.spinner.attachToPromise(connectionPromise);
   }
 }
