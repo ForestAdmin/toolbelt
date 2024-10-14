@@ -1,3 +1,10 @@
+# [5.2.0](https://github.com/ForestAdmin/toolbelt/compare/v5.1.10...v5.2.0) (2024-10-14)
+
+
+### Features
+
+* add bundle project command to simplify agent-nodejs migration ([#689](https://github.com/ForestAdmin/toolbelt/issues/689)) ([47e9328](https://github.com/ForestAdmin/toolbelt/commit/47e93280778ed502146438b5b1f5aea4a6de6e2a))
+
 ## [5.1.10](https://github.com/ForestAdmin/toolbelt/compare/v5.1.9...v5.1.10) (2024-09-05)
 
 
