@@ -16,7 +16,7 @@
   "bugs": "https://github.com/ForestAdmin/toolbelt/issues",
   "dependencies": {
     "@forestadmin/context": "1.37.1",
-    "@forestadmin/datasource-sql": "1.6.4",
+    "@forestadmin/datasource-sql": "1.14.31",
     "@oclif/core": "3.18.2",
     "@oclif/plugin-help": "6.0.12",
     "@oclif/plugin-not-found": "3.0.10",
@@ -46,7 +46,7 @@
     "pluralize": "8.0.0",
     "progress": "2.0.3",
     "saslprep": "1.0.3",
-    "sequelize": "6.32.1",
+    "sequelize": "6.37.5",
     "spinnies": "0.5.1",
     "stdout-stderr": "0.1.13",
     "superagent": "8.1.2",
