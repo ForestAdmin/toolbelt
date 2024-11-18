@@ -40,7 +40,7 @@
     "mkdirp": "1.0.4",
     "mongodb": "4.17.2",
     "mysql2": "3.9.8",
-    "open": "7.3.0",
+    "open": "10.1.0",
     "openid-client": "4.2.2",
     "pg": "8.11.2",
     "pluralize": "8.0.0",
