@@ -1,3 +1,11 @@
+## [5.2.2](https://github.com/ForestAdmin/toolbelt/compare/v5.2.1...v5.2.2) (2024-11-22)
+
+
+### Bug Fixes
+
+* **security:** patch cross-spawn dependency vulnerabilities ([#698](https://github.com/ForestAdmin/toolbelt/issues/698)) ([296a67a](https://github.com/ForestAdmin/toolbelt/commit/296a67a01f2fbee8b0c0ebcae1416aa26f9e7203))
+* **security:** patch micromatch dependency vulnerabilities ([#697](https://github.com/ForestAdmin/toolbelt/issues/697)) ([14be814](https://github.com/ForestAdmin/toolbelt/commit/14be81417a952d027b1bb8975bebccd50a3cd517))
+
 ## [5.2.1](https://github.com/ForestAdmin/toolbelt/compare/v5.2.0...v5.2.1) (2024-11-15)
 
 # [5.2.0](https://github.com/ForestAdmin/toolbelt/compare/v5.1.10...v5.2.0) (2024-10-14)
