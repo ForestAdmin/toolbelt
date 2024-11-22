@@ -133,5 +133,8 @@
     "test": "jest --runInBand",
     "test:coverage": "jest --runInBand --coverage",
     "postbuild": "mkdir -p ./dist/services/dumpers/templates && cp -R src/services/dumpers/templates dist/services/dumpers/"
+  },
+  "resolutions": {
+    "semantic-release-slack-bot/**/micromatch": "^4.0.8"
   }
 }
