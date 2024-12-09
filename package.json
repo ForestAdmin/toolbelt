@@ -18,7 +18,7 @@
     "@forestadmin/context": "1.37.1",
     "@forestadmin/datasource-sql": "1.14.31",
     "@oclif/core": "3.18.2",
-    "@oclif/plugin-help": "6.0.12",
+    "@oclif/plugin-help": "6.2.19",
     "@oclif/plugin-not-found": "3.0.10",
     "@oclif/plugin-warn-if-update-available": "3.0.19",
     "app-root-path": "3.0.0",
