@@ -17,7 +17,7 @@
     "dotenv": "^16.0.1",
     "@forestadmin/agent": "^1.0.0",
     "@forestadmin/datasource-mongoose": "^1.0.0",
-    "mongoose": "^6.10.3"
+    "mongoose": "^8.8.4"
   },
   "devDependencies": {
     "nodemon": "^2.0.12",
