@@ -86,9 +86,9 @@ describe('services > database', () => {
       });
 
       describe('and no dialect is provided', () => {
-        it('should return undefined', () => {
+        it('should return null', () => {
           expect.assertions(1);
-          expect(database.getDialect()).toBeUndefined();
+          expect(database.getDialect()).toBeNull();
         });
       });
     });
