@@ -465,7 +465,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
       describe('when handling datasource', () => {
         describe('when the dbDialect is mongodb', () => {
-          it('should use the mongoose datasource package', async () => {
+          it('should use the mongo datasource package', async () => {
             expect.assertions(1);
 
             const { dumper, context, defaultConfig } = createDumper(language);
