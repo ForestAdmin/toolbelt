@@ -43,5 +43,5 @@ export interface Config {
   appConfig: AppConfig;
   forestAuthSecret: string;
   forestEnvSecret: string;
-  language: Language | null;
+  language?: Language;
 }

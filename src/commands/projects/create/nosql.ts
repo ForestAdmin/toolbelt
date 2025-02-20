@@ -1,7 +1,6 @@
-import type { Config, DbConfig } from '../../../interfaces/project-create-interface';
+import type { Config } from '../../../interfaces/project-create-interface';
 import type AgentNodeJs from '../../../services/dumpers/agent-nodejs';
 import type { ProjectCreateOptions } from '../../../services/projects/create/options';
-import type DatabaseAnalyzer from '../../../services/schema/update/analyzer/database-analyzer';
 import type { CommandOptions } from '../../../utils/option-parser';
 import type { Config as OclifConfig } from '@oclif/core';
 
@@ -35,26 +34,23 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
   /** @see https://oclif.io/docs/flags */
   static override readonly flags = optionsToFlags(this.options);
 
-  private readonly dumper: AgentNodeJs;
-
-  private readonly databaseAnalyzer: DatabaseAnalyzer;
-
   protected readonly agent = Agents.NodeJS;
+
+  private readonly dumper: AgentNodeJs;
 
   constructor(argv: string[], config: OclifConfig, plan?) {
     super(argv, config, plan);
 
-    const { assertPresent, agentNodejsDumper, databaseAnalyzer } = this.context;
+    const { assertPresent, agentNodejsDumper } = this.context;
 
-    assertPresent({ agentNodejsDumper, databaseAnalyzer });
+    assertPresent({ agentNodejsDumper });
 
     this.dumper = agentNodejsDumper;
-    this.databaseAnalyzer = databaseAnalyzer;
   }
 
-  protected async generateProject(config: Config): Promise<void> {
-    const schema = await this.analyzeDatabase(config.dbConfig);
-    await this.createFiles(config, schema);
+  protected override async dump(config: Config) {
+    const dumpPromise = this.dumper.dump(config);
+    await this.spinner.attachToPromise(dumpPromise);
   }
 
   protected override async getCommandOptions(): Promise<ProjectCreateOptions> {
@@ -62,27 +58,5 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
       ...(await super.getCommandOptions()),
       databaseDialect: 'mongodb',
     };
-  }
-
-  private async analyzeDatabase(dbConfig: DbConfig) {
-    this.logger.info('Analyzing the database');
-    const connection = await this.database.connect(dbConfig);
-    const schema = await this.databaseAnalyzer.analyzeMongoDb(connection, dbConfig, true);
-    await this.database.disconnect(connection);
-    this.logger.success('Database is analyzed', { lineColor: 'green' });
-    return schema;
-  }
-
-  private async createFiles(config: Config, schema): Promise<void> {
-    this.spinner.start({ text: 'Creating your project files' });
-    const dumperConfig = {
-      dbConfig: config.dbConfig,
-      appConfig: config.appConfig,
-      forestAuthSecret: config.forestAuthSecret,
-      forestEnvSecret: config.forestEnvSecret,
-      language: config.language,
-    };
-    const dumpPromise = this.dumper.dump(dumperConfig, schema);
-    await this.spinner.attachToPromise(dumpPromise);
   }
 }

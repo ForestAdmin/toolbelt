@@ -1,8 +1,7 @@
 require('dotenv').config();
 const { createAgent } = require('@forestadmin/agent');
-{{#if isMongoose}}
-const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');
-const connection = require('./models');
+{{#if isMongo}}
+const { createMongoDataSource } = require('@forestadmin/datasource-mongo');
 {{else}}
 const { createSqlDataSource } = require('@forestadmin/datasource-sql');
 {{/if}}
@@ -29,8 +28,15 @@ const agent = createAgent({
 
 // Connect your datasources
 // All options are documented at https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
-{{#if isMongoose}}
-agent.addDataSource(createMongooseDataSource(connection, { flattenMode: 'auto' }));
+{{#if isMongo}}
+agent.addDataSource(
+  createMongoDataSource({
+    uri: connectionString,
+    dataSource: {
+      flattenMode: 'auto'
+    },
+  }),
+);
 {{else}}
 agent.addDataSource(
   createSqlDataSource({

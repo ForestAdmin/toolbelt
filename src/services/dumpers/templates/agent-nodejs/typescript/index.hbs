@@ -1,13 +1,12 @@
-{{#unless isMongoose}}
+{{#unless isMongo}}
 import type { SslMode } from '@forestadmin/datasource-sql';
 {{/unless}}
 import type { Schema } from './typings';
 
 import 'dotenv/config';
 import { createAgent } from '@forestadmin/agent';
-{{#if isMongoose}}
-import { createMongooseDataSource } from '@forestadmin/datasource-mongoose';
-import connection from './models';
+{{#if isMongo}}
+import { createMongoDataSource } from '@forestadmin/datasource-mongo';
 {{else}}
 import { createSqlDataSource } from '@forestadmin/datasource-sql';
 {{/if}}
@@ -31,8 +30,15 @@ const agent = createAgent<Schema>({
 
 // Connect your datasources
 // All options are documented at https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
-{{#if isMongoose}}
-agent.addDataSource(createMongooseDataSource(connection, { flattenMode: 'auto' }));
+{{#if isMongo}}
+agent.addDataSource(
+  createMongoDataSource({
+    uri: connectionString,
+    dataSource: {
+      flattenMode: 'auto'
+    },
+  }),
+);
 {{else}}
 agent.addDataSource(
   createSqlDataSource({
