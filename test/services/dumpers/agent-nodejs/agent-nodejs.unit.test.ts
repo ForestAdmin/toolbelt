@@ -491,7 +491,7 @@ describe('services > dumpers > AgentNodeJs', () => {
 
             expect(context.fs.writeFileSync).toHaveBeenCalledWith(
               `/test/a${language.name}Application/package.json`,
-              expect.stringContaining('"mongoose": "^8.8.4"'),
+              expect.stringContaining('"mongoose": "^7.8.6"'),
             );
           });
         });

@@ -77,7 +77,7 @@ export default class AgentNodeJs extends AbstractDumper {
 
     if (dbDialect === 'mongodb') {
       dependencies['@forestadmin/datasource-mongoose'] = '^1.0.0';
-      dependencies.mongoose = '^8.8.4';
+      dependencies.mongoose = '^7.8.6';
     } else {
       dependencies['@forestadmin/datasource-sql'] = '^1.0.0';
     }
