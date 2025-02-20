@@ -75,6 +75,7 @@ describe('abstractProjectCreateCommand command', () => {
     class TestAbstractClass extends AbstractProjectCreateCommand {
       public agent: string | null = null;
 
+      // eslint-disable-next-line class-methods-use-this
       override dump() {
         return Promise.resolve();
       }
