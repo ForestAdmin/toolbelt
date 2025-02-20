@@ -49,27 +49,23 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
     const {
       assertPresent,
-      authenticator,
       eventSender,
       optionParser,
       projectCreator,
-      agentNodejsDumper,
-      databaseAnalyzer,
       database,
       messages,
       spinner,
+      databaseAnalyzer,
     } = this.context;
 
     assertPresent({
-      authenticator,
       eventSender,
       optionParser,
       projectCreator,
-      agentNodejsDumper,
-      databaseAnalyzer,
       database,
       messages,
       spinner,
+      databaseAnalyzer,
     });
 
     this.eventSender = eventSender;
