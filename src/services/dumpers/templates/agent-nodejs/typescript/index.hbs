@@ -33,9 +33,9 @@ const agent = createAgent<Schema>({
 {{#if isMongo}}
 agent.addDataSource(
   createMongoDataSource({
-    uri: connectionString,
+    uri: process.env.DATABASE_URL,
     dataSource: {
-      flattenMode: 'auto'
+      flattenMode: 'auto',
     },
   }),
 );
