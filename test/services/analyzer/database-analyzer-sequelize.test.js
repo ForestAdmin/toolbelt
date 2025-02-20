@@ -7,7 +7,6 @@ const DatabaseAnalyzer = require('../../../src/services/schema/update/analyzer/d
 const databaseUrls = require('./helpers/database-urls');
 const expectedDefaultValuesPostgres = require('./expected/sequelize/db-analysis-output/default_values.postgres.expected');
 const expectedDefaultValuesMysql = require('./expected/sequelize/db-analysis-output/default_values.mysql.expected');
-const expectedDefaultValuesMssql = require('./expected/sequelize/db-analysis-output/default_values.mssql.expected');
 const sequelizeAnalyzer = require('../../../src/services/schema/update/analyzer/sequelize-tables-analyzer');
 
 const defaultPlan = require('../../../src/context/plan');
@@ -19,8 +18,6 @@ const defaultsValueExpected = {
   [databaseUrls.DATABASE_URL_POSTGRESQL_MIN]: _.cloneDeep(expectedDefaultValuesPostgres),
   [databaseUrls.DATABASE_URL_POSTGRESQL_MAX]: expectedDefaultValuesPostgres,
   [databaseUrls.DATABASE_URL_MYSQL_MAX]: expectedDefaultValuesMysql,
-  [databaseUrls.DATABASE_URL_MSSQL_MIN]: expectedDefaultValuesMssql,
-  [databaseUrls.DATABASE_URL_MSSQL_MAX]: expectedDefaultValuesMssql,
 };
 
 // Expected output for PostgresMin and PostgresMax differ only by one value.

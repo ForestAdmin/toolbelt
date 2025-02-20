@@ -1,8 +1,6 @@
 const {
   DATABASE_URL_MONGODB_MIN,
   DATABASE_URL_MONGODB_MAX,
-  DATABASE_URL_MSSQL_MAX,
-  DATABASE_URL_MSSQL_MIN,
   DATABASE_URL_MYSQL_MAX,
   DATABASE_URL_MYSQL_MIN,
   DATABASE_URL_POSTGRESQL_MAX,
@@ -44,18 +42,6 @@ const sqlDatabases = [
     version: '12.1',
     connectionUrl: DATABASE_URL_POSTGRESQL_MAX,
     schema: 'public',
-  },
-  {
-    dialect: 'mssql',
-    version: '2017-CU8-ubuntu',
-    connectionUrl: DATABASE_URL_MSSQL_MIN,
-    schema: 'dbo',
-  },
-  {
-    dialect: 'mssql',
-    version: '2019-GDR1-ubuntu-16.04',
-    connectionUrl: DATABASE_URL_MSSQL_MAX,
-    schema: 'dbo',
   },
 ];
 
