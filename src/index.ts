@@ -1,3 +1,3 @@
-// eslint-disable-next-line import/prefer-default-export
 // hello
+// eslint-disable-next-line import/prefer-default-export
 export { run } from '@oclif/core';
