@@ -51,8 +51,7 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
   }
 
   protected override async dump(config: Config) {
-    const dumpPromise = this.dumper.dump(config);
-    await this.spinner.attachToPromise(dumpPromise);
+    return this.dumper.dump(config);
   }
 
   protected override async testDatabaseConnection(dbConfig: DbConfig) {

@@ -117,8 +117,8 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   }
 
   protected async generateProject(config: Config): Promise<void> {
-    this.spinner.start({ text: 'Creating your project files' });
     const schema = await this.analyzeDatabase(config.dbConfig);
+    this.spinner.start({ text: 'Creating your project files' });
     await this.dump(config, schema);
   }
 
@@ -126,18 +126,16 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected async analyzeDatabase(dbConfig: DbConfig) {
     const connection = await this.database.connect(dbConfig);
+    this.spinner.start({ text: 'Analyzing the database' });
 
+    let schemaPromise;
     if (dbConfig.dbDialect === 'mongodb') {
       // the mongodb analyzer display a progress bar during the analysis
-      this.logger.info('Analyzing the database');
-      const schema = await this.databaseAnalyzer.analyzeMongoDb(connection, dbConfig, true);
-      await this.database.disconnect(connection);
-      this.logger.success('Database is analyzed', { lineColor: 'green' });
-      return schema;
+      schemaPromise = this.databaseAnalyzer.analyzeMongoDb(connection, dbConfig, true);
+    } else {
+      schemaPromise = this.databaseAnalyzer.analyze(connection, dbConfig, true);
     }
 
-    this.spinner.start({ text: 'Analyzing the database' });
-    const schemaPromise = this.databaseAnalyzer.analyze(connection, dbConfig, true);
     const schema = await this.spinner.attachToPromise(schemaPromise);
     this.logger.success('Database is analyzed', { lineColor: 'green' });
     await this.database.disconnect(connection);

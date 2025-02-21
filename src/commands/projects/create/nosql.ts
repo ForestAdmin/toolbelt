@@ -49,8 +49,7 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
   }
 
   protected override async dump(config: Config) {
-    const dumpPromise = this.dumper.dump(config);
-    await this.spinner.attachToPromise(dumpPromise);
+    return this.dumper.dump(config);
   }
 
   protected override async getCommandOptions(): Promise<ProjectCreateOptions> {
