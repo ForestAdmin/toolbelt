@@ -119,7 +119,8 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   protected async generateProject(config: Config): Promise<void> {
     const schema = await this.analyzeDatabase(config.dbConfig);
     this.spinner.start({ text: 'Creating your project files' });
-    await this.dump(config, schema);
+    const dumpPromise = this.dump(config, schema);
+    this.spinner.attachToPromise(dumpPromise);
   }
 
   protected abstract dump(config: Config, schema?): Promise<void>;
