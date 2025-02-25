@@ -43,7 +43,6 @@ export default class CreateCommand extends AbstractProjectCreateCommand {
   }
 
   protected async dump(config: Config, schema?): Promise<void> {
-    const dumpPromise = this.dumper.dump(config, schema);
-    await this.spinner.attachToPromise(dumpPromise);
+    return this.dumper.dump(config, schema);
   }
 }

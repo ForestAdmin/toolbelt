@@ -19,11 +19,7 @@ module.exports = {
     stderr.stop();
 
     if (!errorOutputs.length && stderr.output && assertNoStdError) {
-      if (stderr.output.trim().length > 0) {
-        expect(stderr.output.trim()).toContain('DeprecationWarning');
-      } else {
-        expect(stderr.output.trim()).toBe('');
-      }
+      expect(stderr.output.trim()).toBe('');
     }
 
     for (let i = 0; i < outputs.length; i += 1) {
