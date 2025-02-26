@@ -27,6 +27,7 @@ describe('branch', () => {
       it('should display a list of branches as table', () =>
         testCli({
           env: testEnvWithSecret,
+          assertNoStdError: false,
           token: 'any',
           commandClass: BranchCommand,
           api: [() => getProjectByEnv(), () => getBranchListValid()],

@@ -2,6 +2,7 @@ import type { AppConfig, Config, DbConfig } from './interfaces/project-create-in
 import type { ProjectCreateOptions } from './services/projects/create/options';
 import type ProjectCreator from './services/projects/create/project-creator';
 import type { ProjectMeta } from './services/projects/create/project-creator';
+import type DatabaseAnalyzer from './services/schema/update/analyzer/database-analyzer';
 import type Database from './services/schema/update/database';
 import type Spinner from './services/spinner';
 import type EventSender from './utils/event-sender';
@@ -23,6 +24,8 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   private readonly projectCreator: ProjectCreator;
 
   protected readonly database: Database;
+
+  private readonly databaseAnalyzer: DatabaseAnalyzer;
 
   protected readonly messages: typeof Messages;
 
@@ -46,23 +49,23 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
     const {
       assertPresent,
-      authenticator,
       eventSender,
       optionParser,
       projectCreator,
       database,
       messages,
       spinner,
+      databaseAnalyzer,
     } = this.context;
 
     assertPresent({
-      authenticator,
       eventSender,
       optionParser,
       projectCreator,
       database,
       messages,
       spinner,
+      databaseAnalyzer,
     });
 
     this.eventSender = eventSender;
@@ -71,6 +74,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     this.database = database;
     this.messages = messages;
     this.spinner = spinner;
+    this.databaseAnalyzer = databaseAnalyzer;
   }
 
   protected async runAuthenticated(): Promise<void> {
@@ -112,7 +116,32 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     }
   }
 
-  protected abstract generateProject(config: Config): Promise<void>;
+  protected async generateProject(config: Config): Promise<void> {
+    const schema = await this.analyzeDatabase(config.dbConfig);
+    this.spinner.start({ text: 'Creating your project files' });
+    const dumpPromise = this.dump(config, schema);
+    await this.spinner.attachToPromise(dumpPromise);
+  }
+
+  protected abstract dump(config: Config, schema?): Promise<void>;
+
+  protected async analyzeDatabase(dbConfig: DbConfig) {
+    const connection = await this.database.connect(dbConfig);
+    this.spinner.start({ text: 'Analyzing the database' });
+
+    let schemaPromise;
+    if (dbConfig.dbDialect === 'mongodb') {
+      // the mongodb analyzer display a progress bar during the analysis
+      schemaPromise = this.databaseAnalyzer.analyzeMongoDb(connection, dbConfig, true);
+    } else {
+      schemaPromise = this.databaseAnalyzer.analyze(connection, dbConfig, true);
+    }
+
+    const schema = await this.spinner.attachToPromise(schemaPromise);
+    this.logger.success('Database is analyzed', { lineColor: 'green' });
+    await this.database.disconnect(connection);
+    return schema;
+  }
 
   protected async getConfig(): Promise<{
     appConfig: AppConfig;

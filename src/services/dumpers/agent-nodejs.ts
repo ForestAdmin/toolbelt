@@ -76,8 +76,7 @@ export default class AgentNodeJs extends AbstractDumper {
     };
 
     if (dbDialect === 'mongodb') {
-      dependencies['@forestadmin/datasource-mongoose'] = '^1.0.0';
-      dependencies.mongoose = '^6.10.3';
+      dependencies['@forestadmin/datasource-mongo'] = '^1.0.0';
     } else {
       dependencies['@forestadmin/datasource-sql'] = '^1.0.0';
     }
@@ -159,10 +158,10 @@ export default class AgentNodeJs extends AbstractDumper {
   }
 
   writeIndex(language: Language, dbDialect: string, dbSchema: string) {
-    const isMongoose = dbDialect === 'mongodb';
+    const isMongo = dbDialect === 'mongodb';
 
     const context = {
-      isMongoose,
+      isMongo,
       isMySQL: dbDialect === 'mysql',
       isMSSQL: dbDialect === 'mssql',
       isMariaDB: dbDialect === 'mariadb',
@@ -185,7 +184,7 @@ export default class AgentNodeJs extends AbstractDumper {
   ) {
     const dbUrl = this.buildDatabaseUrl(dbConfig);
     const context = {
-      isMongoose: dbConfig.dbDialect === 'mongodb',
+      isMongo: dbConfig.dbDialect === 'mongodb',
       dbUrl,
       dbSchema: dbConfig.dbSchema,
       dbSslMode: dbConfig.dbSslMode ?? 'disabled',
@@ -251,105 +250,7 @@ export default class AgentNodeJs extends AbstractDumper {
     );
   }
 
-  private removeNonCompliantNestedFields(collectionName: string, fieldsDefinition: any) {
-    if (typeof fieldsDefinition !== 'string') {
-      if (Array.isArray(fieldsDefinition)) {
-        fieldsDefinition.forEach(fieldDefinition => {
-          this.removeNonCompliantNestedFields(collectionName, fieldDefinition);
-        });
-      } else {
-        Object.entries(fieldsDefinition).forEach(([key, fieldDefinition]) => {
-          if (key.includes(':')) {
-            this.logger.warn(
-              `Ignoring field ${key} from collection ${collectionName} as it contains column and is not valid.`,
-            );
-
-            delete fieldsDefinition[key];
-          } else {
-            this.removeNonCompliantNestedFields(collectionName, fieldDefinition);
-          }
-        });
-      }
-    }
-  }
-
-  private removeNonCompliantFields(collectionName, fieldsDefinition) {
-    const compliantFieldsDefinition = JSON.parse(JSON.stringify(fieldsDefinition));
-
-    return compliantFieldsDefinition.reduce((correctFieldsDefinitions, definition) => {
-      if (definition.name.includes(':')) {
-        this.logger.warn(
-          `Ignoring field ${definition.name} from collection ${collectionName} as it contains column and is not valid.`,
-        );
-      } else {
-        correctFieldsDefinitions.push(definition);
-
-        if (definition.type && typeof definition.type !== 'string') {
-          this.removeNonCompliantNestedFields(collectionName, definition.type);
-        }
-      }
-
-      return correctFieldsDefinitions;
-    }, []);
-  }
-
-  private computeModelsConfiguration(language: Language, schema: any): Array<ModelConfiguration> {
-    const collectionNamesSorted = Object.keys(schema).sort();
-
-    return collectionNamesSorted.map(collectionName => {
-      const { fields, options } = schema[collectionName];
-      const modelFileName = `${this.lodash.kebabCase(collectionName)}`;
-      const modelPath = `models/${modelFileName}.${language.fileExtension}`;
-
-      const fieldsDefinition = fields.map(field => {
-        return {
-          ...field,
-          ref: field.ref && this.strings.transformToCamelCaseSafeString(field.ref),
-        };
-      });
-
-      const compliantFieldsDefinition = this.removeNonCompliantFields(
-        collectionName,
-        fieldsDefinition,
-      );
-
-      return {
-        modelName: this.strings.transformToCamelCaseSafeString(collectionName),
-        collectionName,
-        fields: compliantFieldsDefinition,
-        timestamps: options.timestamps,
-        modelFileName,
-        modelPath,
-      };
-    });
-  }
-
-  private async writeMongooseModels(language: Language, schema) {
-    await this.mkdirp(`${this.projectPath}/models`);
-
-    const modelsConfiguration = this.computeModelsConfiguration(language, schema);
-
-    this.copyHandleBarsTemplate(
-      `${language.name}/models/index.hbs`,
-      `models/index.${language.fileExtension}`,
-      { models: modelsConfiguration },
-    );
-
-    modelsConfiguration.forEach(modelConfiguration => {
-      this.copyHandleBarsTemplate(
-        `${language.name}/models/model.hbs`,
-        modelConfiguration.modelPath,
-        {
-          modelName: modelConfiguration.modelName,
-          collectionName: modelConfiguration.collectionName,
-          fields: modelConfiguration.fields,
-          timestamps: modelConfiguration.timestamps,
-        },
-      );
-    });
-  }
-
-  protected async createFiles(dumpConfig: Config, mongoSchema?: any) {
+  protected async createFiles(dumpConfig: Config) {
     this.writePackageJson(
       dumpConfig.language,
       dumpConfig.dbConfig.dbDialect,
@@ -374,9 +275,5 @@ export default class AgentNodeJs extends AbstractDumper {
     this.writeDockerignore(dumpConfig.language);
     this.writeDockerfile(dumpConfig.language);
     this.writeDockerCompose(dumpConfig);
-
-    if (dumpConfig.dbConfig.dbDialect === 'mongodb' && mongoSchema) {
-      await this.writeMongooseModels(dumpConfig.language, mongoSchema);
-    }
   }
 }

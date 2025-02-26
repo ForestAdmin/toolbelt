@@ -2,8 +2,7 @@ import type { Schema } from './typings';
 
 import 'dotenv/config';
 import { createAgent } from '@forestadmin/agent';
-import { createMongooseDataSource } from '@forestadmin/datasource-mongoose';
-import connection from './models';
+import { createMongoDataSource } from '@forestadmin/datasource-mongo';
 
 // This object allows to configure your Forest Admin panel
 const agent = createAgent<Schema>({
@@ -21,7 +20,14 @@ const agent = createAgent<Schema>({
 
 // Connect your datasources
 // All options are documented at https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
-agent.addDataSource(createMongooseDataSource(connection, { flattenMode: 'auto' }));
+agent.addDataSource(
+  createMongoDataSource({
+    uri: process.env.DATABASE_URL,
+    dataSource: {
+      flattenMode: 'auto',
+    },
+  }),
+);
 
 // Add customizations here.
 // For instance, you can code custom actions, charts, create new fields or relationships, load plugins.

@@ -1,51 +1,3 @@
-const mssql = [
-  {
-    tableName: 'reviews',
-    columnName: 'published_date',
-    columnType: 'UNIQUE',
-    constraintName: 'published_date_rating_key',
-    foreignTableName: null,
-    foreignColumnName: null,
-    uniqueIndexes: [['published_date', 'rating']],
-  },
-  {
-    tableName: 'reviews',
-    columnName: 'rating',
-    columnType: 'UNIQUE',
-    constraintName: 'published_date_rating_key',
-    foreignTableName: null,
-    foreignColumnName: null,
-    uniqueIndexes: [['published_date', 'rating']],
-  },
-  {
-    tableName: 'reviews',
-    columnName: 'book_id',
-    columnType: 'FOREIGN KEY',
-    constraintName: 'reviews_book_id_fkey',
-    foreignTableName: 'books',
-    foreignColumnName: 'id',
-    uniqueIndexes: [['published_date', 'rating']],
-  },
-  {
-    tableName: 'reviews',
-    columnName: 'id',
-    columnType: 'PRIMARY KEY',
-    constraintName: 'reviews_pkey',
-    foreignTableName: null,
-    foreignColumnName: null,
-    uniqueIndexes: [['published_date', 'rating']],
-  },
-  {
-    tableName: 'reviews',
-    columnName: 'user_id',
-    columnType: 'FOREIGN KEY',
-    constraintName: 'reviews_user_id_fkey',
-    foreignTableName: 'users',
-    foreignColumnName: 'id',
-    uniqueIndexes: [['published_date', 'rating']],
-  },
-];
-
 const mysql = [
     {
     tableName: 'reviews',
@@ -160,4 +112,4 @@ const postgres = [
   },
 ];
 
-module.exports = { mssql, mysql, postgres };
+module.exports = { mysql, postgres };

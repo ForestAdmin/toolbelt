@@ -44,6 +44,10 @@ describe('abstractProjectCreateCommand command', () => {
         ERROR_UNEXPECTED:
           'An unexpected error occurred. Please reach out for help in our Developers community (https://community.forestadmin.com/) or create a Github issue with following error:',
       },
+      databaseAnalyzer: {
+        analyzeMongoDb: jest.fn(),
+        analyze: jest.fn(),
+      },
       spinner: {
         start: jest.fn(),
         attachToPromise: jest.fn(),
@@ -59,6 +63,7 @@ describe('abstractProjectCreateCommand command', () => {
         .addInstance('projectCreator', stubs.projectCreator)
         .addInstance('database', stubs.database)
         .addInstance('messages', stubs.messages)
+        .addInstance('databaseAnalyzer', stubs.databaseAnalyzer)
         .addInstance('spinner', stubs.spinner);
     return {
       commandPlan,
@@ -69,6 +74,11 @@ describe('abstractProjectCreateCommand command', () => {
   describe('run', () => {
     class TestAbstractClass extends AbstractProjectCreateCommand {
       public agent: string | null = null;
+
+      // eslint-disable-next-line class-methods-use-this
+      override dump() {
+        return Promise.resolve();
+      }
 
       static override readonly flags = {
         ...AbstractProjectCreateCommand.flags,

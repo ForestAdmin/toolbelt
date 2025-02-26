@@ -50,17 +50,8 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
     this.dumper = agentNodejsDumper;
   }
 
-  protected async generateProject(config: Config): Promise<void> {
-    this.spinner.start({ text: 'Creating your project files' });
-    const dumperConfig = {
-      dbConfig: config.dbConfig,
-      appConfig: config.appConfig,
-      forestAuthSecret: config.forestAuthSecret,
-      forestEnvSecret: config.forestEnvSecret,
-      language: config.language,
-    };
-    const dumpPromise = this.dumper.dump(dumperConfig);
-    await this.spinner.attachToPromise(dumpPromise);
+  protected override async dump(config: Config) {
+    return this.dumper.dump(config);
   }
 
   protected override async testDatabaseConnection(dbConfig: DbConfig) {
