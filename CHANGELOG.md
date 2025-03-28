@@ -1,3 +1,10 @@
+## [5.3.1](https://github.com/ForestAdmin/toolbelt/compare/v5.3.0...v5.3.1) (2025-03-28)
+
+
+### Bug Fixes
+
+* **vulnerability:** bump openid-client version ([#714](https://github.com/ForestAdmin/toolbelt/issues/714)) ([1c2b05b](https://github.com/ForestAdmin/toolbelt/commit/1c2b05b9a71e34350e4a0ff60d7251f77d590305))
+
 # [5.3.0](https://github.com/ForestAdmin/toolbelt/compare/v5.2.2...v5.3.0) (2025-02-26)
 
 
