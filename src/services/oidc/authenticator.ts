@@ -1,5 +1,5 @@
 import type Open from 'open';
-import type { Client, DeviceFlowHandle, Issuer } from 'openid-client';
+import type { BaseClient, Client, DeviceFlowHandle, Issuer } from 'openid-client';
 
 import OidcError from './error';
 
@@ -50,7 +50,7 @@ export default class OidcAuthenticator {
         `${this.env.FOREST_SERVER_URL}/oidc/.well-known/openid-configuration`,
       );
 
-      return await (issuer.Client as unknown as typeof Client).register({
+      return await (issuer.Client as unknown as typeof BaseClient).register({
         name: 'forest-cli',
         application_type: 'native',
         redirect_uris: ['com.forestadmin.cli://authenticate'],
