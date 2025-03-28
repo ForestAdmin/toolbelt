@@ -17,7 +17,7 @@
   "dependencies": {
     "@forestadmin/context": "1.37.1",
     "@forestadmin/datasource-sql": "1.14.31",
-    "@oclif/core": "3.18.2",
+    "@oclif/core": "3.27.0",
     "@oclif/plugin-help": "6.2.25",
     "@oclif/plugin-not-found": "3.2.44",
     "@oclif/plugin-warn-if-update-available": "3.1.15",
@@ -26,7 +26,7 @@
     "bluebird": "3.5.2",
     "chalk": "4.1.2",
     "cli-table": "0.3.6",
-    "clipboardy": "2.3.0",
+    "clipboardy": "4.0.0",
     "commander": "2.9.0",
     "dotenv": "8.2.0",
     "handlebars": "4.7.7",
@@ -85,7 +85,7 @@
     "rimraf": "3.0.2",
     "semantic-release": "19.0.3",
     "semantic-release-slack-bot": "3.5.2",
-    "tsc-watch": "6.0.0",
+    "tsc-watch": "6.2.1",
     "typescript": "^4.5.4"
   },
   "engines": {
