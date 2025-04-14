@@ -389,6 +389,7 @@ describe('projects:create:nosql', () => {
                   databaseUser: '',
                   databasePassword: '',
                   databaseSSL: false,
+                  databaseDialect: 'mongodb',
                 },
               },
             ],
