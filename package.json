@@ -16,7 +16,7 @@
   "bugs": "https://github.com/ForestAdmin/toolbelt/issues",
   "dependencies": {
     "@forestadmin/context": "1.37.1",
-    "@forestadmin/datasource-sql": "1.14.31",
+    "@forestadmin/datasource-sql": "^1.17.1",
     "@oclif/core": "3.18.2",
     "@oclif/plugin-help": "6.2.25",
     "@oclif/plugin-not-found": "3.2.44",
@@ -38,7 +38,7 @@
     "jwt-decode": "2.2.0",
     "lodash": "4.17.21",
     "mkdirp": "1.0.4",
-    "mongodb": "4.17.2",
+    "mongodb": "6.17.0",
     "mysql2": "3.9.8",
     "open": "7.3.0",
     "openid-client": "^5.7.1",
