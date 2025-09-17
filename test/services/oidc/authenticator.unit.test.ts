@@ -214,7 +214,7 @@ describe('services > Oidc > Authenticator', () => {
         'message',
         'The authentication request expired. Please try to login a second time, and complete the authentication within 100 seconds.',
       );
-      await expect(promise).rejects.toHaveProperty('reason', undefined);
+      await expect(promise).rejects.not.toHaveProperty('reason');
     });
 
     it('should log a warning when the browser cannot be opened', async () => {
