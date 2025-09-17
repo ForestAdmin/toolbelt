@@ -87,7 +87,7 @@ jobs:
         run: yarn test:coverage
       - name: Publish coverage to Qlty
         if: matrix.withCoverage && matrix.node == 18
-        uses: qltysh/qlty-action@v2
+        uses: qltysh/qlty-action/coverage@v2
         with:
           args: coverage publish ${{ github.workspace }}/coverage/lcov.info
       - name: Test prepack
