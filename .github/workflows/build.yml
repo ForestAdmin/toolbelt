@@ -8,6 +8,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   lint:
     name: Lint
@@ -89,7 +93,8 @@ jobs:
         if: matrix.withCoverage && matrix.node == 18
         uses: qltysh/qlty-action/coverage@v2
         with:
-          args: coverage publish ${{ github.workspace }}/coverage/lcov.info
+          oidc: true
+          files: ${{ github.workspace }}/coverage/lcov.info
       - name: Test prepack
         run: yarn prepack
       - name: Test postpack
