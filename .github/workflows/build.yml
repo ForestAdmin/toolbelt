@@ -82,13 +82,14 @@ jobs:
       - name: Test with Node ${{ matrix.node }}
         if: ${{ !matrix.withCoverage }}
         run: yarn test
-      - name: Test with Node ${{ matrix.node }} & Send coverage
-        uses: paambaati/codeclimate-action@5f637ccd517bc8960de0fe59379dd922bcba9486
+      - name: Test with Node ${{ matrix.node }} (with coverage)
         if: matrix.withCoverage && matrix.node == 18
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        run: yarn test:coverage
+      - name: Publish coverage to Qlty
+        if: matrix.withCoverage && matrix.node == 18
+        uses: qltysh/qlty-action@v2
         with:
-          coverageCommand: yarn test:coverage
+          args: coverage publish ${{ github.workspace }}/coverage/lcov.info
       - name: Test prepack
         run: yarn prepack
       - name: Test postpack
