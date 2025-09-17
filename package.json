@@ -135,6 +135,14 @@
     "postbuild": "mkdir -p ./dist/services/dumpers/templates && cp -R src/services/dumpers/templates dist/services/dumpers/"
   },
   "resolutions": {
-    "semantic-release-slack-bot/**/micromatch": "^4.0.8"
+    "semantic-release-slack-bot/**/micromatch": "^4.0.8",
+    "@azure/core-auth": "1.8.0",
+    "@azure/core-client": "1.7.3",
+    "@azure/core-rest-pipeline": "1.18.0",
+    "@azure/core-tracing": "1.0.1",
+    "@azure/core-util": "1.11.0",
+    "@azure/identity": "4.2.1",
+    "@azure/keyvault-keys": "4.4.0",
+    "@azure/logger": "1.0.4"
   }
 }
