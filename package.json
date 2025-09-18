@@ -136,6 +136,7 @@
   },
   "resolutions": {
     "semantic-release-slack-bot/**/micromatch": "^4.0.8",
+    "socks": "^2.8.7",
     "@azure/core-auth": "1.8.0",
     "@azure/core-client": "1.7.3",
     "@azure/core-rest-pipeline": "1.18.0",
