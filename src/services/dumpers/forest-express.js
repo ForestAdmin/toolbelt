@@ -92,7 +92,7 @@ class ForestExpress extends AbstractDumper {
       } else if (dbDialect === 'mysql') {
         dependencies.mysql2 = '~2.2.5';
       } else if (dbDialect === 'mssql') {
-        dependencies.tedious = '^15.1.3';
+        dependencies.tedious = '^18.6.1';
       } else if (dbDialect === 'mongodb') {
         delete dependencies.sequelize;
         dependencies.mongoose = '~5.13.9';
