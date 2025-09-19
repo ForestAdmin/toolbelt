@@ -46,7 +46,7 @@
     "pluralize": "8.0.0",
     "progress": "2.0.3",
     "saslprep": "1.0.3",
-    "sequelize": "6.37.5",
+    "sequelize": "6.37.7",
     "spinnies": "0.5.1",
     "stdout-stderr": "0.1.13",
     "superagent": "^10.2.3",
