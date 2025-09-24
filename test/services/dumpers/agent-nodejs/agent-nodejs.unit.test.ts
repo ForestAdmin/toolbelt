@@ -454,7 +454,7 @@ describe('services > dumpers > AgentNodeJs', () => {
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             `/test/a${language.name}Application/package.json`,
-            expect.stringContaining('"nodemon": "^2.0.12"'),
+            expect.stringContaining('"nodemon": "^3.1.10"'),
           );
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             `/test/a${language.name}Application/package.json`,

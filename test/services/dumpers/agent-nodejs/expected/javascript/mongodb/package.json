@@ -17,6 +17,6 @@
     "@forestadmin/datasource-mongo": "^1.0.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.12"
+    "nodemon": "^3.1.10"
   }
 }

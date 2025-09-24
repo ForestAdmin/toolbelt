@@ -98,7 +98,7 @@ export default class AgentNodeJs extends AbstractDumper {
       'start:watch': 'nodemon ./index.js',
     };
     const devDependencies: { [name: string]: string } = {
-      nodemon: '^2.0.12',
+      nodemon: '^3.1.10',
     };
     const nodemonConfig = {
       ignore: ['./forestadmin-schema.json'],
