@@ -80,7 +80,7 @@
     "lint-staged": "12.3.7",
     "mock-stdin": "1.0.0",
     "nock": "13.5.0",
-    "oclif": "4.10.11",
+    "oclif": "4.22.27",
     "prettier": "2.8.3",
     "rimraf": "3.0.2",
     "semantic-release": "22.0.12",
