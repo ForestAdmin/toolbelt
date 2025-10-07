@@ -1,3 +1,10 @@
+## [5.3.2](https://github.com/ForestAdmin/toolbelt/compare/v5.3.1...v5.3.2) (2025-10-07)
+
+
+### Bug Fixes
+
+* **onboarding:** fix database dialect with supabase url ([#735](https://github.com/ForestAdmin/toolbelt/issues/735)) ([090c018](https://github.com/ForestAdmin/toolbelt/commit/090c018b68dee996e658fe9dbe8b08366918d8cd))
+
 ## [5.3.1](https://github.com/ForestAdmin/toolbelt/compare/v5.3.0...v5.3.1) (2025-03-28)
 
 
