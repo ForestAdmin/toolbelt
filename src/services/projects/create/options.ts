@@ -30,7 +30,7 @@ export function getDialect(options: ProjectCreateOptions): ProjectCreateOptions[
   const { databaseDialect: dialect, databaseConnectionURL: url } = options;
 
   if (dialect) return dialect;
-  if (url?.startsWith('postgres://')) return 'postgres';
+  if (url?.startsWith('postgres')) return 'postgres';
   if (url?.startsWith('mssql://')) return 'mssql';
   if (url?.startsWith('mongodb')) return 'mongodb';
   if (url?.startsWith('mysql://') || url?.startsWith('mariadb://')) return 'mysql';

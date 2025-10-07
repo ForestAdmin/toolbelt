@@ -121,11 +121,13 @@ describe('abstractProjectCreateCommand command', () => {
 
     let testAbstractClass: TestAbstractClass;
 
-    function setup(config = {}, commandArgs?) {
+    function setup(config = {}, commandArgs?: string[], isSupabaseUrl?: boolean) {
       const planAndStubs = makePlanAndStubs();
       planAndStubs.stubs.optionParser.getCommandLineOptions.mockReturnValue({
         applicationName: 'testApp',
-        databaseConnectionURL: 'postgres://testUser:testPwd@localhost:5432/testDb',
+        databaseConnectionURL: `postgres${
+          isSupabaseUrl ? 'ql' : ''
+        }://testUser:testPwd@localhost:5432/testDb`,
         applicationHost: 'localhost',
         applicationPort: 3000,
         databaseSchema: 'public',
@@ -264,6 +266,36 @@ describe('abstractProjectCreateCommand command', () => {
       expect.assertions(9);
 
       const { stubs, instance } = setup();
+
+      await instance.run();
+
+      expect(stubs.logger.info).toHaveBeenCalledTimes(1);
+      expect(stubs.logger.info).toHaveBeenCalledWith('Hooray, installation success!');
+      expect(stubs.chalk.green).toHaveBeenCalledTimes(1);
+      expect(stubs.eventSender.meta).toStrictEqual({
+        dbDialect: 'postgres',
+        agent: Agents.ExpressSequelize,
+        isLocal: true,
+        architecture: 'microservice',
+        projectId: 1,
+      });
+      expect(stubs.eventSender.command).toBe('projects:create');
+      expect(stubs.eventSender.applicationName).toBe('testApp');
+      expect(stubs.eventSender.sessionToken).toBe('authToken');
+      expect(stubs.eventSender.meta).toStrictEqual({
+        dbDialect: 'postgres',
+        agent: Agents.ExpressSequelize,
+        isLocal: true,
+        architecture: 'microservice',
+        projectId: 1,
+      });
+      expect(stubs.eventSender.notifySuccess).toHaveBeenCalledTimes(1);
+    });
+
+    it('should log the installation success and send the event with supabase url', async () => {
+      expect.assertions(9);
+
+      const { stubs, instance } = setup(undefined, undefined, true);
 
       await instance.run();
 

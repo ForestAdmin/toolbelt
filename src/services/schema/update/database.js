@@ -28,7 +28,7 @@ class Database {
   // eslint-disable-next-line class-methods-use-this
   getDialect(dbConnectionUrl, dbDialect) {
     if (dbConnectionUrl) {
-      if (dbConnectionUrl.startsWith('postgres://')) {
+      if (dbConnectionUrl.startsWith('postgres')) {
         return 'postgres';
       }
       if (dbConnectionUrl.startsWith('mysql://')) {
