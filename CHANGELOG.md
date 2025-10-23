@@ -1,3 +1,10 @@
+## [5.3.3](https://github.com/ForestAdmin/toolbelt/compare/v5.3.2...v5.3.3) (2025-10-23)
+
+
+### Bug Fixes
+
+* **onboarding:** prevent install of deprecated @paralleldrive/cuid2@2.3.0 version ([#739](https://github.com/ForestAdmin/toolbelt/issues/739)) ([124b6da](https://github.com/ForestAdmin/toolbelt/commit/124b6da9a5c4fa691442574109475ee48534bde5))
+
 ## [5.3.2](https://github.com/ForestAdmin/toolbelt/compare/v5.3.1...v5.3.2) (2025-10-07)
 
 
