@@ -146,5 +146,8 @@
     "@azure/keyvault-keys": "4.4.0",
     "@azure/logger": "1.0.4",
     "@paralleldrive/cuid2": "2.2.2"
+  },
+  "overrides": {
+    "@paralleldrive/cuid2": "2.2.2"
   }
 }
