@@ -21,6 +21,7 @@
     "@oclif/plugin-help": "6.2.25",
     "@oclif/plugin-not-found": "3.2.44",
     "@oclif/plugin-warn-if-update-available": "3.1.15",
+    "@paralleldrive/cuid2": "2.2.2",
     "app-root-path": "3.0.0",
     "atob": "2.1.2",
     "bluebird": "3.5.2",
@@ -93,7 +94,6 @@
   },
   "files": [
     "/bin",
-    "/npm-shrinkwrap.json",
     "/oclif.manifest.json",
     "/dist"
   ],
