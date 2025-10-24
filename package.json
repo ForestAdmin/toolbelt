@@ -60,6 +60,7 @@
     "@commitlint/config-conventional": "17.4.2",
     "@semantic-release/changelog": "6.0.3",
     "@semantic-release/git": "10.0.1",
+    "@semantic-release/npm": "^13.1.1",
     "@swc/core": "1.11.1",
     "@swc/jest": "0.2.37",
     "@types/jest": "^29.5.12",
