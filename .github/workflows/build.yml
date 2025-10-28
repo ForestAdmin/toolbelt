@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22.14.0
           cache: 'yarn'
@@ -45,7 +45,7 @@ jobs:
     needs: [lint]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 18.17.0
           cache: 'yarn'
@@ -64,13 +64,13 @@ jobs:
     needs: [lint]
     strategy:
       matrix:
-        node: [18, 20]
+        node: [18, 20, 22]
         include:
           - node: 18
             withCoverage: ${{ true }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
@@ -111,10 +111,12 @@ jobs:
         with:
           ref: ${{ github.ref }}
           persist-credentials: false # GITHUB_TOKEN must not be set for the semantic release
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 18.17.0
+          node-version: 22.21.0
           cache: 'yarn'
+      - name: Install npm >= 11.15.0
+        run: npm install -g npm@latest
       - uses: actions/cache@v4
         with:
           path: "**/node_modules"
