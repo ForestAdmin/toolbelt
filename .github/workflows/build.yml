@@ -113,7 +113,7 @@ jobs:
           persist-credentials: false # GITHUB_TOKEN must not be set for the semantic release
       - uses: actions/setup-node@v4
         with:
-          node-version: 18.17.0
+          node-version: 22.21.0
           cache: 'yarn'
       - uses: actions/cache@v4
         with:
