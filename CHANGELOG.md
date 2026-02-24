@@ -1,3 +1,10 @@
+## [5.3.6](https://github.com/ForestAdmin/toolbelt/compare/v5.3.5...v5.3.6) (2026-02-24)
+
+
+### Bug Fixes
+
+* **deps:** fix fast-xml-parser critical vulnerability ([#753](https://github.com/ForestAdmin/toolbelt/issues/753)) ([5799ce7](https://github.com/ForestAdmin/toolbelt/commit/5799ce7cf06dacd75a41ad66d14fa28cbd2ace19))
+
 ## [5.3.5](https://github.com/ForestAdmin/toolbelt/compare/v5.3.4...v5.3.5) (2025-10-28)
 
 
