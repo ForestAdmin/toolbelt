@@ -146,7 +146,9 @@
     "@azure/identity": "4.2.1",
     "@azure/keyvault-keys": "4.4.0",
     "@azure/logger": "1.0.4",
-    "@paralleldrive/cuid2": "2.2.2"
+    "@paralleldrive/cuid2": "2.2.2",
+    "@aws-sdk/credential-providers": "^3.758.0",
+    "@aws-sdk/client-cloudfront": "^3.758.0"
   },
   "overrides": {
     "@paralleldrive/cuid2": "2.2.2"
