@@ -35,7 +35,7 @@
     "joi": "17.12.2",
     "json-diff": "1.0.0",
     "jsonapi-serializer": "3.6.2",
-    "jsonwebtoken": "9.0.2",
+    "jsonwebtoken": "9.0.3",
     "jwt-decode": "2.2.0",
     "lodash": "4.17.21",
     "mkdirp": "1.0.4",
@@ -50,7 +50,7 @@
     "sequelize": "6.37.5",
     "spinnies": "0.5.1",
     "stdout-stderr": "0.1.13",
-    "superagent": "^10.2.3",
+    "superagent": "^10.3.0",
     "tedious": "18.6.1",
     "uuid": "8.0.0",
     "validate-npm-package-name": "3.0.0"
@@ -82,7 +82,7 @@
     "lint-staged": "12.3.7",
     "mock-stdin": "1.0.0",
     "nock": "13.5.0",
-    "oclif": "4.10.11",
+    "oclif": "4.22.81",
     "prettier": "2.8.3",
     "rimraf": "3.0.2",
     "semantic-release": "25.0.1",
@@ -148,7 +148,12 @@
     "@azure/logger": "1.0.4",
     "@paralleldrive/cuid2": "2.2.2",
     "@aws-sdk/credential-providers": "^3.758.0",
-    "@aws-sdk/client-cloudfront": "^3.758.0"
+    "@aws-sdk/client-cloudfront": "^3.758.0",
+    "validator": ">=13.15.22",
+    "tar": ">=7.5.8",
+    "glob": ">=10.5.0",
+    "@isaacs/brace-expansion": ">=5.0.1",
+    "jws": ">=4.0.1"
   },
   "overrides": {
     "@paralleldrive/cuid2": "2.2.2"
