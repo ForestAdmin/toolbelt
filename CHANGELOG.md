@@ -1,3 +1,10 @@
+## [5.3.8](https://github.com/ForestAdmin/toolbelt/compare/v5.3.7...v5.3.8) (2026-02-25)
+
+
+### Bug Fixes
+
+* **deps:** fix moderate and low vulnerabilities ([#755](https://github.com/ForestAdmin/toolbelt/issues/755)) ([8fe1432](https://github.com/ForestAdmin/toolbelt/commit/8fe1432be6624f9292e70dd0be5e187f9dbdc59a))
+
 ## [5.3.7](https://github.com/ForestAdmin/toolbelt/compare/v5.3.6...v5.3.7) (2026-02-25)
 
 
