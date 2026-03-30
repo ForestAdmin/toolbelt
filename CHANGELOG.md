@@ -1,3 +1,10 @@
+## [5.3.9](https://github.com/ForestAdmin/toolbelt/compare/v5.3.8...v5.3.9) (2026-03-30)
+
+
+### Bug Fixes
+
+* **deps:** fix handlebars and sequelize vulnerabilities ([#756](https://github.com/ForestAdmin/toolbelt/issues/756)) ([59cc3dd](https://github.com/ForestAdmin/toolbelt/commit/59cc3dd07d94322e8b33bbe55f9632ec8340fb51))
+
 ## [5.3.8](https://github.com/ForestAdmin/toolbelt/compare/v5.3.7...v5.3.8) (2026-02-25)
 
 
