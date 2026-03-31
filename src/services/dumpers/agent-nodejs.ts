@@ -250,6 +250,10 @@ export default class AgentNodeJs extends AbstractDumper {
     );
   }
 
+  private writeClaudeMd() {
+    this.copyHandleBarsTemplate('common/claude.hbs', 'claude.md');
+  }
+
   protected async createFiles(dumpConfig: Config) {
     this.writePackageJson(
       dumpConfig.language,
@@ -275,5 +279,6 @@ export default class AgentNodeJs extends AbstractDumper {
     this.writeDockerignore(dumpConfig.language);
     this.writeDockerfile(dumpConfig.language);
     this.writeDockerCompose(dumpConfig);
+    this.writeClaudeMd();
   }
 }
