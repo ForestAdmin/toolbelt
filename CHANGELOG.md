@@ -1,3 +1,10 @@
+## [5.3.10](https://github.com/ForestAdmin/toolbelt/compare/v5.3.9...v5.3.10) (2026-03-31)
+
+
+### Bug Fixes
+
+* **deps:** update forestadmin packages and fix picomatch/brace-expans… ([#757](https://github.com/ForestAdmin/toolbelt/issues/757)) ([3ee620f](https://github.com/ForestAdmin/toolbelt/commit/3ee620f4547857afb5c88d98f6ee92a246a5a3a5))
+
 ## [5.3.9](https://github.com/ForestAdmin/toolbelt/compare/v5.3.8...v5.3.9) (2026-03-30)
 
 
