@@ -15,8 +15,8 @@
   },
   "bugs": "https://github.com/ForestAdmin/toolbelt/issues",
   "dependencies": {
-    "@forestadmin/context": "1.37.1",
-    "@forestadmin/datasource-sql": "1.14.31",
+    "@forestadmin/context": "1.42.12",
+    "@forestadmin/datasource-sql": "1.17.9",
     "@oclif/core": "3.18.2",
     "@oclif/plugin-help": "6.2.25",
     "@oclif/plugin-not-found": "3.2.44",

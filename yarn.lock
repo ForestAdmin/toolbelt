@@ -1812,39 +1812,45 @@
   resolved "https://registry.yarnpkg.com/@fastify/busboy/-/busboy-2.1.1.tgz#b9da6a878a371829a0502c9b6c1c143ef6663f4d"
   integrity sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==
 
-"@forestadmin/context@1.37.1":
-  version "1.37.1"
-  resolved "https://registry.yarnpkg.com/@forestadmin/context/-/context-1.37.1.tgz#301486c456061d43cb653b3e8be60644edb3f71a"
-  integrity sha512-H4U1fAkzC3pm44Cdb/RoRZytI4SZlqb9YNv72ChUnUPJkNUSo2+o5JxDpjWRM1OmIb87Bv4274U3W3AmVhuwQQ==
+"@forestadmin/agent-toolkit@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@forestadmin/agent-toolkit/-/agent-toolkit-1.1.0.tgz#1248e29b38d84e1311f72d8148151afbe59d4bda"
+  integrity sha512-VZMxh1SuMFuOm6eMxSmWZwnOP3rnJWvn7ON+SmtPfOK86d8mwpvpBKvEi/FHVt0odrevtOsFggsGByns7rkkzw==
 
-"@forestadmin/datasource-sequelize@1.10.5":
-  version "1.10.5"
-  resolved "https://registry.yarnpkg.com/@forestadmin/datasource-sequelize/-/datasource-sequelize-1.10.5.tgz#e8353e0cb8bc38ad109b4224f472aa6be59bb569"
-  integrity sha512-1RRHxghW3eGyvOaQNiQZbGZtPBoh2k1SzbNdS7bcMjN7rX96QFSWyKIZtWI+WXyVgphpAR6kn2GQMb9TT6YVnA==
-  dependencies:
-    "@forestadmin/datasource-toolkit" "1.43.0"
+"@forestadmin/context@1.42.12":
+  version "1.42.12"
+  resolved "https://registry.yarnpkg.com/@forestadmin/context/-/context-1.42.12.tgz#dc1ca74f69a9094264b6eacc7d64907aaca49357"
+  integrity sha512-FHzQxcgYph4i0XHhLoJBxHVv52+BbkaxmKWIlDz2jzp7d4jOS9NoosZ2OdKd+JSJT1033o9nBTxzV863fA+IjA==
 
-"@forestadmin/datasource-sql@1.14.31":
-  version "1.14.31"
-  resolved "https://registry.yarnpkg.com/@forestadmin/datasource-sql/-/datasource-sql-1.14.31.tgz#a972758a4ad5ac5adb20b0ec2dc1271498683521"
-  integrity sha512-TQ5HDN3goTV1wNRXhYbL81FfFJAjahWKiKIvSy+xY9u+y3ipWTU0ippjoaWJMfk/V5lCPMQY04tigDBHTH+EBg==
+"@forestadmin/datasource-sequelize@1.13.7":
+  version "1.13.7"
+  resolved "https://registry.yarnpkg.com/@forestadmin/datasource-sequelize/-/datasource-sequelize-1.13.7.tgz#3491ac65576bc073580f28261394e8a05ea93d25"
+  integrity sha512-URUbNWTLQxwjnzJSV/Qm3SGZad4ro547lgIYx8Yzx4Emfw8kblOkXKb3NPjzTbMxhHCkd90002c0UBUqBc8nvg==
   dependencies:
-    "@forestadmin/datasource-sequelize" "1.10.5"
-    "@forestadmin/datasource-toolkit" "1.43.0"
+    "@forestadmin/datasource-toolkit" "1.53.0"
+
+"@forestadmin/datasource-sql@1.17.9":
+  version "1.17.9"
+  resolved "https://registry.yarnpkg.com/@forestadmin/datasource-sql/-/datasource-sql-1.17.9.tgz#8d4c56e3be237f7d3003129fa8783638590bfe83"
+  integrity sha512-1r+3xnBhrBUxWd6MHvZyDCW0IzGtEe0aCjsDKsSPd5buJ1zKW3aDWCIA+ZcDRqAGg1y1GPtg/7sZupodBbIskw==
+  dependencies:
+    "@forestadmin/datasource-sequelize" "1.13.7"
+    "@forestadmin/datasource-toolkit" "1.53.0"
     "@types/ssh2" "^1.11.11"
     pluralize "^8.0.0"
-    sequelize "^6.28.0"
-    socks "^2.7.1"
+    sequelize "^6.37.8"
+    socks "^2.8.4"
     ssh2 "^1.14.0"
 
-"@forestadmin/datasource-toolkit@1.43.0":
-  version "1.43.0"
-  resolved "https://registry.yarnpkg.com/@forestadmin/datasource-toolkit/-/datasource-toolkit-1.43.0.tgz#d9b1ab2ce52c338a0fdf9be4149b3222c5762958"
-  integrity sha512-LBtIt+z2dUPTs4ypgCA6/AlP1xJlFiz6Z+N7mz+h78HOITnaWLVF0F0Hmljav0EFI2/evtR3AghohYAeS0wiLg==
+"@forestadmin/datasource-toolkit@1.53.0":
+  version "1.53.0"
+  resolved "https://registry.yarnpkg.com/@forestadmin/datasource-toolkit/-/datasource-toolkit-1.53.0.tgz#c1ee997190364ae9b5434a9e63d785616ff3dafb"
+  integrity sha512-+iL1A/y15Kr32BNAFBxZw4WWNqRgsWePgnNVrqkaQa26tu7buVcIYNKsgE05yOUUX9jiX44fX1KttucK+G/CjA==
   dependencies:
+    "@forestadmin/agent-toolkit" "1.1.0"
     luxon "^3.2.1"
     object-hash "^3.0.0"
-    uuid "^9.0.0"
+    uuid "11.0.2"
 
 "@hapi/hoek@^9.0.0", "@hapi/hoek@^9.3.0":
   version "9.3.0"
@@ -4844,16 +4850,16 @@ brace-expansion@^1.1.7:
     concat-map "0.0.1"
 
 brace-expansion@^2.0.1:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-2.0.2.tgz#54fc53237a613d854c7bd37463aad17df87214e7"
-  integrity sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ==
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-2.0.3.tgz#0493338bdd58e319b1039c67cf7ee439892c01d9"
+  integrity sha512-MCV/fYJEbqx68aE58kv2cA/kiky1G8vux3OR6/jbS+jIMe/6fJWa0DTzJU7dqijOWYwHi1t29FlfYI9uytqlpA==
   dependencies:
     balanced-match "^1.0.0"
 
 brace-expansion@^5.0.2:
-  version "5.0.3"
-  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-5.0.3.tgz#6a9c6c268f85b53959ec527aeafe0f7300258eef"
-  integrity sha512-fy6KJm2RawA5RcHkLa1z/ScpBeA762UF9KmZQxwIbDtRJrgLzM10depAiEQ+CXYcoiqW1/m96OAAoke2nE9EeA==
+  version "5.0.5"
+  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-5.0.5.tgz#dcc3a37116b79f3e1b46db994ced5d570e930fdb"
+  integrity sha512-VZznLgtwhn+Mact9tfiwx64fA9erHH/MCXEUfB/0bX/6Fz6ny5EGTXYltMocqg4xFAQZtnO3DHWWXi8RiuN7cQ==
   dependencies:
     balanced-match "^4.0.2"
 
@@ -10401,14 +10407,14 @@ picocolors@^1.1.1:
   integrity sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==
 
 picomatch@^2.0.4, picomatch@^2.2.3, picomatch@^2.3.1:
-  version "2.3.1"
-  resolved "https://registry.yarnpkg.com/picomatch/-/picomatch-2.3.1.tgz#3ba3833733646d9d3e4995946c1365a67fb07a42"
-  integrity sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/picomatch/-/picomatch-2.3.2.tgz#5a942915e26b372dc0f0e6753149a16e6b1c5601"
+  integrity sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==
 
 picomatch@^4.0.2, picomatch@^4.0.3:
-  version "4.0.3"
-  resolved "https://registry.yarnpkg.com/picomatch/-/picomatch-4.0.3.tgz#796c76136d1eead715db1e7bad785dedd695a042"
-  integrity sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==
+  version "4.0.4"
+  resolved "https://registry.yarnpkg.com/picomatch/-/picomatch-4.0.4.tgz#fd6f5e00a143086e074dffe4c924b8fb293b0589"
+  integrity sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==
 
 pidtree@^0.5.0:
   version "0.5.0"
@@ -11151,32 +11157,10 @@ sequelize-pool@^7.1.0:
   resolved "https://registry.yarnpkg.com/sequelize-pool/-/sequelize-pool-7.1.0.tgz#210b391af4002762f823188fd6ecfc7413020768"
   integrity sha512-G9c0qlIWQSK29pR/5U2JF5dDQeqqHRragoyahj/Nx4KOOQ3CPPfzxnfqFPCSB7x5UgjOgnZ61nSxz+fjDpRlJg==
 
-sequelize@6.37.8:
+sequelize@6.37.8, sequelize@^6.37.8:
   version "6.37.8"
   resolved "https://registry.yarnpkg.com/sequelize/-/sequelize-6.37.8.tgz#70e62c9e682a2009005093104591e59ec2d0ed2c"
   integrity sha512-HJ0IQFqcTsTiqbEgiuioYFMSD00TP6Cz7zoTti+zVVBwVe9fEhev9cH6WnM3XU31+ABS356durAb99ZuOthnKw==
-  dependencies:
-    "@types/debug" "^4.1.8"
-    "@types/validator" "^13.7.17"
-    debug "^4.3.4"
-    dottie "^2.0.6"
-    inflection "^1.13.4"
-    lodash "^4.17.21"
-    moment "^2.29.4"
-    moment-timezone "^0.5.43"
-    pg-connection-string "^2.6.1"
-    retry-as-promised "^7.0.4"
-    semver "^7.5.4"
-    sequelize-pool "^7.1.0"
-    toposort-class "^1.0.1"
-    uuid "^8.3.2"
-    validator "^13.9.0"
-    wkx "^0.5.0"
-
-sequelize@^6.28.0:
-  version "6.37.7"
-  resolved "https://registry.yarnpkg.com/sequelize/-/sequelize-6.37.7.tgz#55a6f8555ae76c1fbd4bce76b2ac5fcc0a1e6eb6"
-  integrity sha512-mCnh83zuz7kQxxJirtFD7q6Huy6liPanI67BSlbzSYgVNl5eXVdE2CN1FuAeZwG1SNpGsNRCV+bJAVVnykZAFA==
   dependencies:
     "@types/debug" "^4.1.8"
     "@types/validator" "^13.7.17"
@@ -11401,7 +11385,7 @@ socks-proxy-agent@^8.0.3:
     debug "^4.3.4"
     socks "^2.8.3"
 
-socks@^2.7.1, socks@^2.8.3, socks@^2.8.7:
+socks@^2.7.1, socks@^2.8.3, socks@^2.8.4, socks@^2.8.7:
   version "2.8.7"
   resolved "https://registry.yarnpkg.com/socks/-/socks-2.8.7.tgz#e2fb1d9a603add75050a2067db8c381a0b5669ea"
   integrity sha512-HLpt+uLy/pxB+bum/9DzAgiKS8CX1EvbWxI4zlmgGCExImLdiad2iCwXT5Z4c9c3Eq8rP2318mPW2c+QbtjK8A==
@@ -12473,6 +12457,11 @@ util-deprecate@^1.0.1, util-deprecate@^1.0.2, util-deprecate@~1.0.1:
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
   integrity sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==
 
+uuid@11.0.2:
+  version "11.0.2"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-11.0.2.tgz#a8d68ba7347d051e7ea716cc8dcbbab634d66875"
+  integrity sha512-14FfcOJmqdjbBPdDjFQyk/SdT4NySW4eM0zcG+HqbHP5jzuH56xO3J1DGhgs/cEMCfwYi3HQI1gnTO62iaG+tQ==
+
 uuid@8.0.0:
   version "8.0.0"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.0.0.tgz#bc6ccf91b5ff0ac07bbcdbf1c7c4e150db4dbb6c"
@@ -12482,11 +12471,6 @@ uuid@^8.3.0, uuid@^8.3.2:
   version "8.3.2"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
-
-uuid@^9.0.0:
-  version "9.0.1"
-  resolved "https://registry.yarnpkg.com/uuid/-/uuid-9.0.1.tgz#e188d4c8853cc722220392c424cd637f32293f30"
-  integrity sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==
 
 v8-compile-cache-lib@^3.0.1:
   version "3.0.1"
