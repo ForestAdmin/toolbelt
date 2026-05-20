@@ -1,0 +1,299 @@
+# Project Overview
+
+This project is a **Forest Admin Node.js Agent**, a backend service that connects your database and business logic to the Forest Admin interface.  
+It exposes data and workflows through **Smart Actions**, **Smart Fields**, **Hooks**, **Segments**, **Smart Relationships**, **Charts**, **Plugins**, and **Data Source Customizations**.
+
+---
+
+# File Structure
+
+The agent follows a **modular, entity-based architecture** designed for clarity, scalability, and discoverability:
+
+```
+/customizations/               # All Forest Admin customization logic
+/customizations/{entity}/      # Per-entity folders (e.g. users, orders, invoices)
+/customizations/{entity}/actions/       # Smart Actions (custom workflows)
+/customizations/{entity}/fields/        # Smart Fields (computed attributes)
+/customizations/{entity}/hooks/         # Lifecycle Hooks (Before*/After* for CRUD)
+/customizations/{entity}/segments/      # Predefined Segments (filters)
+/customizations/{entity}/relationships/ # Smart Relationships (virtual associations)
+/customizations/{entity}/index.ts       # Registers the entity's customizations
+/dashboards/                  # Smart Charts (API-based)
+/plugins/                     # Forest Admin Plugins (audit, policies, metrics)
+/index.ts                     # Agent bootstrap and registration
+```
+
+Each entity folder contains all logic for a single collection, keeping features modular and discoverable.
+
+---
+
+# Data Source Customizations
+
+Forest Admin supports two main strategies for custom data sources:
+
+### 1. Translation Strategy (Live Access)
+- The agent translates Forest Admin queries (list, filter, sort, create, update, delete) into external API calls in real time.
+- Best for **real-time**, low-latency data sources.
+
+```ts
+// data-sources/external-crm.ts
+import { createCustomDataSource } from '@forestadmin/agent';
+
+export const crm = createCustomDataSource({
+  name: 'crm',
+  declareStructure: builder => {
+    const leads = builder.collection('leads');
+    leads.addField('id', { columnType: 'Uuid', isPrimaryKey: true });
+    leads.addField('email', { columnType: 'String' });
+  },
+  declareCapabilities: caps => {
+    caps.collection('leads')
+      .field('email').readable().filterable(['equal', 'contains']).sortable().searchable();
+  },
+  read: async (query) => translateToCrmApi(query),
+  write: async (mutation) => translateWriteToCrmApi(mutation),
+});
+```
+
+Use this when the external API is fast and expressive.
+
+---
+
+### 2. Replication Strategy (Local Mirror)
+- Periodically replicate remote data into a local DB for fast access and complex queries.
+- Ideal for **slow or rate-limited APIs** and for **dashboards or analytics**.
+
+Workflow:
+- A background job syncs external data into local tables.
+- Collections point to these tables.
+- Foreign keys preserve relationships between replicated entities.
+
+📘 [Docs → Custom Data Sources](https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/custom)
+
+---
+
+# Smart Relationships
+
+Smart Relationships define **virtual associations** between collections, even across data sources.
+
+```ts
+// customizations/users/relationships/latest-order.ts
+export default (collection) => {
+  collection.addRelation('latestOrder', {
+    type: 'HasOne',
+    foreignKey: 'user_id',
+    target: 'orders',
+    scope: (record, { Orders }) =>
+      Orders.where({ userId: record.id }).orderBy('createdAt', 'desc').first(),
+  });
+};
+```
+
+Use these to:
+- Connect entities that don’t share native foreign keys.
+- Build relationships across multiple data sources.
+
+📘 [Docs → Relationships](https://docs.forestadmin.com/developer-guide-agents-nodejs/agent-customization/relationships)
+
+---
+
+# Smart Actions
+
+Smart Actions define **custom workflows** that go beyond CRUD.  
+They can be **Single**, **Bulk**, or **Global**, and may or may not include forms.
+
+### Single (with form)
+```ts
+collection.addAction('Validate KYC', {
+  scope: 'Single',
+  fields: [
+    { field: 'approved', type: 'Boolean', isRequired: true },
+    { field: 'comment', type: 'String' },
+  ],
+  execute: async (ctx, form) => {
+    const user = await ctx.collection('users').find(ctx.recordId);
+    await ctx.services.users.validateKYC(user.id, form.approved, form.comment);
+    return { success: form.approved ? 'KYC approved ✅' : 'KYC rejected ❌' };
+  },
+});
+```
+
+### Bulk (no form)
+```ts
+collection.addAction('Cancel orders', {
+  scope: 'Bulk',
+  execute: async (ctx) => {
+    const orders = await ctx.collection('orders').find(ctx.recordIds);
+    await ctx.services.orders.cancelMany(orders);
+    return { success: `${orders.length} orders canceled.` };
+  },
+});
+```
+
+### Global (no form)
+```ts
+collection.addAction('Recalculate metrics', {
+  scope: 'Global',
+  execute: async (ctx) => {
+    await ctx.services.metrics.recalculateAll();
+    return { success: 'All KPIs recalculated.' };
+  },
+});
+```
+
+📘 [Docs → Actions](https://docs.forestadmin.com/developer-guide-agents-nodejs/agent-customization/actions)
+
+---
+
+# Smart Fields
+
+Smart Fields define computed or virtual data attributes.
+
+### Reading
+```ts
+collection.addField('fullName', {
+  columnType: 'String',
+  dependencies: ['firstName', 'lastName'],
+  getValues: (records) => records.map(r => `${r.firstName} ${r.lastName}`),
+});
+```
+
+### Writing
+```ts
+collection.replaceFieldWriting('shippingAddress', async (ctx, value, record) => {
+  await geoService.updateAddress(record.addressId, value);
+});
+```
+
+### Sorting
+```ts
+collection.replaceFieldSorting('fullName', builder =>
+  builder.orderBy([
+    { field: 'lastName', direction: 'asc' },
+    { field: 'firstName', direction: 'asc' },
+  ])
+);
+```
+
+### Filtering and Searching
+```ts
+collection.replaceFieldFiltering('fullName', builder =>
+  builder.operator('contains', value =>
+    builder.or(
+      builder.contains(builder.field('firstName'), value),
+      builder.contains(builder.field('lastName'), value)
+    )
+  )
+);
+```
+
+### Validation
+```ts
+collection.addHook('BeforeUpdate', async (ctx, record, changes) => {
+  if (changes.email && !changes.email.includes('@')) {
+    throw new Error('Invalid email format');
+  }
+});
+```
+
+📘 [Docs → Smart Fields](https://docs.forestadmin.com/developer-guide-agents-nodejs/agent-customization/fields)
+
+---
+
+# Hooks
+
+Hooks extend or replace default CRUD behavior.
+
+### Collection Hooks (augment behavior)
+```ts
+collection.addHook('BeforeCreate', async (ctx, attrs) => {
+  if (!ctx.user.hasRole('manager')) throw new Error('Forbidden');
+  attrs.createdBy = ctx.user.email;
+});
+```
+
+### Collection Overrides (replace behavior)
+```ts
+collection.overrideCreate(async (ctx, attrs) => {
+  return externalOrdersApi.create(attrs);
+});
+```
+
+Use hooks to **validate or enrich** operations; use overrides to **replace CRUD logic entirely**.
+
+📘 [Docs → Hooks & Overrides](https://docs.forestadmin.com/developer-guide-agents-nodejs/agent-customization/hooks)
+
+---
+
+# Segments
+
+Segments are **named filters** users can quickly access in the UI.
+
+```ts
+collection.addSegment('High Value Customers', {
+  where: (r) => r.total_spent > 10000,
+});
+```
+
+📘 [Docs → Segments](https://docs.forestadmin.com/developer-guide-agents-nodejs/agent-customization/segments)
+
+---
+
+# Charts (Dashboards)
+
+Define analytics and metrics using the **Charts API**.
+
+```ts
+agent.addChart('Monthly revenue', {
+  type: 'Line',
+  endpoint: '/charts/revenue',
+  handler: async (ctx) => {
+    const rows = await ctx.db('orders')
+      .select('month')
+      .sum('total as revenue')
+      .groupBy('month')
+      .orderBy('month');
+    return rows.map(({ month, revenue }) => ({ x: month, y: revenue }));
+  },
+});
+```
+
+📘 [Docs → Charts API](https://docs.forestadmin.com/developer-guide-agents-nodejs/agent-customization/charts)
+
+---
+
+# Plugins
+
+Plugins provides off-the-shelf customizations, and avoid developers to repeat code.
+
+```ts
+// plugins/policies.plugin.ts
+export default () => ({
+  name: 'policies',
+  load: (agent) => {
+    agent.on('BeforeAction', (ctx) => {
+      if (!ctx.user) throw new Error('Unauthorized');
+    });
+  },
+});
+```
+
+
+📘 [Docs → Plugins](https://docs.forestadmin.com/developer-guide-agents-nodejs/agent-customization/plugins)
+
+---
+
+# 🤖 For Claude (and other AI assistants)
+
+> - Create new Smart Actions in `/customizations/{entity}/actions/`, Fields in `/fields/`, Hooks in `/hooks/`, Segments in `/segments/`, and Relationships in `/relationships/`.  
+> - Use `/plugins/` for cross-cutting logic; `/dashboards/` for charts and metrics.  
+> - Do not modify `index.ts` bootstrap logic.  
+> - Call domain logic through `ctx.services.*` instead of querying databases directly.  
+> - Always validate inputs and enforce permissions with `ctx.user`.  
+> - Optimize Smart Fields using batching and caching (avoid per-record I/O).
+
+---
+
+> **Purpose:**  
+> This file provides project context for AI coding assistants (Claude, Cursor, Copilot, Windsurf, etc.) working on this Forest Admin Node.js agent.  
+> It defines structure, conventions, and best practices for accurate and secure code generation.
