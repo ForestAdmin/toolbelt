@@ -137,18 +137,13 @@
   },
   "resolutions": {
     "semantic-release-slack-bot/**/micromatch": "^4.0.8",
-    "@azure/core-auth": "1.8.0",
-    "@azure/core-client": "1.7.3",
-    "@azure/core-rest-pipeline": "1.18.0",
     "@azure/core-tracing": "1.0.1",
-    "@azure/core-util": "1.11.0",
-    "@azure/identity": "4.2.1",
-    "@azure/keyvault-keys": "4.4.0",
-    "@azure/logger": "1.0.4",
     "jws": ">=4.0.1",
     "js-yaml": "3.14.2",
     "fast-xml-parser": ">=5.7.0",
-    "uuid": "^11.1.1"
+    "uuid": "^11.1.1",
+    "superagent/qs": "^6.15.2",
+    "inquirer/external-editor/tmp": "^0.2.6"
   },
   "overrides": {
     "@paralleldrive/cuid2": "2.2.2"

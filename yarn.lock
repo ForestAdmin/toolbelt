@@ -1155,7 +1155,7 @@
   dependencies:
     tslib "^2.6.2"
 
-"@azure/core-auth@1.8.0", "@azure/core-auth@^1.3.0", "@azure/core-auth@^1.4.0", "@azure/core-auth@^1.5.0", "@azure/core-auth@^1.7.2", "@azure/core-auth@^1.8.0":
+"@azure/core-auth@^1.3.0", "@azure/core-auth@^1.4.0", "@azure/core-auth@^1.5.0", "@azure/core-auth@^1.7.2", "@azure/core-auth@^1.8.0":
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/@azure/core-auth/-/core-auth-1.8.0.tgz#281b4a6d3309c3e7b15bcd967f01d4c79ae4a1d6"
   integrity sha512-YvFMowkXzLbXNM11yZtVLhUCmuG0ex7JKOH366ipjmHBhL3vpDcPAeWF+jf0X+jVXwFqo3UhsWUq4kH0ZPdu/g==
@@ -1164,7 +1164,7 @@
     "@azure/core-util" "^1.1.0"
     tslib "^2.6.2"
 
-"@azure/core-client@1.7.3", "@azure/core-client@^1.4.0":
+"@azure/core-client@^1.4.0":
   version "1.7.3"
   resolved "https://registry.yarnpkg.com/@azure/core-client/-/core-client-1.7.3.tgz#f8cb2a1f91e8bc4921fa2e745cfdfda3e6e491a3"
   integrity sha512-kleJ1iUTxcO32Y06dH9Pfi9K4U+Tlb111WXEnbt7R/ne+NLRwppZiTGJuTD5VVoxTMK5NTbEtm5t2vcdNCFe2g==
@@ -1215,7 +1215,7 @@
   dependencies:
     tslib "^2.6.2"
 
-"@azure/core-rest-pipeline@1.18.0", "@azure/core-rest-pipeline@^1.1.0", "@azure/core-rest-pipeline@^1.9.1":
+"@azure/core-rest-pipeline@^1.1.0", "@azure/core-rest-pipeline@^1.9.1":
   version "1.18.0"
   resolved "https://registry.yarnpkg.com/@azure/core-rest-pipeline/-/core-rest-pipeline-1.18.0.tgz#165f1cd9bb1060be3b6895742db3d1f1106271d3"
   integrity sha512-QSoGUp4Eq/gohEFNJaUOwTN7BCc2nHTjjbm75JT0aD7W65PWM1H/tItz0GsABn22uaKyGxiMhWQLt2r+FGU89Q==
@@ -1236,7 +1236,7 @@
   dependencies:
     tslib "^2.2.0"
 
-"@azure/core-util@1.11.0", "@azure/core-util@^1.0.0", "@azure/core-util@^1.1.0", "@azure/core-util@^1.1.1", "@azure/core-util@^1.11.0", "@azure/core-util@^1.2.0", "@azure/core-util@^1.3.0":
+"@azure/core-util@^1.0.0", "@azure/core-util@^1.1.0", "@azure/core-util@^1.1.1", "@azure/core-util@^1.11.0", "@azure/core-util@^1.2.0", "@azure/core-util@^1.3.0":
   version "1.11.0"
   resolved "https://registry.yarnpkg.com/@azure/core-util/-/core-util-1.11.0.tgz#f530fc67e738aea872fbdd1cc8416e70219fada7"
   integrity sha512-DxOSLua+NdpWoSqULhjDyAZTXFdP/LKkqtYuxxz1SCN289zk3OG8UOpnCQAz/tygyACBtWp/BoO72ptK7msY8g==
@@ -1244,7 +1244,7 @@
     "@azure/abort-controller" "^2.0.0"
     tslib "^2.6.2"
 
-"@azure/identity@4.2.1", "@azure/identity@^4.2.1":
+"@azure/identity@^4.2.1":
   version "4.2.1"
   resolved "https://registry.yarnpkg.com/@azure/identity/-/identity-4.2.1.tgz#22b366201e989b7b41c0e1690e103bd579c31e4c"
   integrity sha512-U8hsyC9YPcEIzoaObJlRDvp7KiF0MGS7xcWbyJSVvXRkC/HXo1f0oYeBYmEvVgRfacw7GHf6D6yAoh9JHz6A5Q==
@@ -1264,7 +1264,7 @@
     stoppable "^1.1.0"
     tslib "^2.2.0"
 
-"@azure/keyvault-keys@4.4.0", "@azure/keyvault-keys@^4.4.0":
+"@azure/keyvault-keys@^4.4.0":
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/@azure/keyvault-keys/-/keyvault-keys-4.4.0.tgz#1f4d5f5d8708f6b122eaf08069fe2a1ddc64782d"
   integrity sha512-W9sPZebXYa3aar7BGIA+fAsq/sy1nf2TZAETbkv7DRawzVLrWv8QoVVceqNHjy3cigT4HNxXjaPYCI49ez5CUA==
@@ -1277,7 +1277,7 @@
     "@azure/logger" "^1.0.0"
     tslib "^2.2.0"
 
-"@azure/logger@1.0.4", "@azure/logger@^1.0.0":
+"@azure/logger@^1.0.0":
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@azure/logger/-/logger-1.0.4.tgz#28bc6d0e5b3c38ef29296b32d35da4e483593fa1"
   integrity sha512-ustrPY8MryhloQj7OWGe+HrYx+aoiOxzbXTtgblbV3xwCqpzUK36phH3XNHQKj3EPonyFUuDTfR3qFhTEAuZEg==
@@ -2599,9 +2599,9 @@
   integrity sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==
 
 "@nodable/entities@^2.1.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@nodable/entities/-/entities-2.1.0.tgz#f543e5c6446720d4cf9e498a83019dd159973bc2"
-  integrity sha512-nyT7T3nbMyBI/lvr6L5TyWbFJAI9FTgVRakNoBqCD+PmID8DzFrrNdLLtHMwMszOtqZa8PAOV24ZqDnQrhQINA==
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@nodable/entities/-/entities-2.1.1.tgz#ce41931e9b72606d7f0598d665e46e889285d78a"
+  integrity sha512-Pig3HxDIoMgjdEH8OCf/dkcTmLFjJRjWuq8jSnklu284/TKOPibSRERmOykiwmyXTtv61mP+44f3GMx0tLAyjg==
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -10026,11 +10026,6 @@ optionator@^0.9.3:
     type-check "^0.4.0"
     word-wrap "^1.2.5"
 
-os-tmpdir@~1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/os-tmpdir/-/os-tmpdir-1.0.2.tgz#bbe67406c79aa85c5cfec766fe5734555dfa1274"
-  integrity sha512-D2FR03Vir7FIu45XBY20mTb+/ZSWB00sjU9jdQXt83gDrI4Ztz5Fs7/yy74g2N5SVQY4xY1qDr4rNddwYRVX0g==
-
 own-keys@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/own-keys/-/own-keys-1.0.1.tgz#e4006910a2bf913585289676eebd6f390cf51358"
@@ -10636,10 +10631,10 @@ qrcode-terminal@^0.12.0:
   resolved "https://registry.yarnpkg.com/qrcode-terminal/-/qrcode-terminal-0.12.0.tgz#bb5b699ef7f9f0505092a3748be4464fe71b5819"
   integrity sha512-EXtzRZmC+YGmGlDFbXKxQiMZNwCLEO6BANKXG4iCtSIM0yqc/pappSx3RIKr4r0uh5JsBckOXeKrB3Iz7mdQpQ==
 
-qs@^6.14.1:
-  version "6.15.0"
-  resolved "https://registry.yarnpkg.com/qs/-/qs-6.15.0.tgz#db8fd5d1b1d2d6b5b33adaf87429805f1909e7b3"
-  integrity sha512-mAZTtNCeetKMH+pSjrb76NAM8V9a05I9aBZOHztWy/UqcJdQYNsf59vrRKWnojAT9Y+GbIvoTBC++CPHqpDBhQ==
+qs@^6.14.1, qs@^6.15.2:
+  version "6.15.2"
+  resolved "https://registry.yarnpkg.com/qs/-/qs-6.15.2.tgz#fd55426d710403ddccc45e0f9eab16db7727ece9"
+  integrity sha512-Rzq0KEyX/w/tEybncDgdkZrJgVUsUMk3xjh3t5bv3S1HTAtg+uOYt72+ZfwiQwKdysThkTBdL/rTi6HDmX9Ddw==
   dependencies:
     side-channel "^1.1.0"
 
@@ -11983,12 +11978,10 @@ tinyglobby@^0.2.12, tinyglobby@^0.2.14, tinyglobby@^0.2.9:
     fdir "^6.5.0"
     picomatch "^4.0.3"
 
-tmp@^0.0.33:
-  version "0.0.33"
-  resolved "https://registry.yarnpkg.com/tmp/-/tmp-0.0.33.tgz#6d34335889768d21b2bcda0aa277ced3b1bfadf9"
-  integrity sha512-jRCJlojKnZ3addtTOjdIqoRuPEKBvNXcGYqzO6zWZX8KfKEpnGY5jfggJQ3EjKuu8D4bJRr0y+cYJFmYbImXGw==
-  dependencies:
-    os-tmpdir "~1.0.2"
+tmp@^0.0.33, tmp@^0.2.6:
+  version "0.2.7"
+  resolved "https://registry.yarnpkg.com/tmp/-/tmp-0.2.7.tgz#26f4db11d1601ce8012dcb8a798ece1c06a99059"
+  integrity sha512-e0votIpp4Uo2AJYSzVHV6xCcawuiez3DzqDAbrTc3YxBkplN6e+dM13ZeIcZnDg/QpSuU2zfZ3rzwY8ukEnaXw==
 
 tmpl@1.0.5:
   version "1.0.5"
