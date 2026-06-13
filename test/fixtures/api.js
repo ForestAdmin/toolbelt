@@ -479,6 +479,29 @@ module.exports = {
         }),
       ),
 
+  createProductionEnvironmentValid: () =>
+    nock('http://localhost:3001')
+      .post('/api/environments', {
+        data: {
+          type: 'environments',
+          attributes: {
+            name: 'Production',
+            'are-roles-disabled': false,
+            type: 'production',
+          },
+          relationships: { project: { data: { type: 'projects', id: '2' } } },
+        },
+      })
+      .reply(
+        200,
+        EnvironmentSerializer.serialize({
+          name: 'Production',
+          secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
+          type: 'production',
+          areRolesDisabled: false,
+        }),
+      ),
+
   createEnvironmentForbidden: () =>
     nock('http://localhost:3001').post('/api/environments').reply(403),
 

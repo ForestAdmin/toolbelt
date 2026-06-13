@@ -54,8 +54,12 @@ CreateCommand.flags = {
   }),
   url: Flags.string({
     char: 'u',
-    description: 'Application URL.',
-    required: true,
+    description: 'Application URL (optional for a production environment).',
+  }),
+  type: Flags.string({
+    char: 't',
+    description: 'Environment type. Use "production" to create the first production environment.',
+    options: ['production', 'remote'],
   }),
   format: Flags.string({
     char: 'format',

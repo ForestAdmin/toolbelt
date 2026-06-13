@@ -3,6 +3,7 @@ const EnvironmentCreateCommand = require('../../../src/commands/environments/cre
 const {
   getProjectListValid,
   createEnvironmentValid,
+  createProductionEnvironmentValid,
   createEnvironmentForbidden,
   createEnvironmentDetailedError,
   loginValidOidc,
@@ -141,6 +142,28 @@ describe('environments:create', () => {
           { out: 'ENVIRONMENT' },
           { out: 'name                Test' },
           { out: 'url                 https://test.forestadmin.com' },
+          { out: 'FOREST_AUTH_SECRET  myAuthSecret' },
+          {
+            out: 'FOREST_ENV_SECRET   2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
+          },
+        ],
+      }));
+  });
+
+  describe('with --type production and no URL', () => {
+    it('should create the production environment without requiring a URL', () =>
+      testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: EnvironmentCreateCommand,
+        commandArgs: ['-p', '2', '-n', 'Production', '-t', 'production'],
+        additionnalStep: plan =>
+          plan.replace('utils/keyGenerator', { generate: () => 'myAuthSecret' }),
+        api: [() => createProductionEnvironmentValid()],
+        std: [
+          { out: 'ENVIRONMENT' },
+          { out: 'name                Production' },
+          { out: 'type                production' },
           { out: 'FOREST_AUTH_SECRET  myAuthSecret' },
           {
             out: 'FOREST_ENV_SECRET   2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
