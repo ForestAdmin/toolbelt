@@ -122,6 +122,91 @@ function Authenticator({
    * }} params
    * @returns {Promise<string>}
    */
+  this.trySignup = async config => {
+    await this.logout({ log: false });
+    try {
+      const token = await this.signup(config);
+      await this.saveToken(token);
+      logger.info('Account created. You are now logged in.');
+    } catch (error) {
+      const message =
+        error instanceof ApplicationError
+          ? error.message
+          : `${ERROR_UNEXPECTED} ${chalk.red(error)}`;
+      logger.error(message);
+    }
+  };
+
+  /**
+   * Create a new account, then open a session and return its token.
+   * @param {{
+   *  email: string;
+   *  password: string;
+   *  firstName: string;
+   *  lastName: string;
+   * }} params
+   * @returns {Promise<string>}
+   */
+  this.signup = async ({ email, password, firstName, lastName }) => {
+    if (email) {
+      const validationResult = await this.validateEmail(email);
+      if (validationResult !== true) {
+        throw new ApplicationError(validationResult);
+      }
+    } else email = await this.promptEmail();
+
+    if (!firstName) firstName = await this.promptRequired('firstName', 'What is your first name?');
+    if (!lastName) lastName = await this.promptRequired('lastName', 'What is your last name?');
+    if (!password) {
+      ({ password } = await inquirer.prompt([
+        {
+          type: 'password',
+          name: 'password',
+          message: 'Choose a password:',
+          validate: input => !!input || 'Please enter a password.',
+        },
+      ]));
+    }
+
+    try {
+      await api.signup({ email, password, firstName, lastName });
+    } catch (error) {
+      throw this.toSignupError(error);
+    }
+
+    return api.login(email, password);
+  };
+
+  this.promptRequired = async (name, message) => {
+    const answer = await inquirer.prompt([
+      {
+        type: 'input',
+        name,
+        message,
+        validate: input => !!input || 'This field is required.',
+      },
+    ]);
+    return answer[name];
+  };
+
+  this.toSignupError = error => {
+    const status = error.status || (error.response && error.response.status);
+    const detail =
+      error.response && error.response.body && error.response.body.errors
+        ? error.response.body.errors[0] && error.response.body.errors[0].detail
+        : null;
+
+    // Relay the server message verbatim: it intentionally returns a generic
+    // message when the email already exists (anti user-enumeration) and a
+    // specific one for validation errors (e.g. weak password). We surface
+    // whatever it chose to say rather than inferring from the status code.
+    if (detail) return new ApplicationError(detail);
+    if (status === 429) {
+      return new ApplicationError('Too many attempts. Please wait a moment and try again.');
+    }
+    return error;
+  };
+
   this.login = async ({ email, password, token }) => {
     if (token !== undefined && typeof token === 'string' && !token.trim()) {
       throw new ApplicationError('The provided token is empty. Please provide a valid token.');

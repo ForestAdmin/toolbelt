@@ -21,6 +21,7 @@ The Lumberjacks' toolbelt is the Forest Admin CLI which makes easy to manage you
 ### General
 
 - `user` display the current logged in user.
+- `signup` create a new Forest Admin account.
 - `login` sign in to your Forest Admin account.
 - `logout` sign out of your Forest Admin account.
 - `help [cmd]` display help for [cmd].

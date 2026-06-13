@@ -205,6 +205,25 @@ module.exports = {
       .post('/api/sessions', { email: 'some@mail.com', password: 'valid_pwd' })
       .reply(200, { token: jwt.sign({}, 'key', { expiresIn: '1day' }) }),
 
+  signupValid: () =>
+    nock('http://localhost:3001')
+      .post('/api/users', body => body?.data?.attributes?.email === 'john@mail.com')
+      .reply(201, { data: { type: 'users', id: '1', attributes: { email: 'john@mail.com' } } })
+      .post('/api/sessions', { email: 'john@mail.com', password: 'valid_pwd' })
+      .reply(200, { token: jwt.sign({}, 'key', { expiresIn: '1day' }) }),
+
+  signupEmailTaken: () =>
+    nock('http://localhost:3001')
+      .post('/api/users')
+      .reply(409, {
+        errors: [{ detail: 'Unable to create account. Please try again or contact support.' }],
+      }),
+
+  signupWeakPassword: () =>
+    nock('http://localhost:3001')
+      .post('/api/users')
+      .reply(422, { errors: [{ detail: 'Your password security is too weak.' }] }),
+
   loginInvalid: () =>
     nock('http://localhost:3001')
       .post('/api/sessions', { email: 'some@mail.com', password: 'pwd' })

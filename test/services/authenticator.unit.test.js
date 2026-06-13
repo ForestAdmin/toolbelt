@@ -1,5 +1,6 @@
 const joi = require('joi');
 const Authenticator = require('../../src/services/authenticator');
+const ApplicationError = require('../../src/errors/application-error');
 
 describe('services > authenticator', () => {
   function setup() {
@@ -33,7 +34,17 @@ describe('services > authenticator', () => {
 
     const mkdirp = jest.fn();
 
+    const api = {
+      signup: jest.fn(),
+      login: jest.fn(),
+    };
+    const inquirer = {
+      prompt: jest.fn(),
+    };
+
     const context = {
+      api,
+      inquirer,
       env,
       oidcAuthenticator,
       applicationTokenService,
@@ -507,6 +518,130 @@ describe('services > authenticator', () => {
           'You cannot be logged out with this command. Please use "lumber logout" command.',
         );
       });
+    });
+  });
+
+  describe('trySignup', () => {
+    describe('when signup succeeds', () => {
+      it('saves the token and logs success', async () => {
+        expect.assertions(2);
+        const { authenticator, logger } = setup();
+
+        jest.spyOn(authenticator, 'logout').mockResolvedValue();
+        const token = Symbol('token');
+        jest.spyOn(authenticator, 'signup').mockResolvedValue(token);
+        jest.spyOn(authenticator, 'saveToken').mockResolvedValue();
+
+        await authenticator.trySignup({});
+
+        expect(authenticator.saveToken).toHaveBeenCalledWith(token);
+        expect(logger.info).toHaveBeenCalledWith('Account created. You are now logged in.');
+      });
+    });
+
+    describe('when signup fails', () => {
+      it('logs the error message and does not save a token', async () => {
+        expect.assertions(2);
+        const { authenticator, logger } = setup();
+
+        jest.spyOn(authenticator, 'logout').mockResolvedValue();
+        jest.spyOn(authenticator, 'signup').mockRejectedValue(new ApplicationError('boom'));
+        jest.spyOn(authenticator, 'saveToken');
+
+        await authenticator.trySignup({});
+
+        expect(authenticator.saveToken).not.toHaveBeenCalled();
+        expect(logger.error).toHaveBeenCalledWith('boom');
+      });
+    });
+  });
+
+  describe('signup', () => {
+    it('creates the account then opens a session and returns its token', async () => {
+      expect.assertions(3);
+      const { authenticator, api } = setup();
+
+      api.signup.mockResolvedValue({});
+      api.login.mockResolvedValue('SESSION-TOKEN');
+
+      const token = await authenticator.signup({
+        email: 'john@mail.com',
+        password: 'Password123',
+        firstName: 'John',
+        lastName: 'Doe',
+      });
+
+      expect(api.signup).toHaveBeenCalledWith({
+        email: 'john@mail.com',
+        password: 'Password123',
+        firstName: 'John',
+        lastName: 'Doe',
+      });
+      expect(api.login).toHaveBeenCalledWith('john@mail.com', 'Password123');
+      expect(token).toBe('SESSION-TOKEN');
+    });
+
+    it('maps a server failure through toSignupError', async () => {
+      expect.assertions(1);
+      const { authenticator, api } = setup();
+
+      api.signup.mockRejectedValue({
+        status: 409,
+        response: {
+          body: {
+            errors: [{ detail: 'Unable to create account. Please try again or contact support.' }],
+          },
+        },
+      });
+
+      await expect(
+        authenticator.signup({
+          email: 'john@mail.com',
+          password: 'Password123',
+          firstName: 'John',
+          lastName: 'Doe',
+        }),
+      ).rejects.toThrow('Unable to create account');
+    });
+  });
+
+  describe('toSignupError', () => {
+    it('relays the generic server message on an existing email (anti-enumeration)', () => {
+      expect.assertions(2);
+      const { authenticator } = setup();
+      const result = authenticator.toSignupError({
+        status: 409,
+        response: {
+          body: {
+            errors: [{ detail: 'Unable to create account. Please try again or contact support.' }],
+          },
+        },
+      });
+      expect(result).toBeInstanceOf(ApplicationError);
+      expect(result.message).toBe('Unable to create account. Please try again or contact support.');
+    });
+
+    it('relays the specific server message for a validation error', () => {
+      expect.assertions(1);
+      const { authenticator } = setup();
+      const result = authenticator.toSignupError({
+        status: 422,
+        response: { body: { errors: [{ detail: 'Your password security is too weak.' }] } },
+      });
+      expect(result.message).toBe('Your password security is too weak.');
+    });
+
+    it('returns a rate-limit message on 429 with no detail', () => {
+      expect.assertions(1);
+      const { authenticator } = setup();
+      expect(authenticator.toSignupError({ status: 429 }).message).toContain('Too many attempts');
+    });
+
+    it('returns the raw error when there is no recognizable signal', () => {
+      expect.assertions(1);
+      const { authenticator } = setup();
+      const raw = new Error('weird');
+      expect(authenticator.toSignupError(raw)).toBe(raw);
     });
   });
 });

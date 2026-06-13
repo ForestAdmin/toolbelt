@@ -128,4 +128,34 @@ describe('services > API', () => {
       await expect(api.deleteApplicationToken('THE-TOKEN')).rejects.toBe(error);
     });
   });
+
+  describe('signup', () => {
+    it('should POST the account in JSON:API format and return the response body', async () => {
+      expect.assertions(3);
+      const { superagent, api } = setup();
+
+      superagent.send.mockResolvedValue({ body: { data: { id: '1', type: 'users' } } });
+
+      const result = await api.signup({
+        email: 'john@mail.com',
+        password: 'Password123',
+        firstName: 'John',
+        lastName: 'Doe',
+      });
+
+      expect(superagent.post).toHaveBeenCalledWith('https://api.test.forestadmin.com/api/users');
+      expect(superagent.send).toHaveBeenCalledWith({
+        data: {
+          type: 'users',
+          attributes: {
+            email: 'john@mail.com',
+            first_name: 'John',
+            last_name: 'Doe',
+            password: 'Password123',
+          },
+        },
+      });
+      expect(result).toStrictEqual({ data: { id: '1', type: 'users' } });
+    });
+  });
 });

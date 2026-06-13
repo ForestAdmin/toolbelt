@@ -34,6 +34,32 @@ function Api({
       .then(response => response.body.token);
 
   /**
+   * @param {{
+   *  email: string;
+   *  password: string;
+   *  firstName: string;
+   *  lastName: string;
+   * }} params
+   * @returns {Promise<object>} the created user
+   */
+  this.signup = async ({ email, password, firstName, lastName }) =>
+    agent
+      .post(`${this.endpoint()}/api/users`)
+      .set(headers)
+      .send({
+        data: {
+          type: 'users',
+          attributes: {
+            email,
+            first_name: firstName,
+            last_name: lastName,
+            password,
+          },
+        },
+      })
+      .then(response => response.body);
+
+  /**
    * @param {import('../serializers/application-token').InputApplicationToken} applicationToken
    * @param {string} sessionToken
    * @returns {Promise<import('../deserializers/application-token').ApplicationToken>}
