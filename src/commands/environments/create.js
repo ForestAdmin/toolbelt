@@ -54,11 +54,13 @@ CreateCommand.flags = {
   }),
   url: Flags.string({
     char: 'u',
-    description: 'Application URL (optional for a production environment).',
+    description:
+      'Application URL. Optional: the environment is created inactive until an apiEndpoint is set.',
   }),
   type: Flags.string({
     char: 't',
-    description: 'Environment type. Use "production" to create the first production environment.',
+    description:
+      'Environment type (defaults to "remote" when omitted). Use "production" to create the first production environment. Development environments are created with "forest init".',
     options: ['production', 'remote'],
   }),
   format: Flags.string({
