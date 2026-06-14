@@ -104,6 +104,54 @@ describe('services > dumpers > AgentNodeJs', () => {
     };
   };
 
+  describe.each([languages.Javascript, languages.Typescript])(
+    'when dumping a demo project in $name (isDemo)',
+    language => {
+      const demoConfig = (base: Config): Config => ({ ...base, isDemo: true });
+
+      it('uses the dummy datasource dependency, not sql', async () => {
+        expect.assertions(2);
+        const { dumper, context, defaultConfig } = createDumper(language);
+
+        await dumper.dump(demoConfig(defaultConfig));
+
+        const pkgCall = context.fs.writeFileSync.mock.calls.find(([p]: [string]) =>
+          p.endsWith('package.json'),
+        );
+        expect(pkgCall[1]).toContain('@forestadmin/datasource-dummy');
+        expect(pkgCall[1]).not.toContain('@forestadmin/datasource-sql');
+      });
+
+      it('passes isDemo to the index and .env templates', async () => {
+        expect.assertions(2);
+        const { dumper, context, defaultConfig } = createDumper(language);
+
+        await dumper.dump(demoConfig(defaultConfig));
+
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          `/test/a${language.name}Application/index.${language.fileExtension}`,
+          expect.objectContaining({ isDemo: true }),
+        );
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          `/test/a${language.name}Application/.env`,
+          expect.objectContaining({ isDemo: true }),
+        );
+      });
+
+      it('does not write a docker-compose file (no database)', async () => {
+        expect.assertions(1);
+        const { dumper, context, defaultConfig } = createDumper(language);
+
+        await dumper.dump(demoConfig(defaultConfig));
+
+        expect(context.fs.writeFileSync).not.toHaveBeenCalledWith(
+          `/test/a${language.name}Application/docker-compose.yml`,
+          expect.anything(),
+        );
+      });
+    },
+  );
+
   describe.each([languages.Javascript, languages.Typescript])('when dumping in $name', language => {
     describe('when writing common files', () => {
       it('should write a .gitignore file', async () => {
@@ -171,6 +219,7 @@ describe('services > dumpers > AgentNodeJs', () => {
           expect(context.fs.writeFileSync).toHaveBeenCalledWith(
             `/test/a${language.name}Application/.env`,
             {
+              isDemo: false,
               dbUrl: 'localhost',
               dbSslMode: 'disabled',
               dbSchema: 'public',

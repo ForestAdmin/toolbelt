@@ -1,14 +1,20 @@
+{{#unless isDemo}}
 {{#unless isMongo}}
 import type { SslMode } from '@forestadmin/datasource-sql';
+{{/unless}}
 {{/unless}}
 import type { Schema } from './typings';
 
 import 'dotenv/config';
 import { createAgent } from '@forestadmin/agent';
+{{#if isDemo}}
+import { createDummyDataSource } from '@forestadmin/datasource-dummy';
+{{else}}
 {{#if isMongo}}
 import { createMongoDataSource } from '@forestadmin/datasource-mongo';
 {{else}}
 import { createSqlDataSource } from '@forestadmin/datasource-sql';
+{{/if}}
 {{/if}}
 
 // This object allows to configure your Forest Admin panel
@@ -30,6 +36,11 @@ const agent = createAgent<Schema>({
 
 // Connect your datasources
 // All options are documented at https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
+{{#if isDemo}}
+// Demo data source (in-memory sample data) — no database required.
+// Replace it with your real database: https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
+agent.addDataSource(createDummyDataSource());
+{{else}}
 {{#if isMongo}}
 agent.addDataSource(
   createMongoDataSource({
@@ -49,6 +60,7 @@ agent.addDataSource(
     sslMode: process.env.DATABASE_SSL_MODE as SslMode,
   }),
 );
+{{/if}}
 {{/if}}
 
 // Add customizations here.

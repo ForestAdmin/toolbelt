@@ -69,19 +69,21 @@ export default class AgentNodeJs extends AbstractDumper {
     this.toValidPackageName = toValidPackageName;
   }
 
-  writePackageJson(language: Language, dbDialect: string, appName: string) {
+  writePackageJson(language: Language, dbDialect: string, appName: string, isDemo = false) {
     const dependencies: { [name: string]: string } = {
       dotenv: '^16.0.1',
       '@forestadmin/agent': '^1.0.0',
     };
 
-    if (dbDialect === 'mongodb') {
+    if (isDemo) {
+      dependencies['@forestadmin/datasource-dummy'] = '^1.0.0';
+    } else if (dbDialect === 'mongodb') {
       dependencies['@forestadmin/datasource-mongo'] = '^1.0.0';
     } else {
       dependencies['@forestadmin/datasource-sql'] = '^1.0.0';
     }
 
-    if (dbDialect) {
+    if (!isDemo && dbDialect) {
       if (dbDialect.includes('postgres')) {
         dependencies.pg = '^8.8.0';
       } else if (dbDialect === 'mysql') {
@@ -157,10 +159,11 @@ export default class AgentNodeJs extends AbstractDumper {
     );
   }
 
-  writeIndex(language: Language, dbDialect: string, dbSchema: string) {
+  writeIndex(language: Language, dbDialect: string, dbSchema: string, isDemo = false) {
     const isMongo = dbDialect === 'mongodb';
 
     const context = {
+      isDemo,
       isMongo,
       isMySQL: dbDialect === 'mysql',
       isMSSQL: dbDialect === 'mssql',
@@ -181,11 +184,12 @@ export default class AgentNodeJs extends AbstractDumper {
     appPort: number,
     forestEnvSecret: string,
     forestAuthSecret: string,
+    isDemo = false,
   ) {
-    const dbUrl = this.buildDatabaseUrl(dbConfig);
     const context = {
+      isDemo,
       isMongo: dbConfig.dbDialect === 'mongodb',
-      dbUrl,
+      dbUrl: '',
       dbSchema: dbConfig.dbSchema,
       dbSslMode: dbConfig.dbSslMode ?? 'disabled',
       appPort,
@@ -196,9 +200,15 @@ export default class AgentNodeJs extends AbstractDumper {
       dockerDbUrl: '',
     };
 
-    if (!this.isLinuxOs) {
-      context.hasDockerDbUrl = true;
-      context.dockerDbUrl = dbUrl.replace('localhost', 'host.docker.internal');
+    // Demo runs on an in-memory dummy datasource: no DATABASE_URL.
+    if (!isDemo) {
+      const dbUrl = this.buildDatabaseUrl(dbConfig);
+      context.dbUrl = dbUrl;
+
+      if (!this.isLinuxOs) {
+        context.hasDockerDbUrl = true;
+        context.dockerDbUrl = dbUrl.replace('localhost', 'host.docker.internal');
+      }
     }
 
     this.copyHandleBarsTemplate('common/env.hbs', '.env', context);
@@ -251,10 +261,13 @@ export default class AgentNodeJs extends AbstractDumper {
   }
 
   protected async createFiles(dumpConfig: Config) {
+    const { isDemo } = dumpConfig;
+
     this.writePackageJson(
       dumpConfig.language,
       dumpConfig.dbConfig.dbDialect,
       dumpConfig.appConfig.appName,
+      isDemo,
     );
     if (dumpConfig.language === languages.Typescript) {
       this.writeTsConfigJson();
@@ -263,17 +276,20 @@ export default class AgentNodeJs extends AbstractDumper {
       dumpConfig.language,
       dumpConfig.dbConfig.dbDialect,
       dumpConfig.dbConfig.dbSchema,
+      isDemo,
     );
     this.writeDotEnv(
       dumpConfig.dbConfig,
       dumpConfig.appConfig.appPort || this.DEFAULT_PORT,
       dumpConfig.forestEnvSecret,
       dumpConfig.forestAuthSecret,
+      isDemo,
     );
     this.writeTypings();
     this.writeGitignore(dumpConfig.language);
     this.writeDockerignore(dumpConfig.language);
     this.writeDockerfile(dumpConfig.language);
-    this.writeDockerCompose(dumpConfig);
+    // The demo project has no database, so no docker-compose DB service is needed.
+    if (!isDemo) this.writeDockerCompose(dumpConfig);
   }
 }

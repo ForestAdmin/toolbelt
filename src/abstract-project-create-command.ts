@@ -33,6 +33,11 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected abstract readonly agent: string | null;
 
+  // Whether the project is backed by a database. When false (e.g. the demo
+  // project on a dummy datasource), all DB steps (dialect requirement, connection
+  // test, introspection) are skipped.
+  protected readonly requiresDatabase: boolean = true;
+
   static override args = {
     applicationName: Args.string({
       name: 'applicationName',
@@ -93,7 +98,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
       this.eventSender.meta.projectId = id;
 
-      await this.testDatabaseConnection(dbConfig);
+      if (this.requiresDatabase) await this.testDatabaseConnection(dbConfig);
 
       await this.generateProject({
         dbConfig,
@@ -117,7 +122,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   }
 
   protected async generateProject(config: Config): Promise<void> {
-    const schema = await this.analyzeDatabase(config.dbConfig);
+    const schema = this.requiresDatabase ? await this.analyzeDatabase(config.dbConfig) : undefined;
     this.spinner.start({ text: 'Creating your project files' });
     const dumpPromise = this.dump(config, schema);
     await this.spinner.attachToPromise(dumpPromise);
@@ -156,7 +161,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     this.eventSender.command = 'projects:create';
     this.eventSender.applicationName = config.applicationName;
 
-    if (!config.databaseDialect && !config.databaseConnectionURL) {
+    if (this.requiresDatabase && !config.databaseDialect && !config.databaseConnectionURL) {
       this.logger.error('Missing database dialect option value');
       this.exit(1);
     }
