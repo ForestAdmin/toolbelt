@@ -487,6 +487,49 @@ module.exports = {
       .post('/api/environments')
       .reply(422, { errors: [{ detail: 'dummy test error' }] }),
 
+  getTeamsValid: () =>
+    nock('http://localhost:3001')
+      .get('/api/projects/2/teams')
+      .reply(200, {
+        data: [
+          { type: 'teams', id: '7', attributes: { name: 'Operations' } },
+          { type: 'teams', id: '8', attributes: { name: 'Support' } },
+        ],
+      }),
+
+  getRolesValid: () =>
+    nock('http://localhost:3001')
+      .get('/api/projects/2/roles')
+      .reply(200, {
+        data: [
+          { type: 'roles', id: '3', attributes: { name: 'Admin' } },
+          { type: 'roles', id: '4', attributes: { name: 'Viewer' } },
+        ],
+      }),
+
+  inviteUsersValid: () =>
+    nock('http://localhost:3001')
+      .post('/api/invitations', {
+        data: [
+          {
+            type: 'invitations',
+            attributes: { email: 'new@user.com', 'permission-level': 'editor' },
+            relationships: {
+              team: { data: { type: 'teams', id: '7' } },
+              role: { data: { type: 'roles', id: '3' } },
+            },
+          },
+        ],
+      })
+      .reply(200, {
+        data: [{ type: 'invitations', id: '1', attributes: { email: 'new@user.com' } }],
+      }),
+
+  inviteUsersDetailedError: () =>
+    nock('http://localhost:3001')
+      .post('/api/invitations')
+      .reply(422, { errors: [{ detail: 'Role project does not match team project.' }] }),
+
   getEnvironmentNotFound: (id = '3947') =>
     nock('http://localhost:3001')
       .matchHeader('forest-environment-id', id)
