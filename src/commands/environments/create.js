@@ -15,6 +15,23 @@ class CreateCommand extends AbstractAuthenticatedCommand {
   async runAuthenticated() {
     const parsed = await this.parse(CreateCommand);
     const config = await withCurrentProject({ ...this.env, ...parsed.flags });
+
+    const isProduction = config.type === 'production';
+
+    // Only production environments may be created without a URL; a remote env
+    // without an apiEndpoint would be created permanently inactive.
+    if (!isProduction && !config.url) {
+      this.logger.error('The --url option is required unless --type production is set.');
+      this.exit(1);
+    }
+
+    // Roles cannot be disabled on production: the server skips role creation entirely
+    // when areRolesDisabled is true, which would leave the project without its default roles.
+    if (isProduction && config.disableRoles) {
+      this.logger.error('The --disableRoles option cannot be used with --type production.');
+      this.exit(1);
+    }
+
     const manager = new EnvironmentManager(config);
 
     try {
@@ -55,7 +72,7 @@ CreateCommand.flags = {
   url: Flags.string({
     char: 'u',
     description:
-      'Application URL. Optional: the environment is created inactive until an apiEndpoint is set.',
+      'Application URL. Required, except with --type production where it may be omitted.',
   }),
   type: Flags.string({
     char: 't',

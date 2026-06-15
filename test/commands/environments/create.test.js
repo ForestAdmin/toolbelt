@@ -4,6 +4,7 @@ const {
   getProjectListValid,
   createEnvironmentValid,
   createProductionEnvironmentValid,
+  createProductionEnvironmentWithUrlValid,
   createEnvironmentForbidden,
   createEnvironmentDetailedError,
   loginValidOidc,
@@ -169,6 +170,59 @@ describe('environments:create', () => {
             out: 'FOREST_ENV_SECRET   2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
           },
         ],
+      }));
+  });
+
+  describe('with --type production and a URL', () => {
+    it('should send the apiEndpoint alongside the production type', () =>
+      testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: EnvironmentCreateCommand,
+        commandArgs: [
+          '-p',
+          '2',
+          '-n',
+          'Production',
+          '-t',
+          'production',
+          '-u',
+          'https://prod.forestadmin.com',
+        ],
+        additionnalStep: plan =>
+          plan.replace('utils/keyGenerator', { generate: () => 'myAuthSecret' }),
+        api: [() => createProductionEnvironmentWithUrlValid()],
+        std: [
+          { out: 'ENVIRONMENT' },
+          { out: 'name                Production' },
+          { out: 'url                 https://prod.forestadmin.com' },
+          { out: 'type                production' },
+          { out: 'FOREST_AUTH_SECRET  myAuthSecret' },
+        ],
+      }));
+  });
+
+  describe('with a remote type and no URL', () => {
+    it('should reject creation and exit 1', () =>
+      testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: EnvironmentCreateCommand,
+        commandArgs: ['-p', '2', '-n', 'Test'],
+        std: [{ err: '× The --url option is required unless --type production is set.' }],
+        exitCode: 1,
+      }));
+  });
+
+  describe('with --type production and --disableRoles', () => {
+    it('should reject creation and exit 1', () =>
+      testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: EnvironmentCreateCommand,
+        commandArgs: ['-p', '2', '-n', 'Production', '-t', 'production', '--disableRoles'],
+        std: [{ err: '× The --disableRoles option cannot be used with --type production.' }],
+        exitCode: 1,
       }));
   });
 
