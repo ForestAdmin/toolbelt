@@ -1,3 +1,5 @@
+## [5.3.11](https://github.com/ForestAdmin/toolbelt/compare/v5.3.10...v5.3.11) (2026-06-15)
+
 ## [5.3.10](https://github.com/ForestAdmin/toolbelt/compare/v5.3.9...v5.3.10) (2026-03-31)
 
 
