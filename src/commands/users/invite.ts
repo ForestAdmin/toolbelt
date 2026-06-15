@@ -67,6 +67,7 @@ export default class UsersInviteCommand extends AbstractAuthenticatedCommand {
     entities: NamedEntity[],
     providedName: string | undefined,
     label: string,
+    emptyHint?: string,
   ): Promise<NamedEntity> {
     if (providedName) {
       const match = entities.find(entity => entity.name === providedName);
@@ -75,12 +76,12 @@ export default class UsersInviteCommand extends AbstractAuthenticatedCommand {
       this.logger.error(
         `${label} "${providedName}" not found in this project. Available: ${available}.`,
       );
-      this.exit(1);
+      return this.exit(1);
     }
 
     if (!entities.length) {
-      this.logger.error(`No ${label} found in this project.`);
-      this.exit(1);
+      this.logger.error(`No ${label} found in this project.${emptyHint ? ` ${emptyHint}` : ''}`);
+      return this.exit(1);
     }
     if (entities.length === 1) return entities[0];
 
@@ -104,7 +105,12 @@ export default class UsersInviteCommand extends AbstractAuthenticatedCommand {
       const team = await this.resolveByName(teams, flags.team, 'team');
 
       const roles = await new RoleManager(config).listForProject();
-      const role = await this.resolveByName(roles, flags.role, 'role');
+      const role = await this.resolveByName(
+        roles,
+        flags.role,
+        'role',
+        "Deploy a production environment first (it creates the project's first role), or create one via the API.",
+      );
 
       const invitations = flags.email.map((email: string) => ({
         email,
@@ -131,9 +137,14 @@ export default class UsersInviteCommand extends AbstractAuthenticatedCommand {
         response?: { text?: string };
       };
       if (response && status !== 403 && response.text) {
-        const errorData = JSON.parse(response.text);
-        if (errorData?.errors?.[0]?.detail) {
-          this.logger.error(errorData.errors[0].detail);
+        let detail;
+        try {
+          detail = JSON.parse(response.text)?.errors?.[0]?.detail;
+        } catch {
+          // Non-JSON error body: fall through and rethrow the original error.
+        }
+        if (detail) {
+          this.logger.error(detail);
           this.exit(1);
         }
       }

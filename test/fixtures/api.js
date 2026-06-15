@@ -507,6 +507,11 @@ module.exports = {
         ],
       }),
 
+  getRolesEmpty: () =>
+    nock('http://localhost:3001').get('/api/projects/2/roles').reply(200, {
+      data: [],
+    }),
+
   inviteUsersValid: () =>
     nock('http://localhost:3001')
       .post('/api/invitations', {
@@ -523,6 +528,35 @@ module.exports = {
       })
       .reply(200, {
         data: [{ type: 'invitations', id: '1', attributes: { email: 'new@user.com' } }],
+      }),
+
+  inviteUsersMultipleValid: () =>
+    nock('http://localhost:3001')
+      .post('/api/invitations', {
+        data: [
+          {
+            type: 'invitations',
+            attributes: { email: 'new@user.com', 'permission-level': 'editor' },
+            relationships: {
+              team: { data: { type: 'teams', id: '7' } },
+              role: { data: { type: 'roles', id: '3' } },
+            },
+          },
+          {
+            type: 'invitations',
+            attributes: { email: 'second@user.com', 'permission-level': 'editor' },
+            relationships: {
+              team: { data: { type: 'teams', id: '7' } },
+              role: { data: { type: 'roles', id: '3' } },
+            },
+          },
+        ],
+      })
+      .reply(200, {
+        data: [
+          { type: 'invitations', id: '1', attributes: { email: 'new@user.com' } },
+          { type: 'invitations', id: '2', attributes: { email: 'second@user.com' } },
+        ],
       }),
 
   inviteUsersDetailedError: () =>
