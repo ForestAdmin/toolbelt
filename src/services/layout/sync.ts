@@ -9,9 +9,20 @@ import type LayoutManager from './layout-manager';
 import type { CanonicalLayout } from './rendering-mapper';
 import type { LayoutDomain, LayoutFileDoc, LayoutScope, PlannedOp } from './types';
 
+import { v4 as uuidv4 } from 'uuid';
+
 import { diffDomain } from './diff';
 import { renderingToCanonical } from './rendering-mapper';
 import { LAYOUT_DOMAINS } from './types';
+
+/** A workflow in the file that carries an authored `steps` graph (→ BPMN). */
+export type StepWorkflow = {
+  collectionId: string;
+  id: string;
+  name: string;
+  segmentIds?: string[];
+  steps: unknown[];
+};
 
 /** The domains a `pull` captures (the layout rebuilt from the rendering, plus folders/workflows). */
 export const PULL_DOMAINS: LayoutDomain[] = LAYOUT_DOMAINS;
@@ -56,6 +67,27 @@ export function diffAllDomains(remote: LayoutFileDoc, local: LayoutFileDoc): Dif
   });
 
   return { ops, warnings };
+}
+
+/**
+ * Workflows in the file that carry an authored `steps` graph. Assigns a uuid id
+ * to any such workflow that lacks one (mutates the doc) so the shell `add` and
+ * the subsequent BPMN link target the same id.
+ */
+export function stepWorkflows(local: LayoutFileDoc): StepWorkflow[] {
+  return ((local.workflows ?? []) as Array<Record<string, unknown>>)
+    .filter(workflow => Array.isArray(workflow.steps) && (workflow.steps as unknown[]).length > 0)
+    .map(workflow => {
+      if (workflow.id === undefined || workflow.id === null) workflow.id = uuidv4();
+
+      return {
+        collectionId: String(workflow.collectionId),
+        id: String(workflow.id),
+        name: String(workflow.name),
+        segmentIds: workflow.segmentIds as string[] | undefined,
+        steps: workflow.steps as unknown[],
+      };
+    });
 }
 
 /** Count collections/workflows for a pull summary line (defensive against absent domains). */

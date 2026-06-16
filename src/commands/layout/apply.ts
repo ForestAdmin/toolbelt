@@ -9,8 +9,14 @@ import { LayoutApiError } from '../../services/layout/errors';
 import LayoutManager from '../../services/layout/layout-manager';
 import { explainApiError, formatPlan } from '../../services/layout/plan-format';
 import { resolveCommandScope } from '../../services/layout/resolve-command-scope';
-import { diffAllDomains, domainsInFile, fetchRemoteDocs } from '../../services/layout/sync';
+import {
+  diffAllDomains,
+  domainsInFile,
+  fetchRemoteDocs,
+  stepWorkflows,
+} from '../../services/layout/sync';
 import { LAYOUT_DOMAINS } from '../../services/layout/types';
+import { compileWorkflowToBpmn } from '../../services/layout/workflow-bpmn';
 import { parseLayoutFile } from '../../services/layout/yaml-file';
 
 const DEFAULT_FILE = 'forest-layout.yml';
@@ -76,21 +82,30 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
     });
 
     const manager = new LayoutManager();
+    // Resolve ids for workflows that carry an authored `steps` graph (mutates docs)
+    // BEFORE diffing, so the shell `add` and the BPMN link target the same id.
+    const bpmnWorkflows = stepWorkflows(docs);
+
     const remote = await fetchRemoteDocs(manager, scope, domainsInFile(docs));
     const { ops, warnings } = diffAllDomains(remote, docs);
 
     this.log(formatPlan(ops, warnings));
+    bpmnWorkflows.forEach(workflow =>
+      this.log(
+        `  ⚙ workflow « ${workflow.name} »: compile + upload BPMN (${workflow.steps.length} steps)`,
+      ),
+    );
 
-    if (ops.length === 0) {
+    if (ops.length === 0 && bpmnWorkflows.length === 0) {
       this.logger.success('Nothing to apply: the environment already matches the file.');
       return;
     }
 
     if (!flags.force && !(await this.confirm(scope.environmentName, scope.teamName))) return;
 
-    // One atomic PATCH per domain, in a stable order; ops are already add→replace→remove.
-    const domainsToPatch = LAYOUT_DOMAINS.filter(domain => ops.some(op => op.domain === domain));
     try {
+      // One atomic PATCH per domain, in a stable order; ops are already add→replace→remove.
+      const domainsToPatch = LAYOUT_DOMAINS.filter(domain => ops.some(op => op.domain === domain));
       // eslint-disable-next-line no-restricted-syntax -- sequential awaits: domains patched one at a time
       for (const domain of domainsToPatch) {
         // eslint-disable-next-line no-await-in-loop -- intentional: atomic, ordered per-domain patches
@@ -99,6 +114,37 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
           ops.filter(op => op.domain === domain),
           scope,
         );
+      }
+
+      // BPMN authoring: shells now exist, so compile each step-graph, upload it to
+      // S3, and link the returned version via `bpmnAwsS3Identifier` (one patch).
+      if (bpmnWorkflows.length > 0) {
+        const renderingId = await manager.getRenderingId(scope);
+        const bpmnOps = [];
+        // eslint-disable-next-line no-restricted-syntax -- sequential: one S3 upload at a time
+        for (const workflow of bpmnWorkflows) {
+          const bpmn = compileWorkflowToBpmn({
+            collection: workflow.collectionId,
+            name: workflow.name,
+            segments: workflow.segmentIds,
+            steps: workflow.steps as never,
+          });
+          // eslint-disable-next-line no-await-in-loop -- intentional sequential uploads
+          const version = await manager.uploadWorkflowBpmn(
+            scope,
+            workflow.id,
+            workflow.collectionId,
+            renderingId,
+            bpmn,
+          );
+          bpmnOps.push({
+            op: 'replace' as const,
+            path: `/workflows/${workflow.id}/bpmnAwsS3Identifier`,
+            value: version,
+          });
+        }
+
+        await manager.patchDomain('workflows', bpmnOps, scope);
       }
     } catch (error) {
       if (error instanceof LayoutApiError && error.status !== 401) {
@@ -110,8 +156,9 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       throw error;
     }
 
+    const bpmnNote = bpmnWorkflows.length > 0 ? ` + ${bpmnWorkflows.length} workflow BPMN` : '';
     this.logger.success(
-      `Applied ${ops.length} change${ops.length > 1 ? 's' : ''} to ${this.chalk.bold(
+      `Applied ${ops.length} change${ops.length === 1 ? '' : 's'}${bpmnNote} to ${this.chalk.bold(
         scope.environmentName,
       )} / ${this.chalk.bold(scope.teamName)}.`,
     );

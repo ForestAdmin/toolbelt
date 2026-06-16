@@ -8,7 +8,12 @@ import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
 import LayoutManager from '../../services/layout/layout-manager';
 import { formatPlan } from '../../services/layout/plan-format';
 import { resolveCommandScope } from '../../services/layout/resolve-command-scope';
-import { diffAllDomains, domainsInFile, fetchRemoteDocs } from '../../services/layout/sync';
+import {
+  diffAllDomains,
+  domainsInFile,
+  fetchRemoteDocs,
+  stepWorkflows,
+} from '../../services/layout/sync';
 import { parseLayoutFile } from '../../services/layout/yaml-file';
 
 const DEFAULT_FILE = 'forest-layout.yml';
@@ -75,5 +80,10 @@ export default class LayoutDiffCommand extends AbstractAuthenticatedCommand {
       )} / ${this.chalk.bold(scope.teamName)}:\n`,
     );
     this.log(formatPlan(ops, warnings));
+    stepWorkflows(docs).forEach(workflow =>
+      this.log(
+        `  ⚙ workflow « ${workflow.name} »: would compile + upload BPMN (${workflow.steps.length} steps)`,
+      ),
+    );
   }
 }
