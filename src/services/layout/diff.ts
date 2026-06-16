@@ -12,6 +12,7 @@ import type { KeyedArrayRule, Rule } from './patch-rules';
 import type { LayoutDomain, PlannedOp } from './types';
 
 import { isDeepStrictEqual } from 'util';
+import { v4 as uuidv4 } from 'uuid';
 
 import { DOMAIN_RULES, matchesWhitelist } from './patch-rules';
 import { LayoutFileError } from './yaml-file';
@@ -146,15 +147,24 @@ function diffScalarLike(
   });
 }
 
-function stripForAdd(item: Item, stripOnAdd: string[] | undefined): Item {
-  return Object.fromEntries(
-    Object.entries(item).filter(([key, value]) => {
-      if (stripOnAdd?.includes(key)) return false;
-      if (value === undefined || (key === 'id' && value === null)) return false;
+/**
+ * Build the value sent in an `add` op. The server requires a client-supplied
+ * `id` on add (PRIMARY_KEYS) — so we KEEP the local id (stable across re-apply
+ * and cross-env copies) and generate a uuid only when none is present. Any
+ * per-rule `stripOnAdd` keys and `undefined` values are dropped; remaining
+ * write-required defaults are filled by {@link fillAddDefaults}.
+ */
+function prepareAddValue(item: Item, rule: KeyedArrayRule): Item {
+  const cleaned: Item = {};
+  Object.entries(item).forEach(([key, value]) => {
+    if (rule.stripOnAdd?.includes(key)) return;
+    if (value === undefined) return;
+    cleaned[key] = value;
+  });
 
-      return true;
-    }),
-  );
+  if (cleaned.id === undefined || cleaned.id === null) cleaned.id = uuidv4();
+
+  return rule.addDefaults ? rule.addDefaults(cleaned) : cleaned;
 }
 
 function diffKeyedArray(
@@ -204,7 +214,7 @@ function diffKeyedArray(
       op: 'add',
       path: `${arrayPath}/-`,
       premiumPack,
-      value: stripForAdd(item, rule.stripOnAdd),
+      value: prepareAddValue(item, rule),
       yamlPath,
     });
   });

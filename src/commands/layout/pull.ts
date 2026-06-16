@@ -6,8 +6,8 @@ import path from 'path';
 
 import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
 import LayoutManager from '../../services/layout/layout-manager';
-import { renderingToCanonical } from '../../services/layout/rendering-mapper';
 import { resolveCommandScope } from '../../services/layout/resolve-command-scope';
+import { PULL_DOMAINS, fetchRemoteDocs, summarize } from '../../services/layout/sync';
 import { serializeLayoutFile } from '../../services/layout/yaml-file';
 
 const DEFAULT_OUTPUT = 'forest-layout.yml';
@@ -59,17 +59,17 @@ export default class LayoutPullCommand extends AbstractAuthenticatedCommand {
       flags: { env: flags.env, projectId: flags.projectId, team: flags.team },
     });
 
-    const rendering = await new LayoutManager().getRendering(scope);
-    const layout = renderingToCanonical(rendering);
-    const content = serializeLayoutFile(scope, { layout }, () => new Date());
+    const docs = await fetchRemoteDocs(new LayoutManager(), scope, PULL_DOMAINS);
+    const content = serializeLayoutFile(scope, docs, () => new Date());
 
     const outputPath = path.resolve(process.cwd(), flags.out);
     writeFileSync(outputPath, content);
 
+    const { collections, workflows } = summarize(docs);
     this.logger.success(
       `Pulled the layout of ${this.chalk.bold(scope.environmentName)} / ${this.chalk.bold(
         scope.teamName,
-      )} into ${this.chalk.bold(flags.out)} (${layout.collections.length} collections).`,
+      )} into ${this.chalk.bold(flags.out)} (${collections} collections, ${workflows} workflows).`,
     );
   }
 }

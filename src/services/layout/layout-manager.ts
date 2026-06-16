@@ -59,6 +59,34 @@ export default class LayoutManager {
   }
 
   /**
+   * GET /api/:domain/:project/:env/:team — the raw patchable document for a
+   * non-layout domain (folders, workflows). The layout domain has no usable raw
+   * GET (it returns []), so use {@link getRendering} for it instead.
+   */
+  async getLayoutDomain(
+    domain: Exclude<LayoutDomain, 'layout'>,
+    scope: LayoutScope,
+  ): Promise<unknown[]> {
+    const path = [domain, scope.projectName, scope.environmentName, scope.teamName]
+      .map(segment => encodeURIComponent(segment))
+      .join('/');
+
+    try {
+      const response = await agent
+        .get(`${this.serverUrl}/api/${path}`)
+        .set('Authorization', `Bearer ${this.authenticator.getAuthToken()}`)
+        .set('forest-project-id', String(scope.projectId))
+        .set('forest-environment-id', String(scope.environmentId))
+        .set('forest-team-id', String(scope.teamId))
+        .send();
+
+      return (response.body ?? []) as unknown[];
+    } catch (error) {
+      throw toLayoutApiError(error);
+    }
+  }
+
+  /**
    * PATCH /api/:domain — apply an RFC 6902 JSON-Patch array, scoped by the
    * environment/team headers. The patch is atomic server-side; a 204 is
    * expected on success. Only `op`/`path`/`value` are sent (planner metadata
