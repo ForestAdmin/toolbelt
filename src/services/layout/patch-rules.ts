@@ -373,6 +373,8 @@ export const DOMAIN_RULES: Record<LayoutDomain, DomainRules> = {
         prop: '',
         removable: true,
         segment: 'workflows',
+        // `steps` is authoring input compiled to BPMN out-of-band, never sent in the shell patch.
+        stripOnAdd: ['steps'],
       },
     ],
   },
