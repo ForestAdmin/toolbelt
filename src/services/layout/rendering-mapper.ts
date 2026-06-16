@@ -34,7 +34,9 @@ export type CanonicalCollection = {
 export type CanonicalLayout = {
   collections: CanonicalCollection[];
   dashboards: Array<Record<string, unknown>>;
+  inboxes: Array<Record<string, unknown>>;
   sections: unknown;
+  workspaces: Array<Record<string, unknown>>;
 };
 
 /** `customers-email` -> `email` (resource ids are prefixed by the collection). */
@@ -174,21 +176,59 @@ function mapCollection(
   };
 }
 
+/**
+ * Workspaces carry an ordered list of components; component `options` (tabs,
+ * filters, visible columns…) is deep and polymorphic, so it is kept opaque
+ * (round-tripped verbatim, set as a whole on add). Addressing is by the
+ * workspace/component `id` (the patch route's `:collectionId` param actually
+ * receives the workspace id).
+ */
+function mapWorkspace(
+  workspace: JsonApiResource,
+  index: Map<string, JsonApiResource>,
+): Record<string, unknown> {
+  const components = relatedResources(workspace, index, 'components', 'workspace-components').map(
+    component => ({ id: component.id, ...camelizeShallow(component.attributes ?? {}) }),
+  );
+
+  return { id: workspace.id, ...camelizeShallow(workspace.attributes ?? {}), components };
+}
+
+/** Inboxes reference a collection (and, for segment inboxes, a segment) by id. */
+function mapInbox(inbox: JsonApiResource): Record<string, unknown> {
+  const collectionRef = relatedIds(inbox, 'collection')[0];
+  const segmentRef = relatedIds(inbox, 'segment')[0];
+
+  return {
+    id: inbox.id,
+    ...camelizeShallow(inbox.attributes ?? {}),
+    ...(collectionRef ? { collectionId: collectionRef.id } : {}),
+    ...(segmentRef ? { segmentId: segmentRef.id } : {}),
+  };
+}
+
 /** Build the canonical patchable layout document from a rendering response. */
 export function renderingToCanonical(doc: JsonApiDocument): CanonicalLayout {
   const index = indexIncluded(doc);
-  const collections = (doc.included ?? [])
-    .filter(resource => resource.type === 'collections')
+  const byType = (type: string) => (doc.included ?? []).filter(resource => resource.type === type);
+
+  const collections = byType('collections')
     .map(collection => mapCollection(collection, index))
     .sort((a, b) => a.id.localeCompare(b.id));
 
-  const dashboards = (doc.included ?? [])
-    .filter(resource => resource.type === 'dashboards')
-    .map(dashboard => ({ id: dashboard.id, ...camelizeShallow(dashboard.attributes ?? {}) }));
+  const dashboards = byType('dashboards').map(dashboard => ({
+    id: dashboard.id,
+    ...camelizeShallow(dashboard.attributes ?? {}),
+  }));
+
+  const workspaces = byType('workspaces').map(workspace => mapWorkspace(workspace, index));
+  const inboxes = byType('inboxes').map(inbox => mapInbox(inbox));
 
   return {
     collections,
     dashboards,
+    inboxes,
     sections: (doc.data.attributes?.sections as unknown) ?? [],
+    workspaces,
   };
 }
