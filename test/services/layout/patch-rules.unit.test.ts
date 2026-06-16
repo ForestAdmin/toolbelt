@@ -11,6 +11,15 @@ describe('matchesWhitelist', () => {
       ['remove', '/collections/customers/layout/segments/seg-1'],
       ['replace', '/collections/customers/layout/viewEdit/summaryView'],
       ['add', '/dashboards/-'],
+      ['add', '/workspaces/-'],
+      ['replace', '/workspaces/ws1/name'],
+      ['add', '/workspaces/ws1/components/-'],
+      [
+        'replace',
+        '/workspaces/ws1/components/3f2504e0-4f89-41d3-9a0c-0305e82c3301/displaySettings',
+      ],
+      ['add', '/inboxes/-'],
+      ['replace', '/inboxes/3f2504e0-4f89-41d3-9a0c-0305e82c3301/name'],
       ['replace', '/sections'],
     ])('accepts %s %s', (op, path) => {
       expect.assertions(1);

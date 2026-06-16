@@ -227,6 +227,58 @@ const COLLECTION_RULES: Rule[] = [
   COLLECTION_LAYOUT_RULE,
 ];
 
+/**
+ * Workspaces (and their components) — addressed by id (the route's
+ * `:collectionId` param receives the workspace/component id). Component `type`
+ * and `options` are add-only (carried verbatim in the add value); only
+ * `name`/`displaySettings`/`visibility` are editable, matching the server.
+ */
+const WORKSPACE_RULE: KeyedArrayRule = {
+  addable: true,
+  addDefaults: withDefaults({ collectionId: null, components: [], icon: '🗂️', position: 0 }),
+  children: [
+    scalar('name'),
+    scalar('icon'),
+    scalar('position'),
+    {
+      addable: true,
+      children: [scalar('name'), opaque('displaySettings'), opaque('visibility')],
+      kind: 'keyedArray',
+      prop: 'components',
+      removable: true,
+      segment: 'components',
+    },
+  ],
+  kind: 'keyedArray',
+  prop: 'workspaces',
+  removable: true,
+  segment: 'workspaces',
+};
+
+/**
+ * Inboxes — premium-gated. `type`, `dispatchRule`, `sortingFields`,
+ * `collectionId` and `segmentId` are add-only (set on creation, not
+ * replaceable); the rest are editable scalars.
+ */
+const INBOX_RULE: KeyedArrayRule = {
+  addable: true,
+  addDefaults: withDefaults({ canUsersReassign: false, position: 0 }),
+  children: [
+    scalar('name'),
+    scalar('icon'),
+    scalar('position'),
+    scalar('folder'),
+    scalar('tasksLimit'),
+    scalar('canUsersReassign'),
+    opaque('unassignAfter'),
+  ],
+  kind: 'keyedArray',
+  premiumPack: 'inbox',
+  prop: 'inboxes',
+  removable: true,
+  segment: 'inboxes',
+};
+
 export type DomainRules = {
   /** Rules of the document root. */
   root: Rule[];
@@ -298,6 +350,8 @@ export const DOMAIN_RULES: Record<LayoutDomain, DomainRules> = {
         removable: true,
         segment: 'dashboards',
       },
+      WORKSPACE_RULE,
+      INBOX_RULE,
       opaque('sections'),
     ],
   },

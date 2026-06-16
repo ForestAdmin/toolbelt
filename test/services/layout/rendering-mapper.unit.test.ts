@@ -104,7 +104,90 @@ describe('renderingToCanonical', () => {
     ).toStrictEqual({
       collections: [],
       dashboards: [],
+      inboxes: [],
       sections: [],
+      workspaces: [],
     });
+  });
+
+  it('maps workspaces with their components (options kept opaque)', () => {
+    expect.assertions(1);
+    const doc = {
+      data: { attributes: {}, id: '1', type: 'renderings' },
+      included: [
+        {
+          attributes: { collection_id: null, icon: '🧩', name: 'AML', position: 0 },
+          id: 'ws1',
+          relationships: { components: { data: [{ id: 'c1', type: 'workspace-components' }] } },
+          type: 'workspaces',
+        },
+        {
+          attributes: {
+            display_settings: { height: 22, width: 55 },
+            name: 'tabs1',
+            options: { tabs: [{ name: 'Free', tabId: 't1' }] },
+            type: 'tabs',
+            visibility: { type: 'always' },
+          },
+          id: 'c1',
+          type: 'workspace-components',
+        },
+      ],
+    };
+    expect(renderingToCanonical(doc).workspaces).toStrictEqual([
+      {
+        collectionId: null,
+        components: [
+          {
+            displaySettings: { height: 22, width: 55 },
+            id: 'c1',
+            name: 'tabs1',
+            options: { tabs: [{ name: 'Free', tabId: 't1' }] },
+            type: 'tabs',
+            visibility: { type: 'always' },
+          },
+        ],
+        icon: '🧩',
+        id: 'ws1',
+        name: 'AML',
+        position: 0,
+      },
+    ]);
+  });
+
+  it('maps inboxes with their collection/segment references', () => {
+    expect.assertions(1);
+    const doc = {
+      data: { attributes: {}, id: '1', type: 'renderings' },
+      included: [
+        {
+          attributes: {
+            dispatch_rule: 'basedOnSortingFields',
+            icon: '📥️',
+            name: 'KYC',
+            position: 0,
+            type: 'segment',
+          },
+          id: 'ib1',
+          relationships: {
+            collection: { data: { id: 'kyc_cases', type: 'collections' } },
+            segment: { data: { id: 'seg9', type: 'segments' } },
+          },
+          type: 'inboxes',
+        },
+      ],
+    };
+    expect(renderingToCanonical(doc).inboxes).toStrictEqual([
+      {
+        collectionId: 'kyc_cases',
+        dispatchRule: 'basedOnSortingFields',
+        icon: '📥️',
+        id: 'ib1',
+        name: 'KYC',
+        position: 0,
+        segmentId: 'seg9',
+        type: 'segment',
+      },
+    ]);
   });
 });
