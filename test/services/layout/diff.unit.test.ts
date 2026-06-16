@@ -93,8 +93,8 @@ describe('diffDomain (layout)', () => {
     ]);
   });
 
-  it('adds a new segment (id-less local item), stripping the id on add', () => {
-    expect.assertions(2);
+  it('adds a new segment: keeps a generated id and fills write-required defaults', () => {
+    expect.assertions(4);
     const local = clone(baseLayout());
     ((local.collections as AnyRecord[])[0].layout as AnyRecord).segments = [
       { id: 'seg1', name: 'VIP' },
@@ -103,13 +103,37 @@ describe('diffDomain (layout)', () => {
 
     const { ops } = diffDomain('layout', baseLayout(), local);
     expect(ops).toHaveLength(1);
-    expect(ops[0]).toStrictEqual(
+    expect(ops[0].op).toBe('add');
+    expect(ops[0].path).toBe('/collections/customers/layout/segments/-');
+    const value = ops[0].value as AnyRecord;
+    // The server requires a client id + a full segment shape on add; the engine
+    // generates a uuid and fills the fields the rendering read omits.
+    expect(value).toStrictEqual(
       expect.objectContaining({
-        op: 'add',
-        path: '/collections/customers/layout/segments/-',
-        value: { name: 'New segment' },
+        columns: [],
+        defaultSortingFieldName: null,
+        defaultSortingFieldOrder: null,
+        filter: null,
+        hasColumnsConfiguration: false,
+        icon: null,
+        id: expect.stringMatching(/^[0-9a-f-]{36}$/),
+        name: 'New segment',
+        query: null,
+        type: 'manual',
       }),
     );
+  });
+
+  it('preserves an authored id on add (stable across re-apply / cross-env copy)', () => {
+    expect.assertions(1);
+    const local = clone(baseLayout());
+    ((local.collections as AnyRecord[])[0].layout as AnyRecord).segments = [
+      { id: 'seg1', name: 'VIP' },
+      { id: 'my-fixed-id', name: 'Authored', type: 'smart', query: 'SELECT 1' },
+    ];
+
+    const { ops } = diffDomain('layout', baseLayout(), local);
+    expect((ops[0].value as AnyRecord).id).toBe('my-fixed-id');
   });
 
   it('removes a segment missing from the local document', () => {
@@ -150,6 +174,26 @@ describe('diffDomain (layout)', () => {
 
     const { ops } = diffDomain('layout', baseLayout(), local);
     expect(ops.map(op => op.op)).toStrictEqual(['add', 'replace', 'remove']);
+  });
+
+  it('creates a workflow shell with a generated id and filled defaults (workflows domain)', () => {
+    expect.assertions(3);
+    const remote: AnyRecord[] = [];
+    const local: AnyRecord[] = [{ collectionId: 'aml_alerts', name: 'My workflow' }];
+
+    const { ops } = diffDomain('workflows', remote, local);
+    expect(ops).toHaveLength(1);
+    expect(ops[0]).toStrictEqual(expect.objectContaining({ op: 'add', path: '/workflows/-' }));
+    expect(ops[0].value).toStrictEqual(
+      expect.objectContaining({
+        collectionId: 'aml_alerts',
+        id: expect.stringMatching(/^[0-9a-f-]{36}$/),
+        isVisible: true,
+        name: 'My workflow',
+        position: 0,
+        segmentIds: [],
+      }),
+    );
   });
 
   it('matches items by name when neither side has an id', () => {

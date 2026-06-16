@@ -5,12 +5,12 @@ import { readFileSync } from 'fs';
 import path from 'path';
 
 import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
-import { diffDomain } from '../../services/layout/diff';
 import { LayoutApiError } from '../../services/layout/errors';
 import LayoutManager from '../../services/layout/layout-manager';
 import { explainApiError, formatPlan } from '../../services/layout/plan-format';
-import { renderingToCanonical } from '../../services/layout/rendering-mapper';
 import { resolveCommandScope } from '../../services/layout/resolve-command-scope';
+import { diffAllDomains, domainsInFile, fetchRemoteDocs } from '../../services/layout/sync';
+import { LAYOUT_DOMAINS } from '../../services/layout/types';
 import { parseLayoutFile } from '../../services/layout/yaml-file';
 
 const DEFAULT_FILE = 'forest-layout.yml';
@@ -75,8 +75,9 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       flags: { env: flags.env, projectId: flags.projectId, team: flags.team },
     });
 
-    const remote = renderingToCanonical(await new LayoutManager().getRendering(scope));
-    const { ops, warnings } = diffDomain('layout', remote, docs.layout);
+    const manager = new LayoutManager();
+    const remote = await fetchRemoteDocs(manager, scope, domainsInFile(docs));
+    const { ops, warnings } = diffAllDomains(remote, docs);
 
     this.log(formatPlan(ops, warnings));
 
@@ -87,8 +88,18 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
 
     if (!flags.force && !(await this.confirm(scope.environmentName, scope.teamName))) return;
 
+    // One atomic PATCH per domain, in a stable order; ops are already add→replace→remove.
+    const domainsToPatch = LAYOUT_DOMAINS.filter(domain => ops.some(op => op.domain === domain));
     try {
-      await new LayoutManager().patchDomain('layout', ops, scope);
+      // eslint-disable-next-line no-restricted-syntax -- sequential awaits: domains patched one at a time
+      for (const domain of domainsToPatch) {
+        // eslint-disable-next-line no-await-in-loop -- intentional: atomic, ordered per-domain patches
+        await manager.patchDomain(
+          domain,
+          ops.filter(op => op.domain === domain),
+          scope,
+        );
+      }
     } catch (error) {
       if (error instanceof LayoutApiError && error.status !== 401) {
         this.logger.error(explainApiError(error, ops));

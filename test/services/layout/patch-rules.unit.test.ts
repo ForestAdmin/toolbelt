@@ -28,6 +28,26 @@ describe('matchesWhitelist', () => {
     });
   });
 
+  describe('workflows domain', () => {
+    it.each([
+      ['add', '/workflows/-'],
+      ['remove', '/workflows/3f2504e0-4f89-41d3-9a0c-0305e82c3301'],
+      ['replace', '/workflows/12/name'],
+      ['replace', '/workflows/12/bpmnAwsS3Identifier'],
+      ['replace', '/workflows/12/segmentIds'],
+    ])('accepts %s %s', (op, path) => {
+      expect.assertions(1);
+      expect(matchesWhitelist('workflows', { op, path })).toBe(true);
+    });
+
+    it('rejects an unknown workflow prop', () => {
+      expect.assertions(1);
+      expect(
+        matchesWhitelist('workflows', { op: 'replace', path: '/workflows/12/collectionId' }),
+      ).toBe(false);
+    });
+  });
+
   describe('folders domain', () => {
     it('accepts a folder rename and rejects an unknown folder prop', () => {
       expect.assertions(2);

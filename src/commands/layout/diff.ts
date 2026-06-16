@@ -5,11 +5,10 @@ import { readFileSync } from 'fs';
 import path from 'path';
 
 import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
-import { diffDomain } from '../../services/layout/diff';
 import LayoutManager from '../../services/layout/layout-manager';
 import { formatPlan } from '../../services/layout/plan-format';
-import { renderingToCanonical } from '../../services/layout/rendering-mapper';
 import { resolveCommandScope } from '../../services/layout/resolve-command-scope';
+import { diffAllDomains, domainsInFile, fetchRemoteDocs } from '../../services/layout/sync';
 import { parseLayoutFile } from '../../services/layout/yaml-file';
 
 const DEFAULT_FILE = 'forest-layout.yml';
@@ -67,8 +66,8 @@ export default class LayoutDiffCommand extends AbstractAuthenticatedCommand {
       flags: { env: flags.env, projectId: flags.projectId, team: flags.team },
     });
 
-    const remote = renderingToCanonical(await new LayoutManager().getRendering(scope));
-    const { ops, warnings } = diffDomain('layout', remote, docs.layout);
+    const remote = await fetchRemoteDocs(new LayoutManager(), scope, domainsInFile(docs));
+    const { ops, warnings } = diffAllDomains(remote, docs);
 
     this.log(
       `Diff of ${this.chalk.bold(args.file)} against ${this.chalk.bold(

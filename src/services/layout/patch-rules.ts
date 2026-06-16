@@ -27,6 +27,13 @@ export type OpaqueRule = {
 
 export type KeyedArrayRule = {
   addable?: boolean;
+  /**
+   * Fill write-required fields the rendering read omits, so an `add` value
+   * passes the server validator (e.g. segments need `defaultSortingFieldName`
+   * and `columns`, which the rendering serializer does not return). Only sets
+   * keys that are absent — never overrides an authored value.
+   */
+  addDefaults?: (value: Record<string, unknown>) => Record<string, unknown>;
   // eslint-disable-next-line no-use-before-define -- Rule is a recursive union over the *Rule types
   children: Rule[];
   /** When add/remove of items is detected, replace the whole array instead. */
@@ -62,6 +69,44 @@ const opaque = (prop: string, extra: Partial<OpaqueRule> = {}): OpaqueRule => ({
   prop,
   ...extra,
 });
+
+/** Return an addDefaults fn that fills the given keys only when absent. */
+const withDefaults =
+  (defaults: Record<string, unknown>) =>
+  (value: Record<string, unknown>): Record<string, unknown> => {
+    const out = { ...value };
+    Object.entries(defaults).forEach(([key, fallback]) => {
+      if (out[key] === undefined) out[key] = fallback;
+    });
+
+    return out;
+  };
+
+/**
+ * Segment write-shape: the rendering read omits `defaultSortingFieldName` and
+ * `columns` (both required by the server's segment validator), and manual
+ * segments require `filter`/`query` keys to be present (null allowed) while
+ * smart segments forbid them.
+ */
+function segmentAddDefaults(value: Record<string, unknown>): Record<string, unknown> {
+  const out = withDefaults({
+    columns: [],
+    defaultSortingFieldName: null,
+    defaultSortingFieldOrder: null,
+    hasColumnsConfiguration: false,
+    icon: null,
+    isVisible: true,
+    position: 0,
+    type: 'manual',
+  })(value);
+
+  if (out.type !== 'smart') {
+    if (out.filter === undefined) out.filter = null;
+    if (out.query === undefined) out.query = null;
+  }
+
+  return out;
+}
 
 /** Chart properties (viewEdit and dashboards), patchable and removable per the server. */
 const CHART_PROPS: Rule[] = [
@@ -101,12 +146,12 @@ const SEGMENT_RULE: KeyedArrayRule = {
       segment: 'columns',
     },
   ],
+  addDefaults: segmentAddDefaults,
   kind: 'keyedArray',
   premiumPack: 'scopes',
   prop: 'segments',
   removable: true,
   segment: 'segments',
-  stripOnAdd: ['id'],
 };
 
 /** Children of a collection's `layout` object (canonical: collection.layout.*). */
@@ -219,7 +264,6 @@ export const DOMAIN_RULES: Record<LayoutDomain, DomainRules> = {
         prop: '',
         removable: true,
         segment: 'folders',
-        stripOnAdd: ['id'],
       },
     ],
   },
@@ -247,12 +291,12 @@ export const DOMAIN_RULES: Record<LayoutDomain, DomainRules> = {
             stripOnAdd: [],
           },
         ],
+        addDefaults: withDefaults({ charts: [], icon: null, position: 0 }),
         kind: 'keyedArray',
         premiumPack: 'multipleDashboards',
         prop: 'dashboards',
         removable: true,
         segment: 'dashboards',
-        stripOnAdd: ['id'],
       },
       opaque('sections'),
     ],
@@ -261,12 +305,20 @@ export const DOMAIN_RULES: Record<LayoutDomain, DomainRules> = {
     root: [
       {
         addable: true,
-        children: [scalar('name'), scalar('position'), scalar('isVisible'), opaque('segmentIds')],
+        // `collectionId` is required on add but is not a replaceable path, so it is
+        // carried in the add value (passed through) rather than declared as a child.
+        addDefaults: withDefaults({ isVisible: true, position: 0, segmentIds: [] }),
+        children: [
+          scalar('name'),
+          scalar('position'),
+          scalar('isVisible'),
+          opaque('segmentIds'),
+          scalar('bpmnAwsS3Identifier'),
+        ],
         kind: 'keyedArray',
         prop: '',
         removable: true,
         segment: 'workflows',
-        stripOnAdd: [],
       },
     ],
   },
@@ -412,7 +464,10 @@ const WHITELIST: Record<LayoutDomain, WhitelistEntry[]> = {
   workflows: [
     entry(['add'], `/workflows/-`),
     entry(['remove'], `/workflows/${NUM_OR_UUID}`),
-    entry(['replace'], `/workflows/${NUM_OR_UUID}/(name|position|isVisible|segmentIds)`),
+    entry(
+      ['replace'],
+      `/workflows/${NUM_OR_UUID}/(name|position|isVisible|segmentIds|bpmnAwsS3Identifier)`,
+    ),
   ],
 };
 
