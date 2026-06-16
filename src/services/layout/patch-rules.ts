@@ -1,0 +1,426 @@
+/**
+ * Single source of truth for the diff engine:
+ *  - the rule tree describing how each patchable property of the canonical
+ *    documents maps to a JSON Patch path;
+ *  - a mirror of the server's whitelisted patch patterns (matchesWhitelist),
+ *    used to pre-validate every generated op before sending.
+ *
+ * Mirrored from forestadmin-server make-layout-patch-patterns.ts (+ folder and
+ * workflow patterns). Patterns not synthesized by the diff (test ops, fine-
+ * grained workspace component options…) stay reachable through a raw patch.
+ */
+import type { LayoutDomain } from './types';
+
+export type ScalarRule = {
+  kind: 'scalar';
+  premiumPack?: string;
+  prop: string;
+  /** When true, a property absent locally produces a `remove` op. */
+  removable?: boolean;
+};
+
+export type OpaqueRule = {
+  kind: 'opaque';
+  premiumPack?: string;
+  prop: string;
+};
+
+export type KeyedArrayRule = {
+  addable?: boolean;
+  // eslint-disable-next-line no-use-before-define -- Rule is a recursive union over the *Rule types
+  children: Rule[];
+  /** When add/remove of items is detected, replace the whole array instead. */
+  fallbackReplaceWhole?: boolean;
+  kind: 'keyedArray';
+  premiumPack?: string;
+  prop: string;
+  removable?: boolean;
+  /** Path segment template under the parent, e.g. 'layout/segments'. */
+  segment: string;
+  /** Keys stripped from the value sent in an `add` op. */
+  stripOnAdd?: string[];
+};
+
+/** A nested object (e.g. viewEdit): children apply under a fixed path segment. */
+export type ObjectRule = {
+  // eslint-disable-next-line no-use-before-define -- Rule is a recursive union over the *Rule types
+  children: Rule[];
+  kind: 'object';
+  prop: string;
+  segment: string;
+};
+
+export type Rule = KeyedArrayRule | ObjectRule | OpaqueRule | ScalarRule;
+
+const scalar = (prop: string, extra: Partial<ScalarRule> = {}): ScalarRule => ({
+  kind: 'scalar',
+  prop,
+  ...extra,
+});
+const opaque = (prop: string, extra: Partial<OpaqueRule> = {}): OpaqueRule => ({
+  kind: 'opaque',
+  prop,
+  ...extra,
+});
+
+/** Chart properties (viewEdit and dashboards), patchable and removable per the server. */
+const CHART_PROPS: Rule[] = [
+  'name',
+  'type',
+  'aggregator',
+  'aggregateFieldName',
+  'filter',
+  'query',
+  'apiVersion',
+  'sourceCollectionId',
+  'groupByFieldName',
+  'timeRange',
+  'limit',
+  'labelFieldName',
+  'relationshipFieldName',
+  'numeratorChartId',
+  'denominatorChartId',
+  'objective',
+  'displaySettings',
+  'description',
+  'subTitle',
+].map(prop => scalar(prop, { removable: true }));
+
+const SEGMENT_RULE: KeyedArrayRule = {
+  addable: true,
+  children: [
+    scalar('name'),
+    scalar('position'),
+    scalar('isVisible'),
+    opaque('filter'),
+    {
+      children: [scalar('position'), scalar('isVisible')],
+      fallbackReplaceWhole: true,
+      kind: 'keyedArray',
+      prop: 'columns',
+      segment: 'columns',
+    },
+  ],
+  kind: 'keyedArray',
+  premiumPack: 'scopes',
+  prop: 'segments',
+  removable: true,
+  segment: 'segments',
+  stripOnAdd: ['id'],
+};
+
+/** Children of a collection's `layout` object (canonical: collection.layout.*). */
+const COLLECTION_LAYOUT_RULE: ObjectRule = {
+  children: [
+    {
+      children: [scalar('position'), scalar('isVisible')],
+      kind: 'keyedArray',
+      prop: 'columns',
+      segment: 'columns',
+    },
+    {
+      children: [
+        scalar('displayName'),
+        scalar('description'),
+        scalar('isReadOnly'),
+        scalar('isFilterDisplayed'),
+        scalar('isDissociateDisplayed'),
+        opaque('widgetEdit'),
+        opaque('widgetDisplay'),
+        opaque('mappingValues'),
+        opaque('conditionalFormatting'),
+      ],
+      kind: 'keyedArray',
+      prop: 'fields',
+      segment: 'fields',
+    },
+    SEGMENT_RULE,
+    {
+      children: [
+        scalar('position'),
+        scalar('isVisible'),
+        scalar('displayName'),
+        opaque('confirmation'),
+        opaque('segments'),
+        scalar('buttonType'),
+      ],
+      kind: 'keyedArray',
+      prop: 'actions',
+      segment: 'actions',
+    },
+    {
+      children: [
+        opaque('summaryView'),
+        {
+          addable: true,
+          children: CHART_PROPS,
+          kind: 'keyedArray',
+          prop: 'charts',
+          removable: true,
+          segment: 'charts',
+          stripOnAdd: [],
+        },
+      ],
+      kind: 'object',
+      prop: 'viewEdit',
+      segment: 'viewEdit',
+    },
+  ],
+  kind: 'object',
+  prop: 'layout',
+  segment: 'layout',
+};
+
+const COLLECTION_RULES: Rule[] = [
+  scalar('displayName'),
+  scalar('displayNamePlural'),
+  scalar('icon'),
+  scalar('restrictedToSegments'),
+  scalar('defaultSortingOrder'),
+  scalar('defaultSortingFieldName'),
+  scalar('displayFieldName'),
+  COLLECTION_LAYOUT_RULE,
+];
+
+export type DomainRules = {
+  /** Rules of the document root. */
+  root: Rule[];
+};
+
+export const DOMAIN_RULES: Record<LayoutDomain, DomainRules> = {
+  folders: {
+    root: [
+      {
+        addable: true,
+        children: [
+          scalar('name'),
+          scalar('icon'),
+          {
+            addable: true,
+            children: [
+              scalar('position'),
+              scalar('isVisible'),
+              {
+                addable: true,
+                children: [scalar('position'), scalar('isVisible')],
+                kind: 'keyedArray',
+                prop: 'subChildren',
+                removable: true,
+                segment: 'subChildren',
+              },
+            ],
+            kind: 'keyedArray',
+            prop: 'children',
+            removable: true,
+            segment: 'children',
+          },
+        ],
+        kind: 'keyedArray',
+        prop: '',
+        removable: true,
+        segment: 'folders',
+        stripOnAdd: ['id'],
+      },
+    ],
+  },
+  layout: {
+    root: [
+      {
+        children: COLLECTION_RULES,
+        kind: 'keyedArray',
+        prop: 'collections',
+        segment: 'collections',
+      },
+      {
+        addable: true,
+        children: [
+          scalar('name'),
+          scalar('icon'),
+          scalar('position'),
+          {
+            addable: true,
+            children: CHART_PROPS,
+            kind: 'keyedArray',
+            prop: 'charts',
+            removable: true,
+            segment: 'charts',
+            stripOnAdd: [],
+          },
+        ],
+        kind: 'keyedArray',
+        premiumPack: 'multipleDashboards',
+        prop: 'dashboards',
+        removable: true,
+        segment: 'dashboards',
+        stripOnAdd: ['id'],
+      },
+      opaque('sections'),
+    ],
+  },
+  workflows: {
+    root: [
+      {
+        addable: true,
+        children: [scalar('name'), scalar('position'), scalar('isVisible'), opaque('segmentIds')],
+        kind: 'keyedArray',
+        prop: '',
+        removable: true,
+        segment: 'workflows',
+        stripOnAdd: [],
+      },
+    ],
+  },
+};
+
+/* --------------------------- whitelist mirror ---------------------------- */
+
+// Same id classes as the server's patch-handler.
+const ID = String.raw`[^/\s:]+`;
+const NUM_OR_UUID = String.raw`([0-9]+|[0-9a-fA-F-]{36})`;
+
+type WhitelistEntry = { ops: Array<'add' | 'remove' | 'replace' | 'test'>; pattern: RegExp };
+
+function entry(ops: WhitelistEntry['ops'], path: string): WhitelistEntry {
+  return { ops, pattern: new RegExp(`^${path}$`) };
+}
+
+const COLLECTION_SCALARS = [
+  'displayName',
+  'displayNamePlural',
+  'icon',
+  'restrictedToSegments',
+  'defaultSortingOrder',
+  'defaultSortingFieldName',
+  'displayFieldName',
+].join('|');
+
+const FIELD_PROPS = [
+  'displayName',
+  'description',
+  'isReadOnly',
+  'isFilterDisplayed',
+  'isDissociateDisplayed',
+  'widgetEdit',
+  'widgetDisplay',
+  'mappingValues',
+  'conditionalFormatting',
+].join('|');
+
+const ACTION_PROPS = [
+  'position',
+  'isVisible',
+  'displayName',
+  'confirmation',
+  'segments',
+  'buttonType',
+].join('|');
+
+const CHART_PROP_NAMES = [
+  'name',
+  'type',
+  'aggregator',
+  'aggregateFieldName',
+  'filter',
+  'query',
+  'apiVersion',
+  'sourceCollectionId',
+  'groupByFieldName',
+  'timeRange',
+  'limit',
+  'labelFieldName',
+  'relationshipFieldName',
+  'numeratorChartId',
+  'denominatorChartId',
+  'objective',
+  'displaySettings',
+  'description',
+  'subTitle',
+].join('|');
+
+const WHITELIST: Record<LayoutDomain, WhitelistEntry[]> = {
+  folders: [
+    entry(['add'], `/folders/-`),
+    entry(['remove'], `/folders/${NUM_OR_UUID}`),
+    entry(['replace'], `/folders/${NUM_OR_UUID}/(name|icon)`),
+    entry(['add'], `/folders/${NUM_OR_UUID}/children/-`),
+    entry(['remove'], `/folders/${NUM_OR_UUID}/children/${ID}`),
+    entry(['replace'], `/folders/${NUM_OR_UUID}/children/${ID}/(position|isVisible)`),
+    entry(['add'], `/folders/${NUM_OR_UUID}/children/${ID}/subChildren/-`),
+    entry(['remove'], `/folders/${NUM_OR_UUID}/children/${ID}/subChildren/${ID}`),
+    entry(
+      ['replace'],
+      `/folders/${NUM_OR_UUID}/children/${ID}/subChildren/${ID}/(position|isVisible)`,
+    ),
+  ],
+  layout: [
+    entry(['replace'], `/collections/${ID}/(${COLLECTION_SCALARS})`),
+    entry(['replace'], `/collections/${ID}/layout/columns/${ID}/(position|isVisible)`),
+    entry(['replace'], `/collections/${ID}/layout/fields/${ID}/(${FIELD_PROPS})`),
+    entry(['add'], `/collections/${ID}/layout/segments/-`),
+    entry(['remove'], `/collections/${ID}/layout/segments/${ID}`),
+    entry(
+      ['replace'],
+      `/collections/${ID}/layout/segments/${ID}/(name|position|isVisible|filter|columns)`,
+    ),
+    entry(
+      ['replace'],
+      `/collections/${ID}/layout/segments/${ID}/columns/${ID}/(position|isVisible)`,
+    ),
+    entry(['replace'], `/collections/${ID}/layout/actions/${ID}/(${ACTION_PROPS})`),
+    entry(['replace'], `/collections/${ID}/layout/viewEdit/summaryView`),
+    entry(['add'], `/collections/${ID}/layout/viewEdit/charts/-`),
+    entry(['remove', 'replace'], `/collections/${ID}/layout/viewEdit/charts/${NUM_OR_UUID}`),
+    entry(
+      ['remove', 'replace'],
+      `/collections/${ID}/layout/viewEdit/charts/${NUM_OR_UUID}/(${CHART_PROP_NAMES})`,
+    ),
+    entry(
+      ['replace'],
+      `/collections/${ID}/layout/viewEdit/rows/${ID}/(position|isVisible|explorerConfiguration)`,
+    ),
+    entry(['replace'], `/collections/${ID}/layout/viewCreate/rows/${ID}/(position|isVisible)`),
+    entry(['add'], `/collections/${ID}/layout/viewLists/-`),
+    entry(['remove'], `/collections/${ID}/layout/viewLists/${ID}`),
+    entry(
+      ['replace'],
+      `/collections/${ID}/layout/viewLists/${ID}/(name|position|recordsPerPage|allowJavascript)`,
+    ),
+    entry(['replace'], `/collections/${ID}/layout/scope`),
+    entry(['add'], `/dashboards/-`),
+    entry(['remove'], `/dashboards/${NUM_OR_UUID}`),
+    entry(['replace'], `/dashboards/${NUM_OR_UUID}/(name|icon|position)`),
+    entry(['add'], `/dashboards/${NUM_OR_UUID}/charts/-`),
+    entry(['remove', 'replace'], `/dashboards/${NUM_OR_UUID}/charts/${NUM_OR_UUID}`),
+    entry(
+      ['remove', 'replace'],
+      `/dashboards/${NUM_OR_UUID}/charts/${NUM_OR_UUID}/(${CHART_PROP_NAMES})`,
+    ),
+    entry(['add'], `/workspaces/-`),
+    entry(['remove'], `/workspaces/${ID}`),
+    entry(['replace'], `/workspaces/${ID}/(name|icon|position)`),
+    entry(['add'], `/workspaces/${ID}/components/-`),
+    entry(['remove'], `/workspaces/${ID}/components/${NUM_OR_UUID}`),
+    entry(
+      ['replace'],
+      `/workspaces/${ID}/components/${NUM_OR_UUID}/(name|displaySettings|visibility|options)`,
+    ),
+    entry(['add'], `/inboxes/-`),
+    entry(['remove'], `/inboxes/${NUM_OR_UUID}`),
+    entry(['replace'], `/inboxes/${NUM_OR_UUID}/${ID}`),
+    entry(['replace'], `/sections`),
+  ],
+  workflows: [
+    entry(['add'], `/workflows/-`),
+    entry(['remove'], `/workflows/${NUM_OR_UUID}`),
+    entry(['replace'], `/workflows/${NUM_OR_UUID}/(name|position|isVisible|segmentIds)`),
+  ],
+};
+
+/** True when an op matches the mirrored server whitelist for this domain. */
+export function matchesWhitelist(domain: LayoutDomain, op: { op: string; path: string }): boolean {
+  return WHITELIST[domain].some(
+    candidate =>
+      candidate.ops.includes(op.op as WhitelistEntry['ops'][number]) &&
+      candidate.pattern.test(op.path),
+  );
+}
