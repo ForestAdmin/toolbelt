@@ -120,6 +120,39 @@ export default class LayoutManager {
   }
 
   /**
+   * Download the currently-stored BPMN of a workflow version, to diff against a
+   * freshly compiled one (idempotency). The server returns a presigned S3 GET
+   * URL; the bytes are then fetched straight from S3 (no Forest auth there).
+   */
+  async getWorkflowBpmn(
+    scope: LayoutScope,
+    workflowId: string,
+    collectionId: string,
+    version: string,
+    renderingId: number,
+  ): Promise<string> {
+    try {
+      const meta = await agent
+        .get(`${this.serverUrl}/api/workflows/${workflowId}/bpmn`)
+        .query({ collectionId, version })
+        .set('Authorization', `Bearer ${this.authenticator.getAuthToken()}`)
+        .set('forest-project-id', String(scope.projectId))
+        .set('forest-environment-id', String(scope.environmentId))
+        .set('forest-team-id', String(scope.teamId))
+        .set('forest-rendering-id', String(renderingId));
+
+      const { signedUrl } = meta.body as { signedUrl?: string };
+      if (!signedUrl) return '';
+
+      const file = await agent.get(signedUrl).buffer(true);
+
+      return file.text ?? '';
+    } catch (error) {
+      throw toLayoutApiError(error);
+    }
+  }
+
+  /**
    * Upload a workflow's compiled BPMN and return its S3 version id (to store in
    * `bpmnAwsS3Identifier`). Mirrors the Forest UI exactly: ask the server for a
    * presigned S3 POST, multipart-upload the BPMN to S3, read `x-amz-version-id`.

@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { diffDomain } from './diff';
 import { renderingToCanonical } from './rendering-mapper';
 import { LAYOUT_DOMAINS } from './types';
+import { compileWorkflowToBpmn } from './workflow-bpmn';
 
 /** A workflow in the file that carries an authored `steps` graph (→ BPMN). */
 export type StepWorkflow = {
@@ -88,6 +89,53 @@ export function stepWorkflows(local: LayoutFileDoc): StepWorkflow[] {
         steps: workflow.steps as unknown[],
       };
     });
+}
+
+/** A step-workflow's compiled BPMN + whether it differs from what's stored (idempotency). */
+export type BpmnPlan = { bpmn: string; changed: boolean; workflow: StepWorkflow };
+
+/**
+ * Compile each step-workflow's BPMN and decide whether it needs uploading, by
+ * byte-comparing against the version currently stored on the remote workflow.
+ * Unchanged graphs are skipped — so re-applying a file is a true no-op (the S3
+ * object is stored verbatim and the compiler is deterministic).
+ */
+export async function planWorkflowBpmn(
+  manager: LayoutManager,
+  scope: LayoutScope,
+  workflows: StepWorkflow[],
+  remoteWorkflows: Array<Record<string, unknown>>,
+  renderingId: number,
+): Promise<BpmnPlan[]> {
+  return Promise.all(
+    workflows.map(async workflow => {
+      const bpmn = compileWorkflowToBpmn({
+        collection: workflow.collectionId,
+        name: workflow.name,
+        segments: workflow.segmentIds,
+        steps: workflow.steps as never,
+      });
+
+      const current = remoteWorkflows.find(remote => String(remote.id) === workflow.id);
+      const version = current?.bpmnAwsS3Identifier;
+      if (typeof version !== 'string' || !version) return { bpmn, changed: true, workflow };
+
+      try {
+        const stored = await manager.getWorkflowBpmn(
+          scope,
+          workflow.id,
+          workflow.collectionId,
+          version,
+          renderingId,
+        );
+
+        return { bpmn, changed: stored !== bpmn, workflow };
+      } catch {
+        // Can't read the current BPMN — re-upload rather than risk a stale skip.
+        return { bpmn, changed: true, workflow };
+      }
+    }),
+  );
 }
 
 /** Count collections/workflows for a pull summary line (defensive against absent domains). */
