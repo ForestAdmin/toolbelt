@@ -12,6 +12,7 @@ import {
   diffAllDomains,
   domainsInFile,
   fetchRemoteDocs,
+  planWorkflowBpmn,
   stepWorkflows,
 } from '../../services/layout/sync';
 import { parseLayoutFile } from '../../services/layout/yaml-file';
@@ -71,8 +72,18 @@ export default class LayoutDiffCommand extends AbstractAuthenticatedCommand {
       flags: { env: flags.env, projectId: flags.projectId, team: flags.team },
     });
 
-    const remote = await fetchRemoteDocs(new LayoutManager(), scope, domainsInFile(docs));
+    const manager = new LayoutManager();
+    const remote = await fetchRemoteDocs(manager, scope, domainsInFile(docs));
     const { ops, warnings } = diffAllDomains(remote, docs);
+
+    // Only report a BPMN (re)upload for workflows whose compiled graph differs
+    // from what is stored — matching what `apply` would actually do.
+    const bpmnWorkflows = stepWorkflows(docs);
+    const renderingId = bpmnWorkflows.length > 0 ? await manager.getRenderingId(scope) : 0;
+    const remoteWorkflows = (remote.workflows ?? []) as Array<Record<string, unknown>>;
+    const bpmnToUpload = (
+      await planWorkflowBpmn(manager, scope, bpmnWorkflows, remoteWorkflows, renderingId)
+    ).filter(plan => plan.changed);
 
     this.log(
       `Diff of ${this.chalk.bold(args.file)} against ${this.chalk.bold(
@@ -80,9 +91,9 @@ export default class LayoutDiffCommand extends AbstractAuthenticatedCommand {
       )} / ${this.chalk.bold(scope.teamName)}:\n`,
     );
     this.log(formatPlan(ops, warnings));
-    stepWorkflows(docs).forEach(workflow =>
+    bpmnToUpload.forEach(plan =>
       this.log(
-        `  ⚙ workflow « ${workflow.name} »: would compile + upload BPMN (${workflow.steps.length} steps)`,
+        `  ⚙ workflow « ${plan.workflow.name} »: would compile + upload BPMN (${plan.workflow.steps.length} steps)`,
       ),
     );
   }

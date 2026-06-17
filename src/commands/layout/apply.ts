@@ -1,3 +1,4 @@
+import type { LayoutScope } from '../../services/layout/types';
 import type { Config } from '@oclif/core';
 
 import { Args, Flags } from '@oclif/core';
@@ -13,13 +14,43 @@ import {
   diffAllDomains,
   domainsInFile,
   fetchRemoteDocs,
+  planWorkflowBpmn,
   stepWorkflows,
 } from '../../services/layout/sync';
 import { LAYOUT_DOMAINS } from '../../services/layout/types';
-import { compileWorkflowToBpmn } from '../../services/layout/workflow-bpmn';
 import { parseLayoutFile } from '../../services/layout/yaml-file';
 
 const DEFAULT_FILE = 'forest-layout.yml';
+
+/** Upload each changed step-graph's BPMN to S3 and link the returned versions (one patch). */
+async function uploadWorkflowBpmns(
+  manager: LayoutManager,
+  scope: LayoutScope,
+  plans: Array<{ bpmn: string; workflow: { collectionId: string; id: string } }>,
+  renderingId: number,
+): Promise<void> {
+  if (plans.length === 0) return;
+
+  const bpmnOps = [];
+  // eslint-disable-next-line no-restricted-syntax -- sequential: one S3 upload at a time
+  for (const plan of plans) {
+    // eslint-disable-next-line no-await-in-loop -- intentional sequential uploads
+    const version = await manager.uploadWorkflowBpmn(
+      scope,
+      plan.workflow.id,
+      plan.workflow.collectionId,
+      renderingId,
+      plan.bpmn,
+    );
+    bpmnOps.push({
+      op: 'replace' as const,
+      path: `/workflows/${plan.workflow.id}/bpmnAwsS3Identifier`,
+      value: version,
+    });
+  }
+
+  await manager.patchDomain('workflows', bpmnOps, scope);
+}
 
 /**
  * `forest layout apply` — compute the JSON-Patch plan between forest-layout.yml
@@ -89,14 +120,27 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
     const remote = await fetchRemoteDocs(manager, scope, domainsInFile(docs));
     const { ops, warnings } = diffAllDomains(remote, docs);
 
+    // Compile each step-graph and skip the ones whose BPMN already matches what
+    // is stored — so re-applying a file with `steps` stays idempotent.
+    const renderingId = bpmnWorkflows.length > 0 ? await manager.getRenderingId(scope) : 0;
+    const remoteWorkflows = (remote.workflows ?? []) as Array<Record<string, unknown>>;
+    const bpmnPlans = await planWorkflowBpmn(
+      manager,
+      scope,
+      bpmnWorkflows,
+      remoteWorkflows,
+      renderingId,
+    );
+    const bpmnToUpload = bpmnPlans.filter(plan => plan.changed);
+
     this.log(formatPlan(ops, warnings));
-    bpmnWorkflows.forEach(workflow =>
+    bpmnToUpload.forEach(plan =>
       this.log(
-        `  ⚙ workflow « ${workflow.name} »: compile + upload BPMN (${workflow.steps.length} steps)`,
+        `  ⚙ workflow « ${plan.workflow.name} »: compile + upload BPMN (${plan.workflow.steps.length} steps)`,
       ),
     );
 
-    if (ops.length === 0 && bpmnWorkflows.length === 0) {
+    if (ops.length === 0 && bpmnToUpload.length === 0) {
       this.logger.success('Nothing to apply: the environment already matches the file.');
       return;
     }
@@ -116,36 +160,9 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
         );
       }
 
-      // BPMN authoring: shells now exist, so compile each step-graph, upload it to
-      // S3, and link the returned version via `bpmnAwsS3Identifier` (one patch).
-      if (bpmnWorkflows.length > 0) {
-        const renderingId = await manager.getRenderingId(scope);
-        const bpmnOps = [];
-        // eslint-disable-next-line no-restricted-syntax -- sequential: one S3 upload at a time
-        for (const workflow of bpmnWorkflows) {
-          const bpmn = compileWorkflowToBpmn({
-            collection: workflow.collectionId,
-            name: workflow.name,
-            segments: workflow.segmentIds,
-            steps: workflow.steps as never,
-          });
-          // eslint-disable-next-line no-await-in-loop -- intentional sequential uploads
-          const version = await manager.uploadWorkflowBpmn(
-            scope,
-            workflow.id,
-            workflow.collectionId,
-            renderingId,
-            bpmn,
-          );
-          bpmnOps.push({
-            op: 'replace' as const,
-            path: `/workflows/${workflow.id}/bpmnAwsS3Identifier`,
-            value: version,
-          });
-        }
-
-        await manager.patchDomain('workflows', bpmnOps, scope);
-      }
+      // BPMN authoring: shells now exist, so upload each changed step-graph and
+      // link the returned versions (one patch).
+      await uploadWorkflowBpmns(manager, scope, bpmnToUpload, renderingId);
     } catch (error) {
       if (error instanceof LayoutApiError && error.status !== 401) {
         this.logger.error(explainApiError(error, ops));
@@ -156,7 +173,7 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       throw error;
     }
 
-    const bpmnNote = bpmnWorkflows.length > 0 ? ` + ${bpmnWorkflows.length} workflow BPMN` : '';
+    const bpmnNote = bpmnToUpload.length > 0 ? ` + ${bpmnToUpload.length} workflow BPMN` : '';
     this.logger.success(
       `Applied ${ops.length} change${ops.length === 1 ? '' : 's'}${bpmnNote} to ${this.chalk.bold(
         scope.environmentName,

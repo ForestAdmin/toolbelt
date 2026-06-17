@@ -56,6 +56,11 @@ describe('compileWorkflowToBpmn', () => {
     expect(bpmn).toContain('name="Yes"');
   });
 
+  it('is deterministic (same spec → byte-identical BPMN, the basis for idempotent apply)', () => {
+    expect.assertions(1);
+    expect(compileWorkflowToBpmn(validSpec)).toBe(compileWorkflowToBpmn(validSpec));
+  });
+
   it('escapes XML special characters in names/prompts', () => {
     expect.assertions(1);
     const bpmn = compileWorkflowToBpmn({

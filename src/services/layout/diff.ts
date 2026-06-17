@@ -114,27 +114,10 @@ function diffScalarLike(
 
   const premiumPack = rule.premiumPack ?? ctx.premiumPack;
 
-  if (localValue === undefined) {
-    if ('removable' in rule && rule.removable && remoteValue !== undefined) {
-      emit(ctx, 'removes', {
-        domain: ctx.domain,
-        label: `${yamlPath}: removed`,
-        op: 'remove',
-        path,
-        premiumPack,
-        yamlPath,
-      });
-
-      return;
-    }
-
-    if (remoteValue === undefined) return;
-    ctx.bucket.warnings.push(
-      `${yamlPath}: this field cannot be removed — restore its value (or edit it from the UI).`,
-    );
-
-    return;
-  }
+  // Absent locally = "leave alone" (partial-authoring / patch semantics): the
+  // file need not carry every field. To clear a value, set it explicitly to
+  // `null` (which reaches the replace path below as a value, not `undefined`).
+  if (localValue === undefined) return;
 
   emit(ctx, 'replaces', {
     domain: ctx.domain,
