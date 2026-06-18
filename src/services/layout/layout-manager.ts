@@ -184,12 +184,17 @@ export default class LayoutManager {
 
     // Presigned S3 POST: send the returned policy fields, then the file last. No
     // Forest auth here — the presigned signature authorizes the upload.
-    const upload = agent.post(presigned.url);
-    Object.entries(presigned.fields).forEach(([key, value]) => upload.field(key, value));
-    const response = await upload.attach('file', Buffer.from(bpmn), {
-      contentType: 'text/xml',
-      filename: `${workflowId}.bpmn`,
-    });
+    let response;
+    try {
+      const upload = agent.post(presigned.url);
+      Object.entries(presigned.fields).forEach(([key, value]) => upload.field(key, value));
+      response = await upload.attach('file', Buffer.from(bpmn), {
+        contentType: 'text/xml',
+        filename: `${workflowId}.bpmn`,
+      });
+    } catch (error) {
+      throw toLayoutApiError(error);
+    }
 
     const versionId = response.headers['x-amz-version-id'];
     if (!versionId) {

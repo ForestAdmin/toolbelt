@@ -225,4 +225,13 @@ describe('diffDomain (layout)', () => {
       }),
     );
   });
+
+  it('leaves an omitted scalar alone instead of removing it (partial-authoring; clear via null)', () => {
+    expect.assertions(1);
+    const local = clone(baseLayout());
+    delete (local.collections as AnyRecord[])[0].displayName;
+
+    const { ops } = diffDomain('layout', baseLayout(), local);
+    expect(ops).toStrictEqual([]);
+  });
 });

@@ -15,8 +15,6 @@ export type ScalarRule = {
   kind: 'scalar';
   premiumPack?: string;
   prop: string;
-  /** When true, a property absent locally produces a `remove` op. */
-  removable?: boolean;
 };
 
 export type OpaqueRule = {
@@ -108,7 +106,7 @@ function segmentAddDefaults(value: Record<string, unknown>): Record<string, unkn
   return out;
 }
 
-/** Chart properties (viewEdit and dashboards), patchable and removable per the server. */
+/** Chart properties (viewEdit and dashboards) — editable scalars; clear one by setting it to `null`. */
 const CHART_PROPS: Rule[] = [
   'name',
   'type',
@@ -129,7 +127,7 @@ const CHART_PROPS: Rule[] = [
   'displaySettings',
   'description',
   'subTitle',
-].map(prop => scalar(prop, { removable: true }));
+].map(prop => scalar(prop));
 
 const SEGMENT_RULE: KeyedArrayRule = {
   addable: true,

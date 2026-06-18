@@ -138,7 +138,7 @@ function emit(ctx: Context, kind: keyof Omit<Bucket, 'warnings'>, op: PlannedOp)
 
 function diffScalarLike(
   ctx: Context,
-  rule: Rule & { premiumPack?: string; prop: string; removable?: boolean },
+  rule: Rule & { premiumPack?: string; prop: string },
   remote: Item,
   local: Item,
 ): void {
