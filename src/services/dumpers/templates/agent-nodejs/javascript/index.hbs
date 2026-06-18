@@ -1,9 +1,13 @@
 require('dotenv').config();
 const { createAgent } = require('@forestadmin/agent');
+{{#if isDemo}}
+const { createDummyDataSource } = require('@forestadmin/datasource-dummy');
+{{else}}
 {{#if isMongo}}
 const { createMongoDataSource } = require('@forestadmin/datasource-mongo');
 {{else}}
 const { createSqlDataSource } = require('@forestadmin/datasource-sql');
+{{/if}}
 {{/if}}
 
 // Create the Forest Admin agent.
@@ -28,6 +32,11 @@ const agent = createAgent({
 
 // Connect your datasources
 // All options are documented at https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
+{{#if isDemo}}
+// Demo data source (in-memory sample data) — no database required.
+// Replace it with your real database: https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
+agent.addDataSource(createDummyDataSource());
+{{else}}
 {{#if isMongo}}
 agent.addDataSource(
   createMongoDataSource({
@@ -47,6 +56,7 @@ agent.addDataSource(
     sslMode: process.env.DATABASE_SSL_MODE,
   }),
 );
+{{/if}}
 {{/if}}
 
 // Add customizations here.

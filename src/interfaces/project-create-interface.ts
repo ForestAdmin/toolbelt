@@ -44,4 +44,5 @@ export interface Config {
   forestAuthSecret: string;
   forestEnvSecret: string;
   language?: Language;
+  isDemo?: boolean;
 }
