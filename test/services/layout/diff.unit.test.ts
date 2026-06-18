@@ -206,4 +206,23 @@ describe('diffDomain (layout)', () => {
     const { ops } = diffDomain('layout', remote, local);
     expect(ops).toStrictEqual([]);
   });
+
+  it('matches a name-only local item to an existing remote item that has an id (edit, not add+remove)', () => {
+    expect.assertions(2);
+    const local = clone(baseLayout());
+    // Remote seg1 has an id; a name-only edit must match it (not destroy + recreate).
+    ((local.collections as AnyRecord[])[0].layout as AnyRecord).segments = [
+      { name: 'VIP', isVisible: false },
+    ];
+
+    const { ops } = diffDomain('layout', baseLayout(), local);
+    expect(ops.map(op => op.op)).toStrictEqual(['replace']);
+    expect(ops[0]).toStrictEqual(
+      expect.objectContaining({
+        op: 'replace',
+        path: '/collections/customers/layout/segments/seg1/isVisible',
+        value: false,
+      }),
+    );
+  });
 });

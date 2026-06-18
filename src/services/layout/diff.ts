@@ -2,7 +2,7 @@
  * The diff engine: compares a remote canonical document against the locally
  * edited one and produces ONLY server-whitelisted JSON Patch operations.
  *
- * Identity-based: array items are matched by `id` (falling back to `name`),
+ * Identity-based: items are matched by `id` then `name` (see `matchItems`),
  * never by index. Renames are plain `replace .../name` ops because children
  * are always addressed by the REMOTE item's key (stable across edits).
  * Emission order per domain: adds (parents first) → replaces → removes.
@@ -45,24 +45,61 @@ function identityOf(item: Item): string | undefined {
   return undefined;
 }
 
-function indexByIdentity(items: Item[], yamlPath: string): Map<string, Item> {
-  const index = new Map<string, Item>();
-  items.forEach(item => {
-    const key = identityOf(item);
+type ItemMatch = {
+  added: Item[];
+  common: Array<{ local: Item; remote: Item }>;
+  removed: Item[];
+};
+
+/**
+ * Match local items to remote ones by `id`, then by `name` — so a hand-authored
+ * item that omits its `id` updates the existing element instead of being seen as
+ * an add + a remove. Fails loudly on ambiguous input (duplicate local identities,
+ * or two locals resolving to the same remote).
+ */
+function matchItems(remoteItems: Item[], localItems: Item[], yamlPath: string): ItemMatch {
+  const remoteById = new Map<string, Item>();
+  const remoteByName = new Map<string, Item>();
+  remoteItems.forEach(item => {
+    if (item.id !== undefined && item.id !== null) remoteById.set(String(item.id), item);
+    if (typeof item.name === 'string') remoteByName.set(item.name, item);
+  });
+
+  const seen = new Set<string>();
+  const matched = new Set<Item>();
+  const added: Item[] = [];
+  const common: Array<{ local: Item; remote: Item }> = [];
+
+  localItems.forEach(local => {
+    const key = identityOf(local);
     if (key === undefined) {
       throw new LayoutFileError(
         `${yamlPath}: item without \`id\` or \`name\` — unable to identify it.`,
       );
     }
-
-    if (index.has(key)) {
+    if (seen.has(key)) {
       throw new LayoutFileError(`${yamlPath}: two items share the same identity (${key}).`);
     }
+    seen.add(key);
 
-    index.set(key, item);
+    const remote =
+      (local.id !== undefined && local.id !== null && remoteById.get(String(local.id))) ||
+      (typeof local.name === 'string' && remoteByName.get(local.name)) ||
+      undefined;
+
+    if (!remote) {
+      added.push(local);
+    } else if (matched.has(remote)) {
+      throw new LayoutFileError(
+        `${yamlPath}: two items resolve to the same remote element (\`id\`/\`name\` collision).`,
+      );
+    } else {
+      matched.add(remote);
+      common.push({ local, remote });
+    }
   });
 
-  return index;
+  return { added, common, removed: remoteItems.filter(item => !matched.has(item)) };
 }
 
 function short(value: unknown): string {
@@ -160,13 +197,7 @@ function diffKeyedArray(
   const yamlPath = rule.prop ? `${ctx.yamlPrefix}.${rule.prop}` : ctx.yamlPrefix;
   const premiumPack = rule.premiumPack ?? ctx.premiumPack;
 
-  const remoteIndex = indexByIdentity(remoteItems, `${yamlPath} (remote)`);
-  // Local items WITHOUT id and whose name matches nothing remote are additions.
-  const localIndex = indexByIdentity(localItems, yamlPath);
-
-  const added = [...localIndex.entries()].filter(([key]) => !remoteIndex.has(key));
-  const removed = [...remoteIndex.entries()].filter(([key]) => !localIndex.has(key));
-  const common = [...localIndex.entries()].filter(([key]) => remoteIndex.has(key));
+  const { added, common, removed } = matchItems(remoteItems, localItems, yamlPath);
 
   if (rule.fallbackReplaceWhole && (added.length > 0 || removed.length > 0)) {
     emit(ctx, 'replaces', {
@@ -182,10 +213,12 @@ function diffKeyedArray(
     return;
   }
 
-  added.forEach(([key, item]) => {
+  added.forEach(item => {
     if (!rule.addable) {
       ctx.bucket.warnings.push(
-        `${yamlPath}: cannot add « ${key.split(':')[1]} » (items defined by the agent schema).`,
+        `${yamlPath}: cannot add « ${String(
+          item.name ?? item.id,
+        )} » (items defined by the agent schema).`,
       );
 
       return;
@@ -202,10 +235,12 @@ function diffKeyedArray(
     });
   });
 
-  removed.forEach(([key, item]) => {
+  removed.forEach(item => {
     if (!rule.removable) {
       ctx.bucket.warnings.push(
-        `${yamlPath}: cannot remove « ${key.split(':')[1]} » (items defined by the agent schema).`,
+        `${yamlPath}: cannot remove « ${String(
+          item.name ?? item.id,
+        )} » (items defined by the agent schema).`,
       );
 
       return;
@@ -221,9 +256,8 @@ function diffKeyedArray(
     });
   });
 
-  common.forEach(([key, localItem]) => {
-    const remoteItem = remoteIndex.get(key) as Item;
-    const address = addressOf(remoteItem, yamlPath);
+  common.forEach(({ local, remote }) => {
+    const address = addressOf(remote, yamlPath);
     const childCtx: Context = {
       ...ctx,
       pathPrefix: `${arrayPath}/${address}`,
@@ -231,7 +265,7 @@ function diffKeyedArray(
       yamlPrefix: `${yamlPath}[${address}]`,
     };
     // eslint-disable-next-line no-use-before-define -- applyRules and diffKeyedArray are mutually recursive
-    applyRules(childCtx, rule.children, remoteItem, localItem);
+    applyRules(childCtx, rule.children, remote, local);
   });
 }
 
