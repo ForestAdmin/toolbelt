@@ -1,3 +1,10 @@
+# [5.4.0](https://github.com/ForestAdmin/toolbelt/compare/v5.3.11...v5.4.0) (2026-06-18)
+
+
+### Features
+
+* **users:** add forest users:invite command ([#774](https://github.com/ForestAdmin/toolbelt/issues/774)) ([477eb08](https://github.com/ForestAdmin/toolbelt/commit/477eb08455dbfb9e7a816e0ea4cf0c7cbcf1206b))
+
 ## [5.3.11](https://github.com/ForestAdmin/toolbelt/compare/v5.3.10...v5.3.11) (2026-06-15)
 
 ## [5.3.10](https://github.com/ForestAdmin/toolbelt/compare/v5.3.9...v5.3.10) (2026-03-31)
