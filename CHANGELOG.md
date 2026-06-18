@@ -1,3 +1,10 @@
+# [5.6.0](https://github.com/ForestAdmin/toolbelt/compare/v5.5.0...v5.6.0) (2026-06-18)
+
+
+### Features
+
+* **environments:** support --type and optional URL on environments:create ([#773](https://github.com/ForestAdmin/toolbelt/issues/773)) ([80001bc](https://github.com/ForestAdmin/toolbelt/commit/80001bc8db64f872ffd6d60074ecf5cf204de18c))
+
 # [5.5.0](https://github.com/ForestAdmin/toolbelt/compare/v5.4.0...v5.5.0) (2026-06-18)
 
 
