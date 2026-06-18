@@ -45,18 +45,22 @@ function EnvironmentManager(config) {
   this.createEnvironment = async () => {
     const authToken = authenticator.getAuthToken();
 
+    const attributes = {
+      name: config.name,
+      project: { id: config.projectId },
+      areRolesDisabled: config.disableRoles,
+    };
+    // A production environment can be created without a URL; only send one when provided.
+    if (config.url) attributes.apiEndpoint = config.url;
+    // Required to create the first production environment (e.g. `--type production`).
+    // When omitted, the server defaults the type to "remote" (see environment-service).
+    if (config.type) attributes.type = config.type;
+
     const response = await agent
       .post(`${env.FOREST_SERVER_URL}/api/environments`)
       .set('Authorization', `Bearer ${authToken}`)
       .set('forest-project-id', config.projectId)
-      .send(
-        EnvironmentSerializer.serialize({
-          name: config.name,
-          apiEndpoint: config.url,
-          project: { id: config.projectId },
-          areRolesDisabled: config.disableRoles,
-        }),
-      );
+      .send(EnvironmentSerializer.serialize(attributes));
     const environment = await environmentDeserializer.deserialize(response.body);
 
     environment.authSecret = keyGenerator.generate();
