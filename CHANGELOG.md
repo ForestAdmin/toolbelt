@@ -1,3 +1,10 @@
+# [5.5.0](https://github.com/ForestAdmin/toolbelt/compare/v5.4.0...v5.5.0) (2026-06-18)
+
+
+### Features
+
+* **projects:** add projects:create:demo — zero-DB onboarding on the dummy datasource ([#775](https://github.com/ForestAdmin/toolbelt/issues/775)) ([d82d623](https://github.com/ForestAdmin/toolbelt/commit/d82d623653946c68e7c81a0a129cc81c1de19f0b))
+
 # [5.4.0](https://github.com/ForestAdmin/toolbelt/compare/v5.3.11...v5.4.0) (2026-06-18)
 
 
