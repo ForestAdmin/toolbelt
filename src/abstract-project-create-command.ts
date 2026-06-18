@@ -243,6 +243,11 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   private async notifySuccess(): Promise<void> {
     this.logger.info(`Hooray, ${this.chalk.green('installation success')}!`);
+    this.logNextSteps();
     await this.eventSender.notifySuccess();
   }
+
+  // Overridable no-op: subcommands print follow-up guidance here (the demo points to create:sql).
+  // eslint-disable-next-line class-methods-use-this, @typescript-eslint/no-empty-function -- intentional no-op hook
+  protected logNextSteps(): void {}
 }

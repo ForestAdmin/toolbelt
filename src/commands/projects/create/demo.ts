@@ -44,4 +44,11 @@ export default class DemoCommand extends AbstractProjectCreateCommand {
   protected override async dump(config: Config) {
     return this.dumper.dump({ ...config, isDemo: true });
   }
+
+  protected override logNextSteps(): void {
+    this.logger.info('This demo runs on in-memory sample data — no database required.');
+    this.logger.info(
+      `Next step — connect your real database: ${this.chalk.bold('forest projects:create:sql')}.`,
+    );
+  }
 }
