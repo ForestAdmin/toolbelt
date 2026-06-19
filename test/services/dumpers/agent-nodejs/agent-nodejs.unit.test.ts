@@ -149,6 +149,18 @@ describe('services > dumpers > AgentNodeJs', () => {
           expect.anything(),
         );
       });
+
+      it('writes the pre-configured forest-layout.yml', async () => {
+        expect.assertions(1);
+        const { dumper, context, defaultConfig } = createDumper(language);
+
+        await dumper.dump(demoConfig(defaultConfig));
+
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          `/test/a${language.name}Application/forest-layout.yml`,
+          'mockedContent',
+        );
+      });
     },
   );
 

@@ -260,6 +260,12 @@ export default class AgentNodeJs extends AbstractDumper {
     );
   }
 
+  // The demo ships a pre-configured layout (forest-layout.yml) so the panel looks
+  // curated out of the box; it is applied with `forest layout apply` after the first boot.
+  writeLayoutFile() {
+    this.copyHandleBarsTemplate('common/forest-layout.yml', 'forest-layout.yml');
+  }
+
   protected async createFiles(dumpConfig: Config) {
     const { isDemo } = dumpConfig;
 
@@ -291,5 +297,7 @@ export default class AgentNodeJs extends AbstractDumper {
     this.writeDockerfile(dumpConfig.language);
     // The demo project has no database, so no docker-compose DB service is needed.
     if (!isDemo) this.writeDockerCompose(dumpConfig);
+    // The demo ships a curated layout to apply after the first boot.
+    if (isDemo) this.writeLayoutFile();
   }
 }

@@ -1,0 +1,521 @@
+# forest-layout.yml — demo layout for `forest projects:create:demo`.
+# v0: trimmed from the BaaSDemo export to the 8 fintech collections.
+# TODO: regenerate from a real `forest layout pull` on the fintech ds.
+forest:
+  version: 1
+layout:
+  collections:
+    - defaultSortingFieldName: id
+      defaultSortingOrder: descending
+      displayName: Aml Alerts
+      displayNamePlural: null
+      icon: null
+      id: aml_alerts
+      layout:
+        actions:
+          - id: aml_alerts-Clear@@@Alert@@@(False@@@Positive)
+            name: Clear Alert (False Positive)
+            displayName: Clear Alert (False Positive)
+            position: 0
+          - id: aml_alerts-Create@@@SAR
+            name: Create SAR
+            displayName: Create SAR
+            position: 1
+          - id: aml_alerts-Escalate@@@to@@@Compliance
+            name: Escalate to Compliance
+            displayName: Escalate to Compliance
+            position: 2
+          - id: aml_alerts-Request@@@Enhanced@@@Due@@@Diligence
+            name: Request Enhanced Due Diligence
+            displayName: Request Enhanced Due Diligence
+            position: 3
+        columns:
+          - id: alert_type
+            isVisible: true
+            position: 0
+          - id: customer
+            isVisible: true
+            position: 1
+          - id: id
+            isVisible: true
+            position: 2
+          - id: resolution_notes
+            isVisible: true
+            position: 6
+          - id: severity
+            isVisible: true
+            position: 10
+          - id: status
+            isVisible: true
+            position: 11
+        fields:
+          - id: alert_type
+            displayName: alert type
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: customer
+            displayName: customer
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: id
+            displayName: id
+            isReadOnly: true
+            isFilterDisplayed: true
+          - id: resolution_notes
+            displayName: resolution notes
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: sar_reports
+            displayName: sar reports
+            isReadOnly: false
+            isFilterDisplayed: false
+          - id: severity
+            displayName: severity
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: status
+            displayName: status
+            isReadOnly: false
+            isFilterDisplayed: true
+        segments: []
+        viewEdit:
+          summaryView: null
+      restrictedToSegments: false
+    - defaultSortingFieldName: id
+      defaultSortingOrder: descending
+      displayName: Cards
+      id: cards
+      layout:
+        actions:
+          - id: cards-Block@@@Card
+            name: Block Card
+            displayName: Block Card
+            position: 0
+          - id: cards-Replace@@@Card
+            name: Replace Card
+            displayName: Replace Card
+            position: 1
+          - id: cards-Unblock@@@Card
+            name: Unblock Card
+            displayName: Activate Card
+            position: 2
+        columns:
+          - id: card_type
+            isVisible: true
+            position: 2
+          - id: customer
+            isVisible: true
+            position: 3
+          - id: id
+            isVisible: true
+            position: 5
+          - id: status
+            isVisible: true
+            position: 10
+        fields:
+          - id: card_type
+            displayName: card type
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: chargebacks
+            displayName: chargebacks
+            isReadOnly: false
+            isFilterDisplayed: false
+          - id: customer
+            displayName: customer
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: id
+            displayName: id
+            isReadOnly: true
+            isFilterDisplayed: true
+          - id: status
+            displayName: status
+            isReadOnly: false
+            isFilterDisplayed: true
+        segments: []
+        viewEdit:
+          summaryView: null
+      restrictedToSegments: false
+    - defaultSortingFieldName: id
+      defaultSortingOrder: descending
+      displayName: Chargebacks
+      id: chargebacks
+      layout:
+        actions:
+          - id: chargebacks-Accept@@@Liability@@@&@@@Refund@@@Customer
+            name: Accept Liability & Refund Customer
+            displayName: Accept Liability & Refund Customer
+            position: 0
+          - id: chargebacks-Request@@@Cardholder@@@Info
+            name: Request Cardholder Info
+            displayName: Request Cardholder Info
+            position: 5
+        columns:
+          - id: amount
+            isVisible: true
+            position: 0
+          - id: card
+            isVisible: true
+            position: 2
+          - id: status
+            isVisible: true
+            position: 27
+        fields:
+          - id: amount
+            displayName: amount
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: card
+            displayName: card
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: refund_request
+            displayName: refund request
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: status
+            displayName: status
+            isReadOnly: false
+            isFilterDisplayed: true
+        segments:
+          - id: chargebacks-Awaiting@@@evidence
+            name: Awaiting evidence
+            type: smart
+            position: 0
+            isVisible: false
+          - id: chargebacks-Open
+            name: Open
+            type: smart
+            position: 1
+            isVisible: false
+          - id: chargebacks-Overdue
+            name: Overdue
+            type: smart
+            position: 2
+            isVisible: false
+          - id: chargebacks-Pre-arbitration@@@&@@@Arbitration
+            name: Pre-arbitration & Arbitration
+            type: smart
+            position: 3
+            isVisible: false
+        viewEdit:
+          summaryView: null
+      restrictedToSegments: false
+    - defaultSortingFieldName: id
+      defaultSortingOrder: descending
+      displayName: Customers
+      icon: user
+      id: customers
+      layout:
+        actions: []
+        columns:
+          - id: country_of_residence
+            isVisible: true
+            position: 4
+          - id: onboarding_status
+            isVisible: true
+            position: 5
+          - id: id
+            isVisible: true
+            position: 10
+        fields:
+          - id: aml_alerts
+            displayName: aml alerts
+            isReadOnly: false
+            isFilterDisplayed: false
+          - id: cards
+            displayName: cards
+            isReadOnly: false
+            isFilterDisplayed: false
+          - id: chargebacks
+            displayName: chargebacks
+            isReadOnly: false
+            isFilterDisplayed: false
+          - id: country_of_residence
+            displayName: country of residence
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: id
+            displayName: id
+            isReadOnly: true
+            isFilterDisplayed: true
+          - id: kyc_cases
+            displayName: kyc cases
+            isReadOnly: false
+            isFilterDisplayed: false
+          - id: kyc_documents
+            displayName: kyc documents
+            isReadOnly: false
+            isFilterDisplayed: false
+          - id: onboarding_status
+            displayName: onboarding status
+            isReadOnly: false
+            isFilterDisplayed: true
+            conditionalFormatting:
+              mode: auto
+              shouldAutoFillMissingValues: false
+          - id: refund_requests
+            displayName: refund requests
+            isReadOnly: false
+            isFilterDisplayed: false
+          - id: sar_reports
+            displayName: sar reports
+            isReadOnly: false
+            isFilterDisplayed: false
+        segments:
+          - id: e3c544c9-33c3-4123-acb4-f41f04874c46
+            name: To onboard
+            type: manual
+            position: 0
+            isVisible: false
+            filter:
+              type: and
+              conditions:
+                - value: PENDING_REVIEW
+                  operator: is
+                  fieldName: onboarding_status
+            query: null
+          - id: 282857bd-d769-4223-9a09-3071a9946d95
+            name: Germany
+            type: manual
+            position: 0
+            isVisible: false
+            filter:
+              type: and
+              conditions:
+                - value: DE
+                  operator: is
+                  fieldName: country_of_residence
+            query: null
+        viewEdit:
+          summaryView: null
+      restrictedToSegments: false
+    - defaultSortingFieldName: id
+      displayName: Kyc Cases
+      id: kyc_cases
+      layout:
+        actions:
+          - id: kyc_cases-Approve@@@KYC
+            name: Approve KYC
+            displayName: Approve KYC
+            position: 0
+          - id: kyc_cases-Escalate@@@KYC
+            name: Escalate KYC
+            displayName: Escalate KYC
+            position: 1
+          - id: kyc_cases-Reject@@@KYC
+            name: Reject KYC
+            displayName: Reject KYC
+            position: 2
+        columns:
+          - id: customer
+            isVisible: true
+            position: 0
+          - id: id
+            isVisible: true
+            position: 2
+          - id: status
+            isVisible: true
+            position: 8
+        fields:
+          - id: customer
+            displayName: customer
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: id
+            displayName: id
+            isReadOnly: true
+            isFilterDisplayed: true
+          - id: kyc_documents
+            displayName: kyc documents
+            isReadOnly: false
+            isFilterDisplayed: false
+          - id: status
+            displayName: status
+            isReadOnly: false
+            isFilterDisplayed: true
+        segments: []
+        viewEdit:
+          summaryView: null
+      restrictedToSegments: false
+    - defaultSortingFieldName: id
+      displayName: Kyc Documents
+      id: kyc_documents
+      layout:
+        actions:
+          - id: kyc_documents-Verify@@@Document
+            name: Verify Document
+            displayName: Verify Document
+            position: 0
+        columns:
+          - id: customer
+            isVisible: true
+            position: 0
+          - id: id
+            isVisible: true
+            position: 3
+          - id: kyc_case
+            isVisible: true
+            position: 4
+        fields:
+          - id: customer
+            displayName: customer
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: id
+            displayName: id
+            isReadOnly: true
+            isFilterDisplayed: true
+          - id: kyc_case
+            displayName: kyc case
+            isReadOnly: false
+            isFilterDisplayed: true
+        segments: []
+        viewEdit:
+          summaryView: null
+      restrictedToSegments: false
+    - defaultSortingFieldName: id
+      displayName: Refund Requests
+      id: refund_requests
+      layout:
+        actions:
+          - id: refund_requests-Decline@@@Refund
+            name: Decline Refund
+            displayName: Decline Refund
+            position: 0
+          - id: refund_requests-Open@@@Chargeback
+            name: Open Chargeback
+            displayName: Open Chargeback
+            position: 1
+        columns:
+          - id: amount
+            isVisible: true
+            position: 0
+          - id: customer
+            isVisible: true
+            position: 3
+          - id: id
+            isVisible: true
+            position: 5
+          - id: status
+            isVisible: true
+            position: 14
+        fields:
+          - id: amount
+            displayName: amount
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: chargebacks
+            displayName: chargebacks
+            isReadOnly: false
+            isFilterDisplayed: false
+          - id: customer
+            displayName: customer
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: id
+            displayName: id
+            isReadOnly: true
+            isFilterDisplayed: true
+          - id: status
+            displayName: status
+            isReadOnly: false
+            isFilterDisplayed: true
+        segments: []
+        viewEdit:
+          summaryView: null
+      restrictedToSegments: false
+    - defaultSortingFieldName: id
+      displayName: Sar Reports
+      id: sar_reports
+      layout:
+        actions:
+          - id: sar_reports-File@@@SAR
+            name: File SAR
+            displayName: File SAR
+            position: 0
+        columns:
+          - id: alert
+            isVisible: true
+            position: 3
+          - id: customer
+            isVisible: true
+            position: 5
+          - id: id
+            isVisible: true
+            position: 7
+        fields:
+          - id: alert
+            displayName: alert
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: customer
+            displayName: customer
+            isReadOnly: false
+            isFilterDisplayed: true
+          - id: id
+            displayName: id
+            isReadOnly: true
+            isFilterDisplayed: true
+        segments: []
+        viewEdit:
+          summaryView: null
+      restrictedToSegments: false
+  dashboards: []
+  inboxes: []
+  sections:
+    - name: Data
+      isVisible: true
+  workspaces: []
+folders:
+  - id: 0776bfe4-9231-436a-a7e9-998921f12fa1
+    isMain: true
+    children:
+      - id: aml_alerts
+        type: collection
+        position: 1
+        isVisible: true
+      - id: cards
+        type: collection
+        position: 2
+        isVisible: true
+      - id: customers
+        type: collection
+        position: 3
+        isVisible: true
+        subChildren:
+          - id: e3c544c9-33c3-4123-acb4-f41f04874c46
+            type: segment
+            position: 1
+            isVisible: true
+          - id: 282857bd-d769-4223-9a09-3071a9946d95
+            type: segment
+            position: 2
+            isVisible: true
+      - id: kyc_cases
+        type: collection
+        position: 5
+        isVisible: true
+      - id: kyc_documents
+        type: collection
+        position: 6
+        isVisible: true
+      - id: refund_requests
+        type: collection
+        position: 12
+        isVisible: true
+      - id: sar_reports
+        type: collection
+        position: 13
+        isVisible: true
+      - id: chargebacks
+        type: collection
+        position: 16
+        isVisible: false
+        subChildren:
+          - id: chargebacks-Pre-arbitration@@@&@@@Arbitration
+            type: segment
+            position: 3
+            isVisible: false
+workflows: []
