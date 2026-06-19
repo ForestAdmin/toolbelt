@@ -109,7 +109,7 @@ describe('services > dumpers > AgentNodeJs', () => {
     language => {
       const demoConfig = (base: Config): Config => ({ ...base, isDemo: true });
 
-      it('uses the dummy datasource dependency, not sql', async () => {
+      it('uses the demo-fintech datasource dependency, not sql', async () => {
         expect.assertions(2);
         const { dumper, context, defaultConfig } = createDumper(language);
 
@@ -118,7 +118,7 @@ describe('services > dumpers > AgentNodeJs', () => {
         const pkgCall = context.fs.writeFileSync.mock.calls.find(([p]: [string]) =>
           p.endsWith('package.json'),
         );
-        expect(pkgCall[1]).toContain('@forestadmin/datasource-dummy');
+        expect(pkgCall[1]).toContain('@forestadmin/datasource-demo-fintech');
         expect(pkgCall[1]).not.toContain('@forestadmin/datasource-sql');
       });
 

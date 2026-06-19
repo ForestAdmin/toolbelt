@@ -76,7 +76,7 @@ export default class AgentNodeJs extends AbstractDumper {
     };
 
     if (isDemo) {
-      dependencies['@forestadmin/datasource-dummy'] = '^1.0.0';
+      dependencies['@forestadmin/datasource-demo-fintech'] = '^1.0.1';
     } else if (dbDialect === 'mongodb') {
       dependencies['@forestadmin/datasource-mongo'] = '^1.0.0';
     } else {

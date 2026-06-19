@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { createAgent } = require('@forestadmin/agent');
 {{#if isDemo}}
-const { createDummyDataSource } = require('@forestadmin/datasource-dummy');
+const { createDemoFintechDataSource } = require('@forestadmin/datasource-demo-fintech');
 {{else}}
 {{#if isMongo}}
 const { createMongoDataSource } = require('@forestadmin/datasource-mongo');
@@ -33,9 +33,9 @@ const agent = createAgent({
 // Connect your datasources
 // All options are documented at https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
 {{#if isDemo}}
-// Demo data source (in-memory sample data) — no database required.
+// Demo data source: realistic fintech sample data, no database to configure.
 // Replace it with your real database: https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
-agent.addDataSource(createDummyDataSource());
+agent.addDataSource(createDemoFintechDataSource());
 {{else}}
 {{#if isMongo}}
 agent.addDataSource(
