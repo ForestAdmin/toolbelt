@@ -145,7 +145,10 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       return;
     }
 
-    if (!flags.force && !(await this.confirm(scope.environmentName, scope.teamName))) return;
+    if (!flags.force && !(await this.confirm(scope.environmentName, scope.teamName))) {
+      this.logger.info('Aborted: nothing was applied.');
+      return;
+    }
 
     try {
       // One atomic PATCH per domain, in a stable order; ops are already add→replace→remove.
@@ -166,6 +169,11 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
     } catch (error) {
       if (error instanceof LayoutApiError && error.status !== 401) {
         this.logger.error(explainApiError(error, ops));
+        // Patches are atomic per domain, not across the whole apply: earlier domains
+        // (or BPMN uploads) may already be committed. Re-running converges safely.
+        this.logger.warn(
+          '`forest layout apply` is idempotent — some changes may already be applied; re-run it to converge.',
+        );
         this.exit(2);
         return;
       }

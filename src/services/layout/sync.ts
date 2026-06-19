@@ -10,6 +10,7 @@ import type { LayoutDomain, LayoutFileDoc, LayoutScope, PlannedOp } from './type
 import { v4 as uuidv4 } from 'uuid';
 
 import { diffDomain } from './diff';
+import { LayoutApiError } from './errors';
 import { LAYOUT_DOMAINS } from './types';
 import { compileWorkflowToBpmn } from './workflow-bpmn';
 
@@ -101,8 +102,14 @@ export async function planWorkflowBpmn(
         );
 
         return { bpmn, changed: stored !== bpmn, workflow };
-      } catch {
-        // Can't read the current BPMN — re-upload rather than risk a stale skip.
+      } catch (error) {
+        // Auth/permission failures must surface, not be reframed as "changed".
+        if (error instanceof LayoutApiError && (error.status === 401 || error.status === 403)) {
+          throw error;
+        }
+
+        // Otherwise (no stored BPMN yet, transient read failure…) re-upload
+        // rather than risk a stale skip.
         return { bpmn, changed: true, workflow };
       }
     }),
