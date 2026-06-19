@@ -37,7 +37,8 @@ const agent = createAgent<Schema>({
 // Connect your datasources
 // All options are documented at https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
 {{#if isDemo}}
-// Demo data source: realistic fintech sample data, no database to configure.
+// Demo data source: realistic fintech sample data on a self-contained local SQLite
+// database — no external database to connect.
 // Replace it with your real database: https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
 agent.addDataSource(createDemoFintechDataSource());
 {{else}}

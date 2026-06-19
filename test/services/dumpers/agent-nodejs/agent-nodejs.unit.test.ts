@@ -2,6 +2,9 @@
 import type { Config } from '../../../../src/interfaces/project-create-interface';
 import type { Language } from '../../../../src/utils/languages';
 
+import { readFileSync } from 'fs';
+import path from 'path';
+
 import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
 import languages from '../../../../src/utils/languages';
 
@@ -166,6 +169,18 @@ describe('services > dumpers > AgentNodeJs', () => {
 
   describe.each([languages.Javascript, languages.Typescript])('when dumping in $name', language => {
     describe('when writing common files', () => {
+      it('does not write a forest-layout.yml (only demo projects ship a layout)', async () => {
+        expect.assertions(1);
+        const { dumper, context, defaultConfig } = createDumper(language);
+
+        await dumper.dump(defaultConfig);
+
+        expect(context.fs.writeFileSync).not.toHaveBeenCalledWith(
+          `/test/a${language.name}Application/forest-layout.yml`,
+          expect.anything(),
+        );
+      });
+
       it('should write a .gitignore file', async () => {
         expect.assertions(1);
 
@@ -656,5 +671,30 @@ describe('services > dumpers > AgentNodeJs', () => {
         });
       });
     });
+  });
+});
+
+describe('demo forest-layout.yml asset', () => {
+  // Lightweight guard on the bundled (hand-trimmed) layout: it must not be emptied
+  // or lose a collection. Full YAML/schema validation belongs to a real
+  // `forest layout pull` regeneration (which carries the yaml dependency).
+  it('declares the 8 fintech collections', () => {
+    expect.assertions(8);
+    const file = path.join(
+      __dirname,
+      '../../../../src/services/dumpers/templates/agent-nodejs/common/forest-layout.yml',
+    );
+    const content = readFileSync(file, 'utf8');
+
+    [
+      'aml_alerts',
+      'cards',
+      'chargebacks',
+      'customers',
+      'kyc_cases',
+      'kyc_documents',
+      'refund_requests',
+      'sar_reports',
+    ].forEach(id => expect(content).toContain(`      id: ${id}\n`));
   });
 });
