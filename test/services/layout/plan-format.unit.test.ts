@@ -8,12 +8,12 @@ const op = (over: Partial<PlannedOp>): PlannedOp => ({
   path: '/collections/customers/displayName',
   domain: 'layout',
   label: 'layout.collections[customers].displayName',
-  yamlPath: 'layout.collections[customers].displayName',
+  jsonPath: 'layout.collections[customers].displayName',
   ...over,
 });
 
 describe('explainApiError', () => {
-  it('422: points to the offending YAML path when the op is found', () => {
+  it('422: points to the offending JSON path when the op is found', () => {
     expect.assertions(2);
     const error = new LayoutApiError(422, "invalid: path: '/collections/customers/displayName'");
 

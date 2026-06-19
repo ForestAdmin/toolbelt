@@ -7,6 +7,7 @@ import path from 'path';
 
 import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
 import { LayoutApiError } from '../../services/layout/errors';
+import { parseLayoutFile } from '../../services/layout/layout-file';
 import LayoutManager from '../../services/layout/layout-manager';
 import { explainApiError, formatPlan } from '../../services/layout/plan-format';
 import { fetchRemoteDocs } from '../../services/layout/read';
@@ -18,9 +19,6 @@ import {
   stepWorkflows,
 } from '../../services/layout/sync';
 import { LAYOUT_DOMAINS } from '../../services/layout/types';
-import { parseLayoutFile } from '../../services/layout/yaml-file';
-
-const DEFAULT_FILE = 'forest-layout.yml';
 
 /** Upload each changed step-graph's BPMN to S3 and link the returned versions (one patch). */
 async function uploadWorkflowBpmns(
@@ -53,7 +51,7 @@ async function uploadWorkflowBpmns(
 }
 
 /**
- * `forest layout apply` — compute the JSON-Patch plan between forest-layout.yml
+ * `forest layout apply` — compute the JSON-Patch plan between forest-layout.json
  * and the live rendering, then PATCH it to the environment. Idempotent: an
  * unchanged file produces no operation and sends nothing.
  */
@@ -64,27 +62,27 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
 
   static override args = {
     file: Args.string({
-      default: DEFAULT_FILE,
-      description: `Layout file to apply (default: ${DEFAULT_FILE}).`,
+      description: 'Layout file to apply (e.g. forest-layout.json).',
       name: 'file',
+      required: true,
     }),
   };
 
   static override description =
-    'Apply a forest-layout.yml to an environment (pushes JSON-Patch changes).';
+    'Apply a forest-layout.json to an environment (pushes JSON-Patch changes).';
 
   static override flags = {
     env: Flags.string({
       char: 'e',
-      description: 'Environment to apply to (name or id). Defaults to the file header.',
+      description: 'Environment to apply to (name or id). Prompted if omitted.',
     }),
     team: Flags.string({
       char: 't',
-      description: 'Team to apply to (name or id). Defaults to the file header.',
+      description: 'Team to apply to (name or id). Prompted if omitted.',
     }),
     projectId: Flags.integer({
       char: 'p',
-      description: 'Id of the project (defaults to the file header).',
+      description: 'Id of the project (resolved/prompted when omitted).',
     }),
     force: Flags.boolean({
       char: 'f',
@@ -104,11 +102,13 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
     const { args, flags } = await this.parse(LayoutApplyCommand);
 
     const filePath = path.resolve(process.cwd(), args.file);
-    const { docs, scope: fileScope } = parseLayoutFile(readFileSync(filePath, 'utf8'));
+    const { docs } = parseLayoutFile(readFileSync(filePath, 'utf8'));
 
+    // The file header is provenance only: the target env/team is chosen here
+    // (flags or interactive prompt), never defaulted to where the file was pulled
+    // from — otherwise re-applying onto its own environment would always be a no-op.
     const scope = await resolveCommandScope({
       baseEnv: this.env,
-      fileScope,
       flags: { env: flags.env, projectId: flags.projectId, team: flags.team },
     });
 
