@@ -5,29 +5,30 @@ import { writeFileSync } from 'fs';
 import path from 'path';
 
 import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
+import { serializeLayoutFile } from '../../services/layout/layout-file';
 import LayoutManager from '../../services/layout/layout-manager';
 import { PULL_DOMAINS, fetchRemoteDocs, summarize } from '../../services/layout/read';
 import { resolveCommandScope } from '../../services/layout/resolve-command-scope';
-import { serializeLayoutFile } from '../../services/layout/yaml-file';
 
-const DEFAULT_OUTPUT = 'forest-layout.yml';
+const DEFAULT_OUTPUT = 'forest-layout.json';
 
 /**
  * `forest layout pull` — read the live rendering of an environment/team and
- * write it to a versionable forest-layout.yml. First milestone of the
+ * write it to a versionable forest-layout.json. First milestone of the
  * declarative layout-as-code flow (pull → diff → apply).
  */
 export default class LayoutPullCommand extends AbstractAuthenticatedCommand {
   private readonly env: { FOREST_SERVER_URL: string } & Record<string, unknown>;
 
   static override description =
-    'Pull the layout (rendering) of an environment into a forest-layout.yml file.';
+    'Pull the layout (rendering) of an environment into a forest-layout.json file.';
 
   static override flags = {
     env: Flags.string({
       char: 'e',
       description:
-        'Environment to pull from (name or id). Defaults to the development environment.',
+        'Environment to pull from (name or id). Defaults to the environment of FOREST_ENV_SECRET ' +
+        'when set, otherwise the development environment.',
     }),
     team: Flags.string({
       char: 't',

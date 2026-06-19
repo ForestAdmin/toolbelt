@@ -4,7 +4,7 @@ import {
   LayoutFileError,
   parseLayoutFile,
   serializeLayoutFile,
-} from '../../../src/services/layout/yaml-file';
+} from '../../../src/services/layout/layout-file';
 
 const scope: LayoutScope = {
   environmentId: 10,
@@ -42,19 +42,20 @@ describe('layout file (de)serialization', () => {
     });
   });
 
-  it('writes the guidance header as a leading comment', () => {
-    expect.assertions(1);
+  it('writes pretty-printed JSON with a trailing newline', () => {
+    expect.assertions(2);
     const content = serializeLayoutFile(scope, { layout: {} }, now);
-    expect(content.startsWith('# forest-layout.yml')).toBe(true);
+    expect(content.endsWith('\n')).toBe(true);
+    expect(JSON.parse(content).forest.version).toBe(1);
   });
 
   it('throws a LayoutFileError when the forest header is missing', () => {
     expect.assertions(1);
-    expect(() => parseLayoutFile('layout:\n  collections: []\n')).toThrow(LayoutFileError);
+    expect(() => parseLayoutFile('{ "layout": { "collections": [] } }')).toThrow(LayoutFileError);
   });
 
-  it('throws a LayoutFileError on invalid YAML', () => {
+  it('throws a LayoutFileError on invalid JSON', () => {
     expect.assertions(1);
-    expect(() => parseLayoutFile(':\n  - [unbalanced')).toThrow(LayoutFileError);
+    expect(() => parseLayoutFile('{ unbalanced')).toThrow(LayoutFileError);
   });
 });

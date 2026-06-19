@@ -1,70 +1,46 @@
-import type { ScopeDeps } from '../../../src/services/layout/scope-resolver';
+import type { Candidate } from '../../../src/services/layout/scope-resolver';
 
-import { ScopeError, resolveScope } from '../../../src/services/layout/scope-resolver';
+import { ScopeError, findByFlag, findBySecret } from '../../../src/services/layout/scope-resolver';
 
-function deps(overrides: Partial<ScopeDeps> = {}): ScopeDeps {
-  return {
-    environments: [
-      { id: 10, name: 'Development', type: 'development' },
-      { id: 11, name: 'Production', type: 'production' },
-    ],
-    project: { id: 7, name: 'Acme' },
-    serverUrl: 'https://api.forestadmin.com',
-    teams: [
-      { id: 20, name: 'Operations' },
-      { id: 21, name: 'Sales' },
-    ],
-    ...overrides,
-  };
-}
+const environments: Candidate[] = [
+  { id: 10, name: 'Development', secretKey: 'dev-secret', type: 'development' },
+  { id: 11, name: 'Production', secretKey: 'prod-secret', type: 'production' },
+];
 
-describe('resolveScope', () => {
-  it('defaults to the development environment and the Operations team', () => {
-    expect.assertions(2);
-    const scope = resolveScope(deps(), {});
-    expect(scope.environmentName).toBe('Development');
-    expect(scope.teamName).toBe('Operations');
-  });
-
+describe('findByFlag', () => {
   it('resolves a flag given as an id', () => {
-    expect.assertions(2);
-    const scope = resolveScope(deps(), { env: '11', team: '21' });
-    expect(scope.environmentId).toBe(11);
-    expect(scope.teamId).toBe(21);
+    expect.assertions(1);
+    expect(findByFlag('Environment', '11', environments).name).toBe('Production');
   });
 
   it('resolves a flag given as a name (case-insensitive)', () => {
     expect.assertions(1);
-    const scope = resolveScope(deps(), { env: 'production' });
-    expect(scope.environmentName).toBe('Production');
+    expect(findByFlag('Environment', 'production', environments).id).toBe(11);
   });
 
-  it('auto-picks when a single candidate exists', () => {
-    expect.assertions(1);
-    const scope = resolveScope(deps({ teams: [{ id: 99, name: 'Only team' }] }), {});
-    expect(scope.teamName).toBe('Only team');
-  });
-
-  it('throws when a flag matches nothing', () => {
-    expect.assertions(1);
-    expect(() => resolveScope(deps(), { env: 'staging' })).toThrow(ScopeError);
-  });
-
-  it('throws when ambiguous and no default applies', () => {
-    expect.assertions(1);
-    const ambiguous = deps({
-      teams: [
-        { id: 1, name: 'Red' },
-        { id: 2, name: 'Blue' },
-      ],
-    });
-    expect(() => resolveScope(ambiguous, {})).toThrow(/specify --team/);
-  });
-
-  it('returns the project ids/names from the deps', () => {
+  it('throws an actionable ScopeError when nothing matches', () => {
     expect.assertions(2);
-    const scope = resolveScope(deps(), {});
-    expect(scope.projectId).toBe(7);
-    expect(scope.projectName).toBe('Acme');
+    expect(() => findByFlag('Environment', 'staging', environments)).toThrow(ScopeError);
+    expect(() => findByFlag('Environment', 'staging', environments)).toThrow(/Available:/);
+  });
+});
+
+describe('findBySecret', () => {
+  it('resolves the candidate designated by the secret', () => {
+    expect.assertions(1);
+    expect(findBySecret('Environment', 'prod-secret', environments).name).toBe('Production');
+  });
+
+  it('ignores candidates without a secretKey', () => {
+    expect.assertions(1);
+    const withoutSecret: Candidate[] = [{ id: 1, name: 'No secret' }];
+    expect(() => findBySecret('Environment', 'undefined', withoutSecret)).toThrow(ScopeError);
+  });
+
+  it('throws when no candidate matches the secret', () => {
+    expect.assertions(1);
+    expect(() => findBySecret('Environment', 'unknown', environments)).toThrow(
+      /matches FOREST_ENV_SECRET/,
+    );
   });
 });

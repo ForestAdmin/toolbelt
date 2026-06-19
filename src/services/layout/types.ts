@@ -30,7 +30,7 @@ export type LayoutScope = {
   teamName: string;
 };
 
-/** Parsed content of forest-layout.yml (any domain may be absent on a partial pull). */
+/** Parsed content of forest-layout.json (any domain may be absent on a partial pull). */
 export type LayoutFileDoc = {
   folders?: unknown[];
   layout?: unknown;
