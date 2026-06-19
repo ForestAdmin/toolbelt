@@ -279,7 +279,7 @@ layout:
           - id: 282857bd-d769-4223-9a09-3071a9946d95
             name: Germany
             type: manual
-            position: 0
+            position: 1
             isVisible: false
             filter:
               type: and
@@ -292,6 +292,7 @@ layout:
           summaryView: null
       restrictedToSegments: false
     - defaultSortingFieldName: id
+      defaultSortingOrder: descending
       displayName: Kyc Cases
       id: kyc_cases
       layout:
@@ -340,6 +341,7 @@ layout:
           summaryView: null
       restrictedToSegments: false
     - defaultSortingFieldName: id
+      defaultSortingOrder: descending
       displayName: Kyc Documents
       id: kyc_documents
       layout:
@@ -376,6 +378,7 @@ layout:
           summaryView: null
       restrictedToSegments: false
     - defaultSortingFieldName: id
+      defaultSortingOrder: descending
       displayName: Refund Requests
       id: refund_requests
       layout:
@@ -427,6 +430,7 @@ layout:
           summaryView: null
       restrictedToSegments: false
     - defaultSortingFieldName: id
+      defaultSortingOrder: descending
       displayName: Sar Reports
       id: sar_reports
       layout:
