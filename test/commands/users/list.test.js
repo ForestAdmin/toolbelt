@@ -18,6 +18,7 @@ describe('users:list', () => {
           { out: 'alice@company.com' },
           { out: 'Alice Smith' },
           { out: 'editor' },
+          { out: 'Admin' },
           { out: 'Operations' },
           { out: 'bob@company.com' },
         ],
@@ -35,6 +36,7 @@ describe('users:list', () => {
         std: [
           { out: '"email": "alice@company.com"' },
           { out: '"permissionLevel": "editor"' },
+          { out: '"role": "Admin"' },
           { out: '"teams": [' },
         ],
       }));

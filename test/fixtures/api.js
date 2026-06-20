@@ -586,8 +586,30 @@ module.exports = {
       })
       .get('/api/users/1/teams')
       .reply(200, { data: [{ id: '7', type: 'teams', attributes: { name: 'Operations' } }] })
+      .get('/api/users')
+      .query({ projectId: '2', id: '1', include: 'role' })
+      .reply(200, {
+        data: {
+          id: '1',
+          type: 'users',
+          attributes: {},
+          relationships: { role: { data: { id: '3', type: 'roles' } } },
+        },
+        included: [{ id: '3', type: 'roles', attributes: { name: 'Admin' } }],
+      })
       .get('/api/users/2/teams')
-      .reply(200, { data: [{ id: '8', type: 'teams', attributes: { name: 'Support' } }] }),
+      .reply(200, { data: [{ id: '8', type: 'teams', attributes: { name: 'Support' } }] })
+      .get('/api/users')
+      .query({ projectId: '2', id: '2', include: 'role' })
+      .reply(200, {
+        data: {
+          id: '2',
+          type: 'users',
+          attributes: {},
+          relationships: { role: { data: { id: '4', type: 'roles' } } },
+        },
+        included: [{ id: '4', type: 'roles', attributes: { name: 'Viewer' } }],
+      }),
 
   getUsersEmpty: () =>
     nock('http://localhost:3001').get('/api/projects/2/users').reply(200, { data: [] }),

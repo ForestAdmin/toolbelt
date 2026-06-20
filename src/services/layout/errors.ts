@@ -26,7 +26,7 @@ export function extractDetail(body: unknown): string {
     if (Array.isArray(parsed.errors) && parsed.errors.length > 0) {
       const first = parsed.errors[0];
 
-      return first.detail || first.message || JSON.stringify(body);
+      return first?.detail || first?.message || JSON.stringify(body);
     }
 
     if (parsed.message) return parsed.message;

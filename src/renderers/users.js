@@ -15,8 +15,8 @@ class UsersRenderer {
         break;
       case 'table': {
         const table = new this.Table({
-          head: ['EMAIL', 'NAME', 'PERMISSION LEVEL', 'TEAMS'],
-          colWidths: [40, 25, 20, 30],
+          head: ['EMAIL', 'NAME', 'PERMISSION LEVEL', 'ROLE', 'TEAMS'],
+          colWidths: [40, 25, 20, 20, 25],
           chars,
         });
         users.forEach(user => {
@@ -24,6 +24,7 @@ class UsersRenderer {
             user.email,
             user.name || '',
             user.permissionLevel || '',
+            user.role || '',
             (user.teams || []).join(', '),
           ]);
         });

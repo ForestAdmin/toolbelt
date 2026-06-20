@@ -6,6 +6,7 @@ type ProjectUser = {
   email: string;
   name: string;
   permissionLevel: string;
+  role: string | null;
   teams: string[];
 };
 
@@ -44,20 +45,30 @@ export default class UserManager {
 
     return Promise.all(
       users.map(async user => {
-        const teamsResponse = await agent
-          .get(`${this.env.FOREST_SERVER_URL}/api/users/${user.id}/teams`)
-          .set(headers)
-          .send();
+        const [teamsResponse, roleResponse] = await Promise.all([
+          agent.get(`${this.env.FOREST_SERVER_URL}/api/users/${user.id}/teams`).set(headers).send(),
+          agent
+            .get(`${this.env.FOREST_SERVER_URL}/api/users`)
+            .query({ projectId: this.config.projectId, id: user.id, include: 'role' })
+            .set(headers)
+            .send(),
+        ]);
 
         const teams: string[] = (teamsResponse.body.data || []).map(
           (t: Record<string, any>) => t.attributes.name as string,
         );
+
+        const roleIncluded = (roleResponse.body.included || []).find(
+          (r: Record<string, any>) => r.type === 'roles',
+        );
+        const role: string | null = roleIncluded?.attributes?.name ?? null;
 
         return {
           id: user.id as string,
           email: user.attributes.email as string,
           name: [user.attributes.first_name, user.attributes.last_name].filter(Boolean).join(' '),
           permissionLevel: user.attributes.permission_level as string,
+          role,
           teams,
         };
       }),
