@@ -594,6 +594,17 @@ module.exports = {
   getTeamsEmpty: () =>
     nock('http://localhost:3001').get('/api/projects/2/teams').reply(200, { data: [] }),
 
+  postCopyTeamLayout: (projectId = 2) =>
+    nock('http://localhost:3001')
+      .post('/api/deployment-requests', {
+        data: {
+          type: 'deployment-requests',
+          attributes: { type: 'team', from: 7, to: 8 },
+        },
+      })
+      .matchHeader('forest-project-id', String(projectId))
+      .reply(200, { meta: { job_id: 78 } }),
+
   getRolesValid: () =>
     nock('http://localhost:3001')
       .get('/api/projects/2/roles')
