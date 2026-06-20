@@ -25,6 +25,21 @@ function TeamManager(config) {
       name: team.attributes.name,
     }));
   };
+
+  /**
+   * Delete a team by its id.
+   * @param {string|number} teamId
+   * @returns {Promise<void>}
+   */
+  this.deleteTeam = async teamId => {
+    const authToken = authenticator.getAuthToken();
+
+    await agent
+      .delete(`${env.FOREST_SERVER_URL}/api/teams/${teamId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('forest-project-id', config.projectId)
+      .send();
+  };
 }
 
 module.exports = TeamManager;
