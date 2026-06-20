@@ -25,6 +25,36 @@ function TeamManager(config) {
       name: team.attributes.name,
     }));
   };
+
+  /**
+   * Create a new team in the project.
+   * @param {string} name
+   * @param {string|number} projectId
+   * @returns {Promise<{ id: string, name: string }>}
+   */
+  this.createTeam = async (name, projectId) => {
+    const authToken = authenticator.getAuthToken();
+
+    const response = await agent
+      .post(`${env.FOREST_SERVER_URL}/api/teams`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('forest-project-id', config.projectId)
+      .send({
+        data: {
+          type: 'teams',
+          attributes: { name },
+          relationships: {
+            project: { data: { id: String(projectId), type: 'projects' } },
+          },
+        },
+      });
+
+    const { data } = response.body;
+    return {
+      id: data.id,
+      name: data.attributes.name,
+    };
+  };
 }
 
 module.exports = TeamManager;
