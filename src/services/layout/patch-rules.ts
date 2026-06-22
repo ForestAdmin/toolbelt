@@ -36,6 +36,13 @@ export type KeyedArrayRule = {
   removable?: boolean;
   /** Path segment template under the parent, e.g. 'layout/segments'. */
   segment: string;
+  /**
+   * Name of a boolean flag marking a server-managed singleton (e.g. the main
+   * folder's `isMain`): the local and remote items carrying it are matched to each
+   * other regardless of `id`/`name`, so the singleton is never recreated/removed
+   * across environments (its `id` is per-environment).
+   */
+  singletonFlag?: string;
   /** Keys stripped from the value sent in an `add` op. */
   stripOnAdd?: string[];
 };
@@ -221,9 +228,11 @@ const COLLECTION_RULES: Rule[] = [
 
 /**
  * Workspaces (and their components) — addressed by id (the route's
- * `:collectionId` param receives the workspace/component id). Component `type`
- * and `options` are add-only (carried verbatim in the add value); only
- * `name`/`displaySettings`/`visibility` are editable, matching the server.
+ * `:collectionId` param receives the workspace/component id). Component `type` is
+ * add-only (set on creation); `name`, `displaySettings`, `visibility` and
+ * `options` are editable, matching the server whitelist. `options` is deep and
+ * polymorphic (filter, visibleColumns, collectionId…), so it is kept opaque and
+ * replaced as a whole when it changes.
  */
 const WORKSPACE_RULE: KeyedArrayRule = {
   addable: true,
@@ -234,7 +243,12 @@ const WORKSPACE_RULE: KeyedArrayRule = {
     scalar('position'),
     {
       addable: true,
-      children: [scalar('name'), opaque('displaySettings'), opaque('visibility')],
+      children: [
+        scalar('name'),
+        opaque('displaySettings'),
+        opaque('visibility'),
+        opaque('options'),
+      ],
       kind: 'keyedArray',
       prop: 'components',
       removable: true,
@@ -308,6 +322,7 @@ export const DOMAIN_RULES: Record<LayoutDomain, DomainRules> = {
         prop: '',
         removable: true,
         segment: 'folders',
+        singletonFlag: 'isMain',
       },
     ],
   },

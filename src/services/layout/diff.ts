@@ -57,13 +57,37 @@ type ItemMatch = {
  * an add + a remove. Fails loudly on ambiguous input (duplicate local identities,
  * or two locals resolving to the same remote).
  */
-function matchItems(remoteItems: Item[], localItems: Item[], jsonPath: string): ItemMatch {
+/**
+ * Build the local→remote resolver: a singleton (e.g. the main folder) matches its
+ * remote counterpart regardless of id/name; otherwise match by id, then by name.
+ */
+function remoteResolver(
+  remoteItems: Item[],
+  singletonFlag?: string,
+): (local: Item) => Item | undefined {
   const remoteById = new Map<string, Item>();
   const remoteByName = new Map<string, Item>();
   remoteItems.forEach(item => {
     if (item.id !== undefined && item.id !== null) remoteById.set(String(item.id), item);
     if (typeof item.name === 'string') remoteByName.set(item.name, item);
   });
+  const remoteSingleton = singletonFlag
+    ? remoteItems.find(item => item[singletonFlag] === true)
+    : undefined;
+
+  return local =>
+    (singletonFlag !== undefined && local[singletonFlag] === true ? remoteSingleton : undefined) ??
+    (local.id !== undefined && local.id !== null ? remoteById.get(String(local.id)) : undefined) ??
+    (typeof local.name === 'string' ? remoteByName.get(local.name) : undefined);
+}
+
+function matchItems(
+  remoteItems: Item[],
+  localItems: Item[],
+  jsonPath: string,
+  singletonFlag?: string,
+): ItemMatch {
+  const matchOf = remoteResolver(remoteItems, singletonFlag);
 
   const seen = new Set<string>();
   const matched = new Set<Item>();
@@ -82,10 +106,7 @@ function matchItems(remoteItems: Item[], localItems: Item[], jsonPath: string): 
     }
     seen.add(key);
 
-    const remote =
-      (local.id !== undefined && local.id !== null && remoteById.get(String(local.id))) ||
-      (typeof local.name === 'string' && remoteByName.get(local.name)) ||
-      undefined;
+    const remote = matchOf(local);
 
     if (!remote) {
       added.push(local);
@@ -197,7 +218,12 @@ function diffKeyedArray(
   const jsonPath = rule.prop ? `${ctx.jsonPrefix}.${rule.prop}` : ctx.jsonPrefix;
   const premiumPack = rule.premiumPack ?? ctx.premiumPack;
 
-  const { added, common, removed } = matchItems(remoteItems, localItems, jsonPath);
+  const { added, common, removed } = matchItems(
+    remoteItems,
+    localItems,
+    jsonPath,
+    rule.singletonFlag,
+  );
 
   if (rule.fallbackReplaceWhole && (added.length > 0 || removed.length > 0)) {
     emit(ctx, 'replaces', {
