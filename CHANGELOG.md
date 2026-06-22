@@ -1,3 +1,10 @@
+# [5.7.0](https://github.com/ForestAdmin/toolbelt/compare/v5.6.0...v5.7.0) (2026-06-22)
+
+
+### Features
+
+* **layout:** forest layout pull ([#779](https://github.com/ForestAdmin/toolbelt/issues/779)) ([8b82438](https://github.com/ForestAdmin/toolbelt/commit/8b8243807783e40a3b0c2cb6097f4085ac918c88))
+
 # [5.6.0](https://github.com/ForestAdmin/toolbelt/compare/v5.5.0...v5.6.0) (2026-06-18)
 
 
