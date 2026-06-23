@@ -1,3 +1,10 @@
+# [5.10.0](https://github.com/ForestAdmin/toolbelt/compare/v5.9.0...v5.10.0) (2026-06-23)
+
+
+### Features
+
+* **users:** add forest users:list command ([#783](https://github.com/ForestAdmin/toolbelt/issues/783)) ([21ebf5c](https://github.com/ForestAdmin/toolbelt/commit/21ebf5c9f1be6d7826686944055d259724d28de5))
+
 # [5.9.0](https://github.com/ForestAdmin/toolbelt/compare/v5.8.0...v5.9.0) (2026-06-23)
 
 
