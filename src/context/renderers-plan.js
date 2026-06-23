@@ -5,4 +5,5 @@ module.exports = plan =>
     .addUsingClass('environmentsRenderer', () => require('../renderers/environments'))
     .addUsingClass('projectRenderer', () => require('../renderers/project'))
     .addUsingClass('projectsRenderer', () => require('../renderers/projects'))
-    .addUsingClass('branchesRenderer', () => require('../renderers/branches'));
+    .addUsingClass('branchesRenderer', () => require('../renderers/branches'))
+    .addUsingClass('usersRenderer', () => require('../renderers/users'));

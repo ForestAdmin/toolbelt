@@ -555,6 +555,144 @@ module.exports = {
         ],
       }),
 
+  getUsersValid: () =>
+    nock('http://localhost:3001')
+      .get('/api/projects/2/users')
+      .reply(200, {
+        data: [
+          {
+            type: 'users',
+            id: '1',
+            attributes: {
+              email: 'alice@company.com',
+              first_name: 'Alice',
+              last_name: 'Smith',
+              permission_level: 'editor',
+            },
+            relationships: { teams: { links: { related: '/api/users/1/teams' } } },
+          },
+          {
+            type: 'users',
+            id: '2',
+            attributes: {
+              email: 'bob@company.com',
+              first_name: 'Bob',
+              last_name: 'Jones',
+              permission_level: 'admin',
+            },
+            relationships: { teams: { links: { related: '/api/users/2/teams' } } },
+          },
+        ],
+      })
+      .get('/api/users/1/teams')
+      .reply(200, { data: [{ id: '7', type: 'teams', attributes: { name: 'Operations' } }] })
+      .get('/api/users')
+      .query({ projectId: '2', id: '1', include: 'role' })
+      .reply(200, {
+        data: {
+          id: '1',
+          type: 'users',
+          attributes: {},
+          relationships: { role: { data: { id: '3', type: 'roles' } } },
+        },
+        included: [{ id: '3', type: 'roles', attributes: { name: 'Admin' } }],
+      })
+      .get('/api/users/2/teams')
+      .reply(200, { data: [{ id: '8', type: 'teams', attributes: { name: 'Support' } }] })
+      .get('/api/users')
+      .query({ projectId: '2', id: '2', include: 'role' })
+      .reply(200, {
+        data: {
+          id: '2',
+          type: 'users',
+          attributes: {},
+          relationships: { role: { data: { id: '4', type: 'roles' } } },
+        },
+        included: [{ id: '4', type: 'roles', attributes: { name: 'Viewer' } }],
+      }),
+
+  getUsersEmpty: () =>
+    nock('http://localhost:3001').get('/api/projects/2/users').reply(200, { data: [] }),
+
+  getUsersListError: () =>
+    nock('http://localhost:3001')
+      .get('/api/projects/2/users')
+      .reply(422, { errors: [{ detail: 'Project is misconfigured.' }] }),
+
+  // List succeeds, but one user's teams sub-call fails: the row must degrade
+  // (teams: []) instead of failing the whole listing.
+  getUsersOneTeamFails: () =>
+    nock('http://localhost:3001')
+      .get('/api/projects/2/users')
+      .reply(200, {
+        data: [
+          {
+            type: 'users',
+            id: '1',
+            attributes: {
+              email: 'alice@company.com',
+              first_name: 'Alice',
+              last_name: 'Smith',
+              permission_level: 'editor',
+            },
+          },
+          {
+            type: 'users',
+            id: '2',
+            attributes: {
+              email: 'bob@company.com',
+              first_name: 'Bob',
+              last_name: 'Jones',
+              permission_level: 'admin',
+            },
+          },
+        ],
+      })
+      .get('/api/users/1/teams')
+      .reply(200, { data: [{ id: '7', type: 'teams', attributes: { name: 'Operations' } }] })
+      .get('/api/users')
+      .query({ projectId: '2', id: '1', include: 'role' })
+      .reply(200, {
+        data: { id: '1', type: 'users' },
+        included: [{ id: '3', type: 'roles', attributes: { name: 'Admin' } }],
+      })
+      .get('/api/users/2/teams')
+      .reply(500, { errors: [{ detail: 'boom' }] })
+      .get('/api/users')
+      .query({ projectId: '2', id: '2', include: 'role' })
+      .reply(200, {
+        data: { id: '2', type: 'users' },
+        included: [{ id: '4', type: 'roles', attributes: { name: 'Viewer' } }],
+      }),
+
+  // One user: no last_name, no role (empty included), two teams.
+  getUsersEdgeCases: () =>
+    nock('http://localhost:3001')
+      .get('/api/projects/2/users')
+      .reply(200, {
+        data: [
+          {
+            type: 'users',
+            id: '1',
+            attributes: {
+              email: 'carol@company.com',
+              first_name: 'Carol',
+              permission_level: 'editor',
+            },
+          },
+        ],
+      })
+      .get('/api/users/1/teams')
+      .reply(200, {
+        data: [
+          { id: '7', type: 'teams', attributes: { name: 'Operations' } },
+          { id: '8', type: 'teams', attributes: { name: 'Support' } },
+        ],
+      })
+      .get('/api/users')
+      .query({ projectId: '2', id: '1', include: 'role' })
+      .reply(200, { data: { id: '1', type: 'users' }, included: [] }),
+
   getRolesEmpty: () =>
     nock('http://localhost:3001').get('/api/projects/2/roles').reply(200, {
       data: [],
