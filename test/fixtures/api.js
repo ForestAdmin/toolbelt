@@ -614,6 +614,85 @@ module.exports = {
   getUsersEmpty: () =>
     nock('http://localhost:3001').get('/api/projects/2/users').reply(200, { data: [] }),
 
+  getUsersListError: () =>
+    nock('http://localhost:3001')
+      .get('/api/projects/2/users')
+      .reply(422, { errors: [{ detail: 'Project is misconfigured.' }] }),
+
+  // List succeeds, but one user's teams sub-call fails: the row must degrade
+  // (teams: []) instead of failing the whole listing.
+  getUsersOneTeamFails: () =>
+    nock('http://localhost:3001')
+      .get('/api/projects/2/users')
+      .reply(200, {
+        data: [
+          {
+            type: 'users',
+            id: '1',
+            attributes: {
+              email: 'alice@company.com',
+              first_name: 'Alice',
+              last_name: 'Smith',
+              permission_level: 'editor',
+            },
+          },
+          {
+            type: 'users',
+            id: '2',
+            attributes: {
+              email: 'bob@company.com',
+              first_name: 'Bob',
+              last_name: 'Jones',
+              permission_level: 'admin',
+            },
+          },
+        ],
+      })
+      .get('/api/users/1/teams')
+      .reply(200, { data: [{ id: '7', type: 'teams', attributes: { name: 'Operations' } }] })
+      .get('/api/users')
+      .query({ projectId: '2', id: '1', include: 'role' })
+      .reply(200, {
+        data: { id: '1', type: 'users' },
+        included: [{ id: '3', type: 'roles', attributes: { name: 'Admin' } }],
+      })
+      .get('/api/users/2/teams')
+      .reply(500, { errors: [{ detail: 'boom' }] })
+      .get('/api/users')
+      .query({ projectId: '2', id: '2', include: 'role' })
+      .reply(200, {
+        data: { id: '2', type: 'users' },
+        included: [{ id: '4', type: 'roles', attributes: { name: 'Viewer' } }],
+      }),
+
+  // One user: no last_name, no role (empty included), two teams.
+  getUsersEdgeCases: () =>
+    nock('http://localhost:3001')
+      .get('/api/projects/2/users')
+      .reply(200, {
+        data: [
+          {
+            type: 'users',
+            id: '1',
+            attributes: {
+              email: 'carol@company.com',
+              first_name: 'Carol',
+              permission_level: 'editor',
+            },
+          },
+        ],
+      })
+      .get('/api/users/1/teams')
+      .reply(200, {
+        data: [
+          { id: '7', type: 'teams', attributes: { name: 'Operations' } },
+          { id: '8', type: 'teams', attributes: { name: 'Support' } },
+        ],
+      })
+      .get('/api/users')
+      .query({ projectId: '2', id: '1', include: 'role' })
+      .reply(200, { data: { id: '1', type: 'users' }, included: [] }),
+
   getRolesEmpty: () =>
     nock('http://localhost:3001').get('/api/projects/2/roles').reply(200, {
       data: [],
@@ -1383,76 +1462,4 @@ module.exports = {
           ],
         }),
       ),
-
-  getRoleByIdValid: (roleId = '3', projectId = 2) =>
-    nock('http://localhost:3001')
-      .get(`/api/roles/${roleId}`)
-      .matchHeader('forest-project-id', String(projectId))
-      .reply(200, {
-        data: {
-          type: 'roles',
-          id: roleId,
-          attributes: {
-            name: 'Admin',
-            permissions: {
-              environments: [
-                {
-                  id: 3,
-                  enabled: true,
-                  collections: [
-                    {
-                      collectionName: 'orders',
-                      browseEnabled: true,
-                      readEnabled: true,
-                      addEnabled: false,
-                      editEnabled: false,
-                      deleteEnabled: false,
-                      exportEnabled: true,
-                      smartActions: [
-                        {
-                          smartActionName: 'Mark as shipped',
-                          triggerEnabled: true,
-                          approvalRequired: false,
-                          userApprovalEnabled: false,
-                          selfApprovalEnabled: false,
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          },
-        },
-      }),
-
-  createRoleValid: (projectId = 2) =>
-    nock('http://localhost:3001')
-      .post('/api/roles')
-      .matchHeader('forest-project-id', String(projectId))
-      .reply(201, {
-        data: {
-          type: 'roles',
-          id: '10',
-          attributes: { name: 'Operations' },
-        },
-      }),
-
-  createRoleConflict: (projectId = 2) =>
-    nock('http://localhost:3001')
-      .post('/api/roles')
-      .matchHeader('forest-project-id', String(projectId))
-      .reply(422, { errors: [{ detail: 'Name has already been taken.' }] }),
-
-  copyPermissionsValid: (projectId = 2) =>
-    nock('http://localhost:3001')
-      .post(`/api/projects/${projectId}/roles/copy-permissions`, { from: '3', to: '4' })
-      .matchHeader('forest-project-id', String(projectId))
-      .reply(204),
-
-  patchPermissionsValid: (roleId = '3', projectId = 2) =>
-    nock('http://localhost:3001')
-      .patch(`/api/roles/${roleId}/permissions`)
-      .matchHeader('forest-project-id', String(projectId))
-      .reply(204),
 };
