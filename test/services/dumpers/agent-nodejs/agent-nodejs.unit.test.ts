@@ -2,6 +2,9 @@
 import type { Config } from '../../../../src/interfaces/project-create-interface';
 import type { Language } from '../../../../src/utils/languages';
 
+import { readFileSync } from 'fs';
+import path from 'path';
+
 import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
 import languages from '../../../../src/utils/languages';
 
@@ -109,7 +112,7 @@ describe('services > dumpers > AgentNodeJs', () => {
     language => {
       const demoConfig = (base: Config): Config => ({ ...base, isDemo: true });
 
-      it('uses the dummy datasource dependency, not sql', async () => {
+      it('uses the demo-fintech datasource dependency, not sql', async () => {
         expect.assertions(2);
         const { dumper, context, defaultConfig } = createDumper(language);
 
@@ -118,7 +121,7 @@ describe('services > dumpers > AgentNodeJs', () => {
         const pkgCall = context.fs.writeFileSync.mock.calls.find(([p]: [string]) =>
           p.endsWith('package.json'),
         );
-        expect(pkgCall[1]).toContain('@forestadmin/datasource-dummy');
+        expect(pkgCall[1]).toContain('@forestadmin/datasource-demo-fintech');
         expect(pkgCall[1]).not.toContain('@forestadmin/datasource-sql');
       });
 
@@ -149,11 +152,35 @@ describe('services > dumpers > AgentNodeJs', () => {
           expect.anything(),
         );
       });
+
+      it('writes the pre-configured forest-layout.json', async () => {
+        expect.assertions(1);
+        const { dumper, context, defaultConfig } = createDumper(language);
+
+        await dumper.dump(demoConfig(defaultConfig));
+
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          `/test/a${language.name}Application/forest-layout.json`,
+          'mockedContent',
+        );
+      });
     },
   );
 
   describe.each([languages.Javascript, languages.Typescript])('when dumping in $name', language => {
     describe('when writing common files', () => {
+      it('does not write a forest-layout.json (only demo projects ship a layout)', async () => {
+        expect.assertions(1);
+        const { dumper, context, defaultConfig } = createDumper(language);
+
+        await dumper.dump(defaultConfig);
+
+        expect(context.fs.writeFileSync).not.toHaveBeenCalledWith(
+          `/test/a${language.name}Application/forest-layout.json`,
+          expect.anything(),
+        );
+      });
+
       it('should write a .gitignore file', async () => {
         expect.assertions(1);
 
@@ -644,5 +671,34 @@ describe('services > dumpers > AgentNodeJs', () => {
         });
       });
     });
+  });
+});
+
+describe('demo forest-layout.json asset', () => {
+  // Lightweight guard on the bundled (hand-trimmed) layout: it must stay valid JSON
+  // and not lose a fintech collection. Full schema validation belongs to a real
+  // `forest layout pull` regeneration.
+  it('is valid JSON declaring the 8 fintech collections', () => {
+    expect.assertions(9);
+    const file = path.join(
+      __dirname,
+      '../../../../src/services/dumpers/templates/agent-nodejs/common/forest-layout.json',
+    );
+    const layout = JSON.parse(readFileSync(file, 'utf8'));
+    const collectionIds = (layout.layout?.collections ?? []).map(
+      (collection: { id: string }) => collection.id,
+    );
+
+    expect(collectionIds.length).toBeGreaterThan(0);
+    [
+      'aml_alerts',
+      'cards',
+      'chargebacks',
+      'customers',
+      'kyc_cases',
+      'kyc_documents',
+      'refund_requests',
+      'sar_reports',
+    ].forEach(id => expect(collectionIds).toContain(id));
   });
 });

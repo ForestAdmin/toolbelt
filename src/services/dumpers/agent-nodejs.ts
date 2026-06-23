@@ -76,7 +76,7 @@ export default class AgentNodeJs extends AbstractDumper {
     };
 
     if (isDemo) {
-      dependencies['@forestadmin/datasource-dummy'] = '^1.0.0';
+      dependencies['@forestadmin/datasource-demo-fintech'] = '^1.0.1';
     } else if (dbDialect === 'mongodb') {
       dependencies['@forestadmin/datasource-mongo'] = '^1.0.0';
     } else {
@@ -260,6 +260,13 @@ export default class AgentNodeJs extends AbstractDumper {
     );
   }
 
+  // Demo projects ship a pre-configured forest-layout.json so the panel is curated
+  // out of the box. This only writes the file; applying it (via the `forest layout`
+  // commands) is a separate onboarding step.
+  private writeLayoutFile() {
+    this.copyHandleBarsTemplate('common/forest-layout.json', 'forest-layout.json');
+  }
+
   protected async createFiles(dumpConfig: Config) {
     const { isDemo } = dumpConfig;
 
@@ -291,5 +298,7 @@ export default class AgentNodeJs extends AbstractDumper {
     this.writeDockerfile(dumpConfig.language);
     // The demo project has no database, so no docker-compose DB service is needed.
     if (!isDemo) this.writeDockerCompose(dumpConfig);
+    // Demo projects also get a pre-configured layout file.
+    if (isDemo) this.writeLayoutFile();
   }
 }
