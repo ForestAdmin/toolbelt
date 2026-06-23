@@ -214,25 +214,26 @@ function diffKeyedArray(
   remoteItems: Item[],
   localItems: Item[],
 ): void {
+  // A root rule with `prop: ''` (folders/workflows) receives the document itself,
+  // which is `{}` when the domain is absent remotely — guard against non-arrays so
+  // `matchItems` never iterates a plain object.
+  const remotes = Array.isArray(remoteItems) ? remoteItems : [];
+  const locals = Array.isArray(localItems) ? localItems : [];
+
   const arrayPath = rule.segment ? `${ctx.pathPrefix}/${rule.segment}` : ctx.pathPrefix;
   const jsonPath = rule.prop ? `${ctx.jsonPrefix}.${rule.prop}` : ctx.jsonPrefix;
   const premiumPack = rule.premiumPack ?? ctx.premiumPack;
 
-  const { added, common, removed } = matchItems(
-    remoteItems,
-    localItems,
-    jsonPath,
-    rule.singletonFlag,
-  );
+  const { added, common, removed } = matchItems(remotes, locals, jsonPath, rule.singletonFlag);
 
   if (rule.fallbackReplaceWhole && (added.length > 0 || removed.length > 0)) {
     emit(ctx, 'replaces', {
       domain: ctx.domain,
-      label: `${jsonPath}: replacing the array (${localItems.length} items)`,
+      label: `${jsonPath}: replacing the array (${locals.length} items)`,
       op: 'replace',
       path: arrayPath,
       premiumPack,
-      value: localItems,
+      value: locals,
       jsonPath,
     });
 

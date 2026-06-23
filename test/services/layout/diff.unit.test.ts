@@ -6,6 +6,27 @@ const foldersDoc = (mainId: string, named: Array<{ icon: string; id: string; nam
   ...named.map(folder => ({ ...folder, isMain: false, children: [] })),
 ];
 
+describe('diffDomain — absent remote domain', () => {
+  const folders = [{ icon: '📁', id: '99999999-9999-9999-9999-999999999999', name: 'Solo' }];
+
+  it.each([
+    ['null', null],
+    ['undefined', undefined],
+    ['empty object', {}],
+  ])('does not throw when the remote folders document is %s', (_label, remote) => {
+    expect.assertions(1);
+
+    expect(() => diffDomain('folders', remote, folders)).not.toThrow();
+  });
+
+  it('treats a missing remote folders document as an empty list (everything added)', () => {
+    expect.assertions(1);
+    const { ops } = diffDomain('folders', undefined, folders);
+
+    expect(ops).toContainEqual(expect.objectContaining({ op: 'add', path: '/folders/-' }));
+  });
+});
+
 describe('diffDomain — folders main (singleton) matching', () => {
   it('never adds/removes the main folder when its id differs across environments', () => {
     expect.assertions(2);
