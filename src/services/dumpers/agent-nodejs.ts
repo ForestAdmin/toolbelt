@@ -260,11 +260,11 @@ export default class AgentNodeJs extends AbstractDumper {
     );
   }
 
-  // Demo projects ship a pre-configured forest-layout.yml so the panel is curated
-  // out of the box. This only writes the file; applying it (via the upcoming
-  // `forest layout` commands) is a separate onboarding step.
+  // Demo projects ship a pre-configured forest-layout.json so the panel is curated
+  // out of the box. This only writes the file; applying it (via the `forest layout`
+  // commands) is a separate onboarding step.
   private writeLayoutFile() {
-    this.copyHandleBarsTemplate('common/forest-layout.yml', 'forest-layout.yml');
+    this.copyHandleBarsTemplate('common/forest-layout.json', 'forest-layout.json');
   }
 
   protected async createFiles(dumpConfig: Config) {

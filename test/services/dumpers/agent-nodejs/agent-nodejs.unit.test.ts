@@ -153,14 +153,14 @@ describe('services > dumpers > AgentNodeJs', () => {
         );
       });
 
-      it('writes the pre-configured forest-layout.yml', async () => {
+      it('writes the pre-configured forest-layout.json', async () => {
         expect.assertions(1);
         const { dumper, context, defaultConfig } = createDumper(language);
 
         await dumper.dump(demoConfig(defaultConfig));
 
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
-          `/test/a${language.name}Application/forest-layout.yml`,
+          `/test/a${language.name}Application/forest-layout.json`,
           'mockedContent',
         );
       });
@@ -169,14 +169,14 @@ describe('services > dumpers > AgentNodeJs', () => {
 
   describe.each([languages.Javascript, languages.Typescript])('when dumping in $name', language => {
     describe('when writing common files', () => {
-      it('does not write a forest-layout.yml (only demo projects ship a layout)', async () => {
+      it('does not write a forest-layout.json (only demo projects ship a layout)', async () => {
         expect.assertions(1);
         const { dumper, context, defaultConfig } = createDumper(language);
 
         await dumper.dump(defaultConfig);
 
         expect(context.fs.writeFileSync).not.toHaveBeenCalledWith(
-          `/test/a${language.name}Application/forest-layout.yml`,
+          `/test/a${language.name}Application/forest-layout.json`,
           expect.anything(),
         );
       });
@@ -674,18 +674,22 @@ describe('services > dumpers > AgentNodeJs', () => {
   });
 });
 
-describe('demo forest-layout.yml asset', () => {
-  // Lightweight guard on the bundled (hand-trimmed) layout: it must not be emptied
-  // or lose a collection. Full YAML/schema validation belongs to a real
-  // `forest layout pull` regeneration (which carries the yaml dependency).
-  it('declares the 8 fintech collections', () => {
-    expect.assertions(8);
+describe('demo forest-layout.json asset', () => {
+  // Lightweight guard on the bundled (hand-trimmed) layout: it must stay valid JSON
+  // and not lose a fintech collection. Full schema validation belongs to a real
+  // `forest layout pull` regeneration.
+  it('is valid JSON declaring the 8 fintech collections', () => {
+    expect.assertions(9);
     const file = path.join(
       __dirname,
-      '../../../../src/services/dumpers/templates/agent-nodejs/common/forest-layout.yml',
+      '../../../../src/services/dumpers/templates/agent-nodejs/common/forest-layout.json',
     );
-    const content = readFileSync(file, 'utf8');
+    const layout = JSON.parse(readFileSync(file, 'utf8'));
+    const collectionIds = (layout.layout?.collections ?? []).map(
+      (collection: { id: string }) => collection.id,
+    );
 
+    expect(collectionIds.length).toBeGreaterThan(0);
     [
       'aml_alerts',
       'cards',
@@ -695,6 +699,6 @@ describe('demo forest-layout.yml asset', () => {
       'kyc_documents',
       'refund_requests',
       'sar_reports',
-    ].forEach(id => expect(content).toContain(`      id: ${id}\n`));
+    ].forEach(id => expect(collectionIds).toContain(id));
   });
 });
