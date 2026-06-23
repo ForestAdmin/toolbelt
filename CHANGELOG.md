@@ -1,3 +1,10 @@
+# [5.9.0](https://github.com/ForestAdmin/toolbelt/compare/v5.8.0...v5.9.0) (2026-06-23)
+
+
+### Features
+
+* **projects:create:demo:** bundle demo forest-layout.yml (PRD-573, draft) ([#782](https://github.com/ForestAdmin/toolbelt/issues/782)) ([f9a972e](https://github.com/ForestAdmin/toolbelt/commit/f9a972eef229388fe0f31f8c2be0aaf28f6c8f08))
+
 # [5.8.0](https://github.com/ForestAdmin/toolbelt/compare/v5.7.0...v5.8.0) (2026-06-23)
 
 
