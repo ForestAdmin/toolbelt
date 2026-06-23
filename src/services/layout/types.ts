@@ -5,6 +5,21 @@ export type LayoutDomain = 'folders' | 'layout' | 'workflows';
 
 export const LAYOUT_DOMAINS: LayoutDomain[] = ['layout', 'folders', 'workflows'];
 
+/** A single RFC 6902 JSON-Patch operation, as accepted by `PATCH /api/:domain`. */
+export type JsonPatchOp = {
+  op: 'add' | 'remove' | 'replace' | 'test';
+  path: string;
+  value?: unknown;
+};
+
+/** A diff-produced operation, enriched for display (`label`/`jsonPath`) and the 403 premium explanation (`premiumPack`). */
+export type PlannedOp = JsonPatchOp & {
+  domain: LayoutDomain;
+  label: string;
+  premiumPack?: string;
+  jsonPath: string;
+};
+
 /** Minimal JSON:API resource shape (the rendering document uses snake_case attributes). */
 export type JsonApiResource = {
   attributes?: Record<string, unknown>;
