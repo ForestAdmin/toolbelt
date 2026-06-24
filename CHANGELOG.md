@@ -1,3 +1,10 @@
+# [5.11.0](https://github.com/ForestAdmin/toolbelt/compare/v5.10.0...v5.11.0) (2026-06-24)
+
+
+### Features
+
+* **users:** add forest users:edit command ([#785](https://github.com/ForestAdmin/toolbelt/issues/785)) ([94fce7d](https://github.com/ForestAdmin/toolbelt/commit/94fce7d1a6d6fa998bff0c741240d6d5163f99d7))
+
 # [5.10.0](https://github.com/ForestAdmin/toolbelt/compare/v5.9.0...v5.10.0) (2026-06-23)
 
 
