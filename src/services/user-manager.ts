@@ -6,6 +6,7 @@ export type ProjectUser = {
   email: string;
   name: string;
   permissionLevel: string;
+  roleId: string | null;
   role: string | null;
   teams: string[];
 };
@@ -77,34 +78,90 @@ export default class UserManager {
   }
 
   async listForProject(): Promise<ProjectUser[]> {
-    // Unlike the per-user enrichment below, a failure here surfaces to the command.
+    const users = await this.requestUsers();
+
+    return mapWithConcurrency(users, ENRICH_CONCURRENCY, user => this.toProjectUser(user));
+  }
+
+  /** Raw project-users list (one call, no enrichment). Failures surface to the caller. */
+  private async requestUsers(): Promise<ApiResource[]> {
     const response = await agent
       .get(`${this.env.FOREST_SERVER_URL}/api/projects/${this.config.projectId}/users`)
       .set(this.headers())
       .send();
 
-    const users = (response.body?.data ?? []) as ApiResource[];
-
-    return mapWithConcurrency(users, ENRICH_CONCURRENCY, user => this.toProjectUser(user));
+    return (response.body?.data ?? []) as ApiResource[];
   }
 
-  private async toProjectUser(user: ApiResource): Promise<ProjectUser> {
+  private async toProjectUser(user: ApiResource, strict = false): Promise<ProjectUser> {
     const attributes = user.attributes ?? {};
     const userId = user.id ? String(user.id) : '';
 
-    const [teams, role] = await Promise.all([this.fetchTeams(userId), this.fetchRole(userId)]);
+    const [teams, role] = await Promise.all([
+      this.fetchTeams(userId, strict),
+      this.fetchRole(userId, strict),
+    ]);
 
     return {
       id: userId,
       email: String(attributes.email ?? ''),
       name: [attributes.first_name, attributes.last_name].filter(Boolean).join(' '),
       permissionLevel: String(attributes.permission_level ?? ''),
-      role,
+      roleId: role.id,
+      role: role.name,
       teams,
     };
   }
 
-  private async fetchTeams(userId: string): Promise<string[]> {
+  /**
+   * Resolve a project user by email for the edit path. Returns undefined when no
+   * user matches; transport/API failures throw. The role/teams are read in `strict`
+   * mode (never degraded): the edit reassigns the role and replaces the teams from
+   * these values, so a failed read must abort the edit, not silently wipe them.
+   */
+  async findByEmail(email: string): Promise<ProjectUser | undefined> {
+    const users = await this.requestUsers();
+    const match = users.find(user => String(user.attributes?.email ?? '') === email);
+    if (!match) return undefined;
+
+    return this.toProjectUser(match, true);
+  }
+
+  async editUser(
+    userId: string,
+    currentPermissionLevel: string,
+    currentRoleId: string | null,
+    changes: { roleId?: string; teamIds?: string[]; permissionLevel?: string },
+  ): Promise<void> {
+    const effectiveRoleId = changes.roleId ?? currentRoleId;
+    // Ids are sent as integers: the server's update validator requires
+    // `id: number` for data/role/teams/projects on this route.
+    const relationships: Record<string, unknown> = {
+      projects: { data: [{ type: 'projects', id: Number(this.config.projectId) }] },
+      ...(effectiveRoleId && { role: { data: { type: 'roles', id: Number(effectiveRoleId) } } }),
+    };
+    if (changes.teamIds) {
+      relationships.teams = {
+        data: changes.teamIds.map(id => ({ type: 'teams', id: Number(id) })),
+      };
+    }
+
+    await agent
+      .put(`${this.env.FOREST_SERVER_URL}/api/users/${userId}`)
+      .set(this.headers())
+      .send({
+        data: {
+          type: 'users',
+          id: Number(userId),
+          attributes: { permission_level: changes.permissionLevel ?? currentPermissionLevel },
+          relationships,
+        },
+      });
+  }
+
+  // `strict` is used by the edit path: a failed read must surface (abort the edit)
+  // rather than degrade, since the edit writes these values back.
+  private async fetchTeams(userId: string, strict = false): Promise<string[]> {
     if (!userId) return [];
 
     try {
@@ -117,14 +174,18 @@ export default class UserManager {
         .map(team => String(team.attributes?.name ?? ''))
         .filter(Boolean);
     } catch (error) {
+      if (strict) throw error;
       this.logger.warn(`Could not fetch teams for user ${userId} (showing none): ${error}`);
 
       return [];
     }
   }
 
-  private async fetchRole(userId: string): Promise<string | null> {
-    if (!userId) return null;
+  private async fetchRole(
+    userId: string,
+    strict = false,
+  ): Promise<{ id: string | null; name: string | null }> {
+    if (!userId) return { id: null, name: null };
 
     try {
       const response = await agent
@@ -138,11 +199,12 @@ export default class UserManager {
       );
       const name = role?.attributes?.name;
 
-      return typeof name === 'string' ? name : null;
+      return { id: role?.id ?? null, name: typeof name === 'string' ? name : null };
     } catch (error) {
+      if (strict) throw error;
       this.logger.warn(`Could not fetch role for user ${userId} (showing none): ${error}`);
 
-      return null;
+      return { id: null, name: null };
     }
   }
 }
