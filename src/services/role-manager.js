@@ -3,8 +3,8 @@ const Context = require('@forestadmin/context');
 
 /**
  * Read access to a project's roles.
- * Future `forest roles:*` commands (PRD-528/529) should extend this manager
- * with write operations rather than re-implementing the HTTP calls.
+ * PRD-535: extended with `getRoleById` for `forest roles:export`.
+ * Write operations (create / patch / copy permissions) land with `forest roles:apply` (PRD-528).
  * @param {{ projectId: number | string }} config
  */
 function RoleManager(config) {
@@ -24,6 +24,31 @@ function RoleManager(config) {
       id: role.id,
       name: role.attributes.name,
     }));
+  };
+
+  /**
+   * Fetch a single role with its full permissions object.
+   * @param {string|number} roleId
+   * @returns {Promise<{ id: string, name: string, permissions: object }>}
+   */
+  this.getRoleById = async roleId => {
+    const authToken = authenticator.getAuthToken();
+
+    const response = await agent
+      .get(`${env.FOREST_SERVER_URL}/api/roles/${roleId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('forest-project-id', config.projectId)
+      .send();
+
+    const { data } = response.body;
+    if (!data || !data.attributes) {
+      throw new Error(`Unexpected response for role ${roleId}: missing data.attributes.`);
+    }
+    return {
+      id: data.id,
+      name: data.attributes.name,
+      permissions: data.attributes.permissions || {},
+    };
   };
 }
 

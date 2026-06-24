@@ -693,6 +693,54 @@ module.exports = {
       .query({ projectId: '2', id: '1', include: 'role' })
       .reply(200, { data: { id: '1', type: 'users' }, included: [] }),
 
+  getRoleByIdValid: (roleId = '3', projectId = 2) =>
+    nock('http://localhost:3001')
+      .get(`/api/roles/${roleId}`)
+      .matchHeader('forest-project-id', String(projectId))
+      .reply(200, {
+        data: {
+          type: 'roles',
+          id: roleId,
+          attributes: {
+            name: 'Admin',
+            permissions: {
+              environments: [
+                {
+                  environmentId: 3,
+                  enabled: true,
+                  collections: [
+                    {
+                      collectionName: 'orders',
+                      browseEnabled: true,
+                      readEnabled: true,
+                      addEnabled: false,
+                      editEnabled: false,
+                      deleteEnabled: false,
+                      exportEnabled: true,
+                      smartActions: [
+                        {
+                          smartActionName: 'Mark as shipped',
+                          triggerEnabled: true,
+                          approvalRequired: false,
+                          userApprovalEnabled: false,
+                          selfApprovalEnabled: false,
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      }),
+
+  getRoleByIdNotFound: (roleId = '4', projectId = 2) =>
+    nock('http://localhost:3001')
+      .get(`/api/roles/${roleId}`)
+      .matchHeader('forest-project-id', String(projectId))
+      .reply(404, { errors: [{ detail: 'Role not found.' }] }),
+
   getRolesEmpty: () =>
     nock('http://localhost:3001').get('/api/projects/2/roles').reply(200, {
       data: [],
