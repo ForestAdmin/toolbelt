@@ -1,4 +1,4 @@
-const { formatWide } = require('../../src/services/roles-csv');
+const { formatWide, parseWide } = require('../../src/services/roles-csv');
 
 // Real backend shape: environments[].environmentId, collections[].<crud>Enabled,
 // smartActions[].{triggerEnabled, approvalRequired, userApprovalEnabled,
@@ -162,5 +162,41 @@ describe('roles-csv formatWide', () => {
       3,
     );
     expect(rows(csv)[1].startsWith('"Ops, ""Lead"""')).toBe(true);
+  });
+});
+
+describe('roles-csv parseWide', () => {
+  it('should preserve a value containing escaped double quotes', () => {
+    expect.assertions(2);
+    // `Ops "EU"` is encoded as a quoted field with doubled inner quotes.
+    const csv = ['role,enabled,orders:browse', '"Ops ""EU""",true,true'].join('\n');
+
+    const [parsed] = parseWide(csv, '3');
+
+    expect(parsed.name).toBe('Ops "EU"');
+    expect(parsed.enabled).toBe(true);
+  });
+
+  it('should round-trip a quoted role name through formatWide then parseWide', () => {
+    expect.assertions(1);
+    const roles = [
+      {
+        id: '7',
+        name: 'Ops "EU", APAC',
+        permissions: {
+          environments: [
+            {
+              environmentId: 3,
+              enabled: true,
+              collections: [{ collectionName: 'orders', browseEnabled: true }],
+            },
+          ],
+        },
+      },
+    ];
+
+    const [parsed] = parseWide(formatWide(roles, 3), '3');
+
+    expect(parsed.name).toBe('Ops "EU", APAC');
   });
 });

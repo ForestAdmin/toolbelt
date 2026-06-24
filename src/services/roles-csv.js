@@ -45,16 +45,17 @@ function parseCsvCharacters(line) {
   return line.split('').reduce(
     (acc, ch, i) => {
       if (acc.inQuotes) {
+        // Consume the second quote of an escaped pair (`""`) before treating
+        // `"` as a section delimiter, otherwise it closes the quotes early.
+        if (acc.skipNext) return { ...acc, skipNext: false };
         if (ch === '"') {
           if (line[i + 1] === '"') {
             return { ...acc, current: `${acc.current}"`, skipNext: true };
           }
           return { ...acc, inQuotes: false };
         }
-        if (acc.skipNext) return { ...acc, skipNext: false };
         return { ...acc, current: acc.current + ch };
       }
-      if (acc.skipNext) return { ...acc, skipNext: false };
       if (ch === '"') return { ...acc, inQuotes: true };
       if (ch === ',') return { ...acc, fields: [...acc.fields, acc.current], current: '' };
       return { ...acc, current: acc.current + ch };
