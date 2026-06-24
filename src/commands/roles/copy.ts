@@ -50,11 +50,31 @@ export default class RolesCopyCommand extends AbstractAuthenticatedCommand {
     const { flags } = await this.parse(RolesCopyCommand);
     const config = await withCurrentProject({ ...this.env, projectId: flags.projectId });
 
-    const environments = await new EnvironmentManager(config).listEnvironments();
-    const fromEnv = this.resolveEnvByName(environments, flags.from);
-    const toEnv = this.resolveEnvByName(environments, flags.to);
+    try {
+      const environments = await new EnvironmentManager(config).listEnvironments();
+      const fromEnv = this.resolveEnvByName(environments, flags.from);
+      const toEnv = this.resolveEnvByName(environments, flags.to);
 
-    await new RoleManager(config).copyPermissions(fromEnv.id, toEnv.id);
-    this.logger.info(`Permissions copied from "${flags.from}" to "${flags.to}".`);
+      await new RoleManager(config).copyPermissions(fromEnv.id, toEnv.id);
+      this.logger.info(`Permissions copied from "${flags.from}" to "${flags.to}".`);
+    } catch (error) {
+      // 401/403 keep flowing to the authenticated-command handler.
+      const { response, status } = error as { status?: number; response?: { text?: string } };
+      if (response && status !== 401 && status !== 403 && response.text) {
+        let detail;
+        try {
+          detail = JSON.parse(response.text)?.errors?.[0]?.detail;
+        } catch {
+          // Non-JSON error body: fall through and rethrow the original error.
+        }
+        if (detail) {
+          this.logger.error(detail);
+          this.exit(1);
+          return;
+        }
+      }
+
+      throw error;
+    }
   }
 }

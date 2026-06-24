@@ -42,7 +42,7 @@ export default class RolesCreateCommand extends AbstractAuthenticatedCommand {
         status?: number;
         response?: { text?: string };
       };
-      if (response && status !== 403 && response.text) {
+      if (response && status !== 401 && status !== 403 && response.text) {
         let detail;
         try {
           detail = JSON.parse(response.text)?.errors?.[0]?.detail;

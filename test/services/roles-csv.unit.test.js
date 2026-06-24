@@ -1,4 +1,4 @@
-const { formatWide, parseWide } = require('../../src/services/roles-csv');
+const { formatWide, parseWide, computeDiff } = require('../../src/services/roles-csv');
 
 // Real backend shape: environments[].environmentId, collections[].<crud>Enabled,
 // smartActions[].{triggerEnabled, approvalRequired, userApprovalEnabled,
@@ -198,5 +198,96 @@ describe('roles-csv parseWide', () => {
     const [parsed] = parseWide(formatWide(roles, 3), '3');
 
     expect(parsed.name).toBe('Ops "EU", APAC');
+  });
+
+  it('rejects an invalid boolean cell (write-safety: no silent coercion)', () => {
+    expect.assertions(1);
+    const csv = ['role,enabled,orders:browse', 'Ops,true,TRUE-ish'].join('\n');
+
+    expect(() => parseWide(csv, '3')).toThrow('Invalid boolean');
+  });
+
+  it('rejects an unknown permission column (catches typos before a write)', () => {
+    expect.assertions(1);
+    const csv = ['role,enabled,orders:edt', 'Ops,true,true'].join('\n');
+
+    expect(() => parseWide(csv, '3')).toThrow('Unknown permission column "orders:edt"');
+  });
+
+  it('rejects a row whose cell count does not match the header', () => {
+    expect.assertions(1);
+    const csv = ['role,enabled,orders:browse', 'Ops,true'].join('\n');
+
+    expect(() => parseWide(csv, '3')).toThrow('CSV row has 2 cell(s)');
+  });
+});
+
+describe('roles-csv computeDiff', () => {
+  const desiredRole = (name, browseEnabled) => ({
+    name,
+    enabled: true,
+    envId: '3',
+    collections: [{ collectionName: 'orders', browseEnabled, smartActions: [] }],
+  });
+
+  it('emits a single replace op for a CRUD flip', () => {
+    expect.assertions(1);
+    const current = [{ name: 'Admin', id: '3', enabled: true, collections: [] }];
+    const desired = [desiredRole('Admin', true)];
+
+    const [diff] = computeDiff(current, desired);
+
+    expect(diff.ops).toContainEqual({
+      op: 'replace',
+      path: '/environments/3/collections/orders/browseEnabled',
+      value: true,
+    });
+  });
+
+  it('emits no op when current equals desired', () => {
+    expect.assertions(1);
+    const current = [
+      {
+        name: 'Admin',
+        id: '3',
+        enabled: true,
+        collections: [{ collectionName: 'orders', browseEnabled: true }],
+      },
+    ];
+
+    expect(computeDiff(current, [desiredRole('Admin', true)])[0].ops).toStrictEqual([]);
+  });
+
+  it('flags a role absent from current with roleId null (apply rejects it)', () => {
+    expect.assertions(1);
+    expect(computeDiff([], [desiredRole('Ghost', true)])[0].roleId).toBeNull();
+  });
+
+  it('emits a smart-action flag op on the correct path', () => {
+    expect.assertions(1);
+    const desired = [
+      {
+        name: 'Admin',
+        enabled: true,
+        envId: '3',
+        collections: [
+          {
+            collectionName: 'orders',
+            smartActions: [{ smartActionName: 'ship', triggerEnabled: true }],
+          },
+        ],
+      },
+    ];
+
+    const [diff] = computeDiff(
+      [{ name: 'Admin', id: '3', enabled: true, collections: [] }],
+      desired,
+    );
+
+    expect(diff.ops).toContainEqual({
+      op: 'replace',
+      path: '/environments/3/collections/orders/smartActions/ship/triggerEnabled',
+      value: true,
+    });
   });
 });

@@ -29,6 +29,10 @@ const SA_FIELD_MAP = {
   selfApproval: 'selfApprovalEnabled',
 };
 
+// Derived from the maps so the diff field lists can't drift from the column maps.
+const CRUD_FIELDS = Object.values(CRUD_FIELD_MAP);
+const SA_FIELDS = Object.values(SA_FIELD_MAP);
+
 // ---------------------------------------------------------------------------
 // Internal CSV helpers (no external library)
 // ---------------------------------------------------------------------------
@@ -69,8 +73,11 @@ function parseCsvLine(line) {
   return [...result.fields, result.current];
 }
 
-function parseBool(str) {
-  return str === 'true';
+function parseBool(value) {
+  const normalized = String(value).trim().toLowerCase();
+  if (normalized === 'true') return true;
+  if (normalized === 'false') return false;
+  throw new Error(`Invalid boolean value "${value}" in CSV (expected "true" or "false").`);
 }
 
 // ---------------------------------------------------------------------------
@@ -208,14 +215,18 @@ function emptySa(actionName) {
 }
 
 function applyTwoPartHeader(collectionMap, colName, suffix, rawValue) {
-  if (!CRUD_SUFFIXES.includes(suffix)) return collectionMap;
+  if (!CRUD_SUFFIXES.includes(suffix)) {
+    throw new Error(`Unknown permission column "${colName}:${suffix}" in CSV.`);
+  }
   const col = collectionMap[colName] || emptyCollection(colName);
   return { ...collectionMap, [colName]: { ...col, [CRUD_FIELD_MAP[suffix]]: parseBool(rawValue) } };
 }
 
 function applyThreePartHeader(collectionMap, colName, actionName, suffix, rawValue) {
-  if (suffix === 'hasConditions' || !SMART_ACTION_WRITE_SUFFIXES.includes(suffix)) {
-    return collectionMap;
+  // hasConditions is derived/read-only on export — ignore it on the write path.
+  if (suffix === 'hasConditions') return collectionMap;
+  if (!SMART_ACTION_WRITE_SUFFIXES.includes(suffix)) {
+    throw new Error(`Unknown smart-action column "${colName}:${actionName}:${suffix}" in CSV.`);
   }
   const col = collectionMap[colName] || emptyCollection(colName);
   const existingSa =
@@ -232,11 +243,14 @@ function applyHeader(collectionMap, header, rawValue) {
   if (parts.length === 2) return applyTwoPartHeader(collectionMap, parts[0], parts[1], rawValue);
   if (parts.length === 3)
     return applyThreePartHeader(collectionMap, parts[0], parts[1], parts[2], rawValue);
-  return collectionMap;
+  throw new Error(`Unrecognized CSV column "${header}".`);
 }
 
 function parseRow(headers, cells, envId) {
-  const row = headers.reduce((acc, h, j) => ({ ...acc, [h]: cells[j] || '' }), {});
+  if (cells.length !== headers.length) {
+    throw new Error(`CSV row has ${cells.length} cell(s) but the header has ${headers.length}.`);
+  }
+  const row = headers.reduce((acc, h, j) => ({ ...acc, [h]: cells[j] }), {});
   const name = row.role;
   const enabled = parseBool(row.enabled);
 
@@ -280,19 +294,9 @@ function diffCrudField(envId, colName, curCol, field, desiredVal) {
 }
 
 function diffCrud(envId, desiredCol, curCol) {
-  const fields = [
-    'browseEnabled',
-    'readEnabled',
-    'addEnabled',
-    'editEnabled',
-    'deleteEnabled',
-    'exportEnabled',
-  ];
-  return fields
-    .map(field =>
-      diffCrudField(envId, desiredCol.collectionName, curCol, field, Boolean(desiredCol[field])),
-    )
-    .filter(Boolean);
+  return CRUD_FIELDS.map(field =>
+    diffCrudField(envId, desiredCol.collectionName, curCol, field, Boolean(desiredCol[field])),
+  ).filter(Boolean);
 }
 
 function diffSaField(envId, colName, actionName, curSa, field, desiredVal) {
@@ -309,24 +313,9 @@ function diffSmartAction(envId, colName, desiredSa, curCol) {
   const curSa = curCol
     ? (curCol.smartActions || []).find(a => a.smartActionName === desiredSa.smartActionName)
     : null;
-  const saFields = [
-    'triggerEnabled',
-    'approvalRequired',
-    'userApprovalEnabled',
-    'selfApprovalEnabled',
-  ];
-  return saFields
-    .map(field =>
-      diffSaField(
-        envId,
-        colName,
-        desiredSa.smartActionName,
-        curSa,
-        field,
-        Boolean(desiredSa[field]),
-      ),
-    )
-    .filter(Boolean);
+  return SA_FIELDS.map(field =>
+    diffSaField(envId, colName, desiredSa.smartActionName, curSa, field, Boolean(desiredSa[field])),
+  ).filter(Boolean);
 }
 
 function diffCollection(envId, desiredCol, cur) {
