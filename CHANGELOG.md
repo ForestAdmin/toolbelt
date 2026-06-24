@@ -1,3 +1,10 @@
+# [5.13.0](https://github.com/ForestAdmin/toolbelt/compare/v5.12.0...v5.13.0) (2026-06-24)
+
+
+### Features
+
+* **roles:** add forest roles:apply / create / copy commands ([#787](https://github.com/ForestAdmin/toolbelt/issues/787)) ([ef50958](https://github.com/ForestAdmin/toolbelt/commit/ef5095827a366ef4cc40f5af1169ad295026ec6f))
+
 # [5.12.0](https://github.com/ForestAdmin/toolbelt/compare/v5.11.0...v5.12.0) (2026-06-24)
 
 
