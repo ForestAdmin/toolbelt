@@ -740,6 +740,35 @@ module.exports = {
       .get(`/api/roles/${roleId}`)
       .matchHeader('forest-project-id', String(projectId))
       .reply(404, { errors: [{ detail: 'Role not found.' }] }),
+  createRoleValid: (projectId = 2) =>
+    nock('http://localhost:3001')
+      .post('/api/roles')
+      .matchHeader('forest-project-id', String(projectId))
+      .reply(201, {
+        data: {
+          type: 'roles',
+          id: '10',
+          attributes: { name: 'Operations' },
+        },
+      }),
+
+  createRoleConflict: (projectId = 2) =>
+    nock('http://localhost:3001')
+      .post('/api/roles')
+      .matchHeader('forest-project-id', String(projectId))
+      .reply(422, { errors: [{ detail: 'Name has already been taken.' }] }),
+
+  copyPermissionsValid: (projectId = 2) =>
+    nock('http://localhost:3001')
+      .post(`/api/projects/${projectId}/roles/copy-permissions`, { from: '3', to: '4' })
+      .matchHeader('forest-project-id', String(projectId))
+      .reply(204),
+
+  patchPermissionsValid: (roleId = '3', projectId = 2) =>
+    nock('http://localhost:3001')
+      .patch(`/api/roles/${roleId}/permissions`)
+      .matchHeader('forest-project-id', String(projectId))
+      .reply(204),
 
   getRolesEmpty: () =>
     nock('http://localhost:3001').get('/api/projects/2/roles').reply(200, {
