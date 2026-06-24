@@ -706,7 +706,7 @@ module.exports = {
             permissions: {
               environments: [
                 {
-                  id: 3,
+                  environmentId: 3,
                   enabled: true,
                   collections: [
                     {
@@ -734,6 +734,12 @@ module.exports = {
           },
         },
       }),
+
+  getRoleByIdNotFound: (roleId = '4', projectId = 2) =>
+    nock('http://localhost:3001')
+      .get(`/api/roles/${roleId}`)
+      .matchHeader('forest-project-id', String(projectId))
+      .reply(404, { errors: [{ detail: 'Role not found.' }] }),
 
   getRolesEmpty: () =>
     nock('http://localhost:3001').get('/api/projects/2/roles').reply(200, {

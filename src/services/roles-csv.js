@@ -48,7 +48,7 @@ function collectSmartActionsForCollection(roles, envId, colName) {
   const actionSet = new Set();
   roles.forEach(role => {
     const envPerms = (role.permissions.environments || []).find(
-      e => String(e.id) === String(envId),
+      e => String(e.environmentId ?? e.id) === String(envId),
     );
     if (!envPerms) return;
     const col = (envPerms.collections || []).find(c => c.collectionName === colName);
@@ -74,7 +74,7 @@ function buildColumns(roles, envId) {
   const collectionSet = new Set();
   roles.forEach(role => {
     const envPerms = (role.permissions.environments || []).find(
-      e => String(e.id) === String(envId),
+      e => String(e.environmentId ?? e.id) === String(envId),
     );
     if (!envPerms) return;
     (envPerms.collections || []).forEach(col => collectionSet.add(col.collectionName));
@@ -96,7 +96,13 @@ function getSmartActionValue(col, actionName, suffix) {
   if (!col) return false;
   const sa = (col.smartActions || []).find(a => a.smartActionName === actionName);
   if (!sa) return false;
-  if (suffix === 'hasConditions') return sa.conditionCreator != null || sa.conditionCaller != null;
+  if (suffix === 'hasConditions') {
+    return (
+      sa.triggerCondition != null ||
+      sa.approvalRequiredCondition != null ||
+      sa.userApprovalCondition != null
+    );
+  }
   return Boolean(sa[SA_FIELD_MAP[suffix]]);
 }
 
@@ -114,7 +120,9 @@ function buildCellForColumn(colHeader, colByName) {
 }
 
 function buildRoleRow(role, columns, envId) {
-  const envPerms = (role.permissions.environments || []).find(e => String(e.id) === String(envId));
+  const envPerms = (role.permissions.environments || []).find(
+    e => String(e.environmentId ?? e.id) === String(envId),
+  );
   const enabled = envPerms ? Boolean(envPerms.enabled) : false;
   const colByName = {};
   if (envPerms) {

@@ -41,6 +41,9 @@ function RoleManager(config) {
       .send();
 
     const { data } = response.body;
+    if (!data || !data.attributes) {
+      throw new Error(`Unexpected response for role ${roleId}: missing data.attributes.`);
+    }
     return {
       id: data.id,
       name: data.attributes.name,
