@@ -200,6 +200,16 @@ describe('roles-csv parseWide', () => {
     expect(parsed.name).toBe('Ops "EU", APAC');
   });
 
+  it('handles CRLF line endings (Excel/Windows CSV)', () => {
+    expect.assertions(2);
+    const csv = ['role,enabled,orders:browse', 'Ops,true,true'].join('\r\n');
+
+    const [parsed] = parseWide(csv, '3');
+
+    expect(parsed.enabled).toBe(true);
+    expect(parsed.collections[0].browseEnabled).toBe(true);
+  });
+
   it('rejects an invalid boolean cell (write-safety: no silent coercion)', () => {
     expect.assertions(1);
     const csv = ['role,enabled,orders:browse', 'Ops,true,TRUE-ish'].join('\n');

@@ -267,7 +267,9 @@ function parseRow(headers, cells, envId) {
  * @param {string|number} envId
  */
 function parseWide(csvContent, envId) {
-  const lines = csvContent.split('\n').filter(l => l.trim() !== '');
+  // Split on CRLF or LF: a CSV saved by Excel/Windows uses \r\n, and a trailing
+  // \r would otherwise taint the last field (e.g. `enabled\r`) and break parsing.
+  const lines = csvContent.split(/\r?\n/).filter(l => l.trim() !== '');
   if (lines.length < 2) return [];
   const headers = parseCsvLine(lines[0]);
   return lines.slice(1).map(line => parseRow(headers, parseCsvLine(line), envId));
