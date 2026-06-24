@@ -1,3 +1,10 @@
+# [5.12.0](https://github.com/ForestAdmin/toolbelt/compare/v5.11.0...v5.12.0) (2026-06-24)
+
+
+### Features
+
+* **roles:** add forest roles:export command ([#786](https://github.com/ForestAdmin/toolbelt/issues/786)) ([a2cd8e1](https://github.com/ForestAdmin/toolbelt/commit/a2cd8e1ff15aea09fe47aa4803d3360bd5769259))
+
 # [5.11.0](https://github.com/ForestAdmin/toolbelt/compare/v5.10.0...v5.11.0) (2026-06-24)
 
 
