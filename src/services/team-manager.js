@@ -27,12 +27,11 @@ function TeamManager(config) {
   };
 
   /**
-   * Create a new team in the project.
+   * Create a new team in the project identified by `config.projectId`.
    * @param {string} name
-   * @param {string|number} projectId
    * @returns {Promise<{ id: string, name: string }>}
    */
-  this.createTeam = async (name, projectId) => {
+  this.createTeam = async name => {
     const authToken = authenticator.getAuthToken();
 
     const response = await agent
@@ -44,7 +43,7 @@ function TeamManager(config) {
           type: 'teams',
           attributes: { name },
           relationships: {
-            project: { data: { id: String(projectId), type: 'projects' } },
+            project: { data: { id: String(config.projectId), type: 'projects' } },
           },
         },
       });

@@ -35,7 +35,7 @@ export default class TeamsCreateCommand extends AbstractAuthenticatedCommand {
     const config = await withCurrentProject({ ...this.env, projectId: flags.projectId });
 
     try {
-      const team = await new TeamManager(config).createTeam(flags.name, config.projectId);
+      const team = await new TeamManager(config).createTeam(flags.name);
       this.logger.info(`Team "${team.name}" created (id: ${team.id}).`);
     } catch (error) {
       const { response, status } = error as {
