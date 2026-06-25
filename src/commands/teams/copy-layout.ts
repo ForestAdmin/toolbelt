@@ -43,6 +43,28 @@ export default class TeamsCopyLayoutCommand extends AbstractAuthenticatedCommand
     this.inquirer = inquirer;
   }
 
+  // Surface a server error's `errors[0].detail` cleanly (exit 1), letting
+  // 401/403 flow to the base command's auth handler. Mirrors teams:create/delete.
+  private surfaceApiError(error: unknown): never {
+    const { response, status } = error as {
+      status?: number;
+      response?: { text?: string };
+    };
+    if (response && status !== 401 && status !== 403 && response.text) {
+      let detail;
+      try {
+        detail = JSON.parse(response.text)?.errors?.[0]?.detail;
+      } catch {
+        // Non-JSON error body: fall through and rethrow the original error.
+      }
+      if (detail) {
+        this.logger.error(detail);
+        return this.exit(1);
+      }
+    }
+    throw error;
+  }
+
   private resolveTeam(teams: NamedEntity[], name: string, label: string): NamedEntity {
     const match = teams.find(t => t.name === name);
     if (match) return match;
@@ -87,7 +109,12 @@ export default class TeamsCopyLayoutCommand extends AbstractAuthenticatedCommand
       }
     }
 
-    const copied = await teamManager.copyLayout(fromTeam.id, toTeam.id, oclifExit);
+    let copied;
+    try {
+      copied = await teamManager.copyLayout(fromTeam.id, toTeam.id, oclifExit);
+    } catch (error) {
+      this.surfaceApiError(error);
+    }
 
     if (copied) {
       this.logger.info(
