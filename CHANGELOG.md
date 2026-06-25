@@ -1,3 +1,10 @@
+# [5.16.0](https://github.com/ForestAdmin/toolbelt/compare/v5.15.0...v5.16.0) (2026-06-25)
+
+
+### Features
+
+* **teams:** add forest teams:copy-layout command ([#793](https://github.com/ForestAdmin/toolbelt/issues/793)) ([c5ba310](https://github.com/ForestAdmin/toolbelt/commit/c5ba3106474d8d80411a7410be3a88d5e5988dd2))
+
 # [5.15.0](https://github.com/ForestAdmin/toolbelt/compare/v5.14.0...v5.15.0) (2026-06-25)
 
 
