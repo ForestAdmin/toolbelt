@@ -1,3 +1,10 @@
+# [5.15.0](https://github.com/ForestAdmin/toolbelt/compare/v5.14.0...v5.15.0) (2026-06-25)
+
+
+### Features
+
+* **teams:** add forest teams:delete command ([#792](https://github.com/ForestAdmin/toolbelt/issues/792)) ([8937cac](https://github.com/ForestAdmin/toolbelt/commit/8937cac4a2772755bd541b3c58eace8e1fd37f1f))
+
 # [5.14.0](https://github.com/ForestAdmin/toolbelt/compare/v5.13.0...v5.14.0) (2026-06-25)
 
 
