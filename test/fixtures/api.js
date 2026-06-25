@@ -567,7 +567,15 @@ module.exports = {
 
   createTeamConflict: (projectId = 2) =>
     nock('http://localhost:3001')
-      .post('/api/teams')
+      .post('/api/teams', {
+        data: {
+          type: 'teams',
+          attributes: { name: 'Support' },
+          relationships: {
+            project: { data: { id: String(projectId), type: 'projects' } },
+          },
+        },
+      })
       .matchHeader('forest-project-id', String(projectId))
       .reply(422, { errors: [{ detail: 'Name has already been taken.' }] }),
 

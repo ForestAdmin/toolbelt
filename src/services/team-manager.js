@@ -50,6 +50,9 @@ function TeamManager(config) {
       });
 
     const { data } = response.body;
+    if (!data || !data.attributes) {
+      throw new Error('Unexpected response when creating team: missing data.attributes.');
+    }
     return {
       id: data.id,
       name: data.attributes.name,
