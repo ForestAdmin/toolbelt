@@ -545,6 +545,40 @@ module.exports = {
         ],
       }),
 
+  createTeamValid: (projectId = 2) =>
+    nock('http://localhost:3001')
+      .post('/api/teams', {
+        data: {
+          type: 'teams',
+          attributes: { name: 'Support' },
+          relationships: {
+            project: { data: { id: String(projectId), type: 'projects' } },
+          },
+        },
+      })
+      .matchHeader('forest-project-id', String(projectId))
+      .reply(201, {
+        data: {
+          type: 'teams',
+          id: '12',
+          attributes: { name: 'Support' },
+        },
+      }),
+
+  createTeamConflict: (projectId = 2) =>
+    nock('http://localhost:3001')
+      .post('/api/teams', {
+        data: {
+          type: 'teams',
+          attributes: { name: 'Support' },
+          relationships: {
+            project: { data: { id: String(projectId), type: 'projects' } },
+          },
+        },
+      })
+      .matchHeader('forest-project-id', String(projectId))
+      .reply(422, { errors: [{ detail: 'Name has already been taken.' }] }),
+
   getRolesValid: () =>
     nock('http://localhost:3001')
       .get('/api/projects/2/roles')

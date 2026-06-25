@@ -25,6 +25,38 @@ function TeamManager(config) {
       name: team.attributes.name,
     }));
   };
+
+  /**
+   * Create a new team in the project identified by `config.projectId`.
+   * @param {string} name
+   * @returns {Promise<{ id: string, name: string }>}
+   */
+  this.createTeam = async name => {
+    const authToken = authenticator.getAuthToken();
+
+    const response = await agent
+      .post(`${env.FOREST_SERVER_URL}/api/teams`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('forest-project-id', config.projectId)
+      .send({
+        data: {
+          type: 'teams',
+          attributes: { name },
+          relationships: {
+            project: { data: { id: String(config.projectId), type: 'projects' } },
+          },
+        },
+      });
+
+    const { data } = response.body;
+    if (!data || !data.attributes) {
+      throw new Error('Unexpected response when creating team: missing data.attributes.');
+    }
+    return {
+      id: data.id,
+      name: data.attributes.name,
+    };
+  };
 }
 
 module.exports = TeamManager;
