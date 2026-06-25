@@ -70,7 +70,28 @@ export default class TeamsDeleteCommand extends AbstractAuthenticatedCommand {
       }
     }
 
-    await teamManager.deleteTeam(team.id);
-    this.logger.info(`Team "${team.name}" deleted from project ${config.projectId}.`);
+    try {
+      await teamManager.deleteTeam(team.id);
+      this.logger.info(`Team "${team.name}" deleted from project ${config.projectId}.`);
+    } catch (error) {
+      const { response, status } = error as {
+        status?: number;
+        response?: { text?: string };
+      };
+      if (response && status !== 401 && status !== 403 && response.text) {
+        let detail;
+        try {
+          detail = JSON.parse(response.text)?.errors?.[0]?.detail;
+        } catch {
+          // Non-JSON error body: fall through and rethrow the original error.
+        }
+        if (detail) {
+          this.logger.error(detail);
+          this.exit(1);
+          return;
+        }
+      }
+      throw error;
+    }
   }
 }

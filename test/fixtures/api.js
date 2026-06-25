@@ -585,6 +585,15 @@ module.exports = {
       .matchHeader('forest-project-id', String(projectId))
       .reply(204),
 
+  deleteTeamError: (teamId = '8', projectId = 2) =>
+    nock('http://localhost:3001')
+      .delete(`/api/teams/${teamId}`)
+      .matchHeader('forest-project-id', String(projectId))
+      .reply(404, { errors: [{ detail: 'Team not found.' }] }),
+
+  getTeamsEmpty: () =>
+    nock('http://localhost:3001').get('/api/projects/2/teams').reply(200, { data: [] }),
+
   getRolesValid: () =>
     nock('http://localhost:3001')
       .get('/api/projects/2/roles')
