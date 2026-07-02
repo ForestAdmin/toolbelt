@@ -64,7 +64,13 @@ agent.addDataSource(
 // });
 
 // Run Forest Admin workflows in this process, backed by your database.
-agent.addWorkflowExecutor({ database: { uri: process.env.DATABASE_URL } });
+agent.addWorkflowExecutor({
+  database: {
+    uri: process.env.DATABASE_URL,
+    schema: process.env.DATABASE_SCHEMA,
+    sslMode: process.env.DATABASE_SSL_MODE,
+  },
+});
 
 // Expose an HTTP endpoint.
 agent.mountOnStandaloneServer(Number(process.env.APPLICATION_PORT));
