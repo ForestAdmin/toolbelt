@@ -81,6 +81,9 @@ export default class AgentNodeJs extends AbstractDumper {
       dependencies['@forestadmin/datasource-mongo'] = '^1.0.0';
     } else {
       dependencies['@forestadmin/datasource-sql'] = '^1.0.0';
+      // The embedded workflow executor persists its run store via Sequelize, so it ships only with
+      // SQL projects (its store cannot run on a MongoDB datasource).
+      dependencies['@forestadmin/workflow-executor'] = '^1.0.0';
     }
 
     if (!isDemo && dbDialect) {
@@ -168,6 +171,9 @@ export default class AgentNodeJs extends AbstractDumper {
       isMySQL: dbDialect === 'mysql',
       isMSSQL: dbDialect === 'mssql',
       isMariaDB: dbDialect === 'mariadb',
+      // SQL project (not demo, not mongo): the embedded workflow executor is wired up by default,
+      // its Sequelize-backed run store cannot use a MongoDB datasource.
+      isSql: !isDemo && !isMongo && !!dbDialect,
       dbSchema,
       forestServerUrl: this.env.FOREST_URL_IS_DEFAULT ? false : this.env.FOREST_SERVER_URL,
     };

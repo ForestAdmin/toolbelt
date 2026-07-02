@@ -94,6 +94,19 @@ agent.addDataSource(
 //   });
 // });
 
+{{#if isSql}}
+// Run Forest Admin workflows in this process, backed by your database.
+agent.addWorkflowExecutor({
+  database: {
+    uri: process.env.DATABASE_URL,
+{{#if dbSchema}}
+    schema: process.env.DATABASE_SCHEMA,
+{{/if}}
+    sslMode: process.env.DATABASE_SSL_MODE,
+  },
+});
+
+{{/if}}
 // Expose an HTTP endpoint.
 agent.mountOnStandaloneServer(Number(process.env.APPLICATION_PORT));
 
@@ -104,3 +117,17 @@ agent.start().catch(error => {
   console.error(error.stack);
   process.exit(1);
 });
+
+// Stop the agent gracefully on shutdown, so in-flight work drains before the process exits.
+async function shutdown() {
+  try {
+    await agent.stop();
+    process.exit(0);
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+process.once('SIGTERM', shutdown);
+process.once('SIGINT', shutdown);

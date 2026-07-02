@@ -73,3 +73,17 @@ agent.start().catch(error => {
   console.error(error.stack);
   process.exit(1);
 });
+
+// Stop the agent gracefully on shutdown, so in-flight work drains before the process exits.
+async function shutdown(): Promise<void> {
+  try {
+    await agent.stop();
+    process.exit(0);
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+process.once('SIGTERM', shutdown);
+process.once('SIGINT', shutdown);
