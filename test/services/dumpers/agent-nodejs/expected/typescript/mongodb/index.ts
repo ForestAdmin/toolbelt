@@ -63,6 +63,10 @@ agent.addDataSource(
 //   });
 // });
 
+// Run Forest Admin workflows in this process, using an in-memory run store.
+// Runs are lost on restart; switch to `{ database: { uri: process.env.DATABASE_URL } }` to persist them.
+agent.addWorkflowExecutor({ inMemory: true });
+
 // Expose an HTTP endpoint.
 agent.mountOnStandaloneServer(Number(process.env.APPLICATION_PORT));
 
