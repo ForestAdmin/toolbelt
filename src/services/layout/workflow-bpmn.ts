@@ -226,11 +226,77 @@ function renderStep(step: StepSpec): { element: string; flows: string[] } {
   return { element, flows };
 }
 
+type DiagramNode = { id: string; tag: string };
+type DiagramEdge = { id: string; source: string; target: string };
+type Bounds = { h: number; w: number; x: number; y: number };
+
+/** BPMN element footprint by shape kind (events / gateways / tasks). */
+function elementSize(tag: string): { h: number; w: number } {
+  if (tag.endsWith('Event')) return { h: 36, w: 36 };
+  if (tag === 'exclusiveGateway') return { h: 50, w: 50 };
+
+  return { h: 80, w: 100 };
+}
+
+/**
+ * A minimal left-to-right BPMN-DI diagram. bpmn-js (the workflow editor) refuses
+ * to import a `definitions` with no `<bpmndi:BPMNDiagram>` ("Import BPMN Error"),
+ * so every element needs a shape and every sequence flow an edge — a naive layout
+ * the user can rearrange is enough to make the workflow editable.
+ */
+function renderDiagram(nodes: DiagramNode[], edges: DiagramEdge[]): string[] {
+  const laneCenter = 160;
+  const gap = 60;
+  let cursor = 160;
+  const bounds: Record<string, Bounds> = {};
+  nodes.forEach(node => {
+    const { h, w } = elementSize(node.tag);
+    bounds[node.id] = { h, w, x: cursor, y: laneCenter - h / 2 };
+    cursor += w + gap;
+  });
+
+  const shapes = nodes
+    .map(node => {
+      const b = bounds[node.id];
+      if (!b) return '';
+
+      return `      <bpmndi:BPMNShape id="${node.id}_di" bpmnElement="${node.id}"><dc:Bounds x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" /></bpmndi:BPMNShape>`;
+    })
+    .filter(Boolean);
+
+  const flowEdges = edges
+    .map(edge => {
+      const from = bounds[edge.source];
+      const to = bounds[edge.target];
+      if (!from || !to) return '';
+      const x1 = from.x + from.w;
+      const y1 = from.y + from.h / 2;
+      const x2 = to.x;
+      const y2 = to.y + to.h / 2;
+
+      return `      <bpmndi:BPMNEdge id="${edge.id}_di" bpmnElement="${edge.id}"><di:waypoint x="${x1}" y="${y1}" /><di:waypoint x="${x2}" y="${y2}" /></bpmndi:BPMNEdge>`;
+    })
+    .filter(Boolean);
+
+  return [
+    '  <bpmndi:BPMNDiagram id="BPMNDiagram_1">',
+    '    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">',
+    ...shapes,
+    ...flowEdges,
+    '    </bpmndi:BPMNPlane>',
+    '  </bpmndi:BPMNDiagram>',
+  ];
+}
+
 /** Compile a workflow `steps` spec into BPMN XML (validates first). */
 export function compileWorkflowToBpmn(input: Partial<WorkflowSpec>): string {
   const spec = validateWorkflowSpec(input);
   const entryId = spec.start as string;
 
+  const nodes: DiagramNode[] = [{ id: 'Start_1', tag: 'startEvent' }];
+  const edges: DiagramEdge[] = [
+    { id: flowId('Start_1', entryId), source: 'Start_1', target: entryId },
+  ];
   const elements: string[] = [
     `    <bpmn:startEvent id="Start_1"><bpmn:outgoing>${flowId(
       'Start_1',
@@ -248,15 +314,20 @@ export function compileWorkflowToBpmn(input: Partial<WorkflowSpec>): string {
     const rendered = renderStep(step);
     elements.push(rendered.element);
     flows.push(...rendered.flows);
+    nodes.push({ id: step.id, tag: STEP_TYPES[step.type].element });
+    branchesOf(step).forEach(branch => {
+      edges.push({ id: flowId(step.id, branch.next), source: step.id, target: branch.next });
+    });
   });
 
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:forest="https://forestadmin.com">',
+    '<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:forest="https://app.forestadmin.com" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">',
     '  <bpmn:process id="Process_1" isExecutable="true">',
     ...elements,
     ...flows,
     '  </bpmn:process>',
+    ...renderDiagram(nodes, edges),
     '</bpmn:definitions>',
     '',
   ].join('\n');
