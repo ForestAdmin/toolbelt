@@ -194,8 +194,13 @@ function stepAttributes(step: StepSpec): string {
   const def = STEP_TYPES[step.type];
   const attrs: string[] = [];
   if ('alternative' in def) attrs.push(`forest:alternative="${def.alternative}"`);
-  if (step.auto) attrs.push('forest:automaticExecution="true"');
-  if (step.autoComplete) attrs.push('forest:automaticCompletion="true"');
+  // `automaticExecution`/`automaticCompletion` are only meaningful on serviceTask
+  // steps — a `guidance` step is a manual userTask the UI cannot auto-complete, so
+  // emitting the flag there produces BPMN the editor can't round-trip.
+  if (def.element === 'serviceTask') {
+    if (step.auto) attrs.push('forest:automaticExecution="true"');
+    if (step.autoComplete) attrs.push('forest:automaticCompletion="true"');
+  }
   if (step.prompt) attrs.push(`forest:description="${xml(step.prompt)}"`);
   if (step.type === 'mcp' && step.mcpServerId)
     attrs.push(`forest:mcpServerId="${xml(step.mcpServerId)}"`);
