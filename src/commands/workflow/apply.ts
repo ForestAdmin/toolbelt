@@ -1,3 +1,4 @@
+import type { LayoutScope } from '../../services/layout/types';
 import type { WorkflowSpec } from '../../services/layout/workflow-bpmn';
 import type { Config } from '@oclif/core';
 
@@ -30,6 +31,80 @@ async function readInput(filePath: string | undefined): Promise<string> {
   if (!filePath || filePath === '-') return readStdin();
 
   return readFile(filePath, 'utf8');
+}
+
+/** Find the workflow to upsert: by explicit `id`, else by name + collection. */
+function findWorkflowMatch(
+  existing: RemoteWorkflow[],
+  id: string | undefined,
+  name: string,
+  collection: string,
+): RemoteWorkflow | undefined {
+  if (id) return existing.find(workflow => workflow.id === id);
+
+  return existing.find(workflow => workflow.name === name && workflow.collectionId === collection);
+}
+
+/** Add a new (BPMN-less) workflow shell to the layout. */
+function addWorkflowShell(
+  manager: LayoutManager,
+  scope: LayoutScope,
+  shell: { collection: string; id: string; name: string; position: number; segments: string[] },
+): Promise<void> {
+  return manager.patchDomain(
+    'workflows',
+    [
+      {
+        op: 'add',
+        path: '/workflows/-',
+        value: {
+          collectionId: shell.collection,
+          id: shell.id,
+          isVisible: true,
+          name: shell.name,
+          position: shell.position,
+          segmentIds: shell.segments,
+        },
+      },
+    ],
+    scope,
+  );
+}
+
+/**
+ * Upload the compiled BPMN and link it to the workflow. If this fails right
+ * after a new shell was created, roll the shell back (best-effort) so no
+ * unusable, BPMN-less workflow is left behind (an existing workflow is left as
+ * is — its previous BPMN stays linked and re-applying converges).
+ */
+async function uploadAndLinkBpmn(
+  manager: LayoutManager,
+  scope: LayoutScope,
+  params: { bpmn: string; collection: string; created: boolean; id: string },
+): Promise<void> {
+  try {
+    const renderingId = await manager.getRenderingId(scope);
+    const version = await manager.uploadWorkflowBpmn(
+      scope,
+      params.id,
+      params.collection,
+      renderingId,
+      params.bpmn,
+    );
+    await manager.patchDomain(
+      'workflows',
+      [{ op: 'replace', path: `/workflows/${params.id}/bpmnAwsS3Identifier`, value: version }],
+      scope,
+    );
+  } catch (uploadError) {
+    if (params.created) {
+      await manager
+        .patchDomain('workflows', [{ op: 'remove', path: `/workflows/${params.id}` }], scope)
+        .catch(() => undefined);
+    }
+
+    throw uploadError;
+  }
 }
 
 /**
@@ -100,41 +175,32 @@ export default class WorkflowApplyCommand extends AbstractAuthenticatedCommand {
 
     try {
       const existing = (await manager.getLayoutDomain('workflows', scope)) as RemoteWorkflow[];
-      const match = existing.find(workflow =>
-        spec.id
-          ? workflow.id === spec.id
-          : workflow.name === name && workflow.collectionId === collection,
-      );
-      const id = match?.id ?? spec.id ?? randomUUID();
+      const match = findWorkflowMatch(existing, spec.id, name, collection);
 
-      if (!match) {
-        await manager.patchDomain(
-          'workflows',
-          [
-            {
-              op: 'add',
-              path: '/workflows/-',
-              value: {
-                collectionId: collection,
-                id,
-                isVisible: true,
-                name,
-                position: existing.length,
-                segmentIds: spec.segments ?? [],
-              },
-            },
-          ],
-          scope,
+      // `collectionId` is add-only server-side: matching an existing workflow by
+      // `id` but pointing it at a different collection would upload BPMN for the
+      // new collection against the old shell, silently corrupting it. Reject it.
+      if (match && match.collectionId !== collection) {
+        throw new Error(
+          `Workflow "${match.id}" is on collection "${match.collectionId}", not "${collection}". ` +
+            'A workflow cannot change collection — remove the `id`/rename to create a new one.',
         );
       }
 
-      const renderingId = await manager.getRenderingId(scope);
-      const version = await manager.uploadWorkflowBpmn(scope, id, collection, renderingId, bpmn);
-      await manager.patchDomain(
-        'workflows',
-        [{ op: 'replace', path: `/workflows/${id}/bpmnAwsS3Identifier`, value: version }],
-        scope,
-      );
+      const id = match?.id ?? spec.id ?? randomUUID();
+      const created = !match;
+
+      if (created) {
+        await addWorkflowShell(manager, scope, {
+          collection,
+          id,
+          name,
+          position: existing.length,
+          segments: spec.segments ?? [],
+        });
+      }
+
+      await uploadAndLinkBpmn(manager, scope, { bpmn, collection, created, id });
 
       this.logger.success(
         `${match ? 'Updated' : 'Created'} workflow ${this.chalk.bold(
