@@ -2,7 +2,7 @@ import type { LayoutScope } from '../../services/layout/types';
 import type { Config } from '@oclif/core';
 
 import { Args, Flags } from '@oclif/core';
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
 import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
@@ -50,6 +50,29 @@ async function uploadWorkflowBpmns(
   await manager.patchDomain('workflows', bpmnOps, scope);
 }
 
+/** Read `workflows/<id>.bpmn` sidecars for file workflows that carry no `steps` (steps take precedence). */
+function readWorkflowSidecars(
+  docs: { workflows?: unknown[] },
+  filePath: string,
+  stepWorkflowsList: Array<{ id: string }>,
+): Array<{ bpmn: string; workflow: { collectionId: string; id: string; name: string } }> {
+  const stepIds = new Set(stepWorkflowsList.map(workflow => workflow.id));
+  const dir = path.join(path.dirname(filePath), 'workflows');
+
+  return ((docs.workflows ?? []) as Array<{ collectionId: string; id: string; name?: string }>)
+    .filter(workflow => !stepIds.has(workflow.id))
+    .map(workflow => ({ file: path.join(dir, `${workflow.id}.bpmn`), workflow }))
+    .filter(entry => existsSync(entry.file))
+    .map(entry => ({
+      bpmn: readFileSync(entry.file, 'utf8'),
+      workflow: {
+        collectionId: entry.workflow.collectionId,
+        id: entry.workflow.id,
+        name: entry.workflow.name ?? entry.workflow.id,
+      },
+    }));
+}
+
 /**
  * `forest layout apply` — compute the JSON-Patch plan between forest-layout.json
  * and the live rendering, then PATCH it to the environment. Idempotent: an
@@ -88,6 +111,10 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       char: 'f',
       description: 'Skip the confirmation prompt.',
     }),
+    'with-workflows': Flags.boolean({
+      description:
+        'Also upload workflow BPMN sidecars (workflows/<id>.bpmn) to the target env — the round-trip counterpart of `pull --with-workflows`.',
+    }),
   };
 
   constructor(argv: string[], config: Config, plan?) {
@@ -117,12 +144,19 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
     // BEFORE diffing, so the shell `add` and the BPMN link target the same id.
     const bpmnWorkflows = stepWorkflows(docs);
 
+    // Round-trip: workflows with a `workflows/<id>.bpmn` sidecar and no `steps` are
+    // uploaded verbatim to the target env (faithful transport, incl. UI-authored ones).
+    const sidecarPlans = flags['with-workflows']
+      ? readWorkflowSidecars(docs, filePath, bpmnWorkflows)
+      : [];
+
     const remote = await fetchRemoteDocs(manager, scope, domainsInFile(docs));
     const { ops, warnings } = diffAllDomains(remote, docs);
 
     // Compile each step-graph and skip the ones whose BPMN already matches what
     // is stored — so re-applying a file with `steps` stays idempotent.
-    const renderingId = bpmnWorkflows.length > 0 ? await manager.getRenderingId(scope) : 0;
+    const renderingId =
+      bpmnWorkflows.length > 0 || sidecarPlans.length > 0 ? await manager.getRenderingId(scope) : 0;
     const remoteWorkflows = (remote.workflows ?? []) as Array<Record<string, unknown>>;
     const bpmnPlans = await planWorkflowBpmn(
       manager,
@@ -139,8 +173,11 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
         `  ⚙ workflow « ${plan.workflow.name} »: compile + upload BPMN (${plan.workflow.steps.length} steps)`,
       ),
     );
+    sidecarPlans.forEach(plan =>
+      this.log(`  ↑ workflow « ${plan.workflow.name} »: upload BPMN sidecar`),
+    );
 
-    if (ops.length === 0 && bpmnToUpload.length === 0) {
+    if (ops.length === 0 && bpmnToUpload.length === 0 && sidecarPlans.length === 0) {
       this.logger.success('Nothing to apply: the environment already matches the file.');
       return;
     }
@@ -166,6 +203,8 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       // BPMN authoring: shells now exist, so upload each changed step-graph and
       // link the returned versions (one patch).
       await uploadWorkflowBpmns(manager, scope, bpmnToUpload, renderingId);
+      // Round-trip: upload the sidecar BPMNs verbatim to the target env.
+      await uploadWorkflowBpmns(manager, scope, sidecarPlans, renderingId);
     } catch (error) {
       if (error instanceof LayoutApiError && error.status !== 401) {
         this.logger.error(explainApiError(error, ops));
@@ -181,7 +220,8 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       throw error;
     }
 
-    const bpmnNote = bpmnToUpload.length > 0 ? ` + ${bpmnToUpload.length} workflow BPMN` : '';
+    const bpmnCount = bpmnToUpload.length + sidecarPlans.length;
+    const bpmnNote = bpmnCount > 0 ? ` + ${bpmnCount} workflow BPMN` : '';
     this.logger.success(
       `Applied ${ops.length} change${ops.length === 1 ? '' : 's'}${bpmnNote} to ${this.chalk.bold(
         scope.environmentName,
