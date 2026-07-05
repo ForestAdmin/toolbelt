@@ -19,6 +19,7 @@ import {
   stepWorkflows,
 } from '../../services/layout/sync';
 import { LAYOUT_DOMAINS } from '../../services/layout/types';
+import { sidecarPath } from '../../services/layout/workflow-sidecar';
 
 /** Upload each changed step-graph's BPMN to S3 and link the returned versions (one patch). */
 async function uploadWorkflowBpmns(
@@ -59,18 +60,24 @@ function readWorkflowSidecars(
   const stepIds = new Set(stepWorkflowsList.map(workflow => workflow.id));
   const dir = path.join(path.dirname(filePath), 'workflows');
 
-  return ((docs.workflows ?? []) as Array<{ collectionId: string; id: string; name?: string }>)
-    .filter(workflow => !stepIds.has(workflow.id))
-    .map(workflow => ({ file: path.join(dir, `${workflow.id}.bpmn`), workflow }))
-    .filter(entry => existsSync(entry.file))
-    .map(entry => ({
-      bpmn: readFileSync(entry.file, 'utf8'),
-      workflow: {
-        collectionId: entry.workflow.collectionId,
-        id: entry.workflow.id,
-        name: entry.workflow.name ?? entry.workflow.id,
-      },
-    }));
+  return (
+    ((docs.workflows ?? []) as Array<{ collectionId: string; id: string; name?: string }>)
+      .filter(workflow => !stepIds.has(workflow.id))
+      // `sidecarPath` returns null for a traversal-unsafe id, so a crafted layout
+      // file can never make apply read a file outside the workflows/ directory.
+      .map(workflow => ({ file: sidecarPath(dir, workflow.id), workflow }))
+      .filter((entry): entry is { file: string; workflow: (typeof entry)['workflow'] } =>
+        Boolean(entry.file && existsSync(entry.file)),
+      )
+      .map(entry => ({
+        bpmn: readFileSync(entry.file, 'utf8'),
+        workflow: {
+          collectionId: entry.workflow.collectionId,
+          id: entry.workflow.id,
+          name: entry.workflow.name ?? entry.workflow.id,
+        },
+      }))
+  );
 }
 
 /**
