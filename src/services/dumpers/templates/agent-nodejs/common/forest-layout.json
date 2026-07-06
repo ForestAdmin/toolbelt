@@ -10596,7 +10596,7 @@
       "id": "30d581e3-294e-4790-b723-0f16509ecae0",
       "name": "Onboarding",
       "position": 0,
-      "isVisible": true,
+      "isVisible": false,
       "segmentIds": [],
       "collectionId": "kyc_cases",
       "bpmnAwsS3Identifier": "vcjb5bLs1WKc.Vut36YtL5ukxT1W2IvV"
@@ -10605,7 +10605,7 @@
       "id": "d07aa5ee-9a49-4916-a1b5-1f953bfe9a8e",
       "name": "EDD",
       "position": 1,
-      "isVisible": true,
+      "isVisible": false,
       "segmentIds": [],
       "collectionId": "kyc_cases",
       "bpmnAwsS3Identifier": "B_IUf36eX9VqxxXE4Y6MxoKeIqh4Va2y"
@@ -10614,7 +10614,7 @@
       "id": "d0289f67-2c9e-4c69-b1ee-ecbbace841b3",
       "name": "AML alert review",
       "position": 0,
-      "isVisible": true,
+      "isVisible": false,
       "segmentIds": [],
       "collectionId": "aml_alerts",
       "bpmnAwsS3Identifier": "5uXu8_doUpT8IjX2YrYTWej_7EF0X4yD"
@@ -10623,7 +10623,7 @@
       "id": "9d564d80-19d1-4ce4-bb4b-aaf41e7ef5b6",
       "name": "Request enhanced investigation",
       "position": 1,
-      "isVisible": true,
+      "isVisible": false,
       "segmentIds": [],
       "collectionId": "aml_alerts",
       "bpmnAwsS3Identifier": "K8w0ReYURPWIKdxP9Uh2FQ2NRuok2R5R"
@@ -10632,7 +10632,7 @@
       "id": "52e0acb4-6064-472a-9823-cdfd7fa7a3ab",
       "name": "Process refund",
       "position": 0,
-      "isVisible": true,
+      "isVisible": false,
       "segmentIds": [],
       "collectionId": "refund_requests",
       "bpmnAwsS3Identifier": "wLu2vCMsYb3NHnhKSwG4o67amF5my06f"
@@ -10641,7 +10641,7 @@
       "id": "71f692b4-fe4f-476d-8251-fdc5af1ec51e",
       "name": "Notify via Zendesk",
       "position": 1,
-      "isVisible": true,
+      "isVisible": false,
       "segmentIds": [],
       "collectionId": "customers",
       "bpmnAwsS3Identifier": "FfzRj0.lJUou44XqKq1EMvMwfk39LG64"
@@ -10650,7 +10650,7 @@
       "id": "f01b9e61-4156-47b8-b6a1-5c90adbcd2ba",
       "name": "Demo Onboarding",
       "position": 2,
-      "isVisible": true,
+      "isVisible": false,
       "segmentIds": [],
       "collectionId": "kyc_cases",
       "bpmnAwsS3Identifier": "IB3gCSAXxkHfG1dGzJnAlw7jhyjFYXdW"
@@ -10659,7 +10659,7 @@
       "id": "e25c6237-b882-498b-9655-b16b30131b10",
       "name": "Verify Document",
       "position": 0,
-      "isVisible": true,
+      "isVisible": false,
       "segmentIds": [],
       "collectionId": "kyc_documents",
       "bpmnAwsS3Identifier": "U1HW28yJwu0EZQ3Ic7VJE_knh8pQXseH"
@@ -10668,7 +10668,7 @@
       "id": "c8ab4b5d-20df-4d28-9160-0d4376282c90",
       "name": "Chargeback flow",
       "position": 0,
-      "isVisible": true,
+      "isVisible": false,
       "segmentIds": [],
       "collectionId": "chargebacks",
       "bpmnAwsS3Identifier": "zrUnNJkk_ydD3t2W3ezAGhwM_6I92L9c"
