@@ -1,4 +1,5 @@
 import type { LayoutScope } from '../../services/layout/types';
+import type { SidecarFile, SidecarUpload } from '../../services/layout/workflow-sidecar';
 import type { Config } from '@oclif/core';
 
 import { Args, Flags } from '@oclif/core';
@@ -19,7 +20,13 @@ import {
   stepWorkflows,
 } from '../../services/layout/sync';
 import { LAYOUT_DOMAINS } from '../../services/layout/types';
-import { sidecarPath } from '../../services/layout/workflow-sidecar';
+import {
+  hasWorkflowBpmnOps,
+  planSidecarUploads,
+  resolveRemoteWorkflow,
+  sidecarPath,
+  stripWorkflowBpmnOps,
+} from '../../services/layout/workflow-sidecar';
 
 /** Upload each changed step-graph's BPMN to S3 and link the returned versions (one patch). */
 async function uploadWorkflowBpmns(
@@ -51,7 +58,6 @@ async function uploadWorkflowBpmns(
   await manager.patchDomain('workflows', bpmnOps, scope);
 }
 
-type SidecarPlan = { bpmn: string; workflow: { collectionId: string; id: string; name: string } };
 type FileWorkflow = {
   bpmnAwsS3Identifier?: string;
   collectionId: string;
@@ -61,19 +67,24 @@ type FileWorkflow = {
 
 /**
  * Read `workflows/<id>.bpmn` sidecars for file workflows that carry no `steps`
- * (steps take precedence). Returns the upload plans plus the ids of workflows
- * that had BPMN in the file but no sidecar on disk — their BPMN cannot be
- * transported, so the caller must warn and must not patch their (source) ref.
+ * (steps take precedence). Only workflows that declare BPMN in the layout
+ * (`bpmnAwsS3Identifier`) are considered:
+ * - declared BPMN + sidecar on disk → an upload plan;
+ * - declared BPMN, no sidecar → `missing`: its BPMN cannot be transported, the
+ *   caller warns and never patches the (source) ref;
+ * - sidecar on disk but NO declared BPMN → `orphaned`: a leftover file must not
+ *   silently attach BPMN to a workflow that never had one — warn and skip.
  */
 function readWorkflowSidecars(
   docs: { workflows?: unknown[] },
   filePath: string,
   stepWorkflowsList: Array<{ id: string }>,
-): { missing: string[]; plans: SidecarPlan[] } {
+): { missing: string[]; orphaned: string[]; plans: SidecarFile[] } {
   const stepIds = new Set(stepWorkflowsList.map(workflow => workflow.id));
   const dir = path.join(path.dirname(filePath), 'workflows');
-  const plans: SidecarPlan[] = [];
+  const plans: SidecarFile[] = [];
   const missing: string[] = [];
+  const orphaned: string[] = [];
 
   ((docs.workflows ?? []) as FileWorkflow[])
     .filter(workflow => !stepIds.has(workflow.id))
@@ -81,86 +92,26 @@ function readWorkflowSidecars(
       // `sidecarPath` returns null for a traversal-unsafe id, so a crafted layout
       // file can never make apply read a file outside the workflows/ directory.
       const file = sidecarPath(dir, workflow.id);
-      if (file && existsSync(file)) {
+      const hasSidecar = file !== null && existsSync(file);
+
+      if (!workflow.bpmnAwsS3Identifier) {
+        if (hasSidecar) orphaned.push(workflow.id);
+      } else if (hasSidecar) {
         plans.push({
-          bpmn: readFileSync(file, 'utf8'),
+          bpmn: readFileSync(file as string, 'utf8'),
           workflow: {
             collectionId: workflow.collectionId,
             id: workflow.id,
             name: workflow.name ?? workflow.id,
           },
         });
-      } else if (workflow.bpmnAwsS3Identifier) {
+      } else {
         // The workflow had BPMN in the source, but its bytes weren't checked in.
         missing.push(workflow.id);
       }
     });
 
-  return { missing, plans };
-}
-
-/**
- * Skip sidecar uploads whose bytes already match the BPMN stored in the target
- * (mirrors `planWorkflowBpmn` for step graphs) so re-applying an unchanged file
- * stays a no-op instead of minting a fresh S3 version every time.
- */
-async function planSidecarUploads(
-  manager: LayoutManager,
-  scope: LayoutScope,
-  plans: SidecarPlan[],
-  remoteWorkflows: Array<Record<string, unknown>>,
-  renderingId: number,
-): Promise<SidecarPlan[]> {
-  const decided = await Promise.all(
-    plans.map(async plan => {
-      const current = remoteWorkflows.find(remote => String(remote.id) === plan.workflow.id);
-      const version = current?.bpmnAwsS3Identifier;
-      if (typeof version !== 'string' || !version) return { changed: true, plan };
-
-      try {
-        const stored = await manager.getWorkflowBpmn(
-          scope,
-          plan.workflow.id,
-          plan.workflow.collectionId,
-          version,
-          renderingId,
-        );
-
-        return { changed: stored !== plan.bpmn, plan };
-      } catch (error) {
-        // Auth/permission failures must surface, not be reframed as "changed".
-        if (error instanceof LayoutApiError && (error.status === 401 || error.status === 403)) {
-          throw error;
-        }
-
-        return { changed: true, plan };
-      }
-    }),
-  );
-
-  return decided.filter(entry => entry.changed).map(entry => entry.plan);
-}
-
-/**
- * When `--with-workflows`, BPMN transport is owned by the sidecar upload, not by
- * the JSON patch: `bpmnAwsS3Identifier` is a per-environment S3 pointer and is not
- * portable. Drop it from the diff so a pulled file never patches a target workflow
- * to the source env's (nonexistent) version — for workflows with a sidecar the
- * upload links the fresh id; for those without, the target keeps its own BPMN.
- */
-function stripWorkflowBpmnOps<T extends { op: string; path: string; value?: unknown }>(
-  ops: T[],
-): T[] {
-  return ops
-    .filter(op => !/\/bpmnAwsS3Identifier$/.test(op.path))
-    .map(op => {
-      if (op.op !== 'add' || !op.value || typeof op.value !== 'object') return op;
-
-      const value = { ...(op.value as Record<string, unknown>) };
-      delete value.bpmnAwsS3Identifier;
-
-      return { ...op, value };
-    });
+  return { missing, orphaned, plans };
 }
 
 /**
@@ -219,7 +170,7 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
     const { args, flags } = await this.parse(LayoutApplyCommand);
 
     const filePath = path.resolve(process.cwd(), args.file);
-    const { docs } = parseLayoutFile(readFileSync(filePath, 'utf8'));
+    const { docs, scope: fileScope } = parseLayoutFile(readFileSync(filePath, 'utf8'));
 
     // The file header is provenance only: the target env/team is chosen here
     // (flags or interactive prompt), never defaulted to where the file was pulled
@@ -236,9 +187,13 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
 
     // Round-trip: workflows with a `workflows/<id>.bpmn` sidecar and no `steps` are
     // uploaded verbatim to the target env (faithful transport, incl. UI-authored ones).
-    const { missing: sidecarMissing, plans: sidecarAll } = flags['with-workflows']
+    const {
+      missing: sidecarMissing,
+      orphaned: sidecarOrphaned,
+      plans: sidecarAll,
+    } = flags['with-workflows']
       ? readWorkflowSidecars(docs, filePath, bpmnWorkflows)
-      : { missing: [], plans: [] };
+      : { missing: [], orphaned: [], plans: [] };
 
     const remote = await fetchRemoteDocs(manager, scope, domainsInFile(docs));
     const diff = diffAllDomains(remote, docs);
@@ -246,6 +201,8 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
     // With --with-workflows the sidecar upload owns each workflow's BPMN pointer,
     // so the non-portable `bpmnAwsS3Identifier` must never be patched from the file.
     const ops = flags['with-workflows'] ? stripWorkflowBpmnOps(diff.ops) : diff.ops;
+
+    this.warnOnCrossEnvBpmnRefs(flags['with-workflows'], ops, fileScope.environmentId, scope);
 
     // Compile each step-graph and skip the ones whose BPMN already matches what
     // is stored — so re-applying a file with `steps` (or a sidecar) stays idempotent.
@@ -268,7 +225,7 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       renderingId,
     );
 
-    this.logPlan({ bpmnToUpload, ops, sidecarMissing, sidecarPlans, warnings });
+    this.logPlan({ bpmnToUpload, ops, sidecarMissing, sidecarOrphaned, sidecarPlans, warnings });
 
     if (ops.length === 0 && bpmnToUpload.length === 0 && sidecarPlans.length === 0) {
       this.logger.success('Nothing to apply: the environment already matches the file.');
@@ -298,6 +255,30 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
   }
 
   /**
+   * Applying a file pulled from ANOTHER environment without `--with-workflows`
+   * would patch its `bpmnAwsS3Identifier` pointers into the target, where the
+   * S3 objects do not exist (the pointer is env-local). The ops are kept — a
+   * same-env restore legitimately rewrites its own pointers, and the header may
+   * be wrong or hand-edited — but the user is warned loudly beforehand.
+   */
+  private warnOnCrossEnvBpmnRefs(
+    withWorkflows: boolean,
+    ops: Array<{ op: string; path: string; value?: unknown }>,
+    fileEnvironmentId: number | undefined,
+    scope: LayoutScope,
+  ): void {
+    if (withWorkflows || !hasWorkflowBpmnOps(ops)) return;
+    if (fileEnvironmentId === undefined || fileEnvironmentId === scope.environmentId) return;
+
+    this.logger.warn(
+      'This file was pulled from a different environment and the plan patches workflow BPMN ' +
+        'references (`bpmnAwsS3Identifier`), which are NOT portable across environments — the ' +
+        'target would point at S3 objects that do not exist there. Use `pull --with-workflows` ' +
+        'then `apply --with-workflows` to transport the BPMN itself.',
+    );
+  }
+
+  /**
    * Push the plan: one atomic PATCH per domain (stable order), then the step and
    * sidecar BPMN uploads. Returns false (and exits 2) on a recoverable API error;
    * re-running converges since each domain patch is atomic.
@@ -309,7 +290,7 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       bpmnToUpload: Parameters<typeof uploadWorkflowBpmns>[2];
       ops: ReturnType<typeof diffAllDomains>['ops'];
       renderingId: number;
-      sidecarPlans: SidecarPlan[];
+      sidecarPlans: SidecarUpload[];
     },
   ): Promise<boolean> {
     try {
@@ -326,9 +307,17 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
         );
       }
 
-      // Shells now exist, so upload each changed step-graph, then the sidecars.
+      // Shells now exist, so upload each changed step-graph, then the sidecars —
+      // each sidecar to its TARGET-env workflow id (resolved after the patches
+      // for workflows this apply just added).
       await uploadWorkflowBpmns(manager, scope, plan.bpmnToUpload, plan.renderingId);
-      await uploadWorkflowBpmns(manager, scope, plan.sidecarPlans, plan.renderingId);
+      const sidecarUploads = await this.resolveSidecarTargets(manager, scope, plan.sidecarPlans);
+      await uploadWorkflowBpmns(
+        manager,
+        scope,
+        sidecarUploads.map(upload => ({ bpmn: upload.bpmn, workflow: upload.target })),
+        plan.renderingId,
+      );
 
       return true;
     } catch (error) {
@@ -346,12 +335,54 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
     }
   }
 
-  /** Print the human-readable plan preview (diff + workflow uploads + missing-sidecar warning). */
+  /**
+   * Resolve the sidecars whose target workflow did not exist before the domain
+   * patches (they were `add`ed by this very apply): re-fetch the workflows
+   * document once and match id-then-name. Still-unmatched sidecars are skipped
+   * with a warning — never uploaded under a nonexistent id.
+   */
+  private async resolveSidecarTargets(
+    manager: LayoutManager,
+    scope: LayoutScope,
+    plans: SidecarUpload[],
+  ): Promise<Array<SidecarUpload & { target: { collectionId: string; id: string } }>> {
+    const unresolved = plans.some(plan => plan.target === null);
+    const refreshed = unresolved
+      ? ((await manager.getLayoutDomain('workflows', scope)) as Array<Record<string, unknown>>)
+      : [];
+
+    return plans.flatMap(plan => {
+      if (plan.target) return [{ ...plan, target: plan.target }];
+
+      const remote = resolveRemoteWorkflow(refreshed, plan.workflow);
+      if (!remote) {
+        this.logger.warn(
+          `Workflow « ${plan.workflow.name} » was not found in the target environment after ` +
+            'the patch — its BPMN sidecar was not uploaded.',
+        );
+
+        return [];
+      }
+
+      return [
+        {
+          ...plan,
+          target: {
+            collectionId: String(remote.collectionId ?? plan.workflow.collectionId),
+            id: String(remote.id),
+          },
+        },
+      ];
+    });
+  }
+
+  /** Print the human-readable plan preview (diff + workflow uploads + sidecar warnings). */
   private logPlan(preview: {
     bpmnToUpload: Array<{ workflow: { name: string; steps: unknown[] } }>;
     ops: Parameters<typeof formatPlan>[0];
     sidecarMissing: string[];
-    sidecarPlans: SidecarPlan[];
+    sidecarOrphaned: string[];
+    sidecarPlans: SidecarUpload[];
     warnings: Parameters<typeof formatPlan>[1];
   }): void {
     if (preview.sidecarMissing.length > 0) {
@@ -359,6 +390,14 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
         `${preview.sidecarMissing.length} workflow(s) have BPMN in the file but no ` +
           `workflows/<id>.bpmn sidecar — their BPMN was not transported (the target keeps its ` +
           `own): ${preview.sidecarMissing.join(', ')}.`,
+      );
+    }
+    if (preview.sidecarOrphaned.length > 0) {
+      this.logger.warn(
+        `${preview.sidecarOrphaned.length} sidecar file(s) match a workflow that declares no ` +
+          `BPMN in the layout file — skipped (not uploaded): ${preview.sidecarOrphaned.join(
+            ', ',
+          )}.`,
       );
     }
 
