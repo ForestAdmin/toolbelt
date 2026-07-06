@@ -765,12 +765,11 @@ describe('demo forest-layout.json asset', () => {
   });
 
   it('only references the 8 fintech collections in folders', () => {
+    expect.hasAssertions();
     const layout = JSON.parse(readFileSync(file, 'utf8'));
     const referenced = (layout.folders ?? []).flatMap(
       (folder: { children: Array<{ id: string; type: string }> }) =>
-        folder.children
-          .filter(child => child.type === 'collection')
-          .map(child => child.id),
+        folder.children.filter(child => child.type === 'collection').map(child => child.id),
     );
 
     expect(referenced.length).toBeGreaterThan(0);
@@ -778,20 +777,23 @@ describe('demo forest-layout.json asset', () => {
   });
 
   it('only uses relation names that exist in the fintech datasource', () => {
+    expect.hasAssertions();
     const layout = JSON.parse(readFileSync(file, 'utf8'));
 
     // Summary views: `has-many` blocks reference a relation of their collection.
-    (layout.layout?.collections ?? []).forEach(
-      (collection: { id: string; layout: { viewEdit?: { summaryView?: unknown } } }) => {
-        // eslint-disable-next-line no-restricted-syntax
-        for (const node of walkObjects(collection.layout?.viewEdit?.summaryView)) {
-          if (String(node.type).endsWith('/has-many')) {
-            const name = (node.data as { name: string }).name;
+    const hasManyRefs = (layout.layout?.collections ?? []).flatMap(
+      (collection: { id: string; layout: { viewEdit?: { summaryView?: unknown } } }) =>
+        [...walkObjects(collection.layout?.viewEdit?.summaryView)]
+          .filter(node => String(node.type).endsWith('/has-many'))
+          .map(node => ({
+            collectionId: collection.id,
+            name: (node.data as { name: string }).name,
+          })),
+    );
 
-            expect(FINTECH_RELATIONS[collection.id]).toContain(name);
-          }
-        }
-      },
+    expect(hasManyRefs.length).toBeGreaterThan(0);
+    hasManyRefs.forEach(({ collectionId, name }: { collectionId: string; name: string }) =>
+      expect(FINTECH_RELATIONS[collectionId]).toContain(name),
     );
 
     // Workspace components: a filter condition with a subFieldName traverses a
@@ -816,6 +818,7 @@ describe('demo forest-layout.json asset', () => {
   });
 
   it('numbers smart action endpoints by the datasource addAction order', () => {
+    expect.hasAssertions();
     const layout = JSON.parse(readFileSync(file, 'utf8'));
 
     // addAction calls in @forestadmin/datasource-demo-fintech@1.0.1
@@ -866,6 +869,7 @@ describe('demo forest-layout.json asset', () => {
   });
 
   it('keeps the non-executable workflows hidden', () => {
+    expect.hasAssertions();
     const layout = JSON.parse(readFileSync(file, 'utf8'));
     const workflows = (layout.workflows ?? []) as Array<{ isVisible: boolean; steps?: unknown }>;
 
