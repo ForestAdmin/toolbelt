@@ -57,6 +57,23 @@ export type WorkflowSpec = {
 
 const ID_RE = /^[A-Z_a-z][\w-]*$/;
 
+/** Ids the compiler generates itself — a step id colliding with one of these
+ * (or with a generated `flow_*` sequence-flow / `*_di` diagram id) would produce
+ * duplicate XML ids, which bpmn-js refuses to import. */
+const RESERVED_IDS = new Set([
+  'Start_1',
+  'Process_1',
+  'Definitions_1',
+  'BPMNDiagram_1',
+  'BPMNPlane_1',
+]);
+
+/** The step types that compile to a `serviceTask` (the only element supporting
+ * `forest:automaticExecution`/`forest:automaticCompletion`). */
+const SERVICE_TASK_TYPES = Object.entries(STEP_TYPES)
+  .filter(([, def]) => def.element === 'serviceTask')
+  .map(([type]) => type);
+
 function xml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -76,6 +93,13 @@ function validateStepIdentity(step: StepSpec, seen: Set<string>): void {
   if (!step.id || !ID_RE.test(step.id)) {
     throw new WorkflowSpecError(
       `Each step needs an \`id\` matching ${ID_RE} (got "${step.id ?? ''}").`,
+    );
+  }
+
+  if (RESERVED_IDS.has(step.id) || step.id.startsWith('flow_') || step.id.endsWith('_di')) {
+    throw new WorkflowSpecError(
+      `Step "${step.id}": this id is reserved for generated BPMN elements ` +
+        `(${[...RESERVED_IDS].join(', ')}, \`flow_*\`, \`*_di\`).`,
     );
   }
 
@@ -117,6 +141,13 @@ function validateLinkStep(step: StepSpec): void {
 
 function validateStep(step: StepSpec, seen: Set<string>): void {
   validateStepIdentity(step, seen);
+
+  if ((step.auto || step.autoComplete) && STEP_TYPES[step.type].element !== 'serviceTask') {
+    throw new WorkflowSpecError(
+      `Step "${step.id}": \`auto\`/\`autoComplete\` are only supported on ` +
+        `${SERVICE_TASK_TYPES.join(', ')} steps.`,
+    );
+  }
 
   if (step.type === 'end') {
     if (step.next || step.branches) {
@@ -167,9 +198,23 @@ export function validateWorkflowSpec(spec: Partial<WorkflowSpec>): WorkflowSpec 
   };
 }
 
-function flowId(source: string, target: string): string {
-  return `flow_${source}_${target}`;
+/**
+ * Allocate a unique, deterministic sequence-flow id. `flow_${source}_${target}`
+ * alone is not unique — two condition branches can point at the same target, and
+ * underscores in step ids can make distinct pairs render the same string — so
+ * collisions get a stable numeric suffix (`_2`, `_3`, …) in spec order.
+ */
+function allocateFlowId(source: string, target: string, used: Set<string>): string {
+  const base = `flow_${source}_${target}`;
+  let id = base;
+  for (let n = 2; used.has(id); n += 1) id = `${base}_${n}`;
+  used.add(id);
+
+  return id;
 }
+
+/** A sequence flow with its allocated id (shared by the element, flow and DI edge). */
+type FlowSpec = { branch: BranchSpec; id: string; source: string };
 
 /** The outgoing transitions of a step: a condition's branches, else its `next`. */
 function branchesOf(step: StepSpec): BranchSpec[] {
@@ -179,14 +224,11 @@ function branchesOf(step: StepSpec): BranchSpec[] {
 }
 
 /** One `<bpmn:sequenceFlow>` (template only, no concatenation). */
-function renderFlow(stepId: string, branch: BranchSpec): string {
-  const nameAttr = branch.answer ? ` name="${xml(branch.answer)}"` : '';
-  const colorAttr = branch.color ? ` forest:buttonColor="${xml(branch.color)}"` : '';
+function renderFlow(flow: FlowSpec): string {
+  const nameAttr = flow.branch.answer ? ` name="${xml(flow.branch.answer)}"` : '';
+  const colorAttr = flow.branch.color ? ` forest:buttonColor="${xml(flow.branch.color)}"` : '';
 
-  return `    <bpmn:sequenceFlow id="${flowId(
-    stepId,
-    branch.next,
-  )}" sourceRef="${stepId}" targetRef="${branch.next}"${nameAttr}${colorAttr} />`;
+  return `    <bpmn:sequenceFlow id="${flow.id}" sourceRef="${flow.source}" targetRef="${flow.branch.next}"${nameAttr}${colorAttr} />`;
 }
 
 /** The `forest:*` attribute string for a step element. */
@@ -211,19 +253,16 @@ function stepAttributes(step: StepSpec): string {
 }
 
 /** Build the BPMN element + its outgoing sequenceFlows for one step. */
-function renderStep(step: StepSpec): { element: string; flows: string[] } {
+function renderStep(step: StepSpec, flowSpecs: FlowSpec[]): { element: string; flows: string[] } {
   const name = xml(step.title ?? step.id);
-  const branches = branchesOf(step);
-  const flows = branches.map(branch => renderFlow(step.id, branch));
+  const flows = flowSpecs.map(flow => renderFlow(flow));
 
   if (step.type === 'end') {
     return { element: `    <bpmn:endEvent id="${step.id}" name="${name}"></bpmn:endEvent>`, flows };
   }
 
   const tag = STEP_TYPES[step.type].element;
-  const outgoing = branches
-    .map(branch => `<bpmn:outgoing>${flowId(step.id, branch.next)}</bpmn:outgoing>`)
-    .join('');
+  const outgoing = flowSpecs.map(flow => `<bpmn:outgoing>${flow.id}</bpmn:outgoing>`).join('');
   const element = `    <bpmn:${tag} id="${step.id}" name="${name}"${stepAttributes(
     step,
   )}>${outgoing}</bpmn:${tag}>`;
@@ -298,30 +337,30 @@ export function compileWorkflowToBpmn(input: Partial<WorkflowSpec>): string {
   const spec = validateWorkflowSpec(input);
   const entryId = spec.start as string;
 
+  const usedFlowIds = new Set<string>();
+  const entryFlowId = allocateFlowId('Start_1', entryId, usedFlowIds);
+
   const nodes: DiagramNode[] = [{ id: 'Start_1', tag: 'startEvent' }];
-  const edges: DiagramEdge[] = [
-    { id: flowId('Start_1', entryId), source: 'Start_1', target: entryId },
-  ];
+  const edges: DiagramEdge[] = [{ id: entryFlowId, source: 'Start_1', target: entryId }];
   const elements: string[] = [
-    `    <bpmn:startEvent id="Start_1"><bpmn:outgoing>${flowId(
-      'Start_1',
-      entryId,
-    )}</bpmn:outgoing></bpmn:startEvent>`,
+    `    <bpmn:startEvent id="Start_1"><bpmn:outgoing>${entryFlowId}</bpmn:outgoing></bpmn:startEvent>`,
   ];
   const flows: string[] = [
-    `    <bpmn:sequenceFlow id="${flowId(
-      'Start_1',
-      entryId,
-    )}" sourceRef="Start_1" targetRef="${entryId}" />`,
+    `    <bpmn:sequenceFlow id="${entryFlowId}" sourceRef="Start_1" targetRef="${entryId}" />`,
   ];
 
   spec.steps.forEach(step => {
-    const rendered = renderStep(step);
+    const flowSpecs: FlowSpec[] = branchesOf(step).map(branch => ({
+      branch,
+      id: allocateFlowId(step.id, branch.next, usedFlowIds),
+      source: step.id,
+    }));
+    const rendered = renderStep(step, flowSpecs);
     elements.push(rendered.element);
     flows.push(...rendered.flows);
     nodes.push({ id: step.id, tag: STEP_TYPES[step.type].element });
-    branchesOf(step).forEach(branch => {
-      edges.push({ id: flowId(step.id, branch.next), source: step.id, target: branch.next });
+    flowSpecs.forEach(flow => {
+      edges.push({ id: flow.id, source: step.id, target: flow.branch.next });
     });
   });
 
