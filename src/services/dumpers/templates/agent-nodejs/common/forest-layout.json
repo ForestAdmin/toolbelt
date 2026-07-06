@@ -10299,18 +10299,6 @@
           "isVisible": true
         },
         {
-          "id": "pg_stat_statements",
-          "type": "collection",
-          "position": 9,
-          "isVisible": false
-        },
-        {
-          "id": "pg_stat_statements_info",
-          "type": "collection",
-          "position": 10,
-          "isVisible": false
-        },
-        {
           "id": "373e9cf6-96c0-49ef-a091-fd31504301da",
           "type": "folder",
           "position": 7,
@@ -10504,41 +10492,6 @@
       "isMain": false,
       "children": [
         {
-          "id": "mambu_deposit_accounts",
-          "type": "collection",
-          "position": 3,
-          "isVisible": true,
-          "subChildren": []
-        },
-        {
-          "id": "mambu_cards",
-          "type": "collection",
-          "position": 6,
-          "isVisible": true,
-          "subChildren": []
-        },
-        {
-          "id": "mambu_clients",
-          "type": "collection",
-          "position": 7,
-          "isVisible": true,
-          "subChildren": []
-        },
-        {
-          "id": "mambu_loan_accounts",
-          "type": "collection",
-          "position": 4,
-          "isVisible": true,
-          "subChildren": []
-        },
-        {
-          "id": "mambu_transactions",
-          "type": "collection",
-          "position": 5,
-          "isVisible": true,
-          "subChildren": []
-        },
-        {
           "id": "customers",
           "type": "collection",
           "position": 1,
@@ -10581,13 +10534,6 @@
           "type": "collection",
           "position": 2,
           "isVisible": true,
-          "subChildren": []
-        },
-        {
-          "id": "internal_notes",
-          "type": "collection",
-          "position": 8,
-          "isVisible": false,
           "subChildren": []
         }
       ],
