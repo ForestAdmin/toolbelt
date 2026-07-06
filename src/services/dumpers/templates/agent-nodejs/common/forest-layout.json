@@ -2135,7 +2135,7 @@
                     {
                       "id": "5a7f37e0-3897-11f1-bc3a-1d417b3ac227",
                       "data": {
-                        "name": "kyc_documents"
+                        "name": "kycDocuments"
                       },
                       "type": "data-display/record/summary/has-many"
                     }
@@ -2154,7 +2154,7 @@
                     {
                       "id": "ebfacb40-4d45-11f1-ab6d-832e0a28197d",
                       "data": {
-                        "name": "kyc_documents"
+                        "name": "kycDocuments"
                       },
                       "type": "data-display/record/summary/has-many"
                     }
@@ -2596,7 +2596,7 @@
                     {
                       "id": "b9d5ec10-16f1-11f1-91e0-b90b7f365829",
                       "data": {
-                        "name": "kyc_documents"
+                        "name": "documents"
                       },
                       "type": "data-display/record/summary/has-many"
                     }
@@ -2846,7 +2846,7 @@
                         {
                           "id": "76790370-3899-11f1-bc3a-1d417b3ac227",
                           "data": {
-                            "name": "kyc_case"
+                            "name": "kycCase"
                           },
                           "type": "data-display/record/summary/field"
                         }
@@ -3351,7 +3351,7 @@
                         {
                           "id": "6a9e7a80-22d7-11f1-875c-75ac69028be4",
                           "data": {
-                            "name": "mambu_transaction"
+                            "name": "transaction_id"
                           },
                           "type": "data-display/record/summary/field"
                         }
@@ -4214,7 +4214,7 @@
                   {
                     "value": "{{collection6.selectedRecord.id}}",
                     "operator": "is",
-                    "fieldName": "kyc_case",
+                    "fieldName": "kycCase",
                     "subFieldName": "id",
                     "embeddedFieldName": null
                   }
