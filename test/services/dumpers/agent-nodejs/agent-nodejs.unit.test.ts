@@ -675,30 +675,207 @@ describe('services > dumpers > AgentNodeJs', () => {
 });
 
 describe('demo forest-layout.json asset', () => {
-  // Lightweight guard on the bundled (hand-trimmed) layout: it must stay valid JSON
-  // and not lose a fintech collection. Full schema validation belongs to a real
-  // `forest layout pull` regeneration.
+  // Guards on the bundled (hand-trimmed) layout: it must stay valid JSON and
+  // consistent with the @forestadmin/datasource-demo-fintech schema (the version
+  // pinned in src/services/dumpers/agent-nodejs.ts). Full schema validation
+  // belongs to a real `forest layout pull` regeneration.
+  const file = path.join(
+    __dirname,
+    '../../../../src/services/dumpers/templates/agent-nodejs/common/forest-layout.json',
+  );
+
+  const FINTECH_COLLECTIONS = [
+    'aml_alerts',
+    'cards',
+    'chargebacks',
+    'customers',
+    'kyc_cases',
+    'kyc_documents',
+    'refund_requests',
+    'sar_reports',
+  ];
+
+  // Relation names registered by @forestadmin/datasource-demo-fintech@1.0.1
+  // (dist/customizations/*.js — addManyToOneRelation / addOneToManyRelation calls).
+  const FINTECH_RELATIONS: Record<string, string[]> = {
+    aml_alerts: ['customer', 'sarReports'],
+    cards: ['customer', 'chargebacks'],
+    chargebacks: ['customer', 'card', 'refundRequest'],
+    customers: [
+      'cards',
+      'amlAlerts',
+      'kycCases',
+      'kycDocuments',
+      'chargebacks',
+      'refundRequests',
+      'sarReports',
+    ],
+    kyc_cases: ['customer', 'documents'],
+    kyc_documents: ['customer', 'kycCase'],
+    refund_requests: ['customer', 'chargebacks'],
+    sar_reports: ['customer', 'alert'],
+  };
+
+  /** Depth-first walk yielding every object of the parsed JSON tree. */
+  function* walkObjects(node: unknown): Generator<Record<string, unknown>> {
+    if (Array.isArray(node)) {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const child of node) yield* walkObjects(child);
+    } else if (node && typeof node === 'object') {
+      yield node as Record<string, unknown>;
+      // eslint-disable-next-line no-restricted-syntax
+      for (const child of Object.values(node)) yield* walkObjects(child);
+    }
+  }
+
   it('is valid JSON declaring the 8 fintech collections', () => {
     expect.assertions(9);
-    const file = path.join(
-      __dirname,
-      '../../../../src/services/dumpers/templates/agent-nodejs/common/forest-layout.json',
-    );
     const layout = JSON.parse(readFileSync(file, 'utf8'));
     const collectionIds = (layout.layout?.collections ?? []).map(
       (collection: { id: string }) => collection.id,
     );
 
     expect(collectionIds.length).toBeGreaterThan(0);
-    [
-      'aml_alerts',
-      'cards',
-      'chargebacks',
-      'customers',
-      'kyc_cases',
-      'kyc_documents',
-      'refund_requests',
-      'sar_reports',
-    ].forEach(id => expect(collectionIds).toContain(id));
+    FINTECH_COLLECTIONS.forEach(id => expect(collectionIds).toContain(id));
+  });
+
+  it('contains no leftover of the removed BaaSDemo collections', () => {
+    expect.assertions(3);
+    const raw = readFileSync(file, 'utf8');
+
+    // Collections that existed in the original BaaSDemo export but are not part
+    // of the fintech datasource; none of their names may survive anywhere.
+    expect(raw).not.toContain('mambu_');
+    expect(raw).not.toContain('pg_stat_');
+    expect(raw).not.toContain('internal_notes');
+  });
+
+  it('contains no BaaSDemo provenance metadata', () => {
+    expect.assertions(5);
+    const raw = readFileSync(file, 'utf8');
+    const layout = JSON.parse(raw);
+
+    // The `forest` header is required by `layout apply` but is provenance-only:
+    // it must carry neutral placeholders, not the internal project it was pulled from.
+    expect(raw).not.toContain('BaaSDemo');
+    expect(raw).not.toContain('Alasta');
+    expect(layout.forest.project.id).toBe(0);
+    expect(layout.forest.environment.id).toBe(0);
+    expect(layout.forest.team.id).toBe(0);
+  });
+
+  it('only references the 8 fintech collections in folders', () => {
+    const layout = JSON.parse(readFileSync(file, 'utf8'));
+    const referenced = (layout.folders ?? []).flatMap(
+      (folder: { children: Array<{ id: string; type: string }> }) =>
+        folder.children
+          .filter(child => child.type === 'collection')
+          .map(child => child.id),
+    );
+
+    expect(referenced.length).toBeGreaterThan(0);
+    referenced.forEach((id: string) => expect(FINTECH_COLLECTIONS).toContain(id));
+  });
+
+  it('only uses relation names that exist in the fintech datasource', () => {
+    const layout = JSON.parse(readFileSync(file, 'utf8'));
+
+    // Summary views: `has-many` blocks reference a relation of their collection.
+    (layout.layout?.collections ?? []).forEach(
+      (collection: { id: string; layout: { viewEdit?: { summaryView?: unknown } } }) => {
+        // eslint-disable-next-line no-restricted-syntax
+        for (const node of walkObjects(collection.layout?.viewEdit?.summaryView)) {
+          if (String(node.type).endsWith('/has-many')) {
+            const name = (node.data as { name: string }).name;
+
+            expect(FINTECH_RELATIONS[collection.id]).toContain(name);
+          }
+        }
+      },
+    );
+
+    // Workspace components: a filter condition with a subFieldName traverses a
+    // relation of the component's collection (drives master-detail bindings).
+    (layout.layout?.workspaces ?? []).forEach((workspace: { components?: unknown[] }) => {
+      (workspace.components ?? []).forEach((component: unknown) => {
+        const options = (component as { options?: Record<string, unknown> }).options ?? {};
+        const collectionId = options.collectionId as string | undefined;
+        const conditions =
+          ((options.filter as { conditions?: unknown[] })?.conditions as Array<{
+            fieldName: string;
+            subFieldName: string | null;
+          }>) ?? [];
+
+        conditions
+          .filter(condition => condition.subFieldName && collectionId)
+          .forEach(condition =>
+            expect(FINTECH_RELATIONS[collectionId as string]).toContain(condition.fieldName),
+          );
+      });
+    });
+  });
+
+  it('numbers smart action endpoints by the datasource addAction order', () => {
+    const layout = JSON.parse(readFileSync(file, 'utf8'));
+
+    // addAction calls in @forestadmin/datasource-demo-fintech@1.0.1
+    // (dist/customizations/*.js), in declaration order: the agent exposes each
+    // action under /forest/_actions/<collection>/<addAction index>/<slug>.
+    const expectedEndpointIndexes: Record<string, Record<string, number>> = {
+      aml_alerts: {
+        'Clear Alert (False Positive)': 0,
+        'Create SAR': 1,
+        'Escalate to Compliance': 2,
+        'File SAR': 3,
+        'Request Enhanced Due Diligence': 4,
+      },
+      cards: { 'Block Card': 0, 'Unblock Card': 1, 'Replace Card': 2 },
+      chargebacks: {
+        'File with Network': 0,
+        'Request Cardholder Info': 1,
+        'Block Linked Card': 2,
+        'Accept Liability & Refund Customer': 3,
+        'Mark Won': 4,
+        'Mark Lost': 5,
+        'Dismiss Dispute': 6,
+      },
+      kyc_cases: { 'Approve KYC': 0, 'Reject KYC': 1, 'Escalate KYC': 2 },
+      kyc_documents: { 'Verify Document': 0 },
+      refund_requests: { 'Decline Refund': 0, 'Open Chargeback': 1 },
+      sar_reports: { 'File SAR': 0 },
+    };
+
+    (layout.layout?.collections ?? []).forEach(
+      (collection: {
+        id: string;
+        layout: { actions?: Array<{ endpoint: string; name: string }> };
+      }) => {
+        const expected = expectedEndpointIndexes[collection.id] ?? {};
+        const actions = collection.layout.actions ?? [];
+
+        expect(actions.map(action => action.name).sort()).toStrictEqual(
+          Object.keys(expected).sort(),
+        );
+        actions.forEach(action =>
+          expect(action.endpoint).toMatch(
+            new RegExp(`^/forest/_actions/${collection.id}/${expected[action.name]}/`),
+          ),
+        );
+      },
+    );
+  });
+
+  it('keeps the non-executable workflows hidden', () => {
+    const layout = JSON.parse(readFileSync(file, 'utf8'));
+    const workflows = (layout.workflows ?? []) as Array<{ isVisible: boolean; steps?: unknown }>;
+
+    expect(workflows.length).toBeGreaterThan(0);
+    // The bundled workflows only carry a BaaSDemo S3 BPMN identifier (dead
+    // cross-project reference) and no `steps` graph: they must stay hidden
+    // until they are recompiled with executable steps.
+    workflows.forEach(workflow => {
+      expect(workflow.isVisible).toBe(false);
+      expect(workflow.steps).toBeUndefined();
+    });
   });
 });
