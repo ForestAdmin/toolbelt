@@ -2,7 +2,7 @@ import type { LayoutScope } from '../../services/layout/types';
 import type { Config } from '@oclif/core';
 
 import { Flags } from '@oclif/core';
-import { mkdirSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
 import path from 'path';
 
 import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
@@ -11,7 +11,11 @@ import { serializeLayoutFile } from '../../services/layout/layout-file';
 import LayoutManager from '../../services/layout/layout-manager';
 import { PULL_DOMAINS, fetchRemoteDocs, summarize } from '../../services/layout/read';
 import { resolveCommandScope } from '../../services/layout/resolve-command-scope';
-import { sidecarPath } from '../../services/layout/workflow-sidecar';
+import {
+  isSafeWorkflowId,
+  selectStaleSidecars,
+  sidecarPath,
+} from '../../services/layout/workflow-sidecar';
 
 /** An unresolvable BPMN ref: the S3 version is gone (404), not an auth/network error. */
 function isDeadBpmnRef(error: unknown): boolean {
@@ -44,18 +48,36 @@ async function downloadWorkflowSidecar(
   }
 }
 
-/** Remove `<id>.bpmn` files that were not (re)written this pull, so a mirror stays a mirror. */
-function pruneStaleSidecars(dir: string, keep: Set<string>): string[] {
-  const pruned: string[] = [];
-  readdirSync(dir).forEach(entry => {
-    const match = entry.match(/^(.+)\.bpmn$/);
-    if (match && !keep.has(match[1])) {
-      unlinkSync(path.join(dir, entry));
-      pruned.push(match[1]);
-    }
-  });
+type WorkflowRef = { bpmnAwsS3Identifier?: string; collectionId: string; id: string };
+type SidecarDownloads = { downloads: Array<{ bpmn: string; id: string }>; skipped: string[] };
 
-  return pruned;
+/** Download each workflow's stored BPMN into memory (no disk write here). */
+async function downloadWorkflowBpmns(
+  manager: LayoutManager,
+  scope: LayoutScope,
+  workflows: WorkflowRef[],
+): Promise<SidecarDownloads> {
+  const downloads: Array<{ bpmn: string; id: string }> = [];
+  const skipped: string[] = [];
+
+  const withBpmn = workflows.filter(workflow => workflow.bpmnAwsS3Identifier);
+  if (withBpmn.length === 0) return { downloads, skipped };
+
+  const renderingId = await manager.getRenderingId(scope);
+  // eslint-disable-next-line no-restricted-syntax -- sequential: one signed download at a time
+  for (const workflow of withBpmn) {
+    // A workflow id becomes a filename — reject traversal before touching disk.
+    if (!isSafeWorkflowId(workflow.id)) {
+      skipped.push(String(workflow.id));
+    } else {
+      // eslint-disable-next-line no-await-in-loop -- intentional sequential downloads
+      const bpmn = await downloadWorkflowSidecar(manager, scope, workflow, renderingId);
+      if (bpmn) downloads.push({ bpmn, id: workflow.id });
+      else skipped.push(workflow.id);
+    }
+  }
+
+  return { downloads, skipped };
 }
 
 const DEFAULT_OUTPUT = 'forest-layout.json';
@@ -115,79 +137,77 @@ export default class LayoutPullCommand extends AbstractAuthenticatedCommand {
     const manager = new LayoutManager();
     const docs = await fetchRemoteDocs(manager, scope, PULL_DOMAINS);
     const content = serializeLayoutFile(scope, docs, () => new Date());
+    const workflows = (docs.workflows ?? []) as WorkflowRef[];
+
+    // Download every BPMN into memory BEFORE writing anything, so a mid-pull
+    // network error leaves the previous layout + sidecars fully intact instead
+    // of a fresh layout mixed with stale, unpruned sidecars.
+    const sidecars = flags['with-workflows']
+      ? await downloadWorkflowBpmns(manager, scope, workflows)
+      : null;
 
     const outputPath = path.resolve(process.cwd(), flags.out);
     writeFileSync(outputPath, content);
-
-    if (flags['with-workflows']) {
-      await this.pullWorkflowBpmns(
-        manager,
-        scope,
-        (docs.workflows ?? []) as Array<{
-          bpmnAwsS3Identifier?: string;
-          collectionId: string;
-          id: string;
-        }>,
-        outputPath,
+    if (sidecars) {
+      this.writeWorkflowSidecars(
+        path.join(path.dirname(outputPath), 'workflows'),
+        sidecars,
+        workflows,
       );
     }
 
-    const { collections, workflows } = summarize(docs);
+    const { collections, workflows: workflowCount } = summarize(docs);
     this.logger.success(
       `Pulled the layout of ${this.chalk.bold(scope.environmentName)} / ${this.chalk.bold(
         scope.teamName,
-      )} into ${this.chalk.bold(flags.out)} (${collections} collections, ${workflows} workflows).`,
+      )} into ${this.chalk.bold(
+        flags.out,
+      )} (${collections} collections, ${workflowCount} workflows).`,
     );
   }
 
-  /** Download each workflow's stored BPMN into `workflows/<id>.bpmn` next to the layout file. */
-  private async pullWorkflowBpmns(
-    manager: LayoutManager,
-    scope: LayoutScope,
-    workflows: Array<{ bpmnAwsS3Identifier?: string; collectionId: string; id: string }>,
-    outputPath: string,
-  ): Promise<void> {
-    const withBpmn = workflows.filter(workflow => workflow.bpmnAwsS3Identifier);
-    if (withBpmn.length === 0) return;
+  /**
+   * Write the downloaded sidecars, then prune the STALE ones: only files named
+   * like a managed sidecar whose workflow no longer exists in the environment.
+   * Sidecars of still-existing workflows are always kept — including those whose
+   * download was skipped (dead S3 ref): that file may be the last copy of the
+   * BPMN, and a backup tool must never destroy the backup. Every deletion is
+   * logged. The prune runs even when nothing was downloaded, so a layout whose
+   * workflows all lost their BPMN still converges to a faithful mirror.
+   */
+  private writeWorkflowSidecars(
+    dir: string,
+    sidecars: SidecarDownloads,
+    workflows: WorkflowRef[],
+  ): void {
+    if (sidecars.downloads.length === 0 && !existsSync(dir)) {
+      this.warnSkipped(sidecars.skipped);
+      return;
+    }
 
-    const renderingId = await manager.getRenderingId(scope);
-    const dir = path.join(path.dirname(outputPath), 'workflows');
     mkdirSync(dir, { recursive: true });
+    sidecars.downloads.forEach(({ bpmn, id }) =>
+      writeFileSync(sidecarPath(dir, id) as string, bpmn),
+    );
 
-    const saved: string[] = [];
-    const skipped: string[] = [];
-    // eslint-disable-next-line no-restricted-syntax -- sequential: one signed download at a time
-    for (const workflow of withBpmn) {
-      // A workflow id becomes a filename — reject traversal before touching disk.
-      const file = sidecarPath(dir, workflow.id);
-      if (!file) {
-        skipped.push(String(workflow.id));
-      } else {
-        // eslint-disable-next-line no-await-in-loop -- intentional sequential downloads
-        const bpmn = await downloadWorkflowSidecar(manager, scope, workflow, renderingId);
-        if (bpmn) {
-          writeFileSync(file, bpmn);
-          saved.push(workflow.id);
-        } else {
-          skipped.push(workflow.id);
-        }
-      }
-    }
+    const keep = new Set(workflows.map(workflow => String(workflow.id)));
+    selectStaleSidecars(readdirSync(dir), keep).forEach(entry => {
+      unlinkSync(path.join(dir, entry));
+      this.log(`  ↺ pruned stale sidecar ${entry}`);
+    });
 
-    // A pull mirrors the env: drop sidecars for workflows we did not just write
-    // (deleted, or now unresolvable) so a later apply can't re-upload stale BPMN.
-    const pruned = pruneStaleSidecars(dir, new Set(saved));
+    this.log(
+      `  ↓ ${sidecars.downloads.length} workflow BPMN → ${path.relative(process.cwd(), dir)}/`,
+    );
+    this.warnSkipped(sidecars.skipped);
+  }
 
-    this.log(`  ↓ ${saved.length} workflow BPMN → ${path.relative(process.cwd(), dir)}/`);
-    if (pruned.length > 0) this.log(`  ↺ pruned ${pruned.length} stale sidecar(s)`);
-    if (skipped.length > 0) {
-      this.logger.warn(
-        `Skipped ${
-          skipped.length
-        } workflow BPMN with an unresolvable ref (not uploaded to this env): ${skipped.join(
-          ', ',
-        )}.`,
-      );
-    }
+  private warnSkipped(skipped: string[]): void {
+    if (skipped.length === 0) return;
+
+    this.logger.warn(
+      `Skipped ${skipped.length} workflow BPMN with an unresolvable ref (not uploaded to this env) — their existing ` +
+        `sidecar files, if any, were kept: ${skipped.join(', ')}.`,
+    );
   }
 }
