@@ -1,18 +1,18 @@
 {
   "forest": {
     "environment": {
-      "id": 173066,
+      "id": 0,
       "name": "Production"
     },
     "project": {
-      "id": 132019,
-      "name": "BaaSDemo"
+      "id": 0,
+      "name": "forest-demo"
     },
-    "pulledAt": "2026-06-22T13:54:19.186Z",
+    "pulledAt": "2026-01-01T00:00:00.000Z",
     "server": "https://api.forestadmin.com",
     "team": {
-      "id": 122049,
-      "name": "Alasta_2"
+      "id": 0,
+      "name": "Operations"
     },
     "version": 1
   },
