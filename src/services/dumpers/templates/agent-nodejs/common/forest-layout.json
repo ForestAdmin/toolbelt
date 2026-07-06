@@ -32,7 +32,7 @@
               "baseUrl": null,
               "confirmation": false,
               "download": false,
-              "endpoint": "/forest/_actions/aml_alerts/1/clear-alert-false-positive-",
+              "endpoint": "/forest/_actions/aml_alerts/0/clear-alert-false-positive-",
               "hooks": {
                 "load": false,
                 "change": [
@@ -53,7 +53,7 @@
               "baseUrl": null,
               "confirmation": false,
               "download": false,
-              "endpoint": "/forest/_actions/aml_alerts/0/create-sar",
+              "endpoint": "/forest/_actions/aml_alerts/1/create-sar",
               "hooks": {
                 "load": false,
                 "change": [
@@ -91,11 +91,32 @@
               "layout": null
             },
             {
+              "id": "aml_alerts-File@@@SAR",
+              "baseUrl": null,
+              "confirmation": false,
+              "download": false,
+              "endpoint": "/forest/_actions/aml_alerts/3/file-sar",
+              "hooks": {
+                "load": false,
+                "change": [
+                  "changeHook"
+                ]
+              },
+              "httpMethod": "POST",
+              "isHidden": false,
+              "name": "File SAR",
+              "displayName": "File SAR",
+              "position": 2,
+              "redirect": false,
+              "type": "single",
+              "layout": null
+            },
+            {
               "id": "aml_alerts-Request@@@Enhanced@@@Due@@@Diligence",
               "baseUrl": null,
               "confirmation": false,
               "download": false,
-              "endpoint": "/forest/_actions/aml_alerts/3/request-enhanced-due-diligence",
+              "endpoint": "/forest/_actions/aml_alerts/4/request-enhanced-due-diligence",
               "hooks": {
                 "load": false,
                 "change": [
