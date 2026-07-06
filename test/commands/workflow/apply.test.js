@@ -212,6 +212,67 @@ describe('workflow:apply', () => {
       }));
   });
 
+  describe('when the spec `start` is not the first step (update)', () => {
+    // The recompiled BPMN must honour `start` — dropping it would fall back to
+    // the first step, fake a diff and upload a workflow with a changed entry.
+    const startSpec = {
+      collection: 'cards',
+      name: 'Triage',
+      start: 'read1',
+      steps: [
+        { id: 'notes', next: 'done', type: 'read' },
+        { id: 'read1', next: 'notes', type: 'read' },
+        { id: 'done', type: 'end' },
+      ],
+    };
+
+    it('compares (and would upload) a BPMN starting at that step', () =>
+      testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: WorkflowApplyCommand,
+        commandArgs: [...SCOPE_FLAGS, '-f', SPEC_FILE],
+        files: specFile(startSpec),
+        api: [...planApi([remoteWorkflow()]), ...storedBpmnApi(compileWorkflowToBpmn(startSpec))],
+        std: [{ out: 'Nothing to apply: the workflow already matches the spec.' }],
+        assertNoStdError: false,
+      }));
+  });
+
+  describe('when the spec `id` matches no workflow in the environment', () => {
+    it('errors out instead of silently creating a duplicate', () =>
+      testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: WorkflowApplyCommand,
+        commandArgs: [...SCOPE_FLAGS, '-f', SPEC_FILE],
+        files: specFile({ ...spec, id: '999' }),
+        api: [...scopeApi, () => nock(SERVER).get(WORKFLOWS_URL).reply(200, [remoteWorkflow()])],
+        exitCode: 2,
+        std: [
+          {
+            err:
+              'No workflow with id "999" found in this environment. ' +
+              'Remove `id` from the spec to create a new workflow, or fix it to update an existing one.',
+          },
+        ],
+        assertNoStdError: false,
+      }));
+
+    it('errors out on --dry-run too (the plan cannot be resolved)', () =>
+      testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: WorkflowApplyCommand,
+        commandArgs: [...SCOPE_FLAGS, '--dry-run', SPEC_FILE],
+        files: specFile({ ...spec, id: '999' }),
+        api: [...scopeApi, () => nock(SERVER).get(WORKFLOWS_URL).reply(200, [remoteWorkflow()])],
+        exitCode: 2,
+        std: [{ err: 'No workflow with id "999" found in this environment.' }],
+        assertNoStdError: false,
+      }));
+  });
+
   describe('with --dry-run on an existing workflow', () => {
     it('resolves the scope, prints the would-be update and sends nothing', () =>
       testCli({

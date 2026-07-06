@@ -140,6 +140,121 @@ describe('parseWorkflowSpec', () => {
     expect(parseWorkflowSpec(JSON.stringify({ ...validSpec, id })).id).toBe(id);
   });
 
+  it.each([
+    ['a non-string `name`', { name: 123 }, '`name` must be a string (got 123).'],
+    [
+      'a non-string `collection`',
+      { collection: false },
+      '`collection` must be a string (got false).',
+    ],
+    ['a non-string `start`', { start: 1 }, '`start` must be a string (got 1).'],
+    [
+      'a non-array `segments`',
+      { segments: 'vip' },
+      '`segments` must be an array of segment ids (strings) (got "vip").',
+    ],
+    [
+      'a `segments` array holding non-strings',
+      { segments: [1] },
+      '`segments` must be an array of segment ids (strings) (got [1]).',
+    ],
+  ])('rejects %s', (label, extra, message) => {
+    expect.assertions(2);
+    const raw = JSON.stringify({ ...validSpec, ...extra });
+
+    expect(() => parseWorkflowSpec(raw)).toThrow(WorkflowSpecError);
+    expect(() => parseWorkflowSpec(raw)).toThrow(message);
+  });
+
+  it.each([
+    [
+      '`mcpServerId`',
+      { mcpServerId: 123 },
+      '`mcpServerId` must be a string in step "read1" (got 123).',
+    ],
+    ['`prompt`', { prompt: ['a'] }, '`prompt` must be a string in step "read1" (got ["a"]).'],
+    ['`title`', { title: 7 }, '`title` must be a string in step "read1" (got 7).'],
+    ['`next`', { next: 42 }, '`next` must be a string in step "read1" (got 42).'],
+    ['`type`', { type: 5 }, '`type` must be a string in step "read1" (got 5).'],
+    ['`inboxId`', { inboxId: {} }, '`inboxId` must be a string in step "read1" (got {}).'],
+    ['`auto`', { auto: 'yes' }, '`auto` must be a boolean in step "read1" (got "yes").'],
+    [
+      '`autoComplete`',
+      { autoComplete: 1 },
+      '`autoComplete` must be a boolean in step "read1" (got 1).',
+    ],
+  ])('rejects a wrongly-typed step %s with a clean message', (label, extra, message) => {
+    expect.assertions(2);
+    const raw = JSON.stringify({
+      ...validSpec,
+      steps: [
+        { ...validSpec.steps[0], ...extra },
+        { id: 'done', type: 'end' },
+      ],
+    });
+
+    expect(() => parseWorkflowSpec(raw)).toThrow(WorkflowSpecError);
+    expect(() => parseWorkflowSpec(raw)).toThrow(message);
+  });
+
+  it('rejects a non-array `branches`', () => {
+    expect.assertions(1);
+
+    const spec = {
+      ...validSpec,
+      steps: [
+        { branches: 'nope', id: 'cond1', type: 'condition' },
+        { id: 'done', type: 'end' },
+      ],
+    };
+
+    expect(() => parseWorkflowSpec(JSON.stringify(spec))).toThrow(
+      '`branches` must be an array in step "cond1" (got "nope").',
+    );
+  });
+
+  it('rejects a non-object branch', () => {
+    expect.assertions(1);
+
+    const spec = {
+      ...validSpec,
+      steps: [
+        { branches: ['done'], id: 'cond1', type: 'condition' },
+        { id: 'done', type: 'end' },
+      ],
+    };
+
+    expect(() => parseWorkflowSpec(JSON.stringify(spec))).toThrow(
+      '`branches[0]` must be a JSON object in step "cond1".',
+    );
+  });
+
+  it.each([
+    ['`answer`', { answer: 1, next: 'done' }, '`answer` must be a string in step "cond1" (got 1).'],
+    [
+      '`color`',
+      { answer: 'Yes', color: 0, next: 'done' },
+      '`color` must be a string in step "cond1" (got 0).',
+    ],
+    [
+      '`next`',
+      { answer: 'Yes', next: true },
+      '`next` must be a string in step "cond1" (got true).',
+    ],
+  ])('rejects a wrongly-typed branch %s with a clean message', (label, branch, message) => {
+    expect.assertions(1);
+
+    const spec = {
+      ...validSpec,
+      steps: [
+        { branches: [branch, { answer: 'No', next: 'done' }], id: 'cond1', type: 'condition' },
+        { id: 'done', type: 'end' },
+      ],
+    };
+
+    expect(() => parseWorkflowSpec(JSON.stringify(spec))).toThrow(message);
+  });
+
   it('rejects a negative or fractional position', () => {
     expect.assertions(2);
 

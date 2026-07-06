@@ -95,7 +95,8 @@ function addWorkflowShell(
  * re-applying — the whole BPMN is recompiled and re-uploaded when it differs
  * (it is atomic; there is no per-step patch), and the shell metadata (name,
  * segments, position when pinned) is converged with `replace` patches. Upsert
- * is matched by explicit `id`, else by name + collection.
+ * is matched by explicit `id` (which must exist — a stale id is an error, not
+ * a create), else by name + collection.
  *
  * Sequence: compile steps -> BPMN; show the plan and confirm; PATCH the shell
  * (add if new, metadata replaces otherwise); upload the BPMN to the env's S3
@@ -109,7 +110,7 @@ export default class WorkflowApplyCommand extends AbstractAuthenticatedCommand {
   static override args = {
     file: Args.string({
       description:
-        'JSON workflow spec ({ name, collection, steps, id?, segments?, position?, version? }). "-" or omit to read stdin.',
+        'JSON workflow spec ({ name, collection, steps, id?, segments?, position?, start?, version? }). "-" or omit to read stdin.',
       required: false,
     }),
   };
@@ -154,12 +155,7 @@ export default class WorkflowApplyCommand extends AbstractAuthenticatedCommand {
       spec = parseWorkflowSpec(await readInput(fromStdin ? undefined : args.file));
       bpmn = compileWorkflowToBpmn(spec);
     } catch (error) {
-      if (error instanceof WorkflowSpecError) {
-        this.logger.error(error.message);
-        this.exit(2);
-        return;
-      }
-
+      if (this.reportSpecError(error)) return;
       throw error;
     }
 
@@ -171,25 +167,12 @@ export default class WorkflowApplyCommand extends AbstractAuthenticatedCommand {
     const manager = new LayoutManager();
 
     try {
-      const plan = await this.planApply(manager, scope, spec, bpmn);
-
-      if (plan.match && !plan.bpmnChanged && plan.shellChanges.length === 0) {
-        this.logger.success('Nothing to apply: the workflow already matches the spec.');
-        return;
-      }
-
-      this.printPlan(plan, spec, scope, flags['dry-run']);
-
-      if (flags['dry-run']) {
-        this.log('\n(dry-run: nothing sent)');
-        return;
-      }
-
-      if (!flags.force && !(await this.confirmOrBail(fromStdin, scope))) return;
-
-      await this.executePlan(manager, scope, spec, plan);
-      this.printOutcome(plan, spec, scope);
+      await this.planAndExecute(manager, scope, spec, bpmn, flags, fromStdin);
     } catch (error) {
+      // Planning-time spec/environment mismatches (e.g. an `id` matching no
+      // remote workflow) get the same clean-error treatment as parse errors.
+      if (this.reportSpecError(error)) return;
+
       if (error instanceof LayoutApiError && error.status !== 401) {
         this.logger.error(explainApiError(error, []));
         this.exit(2);
@@ -197,6 +180,44 @@ export default class WorkflowApplyCommand extends AbstractAuthenticatedCommand {
 
       throw error;
     }
+  }
+
+  private async planAndExecute(
+    manager: LayoutManager,
+    scope: LayoutScope,
+    spec: WorkflowApplySpec,
+    bpmn: string,
+    flags: { 'dry-run': boolean; force: boolean },
+    fromStdin: boolean,
+  ): Promise<void> {
+    const plan = await this.planApply(manager, scope, spec, bpmn);
+
+    if (plan.match && !plan.bpmnChanged && plan.shellChanges.length === 0) {
+      this.logger.success('Nothing to apply: the workflow already matches the spec.');
+      return;
+    }
+
+    this.printPlan(plan, spec, scope, flags['dry-run']);
+
+    if (flags['dry-run']) {
+      this.log('\n(dry-run: nothing sent)');
+      return;
+    }
+
+    if (!flags.force && !(await this.confirmOrBail(fromStdin, scope))) return;
+
+    await this.executePlan(manager, scope, spec, plan);
+    this.printOutcome(plan, spec, scope);
+  }
+
+  private reportSpecError(error: unknown): boolean {
+    if (error instanceof WorkflowSpecError) {
+      this.logger.error(error.message);
+      this.exit(2);
+      return true;
+    }
+
+    return false;
   }
 
   /** M2 guards: no silent hang on a TTY, no interactive prompt when stdin carries the spec. */
@@ -233,6 +254,15 @@ export default class WorkflowApplyCommand extends AbstractAuthenticatedCommand {
     const existing = (await manager.getLayoutDomain('workflows', scope)) as RemoteWorkflow[];
     const matches = findWorkflowMatches(existing, spec);
 
+    // An explicit `id` means "update that workflow" — silently creating a new
+    // one (reusing a stale/mistyped id) would bypass the name+collection upsert.
+    if (spec.id !== undefined && matches.length === 0) {
+      throw new WorkflowSpecError(
+        `No workflow with id "${spec.id}" found in this environment. ` +
+          'Remove `id` from the spec to create a new workflow, or fix it to update an existing one.',
+      );
+    }
+
     if (matches.length > 1) {
       this.logger.warn(
         `${matches.length} workflows named "${spec.name}" exist on collection ${spec.collection} — updating the first (id ${matches[0].id}).`,
@@ -247,7 +277,7 @@ export default class WorkflowApplyCommand extends AbstractAuthenticatedCommand {
       );
     }
 
-    const id = match?.id ?? spec.id ?? randomUUID();
+    const id = match?.id ?? randomUUID();
     const renderingId = await manager.getRenderingId(scope);
     // Reuses the layout-apply idempotency brick: byte-compare the compiled BPMN
     // against the stored version, so an unchanged spec uploads nothing (and a
@@ -262,6 +292,7 @@ export default class WorkflowApplyCommand extends AbstractAuthenticatedCommand {
               id,
               name: spec.name as string,
               segmentIds: spec.segments,
+              start: spec.start,
               steps: spec.steps as unknown[],
             },
           ],
