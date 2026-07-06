@@ -13,7 +13,9 @@ import type { LayoutScope } from './types';
 
 import path from 'path';
 
+import { remoteResolver } from './diff';
 import { LayoutApiError } from './errors';
+import { NUM_OR_UUID } from './patch-rules';
 
 /**
  * A workflow id becomes a sidecar filename (`workflows/<id>.bpmn`). Because that
@@ -39,23 +41,44 @@ export function sidecarPath(dir: string, id: unknown): string | null {
 }
 
 /**
- * Resolve a file workflow to its target-env counterpart with the same
- * id-then-name matching the diff engine uses (`remoteResolver` in diff.ts), so
- * the sidecar upload targets the very workflow the domain patch addressed. A
+ * Resolve a file workflow to its target-env counterpart by DELEGATING to the
+ * diff engine's own resolver (`remoteResolver` in diff.ts), so the sidecar
+ * upload targets the very workflow the domain patch addressed — including on
+ * duplicate names, where the resolver's Map makes the LAST remote win. A
  * dev→prod promote typically matches by NAME (each env mints its own ids).
  */
 export function resolveRemoteWorkflow(
   remoteWorkflows: Array<Record<string, unknown>>,
   workflow: { id: string; name?: string },
 ): Record<string, unknown> | undefined {
-  return (
-    remoteWorkflows.find(
-      remote => remote.id !== undefined && remote.id !== null && String(remote.id) === workflow.id,
-    ) ??
-    (typeof workflow.name === 'string'
-      ? remoteWorkflows.find(remote => remote.name === workflow.name)
-      : undefined)
-  );
+  return remoteResolver(remoteWorkflows)(workflow);
+}
+
+/** A file workflow that declares BPMN in the layout but has no sidecar on disk. */
+export type MissingSidecar = { id: string; name: string };
+
+/**
+ * Split the missing-sidecar workflows by what actually happens to their BPMN:
+ * - `targetKeepsOwn`: the workflow exists in the target env (id-then-name), so
+ *   the strip of `bpmnAwsS3Identifier` leaves the target's own BPMN untouched;
+ * - `createdWithoutBpmn`: the workflow matches nothing in the target — this
+ *   apply `add`s it, and with its declared pointer stripped and no sidecar to
+ *   upload, it is created with NO BPMN at all. The caller must warn explicitly:
+ *   "keeps its own" would be a lie here.
+ */
+export function partitionMissingSidecars(
+  missing: MissingSidecar[],
+  remoteWorkflows: Array<Record<string, unknown>>,
+): { createdWithoutBpmn: MissingSidecar[]; targetKeepsOwn: MissingSidecar[] } {
+  const targetKeepsOwn: MissingSidecar[] = [];
+  const createdWithoutBpmn: MissingSidecar[] = [];
+
+  missing.forEach(workflow => {
+    if (resolveRemoteWorkflow(remoteWorkflows, workflow)) targetKeepsOwn.push(workflow);
+    else createdWithoutBpmn.push(workflow);
+  });
+
+  return { createdWithoutBpmn, targetKeepsOwn };
 }
 
 /**
@@ -168,18 +191,27 @@ export async function planSidecarUploads(
 }
 
 /**
- * The sidecar filenames a pull should prune: files that LOOK like a managed
- * sidecar (`<safe-id>.bpmn`) whose id matches no workflow left in the
+ * A managed sidecar filename: `<id>.bpmn` where the id has the shape of a REAL
+ * server workflow id (numeric or UUID — the same `NUM_OR_UUID` class the patch
+ * whitelist uses). Managed sidecars are the only files pull ever writes, so
+ * they are the only files it may ever delete.
+ */
+const MANAGED_SIDECAR = new RegExp(`^${NUM_OR_UUID}\\.bpmn$`);
+
+/**
+ * The sidecar filenames a pull should prune: files named after a server
+ * workflow id (`<num-or-uuid>.bpmn`) that matches no workflow left in the
  * environment. Everything else is preserved:
- * - files not matching the managed pattern (a user's own BPMN files);
+ * - files whose basename is not a server-shaped id (a user's own BPMN files,
+ *   e.g. `review.bpmn` — pull never wrote them, so pull never deletes them);
  * - sidecars of workflows still present in the env, even when their download
  *   was skipped (dead S3 ref) — that sidecar may be the last copy of the BPMN,
  *   and a backup tool must never destroy the backup.
  */
 export function selectStaleSidecars(entries: string[], keepIds: ReadonlySet<string>): string[] {
   return entries.filter(entry => {
-    const match = /^(.+)\.bpmn$/.exec(entry);
+    const match = MANAGED_SIDECAR.exec(entry);
 
-    return match !== null && isSafeWorkflowId(match[1]) && !keepIds.has(match[1]);
+    return match !== null && !keepIds.has(match[1]);
   });
 }

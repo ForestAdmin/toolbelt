@@ -389,9 +389,11 @@ export const DOMAIN_RULES: Record<LayoutDomain, DomainRules> = {
 
 /* --------------------------- whitelist mirror ---------------------------- */
 
-// Same id classes as the server's patch-handler.
+// Same id classes as the server's patch-handler. NUM_OR_UUID is exported so the
+// sidecar prune (`workflow-sidecar.ts`) only ever deletes files named after a
+// real server id — never a user's own hand-named BPMN files.
 const ID = String.raw`[^/\s:]+`;
-const NUM_OR_UUID = String.raw`([0-9]+|[0-9a-fA-F-]{36})`;
+export const NUM_OR_UUID = String.raw`([0-9]+|[0-9a-fA-F-]{36})`;
 
 type WhitelistEntry = { ops: Array<'add' | 'remove' | 'replace' | 'test'>; pattern: RegExp };
 

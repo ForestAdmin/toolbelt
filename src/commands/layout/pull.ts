@@ -146,8 +146,10 @@ export default class LayoutPullCommand extends AbstractAuthenticatedCommand {
       ? await downloadWorkflowBpmns(manager, scope, workflows)
       : null;
 
+    // Sidecars first, layout last: the layout file is the source of truth, so it
+    // only replaces the previous snapshot once the sidecars have converged. A
+    // sidecar write failure leaves the old layout + old sidecars intact.
     const outputPath = path.resolve(process.cwd(), flags.out);
-    writeFileSync(outputPath, content);
     if (sidecars) {
       this.writeWorkflowSidecars(
         path.join(path.dirname(outputPath), 'workflows'),
@@ -155,6 +157,7 @@ export default class LayoutPullCommand extends AbstractAuthenticatedCommand {
         workflows,
       );
     }
+    writeFileSync(outputPath, content);
 
     const { collections, workflows: workflowCount } = summarize(docs);
     this.logger.success(

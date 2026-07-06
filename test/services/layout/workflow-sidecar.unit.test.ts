@@ -6,6 +6,7 @@ import { LayoutApiError } from '../../../src/services/layout/errors';
 import {
   hasWorkflowBpmnOps,
   isSafeWorkflowId,
+  partitionMissingSidecars,
   planSidecarUploads,
   resolveRemoteWorkflow,
   selectStaleSidecars,
@@ -156,6 +157,35 @@ describe('resolveRemoteWorkflow', () => {
       resolveRemoteWorkflow([{ id: 'x', name: 'Y' }], { id: 'src-id', name: 'My workflow' }),
     ).toBeUndefined();
   });
+
+  it('resolves duplicate names to the LAST remote, exactly like the domain patch', () => {
+    expect.assertions(1);
+    // Two same-name workflows in the target: the diff engine's Map keeps the
+    // last one, so the sidecar upload must target that same workflow — not the
+    // first — or the BPMN and the metadata patch would land on different ones.
+    const remotes = [
+      { id: 'prod-1', name: 'My workflow' },
+      { id: 'prod-2', name: 'My workflow' },
+    ];
+
+    expect(resolveRemoteWorkflow(remotes, { id: 'src-id', name: 'My workflow' })).toBe(remotes[1]);
+  });
+});
+
+describe('partitionMissingSidecars', () => {
+  it('splits missing sidecars by whether the target env already has the workflow', () => {
+    expect.assertions(1);
+    const remotes = [{ id: 'prod-1', name: 'Existing' }];
+    const missing = [
+      { id: 'src-1', name: 'Existing' }, // name-matched: the target keeps its own BPMN
+      { id: 'src-2', name: 'Brand new' }, // added by this apply: created with NO BPMN
+    ];
+
+    expect(partitionMissingSidecars(missing, remotes)).toStrictEqual({
+      createdWithoutBpmn: [{ id: 'src-2', name: 'Brand new' }],
+      targetKeepsOwn: [{ id: 'src-1', name: 'Existing' }],
+    });
+  });
 });
 
 describe('planSidecarUploads', () => {
@@ -289,20 +319,22 @@ describe('planSidecarUploads', () => {
 });
 
 describe('selectStaleSidecars', () => {
+  const STALE_UUID = '01234567-89ab-cdef-0123-456789abcdef';
+
   it('selects only managed sidecars whose workflow no longer exists in the env', () => {
     expect.assertions(1);
-    const entries = ['kept.bpmn', 'stale.bpmn'];
+    const entries = ['42.bpmn', `${STALE_UUID}.bpmn`];
 
-    expect(selectStaleSidecars(entries, new Set(['kept']))).toStrictEqual(['stale.bpmn']);
+    expect(selectStaleSidecars(entries, new Set(['42']))).toStrictEqual([`${STALE_UUID}.bpmn`]);
   });
 
   it('preserves sidecars of workflows still in the env even when their download was skipped', () => {
     expect.assertions(1);
-    // "dead-ref" was skipped (404 on S3) but the workflow still exists: its
-    // sidecar may be the last copy of the BPMN — never prune it.
-    const keep = new Set(['saved', 'dead-ref']);
+    // The uuid workflow was skipped (404 on S3) but still exists: its sidecar
+    // may be the last copy of the BPMN — never prune it.
+    const keep = new Set(['42', STALE_UUID]);
 
-    expect(selectStaleSidecars(['saved.bpmn', 'dead-ref.bpmn'], keep)).toStrictEqual([]);
+    expect(selectStaleSidecars(['42.bpmn', `${STALE_UUID}.bpmn`], keep)).toStrictEqual([]);
   });
 
   it('never touches files that do not look like a managed sidecar', () => {
@@ -310,5 +342,14 @@ describe('selectStaleSidecars', () => {
     const entries = ['notes.txt', 'draft..v2.bpmn', '.bpmn', 'diagram.bpmn.bak'];
 
     expect(selectStaleSidecars(entries, new Set())).toStrictEqual([]);
+  });
+
+  it("preserves a user's own hand-named BPMN files (not server-id shaped)", () => {
+    expect.assertions(1);
+    // `review.bpmn` is traversal-safe but was never written by pull (sidecars
+    // are named after NUM_OR_UUID server ids) — pull must never delete it.
+    const entries = ['review.bpmn', 'my-draft.bpmn', '7.bpmn'];
+
+    expect(selectStaleSidecars(entries, new Set())).toStrictEqual(['7.bpmn']);
   });
 });

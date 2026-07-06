@@ -1,5 +1,9 @@
 import type { LayoutScope } from '../../services/layout/types';
-import type { SidecarFile, SidecarUpload } from '../../services/layout/workflow-sidecar';
+import type {
+  MissingSidecar,
+  SidecarFile,
+  SidecarUpload,
+} from '../../services/layout/workflow-sidecar';
 import type { Config } from '@oclif/core';
 
 import { Args, Flags } from '@oclif/core';
@@ -22,6 +26,7 @@ import {
 import { LAYOUT_DOMAINS } from '../../services/layout/types';
 import {
   hasWorkflowBpmnOps,
+  partitionMissingSidecars,
   planSidecarUploads,
   resolveRemoteWorkflow,
   sidecarPath,
@@ -79,11 +84,11 @@ function readWorkflowSidecars(
   docs: { workflows?: unknown[] },
   filePath: string,
   stepWorkflowsList: Array<{ id: string }>,
-): { missing: string[]; orphaned: string[]; plans: SidecarFile[] } {
+): { missing: MissingSidecar[]; orphaned: string[]; plans: SidecarFile[] } {
   const stepIds = new Set(stepWorkflowsList.map(workflow => workflow.id));
   const dir = path.join(path.dirname(filePath), 'workflows');
   const plans: SidecarFile[] = [];
-  const missing: string[] = [];
+  const missing: MissingSidecar[] = [];
   const orphaned: string[] = [];
 
   ((docs.workflows ?? []) as FileWorkflow[])
@@ -107,7 +112,7 @@ function readWorkflowSidecars(
         });
       } else {
         // The workflow had BPMN in the source, but its bytes weren't checked in.
-        missing.push(workflow.id);
+        missing.push({ id: workflow.id, name: workflow.name ?? workflow.id });
       }
     });
 
@@ -225,7 +230,19 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       renderingId,
     );
 
-    this.logPlan({ bpmnToUpload, ops, sidecarMissing, sidecarOrphaned, sidecarPlans, warnings });
+    // A missing sidecar is only harmless when the target workflow already exists
+    // (it keeps its own BPMN) — a workflow being ADDED by this apply would be
+    // created with no BPMN at all, which deserves its own explicit warning.
+    const sidecarMissingSplit = partitionMissingSidecars(sidecarMissing, remoteWorkflows);
+
+    this.logPlan({
+      bpmnToUpload,
+      ops,
+      sidecarMissing: sidecarMissingSplit,
+      sidecarOrphaned,
+      sidecarPlans,
+      warnings,
+    });
 
     if (ops.length === 0 && bpmnToUpload.length === 0 && sidecarPlans.length === 0) {
       this.logger.success('Nothing to apply: the environment already matches the file.');
@@ -380,16 +397,25 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
   private logPlan(preview: {
     bpmnToUpload: Array<{ workflow: { name: string; steps: unknown[] } }>;
     ops: Parameters<typeof formatPlan>[0];
-    sidecarMissing: string[];
+    sidecarMissing: { createdWithoutBpmn: MissingSidecar[]; targetKeepsOwn: MissingSidecar[] };
     sidecarOrphaned: string[];
     sidecarPlans: SidecarUpload[];
     warnings: Parameters<typeof formatPlan>[1];
   }): void {
-    if (preview.sidecarMissing.length > 0) {
+    const { createdWithoutBpmn, targetKeepsOwn } = preview.sidecarMissing;
+    if (targetKeepsOwn.length > 0) {
       this.logger.warn(
-        `${preview.sidecarMissing.length} workflow(s) have BPMN in the file but no ` +
+        `${targetKeepsOwn.length} workflow(s) have BPMN in the file but no ` +
           `workflows/<id>.bpmn sidecar — their BPMN was not transported (the target keeps its ` +
-          `own): ${preview.sidecarMissing.join(', ')}.`,
+          `own): ${targetKeepsOwn.map(workflow => workflow.name).join(', ')}.`,
+      );
+    }
+    if (createdWithoutBpmn.length > 0) {
+      this.logger.warn(
+        `${createdWithoutBpmn.length} workflow(s) will be created WITHOUT BPMN: they declare ` +
+          `BPMN in the layout file but have no workflows/<id>.bpmn sidecar and do not exist in ` +
+          `the target — run \`layout pull --with-workflows\` on the source first: ` +
+          `${createdWithoutBpmn.map(workflow => workflow.name).join(', ')}.`,
       );
     }
     if (preview.sidecarOrphaned.length > 0) {
