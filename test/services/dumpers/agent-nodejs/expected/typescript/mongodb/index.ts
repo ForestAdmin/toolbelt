@@ -63,6 +63,10 @@ agent.addDataSource(
 //   });
 // });
 
+// Run Forest Admin workflows in this process, using an in-memory run store.
+// Runs are lost on restart; switch to `{ database: { uri: process.env.DATABASE_URL } }` to persist them.
+agent.addWorkflowExecutor({ inMemory: true });
+
 // Expose an HTTP endpoint.
 agent.mountOnStandaloneServer(Number(process.env.APPLICATION_PORT));
 
@@ -73,3 +77,17 @@ agent.start().catch(error => {
   console.error(error.stack);
   process.exit(1);
 });
+
+// Stop the agent gracefully on shutdown, so in-flight work drains before the process exits.
+async function shutdown(): Promise<void> {
+  try {
+    await agent.stop();
+    process.exit(0);
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+process.once('SIGTERM', shutdown);
+process.once('SIGINT', shutdown);

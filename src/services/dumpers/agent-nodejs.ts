@@ -83,6 +83,10 @@ export default class AgentNodeJs extends AbstractDumper {
       dependencies['@forestadmin/datasource-sql'] = '^1.0.0';
     }
 
+    // The embedded workflow executor runs Forest Admin workflows in-process. It uses an in-memory
+    // run store, so it ships with every project regardless of the datasource and needs no config.
+    dependencies['@forestadmin/workflow-executor'] = '^1.0.0';
+
     if (!isDemo && dbDialect) {
       if (dbDialect.includes('postgres')) {
         dependencies.pg = '^8.8.0';
