@@ -1,3 +1,10 @@
+# [5.17.0](https://github.com/ForestAdmin/toolbelt/compare/v5.16.0...v5.17.0) (2026-07-07)
+
+
+### Features
+
+* add by default workflow executor on new projects ([#794](https://github.com/ForestAdmin/toolbelt/issues/794)) ([67e4bb4](https://github.com/ForestAdmin/toolbelt/commit/67e4bb44ec19d3ca5d694187022ecfde904c5c53))
+
 # [5.16.0](https://github.com/ForestAdmin/toolbelt/compare/v5.15.0...v5.16.0) (2026-06-25)
 
 
