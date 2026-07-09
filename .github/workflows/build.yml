@@ -116,7 +116,7 @@ jobs:
           node-version: 22.21.0
           cache: 'yarn'
       - name: Install npm >= 11.15.0
-        run: npm install -g npm@latest
+        run: npm install -g npm@11
       - uses: actions/cache@v4
         with:
           path: "**/node_modules"
