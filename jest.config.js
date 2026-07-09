@@ -29,5 +29,9 @@ module.exports = {
     '^.+\\.(j|t)s$': '@swc/jest',
   },
 
+  // bpmn-moddle (used in tests to verify editor importability) and its
+  // dependency chain are published as ESM only — transpile them too.
+  transformIgnorePatterns: ['/node_modules/(?!(bpmn-moddle|moddle|moddle-xml|min-dash|saxen)/)'],
+
   testEnvironment: 'node',
 };
