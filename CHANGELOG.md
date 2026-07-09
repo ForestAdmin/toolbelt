@@ -1,3 +1,17 @@
+# [5.18.0](https://github.com/ForestAdmin/toolbelt/compare/v5.17.0...v5.18.0) (2026-07-09)
+
+
+### Bug Fixes
+
+* **demo:** match the bundled create:demo layout to the demo-fintech schema ([#800](https://github.com/ForestAdmin/toolbelt/issues/800)) ([d2576a3](https://github.com/ForestAdmin/toolbelt/commit/d2576a34625397e3545cb303fad896265bbb2785))
+* **layout:** make CLI-compiled workflows editable in the UI ([#798](https://github.com/ForestAdmin/toolbelt/issues/798)) ([29282dc](https://github.com/ForestAdmin/toolbelt/commit/29282dc6fd9bbdd2aea2b569818b400f9beaf202))
+
+
+### Features
+
+* **layout:** round-trip workflow BPMN via `--with-workflows` ([#801](https://github.com/ForestAdmin/toolbelt/issues/801)) ([2b7cf95](https://github.com/ForestAdmin/toolbelt/commit/2b7cf956ffe67428b16aa7ecab25b42c5ec8cccc))
+* **workflow:** `forest workflow apply` — author a workflow from a JSON steps spec ([#799](https://github.com/ForestAdmin/toolbelt/issues/799)) ([8f9774d](https://github.com/ForestAdmin/toolbelt/commit/8f9774d94780dac3bf6e62a418e49f747c6a4042)), closes [#798](https://github.com/ForestAdmin/toolbelt/issues/798)
+
 # [5.17.0](https://github.com/ForestAdmin/toolbelt/compare/v5.16.0...v5.17.0) (2026-07-07)
 
 
