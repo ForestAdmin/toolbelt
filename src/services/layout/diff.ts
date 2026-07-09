@@ -60,8 +60,10 @@ type ItemMatch = {
 /**
  * Build the local→remote resolver: a singleton (e.g. the main folder) matches its
  * remote counterpart regardless of id/name; otherwise match by id, then by name.
+ * Exported so the sidecar upload (`workflow-sidecar.ts`) resolves its target with
+ * the EXACT same semantics as the domain patch (incl. last-wins on duplicate names).
  */
-function remoteResolver(
+export function remoteResolver(
   remoteItems: Item[],
   singletonFlag?: string,
 ): (local: Item) => Item | undefined {
