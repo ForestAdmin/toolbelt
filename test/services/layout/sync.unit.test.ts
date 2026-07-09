@@ -75,6 +75,23 @@ describe('planWorkflowBpmn', () => {
     expect(getWorkflowBpmn).not.toHaveBeenCalled();
   });
 
+  it('compiles the entry flow from `start`, not from the first step', async () => {
+    expect.assertions(2);
+    const wf = makeWorkflow({
+      start: 'review',
+      steps: [
+        { id: 'notes', type: 'guidance', prompt: 'Notes', next: 'done' },
+        { id: 'review', type: 'guidance', prompt: 'Review', next: 'notes' },
+        { id: 'done', type: 'end' },
+      ],
+    });
+
+    const [plan] = await planWorkflowBpmn(managerWith(jest.fn()), scope, [wf], [], 7);
+
+    expect(plan.bpmn).toContain('sourceRef="Start_1" targetRef="review"');
+    expect(plan.bpmn).not.toContain('sourceRef="Start_1" targetRef="notes"');
+  });
+
   it('re-uploads when the stored BPMN cannot be read (rather than risk a stale skip)', async () => {
     expect.assertions(1);
     const wf = makeWorkflow();
@@ -104,6 +121,21 @@ describe('stepWorkflows', () => {
     };
 
     expect(stepWorkflows(file).map(workflow => workflow.id)).toStrictEqual(['a']);
+  });
+
+  it('passes the authored `start` through (and ignores a non-string one)', () => {
+    expect.assertions(2);
+    const file = {
+      workflows: [
+        { collectionId: 'c', id: 'a', name: 'A', start: 's', steps: [{ id: 's', type: 'end' }] },
+        { collectionId: 'c', id: 'b', name: 'B', start: 42, steps: [{ id: 's', type: 'end' }] },
+      ],
+    };
+
+    const [withStart, withBadStart] = stepWorkflows(file);
+
+    expect(withStart.start).toBe('s');
+    expect(withBadStart.start).toBeUndefined();
   });
 
   it('assigns a uuid in place to a steps-carrying workflow lacking an id', () => {

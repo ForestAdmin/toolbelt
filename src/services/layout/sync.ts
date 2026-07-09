@@ -39,6 +39,8 @@ export type StepWorkflow = {
   id: string;
   name: string;
   segmentIds?: string[];
+  /** Entry step id — must reach the compiler, which otherwise falls back to the first step. */
+  start?: string;
   steps: unknown[];
 };
 
@@ -58,6 +60,7 @@ export function stepWorkflows(local: LayoutFileDoc): StepWorkflow[] {
         id: String(workflow.id),
         name: String(workflow.name),
         segmentIds: workflow.segmentIds as string[] | undefined,
+        start: typeof workflow.start === 'string' ? workflow.start : undefined,
         steps: workflow.steps as unknown[],
       };
     });
@@ -85,6 +88,7 @@ export async function planWorkflowBpmn(
         collection: workflow.collectionId,
         name: workflow.name,
         segments: workflow.segmentIds,
+        start: workflow.start,
         steps: workflow.steps as never,
       });
 
