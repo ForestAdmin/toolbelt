@@ -69,6 +69,20 @@ export default abstract class AbstractDumper {
     return this.writeFile(target, this.fs.readFileSync(templatePath, 'utf-8'));
   }
 
+  // Copy every file from a template sub-directory into the generated project,
+  // creating the target directory. Used for sidecar assets (e.g. workflow BPMN)
+  // that ship alongside a template file. No-op if the source directory is absent.
+  protected copyTemplateDirectory(source: string, target: string) {
+    const sourcePath = `${__dirname}/templates/${this.templateFolder}/${source}`;
+    if (!this.fs.existsSync(sourcePath)) return;
+
+    const files = this.fs.readdirSync(sourcePath);
+    if (files.length === 0) return;
+
+    this.fs.mkdirSync(`${this.projectPath}/${target}`, { recursive: true });
+    files.forEach(file => this.copyHandleBarsTemplate(`${source}/${file}`, `${target}/${file}`));
+  }
+
   async dump(dumperConfig: Config, schema?: any) {
     const cwd = this.constants.CURRENT_WORKING_DIRECTORY;
     this.projectPath = dumperConfig.appConfig.appName
