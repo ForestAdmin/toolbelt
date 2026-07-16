@@ -32,6 +32,13 @@ describe('toPlannedOps', () => {
     ).toThrow(/unknown op "upsert"/);
   });
 
+  it('rejects an add/replace/test op with no value field', () => {
+    expect.assertions(1);
+    expect(() =>
+      toPlannedOps('layout', [{ op: 'replace', path: '/collections/orders/displayName' }]),
+    ).toThrow(/op "replace" requires a "value" field/);
+  });
+
   it('rejects a path that does not start with "/"', () => {
     expect.assertions(1);
     expect(() =>

@@ -86,6 +86,12 @@ export function toPlannedOps(
     if (typeof raw.path !== 'string' || !raw.path.startsWith('/')) {
       throw new Error(`[${domain}][${i}]: path must be a string starting with "/".`);
     }
+    if (
+      (raw.op === 'add' || raw.op === 'replace' || raw.op === 'test') &&
+      raw.value === undefined
+    ) {
+      throw new Error(`[${domain}][${i}]: op "${raw.op}" requires a "value" field.`);
+    }
     if (!matchesWhitelist(domain, raw)) {
       throw new Error(
         `[${domain}][${i}]: path "${raw.path}" is not allowed by the server whitelist.`,
