@@ -1,3 +1,10 @@
+# [5.19.0](https://github.com/ForestAdmin/toolbelt/compare/v5.18.1...v5.19.0) (2026-07-16)
+
+
+### Features
+
+* **layout:** add `forest layout patch` command ([#796](https://github.com/ForestAdmin/toolbelt/issues/796)) ([d706d87](https://github.com/ForestAdmin/toolbelt/commit/d706d873f45d7f2137cb4a07e3460ab9310afa1e))
+
 ## [5.18.1](https://github.com/ForestAdmin/toolbelt/compare/v5.18.0...v5.18.1) (2026-07-16)
 
 
