@@ -269,6 +269,15 @@ export default class AgentNodeJs extends AbstractDumper {
   // commands) is a separate onboarding step.
   private writeLayoutFile() {
     this.copyHandleBarsTemplate('common/forest-layout.json', 'forest-layout.json');
+    this.copyWorkflowBpmnSidecars();
+  }
+
+  // The curated workflows ship their compiled BPMN as portable sidecar files
+  // (workflows/<id>.bpmn). `forest layout apply --with-workflows` re-uploads each
+  // one to the target environment's own S3 bucket and links the fresh version, so
+  // the layout file carries no (non-portable) bpmnAwsS3Identifier of its own.
+  private copyWorkflowBpmnSidecars() {
+    this.copyTemplateDirectory('common/workflows', 'workflows');
   }
 
   protected async createFiles(dumpConfig: Config) {
