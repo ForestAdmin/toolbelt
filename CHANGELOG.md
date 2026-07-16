@@ -1,3 +1,10 @@
+## [5.18.1](https://github.com/ForestAdmin/toolbelt/compare/v5.18.0...v5.18.1) (2026-07-16)
+
+
+### Bug Fixes
+
+* **demo:** ship portable workflow BPMN sidecars in create:demo ([#802](https://github.com/ForestAdmin/toolbelt/issues/802)) ([1167e39](https://github.com/ForestAdmin/toolbelt/commit/1167e3957d89acc0892836e46ba24879a3cb0cff))
+
 # [5.18.0](https://github.com/ForestAdmin/toolbelt/compare/v5.17.0...v5.18.0) (2026-07-09)
 
 
