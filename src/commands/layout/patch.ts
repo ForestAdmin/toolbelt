@@ -30,11 +30,24 @@ const STDIN_FIRST_BYTE_TIMEOUT_MS = 10_000;
 function readStdin(): Promise<string> {
   return new Promise((resolve, reject) => {
     let data = '';
+    let timeout: ReturnType<typeof setTimeout>;
+
+    // Detach our listeners and release stdin on every exit path: a lingering
+    // flowing-mode listener would keep the event loop alive and hang the CLI.
+    const cleanup = () => {
+      clearTimeout(timeout);
+      process.stdin.removeAllListeners('data');
+      process.stdin.removeAllListeners('end');
+      process.stdin.removeAllListeners('error');
+      process.stdin.pause();
+    };
+
     // In a spawned process with an open-but-silent stdin, `isTTY` is undefined
     // and `end` never fires (oclif's own parser defends against the same hang):
     // give the FIRST byte a deadline, then let a slow-but-real pipe stream for
     // as long as it needs.
-    const timeout = setTimeout(() => {
+    timeout = setTimeout(() => {
+      cleanup();
       reject(
         new Error(
           `No data received on stdin after ${STDIN_FIRST_BYTE_TIMEOUT_MS / 1000}s. ` +
@@ -49,11 +62,11 @@ function readStdin(): Promise<string> {
       data += chunk;
     });
     process.stdin.on('end', () => {
-      clearTimeout(timeout);
+      cleanup();
       resolve(data);
     });
     process.stdin.on('error', error => {
-      clearTimeout(timeout);
+      cleanup();
       reject(error);
     });
   });
