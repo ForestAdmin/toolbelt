@@ -204,6 +204,10 @@ export default class LayoutPatchCommand extends AbstractAuthenticatedCommand {
   static override args = {
     file: Args.string({
       description: 'JSON patch file to apply. Use "-" or omit to read from stdin.',
+      // Without this, oclif fills a missing positional FROM stdin (parser/parse.js),
+      // so `echo '{...}' | forest layout patch` would readFile() the JSON as a filename.
+      // Stdin must stay untouched for our own reader (multi-line JSON, explicit guard).
+      ignoreStdin: true,
       required: false,
     }),
   };
