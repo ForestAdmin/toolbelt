@@ -120,10 +120,10 @@ describe('assertNonInteractiveFlags', () => {
     ).not.toThrow();
   });
 
-  it('lets FOREST_ENV_SECRET stand in for --env and --projectId', () => {
+  it('lets FOREST_ENV_SECRET stand in for --projectId only', () => {
     expect.assertions(1);
     expect(() =>
-      assertNonInteractiveFlags({ force: true, team: 'Operations' }, true),
+      assertNonInteractiveFlags({ env: 'Production', force: true, team: 'Operations' }, true),
     ).not.toThrow();
   });
 
@@ -134,9 +134,18 @@ describe('assertNonInteractiveFlags', () => {
     );
   });
 
+  it('still requires --env with FOREST_ENV_SECRET set (the secret never picks the environment)', () => {
+    expect.assertions(1);
+    expect(() => assertNonInteractiveFlags({ force: true, team: 'Operations' }, true)).toThrow(
+      /Missing: -e\/--env/,
+    );
+  });
+
   it('still requires --team and --force with FOREST_ENV_SECRET set', () => {
     expect.assertions(1);
-    expect(() => assertNonInteractiveFlags({}, true)).toThrow(/Missing: -t\/--team, --force/);
+    expect(() => assertNonInteractiveFlags({ env: 'Production' }, true)).toThrow(
+      /Missing: -t\/--team, --force/,
+    );
   });
 });
 

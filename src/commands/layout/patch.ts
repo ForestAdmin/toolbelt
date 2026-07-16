@@ -143,16 +143,18 @@ export function buildAllOps(input: PatchInput): PlannedOp[] {
  * team, confirmation) can run afterwards: it would read from an already-closed
  * pipe and hang or crash. Stdin mode therefore requires the full scope and
  * `--force` up front — fail fast, listing exactly what is missing.
+ *
+ * `FOREST_ENV_SECRET` only stands in for `-p/--projectId`: scope resolution
+ * derives the project from the secret (`withCurrentProject`) but NEVER the
+ * environment — without `-e/--env` it would still prompt.
  */
 export function assertNonInteractiveFlags(
   flags: { env?: string; force?: boolean; projectId?: number; team?: string },
   hasEnvSecret: boolean,
 ): void {
   const missing: string[] = [];
-  if (!hasEnvSecret) {
-    if (!flags.env) missing.push('-e/--env');
-    if (flags.projectId === undefined) missing.push('-p/--projectId');
-  }
+  if (!flags.env) missing.push('-e/--env');
+  if (!hasEnvSecret && flags.projectId === undefined) missing.push('-p/--projectId');
   if (!flags.team) missing.push('-t/--team');
   if (!flags.force) missing.push('--force');
 
@@ -160,7 +162,7 @@ export function assertNonInteractiveFlags(
     throw new Error(
       'Reading the patch from stdin consumes the interactive input, so prompts ' +
         `(project, environment, team, confirmation) cannot run. Missing: ${missing.join(', ')}. ` +
-        'Set FOREST_ENV_SECRET to omit -e/-p, or use --dry-run to preview without a scope.',
+        'Set FOREST_ENV_SECRET to omit -p/--projectId, or use --dry-run to preview without a scope.',
     );
   }
 }
