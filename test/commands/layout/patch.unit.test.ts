@@ -1,4 +1,9 @@
-import { buildAllOps, formatOps, toPlannedOps } from '../../../src/commands/layout/patch';
+import {
+  assertNonInteractiveFlags,
+  buildAllOps,
+  formatOps,
+  toPlannedOps,
+} from '../../../src/commands/layout/patch';
 
 describe('toPlannedOps', () => {
   it('accepts a valid add op', () => {
@@ -101,6 +106,37 @@ describe('buildAllOps', () => {
         layuot: [{ op: 'replace', path: '/collections/orders/displayName', value: 'x' }],
       } as unknown as Parameters<typeof buildAllOps>[0]),
     ).toThrow(/Unknown domain key: layuot/);
+  });
+});
+
+describe('assertNonInteractiveFlags', () => {
+  it('passes when the full scope and --force are given', () => {
+    expect.assertions(1);
+    expect(() =>
+      assertNonInteractiveFlags(
+        { env: 'Production', force: true, projectId: 42, team: 'Operations' },
+        false,
+      ),
+    ).not.toThrow();
+  });
+
+  it('lets FOREST_ENV_SECRET stand in for --env and --projectId', () => {
+    expect.assertions(1);
+    expect(() =>
+      assertNonInteractiveFlags({ force: true, team: 'Operations' }, true),
+    ).not.toThrow();
+  });
+
+  it('lists every missing flag when nothing is provided', () => {
+    expect.assertions(1);
+    expect(() => assertNonInteractiveFlags({}, false)).toThrow(
+      /Missing: -e\/--env, -p\/--projectId, -t\/--team, --force/,
+    );
+  });
+
+  it('still requires --team and --force with FOREST_ENV_SECRET set', () => {
+    expect.assertions(1);
+    expect(() => assertNonInteractiveFlags({}, true)).toThrow(/Missing: -t\/--team, --force/);
   });
 });
 

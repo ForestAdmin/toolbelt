@@ -43,7 +43,7 @@ async function readRawInput(filePath: string | undefined): Promise<string> {
       throw new Error(
         'No input provided. Pass a JSON file or pipe the patch via stdin.\n' +
           '  Example: forest layout patch ops.json --env Production\n' +
-          '  Example: echo \'{"layout":[...]}\' | forest layout patch --env Production',
+          '  Example: echo \'{"layout":[...]}\' | forest layout patch --force -p 42 -e Production -t Operations',
       );
     }
 
@@ -138,6 +138,33 @@ export function buildAllOps(input: PatchInput): PlannedOp[] {
   });
 }
 
+/**
+ * Piped input consumes stdin, so no inquirer prompt (project, environment,
+ * team, confirmation) can run afterwards: it would read from an already-closed
+ * pipe and hang or crash. Stdin mode therefore requires the full scope and
+ * `--force` up front — fail fast, listing exactly what is missing.
+ */
+export function assertNonInteractiveFlags(
+  flags: { env?: string; force?: boolean; projectId?: number; team?: string },
+  hasEnvSecret: boolean,
+): void {
+  const missing: string[] = [];
+  if (!hasEnvSecret) {
+    if (!flags.env) missing.push('-e/--env');
+    if (flags.projectId === undefined) missing.push('-p/--projectId');
+  }
+  if (!flags.team) missing.push('-t/--team');
+  if (!flags.force) missing.push('--force');
+
+  if (missing.length > 0) {
+    throw new Error(
+      'Reading the patch from stdin consumes the interactive input, so prompts ' +
+        `(project, environment, team, confirmation) cannot run. Missing: ${missing.join(', ')}. ` +
+        'Set FOREST_ENV_SECRET to omit -e/-p, or use --dry-run to preview without a scope.',
+    );
+  }
+}
+
 export function formatOps(allOps: PlannedOp[]): string {
   return PATCH_DOMAINS.flatMap(domain => {
     const domainOps = allOps.filter(op => op.domain === domain);
@@ -163,9 +190,14 @@ export function formatOps(allOps: PlannedOp[]): string {
  *   "layout":  [{ "op": "replace", "path": "/collections/orders/displayName", "value": "Orders" }],
  *   "folders": [{ "op": "add",     "path": "/folders/<mainId>/children/-",     "value": {...} }]
  * }
+ *
+ * Stdin mode is non-interactive by construction (the pipe IS the input): it
+ * requires the full scope flags and `--force` — see {@link assertNonInteractiveFlags}.
  */
 export default class LayoutPatchCommand extends AbstractAuthenticatedCommand {
   private readonly env: { FOREST_SERVER_URL: string } & Record<string, unknown>;
+
+  private readonly inquirer: { prompt(questions: unknown): Promise<{ confirm: boolean }> };
 
   static override args = {
     file: Args.string({
@@ -185,6 +217,10 @@ export default class LayoutPatchCommand extends AbstractAuthenticatedCommand {
       char: 'e',
       description: 'Environment name or id.',
     }),
+    force: Flags.boolean({
+      char: 'f',
+      description: 'Skip the confirmation prompt (required when reading from stdin).',
+    }),
     projectId: Flags.integer({
       char: 'p',
       description: 'Project id.',
@@ -197,13 +233,19 @@ export default class LayoutPatchCommand extends AbstractAuthenticatedCommand {
 
   constructor(argv: string[], config: Config, plan?) {
     super(argv, config, plan);
-    const { assertPresent, env } = this.context;
-    assertPresent({ env });
+    const { assertPresent, env, inquirer } = this.context;
+    assertPresent({ env, inquirer });
     this.env = env;
+    this.inquirer = inquirer;
   }
 
   protected async runAuthenticated(): Promise<void> {
     const { args, flags } = await this.parse(LayoutPatchCommand);
+
+    const fromStdin = !args.file || args.file === '-';
+    if (fromStdin && !flags['dry-run']) {
+      assertNonInteractiveFlags(flags, Boolean(this.env.FOREST_ENV_SECRET));
+    }
 
     const allOps = buildAllOps(await readInput(args.file));
 
@@ -225,7 +267,30 @@ export default class LayoutPatchCommand extends AbstractAuthenticatedCommand {
 
     this.log(formatOps(allOps));
 
-    const manager = new LayoutManager();
+    if (
+      !flags.force &&
+      !(await this.confirm(scope.environmentName, scope.teamName, allOps.length))
+    ) {
+      this.logger.info('Aborted: nothing was patched.');
+      return;
+    }
+
+    await this.sendPatches(new LayoutManager(), scope, allOps);
+
+    this.logger.success(
+      `Patched ${allOps.length} op${allOps.length > 1 ? 's' : ''} on ${this.chalk.bold(
+        scope.environmentName,
+      )} / ${this.chalk.bold(scope.teamName)}.`,
+    );
+  }
+
+  /** One atomic PATCH per domain, in stable order. Exits 2 on a recoverable API error. */
+  private async sendPatches(
+    manager: LayoutManager,
+    scope: Awaited<ReturnType<typeof resolveCommandScope>>,
+    allOps: PlannedOp[],
+  ): Promise<void> {
+    const applied: LayoutDomain[] = [];
 
     // eslint-disable-next-line no-restricted-syntax -- sequential: one atomic PATCH per domain
     for (const domain of PATCH_DOMAINS) {
@@ -235,21 +300,43 @@ export default class LayoutPatchCommand extends AbstractAuthenticatedCommand {
       try {
         // eslint-disable-next-line no-await-in-loop -- intentional: atomic, ordered per-domain patches
         await manager.patchDomain(domain, domainOps, scope);
+        applied.push(domain);
       } catch (error) {
         if (error instanceof LayoutApiError && error.status !== 401) {
           // Scope the error to this domain so path correlation in explainApiError is accurate.
           this.logger.error(explainApiError(error, domainOps));
+          if (applied.length > 0) {
+            // Unlike `apply`, a raw patch is NOT idempotent: replaying its "add"
+            // ops would create duplicates on the domains that already succeeded.
+            this.logger.warn(
+              `The "${applied.join('", "')}" patch was already applied before this failure. ` +
+                'Do not re-run the same input as-is: its "add" operations would be applied twice — ' +
+                'remove the applied domain(s) from the input before retrying.',
+            );
+          }
           this.exit(2);
         }
 
         throw error;
       }
     }
+  }
 
-    this.logger.success(
-      `Patched ${allOps.length} op${allOps.length > 1 ? 's' : ''} on ${this.chalk.bold(
-        scope.environmentName,
-      )} / ${this.chalk.bold(scope.teamName)}.`,
-    );
+  private async confirm(
+    environmentName: string,
+    teamName: string,
+    count: number,
+  ): Promise<boolean> {
+    const { confirm } = await this.inquirer.prompt([
+      {
+        message: `Send ${count} patch operation${
+          count > 1 ? 's' : ''
+        } to ${environmentName} / ${teamName}?`,
+        name: 'confirm',
+        type: 'confirm',
+      },
+    ]);
+
+    return confirm;
   }
 }
