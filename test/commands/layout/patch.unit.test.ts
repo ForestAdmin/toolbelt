@@ -47,6 +47,13 @@ describe('toPlannedOps', () => {
       ]),
     ).toThrow(/not allowed by the server whitelist/);
   });
+
+  it('rejects a non-object operation with a user-facing error', () => {
+    expect.assertions(1);
+    expect(() => toPlannedOps('layout', [null as unknown as { op: string; path: string }])).toThrow(
+      /each operation must be a JSON object/,
+    );
+  });
 });
 
 describe('buildAllOps', () => {
@@ -78,6 +85,15 @@ describe('buildAllOps', () => {
     expect(() =>
       buildAllOps({ workflows: [{ op: 'replace', path: '/workflows/42/isVisible', value: true }] }),
     ).toThrow(/"workflows" domain is not supported/);
+  });
+
+  it('rejects an unknown domain key instead of silently dropping it', () => {
+    expect.assertions(1);
+    expect(() =>
+      buildAllOps({
+        layuot: [{ op: 'replace', path: '/collections/orders/displayName', value: 'x' }],
+      } as unknown as Parameters<typeof buildAllOps>[0]),
+    ).toThrow(/Unknown domain key: layuot/);
   });
 });
 

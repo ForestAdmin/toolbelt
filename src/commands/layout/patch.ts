@@ -11,6 +11,7 @@ import LayoutManager from '../../services/layout/layout-manager';
 import { matchesWhitelist } from '../../services/layout/patch-rules';
 import { explainApiError } from '../../services/layout/plan-format';
 import { resolveCommandScope } from '../../services/layout/resolve-command-scope';
+import { LAYOUT_DOMAINS } from '../../services/layout/types';
 
 /**
  * Domains this command accepts. Scoped to the layout-only domains on purpose:
@@ -76,6 +77,9 @@ export function toPlannedOps(
   rawOps: RawOp[],
 ): PlannedOp[] {
   return rawOps.map((raw, i) => {
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+      throw new Error(`[${domain}][${i}]: each operation must be a JSON object.`);
+    }
     if (!['add', 'replace', 'remove', 'test'].includes(raw.op)) {
       throw new Error(`[${domain}][${i}]: unknown op "${raw.op}".`);
     }
@@ -100,6 +104,16 @@ export function toPlannedOps(
 }
 
 export function buildAllOps(input: PatchInput): PlannedOp[] {
+  const unknownDomains = Object.keys(input).filter(
+    key => !LAYOUT_DOMAINS.includes(key as LayoutDomain),
+  );
+  if (unknownDomains.length > 0) {
+    throw new Error(
+      `Unknown domain key${unknownDomains.length > 1 ? 's' : ''}: ${unknownDomains.join(', ')}. ` +
+        `Supported domains are: ${PATCH_DOMAINS.join(', ')}.`,
+    );
+  }
+
   if (input.workflows !== undefined) {
     throw new Error(
       'The "workflows" domain is not supported by `forest layout patch`: creating a workflow ' +
