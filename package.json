@@ -138,6 +138,10 @@
   },
   "resolutions": {
     "semantic-release-slack-bot/**/micromatch": "^4.0.8",
+    "@oclif/core/js-yaml": "3.15.0",
+    "**/@istanbuljs/load-nyc-config/js-yaml": "3.15.0",
+    "@semantic-release/npm/**/sigstore": "^4.1.1",
+    "@semantic-release/npm/**/@sigstore/core": "^3.2.1",
     "@azure/core-tracing": "1.0.1",
     "jws": ">=4.0.1",
     "fast-xml-parser": ">=5.7.0",
