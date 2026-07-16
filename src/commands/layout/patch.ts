@@ -25,15 +25,37 @@ type PatchInput = Partial<Record<LayoutDomain, RawOp[]>>;
 
 const OP_PREFIX: Record<string, string> = { add: '+', remove: '-', replace: '~' };
 
+const STDIN_FIRST_BYTE_TIMEOUT_MS = 10_000;
+
 function readStdin(): Promise<string> {
   return new Promise((resolve, reject) => {
     let data = '';
+    // In a spawned process with an open-but-silent stdin, `isTTY` is undefined
+    // and `end` never fires (oclif's own parser defends against the same hang):
+    // give the FIRST byte a deadline, then let a slow-but-real pipe stream for
+    // as long as it needs.
+    const timeout = setTimeout(() => {
+      reject(
+        new Error(
+          `No data received on stdin after ${STDIN_FIRST_BYTE_TIMEOUT_MS / 1000}s. ` +
+            'Pass a JSON file argument, or pipe the patch via stdin.',
+        ),
+      );
+    }, STDIN_FIRST_BYTE_TIMEOUT_MS);
+
     process.stdin.setEncoding('utf8');
     process.stdin.on('data', chunk => {
+      clearTimeout(timeout);
       data += chunk;
     });
-    process.stdin.on('end', () => resolve(data));
-    process.stdin.on('error', reject);
+    process.stdin.on('end', () => {
+      clearTimeout(timeout);
+      resolve(data);
+    });
+    process.stdin.on('error', error => {
+      clearTimeout(timeout);
+      reject(error);
+    });
   });
 }
 
@@ -42,8 +64,8 @@ async function readRawInput(filePath: string | undefined): Promise<string> {
     if (process.stdin.isTTY) {
       throw new Error(
         'No input provided. Pass a JSON file or pipe the patch via stdin.\n' +
-          '  Example: forest layout patch ops.json --env Production\n' +
-          '  Example: echo \'{"layout":[...]}\' | forest layout patch --force -p 42 -e Production -t Operations',
+          '  Example: forest layout:patch ops.json --env Production\n' +
+          '  Example: echo \'{"layout":[...]}\' | forest layout:patch --force -p 42 -e Production -t Operations',
       );
     }
 
@@ -139,10 +161,11 @@ export function buildAllOps(input: PatchInput): PlannedOp[] {
 }
 
 /**
- * Piped input consumes stdin, so no inquirer prompt (project, environment,
- * team, confirmation) can run afterwards: it would read from an already-closed
- * pipe and hang or crash. Stdin mode therefore requires the full scope and
- * `--force` up front — fail fast, listing exactly what is missing.
+ * When stdin is not an interactive terminal — the patch is piped, or the
+ * command runs in CI / spawned by an agent, even with a file argument — no
+ * inquirer prompt (project, environment, team, confirmation) can run: it would
+ * read from a pipe and hang or crash. Non-TTY runs therefore require the full
+ * scope and `--force` up front — fail fast, listing exactly what is missing.
  *
  * `FOREST_ENV_SECRET` only stands in for `-p/--projectId`: scope resolution
  * derives the project from the secret (`withCurrentProject`) but NEVER the
@@ -160,7 +183,7 @@ export function assertNonInteractiveFlags(
 
   if (missing.length > 0) {
     throw new Error(
-      'Reading the patch from stdin consumes the interactive input, so prompts ' +
+      'stdin is not an interactive terminal, so prompts ' +
         `(project, environment, team, confirmation) cannot run. Missing: ${missing.join(', ')}. ` +
         'Set FOREST_ENV_SECRET to omit -p/--projectId, or use --dry-run to preview without a scope.',
     );
@@ -193,8 +216,9 @@ export function formatOps(allOps: PlannedOp[]): string {
  *   "folders": [{ "op": "add",     "path": "/folders/<mainId>/children/-",     "value": {...} }]
  * }
  *
- * Stdin mode is non-interactive by construction (the pipe IS the input): it
- * requires the full scope flags and `--force` — see {@link assertNonInteractiveFlags}.
+ * Any non-TTY run (piped input, CI, spawned by an agent) is non-interactive by
+ * construction: it requires the full scope flags and `--force` — see
+ * {@link assertNonInteractiveFlags}.
  */
 export default class LayoutPatchCommand extends AbstractAuthenticatedCommand {
   private readonly env: { FOREST_SERVER_URL: string } & Record<string, unknown>;
@@ -248,8 +272,10 @@ export default class LayoutPatchCommand extends AbstractAuthenticatedCommand {
   protected async runAuthenticated(): Promise<void> {
     const { args, flags } = await this.parse(LayoutPatchCommand);
 
-    const fromStdin = !args.file || args.file === '-';
-    if (fromStdin && !flags['dry-run']) {
+    // No TTY on stdin ⇒ no prompt can run (scope or confirmation) — whether the
+    // patch is piped or read from a file argument in CI. `--dry-run` is exempt:
+    // it neither prompts nor sends.
+    if (!process.stdin.isTTY && !flags['dry-run']) {
       assertNonInteractiveFlags(flags, Boolean(this.env.FOREST_ENV_SECRET));
     }
 
