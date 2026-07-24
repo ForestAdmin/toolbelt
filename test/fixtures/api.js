@@ -1513,7 +1513,11 @@ module.exports = {
         }),
       ),
 
-  createProject: ({ databaseType, agent = Agents.ExpressSequelize }) =>
+  createProject: ({
+    databaseType,
+    agent = Agents.ExpressSequelize,
+    architecture = 'microservice',
+  }) =>
     nock('http://localhost:3001')
       .post('/api/projects', {
         data: {
@@ -1521,7 +1525,7 @@ module.exports = {
           attributes: {
             name: 'name',
             agent,
-            architecture: 'microservice',
+            architecture,
             database_type: databaseType,
           },
         },
