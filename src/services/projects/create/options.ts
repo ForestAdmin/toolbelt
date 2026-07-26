@@ -38,6 +38,25 @@ export function getDialect(options: ProjectCreateOptions): ProjectCreateOptions[
   return null;
 }
 
+// Skip a field prompt when the user has provided a connection URL instead (used by sql/nosql).
+export const skipWhenConnectionUrl = (args: ProjectCreateOptions): boolean =>
+  !args.databaseConnectionURL;
+
+// Accept a blank value (⇒ fill the fields instead) or a real `scheme://…` for the engine family.
+export function validateSqlConnectionUrl(value: string): boolean | string {
+  if (!value) return true;
+
+  return /^(postgres|postgresql|mysql|mariadb|mssql):\/\/.+/i.test(value)
+    ? true
+    : 'Enter a URL like postgres://…, mysql://…, mariadb://… or mssql://…';
+}
+
+export function validateMongoConnectionUrl(value: string): boolean | string {
+  if (!value) return true;
+
+  return /^mongodb(\+srv)?:\/\/.+/i.test(value) ? true : 'Enter a mongodb:// or mongodb+srv:// URL';
+}
+
 export const applicationHost: Option = {
   default: 'http://localhost',
   validate: validateAppHostname,

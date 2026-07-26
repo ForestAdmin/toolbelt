@@ -12,14 +12,40 @@ import { optionsToFlags } from '../../../utils/option-parser';
 
 export default class SqlCommand extends AbstractProjectCreateCommand {
   protected static options: CommandOptions = {
-    databaseConnectionURL: projectCreateOptions.databaseConnectionURL,
-    databaseDialect: projectCreateOptions.databaseDialectSqlV2,
-    databaseName: projectCreateOptions.databaseName,
+    // Ask for a connection URL first; when provided, the field prompts below are skipped
+    // (dialect/host/port/user/pass/name are derived from the URL).
+    databaseConnectionURL: {
+      ...projectCreateOptions.databaseConnectionURL,
+      validate: projectCreateOptions.validateSqlConnectionUrl,
+      prompter: {
+        question: 'Database connection URL (leave blank to enter the details manually):',
+      },
+    },
+    databaseDialect: {
+      ...projectCreateOptions.databaseDialectSqlV2,
+      when: projectCreateOptions.skipWhenConnectionUrl,
+    },
+    databaseName: {
+      ...projectCreateOptions.databaseName,
+      when: projectCreateOptions.skipWhenConnectionUrl,
+    },
     databaseSchema: projectCreateOptions.databaseSchema,
-    databaseHost: projectCreateOptions.databaseHost,
-    databasePort: projectCreateOptions.databasePort,
-    databaseUser: projectCreateOptions.databaseUser,
-    databasePassword: projectCreateOptions.databasePassword,
+    databaseHost: {
+      ...projectCreateOptions.databaseHost,
+      when: projectCreateOptions.skipWhenConnectionUrl,
+    },
+    databasePort: {
+      ...projectCreateOptions.databasePort,
+      when: projectCreateOptions.skipWhenConnectionUrl,
+    },
+    databaseUser: {
+      ...projectCreateOptions.databaseUser,
+      when: projectCreateOptions.skipWhenConnectionUrl,
+    },
+    databasePassword: {
+      ...projectCreateOptions.databasePassword,
+      when: projectCreateOptions.skipWhenConnectionUrl,
+    },
 
     // Set prompter to null to replicate bug from previous version (we don't ask for SSL there).
     databaseSslMode: { ...projectCreateOptions.databaseSslMode, prompter: null },

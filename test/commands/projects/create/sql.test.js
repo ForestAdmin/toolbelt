@@ -15,6 +15,12 @@ const { default: languages } = require('../../../../src/utils/languages');
 const makePromptInputList = ({ except = null, only = null } = {}) => {
   const allPromptInputs = [
     {
+      name: 'databaseConnectionURL',
+      message: 'Database connection URL (leave blank to enter the details manually):',
+      type: 'input',
+      validate: expect.any(Function),
+    },
+    {
       name: 'databaseDialect',
       message: "What's the database type?",
       type: 'list',
@@ -23,12 +29,14 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
         { name: 'mysql / mariadb', value: 'mysql' },
         { name: 'postgres', value: 'postgres' },
       ],
+      when: expect.any(Function),
     },
     {
       name: 'databaseName',
       type: 'input',
       message: "What's the database name?",
       validate: expect.any(Function),
+      when: expect.any(Function),
     },
     {
       name: 'databaseSchema',
@@ -43,6 +51,7 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
       message: "What's the database hostname?",
       type: 'input',
       default: 'localhost',
+      when: expect.any(Function),
     },
     {
       name: 'databasePort',
@@ -50,17 +59,20 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
       message: "What's the database port?",
       default: expect.any(Function),
       validate: expect.any(Function),
+      when: expect.any(Function),
     },
     {
       name: 'databaseUser',
       message: "What's the database user?",
       default: expect.any(Function),
       type: 'input',
+      when: expect.any(Function),
     },
     {
       name: 'databasePassword',
       message: "What's the database password? [optional]",
       type: 'password',
+      when: expect.any(Function),
     },
     {
       name: 'applicationHost',
@@ -361,6 +373,36 @@ describe('projects:create:sql', () => {
               { spinner: '× Testing connection to your database' },
             ],
             // This only validates login, options are missing thus the error.
+            exitCode: 1,
+          }));
+      });
+
+      describe('is chosen interactively (blank left to fill fields, or a URL pasted)', () => {
+        it('should accept a connection URL and skip the field prompts', () =>
+          testCli({
+            commandClass: SqlCommand,
+            commandArgs: ['name'],
+            env: testEnvWithSecret,
+            token: 'any',
+            api: [
+              () => createProject({ databaseType: 'postgres', agent: Agents.NodeJS }),
+              () => updateNewEnvironmentEndpoint(),
+            ],
+            prompts: [
+              {
+                in: makePromptInputList(),
+                // Only the URL is answered (no field values) — the dialect (postgres) is derived
+                // from it, proving the field prompts were skipped.
+                out: {
+                  databaseConnectionURL: 'postgres://u:p@unreachable.invalid:5432/db',
+                  language: languages.Javascript,
+                },
+              },
+            ],
+            std: [
+              { spinner: '√ Creating your project on Forest Admin' },
+              { spinner: '× Testing connection to your database' },
+            ],
             exitCode: 1,
           }));
       });
