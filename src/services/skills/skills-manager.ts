@@ -96,6 +96,10 @@ export async function fetchMarketplace(
   }
 }
 
+/** Forward-slash-normalize a path so entries written on one OS (Windows `\`) compare equal to
+ *  paths produced on another (Unix `/`). */
+const normalizePath = (p: string) => p.replace(/\\/g, '/');
+
 /** True if `p` exists and is a symlink (never throws). */
 function isSymlink(p: string): boolean {
   try {
@@ -143,9 +147,18 @@ export function copyDir(src: string, dest: string): string[] {
   });
 }
 
-/** Copy the skill bundles from the extracted repo into one agent's skills dir. */
-export function installSkills(srcRoot: string, agent: string, force: boolean): string[] {
+/** Copy the skill bundles from the extracted repo into one agent's skills dir.
+ *  `previousFiles` is the file list from the previous manifest (`null` on a first run): on the
+ *  no-force skip path it bounds what we may claim as managed — we never claim a file we did not
+ *  write ourselves on some run, or a later prune would delete user-authored content. */
+export function installSkills(
+  srcRoot: string,
+  agent: string,
+  force: boolean,
+  previousFiles: string[] | null,
+): string[] {
   const targetBase = AGENT_SKILL_DIRS[agent];
+  const previouslyManaged = new Set((previousFiles ?? []).map(normalizePath));
 
   return SKILL_SOURCES.flatMap(({ plugin, skills }) =>
     skills.flatMap(skill => {
@@ -163,11 +176,14 @@ export function installSkills(srcRoot: string, agent: string, force: boolean): s
           // A stray non-directory where a skill dir belongs → replace it wholesale.
           fs.rmSync(dest, { recursive: true, force: true });
         } else if (!force) {
-          // Installed and no --force: keep as-is, but report the *managed* files (derived from the
-          // source bundle, mapped to dest) so the manifest stays complete — NOT the actual dir
-          // contents, which may include user-added files we must never record as managed (they'd
-          // then be pruned on a later refresh).
-          return listFiles(src).map(f => path.join(dest, path.relative(src, f)));
+          // Installed and no --force: nothing is written here, so only carry over files that are
+          // BOTH in the incoming bundle (derived from source, mapped to dest — never the actual
+          // dir contents, which may include user-added files) AND in the previous manifest (proof
+          // a past run wrote them). A dir that pre-existed the first run was authored by the user:
+          // claiming its files would mark them managed and a later refresh would prune them.
+          return listFiles(src)
+            .map(f => path.join(dest, path.relative(src, f)))
+            .filter(f => previouslyManaged.has(normalizePath(f)));
         }
         // With --force on an existing dir we fall through and overlay the incoming bundle on top.
         // We deliberately do NOT delete the dir, so user-added files survive; pruning of
@@ -217,10 +233,9 @@ export function removeStaleSkillFiles(previousFiles: string[], currentFiles: str
   // Compare on forward-slash-normalized paths so a manifest written on one OS (e.g. Unix `/`)
   // matches files produced on another (Windows `\`) — otherwise every entry looks stale and a
   // cross-platform refresh would wipe freshly-installed bundles. Delete via the original path.
-  const normalize = (p: string) => p.replace(/\\/g, '/');
-  const kept = new Set(currentFiles.map(normalize));
+  const kept = new Set(currentFiles.map(normalizePath));
   const stale = previousFiles.filter(
-    file => !kept.has(normalize(file)) && fs.existsSync(file) && isWithinSkillDirs(file),
+    file => !kept.has(normalizePath(file)) && fs.existsSync(file) && isWithinSkillDirs(file),
   );
   stale.forEach(file => fs.rmSync(file));
 
