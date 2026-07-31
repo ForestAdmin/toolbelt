@@ -12,6 +12,8 @@ import {
   readManifest,
   removeStaleSkillFiles,
   skillDirEntries,
+  validateLocalMcp,
+  validateMarketplaceBundle,
   writeManifest,
 } from '../../../src/services/skills/skills-manager';
 
@@ -428,6 +430,62 @@ describe('skills-manager', () => {
         installDocsMcp(root);
         const mcp = JSON.parse(fs.readFileSync('.mcp.json', 'utf8'));
         expect(mcp.mcpServers['forest-docs']).toBeDefined();
+      });
+    });
+  });
+
+  describe('validateLocalMcp', () => {
+    it('passes when no .mcp.json exists', () => {
+      expect.assertions(1);
+      withTempDir(() => {
+        expect(() => validateLocalMcp()).not.toThrow();
+      });
+    });
+
+    it('passes on a parsable .mcp.json', () => {
+      expect.assertions(1);
+      withTempDir(() => {
+        fs.writeFileSync('.mcp.json', JSON.stringify({ mcpServers: {} }));
+        expect(() => validateLocalMcp()).not.toThrow();
+      });
+    });
+
+    it('throws a clear error on an unparsable .mcp.json (fail fast, before any install)', () => {
+      expect.assertions(2);
+      withTempDir(() => {
+        fs.writeFileSync('.mcp.json', '{ not valid json');
+        expect(() => validateLocalMcp()).toThrow(/Cannot parse existing \.mcp\.json/);
+        expect(fs.readFileSync('.mcp.json', 'utf8')).toBe('{ not valid json'); // left untouched
+      });
+    });
+
+    it('passes on a symlinked .mcp.json (replaced, never read, at install time)', () => {
+      expect.assertions(1);
+      withTempDir(() => {
+        fs.writeFileSync('outside.json', '{ not valid json');
+        fs.symlinkSync(path.resolve('outside.json'), '.mcp.json');
+        expect(() => validateLocalMcp()).not.toThrow();
+      });
+    });
+  });
+
+  describe('validateMarketplaceBundle', () => {
+    it('passes when the bundle carries forest-docs/.mcp.json', () => {
+      expect.assertions(1);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        expect(() => validateMarketplaceBundle(root, 'main')).not.toThrow();
+      });
+    });
+
+    it('throws a clear error naming the ref when forest-docs/.mcp.json is missing', () => {
+      expect.assertions(1);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        fs.rmSync(path.join(root, 'forest-docs'), { recursive: true, force: true });
+        expect(() => validateMarketplaceBundle(root, 'v1.2.3')).toThrow(
+          /ref "v1\.2\.3" has no forest-docs\/\.mcp\.json/,
+        );
       });
     });
   });
