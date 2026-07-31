@@ -47,7 +47,8 @@ function errorIfRest(rest) {
 }
 
 function errorIfStdRest(stds) {
-  const valids = ['in', 'out', 'err', 'spinner'];
+  // `not` asserts the given text appears in NEITHER stdout NOR stderr.
+  const valids = ['in', 'out', 'err', 'spinner', 'not'];
   const rest = stds.filter(
     type => !valids.find(valid => Object.prototype.hasOwnProperty.call(type, valid)),
   );

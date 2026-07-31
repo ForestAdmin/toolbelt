@@ -15,6 +15,10 @@ class Logger {
 
     // FIXME: Silent was not used before as no "silent" value was in context.
     this.silent = !!this.env.SILENT && this.env.SILENT !== '0';
+
+    // When true, mutes stdout lines only (stderr still goes through). Used by
+    // commands whose stdout must stay machine-readable (e.g. `--format json`).
+    this.silentStdout = false;
   }
 
   _logLine(message, options) {
@@ -24,6 +28,8 @@ class Logger {
       ...DEFAULT_OPTION_VALUES,
       ...options,
     };
+
+    if (this.silentStdout && options.std !== 'err') return;
 
     let actualPrefix = '';
     if ([undefined, null, ''].indexOf(options.prefix) === -1) actualPrefix = `${options.prefix} `;
