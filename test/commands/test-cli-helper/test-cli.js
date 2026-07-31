@@ -26,6 +26,8 @@ function asArray(any) {
 function filterStds(stds) {
   const inputs = stds ? stds.filter(type => type.in !== undefined).map(type => type.in) : [];
   const outputs = stds ? stds.filter(type => type.out !== undefined).map(type => type.out) : [];
+  // Negative assertions: the text must appear in neither stdout nor stderr.
+  const notOutputs = stds ? stds.filter(type => type.not !== undefined).map(type => type.not) : [];
   let errorOutputs;
   if (stds) {
     // NOTICE: spinnies outputs to std.err
@@ -41,7 +43,7 @@ function filterStds(stds) {
   } else {
     errorOutputs = [];
   }
-  return { inputs, outputs, errorOutputs };
+  return { inputs, outputs, errorOutputs, notOutputs };
 }
 
 /**
@@ -83,7 +85,7 @@ async function testCli({
     }
   });
 
-  const { inputs, outputs, errorOutputs } = filterStds(stds);
+  const { inputs, outputs, errorOutputs, notOutputs } = filterStds(stds);
 
   validateInput(
     files,
@@ -158,7 +160,7 @@ async function testCli({
     assertExitMessage(actualError, expectedExitMessage);
     assertNoErrorThrown(actualError, expectedExitCode, expectedExitMessage);
     if (mocks) assertPromptCalled(prompts, mocks.inquirer);
-    assertOutputs(outputs, errorOutputs, { assertNoStdError });
+    assertOutputs(outputs, errorOutputs, { assertNoStdError, notOutputs });
     assertApi(nocks);
   } catch (e) {
     logStdErr();

@@ -1545,7 +1545,7 @@ module.exports = {
           origin: 'Lumber',
         }),
       ),
-  updateNewEnvironmentEndpoint: () =>
+  updateNewEnvironmentEndpoint: (apiEndpoint = 'http://localhost:3310') =>
     nock('http://localhost:3001')
       .put('/api/environments/182', {
         data: {
@@ -1553,7 +1553,7 @@ module.exports = {
           id: '182',
           attributes: {
             name: 'development',
-            'api-endpoint': 'http://localhost:3310',
+            'api-endpoint': apiEndpoint,
             type: 'development',
           },
         },

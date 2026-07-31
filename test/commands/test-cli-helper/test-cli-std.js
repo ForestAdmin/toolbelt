@@ -14,7 +14,7 @@ module.exports = {
     const stdin = mockStdin.stdin();
     return stdin;
   },
-  assertOutputs: (outputs, errorOutputs, { assertNoStdError }) => {
+  assertOutputs: (outputs, errorOutputs, { assertNoStdError, notOutputs = [] }) => {
     stdout.stop();
     stderr.stop();
 
@@ -35,6 +35,11 @@ module.exports = {
     }
     for (let i = 0; i < errorOutputs.length; i += 1) {
       expect(stderr.output).toContain(errorOutputs[i]);
+    }
+    // `not` entries must appear in NEITHER stdout NOR stderr (spinners write to stderr).
+    for (let i = 0; i < notOutputs.length; i += 1) {
+      expect(stdout.output).not.toContain(notOutputs[i]);
+      expect(stderr.output).not.toContain(notOutputs[i]);
     }
   },
   rollbackStd: (stdin, inputs, outputs) => {
