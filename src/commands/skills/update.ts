@@ -11,6 +11,8 @@ import {
   readManifest,
   removeStaleSkillFiles,
   skillDirEntries,
+  validateLocalMcp,
+  validateMarketplaceBundle,
   writeManifest,
 } from '../../services/skills/skills-manager';
 
@@ -42,9 +44,26 @@ export default class SkillsUpdateCommand extends AbstractCommand {
 
     const { agents } = SkillsUpdateCommand;
 
+    // Fail fast BEFORE any disk mutation: a broken local .mcp.json would otherwise only surface
+    // in installDocsMcp, at the very end, leaving a half-applied refresh behind (same as init).
+    validateLocalMcp();
+
+    // An update targets the requested ref (default main) — but never silently: an install pinned
+    // to a tag/SHA jumping refs must be visible, and the way back must be obvious.
+    if (manifest.ref && manifest.ref !== flags.ref) {
+      this.logger.warn(
+        `Skills were installed from "${manifest.ref}"; updating to "${flags.ref}". ` +
+          `Pass ${this.chalk.bold(`--ref ${manifest.ref}`)} to stay pinned.`,
+      );
+    }
+
     this.logger.info(`Refreshing Forest skills from ForestAdmin/ai-marketplace@${flags.ref}…`);
     const { root: srcRoot, cleanup } = await fetchMarketplace(flags.ref);
     try {
+      // Still before any write: the bundle must carry the docs MCP config, or the last step
+      // would fail with a raw ENOENT after skills/context files were already refreshed.
+      validateMarketplaceBundle(srcRoot, flags.ref);
+
       // The managed skill files previously installed — candidates for stale-pruning.
       const oldSkillFiles = skillDirEntries(manifest.files);
 
