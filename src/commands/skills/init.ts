@@ -39,7 +39,7 @@ export default class SkillsInitCommand extends AbstractCommand {
     const { root: srcRoot, cleanup } = await fetchMarketplace(flags.ref);
     try {
       const skillFiles = agents.flatMap(agent => {
-        const written = installSkills(srcRoot, agent, flags.force);
+        const written = installSkills(srcRoot, agent, flags.force, previous?.files ?? null);
         const contextFile = contextFileFor(agent);
         mergeBlock(contextFile, FOREST_BLOCK);
         this.logger.success(`Forest skills installed for ${agent} → ${AGENT_SKILL_DIRS[agent]}`, {
