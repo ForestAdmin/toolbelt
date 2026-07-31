@@ -16,6 +16,17 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
     // (dialect/host/port/user/pass/name are derived from the URL).
     databaseConnectionURL: {
       ...projectCreateOptions.databaseConnectionURL,
+      // Mirror the field options' `exclusive: ['databaseConnectionURL']`: when any DB field
+      // flag is passed on the command line, the URL prompt is dropped (scripted/CI usage
+      // must not hang on a new interactive question).
+      exclusive: [
+        'databaseDialect',
+        'databaseName',
+        'databaseHost',
+        'databasePort',
+        'databaseUser',
+        'databasePassword',
+      ],
       validate: projectCreateOptions.validateSqlConnectionUrl,
       prompter: {
         question: 'Database connection URL (leave blank to enter the details manually):',

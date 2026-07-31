@@ -14,6 +14,17 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
     // Ask for a connection URL first; when provided, the field prompts below are skipped.
     databaseConnectionURL: {
       ...projectCreateOptions.databaseConnectionURL,
+      // Mirror the field options' `exclusive: ['databaseConnectionURL']`: when any DB field
+      // flag is passed on the command line, the URL prompt is dropped (scripted/CI usage
+      // must not hang on a new interactive question).
+      exclusive: [
+        'databaseName',
+        'databaseHost',
+        'databasePort',
+        'databaseUser',
+        'databasePassword',
+        'mongoDBSRV',
+      ],
       validate: projectCreateOptions.validateMongoConnectionUrl,
       prompter: {
         question: 'MongoDB connection URL (leave blank to enter the details manually):',

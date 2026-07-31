@@ -43,18 +43,23 @@ export const skipWhenConnectionUrl = (args: ProjectCreateOptions): boolean =>
   !args.databaseConnectionURL;
 
 // Accept a blank value (⇒ fill the fields instead) or a real `scheme://…` for the engine family.
+// The scheme must be lowercase: getDialect() and the generated project both match schemes
+// case-sensitively, so an uppercase scheme would silently produce a project with no dialect.
+// mariadb:// is not offered: the mariadb driver is not shipped, use mysql:// instead.
 export function validateSqlConnectionUrl(value: string): boolean | string {
   if (!value) return true;
 
-  return /^(postgres|postgresql|mysql|mariadb|mssql):\/\/.+/i.test(value)
+  return /^(postgres|postgresql|mysql|mssql):\/\/.+/.test(value)
     ? true
-    : 'Enter a URL like postgres://…, mysql://…, mariadb://… or mssql://…';
+    : 'Enter a URL like postgres://…, mysql://… or mssql://… (the scheme must be lowercase)';
 }
 
 export function validateMongoConnectionUrl(value: string): boolean | string {
   if (!value) return true;
 
-  return /^mongodb(\+srv)?:\/\/.+/i.test(value) ? true : 'Enter a mongodb:// or mongodb+srv:// URL';
+  return /^mongodb(\+srv)?:\/\/.+/.test(value)
+    ? true
+    : 'Enter a mongodb:// or mongodb+srv:// URL (the scheme must be lowercase)';
 }
 
 export const applicationHost: Option = {

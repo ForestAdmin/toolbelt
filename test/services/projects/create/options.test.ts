@@ -74,25 +74,46 @@ describe('projectCreateOptions', () => {
 
   // Connection-URL onboarding helpers (used by sql/nosql to offer "paste a URL" interactively).
   describe('connection URL helpers', () => {
-    it('skipWhenConnectionUrl: true without a URL, false with one', () => {
-      expect.assertions(2);
+    it('skipWhenConnectionUrl: true without a URL (or a blank one), false with one', () => {
+      expect.assertions(3);
       expect(options.skipWhenConnectionUrl({})).toBe(true);
+      // A blank answer to the URL prompt means "fill the fields instead".
+      expect(options.skipWhenConnectionUrl({ databaseConnectionURL: '' })).toBe(true);
       expect(options.skipWhenConnectionUrl({ databaseConnectionURL: 'postgres://x' })).toBe(false);
     });
 
     it('validateSqlConnectionUrl: blank ok, sql scheme ok, garbage + mongodb rejected', () => {
-      expect.assertions(4);
+      expect.assertions(5);
       expect(options.validateSqlConnectionUrl('')).toBe(true);
       expect(options.validateSqlConnectionUrl('postgres://u:p@h:5432/db')).toBe(true);
+      expect(options.validateSqlConnectionUrl('mysql://u:p@h:3306/db')).toBe(true);
       expect(typeof options.validateSqlConnectionUrl('postgres-not-a-url')).toBe('string');
       expect(typeof options.validateSqlConnectionUrl('mongodb://h/db')).toBe('string');
     });
 
-    it('validateMongoConnectionUrl: blank ok, mongodb(+srv) ok, sql rejected', () => {
-      expect.assertions(3);
+    it('validateSqlConnectionUrl: rejects mariadb:// (driver not shipped with generated projects)', () => {
+      expect.assertions(1);
+      expect(typeof options.validateSqlConnectionUrl('mariadb://u:p@h:3306/db')).toBe('string');
+    });
+
+    it('validateSqlConnectionUrl: rejects uppercase schemes (getDialect matches lowercase only)', () => {
+      expect.assertions(2);
+      expect(options.validateSqlConnectionUrl('Postgres://u:p@h:5432/db')).toBe(
+        'Enter a URL like postgres://…, mysql://… or mssql://… (the scheme must be lowercase)',
+      );
+      expect(options.getDialect({ databaseConnectionURL: 'postgres://u:p@h:5432/db' })).toBe(
+        'postgres',
+      );
+    });
+
+    it('validateMongoConnectionUrl: blank ok, mongodb(+srv) ok, sql + uppercase rejected', () => {
+      expect.assertions(4);
       expect(options.validateMongoConnectionUrl('')).toBe(true);
       expect(options.validateMongoConnectionUrl('mongodb+srv://h/db')).toBe(true);
       expect(typeof options.validateMongoConnectionUrl('postgres://h/db')).toBe('string');
+      expect(options.validateMongoConnectionUrl('MongoDB://h/db')).toBe(
+        'Enter a mongodb:// or mongodb+srv:// URL (the scheme must be lowercase)',
+      );
     });
   });
 });

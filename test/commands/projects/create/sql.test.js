@@ -377,6 +377,55 @@ describe('projects:create:sql', () => {
           }));
       });
 
+      describe('when the database field flags are provided instead', () => {
+        // Regression guard for scripted/CI usage: passing the field flags must not
+        // surface the new interactive URL question (it would hang in a non-TTY).
+        it('should not prompt for the connection URL', () =>
+          testCli({
+            commandClass: SqlCommand,
+            commandArgs: [
+              'name',
+              '-d',
+              'postgres',
+              '-n',
+              'db',
+              '-h',
+              'localhost',
+              '-p',
+              '54999',
+              '-u',
+              'user',
+              '-H',
+              'http://localhost',
+              '-P',
+              '3310',
+              '-l',
+              'javascript',
+            ],
+            env: testEnvWithSecret,
+            token: 'any',
+            api: [
+              () => createProject({ databaseType: 'postgres', agent: Agents.NodeJS }),
+              () => updateNewEnvironmentEndpoint(),
+            ],
+            prompts: [
+              {
+                in: makePromptInputList({ only: ['databaseSchema', 'databasePassword'] }),
+                out: {
+                  databaseSchema: 'public',
+                  databasePassword: 'wrong_password',
+                },
+              },
+            ],
+            std: [
+              { spinner: '√ Creating your project on Forest Admin' },
+              { spinner: '× Testing connection to your database' },
+            ],
+            // The database is unreachable on purpose: only the prompt list matters here.
+            exitCode: 1,
+          }));
+      });
+
       describe('is chosen interactively (blank left to fill fields, or a URL pasted)', () => {
         it('should accept a connection URL and skip the field prompts', () =>
           testCli({
@@ -455,6 +504,48 @@ describe('projects:create:sql', () => {
           ],
           exitCode: 0,
         }));
+
+      describe('when the connection URL prompt is left blank', () => {
+        // Round-trip of the "blank ⇒ enter the details manually" path: the empty answer
+        // must be normalized to undefined so the connection uses the field values.
+        it('should fall back to the field prompts and generate the project', () =>
+          testCli({
+            commandClass: SqlCommand,
+            commandArgs: ['name'],
+            env: testEnvWithSecret,
+            token: 'any',
+            api: [
+              () => createProject({ databaseType: 'postgres', agent: Agents.NodeJS }),
+              () => updateNewEnvironmentEndpoint(),
+            ],
+            prompts: [
+              {
+                in: makePromptInputList(),
+                out: {
+                  databaseConnectionURL: '',
+                  databaseDialect: 'postgres',
+                  databaseName: 'forestadmin_test_toolbelt-sequelize',
+                  databaseSchema: 'public',
+                  databaseHost: 'localhost',
+                  databasePort: 54369,
+                  databaseUser: 'forest',
+                  databasePassword: 'secret',
+                  databaseSSL: false,
+                  databaseSslMode: 'disabled',
+                  language: languages.Javascript,
+                },
+              },
+            ],
+            std: [
+              { spinner: '√ Creating your project on Forest Admin' },
+              { spinner: '√ Testing connection to your database' },
+              { spinner: '√ Creating your project files' },
+              { out: 'create index.js' },
+              { out: '> Hooray, installation success!' },
+            ],
+            exitCode: 0,
+          }));
+      });
 
       describe('with language flag set to typescript', () => {
         it('should generate a project in typescript', () =>
