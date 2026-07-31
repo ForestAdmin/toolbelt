@@ -12,6 +12,8 @@ import {
   readManifest,
   removeStaleSkillFiles,
   skillDirEntries,
+  validateLocalMcp,
+  validateMarketplaceBundle,
   writeManifest,
 } from '../../../src/services/skills/skills-manager';
 
@@ -106,7 +108,7 @@ describe('skills-manager', () => {
       expect.assertions(3);
       withTempDir(dir => {
         const root = fakeMarketplace(path.join(dir, 'src'));
-        const written = installSkills(root, 'claude', false);
+        const written = installSkills(root, 'claude', false, null);
         expect(fs.existsSync('.claude/skills/layout/SKILL.md')).toBe(true);
         expect(fs.existsSync('.claude/skills/forest-code/SKILL.md')).toBe(true);
         expect(written).toContain(path.join('.claude/skills', 'layout', 'references', 'a.md'));
@@ -119,7 +121,9 @@ describe('skills-manager', () => {
         const root = fakeMarketplace(path.join(dir, 'src'));
         const { plugin, skills } = SKILL_SOURCES[0];
         fs.rmSync(path.join(root, plugin, 'skills', skills[0]), { recursive: true, force: true });
-        expect(() => installSkills(root, 'claude', false)).toThrow(/missing from the marketplace/);
+        expect(() => installSkills(root, 'claude', false, null)).toThrow(
+          /missing from the marketplace/,
+        );
       });
     });
 
@@ -127,11 +131,11 @@ describe('skills-manager', () => {
       expect.assertions(2);
       withTempDir(dir => {
         const root = fakeMarketplace(path.join(dir, 'src'));
-        installSkills(root, 'claude', false);
+        const first = installSkills(root, 'claude', false, null);
         fs.writeFileSync('.claude/skills/layout/SKILL.md', 'edited');
-        installSkills(root, 'claude', false); // no force → keep edit
+        installSkills(root, 'claude', false, first); // no force → keep edit
         expect(fs.readFileSync('.claude/skills/layout/SKILL.md', 'utf8')).toBe('edited');
-        installSkills(root, 'claude', true); // force → overwrite
+        installSkills(root, 'claude', true, first); // force → overwrite
         expect(fs.readFileSync('.claude/skills/layout/SKILL.md', 'utf8')).toBe('# layout skill');
       });
     });
@@ -140,8 +144,8 @@ describe('skills-manager', () => {
       expect.assertions(2);
       withTempDir(dir => {
         const root = fakeMarketplace(path.join(dir, 'src'));
-        const first = installSkills(root, 'claude', false);
-        const second = installSkills(root, 'claude', false); // skips copy, still lists the files
+        const first = installSkills(root, 'claude', false, null);
+        const second = installSkills(root, 'claude', false, first); // skips copy, still lists them
         expect(second).toHaveLength(first.length);
         expect(second).toContain(path.join('.claude/skills', 'layout', 'SKILL.md'));
       });
@@ -151,9 +155,9 @@ describe('skills-manager', () => {
       expect.assertions(2);
       withTempDir(dir => {
         const root = fakeMarketplace(path.join(dir, 'src'));
-        installSkills(root, 'claude', false);
+        const first = installSkills(root, 'claude', false, null);
         fs.writeFileSync('.claude/skills/layout/my-notes.md', 'mine');
-        installSkills(root, 'claude', true); // force → overlay, not a dir nuke
+        installSkills(root, 'claude', true, first); // force → overlay, not a dir nuke
         expect(fs.readFileSync('.claude/skills/layout/my-notes.md', 'utf8')).toBe('mine');
         expect(fs.readFileSync('.claude/skills/layout/SKILL.md', 'utf8')).toBe('# layout skill');
       });
@@ -165,7 +169,7 @@ describe('skills-manager', () => {
         const root = fakeMarketplace(path.join(dir, 'src'));
         fs.mkdirSync('.claude/skills', { recursive: true });
         fs.writeFileSync('.claude/skills/layout', 'stray file, not a dir');
-        installSkills(root, 'claude', false);
+        installSkills(root, 'claude', false, null);
         expect(fs.statSync('.claude/skills/layout').isDirectory()).toBe(true);
         expect(fs.existsSync('.claude/skills/layout/SKILL.md')).toBe(true);
       });
@@ -175,10 +179,42 @@ describe('skills-manager', () => {
       expect.assertions(2);
       withTempDir(dir => {
         const root = fakeMarketplace(path.join(dir, 'src'));
-        installSkills(root, 'claude', false);
+        const first = installSkills(root, 'claude', false, null);
         fs.writeFileSync('.claude/skills/layout/my-notes.md', 'mine');
-        const reported = installSkills(root, 'claude', false);
+        const reported = installSkills(root, 'claude', false, first);
         expect(reported).not.toContain(path.join('.claude/skills', 'layout', 'my-notes.md'));
+        expect(reported).toContain(path.join('.claude/skills', 'layout', 'SKILL.md'));
+      });
+    });
+
+    it('claims nothing for a skill dir that pre-existed the first run (later prune spares it)', () => {
+      expect.assertions(3);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        // The user authored their own layout skill BEFORE ever running skills:init.
+        fs.mkdirSync('.claude/skills/layout', { recursive: true });
+        fs.writeFileSync('.claude/skills/layout/SKILL.md', 'user-authored');
+        // First run (no manifest), no --force: the dir is skipped, so nothing in it was written
+        // by us and nothing in it may be claimed as managed.
+        const written = installSkills(root, 'claude', false, null);
+        expect(written).not.toContain(path.join('.claude/skills', 'layout', 'SKILL.md'));
+        // Later refresh where `layout` left the upstream bundle: the prune (manifest-scoped) must
+        // not touch the user's file, since the manifest never claimed it.
+        const removed = removeStaleSkillFiles(skillDirEntries(written), []);
+        expect(removed).not.toContain(path.join('.claude/skills', 'layout', 'SKILL.md'));
+        expect(fs.readFileSync('.claude/skills/layout/SKILL.md', 'utf8')).toBe('user-authored');
+      });
+    });
+
+    it('matches previous manifest entries across path separators on the skip path', () => {
+      expect.assertions(1);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        installSkills(root, 'claude', false, null);
+        // A manifest written on Windows (backslashes) must still vouch for the same file here.
+        const reported = installSkills(root, 'claude', false, [
+          '.claude\\skills\\layout\\SKILL.md',
+        ]);
         expect(reported).toContain(path.join('.claude/skills', 'layout', 'SKILL.md'));
       });
     });
@@ -394,6 +430,62 @@ describe('skills-manager', () => {
         installDocsMcp(root);
         const mcp = JSON.parse(fs.readFileSync('.mcp.json', 'utf8'));
         expect(mcp.mcpServers['forest-docs']).toBeDefined();
+      });
+    });
+  });
+
+  describe('validateLocalMcp', () => {
+    it('passes when no .mcp.json exists', () => {
+      expect.assertions(1);
+      withTempDir(() => {
+        expect(() => validateLocalMcp()).not.toThrow();
+      });
+    });
+
+    it('passes on a parsable .mcp.json', () => {
+      expect.assertions(1);
+      withTempDir(() => {
+        fs.writeFileSync('.mcp.json', JSON.stringify({ mcpServers: {} }));
+        expect(() => validateLocalMcp()).not.toThrow();
+      });
+    });
+
+    it('throws a clear error on an unparsable .mcp.json (fail fast, before any install)', () => {
+      expect.assertions(2);
+      withTempDir(() => {
+        fs.writeFileSync('.mcp.json', '{ not valid json');
+        expect(() => validateLocalMcp()).toThrow(/Cannot parse existing \.mcp\.json/);
+        expect(fs.readFileSync('.mcp.json', 'utf8')).toBe('{ not valid json'); // left untouched
+      });
+    });
+
+    it('passes on a symlinked .mcp.json (replaced, never read, at install time)', () => {
+      expect.assertions(1);
+      withTempDir(() => {
+        fs.writeFileSync('outside.json', '{ not valid json');
+        fs.symlinkSync(path.resolve('outside.json'), '.mcp.json');
+        expect(() => validateLocalMcp()).not.toThrow();
+      });
+    });
+  });
+
+  describe('validateMarketplaceBundle', () => {
+    it('passes when the bundle carries forest-docs/.mcp.json', () => {
+      expect.assertions(1);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        expect(() => validateMarketplaceBundle(root, 'main')).not.toThrow();
+      });
+    });
+
+    it('throws a clear error naming the ref when forest-docs/.mcp.json is missing', () => {
+      expect.assertions(1);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        fs.rmSync(path.join(root, 'forest-docs'), { recursive: true, force: true });
+        expect(() => validateMarketplaceBundle(root, 'v1.2.3')).toThrow(
+          /ref "v1\.2\.3" has no forest-docs\/\.mcp\.json/,
+        );
       });
     });
   });

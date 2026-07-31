@@ -12,6 +12,8 @@ import {
   readManifest,
   removeStaleSkillFiles,
   skillDirEntries,
+  validateLocalMcp,
+  validateMarketplaceBundle,
   writeManifest,
 } from '../../services/skills/skills-manager';
 
@@ -33,13 +35,21 @@ export default class SkillsInitCommand extends AbstractCommand {
     const { agents } = SkillsInitCommand;
     const previous = readManifest(); // to prune Forest files that left the bundle on a re-install
 
+    // Fail fast BEFORE any disk mutation: a broken local .mcp.json would otherwise only surface
+    // in installDocsMcp, at the very end, leaving a half-applied install behind.
+    validateLocalMcp();
+
     this.logger.info(
       `Fetching Forest skills from ${this.chalk.bold('ForestAdmin/ai-marketplace')}@${flags.ref}…`,
     );
     const { root: srcRoot, cleanup } = await fetchMarketplace(flags.ref);
     try {
+      // Still before any write: the bundle must carry the docs MCP config, or the last step
+      // would fail with a raw ENOENT after skills/context files were already applied.
+      validateMarketplaceBundle(srcRoot, flags.ref);
+
       const skillFiles = agents.flatMap(agent => {
-        const written = installSkills(srcRoot, agent, flags.force);
+        const written = installSkills(srcRoot, agent, flags.force, previous?.files ?? null);
         const contextFile = contextFileFor(agent);
         mergeBlock(contextFile, FOREST_BLOCK);
         this.logger.success(`Forest skills installed for ${agent} → ${AGENT_SKILL_DIRS[agent]}`, {

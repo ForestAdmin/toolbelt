@@ -49,7 +49,8 @@ export default class SkillsUpdateCommand extends AbstractCommand {
       const oldSkillFiles = skillDirEntries(manifest.files);
 
       const skillFiles = agents.flatMap(agent => {
-        const written = installSkills(srcRoot, agent, true); // force: managed files are Forest-owned
+        // force: managed files are Forest-owned; manifest.files bounds what may be claimed.
+        const written = installSkills(srcRoot, agent, true, manifest.files);
         const contextFile = contextFileFor(agent);
         mergeBlock(contextFile, FOREST_BLOCK); // refreshes only the Forest block; user content untouched
 
