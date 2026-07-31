@@ -259,6 +259,41 @@ export function mergeBlock(file: string, content: string): void {
 }
 
 /**
+ * Fail-fast preflight for the local `.mcp.json`: run it BEFORE any disk mutation. `installDocsMcp`
+ * throws on an unparseable local config (on purpose, to protect user content), but it runs last —
+ * without this check the failure would surface after skills were installed and the context files
+ * merged, leaving a half-applied state with no manifest rewrite.
+ */
+export function validateLocalMcp(): void {
+  const target = '.mcp.json';
+  // A symlinked .mcp.json is replaced (never read) at install time, so its target's content is
+  // irrelevant here. Same for an absent file.
+  if (isSymlink(target) || !fs.existsSync(target)) return;
+  try {
+    JSON.parse(fs.readFileSync(target, 'utf8'));
+  } catch {
+    throw new Error(
+      `Cannot parse existing ${target}; aborting before any changes so it isn't overwritten. ` +
+        'Fix or remove it, then re-run.',
+    );
+  }
+}
+
+/**
+ * Fail-fast preflight for the fetched marketplace bundle: run it after the fetch but BEFORE any
+ * write. The docs MCP config is read last by `installDocsMcp`; a bundle missing it would otherwise
+ * die on a raw ENOENT after everything else was already applied.
+ */
+export function validateMarketplaceBundle(srcRoot: string, ref: string): void {
+  if (!fs.existsSync(path.join(srcRoot, 'forest-docs', '.mcp.json'))) {
+    throw new Error(
+      `The Forest marketplace at ref "${ref}" has no forest-docs/.mcp.json (docs MCP config). ` +
+        'Nothing was changed. Check the --ref value or try again with the default ref.',
+    );
+  }
+}
+
+/**
  * Wire the Forest docs MCP (Mintlify, https://docs.forest.app/mcp — static, read-only, NO secret)
  * by reading the source of truth `forest-docs/.mcp.json` from the fetched marketplace and merging
  * its `mcpServers` into the project's `.mcp.json` (preserving any existing servers the user has).
