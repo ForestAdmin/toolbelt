@@ -137,11 +137,12 @@
     "postbuild": "mkdir -p ./dist/services/dumpers/templates && cp -R src/services/dumpers/templates dist/services/dumpers/"
   },
   "resolutions": {
-    "semantic-release-slack-bot/**/micromatch": "^4.0.8",
     "@azure/core-tracing": "1.0.1",
     "jws": ">=4.0.1",
     "fast-xml-parser": ">=5.7.0",
     "uuid": "^11.1.1",
-    "inquirer/**/tmp": "^0.2.6"
+    "inquirer/**/tmp": "^0.2.6",
+    "brace-expansion": "^1.1.16 || ^2.1.2",
+    "fast-uri": "^3.1.4"
   }
 }
