@@ -14,8 +14,9 @@ import * as tar from 'tar';
  *   (`claude plugin …` / `codex plugin …`). They fetch, version, auto-update and wire the
  *   Forest docs MCP themselves, and the user gets the plugin's slash commands too. Nothing
  *   is copied into the repo.
- * - Agents that only discover `SKILL.md` files (Cursor, OpenCode, …) → we copy the curated
- *   skills into `.agents/skills/`, the cross-agent convention they all read.
+ * - Agents that only discover `SKILL.md` files (Cursor, OpenCode, …) → we copy the same
+ *   plugins' skills into `.agents/skills/`, the cross-agent convention they all read, so both
+ *   routes deliver the same set.
  *
  * The marketplace repo is PUBLIC → no auth needed for the fetch, and both plugin CLIs read
  * the same `.claude-plugin/marketplace.json` (verified against codex-cli 0.147.0), so one
@@ -25,16 +26,21 @@ import * as tar from 'tar';
 export const MARKETPLACE_REPO = 'ForestAdmin/ai-marketplace';
 export const MARKETPLACE_NAME = 'forest-admin-ai';
 
-// Which dev-facing skills we distribute into a client's repo on the COPY route. Curated on
-// purpose (explicit control over what ships; internal/test-only skills like deploy-heroku stay
-// out). Source path in the repo = `<plugin>/skills/<name>`.
-export const SKILL_SOURCES: { plugin: string; skills: string[] }[] = [
-  {
-    plugin: 'forest',
-    skills: ['boot-standalone-agent', 'layout', 'management', 'onboard', 'workflows'],
-  },
-  { plugin: 'forest-code', skills: ['forest-code', 'forest-legacy'] },
-];
+/**
+ * Which plugins the COPY route takes its skills from — ALL of their skills, discovered from the
+ * bundle rather than listed here.
+ *
+ * There used to be a hand-picked list of skill names. It made the two routes disagree: the plugin
+ * route installs whole plugins, so a name left out here still shipped there. Worse, the skills
+ * cross-reference each other — `onboard` hands the production step to `deploy-heroku`, which the
+ * list excluded — so copy-route users got an `onboard` skill pointing at something that was not
+ * installed. What ships is decided in the marketplace, by what a plugin contains; a second,
+ * divergent definition here can only drift.
+ *
+ * `forest-docs` is absent because it carries no skills (it is an MCP config, which only the plugin
+ * route can wire), and `forest-mcp` because it is data access, not developer help.
+ */
+export const SKILL_PLUGINS = ['forest', 'forest-code'];
 
 // Which plugins we install on the PLUGIN route. These three are what "knowing Forest" means:
 // how to build a back-office (`forest`), how to write agent code (`forest-code`), and how to look
@@ -176,6 +182,17 @@ function listFiles(dir: string): string[] {
   });
 }
 
+/** The skill directories a plugin ships: every subdirectory holding a SKILL.md. A symlinked entry
+ *  is ignored — copyDir would refuse it anyway, and it must not fabricate a dest dir. */
+function listSkillDirs(skillsRoot: string): string[] {
+  return fs
+    .readdirSync(skillsRoot, { withFileTypes: true })
+    .filter(
+      entry => entry.isDirectory() && fs.existsSync(path.join(skillsRoot, entry.name, 'SKILL.md')),
+    )
+    .map(entry => entry.name);
+}
+
 /** What a copy produced: files we wrote, and files we refused to overwrite because the user
  *  wrote them (same path as a bundle file, but never managed by us). */
 export type CopyResult = { written: string[]; skipped: string[] };
@@ -242,17 +259,20 @@ export function installSkills(
   const isManaged = (file: string) => previouslyManaged.has(normalizePath(file));
 
   return mergeCopy(
-    SKILL_SOURCES.flatMap(({ plugin, skills }) =>
-      skills.map(skill => {
-        const src = path.join(srcRoot, plugin, 'skills', skill);
+    SKILL_PLUGINS.flatMap(plugin => {
+      const skillsRoot = path.join(srcRoot, plugin, 'skills');
+      // Fail loud on a plugin that carries no skills at all rather than reporting a misleading
+      // partial success — at that point the marketplace layout has changed under us.
+      if (!fs.existsSync(skillsRoot)) {
+        throw new Error(
+          `Plugin "${plugin}" has no skills/ directory in the marketplace (expected ${plugin}/skills). ` +
+            'The marketplace layout changed — check the --ref value.',
+        );
+      }
+
+      return listSkillDirs(skillsRoot).map(skill => {
+        const src = path.join(skillsRoot, skill);
         const dest = path.join(SKILLS_DIR, skill);
-        // Fail loud on a missing curated skill rather than reporting a misleading partial success.
-        if (!fs.existsSync(src)) {
-          throw new Error(
-            `Skill "${skill}" is missing from the marketplace (expected ${plugin}/skills/${skill}). ` +
-              'The curated SKILL_SOURCES list is out of sync with this marketplace ref.',
-          );
-        }
         if (fs.existsSync(dest)) {
           if (!fs.lstatSync(dest).isDirectory()) {
             // A stray non-directory where a skill dir belongs → replace it wholesale.
@@ -278,8 +298,8 @@ export function installSkills(
         }
 
         return copyDir(src, dest, file => !previousFiles || isManaged(file));
-      }),
-    ),
+      });
+    }),
   );
 }
 

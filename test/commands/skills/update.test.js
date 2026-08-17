@@ -17,21 +17,32 @@ jest.mock('../../../src/services/skills/skills-manager', () => ({
 const SkillsUpdateCommand = require('../../../src/commands/skills/update').default;
 const {
   SKILLS_DIR,
-  SKILL_SOURCES,
   fetchMarketplace,
   hasPluginCli,
   upgradePlugins,
 } = require('../../../src/services/skills/skills-manager');
 
-// Build a fake extracted marketplace holding every curated skill (derived from SKILL_SOURCES so
-// the fixture stays in sync with the real list).
+// Build a fake extracted marketplace: each plugin ships its skills as SKILL.md dirs, exactly as
+// the real bundle does — including deploy-heroku, which the old curated list dropped.
+const BUNDLE_SKILLS = {
+  forest: [
+    'boot-standalone-agent',
+    'deploy-heroku',
+    'layout',
+    'management',
+    'onboard',
+    'workflows',
+  ],
+  'forest-code': ['forest-code', 'forest-legacy'],
+};
+
 function makeFakeBundle() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'skills-update-test-'));
   const write = (p, c) => {
     fs.mkdirSync(path.dirname(p), { recursive: true });
     fs.writeFileSync(p, c);
   };
-  SKILL_SOURCES.forEach(({ plugin, skills }) =>
+  Object.entries(BUNDLE_SKILLS).forEach(([plugin, skills]) =>
     skills.forEach(skill =>
       write(path.join(root, plugin, 'skills', skill, 'SKILL.md'), `# ${skill} skill (fresh)`),
     ),

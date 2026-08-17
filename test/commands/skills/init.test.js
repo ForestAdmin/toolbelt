@@ -16,11 +16,24 @@ jest.mock('../../../src/services/skills/skills-manager', () => ({
 const SkillsInitCommand = require('../../../src/commands/skills/init').default;
 const {
   SKILLS_DIR,
-  SKILL_SOURCES,
   fetchMarketplace,
   hasPluginCli,
   installPlugins,
 } = require('../../../src/services/skills/skills-manager');
+
+// Build a fake extracted marketplace: each plugin ships its skills as SKILL.md dirs, exactly as
+// the real bundle does — including deploy-heroku, which the old curated list dropped.
+const BUNDLE_SKILLS = {
+  forest: [
+    'boot-standalone-agent',
+    'deploy-heroku',
+    'layout',
+    'management',
+    'onboard',
+    'workflows',
+  ],
+  'forest-code': ['forest-code', 'forest-legacy'],
+};
 
 function makeFakeBundle() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'skills-init-test-'));
@@ -28,7 +41,7 @@ function makeFakeBundle() {
     fs.mkdirSync(path.dirname(p), { recursive: true });
     fs.writeFileSync(p, c);
   };
-  SKILL_SOURCES.forEach(({ plugin, skills }) =>
+  Object.entries(BUNDLE_SKILLS).forEach(([plugin, skills]) =>
     skills.forEach(skill =>
       write(path.join(root, plugin, 'skills', skill, 'SKILL.md'), `# ${skill} skill`),
     ),
@@ -129,7 +142,7 @@ describe('skills:init', () => {
   });
 
   describe('with a copy-route agent (--agent cursor)', () => {
-    it('copies the curated skills into the cross-agent dir and records them', async () => {
+    it('copies the skills into the cross-agent dir and records them', async () => {
       expect.hasAssertions();
       mockPipeline();
 

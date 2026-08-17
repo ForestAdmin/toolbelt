@@ -6,7 +6,7 @@ import {
   FOREST_PLUGINS,
   MARKETPLACE_REPO,
   SKILLS_DIR,
-  SKILL_SOURCES,
+  SKILL_PLUGINS,
   contextFileFor,
   copyDir,
   detectAgents,
@@ -50,14 +50,27 @@ function withTempDir(run: (dir: string) => void): void {
   }
 }
 
-// Build a fake extracted marketplace holding every curated skill (derived from SKILL_SOURCES so
-// the fixture stays in sync with the real list).
+// Build a fake extracted marketplace: each plugin ships its skills as SKILL.md dirs, exactly as
+// the real bundle does. `deploy-heroku` is in there on purpose — the old curated list excluded it
+// while the plugin route shipped it, which is the drift this fixture must be able to catch.
+const BUNDLE_SKILLS: Record<string, string[]> = {
+  forest: [
+    'boot-standalone-agent',
+    'deploy-heroku',
+    'layout',
+    'management',
+    'onboard',
+    'workflows',
+  ],
+  'forest-code': ['forest-code', 'forest-legacy'],
+};
+
 function fakeMarketplace(root: string): string {
   const write = (p: string, c: string) => {
     fs.mkdirSync(path.dirname(p), { recursive: true });
     fs.writeFileSync(p, c);
   };
-  SKILL_SOURCES.forEach(({ plugin, skills }) =>
+  Object.entries(BUNDLE_SKILLS).forEach(([plugin, skills]) =>
     skills.forEach(skill =>
       write(path.join(root, plugin, 'skills', skill, 'SKILL.md'), `# ${skill} skill`),
     ),
@@ -132,7 +145,7 @@ describe('skills-manager', () => {
   });
 
   describe('installSkills', () => {
-    it('copies the curated skill bundles into the single cross-agent skills dir', () => {
+    it('copies the skill bundles into the single cross-agent skills dir', () => {
       expect.assertions(3);
       withTempDir(dir => {
         const root = fakeMarketplace(path.join(dir, 'src'));
@@ -152,13 +165,34 @@ describe('skills-manager', () => {
       });
     });
 
-    it('throws when a curated skill is absent from the marketplace (no misleading partial install)', () => {
+    it('ships every skill the plugins carry, so the copy route matches the plugin route', () => {
+      expect.assertions(2);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        installSkills(root, false, null);
+        const shipped = fs.readdirSync(SKILLS_DIR).sort();
+        expect(shipped).toStrictEqual(Object.values(BUNDLE_SKILLS).flat().sort());
+        // The one the old curated list dropped, while `onboard` kept pointing at it.
+        expect(shipped).toContain('deploy-heroku');
+      });
+    });
+
+    it('throws when a plugin carries no skills at all (no misleading partial install)', () => {
       expect.assertions(1);
       withTempDir(dir => {
         const root = fakeMarketplace(path.join(dir, 'src'));
-        const { plugin, skills } = SKILL_SOURCES[0];
-        fs.rmSync(path.join(root, plugin, 'skills', skills[0]), { recursive: true, force: true });
-        expect(() => installSkills(root, false, null)).toThrow(/missing from the marketplace/);
+        fs.rmSync(path.join(root, SKILL_PLUGINS[0], 'skills'), { recursive: true, force: true });
+        expect(() => installSkills(root, false, null)).toThrow(/has no skills\/ directory/);
+      });
+    });
+
+    it('ignores a stray directory that carries no SKILL.md', () => {
+      expect.assertions(1);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        fs.mkdirSync(path.join(root, 'forest', 'skills', 'not-a-skill'), { recursive: true });
+        installSkills(root, false, null);
+        expect(fs.existsSync(path.join(SKILLS_DIR, 'not-a-skill'))).toBe(false);
       });
     });
 
