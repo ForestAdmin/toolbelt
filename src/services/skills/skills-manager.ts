@@ -36,8 +36,11 @@ export const SKILL_SOURCES: { plugin: string; skills: string[] }[] = [
   { plugin: 'forest-code', skills: ['forest-code', 'forest-legacy'] },
 ];
 
-// Which plugins we install on the PLUGIN route. `forest-mcp` is deliberately out: it needs the
-// user's Forest credentials at install time (authPolicy ON_INSTALL), so it is an opt-in.
+// Which plugins we install on the PLUGIN route. These three are what "knowing Forest" means:
+// how to build a back-office (`forest`), how to write agent code (`forest-code`), and how to look
+// things up (`forest-docs`). `forest-mcp` is not one of them — it is a data-access server for
+// querying a live project's records, not help for the developer, so it has no place in a command
+// whose job is to teach the agent Forest. Anyone who wants it installs it themselves.
 export const FOREST_PLUGINS = ['forest', 'forest-code', 'forest-docs'];
 
 /**
