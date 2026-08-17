@@ -6,7 +6,6 @@ import {
   FOREST_PLUGINS,
   MARKETPLACE_REPO,
   SKILLS_DIR,
-  SKILL_PLUGINS,
   contextFileFor,
   copyDir,
   detectAgents,
@@ -177,12 +176,26 @@ describe('skills-manager', () => {
       });
     });
 
-    it('throws when a plugin carries no skills at all (no misleading partial install)', () => {
+    it('skips a plugin that carries no skills instead of rejecting it (forest-docs is MCP-only)', () => {
+      expect.assertions(2);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        // forest-docs is in FOREST_PLUGINS but ships no skills/ — that is normal, not an error.
+        expect(FOREST_PLUGINS).toContain('forest-docs');
+        expect(() => installSkills(root, false, null)).not.toThrow();
+      });
+    });
+
+    it('throws when the bundle yields no skill at all (marketplace layout moved)', () => {
       expect.assertions(1);
       withTempDir(dir => {
         const root = fakeMarketplace(path.join(dir, 'src'));
-        fs.rmSync(path.join(root, SKILL_PLUGINS[0], 'skills'), { recursive: true, force: true });
-        expect(() => installSkills(root, false, null)).toThrow(/has no skills\/ directory/);
+        Object.keys(BUNDLE_SKILLS).forEach(plugin =>
+          fs.rmSync(path.join(root, plugin, 'skills'), { recursive: true, force: true }),
+        );
+        expect(() => installSkills(root, false, null)).toThrow(
+          /No skills found in the marketplace/,
+        );
       });
     });
 

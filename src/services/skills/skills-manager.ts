@@ -27,26 +27,22 @@ export const MARKETPLACE_REPO = 'ForestAdmin/ai-marketplace';
 export const MARKETPLACE_NAME = 'forest-admin-ai';
 
 /**
- * Which plugins the COPY route takes its skills from — ALL of their skills, discovered from the
- * bundle rather than listed here.
+ * The Forest plugins this command ships — the ONLY thing it decides, and it decides it once for
+ * both routes. These three are what "knowing Forest" means: how to build a back-office (`forest`),
+ * how to write agent code (`forest-code`), and how to look things up (`forest-docs`).
  *
- * There used to be a hand-picked list of skill names. It made the two routes disagree: the plugin
- * route installs whole plugins, so a name left out here still shipped there. Worse, the skills
- * cross-reference each other — `onboard` hands the production step to `deploy-heroku`, which the
- * list excluded — so copy-route users got an `onboard` skill pointing at something that was not
- * installed. What ships is decided in the marketplace, by what a plugin contains; a second,
- * divergent definition here can only drift.
+ * `forest-mcp` is not one of them: it is a data-access server for querying a live project's
+ * records, not help for the developer, so it has no place in a command whose job is to teach the
+ * agent Forest. Anyone who wants it installs it themselves.
  *
- * `forest-docs` is absent because it carries no skills (it is an MCP config, which only the plugin
- * route can wire), and `forest-mcp` because it is data access, not developer help.
+ * Nothing below the plugin is filtered. There used to be a hand-picked list of skill NAMES, and it
+ * did real damage: the plugin route installs whole plugins, so a name left out still shipped
+ * there, and the skills cross-reference each other — `onboard` hands the production step to
+ * `deploy-heroku`, which the list excluded — leaving copy-route users with an `onboard` skill
+ * pointing at something never installed. A plugin is the unit of distribution and is coherent only
+ * as a whole; what it contains is the marketplace's call, not ours. Choosing plugins is a product
+ * decision, choosing their contents is drift waiting to happen.
  */
-export const SKILL_PLUGINS = ['forest', 'forest-code'];
-
-// Which plugins we install on the PLUGIN route. These three are what "knowing Forest" means:
-// how to build a back-office (`forest`), how to write agent code (`forest-code`), and how to look
-// things up (`forest-docs`). `forest-mcp` is not one of them — it is a data-access server for
-// querying a live project's records, not help for the developer, so it has no place in a command
-// whose job is to teach the agent Forest. Anyone who wants it installs it themselves.
 export const FOREST_PLUGINS = ['forest', 'forest-code', 'forest-docs'];
 
 /**
@@ -243,7 +239,12 @@ export function copyDir(
 }
 
 /**
- * Copy the curated skill bundles from the extracted repo into `SKILLS_DIR`.
+ * Copy the skills of every shipped plugin from the extracted repo into `SKILLS_DIR`.
+ *
+ * The same `FOREST_PLUGINS` the plugin route installs — one list, so the two routes cannot drift.
+ * A plugin with no `skills/` is simply skipped rather than rejected: `forest-docs` legitimately
+ * carries only an MCP config, which this route cannot wire anyway. What must not pass silently is
+ * copying NOTHING, so that is what the guard checks — a marketplace whose layout moved under us.
  *
  * `previousFiles` is the file list from the previous manifest (`null` on a first run). It bounds
  * what we may claim as managed AND what we may overwrite: a file we never wrote is the user's,
@@ -258,17 +259,10 @@ export function installSkills(
   const previouslyManaged = new Set((previousFiles ?? []).map(normalizePath));
   const isManaged = (file: string) => previouslyManaged.has(normalizePath(file));
 
-  return mergeCopy(
-    SKILL_PLUGINS.flatMap(plugin => {
+  const result = mergeCopy(
+    FOREST_PLUGINS.flatMap(plugin => {
       const skillsRoot = path.join(srcRoot, plugin, 'skills');
-      // Fail loud on a plugin that carries no skills at all rather than reporting a misleading
-      // partial success — at that point the marketplace layout has changed under us.
-      if (!fs.existsSync(skillsRoot)) {
-        throw new Error(
-          `Plugin "${plugin}" has no skills/ directory in the marketplace (expected ${plugin}/skills). ` +
-            'The marketplace layout changed — check the --ref value.',
-        );
-      }
+      if (!fs.existsSync(skillsRoot)) return [];
 
       return listSkillDirs(skillsRoot).map(skill => {
         const src = path.join(skillsRoot, skill);
@@ -301,6 +295,15 @@ export function installSkills(
       });
     }),
   );
+
+  if (!result.written.length && !result.skipped.length) {
+    throw new Error(
+      `No skills found in the marketplace for ${FOREST_PLUGINS.join(', ')} (expected ` +
+        '`<plugin>/skills/<name>/SKILL.md`). The marketplace layout changed — check the --ref value.',
+    );
+  }
+
+  return result;
 }
 
 /** From a manifest file list, the entries that live under the skills dir (normalized for Windows,
