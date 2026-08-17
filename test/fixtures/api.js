@@ -1513,7 +1513,11 @@ module.exports = {
         }),
       ),
 
-  createProject: ({ databaseType, agent = Agents.ExpressSequelize }) =>
+  createProject: ({
+    databaseType,
+    agent = Agents.ExpressSequelize,
+    architecture = 'microservice',
+  }) =>
     nock('http://localhost:3001')
       .post('/api/projects', {
         data: {
@@ -1521,7 +1525,7 @@ module.exports = {
           attributes: {
             name: 'name',
             agent,
-            architecture: 'microservice',
+            architecture,
             database_type: databaseType,
           },
         },
@@ -1541,7 +1545,7 @@ module.exports = {
           origin: 'Lumber',
         }),
       ),
-  updateNewEnvironmentEndpoint: () =>
+  updateNewEnvironmentEndpoint: (apiEndpoint = 'http://localhost:3310') =>
     nock('http://localhost:3001')
       .put('/api/environments/182', {
         data: {
@@ -1549,7 +1553,7 @@ module.exports = {
           id: '182',
           attributes: {
             name: 'development',
-            'api-endpoint': 'http://localhost:3310',
+            'api-endpoint': apiEndpoint,
             type: 'development',
           },
         },
