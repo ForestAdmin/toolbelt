@@ -94,7 +94,10 @@ export default class SkillsInitCommand extends AbstractCommand {
       {
         type: 'checkbox',
         name: 'chosen',
-        message: 'Which coding agent(s) do you use?',
+        // The hint lives in the message, not in inquirer's own one — that one is appended to the
+        // first render only and vanishes on the first keypress, right when it is needed most.
+        // Arrow keys move without selecting, so "press space" is the one thing users must know.
+        message: 'Which coding agent(s) do you use? (space to select, enter to confirm)',
         choices: ALL_AGENTS.map(agent => ({
           name: AGENT_LABELS[agent],
           value: agent,
