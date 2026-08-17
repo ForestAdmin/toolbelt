@@ -172,7 +172,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       appPort: Number(config.applicationPort),
     } as AppConfig;
     const dbConfig = {
-      dbConnectionUrl: config.databaseConnectionURL,
+      dbConnectionUrl: config.databaseConnectionURL || undefined, // blank prompt ⇒ use the fields
       dbDialect: config.databaseDialect,
       dbSchema: config.databaseSchema,
       dbName: config.databaseName,

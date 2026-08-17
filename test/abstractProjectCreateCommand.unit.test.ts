@@ -322,6 +322,51 @@ describe('abstractProjectCreateCommand command', () => {
       expect(stubs.eventSender.notifySuccess).toHaveBeenCalledTimes(1);
     });
 
+    describe('when the connection URL prompt was left blank (empty string)', () => {
+      // The sql/nosql commands ask for an optional connection URL first; a blank answer
+      // means "use the field prompts". The empty string must be normalized to undefined
+      // so the database services use the fields instead of a blank URL.
+      it('should normalize the blank URL to undefined and connect with the fields', async () => {
+        expect.assertions(1);
+
+        const config = {
+          databaseConnectionURL: '',
+          databaseName: 'testDb',
+          databaseHost: 'localhost',
+          databasePort: 5432,
+          databaseUser: 'testUser',
+          databasePassword: 'testPwd',
+        };
+        const commandArgs = [
+          'testApp',
+          '--applicationHost',
+          'localhost',
+          '--applicationPort',
+          '3300',
+          '--databaseSchema',
+          'public',
+        ];
+
+        const { instance, stubs } = setup(config, commandArgs);
+
+        await instance.run();
+
+        expect(stubs.database.connect).toHaveBeenCalledWith({
+          dbConnectionUrl: undefined,
+          dbDialect: 'postgres',
+          dbHostname: 'localhost',
+          dbName: 'testDb',
+          dbPassword: 'testPwd',
+          dbPort: 5432,
+          dbSchema: 'public',
+          dbUser: 'testUser',
+          mongodbSrv: undefined,
+          dbSsl: false,
+          dbSslMode: 'disabled',
+        });
+      });
+    });
+
     describe('on a mongo database', () => {
       const config = {
         applicationName: 'testApp',

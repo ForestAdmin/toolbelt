@@ -15,6 +15,12 @@ const { default: languages } = require('../../../../src/utils/languages');
 const makePromptInputList = ({ except = null, only = null } = {}) => {
   const allPromptInputs = [
     {
+      name: 'databaseConnectionURL',
+      message: 'Database connection URL (leave blank to enter the details manually):',
+      type: 'input',
+      validate: expect.any(Function),
+    },
+    {
       name: 'databaseDialect',
       message: "What's the database type?",
       type: 'list',
@@ -23,12 +29,14 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
         { name: 'mysql / mariadb', value: 'mysql' },
         { name: 'postgres', value: 'postgres' },
       ],
+      when: expect.any(Function),
     },
     {
       name: 'databaseName',
       type: 'input',
       message: "What's the database name?",
       validate: expect.any(Function),
+      when: expect.any(Function),
     },
     {
       name: 'databaseSchema',
@@ -43,6 +51,7 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
       message: "What's the database hostname?",
       type: 'input',
       default: 'localhost',
+      when: expect.any(Function),
     },
     {
       name: 'databasePort',
@@ -50,17 +59,20 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
       message: "What's the database port?",
       default: expect.any(Function),
       validate: expect.any(Function),
+      when: expect.any(Function),
     },
     {
       name: 'databaseUser',
       message: "What's the database user?",
       default: expect.any(Function),
       type: 'input',
+      when: expect.any(Function),
     },
     {
       name: 'databasePassword',
       message: "What's the database password? [optional]",
       type: 'password',
+      when: expect.any(Function),
     },
     {
       name: 'applicationHost',
@@ -364,6 +376,85 @@ describe('projects:create:sql', () => {
             exitCode: 1,
           }));
       });
+
+      describe('when the database field flags are provided instead', () => {
+        // Regression guard for scripted/CI usage: passing the field flags must not
+        // surface the new interactive URL question (it would hang in a non-TTY).
+        it('should not prompt for the connection URL', () =>
+          testCli({
+            commandClass: SqlCommand,
+            commandArgs: [
+              'name',
+              '-d',
+              'postgres',
+              '-n',
+              'db',
+              '-h',
+              'localhost',
+              '-p',
+              '54999',
+              '-u',
+              'user',
+              '-H',
+              'http://localhost',
+              '-P',
+              '3310',
+              '-l',
+              'javascript',
+            ],
+            env: testEnvWithSecret,
+            token: 'any',
+            api: [
+              () => createProject({ databaseType: 'postgres', agent: Agents.NodeJS }),
+              () => updateNewEnvironmentEndpoint(),
+            ],
+            prompts: [
+              {
+                in: makePromptInputList({ only: ['databaseSchema', 'databasePassword'] }),
+                out: {
+                  databaseSchema: 'public',
+                  databasePassword: 'wrong_password',
+                },
+              },
+            ],
+            std: [
+              { spinner: '√ Creating your project on Forest Admin' },
+              { spinner: '× Testing connection to your database' },
+            ],
+            // The database is unreachable on purpose: only the prompt list matters here.
+            exitCode: 1,
+          }));
+      });
+
+      describe('is chosen interactively (blank left to fill fields, or a URL pasted)', () => {
+        it('should accept a connection URL and skip the field prompts', () =>
+          testCli({
+            commandClass: SqlCommand,
+            commandArgs: ['name'],
+            env: testEnvWithSecret,
+            token: 'any',
+            api: [
+              () => createProject({ databaseType: 'postgres', agent: Agents.NodeJS }),
+              () => updateNewEnvironmentEndpoint(),
+            ],
+            prompts: [
+              {
+                in: makePromptInputList(),
+                // Only the URL is answered (no field values) — the dialect (postgres) is derived
+                // from it, proving the field prompts were skipped.
+                out: {
+                  databaseConnectionURL: 'postgres://u:p@unreachable.invalid:5432/db',
+                  language: languages.Javascript,
+                },
+              },
+            ],
+            std: [
+              { spinner: '√ Creating your project on Forest Admin' },
+              { spinner: '× Testing connection to your database' },
+            ],
+            exitCode: 1,
+          }));
+      });
     });
   });
 
@@ -413,6 +504,48 @@ describe('projects:create:sql', () => {
           ],
           exitCode: 0,
         }));
+
+      describe('when the connection URL prompt is left blank', () => {
+        // Round-trip of the "blank ⇒ enter the details manually" path: the empty answer
+        // must be normalized to undefined so the connection uses the field values.
+        it('should fall back to the field prompts and generate the project', () =>
+          testCli({
+            commandClass: SqlCommand,
+            commandArgs: ['name'],
+            env: testEnvWithSecret,
+            token: 'any',
+            api: [
+              () => createProject({ databaseType: 'postgres', agent: Agents.NodeJS }),
+              () => updateNewEnvironmentEndpoint(),
+            ],
+            prompts: [
+              {
+                in: makePromptInputList(),
+                out: {
+                  databaseConnectionURL: '',
+                  databaseDialect: 'postgres',
+                  databaseName: 'forestadmin_test_toolbelt-sequelize',
+                  databaseSchema: 'public',
+                  databaseHost: 'localhost',
+                  databasePort: 54369,
+                  databaseUser: 'forest',
+                  databasePassword: 'secret',
+                  databaseSSL: false,
+                  databaseSslMode: 'disabled',
+                  language: languages.Javascript,
+                },
+              },
+            ],
+            std: [
+              { spinner: '√ Creating your project on Forest Admin' },
+              { spinner: '√ Testing connection to your database' },
+              { spinner: '√ Creating your project files' },
+              { out: 'create index.js' },
+              { out: '> Hooray, installation success!' },
+            ],
+            exitCode: 0,
+          }));
+      });
 
       describe('with language flag set to typescript', () => {
         it('should generate a project in typescript', () =>
