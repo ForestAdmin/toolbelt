@@ -1,34 +1,36 @@
+import type { Agent, PluginAgent } from '../../services/skills/skills-manager';
+
 import { Flags } from '@oclif/core';
 
 import AbstractCommand from '../../abstract-command';
 import {
-  FOREST_BLOCK,
+  AGENT_LABELS,
+  MARKETPLACE_REPO,
+  SKILLS_DIR,
   contextFileFor,
   fetchMarketplace,
-  installDocsMcp,
+  forestBlock,
+  hasPluginCli,
   installSkills,
+  isPluginAgent,
   mergeBlock,
   readManifest,
   removeStaleSkillFiles,
   skillDirEntries,
-  validateLocalMcp,
-  validateMarketplaceBundle,
+  upgradePlugins,
   writeManifest,
 } from '../../services/skills/skills-manager';
 
 export default class SkillsUpdateCommand extends AbstractCommand {
   static override description =
-    'Refresh the Forest skills in this repo from ForestAdmin/ai-marketplace (anti-drift). ' +
-    'Overwrites the managed skill files and prunes ones dropped upstream (git shows the diff); ' +
-    'files you added yourself inside the skill dirs are left untouched.';
+    'Refresh what `forest skills:init` installed (anti-drift): re-installs the Forest plugin for ' +
+    'Claude Code / Codex, and re-copies the skills for the other agents — overwriting the managed ' +
+    'files and pruning what was dropped upstream (git shows the diff). Files you wrote yourself are ' +
+    'left untouched.';
 
   static override flags = {
     ref: Flags.string({ description: 'Marketplace version (git ref).', default: 'main' }),
   };
-
-  // Always refresh both agents (matches skills:init) — avoids the class of bug where refreshing
-  // one agent treats the other agent's files as stale and deletes them.
-  private static readonly agents = ['claude', 'codex'];
 
   async run(): Promise<void> {
     const { flags } = await this.parse(SkillsUpdateCommand);
@@ -42,12 +44,6 @@ export default class SkillsUpdateCommand extends AbstractCommand {
       return;
     }
 
-    const { agents } = SkillsUpdateCommand;
-
-    // Fail fast BEFORE any disk mutation: a broken local .mcp.json would otherwise only surface
-    // in installDocsMcp, at the very end, leaving a half-applied refresh behind (same as init).
-    validateLocalMcp();
-
     // An update targets the requested ref (default main) — but never silently: an install pinned
     // to a tag/SHA jumping refs must be visible, and the way back must be obvious.
     if (manifest.ref && manifest.ref !== flags.ref) {
@@ -57,37 +53,75 @@ export default class SkillsUpdateCommand extends AbstractCommand {
       );
     }
 
-    this.logger.info(`Refreshing Forest skills from ForestAdmin/ai-marketplace@${flags.ref}…`);
-    const { root: srcRoot, cleanup } = await fetchMarketplace(flags.ref);
+    // Refresh exactly the agents the install targeted: refreshing one agent must never treat
+    // another's files as stale. An older manifest without `agents` is treated as copy-only.
+    const agents = (manifest.agents ?? []) as Agent[];
+    const pluginAgents = agents.filter(isPluginAgent);
+    const copyAgents = agents.filter(agent => !isPluginAgent(agent));
+
+    pluginAgents.forEach(agent => this.upgradePluginFor(agent, flags.ref));
+
+    const files = copyAgents.length ? await this.refreshSkills(manifest.files, flags.ref) : [];
+
+    const contextFiles = [...new Set(agents.map(contextFileFor))];
+    agents.forEach(agent => mergeBlock(contextFileFor(agent), forestBlock(agent)));
+
+    writeManifest({
+      ref: flags.ref,
+      installedAt: new Date().toISOString(),
+      agents,
+      files: [...files, ...contextFiles],
+    });
+  }
+
+  private upgradePluginFor(agent: PluginAgent, ref: string): void {
+    if (!hasPluginCli(agent)) {
+      this.logger.warn(
+        `${AGENT_LABELS[agent]}: CLI not on your PATH — skipping its plugin refresh.`,
+      );
+
+      return;
+    }
+    const { installed, failed } = upgradePlugins(agent, ref);
+    if (installed.length) {
+      this.logger.success(
+        `${AGENT_LABELS[agent]}: Forest plugins refreshed (${installed.join(', ')}).`,
+        {
+          lineColor: 'green',
+        },
+      );
+    }
+    if (failed.length) {
+      this.logger.warn(`${AGENT_LABELS[agent]}: could not refresh ${failed.join(', ')}.`);
+    }
+  }
+
+  private async refreshSkills(previousFiles: string[], ref: string): Promise<string[]> {
+    this.logger.info(`Refreshing Forest skills from ${MARKETPLACE_REPO}@${ref}…`);
+    const { root: srcRoot, cleanup } = await fetchMarketplace(ref);
     try {
-      // Still before any write: the bundle must carry the docs MCP config, or the last step
-      // would fail with a raw ENOENT after skills/context files were already refreshed.
-      validateMarketplaceBundle(srcRoot, flags.ref);
-
       // The managed skill files previously installed — candidates for stale-pruning.
-      const oldSkillFiles = skillDirEntries(manifest.files);
-
-      const skillFiles = agents.flatMap(agent => {
-        const written = installSkills(srcRoot, agent, true); // force: managed files are Forest-owned
-        const contextFile = contextFileFor(agent);
-        mergeBlock(contextFile, FOREST_BLOCK); // refreshes only the Forest block; user content untouched
-
-        return [...written, contextFile];
-      });
+      const oldSkillFiles = skillDirEntries(previousFiles);
+      // force: managed files are Forest-owned. `previousFiles` still bounds what may be
+      // overwritten, so a same-named file the user wrote is preserved, not silently replaced.
+      const { written, skipped } = installSkills(srcRoot, true, previousFiles);
 
       // Deletions: managed skill files removed upstream are removed locally.
-      const removed = removeStaleSkillFiles(oldSkillFiles, skillFiles);
-
-      const files = [...skillFiles, installDocsMcp(srcRoot)];
-
-      writeManifest({ ref: flags.ref, installedAt: new Date().toISOString(), agents, files });
+      const removed = removeStaleSkillFiles(oldSkillFiles, written);
 
       this.logger.success(
-        `Forest skills refreshed for ${agents.join(', ')} (${files.length} files, ${
-          removed.length
-        } removed).`,
+        `Forest skills refreshed in ${SKILLS_DIR}/ (${written.length} files, ${removed.length} removed).`,
         { lineColor: 'green' },
       );
+      if (skipped.length) {
+        this.logger.warn(
+          `Kept your own version of ${skipped.length} file(s) we've never written: ${skipped.join(
+            ', ',
+          )}.`,
+        );
+      }
+
+      return written;
     } finally {
       cleanup();
     }

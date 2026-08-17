@@ -4,18 +4,27 @@ const path = require('path');
 
 const testCli = require('../test-cli-helper/test-cli');
 
-// Mock ONLY the network fetch: the command's real orchestration (validation, install, block
-// merge, stale-pruning, manifest rewrite) runs against a fake extracted bundle on disk.
+// Mock ONLY the network fetch and the agent-CLI calls: the command's real orchestration
+// (route split, install, block merge, stale-pruning, manifest rewrite) runs for real against a
+// fake extracted bundle on disk.
 jest.mock('../../../src/services/skills/skills-manager', () => ({
   ...jest.requireActual('../../../src/services/skills/skills-manager'),
   fetchMarketplace: jest.fn(),
+  hasPluginCli: jest.fn(),
+  upgradePlugins: jest.fn(),
 }));
 
 const SkillsUpdateCommand = require('../../../src/commands/skills/update').default;
-const { SKILL_SOURCES, fetchMarketplace } = require('../../../src/services/skills/skills-manager');
+const {
+  SKILLS_DIR,
+  SKILL_SOURCES,
+  fetchMarketplace,
+  hasPluginCli,
+  upgradePlugins,
+} = require('../../../src/services/skills/skills-manager');
 
 // Build a fake extracted marketplace holding every curated skill (derived from SKILL_SOURCES so
-// the fixture stays in sync with the real list) + forest-docs/.mcp.json.
+// the fixture stays in sync with the real list).
 function makeFakeBundle() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'skills-update-test-'));
   const write = (p, c) => {
@@ -27,21 +36,19 @@ function makeFakeBundle() {
       write(path.join(root, plugin, 'skills', skill, 'SKILL.md'), `# ${skill} skill (fresh)`),
     ),
   );
-  write(
-    path.join(root, 'forest-docs', '.mcp.json'),
-    JSON.stringify({
-      mcpServers: { 'forest-docs': { type: 'http', url: 'https://docs.forest.app/mcp' } },
-    }),
-  );
   return root;
 }
 
-function mockMarketplaceFetch() {
+function mockPipeline({ cliPresent = true } = {}) {
   fetchMarketplace.mockReset();
   fetchMarketplace.mockImplementation(async () => {
     const root = makeFakeBundle();
     return { root, cleanup: () => fs.rmSync(root, { recursive: true, force: true }) };
   });
+  hasPluginCli.mockReset();
+  hasPluginCli.mockReturnValue(cliPresent);
+  upgradePlugins.mockReset();
+  upgradePlugins.mockImplementation(agent => ({ agent, installed: ['forest'], failed: [] }));
 }
 
 // Run testCli but keep the temporary project directory so the resulting disk state can be
@@ -59,14 +66,16 @@ async function runCliKeepingProjectDir(options) {
   return options.files[0].chdir;
 }
 
-const previousManifest = (ref, files) =>
-  JSON.stringify({ ref, installedAt: '2026-01-01T00:00:00.000Z', agents: ['claude'], files });
+const previousManifest = (ref, files, agents = ['cursor']) =>
+  JSON.stringify({ ref, installedAt: '2026-01-01T00:00:00.000Z', agents, files });
+
+const skill = (...parts) => path.join(SKILLS_DIR, ...parts);
 
 describe('skills:update', () => {
   describe('when no manifest exists', () => {
     it('exits with an error and never reaches the marketplace', async () => {
       expect.hasAssertions();
-      mockMarketplaceFetch();
+      mockPipeline();
 
       await testCli({
         commandClass: SkillsUpdateCommand,
@@ -82,46 +91,22 @@ describe('skills:update', () => {
     });
   });
 
-  describe('when the local .mcp.json is unparsable', () => {
-    it('fails fast before fetching or mutating anything', async () => {
-      expect.hasAssertions();
-      mockMarketplaceFetch();
-
-      await testCli({
-        commandClass: SkillsUpdateCommand,
-        files: [
-          {
-            name: '.forest/skills-manifest.json',
-            content: previousManifest('main', ['.claude/skills/layout/SKILL.md']),
-          },
-          { name: '.mcp.json', content: '{ not valid json' },
-        ],
-        exitMessage:
-          "Cannot parse existing .mcp.json; aborting before any changes so it isn't overwritten. " +
-          'Fix or remove it, then re-run.',
-      });
-
-      expect(fetchMarketplace).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('when a manifest exists', () => {
+  describe('on the copy route', () => {
     it('refreshes managed files, prunes stale ones and rewrites the manifest', async () => {
       expect.hasAssertions();
-      mockMarketplaceFetch();
+      mockPipeline();
 
       const files = [
         {
           name: '.forest/skills-manifest.json',
           content: previousManifest('main', [
-            '.claude/skills/layout/SKILL.md',
-            '.claude/skills/old-skill/SKILL.md', // left the upstream bundle since
-            'CLAUDE.md',
-            '.mcp.json',
+            skill('layout', 'SKILL.md'),
+            skill('old-skill', 'SKILL.md'), // left the upstream bundle since
+            'AGENTS.md',
           ]),
         },
-        { name: '.claude/skills/layout/SKILL.md', content: 'outdated content' },
-        { name: '.claude/skills/old-skill/SKILL.md', content: 'stale content' },
+        { name: skill('layout', 'SKILL.md'), content: 'outdated content' },
+        { name: skill('old-skill', 'SKILL.md'), content: 'stale content' },
       ];
 
       const projectDir = await runCliKeepingProjectDir({
@@ -129,25 +114,58 @@ describe('skills:update', () => {
         files,
         std: [
           { out: 'Refreshing Forest skills from ForestAdmin/ai-marketplace@main' },
-          { out: 'Forest skills refreshed for claude, codex' },
+          { out: 'Forest skills refreshed in .agents/skills/' },
         ],
       });
 
       try {
         const at = p => path.join(projectDir, p);
         // Managed file refreshed from the bundle.
-        expect(fs.readFileSync(at('.claude/skills/layout/SKILL.md'), 'utf8')).toBe(
+        expect(fs.readFileSync(at(skill('layout', 'SKILL.md')), 'utf8')).toBe(
           '# layout skill (fresh)',
         );
         // Stale managed file (in the old manifest, gone upstream) pruned.
-        expect(fs.existsSync(at('.claude/skills/old-skill/SKILL.md'))).toBe(false);
+        expect(fs.existsSync(at(skill('old-skill', 'SKILL.md')))).toBe(false);
         // Freshly installed files NOT pruned (removeStaleSkillFiles argument order).
-        expect(fs.existsSync(at('.claude/skills/forest-code/SKILL.md'))).toBe(true);
-        expect(fs.existsSync(at('.agents/skills/layout/SKILL.md'))).toBe(true);
+        expect(fs.existsSync(at(skill('forest-code', 'SKILL.md')))).toBe(true);
+        // Claude Code's dir is never written on the copy route — it gets the plugin instead.
+        expect(fs.existsSync(at('.claude/skills'))).toBe(false);
         // Manifest rewritten with the effective ref and the refreshed file list.
         const manifest = JSON.parse(fs.readFileSync(at('.forest/skills-manifest.json'), 'utf8'));
         expect(manifest.ref).toBe('main');
-        expect(manifest.files).toContain(path.join('.claude/skills', 'forest-code', 'SKILL.md'));
+        expect(manifest.files).toContain(skill('forest-code', 'SKILL.md'));
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
+    });
+
+    it('keeps a user-authored file that collides with a bundle path instead of overwriting it', async () => {
+      expect.hasAssertions();
+      mockPipeline();
+
+      const files = [
+        {
+          name: '.forest/skills-manifest.json',
+          // The manifest never claimed layout/SKILL.md → we never wrote it → it is the user's.
+          content: previousManifest('main', [skill('onboard', 'SKILL.md')]),
+        },
+        { name: skill('onboard', 'SKILL.md'), content: 'managed, will be refreshed' },
+        { name: skill('layout', 'SKILL.md'), content: 'my own skill' },
+      ];
+
+      const projectDir = await runCliKeepingProjectDir({
+        commandClass: SkillsUpdateCommand,
+        files,
+        std: [{ out: "Kept your own version of 1 file(s) we've never written" }],
+      });
+
+      try {
+        const at = p => path.join(projectDir, p);
+        expect(fs.readFileSync(at(skill('layout', 'SKILL.md')), 'utf8')).toBe('my own skill');
+        // …while the file we did write is refreshed as usual.
+        expect(fs.readFileSync(at(skill('onboard', 'SKILL.md')), 'utf8')).toBe(
+          '# onboard skill (fresh)',
+        );
       } finally {
         fs.rmSync(projectDir, { recursive: true, force: true });
       }
@@ -155,14 +173,14 @@ describe('skills:update', () => {
 
     it('logs the ref transition when the manifest was pinned to another ref', async () => {
       expect.hasAssertions();
-      mockMarketplaceFetch();
+      mockPipeline();
 
       const files = [
         {
           name: '.forest/skills-manifest.json',
-          content: previousManifest('v2.1.0', ['.claude/skills/layout/SKILL.md']),
+          content: previousManifest('v2.1.0', [skill('layout', 'SKILL.md')]),
         },
-        { name: '.claude/skills/layout/SKILL.md', content: 'outdated content' },
+        { name: skill('layout', 'SKILL.md'), content: 'outdated content' },
       ];
 
       const projectDir = await runCliKeepingProjectDir({
@@ -188,14 +206,14 @@ describe('skills:update', () => {
 
     it('passes the requested --ref through to the fetch and the manifest', async () => {
       expect.hasAssertions();
-      mockMarketplaceFetch();
+      mockPipeline();
 
       const files = [
         {
           name: '.forest/skills-manifest.json',
-          content: previousManifest('v2.1.0', ['.claude/skills/layout/SKILL.md']),
+          content: previousManifest('v2.1.0', [skill('layout', 'SKILL.md')]),
         },
-        { name: '.claude/skills/layout/SKILL.md', content: 'outdated content' },
+        { name: skill('layout', 'SKILL.md'), content: 'outdated content' },
       ];
 
       const projectDir = await runCliKeepingProjectDir({
@@ -215,6 +233,46 @@ describe('skills:update', () => {
       } finally {
         fs.rmSync(projectDir, { recursive: true, force: true });
       }
+    });
+  });
+
+  describe('on the plugin route', () => {
+    it('re-installs the plugin and never fetches the tarball', async () => {
+      expect.hasAssertions();
+      mockPipeline();
+
+      await testCli({
+        commandClass: SkillsUpdateCommand,
+        files: [
+          {
+            name: '.forest/skills-manifest.json',
+            content: previousManifest('main', ['CLAUDE.md'], ['claude']),
+          },
+        ],
+        std: [{ out: 'Claude Code: Forest plugins refreshed (forest)' }],
+      });
+
+      expect(upgradePlugins).toHaveBeenCalledWith('claude', 'main');
+      // No copy route in play → the marketplace tarball is never downloaded.
+      expect(fetchMarketplace).not.toHaveBeenCalled();
+    });
+
+    it('warns and carries on when the agent CLI is not installed', async () => {
+      expect.hasAssertions();
+      mockPipeline({ cliPresent: false });
+
+      await testCli({
+        commandClass: SkillsUpdateCommand,
+        files: [
+          {
+            name: '.forest/skills-manifest.json',
+            content: previousManifest('main', ['CLAUDE.md'], ['claude']),
+          },
+        ],
+        std: [{ out: 'Claude Code: CLI not on your PATH' }],
+      });
+
+      expect(upgradePlugins).not.toHaveBeenCalled();
     });
   });
 });

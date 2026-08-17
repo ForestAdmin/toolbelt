@@ -1,3 +1,4 @@
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -5,19 +6,28 @@ import superagent from 'superagent';
 import * as tar from 'tar';
 
 /**
- * Shared logic for `skills:init` / `skills:update`: fetch the public
- * ForestAdmin/ai-marketplace repo, copy the Forest skill bundles into a project
- * (project-scoped, for Claude Code and Codex), merge a Forest block into
- * CLAUDE.md/AGENTS.md, wire the Forest docs MCP, and track it in a manifest.
+ * Shared logic for `skills:init` / `skills:update`.
  *
- * The marketplace repo is PUBLIC → no auth needed for the fetch.
+ * Two distribution routes, because coding agents split in two families:
+ *
+ * - Agents with a native plugin system (Claude Code, Codex) → we drive THEIR CLI
+ *   (`claude plugin …` / `codex plugin …`). They fetch, version, auto-update and wire the
+ *   Forest docs MCP themselves, and the user gets the plugin's slash commands too. Nothing
+ *   is copied into the repo.
+ * - Agents that only discover `SKILL.md` files (Cursor, OpenCode, …) → we copy the curated
+ *   skills into `.agents/skills/`, the cross-agent convention they all read.
+ *
+ * The marketplace repo is PUBLIC → no auth needed for the fetch, and both plugin CLIs read
+ * the same `.claude-plugin/marketplace.json` (verified against codex-cli 0.147.0), so one
+ * catalog serves every agent.
  */
 
 export const MARKETPLACE_REPO = 'ForestAdmin/ai-marketplace';
+export const MARKETPLACE_NAME = 'forest-admin-ai';
 
-// Which dev-facing skills we distribute into a client's repo. Curated on purpose
-// (explicit control over what ships; internal/test-only skills like deploy-heroku
-// stay out). Source path in the repo = `<plugin>/skills/<name>`.
+// Which dev-facing skills we distribute into a client's repo on the COPY route. Curated on
+// purpose (explicit control over what ships; internal/test-only skills like deploy-heroku stay
+// out). Source path in the repo = `<plugin>/skills/<name>`.
 export const SKILL_SOURCES: { plugin: string; skills: string[] }[] = [
   {
     plugin: 'forest',
@@ -26,34 +36,73 @@ export const SKILL_SOURCES: { plugin: string; skills: string[] }[] = [
   { plugin: 'forest-code', skills: ['forest-code', 'forest-legacy'] },
 ];
 
-// Per-agent project-scoped skill dir (both are auto-discovered; no marketplace needed).
-export const AGENT_SKILL_DIRS: Record<string, string> = {
-  claude: '.claude/skills',
-  codex: '.agents/skills',
+// Which plugins we install on the PLUGIN route. `forest-mcp` is deliberately out: it needs the
+// user's Forest credentials at install time (authPolicy ON_INSTALL), so it is an opt-in.
+export const FOREST_PLUGINS = ['forest', 'forest-code', 'forest-docs'];
+
+/**
+ * The single skills dir on the copy route. `.agents/skills/` is the cross-agent convention:
+ * Cursor and OpenCode both read it (alongside their own `.cursor/`, `.opencode/`), and so does
+ * Codex. Claude Code is the one agent that does NOT read it — it reads `.claude/skills/` — but
+ * it is served by the plugin route, so a second copy would only duplicate its skills.
+ */
+export const SKILLS_DIR = '.agents/skills';
+
+/** Agents served by driving their own plugin CLI. */
+export const PLUGIN_AGENTS = ['claude', 'codex'] as const;
+/** Agents served by copying SKILL.md files into SKILLS_DIR. */
+export const COPY_AGENTS = ['cursor', 'opencode', 'other'] as const;
+export const ALL_AGENTS = [...PLUGIN_AGENTS, ...COPY_AGENTS] as const;
+
+export type PluginAgent = (typeof PLUGIN_AGENTS)[number];
+export type Agent = (typeof ALL_AGENTS)[number];
+
+export const AGENT_LABELS: Record<Agent, string> = {
+  claude: 'Claude Code',
+  codex: 'Codex',
+  cursor: 'Cursor',
+  opencode: 'OpenCode',
+  other: 'Other (any SKILL.md-compatible agent)',
 };
+
+export const isPluginAgent = (agent: string): agent is PluginAgent =>
+  (PLUGIN_AGENTS as readonly string[]).includes(agent);
 
 export const MANIFEST_PATH = '.forest/skills-manifest.json';
 
 const BLOCK_BEGIN = '<!-- forest:begin -->';
 const BLOCK_END = '<!-- forest:end -->';
 
-// The Forest block merged into CLAUDE.md / AGENTS.md (project context for the agent).
-export const FOREST_BLOCK = [
-  'This project uses **Forest Admin**. Skills to build/customize it are installed in',
-  '`.claude/skills/` (Claude Code) and `.agents/skills/` (Codex) — e.g. `/forest-code`, `/forest:layout`.',
-  'Forest documentation is searchable via the `forest-docs` MCP server.',
-].join('\n');
-
-export type Manifest = { ref: string; installedAt: string; agents: string[]; files: string[] };
-
-export function contextFileFor(agent: string): string {
+/** Context files, per agent. AGENTS.md is the cross-agent standard (Codex, Cursor, OpenCode). */
+export function contextFileFor(agent: Agent): string {
   return agent === 'claude' ? 'CLAUDE.md' : 'AGENTS.md';
 }
+
+/** The Forest block merged into CLAUDE.md / AGENTS.md, worded for the route actually applied. */
+export function forestBlock(agent: Agent): string {
+  const where = isPluginAgent(agent)
+    ? 'available through the `forest` plugin — e.g. `/forest:start`, `/forest:layout`, `/forest-code`'
+    : `installed in \`${SKILLS_DIR}/\` — e.g. \`layout\`, \`onboard\`, \`forest-code\``;
+
+  return [
+    `This project uses **Forest Admin**. Skills to build and customize it are ${where}.`,
+    'Forest documentation is searchable via the `forest-docs` MCP server.',
+  ].join('\n');
+}
+
+export type Manifest = {
+  ref: string;
+  installedAt: string;
+  agents: string[];
+  files: string[];
+};
 
 /**
  * Download + extract the marketplace tarball at `ref`. Returns the extracted root dir and a
  * `cleanup` the caller must run (in a finally) to delete the temp dir — otherwise every
  * init/update leaks a full copy of the marketplace under the OS temp dir.
+ *
+ * Only the copy route needs this: the plugin CLIs do their own fetching.
  */
 export async function fetchMarketplace(
   ref = 'main',
@@ -124,96 +173,129 @@ function listFiles(dir: string): string[] {
   });
 }
 
-/** Recursively copy a directory, returning the list of files written. Never follows a symlink at
- *  the destination — it's replaced — so a planted link can't redirect a write outside the project. */
-export function copyDir(src: string, dest: string): string[] {
+/** What a copy produced: files we wrote, and files we refused to overwrite because the user
+ *  wrote them (same path as a bundle file, but never managed by us). */
+export type CopyResult = { written: string[]; skipped: string[] };
+
+const emptyCopy = (): CopyResult => ({ written: [], skipped: [] });
+
+const mergeCopy = (results: CopyResult[]): CopyResult => ({
+  written: results.flatMap(r => r.written),
+  skipped: results.flatMap(r => r.skipped),
+});
+
+/**
+ * Recursively copy a directory. Never follows a symlink at the destination — it's replaced — so a
+ * planted link can't redirect a write outside the project.
+ *
+ * `isManaged` decides whether an EXISTING destination file may be overwritten. A file that is on
+ * disk but was never written by us is user-authored content that happens to share a bundle path:
+ * we leave it alone and report it, rather than silently destroying it.
+ */
+export function copyDir(
+  src: string,
+  dest: string,
+  isManaged: (file: string) => boolean = () => true,
+): CopyResult {
   // Refuse a source dir that is itself a symlink — a crafted marketplace could point a curated
   // skill path at an absolute host dir and have readdirSync follow it, copying local files in.
-  if (isSymlink(src)) return [];
+  if (isSymlink(src)) return emptyCopy();
   if (isSymlink(dest)) fs.rmSync(dest);
   fs.mkdirSync(dest, { recursive: true });
 
-  return fs.readdirSync(src, { withFileTypes: true }).flatMap(entry => {
-    const from = path.join(src, entry.name);
-    const to = path.join(dest, entry.name);
-    // Never follow a symlink in the source bundle (a crafted marketplace could point one at an
-    // arbitrary file on the user's machine and have us copy its contents in).
-    if (entry.isSymbolicLink()) return [];
-    if (entry.isDirectory()) return copyDir(from, to);
-    if (isSymlink(to)) fs.rmSync(to);
-    fs.copyFileSync(from, to);
+  return mergeCopy(
+    fs.readdirSync(src, { withFileTypes: true }).map(entry => {
+      const from = path.join(src, entry.name);
+      const to = path.join(dest, entry.name);
+      // Never follow a symlink in the source bundle (a crafted marketplace could point one at an
+      // arbitrary file on the user's machine and have us copy its contents in).
+      if (entry.isSymbolicLink()) return emptyCopy();
+      if (entry.isDirectory()) return copyDir(from, to, isManaged);
+      // Existing file we never wrote → the user's. Don't clobber it.
+      if (fs.existsSync(to) && !isSymlink(to) && !isManaged(to))
+        return { written: [], skipped: [to] };
+      if (isSymlink(to)) fs.rmSync(to);
+      fs.copyFileSync(from, to);
 
-    return [to];
-  });
-}
-
-/** Copy the skill bundles from the extracted repo into one agent's skills dir.
- *  `previousFiles` is the file list from the previous manifest (`null` on a first run): on the
- *  no-force skip path it bounds what we may claim as managed — we never claim a file we did not
- *  write ourselves on some run, or a later prune would delete user-authored content. */
-export function installSkills(
-  srcRoot: string,
-  agent: string,
-  force: boolean,
-  previousFiles: string[] | null,
-): string[] {
-  const targetBase = AGENT_SKILL_DIRS[agent];
-  const previouslyManaged = new Set((previousFiles ?? []).map(normalizePath));
-
-  return SKILL_SOURCES.flatMap(({ plugin, skills }) =>
-    skills.flatMap(skill => {
-      const src = path.join(srcRoot, plugin, 'skills', skill);
-      const dest = path.join(targetBase, skill);
-      // Fail loud on a missing curated skill rather than reporting a misleading partial success.
-      if (!fs.existsSync(src)) {
-        throw new Error(
-          `Skill "${skill}" is missing from the marketplace (expected ${plugin}/skills/${skill}). ` +
-            'The curated SKILL_SOURCES list is out of sync with this marketplace ref.',
-        );
-      }
-      if (fs.existsSync(dest)) {
-        if (!fs.lstatSync(dest).isDirectory()) {
-          // A stray non-directory where a skill dir belongs → replace it wholesale.
-          fs.rmSync(dest, { recursive: true, force: true });
-        } else if (!force) {
-          // Installed and no --force: nothing is written here, so only carry over files that are
-          // BOTH in the incoming bundle (derived from source, mapped to dest — never the actual
-          // dir contents, which may include user-added files) AND in the previous manifest (proof
-          // a past run wrote them). A dir that pre-existed the first run was authored by the user:
-          // claiming its files would mark them managed and a later refresh would prune them.
-          return listFiles(src)
-            .map(f => path.join(dest, path.relative(src, f)))
-            .filter(f => previouslyManaged.has(normalizePath(f)));
-        }
-        // With --force on an existing dir we fall through and overlay the incoming bundle on top.
-        // We deliberately do NOT delete the dir, so user-added files survive; pruning of
-        // Forest-owned files that left the bundle is the command's job (removeStaleSkillFiles,
-        // manifest-scoped) — never a blind rm here.
-      }
-
-      return copyDir(src, dest);
+      return { written: [to], skipped: [] };
     }),
   );
 }
 
-/** From a manifest file list, the entries that live under the skill dirs (normalized for Windows,
- *  where manifest paths use backslashes). These are the candidates for stale-pruning on a refresh. */
-export function skillDirEntries(files: string[]): string[] {
-  const bases = Object.values(AGENT_SKILL_DIRS);
+/**
+ * Copy the curated skill bundles from the extracted repo into `SKILLS_DIR`.
+ *
+ * `previousFiles` is the file list from the previous manifest (`null` on a first run). It bounds
+ * what we may claim as managed AND what we may overwrite: a file we never wrote is the user's,
+ * both on the skip path (claiming it would let a later prune delete it) and on the force path
+ * (overwriting it would destroy it outright).
+ */
+export function installSkills(
+  srcRoot: string,
+  force: boolean,
+  previousFiles: string[] | null,
+): CopyResult {
+  const previouslyManaged = new Set((previousFiles ?? []).map(normalizePath));
+  const isManaged = (file: string) => previouslyManaged.has(normalizePath(file));
 
-  return files.filter(file => bases.some(dir => file.replace(/\\/g, '/').startsWith(dir)));
+  return mergeCopy(
+    SKILL_SOURCES.flatMap(({ plugin, skills }) =>
+      skills.map(skill => {
+        const src = path.join(srcRoot, plugin, 'skills', skill);
+        const dest = path.join(SKILLS_DIR, skill);
+        // Fail loud on a missing curated skill rather than reporting a misleading partial success.
+        if (!fs.existsSync(src)) {
+          throw new Error(
+            `Skill "${skill}" is missing from the marketplace (expected ${plugin}/skills/${skill}). ` +
+              'The curated SKILL_SOURCES list is out of sync with this marketplace ref.',
+          );
+        }
+        if (fs.existsSync(dest)) {
+          if (!fs.lstatSync(dest).isDirectory()) {
+            // A stray non-directory where a skill dir belongs → replace it wholesale.
+            fs.rmSync(dest, { recursive: true, force: true });
+          } else if (!force) {
+            // Installed and no --force: nothing is written here, so only carry over files that are
+            // BOTH in the incoming bundle (derived from source, mapped to dest — never the actual
+            // dir contents, which may include user-added files) AND in the previous manifest (proof
+            // a past run wrote them). A dir that pre-existed the first run was authored by the user:
+            // claiming its files would mark them managed and a later refresh would prune them.
+            return {
+              written: listFiles(src)
+                .map(f => path.join(dest, path.relative(src, f)))
+                .filter(isManaged),
+              skipped: [],
+            };
+          }
+          // With --force on an existing dir we fall through and overlay the incoming bundle on top.
+          // We deliberately do NOT delete the dir, so user-added files survive; pruning of
+          // Forest-owned files that left the bundle is the command's job (removeStaleSkillFiles,
+          // manifest-scoped) — never a blind rm here. `isManaged` still shields user-authored
+          // files that collide with a bundle path.
+        }
+
+        return copyDir(src, dest, file => !previousFiles || isManaged(file));
+      }),
+    ),
+  );
 }
 
-/** Guard a deletion candidate: it must resolve *inside* the skill dirs (blocks `..` traversal and
+/** From a manifest file list, the entries that live under the skills dir (normalized for Windows,
+ *  where manifest paths use backslashes). These are the candidates for stale-pruning on a refresh. */
+export function skillDirEntries(files: string[]): string[] {
+  return files.filter(file => normalizePath(file).startsWith(SKILLS_DIR));
+}
+
+/** Guard a deletion candidate: it must resolve *inside* the skills dir (blocks `..` traversal and
  *  absolute paths) and its real location must stay there too (blocks a symlinked ancestor from
  *  redirecting the delete outside the project). A crafted manifest entry must never widen rmSync. */
 function isWithinSkillDirs(file: string): boolean {
-  const skillBases = Object.values(AGENT_SKILL_DIRS).map(dir => path.resolve(dir));
+  const base = path.resolve(SKILLS_DIR);
   const resolved = path.resolve(file);
-  // Textual containment: reject `..` traversal and absolute paths outside the skill dirs.
-  if (!skillBases.some(base => resolved.startsWith(base + path.sep))) return false;
+  // Textual containment: reject `..` traversal and absolute paths outside the skills dir.
+  if (!resolved.startsWith(base + path.sep)) return false;
   // Real containment against the PROJECT root (not the skill dir's symlink target): a symlinked
-  // skill dir pointing outside the project must be rejected, never whitelisted via its target.
+  // skills dir pointing outside the project must be rejected, never whitelisted via its target.
   try {
     const projectRoot = fs.realpathSync(process.cwd());
     const realParent = fs.realpathSync(path.dirname(file));
@@ -227,7 +309,7 @@ function isWithinSkillDirs(file: string): boolean {
 /**
  * Delete managed skill files that existed before but are no longer produced (removed upstream).
  * Set-diff of previous vs current, deleting only paths that still exist *and* are safely contained
- * within the skill dirs. Returns what it removed.
+ * within the skills dir. Returns what it removed.
  */
 export function removeStaleSkillFiles(previousFiles: string[], currentFiles: string[]): string[] {
   // Compare on forward-slash-normalized paths so a manifest written on one OS (e.g. Unix `/`)
@@ -258,71 +340,109 @@ export function mergeBlock(file: string, content: string): void {
   fs.writeFileSync(file, next);
 }
 
-/**
- * Fail-fast preflight for the local `.mcp.json`: run it BEFORE any disk mutation. `installDocsMcp`
- * throws on an unparseable local config (on purpose, to protect user content), but it runs last —
- * without this check the failure would surface after skills were installed and the context files
- * merged, leaving a half-applied state with no manifest rewrite.
- */
-export function validateLocalMcp(): void {
-  const target = '.mcp.json';
-  // A symlinked .mcp.json is replaced (never read) at install time, so its target's content is
-  // irrelevant here. Same for an absent file.
-  if (isSymlink(target) || !fs.existsSync(target)) return;
-  try {
-    JSON.parse(fs.readFileSync(target, 'utf8'));
-  } catch {
-    throw new Error(
-      `Cannot parse existing ${target}; aborting before any changes so it isn't overwritten. ` +
-        'Fix or remove it, then re-run.',
-    );
-  }
+// ---------------------------------------------------------------------------------------------
+// Plugin route: drive the agent's own CLI
+// ---------------------------------------------------------------------------------------------
+
+const PLUGIN_BINS: Record<PluginAgent, string> = { claude: 'claude', codex: 'codex' };
+
+/** Run an agent CLI and return its outcome. Never throws on a non-zero exit — callers decide. */
+function runCli(bin: string, args: string[]): { ok: boolean; output: string } {
+  const res = spawnSync(bin, args, { encoding: 'utf8' });
+  const output = `${res.stdout ?? ''}${res.stderr ?? ''}`.trim();
+  if (res.error) return { ok: false, output: res.error.message };
+
+  return { ok: res.status === 0, output };
+}
+
+/** True if the agent's CLI is installed and runnable. */
+export function hasPluginCli(agent: PluginAgent): boolean {
+  return runCli(PLUGIN_BINS[agent], ['--version']).ok;
 }
 
 /**
- * Fail-fast preflight for the fetched marketplace bundle: run it after the fetch but BEFORE any
- * write. The docs MCP config is read last by `installDocsMcp`; a bundle missing it would otherwise
- * die on a raw ENOENT after everything else was already applied.
+ * Marketplace source for an agent CLI. Both read the same `.claude-plugin/marketplace.json`.
+ * A non-default ref is passed the way each CLI accepts it: Codex has `--ref`, Claude Code takes
+ * it appended to a full git URL (`....git#ref`) since the `owner/repo` shorthand has no ref form.
  */
-export function validateMarketplaceBundle(srcRoot: string, ref: string): void {
-  if (!fs.existsSync(path.join(srcRoot, 'forest-docs', '.mcp.json'))) {
-    throw new Error(
-      `The Forest marketplace at ref "${ref}" has no forest-docs/.mcp.json (docs MCP config). ` +
-        'Nothing was changed. Check the --ref value or try again with the default ref.',
-    );
+function marketplaceAddArgs(agent: PluginAgent, ref: string): string[] {
+  if (agent === 'codex') {
+    return [
+      'plugin',
+      'marketplace',
+      'add',
+      MARKETPLACE_REPO,
+      ...(ref === 'main' ? [] : ['--ref', ref]),
+    ];
   }
+  const source =
+    ref === 'main' ? MARKETPLACE_REPO : `https://github.com/${MARKETPLACE_REPO}.git#${ref}`;
+
+  return ['plugin', 'marketplace', 'add', source, '--scope', 'project'];
 }
 
 /**
- * Wire the Forest docs MCP (Mintlify, https://docs.forest.app/mcp — static, read-only, NO secret)
- * by reading the source of truth `forest-docs/.mcp.json` from the fetched marketplace and merging
- * its `mcpServers` into the project's `.mcp.json` (preserving any existing servers the user has).
+ * `install` on Claude Code (project scope → the plugin is declared in `.claude/settings.json`,
+ * which the team commits), `add` on Codex (user scope only — its CLI has no project scope).
  */
-export function installDocsMcp(srcRoot: string): string {
-  const incoming = JSON.parse(
-    fs.readFileSync(path.join(srcRoot, 'forest-docs', '.mcp.json'), 'utf8'),
-  );
-  const target = '.mcp.json';
-  replaceSymlink(target); // never read/write through a symlinked .mcp.json
-  let current: { mcpServers?: Record<string, unknown> } = { mcpServers: {} };
-  if (fs.existsSync(target)) {
-    try {
-      const parsed = JSON.parse(fs.readFileSync(target, 'utf8'));
-      // Valid JSON that isn't a plain object (null, array, scalar) → treat as empty, don't crash.
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        current = parsed as { mcpServers?: Record<string, unknown> };
-      }
-    } catch {
-      // Don't clobber a user-authored (but unparseable) config with an empty one.
-      throw new Error(
-        `Cannot parse existing ${target}; aborting so it isn't overwritten. Fix or remove it, then re-run.`,
-      );
-    }
-  }
-  current.mcpServers = { ...(current.mcpServers || {}), ...(incoming.mcpServers || {}) };
-  fs.writeFileSync(target, `${JSON.stringify(current, null, 2)}\n`);
+function pluginInstallArgs(agent: PluginAgent, plugin: string): string[] {
+  return agent === 'codex'
+    ? ['plugin', 'add', `${plugin}@${MARKETPLACE_NAME}`, '--json']
+    : ['plugin', 'install', `${plugin}@${MARKETPLACE_NAME}`, '--scope', 'project'];
+}
 
-  return target;
+export type PluginInstallResult = { agent: PluginAgent; installed: string[]; failed: string[] };
+
+/**
+ * Register the Forest marketplace with the agent's CLI and install the Forest plugins.
+ * Throws when the marketplace cannot be added at all (nothing else can work); a single plugin
+ * that fails to install is reported, not fatal — the others are still worth having.
+ */
+export function installPlugins(agent: PluginAgent, ref = 'main'): PluginInstallResult {
+  const bin = PLUGIN_BINS[agent];
+  const added = runCli(bin, marketplaceAddArgs(agent, ref));
+  if (!added.ok) {
+    throw new Error(
+      `\`${bin} plugin marketplace add\` failed: ${added.output || 'unknown error'}. ` +
+        'Nothing was changed for this agent.',
+    );
+  }
+
+  const installed: string[] = [];
+  const failed: string[] = [];
+  FOREST_PLUGINS.forEach(plugin => {
+    if (runCli(bin, pluginInstallArgs(agent, plugin)).ok) installed.push(plugin);
+    else failed.push(plugin);
+  });
+
+  return { agent, installed, failed };
+}
+
+/** Refresh already-installed plugins (the plugin-route equivalent of re-copying files). */
+export function upgradePlugins(agent: PluginAgent, ref = 'main'): PluginInstallResult {
+  // Both CLIs are idempotent on add/install, and re-running them is the one path that works the
+  // same whether the plugin is present, stale, or was removed by hand.
+  return installPlugins(agent, ref);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Agent detection
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Best-effort guess of which agents this repo/machine uses, so the prompt comes pre-checked and
+ * `--agent` stays optional in scripted runs. A missing signal is not an error: the user can
+ * always tick a box or pass the flag.
+ */
+export function detectAgents(): Agent[] {
+  const detected: Agent[] = [];
+  if (fs.existsSync('.claude') || fs.existsSync('CLAUDE.md') || hasPluginCli('claude'))
+    detected.push('claude');
+  if (fs.existsSync('.codex') || hasPluginCli('codex')) detected.push('codex');
+  if (fs.existsSync('.cursor')) detected.push('cursor');
+  if (fs.existsSync('.opencode') || fs.existsSync('opencode.json')) detected.push('opencode');
+
+  return detected;
 }
 
 export function readManifest(): Manifest | null {
