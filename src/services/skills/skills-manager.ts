@@ -429,20 +429,33 @@ export function upgradePlugins(agent: PluginAgent, ref = 'main'): PluginInstallR
 // Agent detection
 // ---------------------------------------------------------------------------------------------
 
+/** Marks an agent leaves in a repo it is actually used on. */
+const REPO_SIGNALS: Record<Agent, string[]> = {
+  claude: ['.claude', 'CLAUDE.md'],
+  codex: ['.codex'],
+  cursor: ['.cursor', '.cursorrules'],
+  opencode: ['.opencode', 'opencode.json'],
+  other: [],
+};
+
 /**
- * Best-effort guess of which agents this repo/machine uses, so the prompt comes pre-checked and
- * `--agent` stays optional in scripted runs. A missing signal is not an error: the user can
- * always tick a box or pass the flag.
+ * Best-effort guess of which agents THIS REPO uses, so the prompt comes pre-checked and `--agent`
+ * stays optional in scripted runs. A missing signal is not an error: the user can always tick a
+ * box or pass the flag.
+ *
+ * Repo signals win over an installed binary, and deliberately so: a developer who has every agent
+ * CLI on their machine would otherwise get all of them pre-checked in every repo, and confirming
+ * the prompt would install plugins they never asked for. The PATH is consulted only when the repo
+ * says nothing at all — the fresh-project case (`npx create-forest`), where "what you have
+ * installed" is the only signal there is.
  */
 export function detectAgents(): Agent[] {
-  const detected: Agent[] = [];
-  if (fs.existsSync('.claude') || fs.existsSync('CLAUDE.md') || hasPluginCli('claude'))
-    detected.push('claude');
-  if (fs.existsSync('.codex') || hasPluginCli('codex')) detected.push('codex');
-  if (fs.existsSync('.cursor')) detected.push('cursor');
-  if (fs.existsSync('.opencode') || fs.existsSync('opencode.json')) detected.push('opencode');
+  const fromRepo = (ALL_AGENTS as readonly Agent[]).filter(agent =>
+    REPO_SIGNALS[agent].some(mark => fs.existsSync(mark)),
+  );
+  if (fromRepo.length) return fromRepo;
 
-  return detected;
+  return (PLUGIN_AGENTS as readonly PluginAgent[]).filter(hasPluginCli);
 }
 
 export function readManifest(): Manifest | null {

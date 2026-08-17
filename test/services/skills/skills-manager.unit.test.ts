@@ -440,6 +440,24 @@ describe('skills-manager', () => {
       });
     });
 
+    it('lets a repo signal win over an installed CLI, so a machine with every agent does not pre-check them all', () => {
+      expect.assertions(1);
+      mockCli(); // claude AND codex both answer --version on this machine
+      withTempDir(() => {
+        fs.mkdirSync('.cursor');
+        // Only what this repo actually uses — not everything the developer happens to have.
+        expect(detectAgents()).toStrictEqual(['cursor']);
+      });
+    });
+
+    it('falls back to the installed CLIs when the repo carries no signal at all', () => {
+      expect.assertions(1);
+      mockCli();
+      withTempDir(() => {
+        expect(detectAgents()).toStrictEqual(['claude', 'codex']);
+      });
+    });
+
     it('returns nothing in a bare repo with no agent CLI installed', () => {
       expect.assertions(1);
       mockCli({ failing: /--version/ });
