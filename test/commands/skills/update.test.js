@@ -182,6 +182,43 @@ describe('skills:update', () => {
       }
     });
 
+    it('treats a manifest with no `agents` as a copy install rather than refreshing nothing', async () => {
+      expect.hasAssertions();
+      mockPipeline();
+
+      const files = [
+        {
+          name: '.forest/skills-manifest.json',
+          // Predates the `agents` field: it can only have come from a copy-route install.
+          content: JSON.stringify({
+            ref: 'main',
+            installedAt: '2026-01-01T00:00:00.000Z',
+            files: [skill('layout', 'SKILL.md')],
+          }),
+        },
+        { name: skill('layout', 'SKILL.md'), content: 'outdated content' },
+      ];
+
+      const projectDir = await runCliKeepingProjectDir({
+        commandClass: SkillsUpdateCommand,
+        files,
+        std: [{ out: 'Forest skills refreshed in .agents/skills/' }],
+      });
+
+      try {
+        const at = p => path.join(projectDir, p);
+        // Refreshed, not ignored…
+        expect(fs.readFileSync(at(skill('layout', 'SKILL.md')), 'utf8')).toBe(
+          '# layout skill (fresh)',
+        );
+        // …and still tracked, so a later run can still prune what leaves the bundle.
+        const manifest = JSON.parse(fs.readFileSync(at('.forest/skills-manifest.json'), 'utf8'));
+        expect(manifest.files).toContain(skill('layout', 'SKILL.md'));
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
+    });
+
     it('logs the ref transition when the manifest was pinned to another ref', async () => {
       expect.hasAssertions();
       mockPipeline();

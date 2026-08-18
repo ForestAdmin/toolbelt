@@ -7,6 +7,7 @@ import {
   MARKETPLACE_REPO,
   SKILLS_DIR,
   contextFileFor,
+  contextFileGroups,
   copyDir,
   detectAgents,
   forestBlock,
@@ -101,9 +102,27 @@ describe('skills-manager', () => {
     });
 
     it('words the context block for the route actually applied', () => {
+      expect.assertions(4);
+      expect(forestBlock(['claude'])).toContain('`forest` plugin');
+      expect(forestBlock(['claude'])).not.toContain(SKILLS_DIR);
+      expect(forestBlock(['cursor'])).toContain(SKILLS_DIR);
+      expect(forestBlock(['cursor'])).not.toContain('`forest` plugin');
+    });
+
+    it('covers BOTH routes in one block when a single context file serves both', () => {
       expect.assertions(2);
-      expect(forestBlock('claude')).toContain('`forest` plugin');
-      expect(forestBlock('cursor')).toContain(SKILLS_DIR);
+      // AGENTS.md is Codex's (plugin) and Cursor's (copy) alike.
+      const block = forestBlock(['codex', 'cursor']);
+      expect(block).toContain('`forest` plugin');
+      expect(block).toContain(SKILLS_DIR);
+    });
+
+    it('groups agents by context file so each file is merged exactly once', () => {
+      expect.assertions(3);
+      const groups = contextFileGroups(['claude', 'codex', 'cursor', 'opencode']);
+      expect([...groups.keys()].sort()).toStrictEqual(['AGENTS.md', 'CLAUDE.md']);
+      expect(groups.get('CLAUDE.md')).toStrictEqual(['claude']);
+      expect(groups.get('AGENTS.md')).toStrictEqual(['codex', 'cursor', 'opencode']);
     });
   });
 
@@ -196,6 +215,34 @@ describe('skills-manager', () => {
         expect(() => installSkills(root, false, null)).toThrow(
           /No skills found in the marketplace/,
         );
+      });
+    });
+
+    it('never destroys a user file sitting where a skill dir belongs', () => {
+      expect.assertions(3);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        fs.mkdirSync(SKILLS_DIR, { recursive: true });
+        fs.writeFileSync(path.join(SKILLS_DIR, 'layout'), 'a file, not a dir — and mine');
+        const { written, skipped } = installSkills(root, false, null);
+        expect(fs.readFileSync(path.join(SKILLS_DIR, 'layout'), 'utf8')).toBe(
+          'a file, not a dir — and mine',
+        );
+        expect(skipped).toContain(path.join(SKILLS_DIR, 'layout'));
+        expect(written).not.toContain(layoutSkill);
+      });
+    });
+
+    it('does not let --force overwrite files no previous run wrote', () => {
+      expect.assertions(2);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        fs.mkdirSync(path.join(SKILLS_DIR, 'layout'), { recursive: true });
+        fs.writeFileSync(layoutSkill, 'my own skill');
+        // --force with NO previous manifest: nothing is managed, so nothing may be overwritten.
+        const { skipped } = installSkills(root, true, null);
+        expect(fs.readFileSync(layoutSkill, 'utf8')).toBe('my own skill');
+        expect(skipped).toContain(layoutSkill);
       });
     });
 

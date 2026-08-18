@@ -83,16 +83,39 @@ export function contextFileFor(agent: Agent): string {
   return agent === 'claude' ? 'CLAUDE.md' : 'AGENTS.md';
 }
 
-/** The Forest block merged into CLAUDE.md / AGENTS.md, worded for the route actually applied. */
-export function forestBlock(agent: Agent): string {
-  const where = isPluginAgent(agent)
-    ? 'available through the `forest` plugin — e.g. `/forest:start`, `/forest:layout`, `/forest-code`'
-    : `installed in \`${SKILLS_DIR}/\` — e.g. \`layout\`, \`onboard\`, \`forest-code\``;
+/**
+ * The Forest block merged into a context file, describing every route that feeds THAT file.
+ *
+ * Takes the agents rather than one agent because a single file often serves both routes: AGENTS.md
+ * is Codex's (plugin) and Cursor's and OpenCode's (copy). Writing one block per agent would have
+ * the second merge replace the first — same delimiters — leaving the file describing only whichever
+ * route ran last.
+ */
+export function forestBlock(agents: Agent[]): string {
+  const where: string[] = [];
+  if (agents.some(isPluginAgent))
+    where.push(
+      'available through the `forest` plugin — e.g. `/forest:start`, `/forest:layout`, `/forest-code`',
+    );
+  if (agents.some(agent => !isPluginAgent(agent)))
+    where.push(`installed in \`${SKILLS_DIR}/\` — e.g. \`layout\`, \`onboard\`, \`forest-code\``);
 
   return [
-    `This project uses **Forest Admin**. Skills to build and customize it are ${where}.`,
+    `This project uses **Forest Admin**. Skills to build and customize it are ${where.join(
+      ', and ',
+    )}.`,
     'Forest documentation is searchable via the `forest-docs` MCP server.',
   ].join('\n');
+}
+
+/** Group agents by the context file they write to, so each file gets exactly one merged block. */
+export function contextFileGroups(agents: Agent[]): Map<string, Agent[]> {
+  return agents.reduce((groups, agent) => {
+    const file = contextFileFor(agent);
+    groups.set(file, [...(groups.get(file) ?? []), agent]);
+
+    return groups;
+  }, new Map<string, Agent[]>());
 }
 
 export type Manifest = {
@@ -238,6 +261,45 @@ export function copyDir(
   );
 }
 
+/** Install one skill directory. Split out of `installSkills` so each function stays readable. */
+function installSkill(
+  src: string,
+  dest: string,
+  force: boolean,
+  isManaged: (file: string) => boolean,
+): CopyResult {
+  if (fs.existsSync(dest)) {
+    if (!fs.lstatSync(dest).isDirectory()) {
+      // Something that is not a directory sits where a skill dir belongs. We did not put it there
+      // — a skill is always a directory — so it is the user's, and removing it to make room would
+      // destroy content no manifest ever claimed. Report it and move on.
+      return { written: [], skipped: [dest] };
+    }
+    if (!force) {
+      // Installed and no --force: nothing is written here, so only carry over files that are BOTH
+      // in the incoming bundle (derived from source, mapped to dest — never the actual dir
+      // contents, which may include user-added files) AND in the previous manifest (proof a past
+      // run wrote them). A dir that pre-existed the first run was authored by the user: claiming
+      // its files would mark them managed and a later refresh would prune them.
+      return {
+        written: listFiles(src)
+          .map(f => path.join(dest, path.relative(src, f)))
+          .filter(isManaged),
+        skipped: [],
+      };
+    }
+    // With --force on an existing dir we fall through and overlay the incoming bundle on top. We
+    // deliberately do NOT delete the dir, so user-added files survive; pruning of Forest-owned
+    // files that left the bundle is the command's job (removeStaleSkillFiles, manifest-scoped).
+  }
+
+  // `isManaged` is the only licence to overwrite, --force included: the flag re-writes what a
+  // previous run wrote, it does not claim the right to destroy files we never wrote. With no
+  // previous manifest nothing is managed, so a forced re-install over a directory the user authored
+  // overwrites none of it. New files are unaffected — the guard only sees paths already on disk.
+  return copyDir(src, dest, isManaged);
+}
+
 /**
  * Copy the skills of every shipped plugin from the extracted repo into `SKILLS_DIR`.
  *
@@ -264,35 +326,9 @@ export function installSkills(
       const skillsRoot = path.join(srcRoot, plugin, 'skills');
       if (!fs.existsSync(skillsRoot)) return [];
 
-      return listSkillDirs(skillsRoot).map(skill => {
-        const src = path.join(skillsRoot, skill);
-        const dest = path.join(SKILLS_DIR, skill);
-        if (fs.existsSync(dest)) {
-          if (!fs.lstatSync(dest).isDirectory()) {
-            // A stray non-directory where a skill dir belongs → replace it wholesale.
-            fs.rmSync(dest, { recursive: true, force: true });
-          } else if (!force) {
-            // Installed and no --force: nothing is written here, so only carry over files that are
-            // BOTH in the incoming bundle (derived from source, mapped to dest — never the actual
-            // dir contents, which may include user-added files) AND in the previous manifest (proof
-            // a past run wrote them). A dir that pre-existed the first run was authored by the user:
-            // claiming its files would mark them managed and a later refresh would prune them.
-            return {
-              written: listFiles(src)
-                .map(f => path.join(dest, path.relative(src, f)))
-                .filter(isManaged),
-              skipped: [],
-            };
-          }
-          // With --force on an existing dir we fall through and overlay the incoming bundle on top.
-          // We deliberately do NOT delete the dir, so user-added files survive; pruning of
-          // Forest-owned files that left the bundle is the command's job (removeStaleSkillFiles,
-          // manifest-scoped) — never a blind rm here. `isManaged` still shields user-authored
-          // files that collide with a bundle path.
-        }
-
-        return copyDir(src, dest, file => !previousFiles || isManaged(file));
-      });
+      return listSkillDirs(skillsRoot).map(skill =>
+        installSkill(path.join(skillsRoot, skill), path.join(SKILLS_DIR, skill), force, isManaged),
+      );
     }),
   );
 

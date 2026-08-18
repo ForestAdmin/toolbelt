@@ -7,7 +7,7 @@ import {
   AGENT_LABELS,
   MARKETPLACE_REPO,
   SKILLS_DIR,
-  contextFileFor,
+  contextFileGroups,
   fetchMarketplace,
   forestBlock,
   hasPluginCli,
@@ -54,8 +54,10 @@ export default class SkillsUpdateCommand extends AbstractCommand {
     }
 
     // Refresh exactly the agents the install targeted: refreshing one agent must never treat
-    // another's files as stale. An older manifest without `agents` is treated as copy-only.
-    const agents = (manifest.agents ?? []) as Agent[];
+    // another's files as stale. A manifest with no `agents` predates that field; it can only have
+    // come from a copy-route install, so treat it as one — reading it as "no agents" would refresh
+    // nothing AND rewrite the manifest without its files, orphaning every skill on disk.
+    const agents = (manifest.agents?.length ? manifest.agents : ['other']) as Agent[];
     const pluginAgents = agents.filter(isPluginAgent);
     const copyAgents = agents.filter(agent => !isPluginAgent(agent));
 
@@ -63,14 +65,15 @@ export default class SkillsUpdateCommand extends AbstractCommand {
 
     const files = copyAgents.length ? await this.refreshSkills(manifest.files, flags.ref) : [];
 
-    const contextFiles = [...new Set(agents.map(contextFileFor))];
-    agents.forEach(agent => mergeBlock(contextFileFor(agent), forestBlock(agent)));
+    // One merged block per FILE, not per agent — AGENTS.md serves Codex, Cursor and OpenCode.
+    const groups = contextFileGroups(agents);
+    groups.forEach((groupAgents, file) => mergeBlock(file, forestBlock(groupAgents)));
 
     writeManifest({
       ref: flags.ref,
       installedAt: new Date().toISOString(),
       agents,
-      files: [...files, ...contextFiles],
+      files: [...files, ...groups.keys()],
     });
   }
 

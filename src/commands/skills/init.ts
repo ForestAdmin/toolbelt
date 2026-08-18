@@ -8,7 +8,7 @@ import {
   ALL_AGENTS,
   MARKETPLACE_REPO,
   SKILLS_DIR,
-  contextFileFor,
+  contextFileGroups,
   detectAgents,
   fetchMarketplace,
   forestBlock,
@@ -55,15 +55,20 @@ export default class SkillsInitCommand extends AbstractCommand {
 
     const files = copyAgents.length ? await this.copySkills(flags.ref, flags.force) : [];
 
-    // Context files: tell the agent this repo is a Forest project, whichever route it came by.
-    const contextFiles = [...new Set(agents.map(contextFileFor))];
-    agents.forEach(agent => mergeBlock(contextFileFor(agent), forestBlock(agent)));
+    // Only what actually got set up: a plugin agent whose CLI is missing was skipped, so claiming
+    // it in the manifest would have `skills:update` refresh a plugin that was never installed, and
+    // its context file would tell the agent about a plugin it does not have.
+    const installed = [...pluginOk, ...copyAgents];
+    const groups = contextFileGroups(installed);
+    // One merged block per FILE, not per agent: AGENTS.md serves Codex, Cursor and OpenCode alike,
+    // and a second merge would replace the first instead of adding to it.
+    groups.forEach((groupAgents, file) => mergeBlock(file, forestBlock(groupAgents)));
 
     writeManifest({
       ref: flags.ref,
       installedAt: new Date().toISOString(),
-      agents,
-      files: [...files, ...contextFiles],
+      agents: installed,
+      files: [...files, ...groups.keys()],
     });
 
     this.logNextSteps(pluginOk, copyAgents);

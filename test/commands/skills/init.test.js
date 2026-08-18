@@ -124,6 +124,30 @@ describe('skills:init', () => {
       expect(installPlugins).not.toHaveBeenCalled();
     });
 
+    it('does not claim a skipped agent in the manifest or its context file', async () => {
+      expect.hasAssertions();
+      mockPipeline({ cliPresent: false });
+
+      const projectDir = await runCliKeepingProjectDir({
+        commandClass: SkillsInitCommand,
+        commandArgs: ['--agent', 'claude', '--agent', 'cursor'],
+        files: [{ name: 'placeholder', content: 'x' }],
+        std: [{ out: "Claude Code selected but its CLI isn't on your PATH" }],
+      });
+
+      try {
+        const at = p => path.join(projectDir, p);
+        // Nothing was installed for Claude Code, so nothing may say it was.
+        const manifest = JSON.parse(fs.readFileSync(at('.forest/skills-manifest.json'), 'utf8'));
+        expect(manifest.agents).toStrictEqual(['cursor']);
+        expect(fs.existsSync(at('CLAUDE.md'))).toBe(false);
+        // The agent that did get set up is unaffected.
+        expect(fs.existsSync(at(skill('layout', 'SKILL.md')))).toBe(true);
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
+    });
+
     it('reports a plugin that failed to install without failing the whole run', async () => {
       expect.hasAssertions();
       mockPipeline({ failed: ['forest-docs'] });
@@ -218,6 +242,30 @@ describe('skills:init', () => {
         expect(fs.readFileSync(at('AGENTS.md'), 'utf8')).toContain(SKILLS_DIR);
         const manifest = JSON.parse(fs.readFileSync(at('.forest/skills-manifest.json'), 'utf8'));
         expect(manifest.agents).toStrictEqual(['claude', 'cursor']);
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
+    });
+  });
+
+  describe('when one context file serves both routes (--agent codex --agent cursor)', () => {
+    it('writes a single AGENTS.md block covering the plugin AND the copied skills', async () => {
+      expect.hasAssertions();
+      mockPipeline();
+
+      const projectDir = await runCliKeepingProjectDir({
+        commandClass: SkillsInitCommand,
+        commandArgs: ['--agent', 'codex', '--agent', 'cursor'],
+        files: [{ name: 'placeholder', content: 'x' }],
+        std: [{ out: 'Forest skills copied to .agents/skills/' }],
+      });
+
+      try {
+        const agentsMd = fs.readFileSync(path.join(projectDir, 'AGENTS.md'), 'utf8');
+        // Both routes described — the second merge used to replace the first.
+        expect(agentsMd).toContain('`forest` plugin');
+        expect(agentsMd).toContain(SKILLS_DIR);
+        expect(agentsMd.match(/<!-- forest:begin -->/g)).toHaveLength(1);
       } finally {
         fs.rmSync(projectDir, { recursive: true, force: true });
       }
