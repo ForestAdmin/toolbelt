@@ -121,7 +121,8 @@ export function contextFileGroups(agents: Agent[]): Map<string, Agent[]> {
 export type Manifest = {
   ref: string;
   installedAt: string;
-  agents: string[];
+  /** Absent on manifests written before the field existed — those are copy-route installs. */
+  agents?: string[];
   files: string[];
 };
 
@@ -192,6 +193,27 @@ function replaceSymlink(p: string): void {
   if (isSymlink(p)) fs.rmSync(p);
 }
 
+/**
+ * Refuse to write anywhere below a symlinked ancestor. Checking the destination itself is not
+ * enough: `mkdirSync(..., { recursive: true })` happily follows a symlinked `.agents` or
+ * `.agents/skills`, and every file then lands outside the project. Walks relative segments only,
+ * so it stops at `.` and never judges the absolute path the project happens to live under.
+ */
+function assertNoSymlinkedAncestor(target: string): void {
+  for (
+    let parent = path.dirname(target);
+    parent !== path.dirname(parent);
+    parent = path.dirname(parent)
+  ) {
+    if (isSymlink(parent)) {
+      throw new Error(
+        `Refusing to write through the symlinked directory "${parent}" — it points outside the ` +
+          'files this command manages. Replace it with a real directory, then re-run.',
+      );
+    }
+  }
+}
+
 /** Recursively list the files under `dir` (dest paths), mirroring copyDir's return without copying. */
 function listFiles(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
@@ -204,6 +226,11 @@ function listFiles(dir: string): string[] {
 /** The skill directories a plugin ships: every subdirectory holding a SKILL.md. A symlinked entry
  *  is ignored — copyDir would refuse it anyway, and it must not fabricate a dest dir. */
 function listSkillDirs(skillsRoot: string): string[] {
+  // The ancestor, not just the entries: `copyDir` checks whether a SKILL dir is a symlink, but a
+  // crafted marketplace can symlink `<plugin>/skills` itself at an arbitrary local directory and
+  // have every real child underneath copied in. Refuse the whole root.
+  if (isSymlink(skillsRoot)) return [];
+
   return fs
     .readdirSync(skillsRoot, { withFileTypes: true })
     .filter(
@@ -321,6 +348,10 @@ export function installSkills(
   const previouslyManaged = new Set((previousFiles ?? []).map(normalizePath));
   const isManaged = (file: string) => previouslyManaged.has(normalizePath(file));
 
+  // Before ANY write: a symlinked `.agents` or `.agents/skills` would send every copy outside the
+  // project. Checked once here so the run aborts whole rather than half-applied.
+  assertNoSymlinkedAncestor(path.join(SKILLS_DIR, 'x'));
+
   const result = mergeCopy(
     FOREST_PLUGINS.flatMap(plugin => {
       const skillsRoot = path.join(srcRoot, plugin, 'skills');
@@ -356,13 +387,18 @@ function isWithinSkillDirs(file: string): boolean {
   const resolved = path.resolve(file);
   // Textual containment: reject `..` traversal and absolute paths outside the skills dir.
   if (!resolved.startsWith(base + path.sep)) return false;
-  // Real containment against the PROJECT root (not the skill dir's symlink target): a symlinked
-  // skills dir pointing outside the project must be rejected, never whitelisted via its target.
+  // Real containment against the real skills dir — NOT merely the project root. A skill
+  // subdirectory symlinked at, say, `src/` keeps its target inside the project, so a project-root
+  // check would happily authorise deleting `src/index.ts` through it. The skills dir itself must
+  // also resolve inside the project, or a link pointing outside would whitelist everything below.
   try {
     const projectRoot = fs.realpathSync(process.cwd());
+    const realSkillsDir = fs.realpathSync(SKILLS_DIR);
     const realParent = fs.realpathSync(path.dirname(file));
+    const isUnder = (child: string, root: string) =>
+      child === root || child.startsWith(root + path.sep);
 
-    return realParent === projectRoot || realParent.startsWith(projectRoot + path.sep);
+    return isUnder(realSkillsDir, projectRoot) && isUnder(realParent, realSkillsDir);
   } catch {
     return false; // path doesn't resolve (already gone) → nothing to delete
   }
@@ -374,13 +410,14 @@ function isWithinSkillDirs(file: string): boolean {
  * within the skills dir. Returns what it removed.
  */
 export function removeStaleSkillFiles(previousFiles: string[], currentFiles: string[]): string[] {
-  // Compare on forward-slash-normalized paths so a manifest written on one OS (e.g. Unix `/`)
-  // matches files produced on another (Windows `\`) — otherwise every entry looks stale and a
-  // cross-platform refresh would wipe freshly-installed bundles. Delete via the original path.
+  // Work on forward-slash-normalized paths throughout, not just for the comparison: a manifest
+  // written on Windows carries `.agents\skills\…`, which `existsSync` and `rmSync` do not resolve
+  // on Unix, so a normalized-comparison-only version silently pruned nothing. Node accepts forward
+  // slashes on Windows too, so the normalized form is safe to act on everywhere.
   const kept = new Set(currentFiles.map(normalizePath));
-  const stale = previousFiles.filter(
-    file => !kept.has(normalizePath(file)) && fs.existsSync(file) && isWithinSkillDirs(file),
-  );
+  const stale = previousFiles
+    .map(normalizePath)
+    .filter(file => !kept.has(file) && fs.existsSync(file) && isWithinSkillDirs(file));
   stale.forEach(file => fs.rmSync(file));
 
   return stale;
@@ -525,9 +562,12 @@ export function readManifest(): Manifest | null {
     const parsed = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
     // Validate the shape: a valid-but-malformed manifest ({}, [], null…) must read as "absent",
     // otherwise callers dereference `previous.files` and crash.
-    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.files)) return parsed;
+    if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.files)) return null;
 
-    return null;
+    // `agents` is normalized rather than required: a manifest predating the field is a legitimate
+    // copy-route install that callers handle, but anything that is not an array (`{}`, a string)
+    // must not reach their `.filter` — it would throw instead of degrading.
+    return { ...parsed, agents: Array.isArray(parsed.agents) ? parsed.agents : undefined };
   } catch {
     return null;
   }

@@ -246,6 +246,36 @@ describe('skills-manager', () => {
       });
     });
 
+    it('refuses to write through a symlinked ancestor of the skills dir', () => {
+      expect.assertions(2);
+      const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'skills-outside-'));
+      try {
+        withTempDir(dir => {
+          const root = fakeMarketplace(path.join(dir, 'src'));
+          // `.agents` points elsewhere: mkdirSync -r would follow it and write outside the project.
+          fs.symlinkSync(outside, '.agents');
+          expect(() => installSkills(root, false, null)).toThrow(/symlinked directory/);
+          expect(fs.readdirSync(outside)).toStrictEqual([]);
+        });
+      } finally {
+        fs.rmSync(outside, { recursive: true, force: true });
+      }
+    });
+
+    it('refuses a symlinked <plugin>/skills root (crafted-marketplace ancestor escape)', () => {
+      expect.assertions(2);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        fs.mkdirSync(path.join(dir, 'host', 'private'), { recursive: true });
+        fs.writeFileSync(path.join(dir, 'host', 'private', 'SKILL.md'), 'local secret');
+        fs.rmSync(path.join(root, 'forest-code', 'skills'), { recursive: true, force: true });
+        fs.symlinkSync(path.join(dir, 'host'), path.join(root, 'forest-code', 'skills'));
+        const { written } = installSkills(root, false, null);
+        expect(fs.existsSync(path.join(SKILLS_DIR, 'private'))).toBe(false);
+        expect(written.every(f => !f.includes('private'))).toBe(true);
+      });
+    });
+
     it('ignores a stray directory that carries no SKILL.md', () => {
       expect.assertions(1);
       withTempDir(dir => {
@@ -423,6 +453,35 @@ describe('skills-manager', () => {
       });
     });
 
+    it('refuses to delete through a skill dir symlinked at another directory INSIDE the project', () => {
+      expect.assertions(2);
+      withTempDir(() => {
+        // The classic near-miss: the link target stays under the project root, so a project-root
+        // containment check would authorise deleting straight through it.
+        fs.mkdirSync('src', { recursive: true });
+        fs.writeFileSync('src/index.ts', 'application code');
+        fs.mkdirSync(SKILLS_DIR, { recursive: true });
+        fs.symlinkSync(path.resolve('src'), path.join(SKILLS_DIR, 'layout'));
+        const removed = removeStaleSkillFiles([path.join(SKILLS_DIR, 'layout', 'index.ts')], []);
+        expect(removed).toStrictEqual([]);
+        expect(fs.readFileSync('src/index.ts', 'utf8')).toBe('application code');
+      });
+    });
+
+    it('prunes an entry written with Windows separators when running on Unix', () => {
+      expect.assertions(2);
+      withTempDir(() => {
+        const stale = path.join(SKILLS_DIR, 'layout', 'stale.md');
+        fs.mkdirSync(path.dirname(stale), { recursive: true });
+        fs.writeFileSync(stale, 'old');
+        // A manifest written on Windows: comparing on normalized paths is not enough, the
+        // existence check and the deletion must act on the normalized form too.
+        const removed = removeStaleSkillFiles(['.agents\\skills\\layout\\stale.md'], []);
+        expect(removed).toStrictEqual([stale]);
+        expect(fs.existsSync(stale)).toBe(false);
+      });
+    });
+
     it('refuses to delete through a symlinked skills dir pointing outside the project', () => {
       expect.assertions(2);
       // The link target must live OUTSIDE the project root, or it is legitimately in scope.
@@ -584,6 +643,21 @@ describe('skills-manager', () => {
         expect(readManifest()).toBeNull();
         fs.writeFileSync('.forest/skills-manifest.json', '{}'); // valid JSON, wrong shape
         expect(readManifest()).toBeNull();
+      });
+    });
+
+    it('normalizes a non-array `agents` away so callers never call .filter on it', () => {
+      expect.assertions(2);
+      withTempDir(() => {
+        fs.mkdirSync('.forest', { recursive: true });
+        fs.writeFileSync(
+          '.forest/skills-manifest.json',
+          JSON.stringify({ ref: 'main', installedAt: 'x', agents: {}, files: [] }),
+        );
+        const manifest = readManifest();
+        // Still a usable manifest — `files` is what makes it valid — with `agents` neutralised.
+        expect(manifest?.files).toStrictEqual([]);
+        expect(manifest?.agents).toBeUndefined();
       });
     });
   });
