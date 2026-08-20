@@ -567,9 +567,12 @@ export default class StartCommand extends AbstractCommand {
       message: 'Once Forest is mounted in your server, press Enter to boot it',
     });
     const booted = this.boot('npm', ['start'], {
+      // Only what we actually have. An empty string is not a neutral default: it SHADOWS the
+      // value dotenv would have loaded from the .env we just wrote, so the app boots with no
+      // secret at all — the one case this whole path exists to prevent.
       env: {
-        FOREST_ENV_SECRET: secrets.envSecret ?? '',
-        FOREST_AUTH_SECRET: secrets.authSecret ?? '',
+        ...(secrets.envSecret ? { FOREST_ENV_SECRET: secrets.envSecret } : {}),
+        ...(secrets.authSecret ? { FOREST_AUTH_SECRET: secrets.authSecret } : {}),
         PORT: String(NODE_PORT),
       },
     });
