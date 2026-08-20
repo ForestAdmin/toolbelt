@@ -48,8 +48,9 @@ describe('start', () => {
           'postgres://u:p@h:5432/d',
         ],
         std: [
+          // The URL carries credentials: echoed redacted, passed through intact.
           {
-            out: '$ forest projects:create:sql my-back-office --databaseConnectionURL postgres://u:p@h:5432/d',
+            out: '$ forest projects:create:sql my-back-office --databaseConnectionURL <redacted>',
           },
           { out: 'Setup complete — booting your back-end on :3310' },
           { out: 'Your back-office is live!' },
@@ -69,6 +70,25 @@ describe('start', () => {
         // of a hostname, or of a free port. Credentials never pass through this command either.
         // The trailing newline is the assertion: nothing follows the project name on that line.
         std: [{ out: '$ forest projects:create:sql x\n' }],
+      });
+    });
+
+    it('never echoes the database credentials it was given', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: [
+          '--dry-run',
+          '--flow',
+          'standalone',
+          '--name',
+          'x',
+          '--db',
+          'postgres://user:hunter2@host:5432/db',
+        ],
+        // A terminal, a scrollback and a CI log all keep what is printed.
+        std: [{ out: '--databaseConnectionURL <redacted>' }],
       });
     });
 

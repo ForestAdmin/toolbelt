@@ -117,6 +117,20 @@ describe('onboarding detect', () => {
     });
   });
 
+  describe('detectRails, commented declarations', () => {
+    it('ignores a commented gem line, which records that Rails was NOT used', () => {
+      expect.assertions(2);
+      withTempDir(() => {
+        fs.writeFileSync('Gemfile', "source 'x'\n# gem 'rails', '~> 8.0'\ngem 'sinatra'\n");
+        expect(detectRails()).toBe(false);
+
+        // …while an indented but live declaration still counts.
+        fs.writeFileSync('Gemfile', "group :default do\n  gem 'rails'\nend\n");
+        expect(detectRails()).toBe(true);
+      });
+    });
+  });
+
   describe('mountHelper', () => {
     it('capitalises the framework for mountOn<Framework>, keeping NestJs casing', () => {
       expect.assertions(3);
