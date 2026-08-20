@@ -1,6 +1,12 @@
 import net from 'net';
 
-import { runCapture, runStep, startProcess, stopProcess } from '../../src/services/process-runner';
+import {
+  runCapture,
+  runStep,
+  startProcess,
+  stopAllProcesses,
+  stopProcess,
+} from '../../src/services/process-runner';
 
 // A wrapper that stays alive and whose CHILD holds the port — the shape of `npm start`, and the
 // whole reason this service exists. `sh -c 'cmd'` alone would exec and collapse into one process,
@@ -133,6 +139,21 @@ describe('process-runner', () => {
         stopProcess(child);
         await wait(300);
       }
+    });
+  });
+
+  describe('stopAllProcesses', () => {
+    it('takes down everything still running, for a caller unwinding on an error', async () => {
+      expect.assertions(2);
+      const a = startProcess('sh', wrapper(39327), { ready: /listening/ });
+      const b = startProcess('sh', wrapper(39328), { ready: /listening/ });
+      await Promise.all([a.ready, b.ready]);
+
+      stopAllProcesses();
+      await wait(500);
+
+      await expect(isPortFree(39327)).resolves.toBe(true);
+      await expect(isPortFree(39328)).resolves.toBe(true);
     });
   });
 
