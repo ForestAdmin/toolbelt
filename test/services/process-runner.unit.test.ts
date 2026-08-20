@@ -42,11 +42,30 @@ describe('process-runner', () => {
   });
 
   describe('runCapture', () => {
-    it('returns stdout and stderr, so secrets printed either way can be read back', async () => {
-      expect.assertions(2);
-      const output = await runCapture('node', ['-e', 'console.log("out"); console.error("err")']);
-      expect(output).toContain('out');
-      expect(output).toContain('err');
+    it('keeps the streams apart, so progress on stderr cannot corrupt a JSON stdout', async () => {
+      expect.assertions(3);
+      const progress: string[] = [];
+      const { stdout, stderr } = await runCapture(
+        'node',
+        ['-e', 'console.error("spinner"); console.log(JSON.stringify({ secret: "s3cret" }))'],
+        { onProgress: chunk => progress.push(chunk) },
+      );
+
+      // Merging the two would make this parse throw, and the caller would silently get nothing.
+      expect(JSON.parse(stdout)).toStrictEqual({ secret: 's3cret' });
+      expect(stderr).toContain('spinner');
+      // …while the user still sees the progress that was written to stderr.
+      expect(progress.join('')).toContain('spinner');
+    });
+
+    it('carries the failed command own message, not just its exit code', async () => {
+      expect.assertions(1);
+      await expect(
+        runCapture('node', [
+          '-e',
+          'console.error("A project with this name already exists"); process.exit(2)',
+        ]),
+      ).rejects.toThrow(/A project with this name already exists/);
     });
   });
 
@@ -119,16 +138,102 @@ describe('process-runner', () => {
       await expect(isPortFree(39324)).resolves.toBe(true);
     });
 
-    it('does nothing, and does not throw, when there is no process or it is already stopped', async () => {
-      expect.assertions(2);
+    it('does not re-signal a process that already exited, whose pid the OS may have reused', async () => {
+      expect.assertions(3);
       expect(() => stopProcess(undefined)).not.toThrow();
 
       const { child, ready } = startProcess('sh', wrapper(39325), { ready: /listening/ });
       await ready;
       stopProcess(child);
-      await wait(300);
+      await wait(500);
 
-      expect(() => stopProcess(child)).not.toThrow();
+      // `child.killed` stays false on the group path — `process.kill()` never sets it — so the
+      // guard has to read the exit state instead, or a second call signals a recycled pid.
+      expect(child.killed).toBe(false);
+      const signalled: number[] = [];
+      const realKill = process.kill.bind(process);
+      jest.spyOn(process, 'kill').mockImplementation(((pid: number, sig?: NodeJS.Signals) => {
+        signalled.push(pid);
+
+        return realKill(pid, sig);
+      }) as typeof process.kill);
+      try {
+        stopProcess(child);
+        expect(signalled).toStrictEqual([]);
+      } finally {
+        jest.restoreAllMocks();
+      }
+    });
+
+    it('kills the process when the start fails, instead of leaving it holding the port', async () => {
+      expect.assertions(2);
+      const { ready } = startProcess('sh', wrapper(39326), {
+        ready: /never-matches/,
+        timeoutMs: 600,
+      });
+
+      await expect(ready).rejects.toThrow(/Timed out/);
+      await wait(500);
+      // Before the fix the rejection left the child alive — and its open pipes kept the CLI's
+      // event loop alive with it, so the command never returned to the prompt.
+      await expect(isPortFree(39326)).resolves.toBe(true);
+    });
+
+    it('stops scanning once ready, so a chatty back-end does not grow an unbounded buffer', async () => {
+      expect.assertions(2);
+      const scans: number[] = [];
+      const ready = {
+        test: (s: string) => {
+          scans.push(s.length);
+          return /listening/.test(s);
+        },
+      } as RegExp;
+      const { child, ready: readyPromise } = startProcess(
+        'sh',
+        [
+          '-c',
+          "node -e \"console.log('listening'); setInterval(()=>console.log('x'.repeat(500)), 20)\" & wait",
+        ],
+        { ready },
+      );
+
+      try {
+        await readyPromise;
+        const atReady = scans.length;
+        await wait(600);
+        // The regex is not re-run at all after ready; before the fix it ran on every chunk, over
+        // an ever-growing string, for the whole life of the process.
+        expect(scans).toHaveLength(atReady);
+        expect(Math.max(...scans)).toBeLessThan(2000);
+      } finally {
+        stopProcess(child);
+        await wait(300);
+      }
+    });
+
+    it('mutes the stream on request, so back-end logs stop corrupting a handed-over terminal', async () => {
+      expect.assertions(2);
+      const chunks: string[] = [];
+      const { child, ready, mute } = startProcess(
+        'sh',
+        [
+          '-c',
+          "node -e \"console.log('listening'); setInterval(()=>console.log('noise'), 20)\" & wait",
+        ],
+        { ready: /listening/, onOutput: chunk => chunks.push(chunk) },
+      );
+
+      try {
+        await ready;
+        mute();
+        const afterMute = chunks.length;
+        await wait(400);
+        expect(chunks).toHaveLength(afterMute);
+        expect(chunks.join('')).toContain('listening');
+      } finally {
+        stopProcess(child);
+        await wait(300);
+      }
     });
   });
 });
