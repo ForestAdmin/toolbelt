@@ -140,11 +140,15 @@ export function runCapture(
     let stdout = '';
     let stderr = '';
 
-    child.stdout?.on('data', chunk => {
-      stdout += chunk.toString();
+    // Decoded by the stream, not per chunk: a multibyte character split across two reads would
+    // otherwise become two replacement characters — silently changing a value we then JSON.parse.
+    child.stdout?.setEncoding('utf8');
+    child.stderr?.setEncoding('utf8');
+
+    child.stdout?.on('data', (text: string) => {
+      stdout += text;
     });
-    child.stderr?.on('data', chunk => {
-      const text = chunk.toString();
+    child.stderr?.on('data', (text: string) => {
       stderr += text;
       onProgress?.(text);
     });
@@ -228,8 +232,7 @@ export function startProcess(
       reject(error);
     };
 
-    const onData = (chunk: Buffer) => {
-      const text = chunk.toString();
+    const onData = (text: string) => {
       stream?.(text);
       if (settled) return;
       scanned += text;
@@ -247,6 +250,10 @@ export function startProcess(
       timeoutMs,
     );
 
+    // Same reason as `runCapture`, with a sharper consequence: a `ready` pattern straddling a
+    // chunk boundary would never match, and the process would be killed on a false timeout.
+    child.stdout?.setEncoding('utf8');
+    child.stderr?.setEncoding('utf8');
     child.stdout?.on('data', onData);
     child.stderr?.on('data', onData);
     child.on('error', error => fail(error));
