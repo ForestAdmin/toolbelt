@@ -69,6 +69,15 @@ export function stopProcess(child: ChildProcess | undefined, signal: NodeJS.Sign
   }
 }
 
+/**
+ * Stop everything still running. For a caller unwinding on an error: a detached back-end survives
+ * its parent, and its open pipes can keep the CLI's event loop alive, so an unhandled failure
+ * would otherwise leave both a hung command and a server holding a port.
+ */
+export function stopAllProcesses(signal: NodeJS.Signals = 'SIGTERM') {
+  [...running].forEach(child => stopProcess(child, signal));
+}
+
 function installExitHook() {
   if (exitHookInstalled) return;
   exitHookInstalled = true;
