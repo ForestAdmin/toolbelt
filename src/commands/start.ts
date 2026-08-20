@@ -35,6 +35,8 @@ type Tail = {
   demo?: boolean;
   /** Stops streaming the back-end's logs — they would otherwise be drawn into a full-screen TUI. */
   mute?: () => void;
+  /** How to start this back-end again. Rails is not started with `npm start`. */
+  restart: string;
 };
 
 /**
@@ -106,9 +108,27 @@ export default class StartCommand extends AbstractCommand {
 
   // ---------- primitives ----------
 
+  /**
+   * Values that must never reach the terminal, a scrollback or a CI log. The echo is a feature —
+   * it teaches what the wrapper does — but a database URL carries credentials and an env secret is
+   * a long-lived one, so what is shown and what is run are not the same string.
+   */
+  private static redact(command: string, args: string[]): string {
+    const shown = args.map((arg, index) => {
+      const previous = args[index - 1];
+
+      if (previous === '--databaseConnectionURL' || previous === '-c') return '<redacted>';
+      if (command === 'bin/rails' && previous === 'forest_admin_rails:install') return '<redacted>';
+
+      return arg;
+    });
+
+    return `${command} ${shown.join(' ')}`.trim();
+  }
+
   /** Run a command, echoing it first. The echo is the point: it teaches what the wrapper does. */
   private async run$(command: string, args: string[], cwd?: string): Promise<void> {
-    this.logger.log(this.chalk.grey(`\n$ ${`${command} ${args.join(' ')}`.trim()}`));
+    this.logger.log(this.chalk.grey(`\n$ ${StartCommand.redact(command, args)}`));
     if (this.dryRun) return this.logger.log(this.chalk.grey('  (dry-run — not executed)'));
 
     return runStep(command, args, { cwd });
@@ -117,7 +137,7 @@ export default class StartCommand extends AbstractCommand {
   /** Invoke one of our own commands. Resolved through this executable, never through the PATH:
    *  under `npx forest-cli@latest start` there may be no `forest` installed anywhere. */
   private forest(args: string[], cwd?: string): Promise<void> {
-    this.logger.log(this.chalk.grey(`\n$ forest ${args.join(' ')}`));
+    this.logger.log(this.chalk.grey(`\n$ ${StartCommand.redact('forest', args)}`));
     if (this.dryRun) {
       this.logger.log(this.chalk.grey('  (dry-run — not executed)'));
 
@@ -134,7 +154,7 @@ export default class StartCommand extends AbstractCommand {
    * there, and a silent terminal during project creation reads as a hang.
    */
   private async forestCapture(args: string[]): Promise<string> {
-    this.logger.log(this.chalk.grey(`\n$ forest ${args.join(' ')}`));
+    this.logger.log(this.chalk.grey(`\n$ ${StartCommand.redact('forest', args)}`));
     if (this.dryRun) {
       this.logger.log(this.chalk.grey('  (dry-run — not executed)'));
 
@@ -151,8 +171,11 @@ export default class StartCommand extends AbstractCommand {
 
       return stdout;
     } catch (error) {
-      if (!/--format|Nonexistent flag/.test((error as Error).message) || !args.includes('--format'))
-        throw error;
+      // The error message opens with the command, which contains `--format` — testing the whole
+      // message would match every failure and re-run a command that creates a project.
+      // Only the diagnostic below the first line can say the flag is unknown.
+      const [, ...detail] = (error as Error).message.split('\n');
+      if (!args.includes('--format') || !/Nonexistent flag/i.test(detail.join('\n'))) throw error;
 
       const withoutFormat = args.filter(
         (arg, index) => arg !== '--format' && args[index - 1] !== '--format',
@@ -353,22 +376,29 @@ export default class StartCommand extends AbstractCommand {
     const tail: Tail = {
       name,
       dir: name, // `create:sql` scaffolded ./<name>
+      restart: 'npm start',
       stack: "standalone Forest agent (TypeScript) on the user's own database",
       url: `http://localhost:${DEMO_PORT}`,
     };
 
     if (this.dryRun) {
       this.logger.log(this.chalk.grey(`\n$ npm start   (back-end stays live on :${DEMO_PORT})`));
-      this.doneStandalone(name);
+      this.doneStandalone(name, DEMO_PORT);
       await this.handoff(tail);
 
       return;
     }
 
+    // Without --db the port came from `create:sql`'s own prompt, so DEMO_PORT is a guess. The
+    // generated .env records what was actually chosen — reporting the wrong one would send both
+    // the user and the coding agent to a back-end that is not listening there.
+    const port = StartCommand.readPort(name) ?? DEMO_PORT;
+    tail.url = `http://localhost:${port}`;
+
     const booted = this.boot('npm', ['start'], { cwd: name });
     this.logger.log(this.chalk.grey('  (waiting for the schema push…)'));
     await booted.ready;
-    this.doneStandalone(name);
+    this.doneStandalone(name, port);
     await this.handoff({ ...tail, child: booted.child, mute: booted.mute });
   }
 
@@ -414,6 +444,7 @@ export default class StartCommand extends AbstractCommand {
     const tail: Tail = {
       name,
       dir: '.', // in-app scaffolds nothing: the repo is the user's own
+      restart: `bin/rails server -p ${RAILS_PORT}`,
       stack: "Forest mounted inside the user's Ruby on Rails app",
       url: `http://localhost:${RAILS_PORT}`,
     };
@@ -480,6 +511,7 @@ export default class StartCommand extends AbstractCommand {
     const tail: Tail = {
       name,
       dir: '.', // in-app scaffolds nothing: the repo is the user's own
+      restart: 'npm start',
       stack: "Forest mounted inside the user's Node.js app",
       url: `http://localhost:${NODE_PORT}`,
     };
@@ -495,14 +527,12 @@ export default class StartCommand extends AbstractCommand {
     }
 
     if (!this.interactive) {
-      // The secrets are what the app needs to boot, so they have to be shown — but they are
-      // long-lived credentials and this path is where CI logs are written, hence the warning.
-      this.logger.warn('The value below is a SECRET — do not commit it or paste it into logs.');
-      this.logger.log(
-        this.chalk.grey(
-          `  Then run:  FOREST_ENV_SECRET=${secrets.envSecret} FOREST_AUTH_SECRET=${secrets.authSecret} PORT=${NODE_PORT} npm start`,
-        ),
-      );
+      // Written, never printed: this path is where CI logs are produced, and `FOREST_ENV_SECRET`
+      // is a long-lived credential — anyone who can read the retained log gets the project. A
+      // warning next to the value would not have stopped that.
+      const envFile = StartCommand.writeSecrets(secrets);
+      this.logger.success(`Secrets written to ${envFile} — do not commit it.`);
+      this.logger.log(this.chalk.grey(`  Then run:  PORT=${NODE_PORT} npm start`));
 
       return;
     }
@@ -613,7 +643,7 @@ export default class StartCommand extends AbstractCommand {
     }
 
     if (next === 'stay') {
-      if (child) await this.keepAlive(child, name);
+      if (child) await this.keepAlive(child, name, 'npm start');
 
       return;
     }
@@ -632,7 +662,7 @@ export default class StartCommand extends AbstractCommand {
     if (!this.interactive) {
       if (tail.child) {
         stopProcess(tail.child);
-        this.logger.log(this.chalk.grey(`  Launch it anytime: cd ${tail.dir} && npm start`));
+        this.logger.log(this.chalk.grey(`  Launch it anytime: cd ${tail.dir} && ${tail.restart}`));
       }
 
       return;
@@ -659,7 +689,7 @@ export default class StartCommand extends AbstractCommand {
       done = next === 'stay';
     }
 
-    if (tail.child) await this.keepAlive(tail.child, tail.dir);
+    if (tail.child) await this.keepAlive(tail.child, tail.dir, tail.restart);
   }
 
   /** One menu choice. Returns true when the terminal was handed to a coding agent. */
@@ -682,6 +712,18 @@ export default class StartCommand extends AbstractCommand {
       // Deploying lives in the `deploy-heroku` SKILL, so it needs the skills installed first —
       // `forest deploy` ships layout changes, it does not deploy the app.
       if (await this.launch(tail, StartCommand.seed('deploy', tail))) return true;
+
+      // Skills present, but no agent we can start from here — Cursor and OpenCode have them and
+      // are not launchable. Sending those users back to `skills:init` loops them on a step they
+      // have already done, with no way to ever reach a deploy.
+      if (StartCommand.hasSkills(tail.dir)) {
+        this.instruct('Ask your coding agent to deploy:', [
+          this.chalk.cyan('"deploy this Forest project to production"'),
+          this.chalk.grey('It has the Forest skills — the steps are in `deploy-heroku`.'),
+        ]);
+
+        return false;
+      }
 
       this.instruct('Deploying needs your coding agent set up first:', [
         `Pick ${this.chalk.cyan(
@@ -712,24 +754,27 @@ export default class StartCommand extends AbstractCommand {
         `\n  (your Forest back-end keeps running underneath — opening ${agent.label}…)`,
       ),
     );
+    // The agent takes over a full-screen terminal; back-end log lines drawn into it corrupt the
+    // display for the whole session. It keeps running, we just stop echoing it.
+    tail.mute?.();
     await this.run$(agent.bin, [seed], tail.dir);
     stopProcess(tail.child, 'SIGINT');
     this.logger.log(
-      this.chalk.grey(`\n  Forest back-end stopped. Restart it: cd ${tail.dir} && npm start`),
+      this.chalk.grey(`\n  Forest back-end stopped. Restart it: cd ${tail.dir} && ${tail.restart}`),
     );
 
     return true;
   }
 
   /** Hold the back-end in the foreground so a closed window is never a dead end. */
-  private keepAlive(child: ChildProcess, name: string): Promise<void> {
+  private keepAlive(child: ChildProcess, dir: string, restart: string): Promise<void> {
     this.logger.log(
       this.chalk.grey(
         '\n  ▸ This terminal now runs your back-end (live logs below). Keep it open.',
       ),
     );
     this.logger.log(
-      this.chalk.grey(`     Ctrl-C to stop  ·  restart later: cd ${name} && npm start`),
+      this.chalk.grey(`     Ctrl-C to stop  ·  restart later: cd ${dir} && ${restart}`),
     );
 
     return new Promise(resolve => {
@@ -739,7 +784,7 @@ export default class StartCommand extends AbstractCommand {
         stopped = true;
         this.logger.log(
           `\n\n${this.chalk.yellow('■')} Back-end stopped. Restart it anytime → ${this.chalk.cyan(
-            `cd ${name} && npm start`,
+            `cd ${dir} && ${restart}`,
           )}`,
         );
         stopProcess(child, 'SIGINT');
@@ -809,6 +854,27 @@ export default class StartCommand extends AbstractCommand {
    * fallback is what makes this work against a CLI that predates the flag rather than dying on
    * `Nonexistent flag: --format`.
    */
+  /**
+   * Put the secrets where the app reads them from, rather than on the terminal. Existing values
+   * are left alone: overwriting a secret the user already configured would be worse than not
+   * writing at all.
+   */
+  private static writeSecrets(secrets: { envSecret?: string; authSecret?: string }): string {
+    const file = '.env';
+    const current = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+    const missing = Object.entries({
+      FOREST_ENV_SECRET: secrets.envSecret,
+      FOREST_AUTH_SECRET: secrets.authSecret,
+    }).filter(([key, value]) => value && !new RegExp(`^${key}=`, 'm').test(current));
+
+    if (missing.length) {
+      const separator = current && !current.endsWith('\n') ? '\n' : '';
+      fs.appendFileSync(file, `${separator}${missing.map(([k, v]) => `${k}=${v}`).join('\n')}\n`);
+    }
+
+    return file;
+  }
+
   private static parseSecrets(output: string): { envSecret?: string; authSecret?: string } {
     try {
       const parsed = JSON.parse(output.trim());
@@ -829,13 +895,24 @@ export default class StartCommand extends AbstractCommand {
     );
   }
 
-  private doneStandalone(name: string): void {
+  /** The port the scaffolded project actually runs on, from its generated .env. */
+  private static readPort(dir: string): number | undefined {
+    try {
+      const port = /^APPLICATION_PORT=(\d+)/m.exec(fs.readFileSync(`${dir}/.env`, 'utf8'))?.[1];
+
+      return port ? Number(port) : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private doneStandalone(name: string, port: number): void {
     this.logger.success('Your back-office is live!');
     this.logger.log(
       `  ${this.chalk.bold('Open it →')} ${this.chalk.cyan(`https://app.forestadmin.com/${name}`)}`,
     );
     this.logger.log(
-      `  ${this.chalk.bold('Served by →')} http://localhost:${DEMO_PORT}   (this terminal)`,
+      `  ${this.chalk.bold('Served by →')} http://localhost:${port}   (this terminal)`,
     );
   }
 

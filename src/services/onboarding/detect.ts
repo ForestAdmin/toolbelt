@@ -74,7 +74,10 @@ export function detectNodeStack(): NodeStack {
 /** True when the current directory holds a Rails application. */
 export function detectRails(): boolean {
   try {
-    return /gem\s+['"]rails['"]/.test(fs.readFileSync('Gemfile', 'utf8'));
+    // Anchored per line and excluding comments: `# gem 'rails'` is how a Gemfile records that
+    // Rails was considered and NOT used, so matching it sends a Node repo down the Rails flow —
+    // installing Rails gems and calling `bin/rails` in a project that has neither.
+    return /^(?!\s*#).*gem\s+['"]rails['"]/m.test(fs.readFileSync('Gemfile', 'utf8'));
   } catch {
     return false;
   }
