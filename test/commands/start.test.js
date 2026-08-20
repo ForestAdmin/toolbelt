@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const StartCommand = require('../../src/commands/start').default;
 const testCli = require('./test-cli-helper/test-cli');
 
@@ -114,6 +116,20 @@ describe('start', () => {
   });
 
   describe('in-app Rails flow', () => {
+    it('checks the secret before touching the Gemfile, so a failure installs nothing', async () => {
+      expect.hasAssertions();
+
+      // The create is mocked away by --dry-run, so no secret comes back; the guard must fire
+      // before `bundle add`, or five gems and a lockfile change are left in the user's repo
+      // while the error claims nothing was installed.
+      const source = fs.readFileSync('src/commands/start.ts', 'utf8');
+      const guard = source.indexOf('Checked before `bundle add`');
+      const bundle = source.indexOf("this.run$('bundle'");
+
+      expect(guard).toBeGreaterThan(-1);
+      expect(guard).toBeLessThan(bundle);
+    });
+
     it('registers an in-app project then installs the five gems the boot actually needs', async () => {
       expect.hasAssertions();
 
@@ -189,8 +205,10 @@ describe('start', () => {
         std: [
           { out: '@forestadmin/datasource-mongoose' },
           // Telling a mongoose app to call createSequelizeDataSource sends it into an import that
-          // does not exist.
+          // does not exist…
           { out: 'createMongooseDataSource(connection)' },
+          // …and calling a factory that is never imported does not compile either.
+          { out: "import { createMongooseDataSource } from '@forestadmin/datasource-mongoose';" },
         ],
       });
     });
