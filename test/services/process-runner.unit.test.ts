@@ -58,6 +58,19 @@ describe('process-runner', () => {
       expect(progress.join('')).toContain('spinner');
     });
 
+    it('decodes multibyte characters split across pipe chunks', async () => {
+      expect.assertions(1);
+      // Written one byte at a time, so every accented character straddles a chunk boundary.
+      // Decoding per chunk turns each into replacement characters — and the JSON below then
+      // parses to a different string than the command produced.
+      const { stdout } = await runCapture('node', [
+        '-e',
+        'const s = JSON.stringify({ v: "créé-àé€" }); for (const b of Buffer.from(s)) process.stdout.write(Buffer.from([b]));',
+      ]);
+
+      expect(JSON.parse(stdout)).toStrictEqual({ v: 'créé-àé€' });
+    });
+
     it('carries the failed command own message, not just its exit code', async () => {
       expect.assertions(1);
       await expect(
