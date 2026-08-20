@@ -202,11 +202,13 @@ export default class StartCommand extends AbstractCommand {
       this.logger.log(
         this.chalk.grey('  (this CLI has no --format json — reading the printed secrets)'),
       );
-      const { stdout, stderr } = await runCapture(
-        process.execPath,
-        [process.argv[1], ...withoutFormat],
-        { onProgress },
-      );
+      // NO onProgress here, unlike above: this retry captures the human output precisely because
+      // that is where the secrets are printed. Echoing it would put a long-lived credential in
+      // the terminal, the scrollback and — on the non-interactive path — a retained CI log.
+      const { stdout, stderr } = await runCapture(process.execPath, [
+        process.argv[1],
+        ...withoutFormat,
+      ]);
 
       return `${stdout}\n${stderr}`;
     }
@@ -549,12 +551,15 @@ export default class StartCommand extends AbstractCommand {
       // Written, never printed: this path is where CI logs are produced, and `FOREST_ENV_SECRET`
       // is a long-lived credential — anyone who can read the retained log gets the project. A
       // warning next to the value would not have stopped that.
-      const envFile = StartCommand.writeSecrets(secrets);
-      this.logger.success(`Secrets written to ${envFile} — do not commit it.`);
+      this.reportSecrets(StartCommand.writeSecrets(secrets));
       this.logger.log(this.chalk.grey(`  Then run:  PORT=${NODE_PORT} npm start`));
 
       return;
     }
+
+    // Persisted before booting, not just passed to this one process: everything the user is told
+    // afterwards — the restart hint, `npm start` — runs without our environment.
+    this.reportSecrets(StartCommand.writeSecrets(secrets));
 
     await this.ask({
       type: 'input',
@@ -890,20 +895,77 @@ export default class StartCommand extends AbstractCommand {
    * are left alone: overwriting a secret the user already configured would be worse than not
    * writing at all.
    */
-  private static writeSecrets(secrets: { envSecret?: string; authSecret?: string }): string {
+  private static writeSecrets(secrets: { envSecret?: string; authSecret?: string }): {
+    file: string;
+    written: string[];
+    conflicts: string[];
+  } {
     const file = '.env';
     const current = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-    const missing = Object.entries({
+    const written: string[] = [];
+    const conflicts: string[] = [];
+    const appended: string[] = [];
+    let content = current;
+
+    Object.entries({
       FOREST_ENV_SECRET: secrets.envSecret,
       FOREST_AUTH_SECRET: secrets.authSecret,
-    }).filter(([key, value]) => value && !new RegExp(`^${key}=`, 'm').test(current));
+    }).forEach(([key, value]) => {
+      if (!value) return;
 
-    if (missing.length) {
-      const separator = current && !current.endsWith('\n') ? '\n' : '';
-      fs.appendFileSync(file, `${separator}${missing.map(([k, v]) => `${k}=${v}`).join('\n')}\n`);
+      const assignment = new RegExp(`^${key}=(.*)$`, 'm');
+      const existing = assignment.exec(content)?.[1]?.trim();
+
+      if (existing === undefined) {
+        appended.push(`${key}=${value}`);
+        written.push(key);
+      } else if (existing === '') {
+        // A placeholder, not a configured value. Filled IN PLACE: appending would leave the file
+        // with the same key twice, which reads as a mistake even though dotenv takes the last.
+        content = content.replace(assignment, `${key}=${value}`);
+        written.push(key);
+      } else if (existing !== value) {
+        // A DIFFERENT secret is already there: overwriting it would break whatever it belongs to,
+        // and staying silent would leave the app pointing at another project while we report
+        // success. Neither is acceptable, so it is surfaced.
+        conflicts.push(key);
+      }
+    });
+
+    if (content !== current || appended.length) {
+      const separator = content && !content.endsWith('\n') ? '\n' : '';
+      fs.writeFileSync(
+        file,
+        appended.length ? `${content}${separator}${appended.join('\n')}\n` : content,
+      );
     }
 
-    return file;
+    return { file, written, conflicts };
+  }
+
+  /** Say what actually happened to the secrets — never the values themselves. */
+  private reportSecrets({
+    file,
+    written,
+    conflicts,
+  }: {
+    file: string;
+    written: string[];
+    conflicts: string[];
+  }): void {
+    if (written.length)
+      this.logger.success(`${written.join(' and ')} written to ${file} — do not commit it.`);
+    if (conflicts.length) {
+      this.logger.warn(
+        `${conflicts.join(
+          ' and ',
+        )} already set to a different value in ${file} — left untouched. ` +
+          'Your app will keep using the existing project until you replace it.',
+      );
+    }
+    if (!written.length && !conflicts.length) {
+      this.logger.warn(`No secret was returned, so nothing was written to ${file}.`);
+    }
   }
 
   private static parseSecrets(output: string): { envSecret?: string; authSecret?: string } {
