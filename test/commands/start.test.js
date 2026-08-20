@@ -59,15 +59,36 @@ describe('start', () => {
       });
     });
 
-    it('leaves the database prompts to create:sql when no URL is given', async () => {
+    it('leaves every prompt to create:sql when no URL is given', async () => {
       expect.hasAssertions();
 
       await testCli({
         commandClass: StartCommand,
         commandArgs: ['--dry-run', '--flow', 'standalone', '--name', 'x'],
-        // No --databaseConnectionURL: credentials are typed into `create:sql` itself and never
-        // pass through this command.
-        std: [{ out: '$ forest projects:create:sql x -l typescript' }],
+        // Bare on purpose: forcing -l/-H/-P here would silently remove the choice of JavaScript,
+        // of a hostname, or of a free port. Credentials never pass through this command either.
+        // The trailing newline is the assertion: nothing follows the project name on that line.
+        std: [{ out: '$ forest projects:create:sql x\n' }],
+      });
+    });
+
+    it('honours --schema alongside --db', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: [
+          '--dry-run',
+          '--flow',
+          'standalone',
+          '--name',
+          'x',
+          '--db',
+          'postgres://u:p@h:5432/d',
+          '--schema',
+          'analytics',
+        ],
+        std: [{ out: '-s analytics' }],
       });
     });
   });
@@ -117,7 +138,65 @@ describe('start', () => {
           // Nothing detected → the defaults, and the snippet matches them.
           { out: '$ npm install @forestadmin/agent @forestadmin/datasource-sql' },
           { out: 'Add to your server' },
+          { out: 'createSqlDataSource(process.env.DATABASE_URL)' },
           { out: 'mountOnExpress(app).start();' },
+        ],
+      });
+    });
+
+    it('names the datasource the snippet uses after the one it installs', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: [
+          '--dry-run',
+          '--flow',
+          'inapp',
+          '--stack',
+          'node',
+          '--name',
+          'app',
+          '--mount',
+          'manual',
+        ],
+        files: [
+          {
+            name: 'package.json',
+            content: JSON.stringify({ name: 'app', dependencies: { mongoose: '^8.0.0' } }),
+          },
+        ],
+        std: [
+          { out: '@forestadmin/datasource-mongoose' },
+          // Telling a mongoose app to call createSequelizeDataSource sends it into an import that
+          // does not exist.
+          { out: 'createMongooseDataSource(connection)' },
+        ],
+      });
+    });
+
+    it('asks how to mount BEFORE creating anything, so declining leaves no stray project', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: [
+          '--dry-run',
+          '--flow',
+          'inapp',
+          '--stack',
+          'node',
+          '--name',
+          'app',
+          '--mount',
+          'standalone',
+        ],
+        // The two lines are adjacent in the output, which proves nothing ran in between — no
+        // in-app project created, no package written into the user's own app.
+        std: [
+          {
+            out: 'Forest runs as its own back-end on your DB (no code change).\n\n$ forest projects:create:sql',
+          },
         ],
       });
     });
