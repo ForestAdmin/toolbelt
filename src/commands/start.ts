@@ -11,7 +11,13 @@ import {
   detectRails,
   mountHelper,
 } from '../services/onboarding/detect';
-import { runCapture, runStep, startProcess, stopProcess } from '../services/process-runner';
+import {
+  runCapture,
+  runStep,
+  startProcess,
+  stopAllProcesses,
+  stopProcess,
+} from '../services/process-runner';
 
 const DOCS_URL = 'https://docs.forest.app';
 const DEMO_PORT = 3310;
@@ -90,6 +96,19 @@ export default class StartCommand extends AbstractCommand {
     const { flags } = await this.parse(StartCommand);
     this.dryRun = flags['dry-run'];
 
+    try {
+      await this.onboard(flags as Record<string, string | undefined>);
+    } catch (error) {
+      // Anything after a boot — `layout:apply`, `skills:init`, the agent launch — can fail. The
+      // back-end is detached, so it would survive, and its open pipes can keep this command alive
+      // with it: an error message followed by a prompt that never returns, and a port still held.
+      stopAllProcesses();
+
+      throw error;
+    }
+  }
+
+  private async onboard(flags: Record<string, string | undefined>): Promise<void> {
     this.logger.log(
       `\nWelcome to ${this.chalk.green('Forest')}. Let's get your back-office running.`,
     );
@@ -416,6 +435,15 @@ export default class StartCommand extends AbstractCommand {
     ]);
     const secrets = StartCommand.parseSecrets(output);
 
+    // Checked before `bundle add`: past that point five gems and a lockfile change are in the
+    // user's repo, and throwing "nothing was generated" would be false.
+    if (!secrets.envSecret && !this.dryRun) {
+      throw new Error(
+        'Could not read FOREST_ENV_SECRET from `projects:create:in-app`. Nothing was installed — ' +
+          'run it by hand and pass the secret to `bin/rails g forest_admin_rails:install`.',
+      );
+    }
+
     // Five gems, not the three the docs list: forest_admin_rails alone installs but fails to boot,
     // because it does not declare its companions as runtime dependencies.
     await this.run$('bundle', [
@@ -426,15 +454,6 @@ export default class StartCommand extends AbstractCommand {
       'forest_admin_datasource_toolkit',
       'forest_admin_datasource_customizer',
     ]);
-    // Without it the generator writes a literal placeholder into the Rails initializer, on disk,
-    // and the app boots against nothing. Fail here instead, while nothing has been generated.
-    if (!secrets.envSecret && !this.dryRun) {
-      throw new Error(
-        'Could not read FOREST_ENV_SECRET from `projects:create:in-app`. Nothing was generated — ' +
-          'run it by hand and pass the secret to `bin/rails g forest_admin_rails:install`.',
-      );
-    }
-
     await this.run$('bin/rails', [
       'g',
       'forest_admin_rails:install',
@@ -586,22 +605,34 @@ export default class StartCommand extends AbstractCommand {
       return;
     }
 
-    // Must match the package just installed: telling a mongoose app to call
-    // `createSequelizeDataSource` sends the user straight into an import that does not exist.
-    const datasource = {
-      sql: 'createSqlDataSource(process.env.DATABASE_URL)',
-      sequelize: 'createSequelizeDataSource(sequelize)',
-      mongoose: 'createMongooseDataSource(connection)',
-      typeorm: 'createTypeOrmDataSource(dataSource)',
-      prisma: 'createPrismaDataSource(prisma)',
+    // Must match the package just installed, IMPORT INCLUDED: a snippet calling
+    // `createMongooseDataSource` while importing only `createAgent` does not compile, and the
+    // reader has no way to know which package the missing symbol comes from.
+    const { factory, call } = {
+      sql: {
+        factory: 'createSqlDataSource',
+        call: 'createSqlDataSource(process.env.DATABASE_URL)',
+      },
+      sequelize: {
+        factory: 'createSequelizeDataSource',
+        call: 'createSequelizeDataSource(sequelize)',
+      },
+      mongoose: {
+        factory: 'createMongooseDataSource',
+        call: 'createMongooseDataSource(connection)',
+      },
+      typeorm: { factory: 'createTypeOrmDataSource', call: 'createTypeOrmDataSource(dataSource)' },
+      prisma: { factory: 'createPrismaDataSource', call: 'createPrismaDataSource(prisma)' },
     }[stack.orm];
+
     this.instruct('Add to your server (after your ORM is ready, before app.listen):', [
       this.chalk.cyan("import { createAgent } from '@forestadmin/agent';"),
+      this.chalk.cyan(`import { ${factory} } from '${NODE_DATASOURCE[stack.orm]}';`),
       this.chalk.cyan(
         'createAgent({ authSecret: process.env.FOREST_AUTH_SECRET, envSecret: process.env.FOREST_ENV_SECRET, isProduction: false })',
       ),
       this.chalk.cyan(
-        `  .addDataSource(${datasource}).mountOn${mountHelper(stack.framework)}(app).start();`,
+        `  .addDataSource(${call}).mountOn${mountHelper(stack.framework)}(app).start();`,
       ),
       this.chalk.grey(`Exact per-stack snippet → ${DOCS_URL}/…/in-app/${stack.framework}`),
     ]);
