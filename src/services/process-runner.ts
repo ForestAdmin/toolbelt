@@ -219,17 +219,26 @@ export function startProcess(
   };
 
   const readyPromise = new Promise<void>((resolve, reject) => {
-    // Only accumulated until `ready` matches, then released. Keeping it would mean re-running the
-    // regex over an ever-growing string for the process's whole life — quadratic, on a buffer a
-    // long-lived server grows to hundreds of megabytes.
-    let scanned = '';
+    // Rebuilt without `g`/`y`: those flags make `.test()` stateful, so a caller passing `/x/g`
+    // would have its `lastIndex` advance between chunks and skip the very announcement we wait
+    // for — the process then dies on a timeout that had no cause.
+    const readyPattern = new RegExp(ready.source, ready.flags.replace(/[gy]/g, ''));
+
+    // One buffer PER STREAM. Sharing one would let a token straddling stdout and stderr match
+    // when neither stream ever produced it. Each is capped to a suffix: a chatty process that
+    // never announces itself would otherwise exhaust the heap long before the timeout fires,
+    // crashing instead of reporting. The window is far wider than any readiness line, so a
+    // pattern split across chunk boundaries still matches.
+    const WINDOW = 8192;
+    const scanned = { stdout: '', stderr: '' };
     let settled = false;
     let timeout: NodeJS.Timeout;
 
     const settle = () => {
       settled = true;
       clearTimeout(timeout);
-      scanned = ''; // release the buffer; `onData` keeps streaming but stops scanning
+      scanned.stdout = '';
+      scanned.stderr = '';
     };
 
     // A failed start must not leave the process behind: its open pipes would also keep this CLI's
@@ -241,15 +250,15 @@ export function startProcess(
       reject(error);
     };
 
-    const onData = (text: string) => {
+    const onData = (source: 'stdout' | 'stderr') => (text: string) => {
       stream?.(text);
       if (settled) return;
-      scanned += text;
+      scanned[source] = (scanned[source] + text).slice(-WINDOW);
 
-      if (ready.test(scanned)) {
+      if (readyPattern.test(scanned[source])) {
         settle();
         resolve();
-      } else if (/EADDRINUSE/.test(scanned)) {
+      } else if (/EADDRINUSE/.test(scanned[source])) {
         fail(new Error('Port already in use — free it with `lsof -ti :<port> | xargs kill`.'));
       }
     };
@@ -259,12 +268,13 @@ export function startProcess(
       timeoutMs,
     );
 
-    // Same reason as `runCapture`, with a sharper consequence: a `ready` pattern straddling a
-    // chunk boundary would never match, and the process would be killed on a false timeout.
+    // Decoded by the stream, not per chunk: a multibyte character split across two reads would
+    // otherwise become replacement characters, and a `ready` pattern containing one would never
+    // match — the process killed on a false timeout.
     child.stdout?.setEncoding('utf8');
     child.stderr?.setEncoding('utf8');
-    child.stdout?.on('data', onData);
-    child.stderr?.on('data', onData);
+    child.stdout?.on('data', onData('stdout'));
+    child.stderr?.on('data', onData('stderr'));
     child.on('error', error => fail(error));
     child.on('close', code =>
       fail(new Error(`\`${command}\` stopped before it was ready (exit code ${code}).`)),

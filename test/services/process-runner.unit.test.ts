@@ -107,6 +107,43 @@ describe('process-runner', () => {
       }
     });
 
+    it('matches a stateful ready pattern, whose lastIndex would otherwise skip the announcement', async () => {
+      expect.assertions(1);
+      const { child, ready } = startProcess(
+        'sh',
+        ['-c', 'node -e "setInterval(()=>console.log(\'server listening now\'), 30)" & wait'],
+        // `/y/` is sticky: `.test()` advances lastIndex, so a second call misses a match the
+        // first one already passed — the process would die on a timeout that had no cause.
+        { ready: /listening/y, timeoutMs: 3000 },
+      );
+
+      try {
+        await expect(ready).resolves.toBeUndefined();
+      } finally {
+        stopProcess(child);
+        await wait(300);
+      }
+    });
+
+    it('does not accept a token straddling stdout and stderr, which neither stream produced', async () => {
+      expect.assertions(1);
+      const { child, ready } = startProcess(
+        'sh',
+        [
+          '-c',
+          "node -e \"process.stdout.write('READ'); process.stderr.write('Y-NOW'); setInterval(()=>{},1e3)\" & wait",
+        ],
+        { ready: /READY-NOW/, timeoutMs: 800 },
+      );
+
+      try {
+        await expect(ready).rejects.toThrow(/Timed out/);
+      } finally {
+        stopProcess(child);
+        await wait(300);
+      }
+    });
+
     it('rejects when the process dies before it is ready', async () => {
       expect.assertions(1);
       const { ready } = startProcess('node', ['-e', 'process.exit(1)'], { ready: /never/ });
@@ -213,32 +250,22 @@ describe('process-runner', () => {
       await expect(isPortFree(39326)).resolves.toBe(true);
     });
 
-    it('stops scanning once ready, so a chatty back-end does not grow an unbounded buffer', async () => {
-      expect.assertions(2);
-      const scans: number[] = [];
-      const ready = {
-        test: (s: string) => {
-          scans.push(s.length);
-          return /listening/.test(s);
-        },
-      } as RegExp;
-      const { child, ready: readyPromise } = startProcess(
+    it('keeps only a bounded window, so a chatty process cannot exhaust the heap before timing out', async () => {
+      expect.assertions(1);
+      // 40 KB of noise between the two halves of the pattern. Retaining everything would match;
+      // a bounded window cannot — which is the point: before the cap, a process that never
+      // announced itself grew the buffer until the CLI crashed, instead of reporting a timeout.
+      const { child, ready } = startProcess(
         'sh',
         [
           '-c',
-          "node -e \"console.log('listening'); setInterval(()=>console.log('x'.repeat(500)), 20)\" & wait",
+          "node -e \"process.stdout.write('BEGIN'); process.stdout.write('x'.repeat(40000)); process.stdout.write('END'); setInterval(()=>{},1e3)\" & wait",
         ],
-        { ready },
+        { ready: /BEGIN[\s\S]*END/, timeoutMs: 900 },
       );
 
       try {
-        await readyPromise;
-        const atReady = scans.length;
-        await wait(600);
-        // The regex is not re-run at all after ready; before the fix it ran on every chunk, over
-        // an ever-growing string, for the whole life of the process.
-        expect(scans).toHaveLength(atReady);
-        expect(Math.max(...scans)).toBeLessThan(2000);
+        await expect(ready).rejects.toThrow(/Timed out/);
       } finally {
         stopProcess(child);
         await wait(300);
