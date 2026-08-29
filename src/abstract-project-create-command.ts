@@ -38,6 +38,11 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   // test, introspection) are skipped.
   protected readonly requiresDatabase: boolean = true;
 
+  // Hosting architecture sent to the server. 'microservice' = a dedicated agent
+  // we scaffold (the default for every create:* command); 'in-app' = the user
+  // hosts the agent inside their own app (no scaffold).
+  protected readonly architecture: string = 'microservice';
+
   static override args = {
     applicationName: Args.string({
       name: 'applicationName',
@@ -190,7 +195,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       agent:
         this.agent || (dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize'),
       dbDialect: dbConfig.dbDialect,
-      architecture: 'microservice',
+      architecture: this.architecture,
       isLocal: ['localhost', '127.0.0.1', '::1'].some(keyword =>
         dbConfig.dbHostname
           ? dbConfig.dbHostname.includes(keyword)
