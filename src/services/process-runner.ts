@@ -12,6 +12,11 @@ import { spawn } from 'child_process';
  * CLI alive too. Every long-running process is therefore started in its own process group, and
  * stopped by signalling that group.
  *
+ * And stopping means stopped. SIGTERM is a request a back-end is free to trap and decline — puma
+ * and most servers do, for a graceful shutdown — so the group is killed outright if it is still
+ * there after a grace period. On the way out of the CLI that grace is taken synchronously, because
+ * by then nothing asynchronous will ever run again.
+ *
  * KNOWN LIMITATION — Windows. `process.kill(-pid)` does not exist there and `detached` creates no
  * signalable group, so `stopProcess` falls back to signalling the wrapper alone: the server it
  * spawned survives, which is the very bug this module fixes elsewhere. CI is Linux-only and the
@@ -35,6 +40,17 @@ export type CaptureResult = { stdout: string; stderr: string };
 
 const READY_TIMEOUT_MS = 120_000;
 
+/** How long a process gets to honour SIGTERM before its group is killed outright. */
+const STOP_GRACE_MS = 2_000;
+
+/** The same grace, taken synchronously, when the CLI is on its way out and cannot await anything. */
+const EXIT_GRACE_MS = 500;
+
+const CAN_SIGNAL_GROUPS = process.platform !== 'win32';
+
+/** 128 + signal number, the shell convention a caller in CI will compare against. */
+const EXIT_CODE_BY_SIGNAL = { SIGHUP: 129, SIGINT: 130, SIGTERM: 143 } as const;
+
 /**
  * Every process we started and have not stopped. Registered so the CLI can take them down with it:
  * a detached child survives its parent by design, and the terminal's Ctrl-C never reaches it (it
@@ -42,24 +58,35 @@ const READY_TIMEOUT_MS = 120_000;
  * a port the user then has to hunt down with `lsof`.
  */
 const running = new Set<ChildProcess>();
+
+/** Groups we have already signalled — the one thing that must not be repeated. */
+const stopped = new WeakSet<ChildProcess>();
 let exitHookInstalled = false;
 
 /**
- * Stop a process started by `startProcess`, and everything it spawned.
+ * Is anything still alive in the group this child leads?
  *
- * A negative pid signals the whole process group — the only way to reach the server a package
- * manager launched on our behalf. Never throws: stopping something already stopped is a success.
+ * Signal 0 only asks the question. It is also what makes the negative pid safe to use after the
+ * leader itself exited: POSIX forbids recycling a pid while a process group still carries it as
+ * its id, so while this answers yes, `-pid` can only mean the group we started.
  */
-export function stopProcess(child: ChildProcess | undefined, signal: NodeJS.Signals = 'SIGTERM') {
-  // `child.killed` is not the state we need: it only records that `child.kill()` was called, and
-  // the group path uses `process.kill()`, which never sets it. `exitCode`/`signalCode` are what
-  // actually say the process is gone — and they stop us re-signalling a pid the OS may have reused.
-  if (!child?.pid || child.exitCode !== null || child.signalCode !== null) return;
-
-  running.delete(child);
+function groupAlive(child: ChildProcess): boolean {
+  if (!child.pid) return false;
+  // No groups on Windows, so the leader's own exit state is all there is to go on.
+  if (!CAN_SIGNAL_GROUPS) return child.exitCode === null && child.signalCode === null;
 
   try {
-    process.kill(-child.pid, signal);
+    process.kill(-child.pid, 0);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function signalGroup(child: ChildProcess, signal: NodeJS.Signals) {
+  try {
+    process.kill(-(child.pid as number), signal);
   } catch {
     try {
       child.kill(signal);
@@ -70,28 +97,82 @@ export function stopProcess(child: ChildProcess | undefined, signal: NodeJS.Sign
 }
 
 /**
+ * Stop a process started by `startProcess`, and everything it spawned.
+ *
+ * A negative pid signals the whole process group — the only way to reach the server a package
+ * manager launched on our behalf. `graceMs` later, anything left in that group is killed outright.
+ * Never throws: stopping something already stopped is a success.
+ */
+export function stopProcess(
+  child: ChildProcess | undefined,
+  signal: NodeJS.Signals = 'SIGTERM',
+  graceMs: number = STOP_GRACE_MS,
+) {
+  // NOT the leader's exit state. The process we spawned is a wrapper, and it can exit while the
+  // server it launched keeps the port — the very failure this module exists to prevent, reached
+  // from the other side. What must not be repeated is the SIGNAL, so that is what is tracked;
+  // `groupAlive` then rules out the pid the OS could have recycled. (`child.killed` is no use
+  // either: it only records that `child.kill()` was called, and the group path never calls it.)
+  if (!child?.pid || stopped.has(child) || !groupAlive(child)) return;
+
+  stopped.add(child);
+  running.delete(child);
+  signalGroup(child, signal);
+
+  if (signal === 'SIGKILL') return;
+
+  // A graceful SIGTERM is a request, not an outcome: a server that traps it to shut down cleanly —
+  // puma, and anything with a shutdown hook of its own — keeps the port until it decides otherwise,
+  // or for good. Unref'd, so this grace period never keeps the CLI alive by itself.
+  const escalation = setTimeout(() => {
+    if (groupAlive(child)) signalGroup(child, 'SIGKILL');
+  }, graceMs);
+  escalation.unref();
+}
+
+/**
  * Stop everything still running. For a caller unwinding on an error: a detached back-end survives
  * its parent, and its open pipes can keep the CLI's event loop alive, so an unhandled failure
  * would otherwise leave both a hung command and a server holding a port.
  */
-export function stopAllProcesses(signal: NodeJS.Signals = 'SIGTERM') {
-  [...running].forEach(child => stopProcess(child, signal));
+export function stopAllProcesses(
+  signal: NodeJS.Signals = 'SIGTERM',
+  graceMs: number = STOP_GRACE_MS,
+) {
+  [...running].forEach(child => stopProcess(child, signal, graceMs));
+}
+
+/**
+ * The same, for a process on its way out — where nothing asynchronous will ever run again.
+ *
+ * The escalation `stopProcess` schedules is therefore useless here, so the grace is taken
+ * synchronously and whatever is still holding on is killed outright: half a second of delay on
+ * Ctrl-C is a better trade than a server the user has to hunt down with `lsof`.
+ */
+function stopAllSync() {
+  const children = [...running];
+  children.forEach(child => stopProcess(child));
+
+  if (!children.some(groupAlive)) return;
+
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, EXIT_GRACE_MS);
+  children.forEach(child => {
+    if (groupAlive(child)) signalGroup(child, 'SIGKILL');
+  });
 }
 
 function installExitHook() {
   if (exitHookInstalled) return;
   exitHookInstalled = true;
 
-  const stopAll = () => running.forEach(child => stopProcess(child));
-
   // `exit` covers a normal end and an uncaught throw. The signals cover the terminal, which would
   // otherwise kill this process and leave the group behind. `once` so a second Ctrl-C is never
   // swallowed — the user must always be able to give up.
-  process.on('exit', stopAll);
-  (['SIGINT', 'SIGTERM', 'SIGHUP'] as const).forEach(signal =>
+  process.on('exit', stopAllSync);
+  (Object.keys(EXIT_CODE_BY_SIGNAL) as (keyof typeof EXIT_CODE_BY_SIGNAL)[]).forEach(signal =>
     process.once(signal, () => {
-      stopAll();
-      process.exit(signal === 'SIGINT' ? 130 : 143);
+      stopAllSync();
+      process.exit(EXIT_CODE_BY_SIGNAL[signal]);
     }),
   );
 }
