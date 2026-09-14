@@ -84,8 +84,8 @@ const EXIT_CODE_BY_SIGNAL = { SIGHUP: 129, SIGINT: 130, SIGTERM: 143 } as const;
  */
 const running = new Set<ChildProcess>();
 
-/** Groups we have already signalled — the one thing that must not be repeated. */
-const stopped = new WeakSet<ChildProcess>();
+/** Groups already on an escalation countdown — the one thing that must not be stacked. */
+const escalating = new WeakSet<ChildProcess>();
 let exitHookInstalled = false;
 
 /**
@@ -110,14 +110,24 @@ function groupAlive(child: ChildProcess): boolean {
 }
 
 function signalGroup(child: ChildProcess, signal: NodeJS.Signals) {
-  try {
-    process.kill(-(child.pid as number), signal);
-  } catch {
+  // Windows has no group to signal, so the wrapper alone is all there is — the known limitation
+  // at the top of this file. On POSIX there is no fallback worth making: the leader was IN the
+  // group we just failed to signal, so its pid adds nothing, and by then that pid may belong to
+  // something else entirely.
+  if (!CAN_SIGNAL_GROUPS) {
     try {
       child.kill(signal);
     } catch {
       // Already dead — nothing left to stop.
     }
+
+    return;
+  }
+
+  try {
+    process.kill(-(child.pid as number), signal);
+  } catch {
+    // Already dead — nothing left to stop.
   }
 }
 
@@ -135,16 +145,18 @@ export function stopProcess(
 ) {
   // NOT the leader's exit state. The process we spawned is a wrapper, and it can exit while the
   // server it launched keeps the port — the very failure this module exists to prevent, reached
-  // from the other side. What must not be repeated is the SIGNAL, so that is what is tracked;
-  // `groupAlive` then rules out the pid the OS could have recycled. (`child.killed` is no use
+  // from the other side. Whether the group is still there is the question, and `groupAlive` both
+  // answers it and rules out the pid the OS could have recycled. (`child.killed` is no use
   // either: it only records that `child.kill()` was called, and the group path never calls it.)
-  if (!child?.pid || stopped.has(child) || !groupAlive(child)) return;
+  if (!child?.pid || !groupAlive(child)) return;
 
-  stopped.add(child);
-  running.delete(child);
   signalGroup(child, signal);
 
-  if (signal === 'SIGKILL') return;
+  // Signalling again is fine — the group is demonstrably still there, and a caller unwinding hard
+  // must be able to follow a declined SIGTERM with a SIGKILL. Stacking countdowns is not.
+  if (signal === 'SIGKILL' || escalating.has(child)) return;
+
+  escalating.add(child);
 
   // A graceful SIGTERM is a request, not an outcome: a server that traps it to shut down cleanly —
   // puma, and anything with a shutdown hook of its own — keeps the port until it decides otherwise,
@@ -487,7 +499,12 @@ export function startProcess(
   );
 
   running.add(child);
-  child.on('close', () => running.delete(child));
+  // Not simply `running.delete(child)`: the wrapper can exit while the server it started keeps
+  // running, and dropping it here would put that server out of reach of the exit hook — stranded
+  // on the next Ctrl-C, holding its port.
+  child.on('close', () => {
+    if (!groupAlive(child)) running.delete(child);
+  });
 
   let stream = onOutput;
   const mute = () => {

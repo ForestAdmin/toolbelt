@@ -254,7 +254,7 @@ describe('process-runner', () => {
     });
 
     it('does not re-signal a process that already exited, whose pid the OS may have reused', async () => {
-      expect.assertions(3);
+      expect.assertions(4);
       expect(() => stopProcess(undefined)).not.toThrow();
 
       const { child, ready } = startProcess('sh', wrapper(39325), { ready: /listening/ });
@@ -263,18 +263,24 @@ describe('process-runner', () => {
       await wait(500);
 
       // `child.killed` stays false on the group path — `process.kill()` never sets it — so the
-      // guard has to read the exit state instead, or a second call signals a recycled pid.
+      // guard cannot read that, and a second call would otherwise signal a recycled pid.
       expect(child.killed).toBe(false);
+      const probed: number[] = [];
       const signalled: number[] = [];
       const realKill = process.kill.bind(process);
       jest.spyOn(process, 'kill').mockImplementation(((pid: number, sig?: NodeJS.Signals) => {
-        signalled.push(pid);
+        // Signal 0 asks whether the group is still there and stops nothing; it is the check, not
+        // the thing being checked for.
+        (sig === (0 as unknown as NodeJS.Signals) ? probed : signalled).push(pid);
 
         return realKill(pid, sig);
       }) as typeof process.kill);
       try {
         stopProcess(child);
         expect(signalled).toStrictEqual([]);
+        // …and it did ask, rather than remembering: what makes this safe is that the group is
+        // gone, not that we happen to have stopped this child before.
+        expect(probed).toStrictEqual([-(child.pid as number)]);
       } finally {
         jest.restoreAllMocks();
       }
@@ -662,6 +668,62 @@ describe('process-runner', () => {
       stopProcess(child);
 
       await expect(exited).resolves.toStrictEqual({ code: null, signal: 'SIGTERM' });
+    });
+  });
+
+  describe('what the exit hook can still reach', () => {
+    it('keeps a stopped-but-trapping process reachable, in case the CLI leaves before it does', async () => {
+      expect.assertions(1);
+      const port = await freePort();
+      const { child, ready } = startProcess('sh', trappingWrapper(port), { ready: /listening/ });
+      await ready;
+
+      // It was asked to stop and declined. Dropping it from the register at signal time puts it
+      // out of reach of everything that runs later — and the escalation is on an unref'd timer,
+      // so a CLI that exits first never fires it.
+      stopProcess(child, 'SIGTERM', 60_000);
+      await wait(300);
+
+      stopAllProcesses('SIGKILL');
+
+      await expect(waitForPortFree(port)).resolves.toBe(true);
+    });
+
+    it('keeps a server whose wrapper already exited reachable', async () => {
+      expect.assertions(2);
+      const port = await freePort();
+      const { child, ready } = startProcess('sh', orphaningWrapper(port), { ready: /listening/ });
+      await ready;
+      await wait(800);
+
+      // The wrapper's `close` has fired and the server it left behind has not. Taking that as the
+      // end of the group is how a Ctrl-C strands a port.
+      expect(child.exitCode).not.toBeNull();
+      stopAllProcesses('SIGTERM', 200);
+
+      await expect(waitForPortFree(port)).resolves.toBe(true);
+    });
+  });
+
+  describe('a wrapper that exits before the server it started announces itself', () => {
+    it('waits for the announcement, because the wrapper ending is not the start failing', async () => {
+      expect.assertions(1);
+      // `server &` with no `wait`: the launcher is gone in milliseconds and the server it left
+      // behind holds the pipes, so `exit` fires long before the readiness line and `close` never
+      // fires at all. Treating the wrapper's exit as the failure rejects a start that succeeds —
+      // which is this module's own thesis, that the wrapper is not the server.
+      const { child, ready } = startProcess(
+        'sh',
+        ['-c', `node -e "setTimeout(()=>console.log('listening'),600)" &`],
+        { ready: /listening/, timeoutMs: 5000 },
+      );
+
+      try {
+        await expect(ready).resolves.toBeUndefined();
+      } finally {
+        stopProcess(child);
+        await wait(300);
+      }
     });
   });
 });
