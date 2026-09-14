@@ -226,7 +226,9 @@ function spawnOptions(options: RunOptions, extra: SpawnOptions = {}): SpawnOptio
 const SECRET_FLAG =
   /^--?[a-z0-9-]*(token|secret|password|passwd|pwd|apikey|api-key|auth|credential)[a-z0-9-]*$/i;
 
-const URL_CREDENTIALS = /([a-z][a-z0-9+.-]*:\/\/[^\s/@:]+):[^\s/@]+@/gi;
+// The username may be empty — `redis://:password@host` is how Redis and Mongo URLs usually look —
+// so it is `*` and not `+`, or the password right after it goes unredacted.
+const URL_CREDENTIALS = /([a-z][a-z0-9+.-]*:\/\/[^\s/@:]*):[^\s/@]+@/gi;
 
 /**
  * Take the password out of any connection string in `text`.
@@ -242,11 +244,15 @@ function redactSecrets(text: string): string {
   return text.replace(URL_CREDENTIALS, '$1:***@');
 }
 
+// `--verbose`, and nothing a credential is likely to be: a secret can start with a single `-`,
+// so only this shape is taken as the next flag rather than the previous flag's value.
+const LONG_FLAG = /^--[a-z0-9][a-z0-9-]*$/i;
+
 function redactArgs(args: string[]): string[] {
   let valueIsSecret = false;
 
   return args.map(arg => {
-    const isSecretValue = valueIsSecret && !arg.startsWith('-');
+    const isSecretValue = valueIsSecret && !LONG_FLAG.test(arg);
     const [flag, ...value] = arg.split('=');
 
     valueIsSecret = SECRET_FLAG.test(flag) && !value.length;
