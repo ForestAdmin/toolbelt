@@ -40,6 +40,16 @@ export type CaptureResult = { stdout: string; stderr: string };
 
 const READY_TIMEOUT_MS = 120_000;
 
+/**
+ * How long a process that reported a port clash gets to recover from it.
+ *
+ * Reporting EADDRINUSE is not the same as failing on it: plenty of dev servers say it and then
+ * bind the next port up. Killing on the spot takes down a back-end that was about to serve — so
+ * the clash starts a countdown instead, and announcing readiness cancels it. The point of noticing
+ * at all is kept: a start that will never happen fails here rather than at the full timeout.
+ */
+const PORT_CLASH_GRACE_MS = 5_000;
+
 /** How long a process gets to honour SIGTERM before its group is killed outright. */
 const STOP_GRACE_MS = 2_000;
 
@@ -350,13 +360,24 @@ export function startProcess(
     const scanned = { stdout: '', stderr: '' };
     let settled = false;
     let timeout: NodeJS.Timeout;
+    let portClash: NodeJS.Timeout | undefined;
+    let clashedPort: string | undefined;
 
     const settle = () => {
       settled = true;
       clearTimeout(timeout);
+      clearTimeout(portClash);
       scanned.stdout = '';
       scanned.stderr = '';
     };
+
+    // Never longer than the wait it is meant to cut short.
+    const clashGraceMs = Math.min(PORT_CLASH_GRACE_MS, Math.floor(timeoutMs / 2));
+
+    const portInUse = () =>
+      new Error(
+        `Port ${clashedPort} is already in use — free it with \`lsof -ti :${clashedPort} | xargs kill\`.`,
+      );
 
     // A failed start must not leave the process behind: its open pipes would also keep this CLI's
     // event loop alive, so the user would get an error and then a prompt that never returns.
@@ -375,8 +396,16 @@ export function startProcess(
       if (readyPattern.test(scanned[source])) {
         settle();
         resolve();
-      } else if (/EADDRINUSE/.test(scanned[source])) {
-        fail(new Error('Port already in use — free it with `lsof -ti :<port> | xargs kill`.'));
+        return;
+      }
+
+      // `:3000` at the end of `listen EADDRINUSE: address already in use :::3000`, so the error
+      // can name the port instead of leaving the user to find it.
+      const clash = !portClash && /EADDRINUSE[^\n]*?:(\d{2,5})\b/.exec(scanned[source]);
+
+      if (clash) {
+        [, clashedPort] = clash;
+        portClash = setTimeout(() => fail(portInUse()), clashGraceMs);
       }
     };
 
@@ -394,7 +423,11 @@ export function startProcess(
     child.stderr?.on('data', onData('stderr'));
     child.on('error', error => fail(error));
     child.on('close', code =>
-      fail(new Error(`\`${command}\` stopped before it was ready (exit code ${code}).`)),
+      fail(
+        clashedPort
+          ? portInUse()
+          : new Error(`\`${command}\` stopped before it was ready (exit code ${code}).`),
+      ),
     );
   });
 
