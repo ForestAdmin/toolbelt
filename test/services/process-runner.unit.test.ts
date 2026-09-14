@@ -575,6 +575,48 @@ describe('process-runner', () => {
         await wait(300);
       }
     });
+
+    it('fails fast on a message that puts the port before the word, as Ruby does', async () => {
+      expect.assertions(1);
+      // `Address already in use - bind(2) for "127.0.0.1" port 3000 (Errno::EADDRINUSE)`, which is
+      // what `bin/rails server` prints. Reading the port only after the word finds nothing here,
+      // and a start that will never happen then waits out the entire timeout.
+      const { child, ready } = startProcess(
+        'sh',
+        [
+          '-c',
+          `node -e "console.error('Address already in use - bind(2) for 127.0.0.1 port 3000 (Errno::EADDRINUSE)');setInterval(()=>{},1e3)" & wait`,
+        ],
+        { ready: /never-matches/, timeoutMs: 4000 },
+      );
+
+      try {
+        await expect(ready).rejects.toThrow('Port 3000 is already in use');
+      } finally {
+        stopProcess(child);
+        await wait(300);
+      }
+    });
+
+    it('fails fast even when no port can be read from the message at all', async () => {
+      expect.assertions(1);
+      // A unix socket has no port to name. Naming one is a courtesy; failing fast is the point.
+      const { child, ready } = startProcess(
+        'sh',
+        [
+          '-c',
+          `node -e "console.error('listen EADDRINUSE: address already in use /tmp/forest.sock');setInterval(()=>{},1e3)" & wait`,
+        ],
+        { ready: /never-matches/, timeoutMs: 4000 },
+      );
+
+      try {
+        await expect(ready).rejects.toThrow(/A port it needs is already in use/);
+      } finally {
+        stopProcess(child);
+        await wait(300);
+      }
+    });
   });
 
   describe('startProcess — the end of a process that did start', () => {

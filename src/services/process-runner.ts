@@ -41,6 +41,10 @@ export type StartedProcess = {
    * resolved and says nothing, so a caller holding one has no way to notice; this is that way.
    * It never rejects: an exit is an outcome to read (`code`, or `signal` when something stopped
    * it), not a failure to catch.
+   *
+   * It describes the process we spawned, which for a package manager is the WRAPPER — the same
+   * one whose exit says nothing about the server it left behind. That is the only end this CLI
+   * can observe directly; `stopProcess` is what deals with the rest of the group.
    */
   exited: Promise<ProcessExit>;
   /** Stop streaming output — before handing the terminal to something else, typically. */
@@ -187,8 +191,9 @@ function installExitHook() {
   exitHookInstalled = true;
 
   // `exit` covers a normal end and an uncaught throw. The signals cover the terminal, which would
-  // otherwise kill this process and leave the group behind. `once` so a second Ctrl-C is never
-  // swallowed — the user must always be able to give up.
+  // otherwise kill this process and leave the group behind. `once`, so the handler is gone by the
+  // time a second Ctrl-C arrives and the default behaviour takes it: the user can always give up,
+  // at worst once the synchronous grace below is over.
   process.on('exit', stopAllSync);
   (Object.keys(EXIT_CODE_BY_SIGNAL) as (keyof typeof EXIT_CODE_BY_SIGNAL)[]).forEach(signal =>
     process.once(signal, () => {
@@ -387,7 +392,9 @@ export function startProcess(
 
     const portInUse = () =>
       new Error(
-        `Port ${clashedPort} is already in use — free it with \`lsof -ti :${clashedPort} | xargs kill\`.`,
+        clashedPort
+          ? `Port ${clashedPort} is already in use — free it with \`lsof -ti :${clashedPort} | xargs kill\`.`
+          : 'A port it needs is already in use — free it with `lsof -ti :<port> | xargs kill`.',
       );
 
     // A failed start must not leave the process behind: its open pipes would also keep this CLI's
@@ -410,14 +417,21 @@ export function startProcess(
         return;
       }
 
-      // `:3000` at the end of `listen EADDRINUSE: address already in use :::3000`, so the error
-      // can name the port instead of leaving the user to find it.
-      const clash = !portClash && /EADDRINUSE[^\n]*?:(\d{2,5})\b/.exec(scanned[source]);
+      const clash = /^.*EADDRINUSE.*$/m.exec(scanned[source]);
 
-      if (clash) {
-        [, clashedPort] = clash;
-        portClash = setTimeout(() => fail(portInUse()), clashGraceMs);
+      if (!clash) return;
+
+      // Naming the port is a courtesy, and it sits on either side of the word depending on who
+      // wrote the message — node says `address already in use :::3000`, Ruby says
+      // `port 3000 (Errno::EADDRINUSE)`. So failing to find it must never hold up the countdown,
+      // or a `bin/rails server` that will never start waits out the whole timeout instead. Still
+      // looked for on later chunks, in case the line arrived split.
+      if (!clashedPort) {
+        [, clashedPort] = /:(\d{2,5})\b/.exec(clash[0]) ??
+          /\bport (\d{2,5})\b/i.exec(clash[0]) ?? [];
       }
+
+      if (!portClash) portClash = setTimeout(() => fail(portInUse()), clashGraceMs);
     };
 
     timeout = setTimeout(
