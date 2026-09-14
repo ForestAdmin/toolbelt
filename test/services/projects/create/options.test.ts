@@ -134,29 +134,50 @@ describe('projectCreateOptions', () => {
       expect(options.validateSqlConnectionUrl('MariaDB://u:p@h:3306/db')).toBe(message);
     });
 
-    it('validateSqlConnectionUrl: rejects uppercase schemes (getDialect matches lowercase only)', () => {
-      expect.assertions(3);
-      expect(options.validateSqlConnectionUrl('Postgres://u:p@h:5432/db')).toBe(
-        'The scheme must be lowercase: use "postgres://"',
+    it('validateSqlConnectionUrl: accepts uppercase schemes (the SQL drivers normalize them)', () => {
+      expect.assertions(4);
+      expect(options.validateSqlConnectionUrl('Postgres://u:p@h:5432/db')).toBe(true);
+      expect(options.validateSqlConnectionUrl('MYSQL://u:p@h:3306/db')).toBe(true);
+      // …and the dialect must still be derived, otherwise the generated project ships no driver.
+      expect(options.getDialect({ databaseConnectionURL: 'Postgres://u:p@h:5432/db' })).toBe(
+        'postgres',
       );
-      expect(options.validateSqlConnectionUrl('MYSQL://u:p@h:3306/db')).toBe(
-        'The scheme must be lowercase: use "mysql://"',
-      );
+      expect(options.getDialect({ databaseConnectionURL: 'MYSQL://u:p@h:3306/db' })).toBe('mysql');
+    });
+
+    it('getDialect: matches the scheme case-insensitively without touching the credentials', () => {
+      expect.assertions(5);
       expect(options.getDialect({ databaseConnectionURL: 'postgres://u:p@h:5432/db' })).toBe(
         'postgres',
       );
+      expect(options.getDialect({ databaseConnectionURL: 'MsSql://u:p@h:1433/db' })).toBe('mssql');
+      expect(options.getDialect({ databaseConnectionURL: 'MongoDB+SRV://h/db' })).toBe('mongodb');
+
+      const databaseConnectionURL = 'Postgres://u:MyTopSecret@h:5432/db';
+      expect(options.getDialect({ databaseConnectionURL })).toBe('postgres');
+      expect(databaseConnectionURL).toBe('Postgres://u:MyTopSecret@h:5432/db');
     });
 
-    it('validateMongoConnectionUrl: blank ok, mongodb(+srv) ok, sql + uppercase rejected', () => {
-      expect.assertions(5);
+    it('validateMongoConnectionUrl: blank ok, mongodb(+srv) ok, sql rejected', () => {
+      expect.assertions(4);
       expect(options.validateMongoConnectionUrl('')).toBe(true);
       expect(options.validateMongoConnectionUrl('mongodb://h/db')).toBe(true);
       expect(options.validateMongoConnectionUrl(' mongodb+srv://h/db ')).toBe(true);
       expect(options.validateMongoConnectionUrl('postgres://h/db')).toBe(
         '"postgres://" is not supported, expected mongodb://, mongodb+srv://',
       );
+    });
+
+    it('validateMongoConnectionUrl: rejects uppercase, which the mongodb driver refuses', () => {
+      expect.assertions(2);
+      // new MongoClient('MongoDB://…') throws "Invalid scheme, expected connection string to
+      // start with mongodb://" — catching it here keeps the failure inside the prompt, before
+      // the project is created on Forest.
       expect(options.validateMongoConnectionUrl('MongoDB://h/db')).toBe(
         'The scheme must be lowercase: use "mongodb://"',
+      );
+      expect(options.validateMongoConnectionUrl('MONGODB+SRV://h/db')).toBe(
+        'The scheme must be lowercase: use "mongodb+srv://"',
       );
     });
   });
