@@ -726,4 +726,42 @@ describe('process-runner', () => {
       }
     });
   });
+
+  describe('secrets the narrow shapes still have to catch', () => {
+    it('redacts a password after an empty username, as Redis and Mongo URLs are written', async () => {
+      expect.assertions(2);
+      const error = await runCapture('node', [
+        '-e',
+        'console.error("connect failed: redis://:s3cr3t@cache.internal:6379/0"); process.exit(2)',
+      ]).catch((thrown: Error) => thrown);
+
+      expect(error.message).not.toContain('s3cr3t');
+      expect(error.message).toContain('redis://:***@cache.internal:6379/0');
+    });
+
+    it('redacts a secret value that starts with a dash, without eating the next flag', async () => {
+      expect.assertions(4);
+      const dashed = await runStep('node', [
+        '-e',
+        'process.exit(1)',
+        '--',
+        '--auth-token',
+        '-dashy-looking-secret',
+      ]).catch((thrown: Error) => thrown);
+      const boolean = await runStep('node', [
+        '-e',
+        'process.exit(1)',
+        '--',
+        '--auth-token',
+        '--verbose',
+      ]).catch((thrown: Error) => thrown);
+
+      expect(dashed.message).not.toContain('dashy-looking-secret');
+      expect(dashed.message).toContain('--auth-token ***');
+      // …while a flag that follows is still a flag, so the message does not claim a secret was
+      // passed where none was, and still says what actually ran.
+      expect(boolean.message).toContain('--auth-token --verbose');
+      expect(boolean.message).not.toContain('***');
+    });
+  });
 });
