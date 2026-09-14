@@ -44,6 +44,21 @@ function isPortFree(port: number): Promise<boolean> {
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// A signal is delivered synchronously; the socket the kernel then frees is not. So the effect is
+// polled for, and what has to happen synchronously is asserted on the signals themselves.
+async function waitForPortFree(port: number, timeoutMs = 5000): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    // eslint-disable-next-line no-await-in-loop
+    if (await isPortFree(port)) return true;
+    // eslint-disable-next-line no-await-in-loop
+    await wait(50);
+  }
+
+  return isPortFree(port);
+}
+
 // Asked of the OS rather than hardcoded. These tests are about servers that outlive what started
 // them, so a run that leaves one behind must not be able to poison the next one.
 function freePort(): Promise<number> {
@@ -342,9 +357,8 @@ describe('process-runner', () => {
       await expect(isPortFree(port)).resolves.toBe(false);
 
       stopProcess(child, 'SIGTERM', 200);
-      await wait(600);
 
-      await expect(isPortFree(port)).resolves.toBe(true);
+      await expect(waitForPortFree(port)).resolves.toBe(true);
     });
   });
 
@@ -360,8 +374,7 @@ describe('process-runner', () => {
       // Still there: it caught the signal and simply declined to leave.
       await expect(isPortFree(port)).resolves.toBe(false);
 
-      await wait(700);
-      await expect(isPortFree(port)).resolves.toBe(true);
+      await expect(waitForPortFree(port)).resolves.toBe(true);
     });
 
     it('escalates through stopAllProcesses too, for a caller unwinding on an error', async () => {
@@ -371,9 +384,8 @@ describe('process-runner', () => {
       await ready;
 
       stopAllProcesses('SIGTERM', 250);
-      await wait(800);
 
-      await expect(isPortFree(port)).resolves.toBe(true);
+      await expect(waitForPortFree(port)).resolves.toBe(true);
     });
   });
 
@@ -385,7 +397,7 @@ describe('process-runner', () => {
     }
 
     it('kills the group synchronously on a signal, and exits 128 + the signal number', async () => {
-      expect.assertions(3);
+      expect.assertions(4);
       const before = installedListeners('SIGHUP');
       const beforeExit = new Set(process.listeners('exit'));
 
@@ -403,7 +415,22 @@ describe('process-runner', () => {
       const onHangUp = process.listeners('SIGHUP').find(listener => !before.has(listener)) as (
         signal: NodeJS.Signals,
       ) => void;
-      const exit = jest.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
+
+      // What the hook signalled, as of the moment it called `process.exit` — the property under
+      // test is that both signals are already out by then, because nothing asynchronous it might
+      // have scheduled would ever run.
+      const realKill = process.kill.bind(process);
+      const sent: string[] = [];
+      let sentBeforeExit: string[] = [];
+      jest.spyOn(process, 'kill').mockImplementation(((pid: number, signal?: NodeJS.Signals) => {
+        // Signal 0 only asks whether the group is still there; it stops nothing.
+        if (signal !== 0) sent.push(`${pid < 0 ? 'group' : 'pid'} ${signal}`);
+
+        return realKill(pid, signal);
+      }) as typeof process.kill);
+      const exit = jest.spyOn(process, 'exit').mockImplementation((() => {
+        sentBeforeExit = [...sent];
+      }) as never);
 
       try {
         expect(onHangUp).toBeDefined();
@@ -411,9 +438,9 @@ describe('process-runner', () => {
 
         // SIGHUP is 1, so 129 — not the 143 that belongs to SIGTERM.
         expect(exit).toHaveBeenCalledWith(129);
-        // And the port is already free by the time `process.exit` was called: nothing asynchronous
-        // would ever have run, so the grace and the SIGKILL have to happen before the hook returns.
-        await expect(isPortFree(port)).resolves.toBe(true);
+        // The graceful signal, then the one it cannot decline — both before the process leaves.
+        expect(sentBeforeExit).toStrictEqual(['group SIGTERM', 'group SIGKILL']);
+        await expect(waitForPortFree(port)).resolves.toBe(true);
       } finally {
         jest.restoreAllMocks();
         process
