@@ -39,6 +39,17 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   // test, introspection) are skipped.
   protected readonly requiresDatabase: boolean = true;
 
+  /**
+   * Whether options missing from the command line may be asked interactively.
+   * Subclasses driven by a script turn this off (see `projects:create:in-app
+   * --format json`): prompts would write to stdout and wait for an answer nobody
+   * is there to give, so declared defaults are used instead.
+   */
+  // eslint-disable-next-line class-methods-use-this -- overridden per command
+  protected get interactive(): boolean {
+    return true;
+  }
+
   // Hosting architecture sent to the server. 'microservice' = a dedicated agent
   // we scaffold (the default for every create:* command); 'in-app' = the user
   // hosts the agent inside their own app (no scaffold).
@@ -225,7 +236,9 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   }
 
   protected async getCommandOptions(): Promise<ProjectCreateOptions> {
-    const options = await this.optionParser.getCommandLineOptions<ProjectCreateOptions>(this);
+    const options = await this.optionParser.getCommandLineOptions<ProjectCreateOptions>(this, {
+      interactive: this.interactive,
+    });
 
     options.databaseConnectionURL = options.databaseConnectionURL?.trim() || undefined;
 

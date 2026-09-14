@@ -89,8 +89,53 @@ export async function getInteractiveOptions<T>(
   return promise;
 }
 
-/** Get options that were passed in the command line */
-export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
+/**
+ * Resolve the options that would have been prompted, from their declared defaults.
+ *
+ * Same selection rules as `getInteractiveOptions` (has a prompter, not already set,
+ * not shadowed by an exclusive option, `when` satisfied) — it just answers with the
+ * declared default instead of asking. Used by commands running unattended, where a
+ * prompt would write to stdout and block on an answer nobody is there to give.
+ */
+export function getDefaultOptions<T>(
+  options: CommandOptions,
+  values: Record<string, unknown> = {},
+): T {
+  const resolved: Record<string, unknown> = {};
+
+  Object.entries(options).forEach(([name, option]) => {
+    if (
+      !option.prompter || // Would not have been asked
+      values[name] !== undefined || // Already set
+      (option.exclusive ?? []).some(e => values[e] !== undefined) || // Shadowed
+      option.default === undefined // Nothing to fall back on
+    )
+      return;
+
+    // A default may depend on the options resolved before it (e.g. databasePort reads
+    // the dialect), just as inquirer feeds previous answers to the next question.
+    const answersSoFar: Record<string, unknown> = { ...values, ...resolved };
+    if (option.when && !option.when(answersSoFar)) return;
+
+    resolved[name] =
+      typeof option.default === 'function'
+        ? (option.default as (v: Record<string, unknown>) => unknown)(answersSoFar)
+        : option.default;
+  });
+
+  return resolved as T;
+}
+
+/**
+ * Get options that were passed in the command line.
+ *
+ * Missing ones are asked interactively, unless `interactive` is false — then their
+ * declared defaults are used and nothing is ever written to stdout.
+ */
+export async function getCommandLineOptions<T>(
+  instance: Command,
+  { interactive = true }: { interactive?: boolean } = {},
+): Promise<T> {
   const { options } = instance.constructor as unknown as { options: CommandOptions };
 
   // Parse the command line arguments and flags.
@@ -120,10 +165,12 @@ export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
     if (typeof error === 'string') throw new InvalidOptionError(`Invalid value for ${k}: ${error}`);
   });
 
-  // Query missing options interactively
-  const optionsFromPrompt = await getInteractiveOptions<T>(options, optionsFromCli);
+  // Query missing options interactively, or fall back on their declared defaults
+  const missingOptions = interactive
+    ? await getInteractiveOptions<T>(options, optionsFromCli)
+    : getDefaultOptions<T>(options, optionsFromCli);
 
-  return { ...optionsFromCli, ...optionsFromPrompt };
+  return { ...optionsFromCli, ...missingOptions };
 }
 
 /** Convert generic options to oclif flags */
