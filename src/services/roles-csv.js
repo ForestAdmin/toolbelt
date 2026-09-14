@@ -100,10 +100,22 @@ function collectSmartActionsForCollection(roles, envId, colName) {
 
 function collectColumns(collections, roles, envId) {
   return collections.reduce((cols, colName) => {
-    const crudCols = CRUD_SUFFIXES.map(s => `${colName}:${s}`);
+    const crudCols = CRUD_SUFFIXES.map(s => ({
+      header: `${colName}:${s}`,
+      collectionName: colName,
+      suffix: s,
+    }));
     const actions = collectSmartActionsForCollection(roles, envId, colName);
     const saCols = actions.reduce(
-      (acc, action) => [...acc, ...SMART_ACTION_SUFFIXES.map(s => `${colName}:${action}:${s}`)],
+      (acc, action) => [
+        ...acc,
+        ...SMART_ACTION_SUFFIXES.map(s => ({
+          header: `${colName}:${action}:${s}`,
+          collectionName: colName,
+          actionName: action,
+          suffix: s,
+        })),
+      ],
       [],
     );
     return [...cols, ...crudCols, ...saCols];
@@ -146,17 +158,13 @@ function getSmartActionValue(col, actionName, suffix) {
   return Boolean(sa[SA_FIELD_MAP[suffix]]);
 }
 
-function buildCellForColumn(colHeader, colByName) {
-  const parts = colHeader.split(':');
-  if (parts.length === 2) {
-    const [colName, suffix] = parts;
-    return String(getCrudValue(colByName[colName], suffix));
-  }
-  if (parts.length === 3) {
-    const [colName, actionName, suffix] = parts;
-    return String(getSmartActionValue(colByName[colName], actionName, suffix));
-  }
-  return 'false';
+// Reads the structured column descriptor built by collectColumns rather than
+// re-splitting its `header`: a smart-action name may itself contain a colon
+// (e.g. "SAML SSO #2: Edit SSO config"), which a split would mis-slice.
+function buildCellForColumn(column, colByName) {
+  const col = colByName[column.collectionName];
+  if (column.actionName === undefined) return String(getCrudValue(col, column.suffix));
+  return String(getSmartActionValue(col, column.actionName, column.suffix));
 }
 
 function buildRoleRow(role, columns, envId) {
@@ -182,7 +190,7 @@ function buildRoleRow(role, columns, envId) {
  */
 function formatWide(roles, envId) {
   const columns = buildColumns(roles, envId);
-  const header = ['role', 'enabled', ...columns].map(escapeCsv).join(',');
+  const header = ['role', 'enabled', ...columns.map(c => c.header)].map(escapeCsv).join(',');
   const rows = [header, ...roles.map(role => buildRoleRow(role, columns, envId))];
   return `${rows.join('\n')}\n`;
 }
@@ -238,12 +246,52 @@ function applyThreePartHeader(collectionMap, colName, actionName, suffix, rawVal
   return { ...collectionMap, [colName]: { ...col, smartActions: updatedSmartActions } };
 }
 
+/**
+ * Split a column header into its parts, keying off the trailing suffix instead of
+ * splitting on every colon: smart-action names routinely contain one (e.g.
+ * "Organisation:SAML SSO #2: Edit SSO config:trigger"), so a naive split
+ * over-slices them. The CRUD and smart-action suffix sets are disjoint, which
+ * makes the trailing segment enough to tell the two column shapes apart.
+ *
+ * A collection name containing a colon stays ambiguous in the smart-action case;
+ * we keep the export's convention that the collection is the first segment.
+ * @returns {{ collectionName: string, actionName?: string, suffix: string }|null}
+ */
+function parseHeader(header) {
+  const lastColon = header.lastIndexOf(':');
+  if (lastColon === -1) return null;
+  const suffix = header.slice(lastColon + 1);
+  const prefix = header.slice(0, lastColon);
+  if (!prefix) return null;
+
+  if (SMART_ACTION_SUFFIXES.includes(suffix)) {
+    const firstColon = prefix.indexOf(':');
+    if (firstColon === -1) return null;
+    return {
+      collectionName: prefix.slice(0, firstColon),
+      actionName: prefix.slice(firstColon + 1),
+      suffix,
+    };
+  }
+  // Not a smart-action suffix: the whole prefix is the collection name, colons
+  // included. Unknown suffixes fall through here and are rejected downstream
+  // with the more precise "Unknown permission column" message.
+  return { collectionName: prefix, suffix };
+}
+
 function applyHeader(collectionMap, header, rawValue) {
-  const parts = header.split(':');
-  if (parts.length === 2) return applyTwoPartHeader(collectionMap, parts[0], parts[1], rawValue);
-  if (parts.length === 3)
-    return applyThreePartHeader(collectionMap, parts[0], parts[1], parts[2], rawValue);
-  throw new Error(`Unrecognized CSV column "${header}".`);
+  const parsed = parseHeader(header);
+  if (!parsed) throw new Error(`Unrecognized CSV column "${header}".`);
+  if (parsed.actionName === undefined) {
+    return applyTwoPartHeader(collectionMap, parsed.collectionName, parsed.suffix, rawValue);
+  }
+  return applyThreePartHeader(
+    collectionMap,
+    parsed.collectionName,
+    parsed.actionName,
+    parsed.suffix,
+    rawValue,
+  );
 }
 
 function parseRow(headers, cells, envId) {

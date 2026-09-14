@@ -74,6 +74,30 @@ describe('roles-csv formatWide', () => {
     expect(row.endsWith('true,false,true,false,true')).toBe(true);
   });
 
+  it('emits real cell values for a smart action whose name contains a colon', () => {
+    expect.assertions(2);
+    const collections = [
+      {
+        collectionName: 'Organisation',
+        smartActions: [
+          {
+            smartActionName: 'SAML SSO #2: Edit SSO config',
+            triggerEnabled: true,
+            approvalRequired: true,
+            userApprovalEnabled: false,
+            selfApprovalEnabled: false,
+          },
+        ],
+      },
+    ];
+    const csv = formatWide([role('R', [{ environmentId: 3, enabled: true, collections }])], 3);
+    const [header, row] = rows(csv);
+
+    expect(header).toContain('Organisation:SAML SSO #2: Edit SSO config:trigger');
+    // Regression: the colon in the action name used to make every cell read "false".
+    expect(row.endsWith('true,true,false,false,false')).toBe(true);
+  });
+
   it('hasConditions is false when no *Condition field is set', () => {
     expect.assertions(1);
     const collections = [
@@ -208,6 +232,36 @@ describe('roles-csv parseWide', () => {
 
     expect(parsed.enabled).toBe(true);
     expect(parsed.collections[0].browseEnabled).toBe(true);
+  });
+
+  it('round-trips a smart action whose name contains a colon (PRD-535 regression)', () => {
+    expect.assertions(2);
+    // Verbatim shape of the column `roles:export` produced for Spendesk, which
+    // `roles:apply` then rejected as an unrecognized column.
+    const csv = [
+      'role,enabled,Organisation:browse,Organisation:SAML SSO #2: Edit SSO config:trigger',
+      'Ops,true,true,true',
+    ].join('\n');
+    const [parsed] = parseWide(csv, '3');
+    const [collection] = parsed.collections;
+
+    expect(collection.browseEnabled).toBe(true);
+    expect(collection.smartActions).toStrictEqual([
+      {
+        smartActionName: 'SAML SSO #2: Edit SSO config',
+        triggerEnabled: true,
+        approvalRequired: false,
+        userApprovalEnabled: false,
+        selfApprovalEnabled: false,
+      },
+    ]);
+  });
+
+  it('keeps a colon in the collection name on a CRUD column', () => {
+    expect.assertions(1);
+    const csv = ['role,enabled,schema:orders:browse', 'Ops,true,true'].join('\n');
+
+    expect(parseWide(csv, '3')[0].collections[0].collectionName).toBe('schema:orders');
   });
 
   it('rejects an invalid boolean cell (write-safety: no silent coercion)', () => {
