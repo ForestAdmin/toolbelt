@@ -201,7 +201,7 @@ describe('process-runner', () => {
 
       try {
         const { ready } = startProcess('sh', wrapper(39322), { ready: /never-matches/ });
-        await expect(ready).rejects.toThrow(/Port already in use/);
+        await expect(ready).rejects.toThrow(/Port 39322 is already in use/);
       } finally {
         blocker.close();
       }
@@ -521,6 +521,59 @@ describe('process-runner', () => {
 
       expect(error.message).toContain('--verbose');
       expect(error.message).toContain('exited with code 4');
+    });
+  });
+
+  describe('startProcess — a port clash the process recovers from', () => {
+    it('lets a server that falls back to another port become ready, instead of killing it', async () => {
+      expect.assertions(2);
+      const taken = await freePort();
+      const blocker = net.createServer().listen(taken);
+
+      // What a dev server does: report the clash, then bind the next one up and serve. Treating
+      // the word EADDRINUSE as the failure itself takes down a back-end that was about to work.
+      const { child, ready } = startProcess(
+        'sh',
+        [
+          '-c',
+          `node -e "const net=require('net');const s=net.createServer();s.on('error',()=>{console.error('Error: listen EADDRINUSE: address already in use :::${taken}');s.listen(0,()=>console.log('listening on a free port'))});s.listen(${taken});setInterval(()=>{},1e3)" & wait`,
+        ],
+        { ready: /listening on a free port/, timeoutMs: 6000 },
+      );
+
+      try {
+        await expect(ready).resolves.toBeUndefined();
+        await expect(isPortFree(taken)).resolves.toBe(false);
+      } finally {
+        blocker.close();
+        stopProcess(child);
+        await wait(300);
+      }
+    });
+
+    it('still fails fast, and names the port, when nothing recovers', async () => {
+      expect.assertions(1);
+      const taken = await freePort();
+      const blocker = net.createServer().listen(taken);
+
+      // Reports the clash and then just sits there. Waiting out the full timeout for a start that
+      // will never happen is the thing this check exists to avoid, so the countdown must fire.
+      const { child, ready } = startProcess(
+        'sh',
+        [
+          '-c',
+          `node -e "const net=require('net');const s=net.createServer();s.on('error',()=>console.error('Error: listen EADDRINUSE: address already in use :::${taken}'));s.listen(${taken});setInterval(()=>{},1e3)" & wait`,
+        ],
+        { ready: /never-matches/, timeoutMs: 2000 },
+      );
+
+      try {
+        await expect(ready).rejects.toThrow(`Port ${taken} is already in use`);
+      } finally {
+        blocker.close();
+        stopProcess(child);
+        await wait(300);
+      }
     });
   });
 });
