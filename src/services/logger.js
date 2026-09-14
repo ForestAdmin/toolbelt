@@ -15,6 +15,12 @@ class Logger {
 
     // FIXME: Silent was not used before as no "silent" value was in context.
     this.silent = !!this.env.SILENT && this.env.SILENT !== '0';
+
+    // When true, stdout is reserved for a machine-readable payload the command
+    // writes itself (e.g. `--format json`): every human-readable line is diverted
+    // to stderr instead. Nothing is dropped — diagnostics stay visible, they just
+    // stop polluting the parsable stream.
+    this.reserveStdout = false;
   }
 
   _logLine(message, options) {
@@ -37,7 +43,7 @@ class Logger {
     }
     actualMessage = `${actualPrefix}${actualMessage}\n`;
 
-    if (options.std === 'err') {
+    if (options.std === 'err' || this.reserveStdout) {
       this.stderr.write(actualMessage);
     } else {
       this.stdout.write(actualMessage);
