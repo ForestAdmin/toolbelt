@@ -25,9 +25,12 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
         'databasePassword',
         'mongoDBSRV',
       ],
+      filter: projectCreateOptions.trimConnectionUrl,
       validate: projectCreateOptions.validateMongoConnectionUrl,
       prompter: {
         question: 'MongoDB connection URL (leave blank to enter the details manually):',
+        // The URL embeds the database password: it must be masked like the password prompt.
+        secret: true,
       },
     },
     databaseName: {

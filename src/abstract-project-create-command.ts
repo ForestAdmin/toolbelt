@@ -172,7 +172,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       appPort: Number(config.applicationPort),
     } as AppConfig;
     const dbConfig = {
-      dbConnectionUrl: config.databaseConnectionURL || undefined, // blank prompt ⇒ use the fields
+      dbConnectionUrl: config.databaseConnectionURL,
       dbDialect: config.databaseDialect,
       dbSchema: config.databaseSchema,
       dbName: config.databaseName,
@@ -216,6 +216,11 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
   protected async getCommandOptions(): Promise<ProjectCreateOptions> {
     const options = await this.optionParser.getCommandLineOptions<ProjectCreateOptions>(this);
+
+    // A blank answer to the optional connection URL prompt means "use the field prompts instead",
+    // and a pasted URL routinely carries surrounding whitespace. Normalize once, before the
+    // dialect is derived from it and before it reaches the connection test and the generated .env.
+    options.databaseConnectionURL = options.databaseConnectionURL?.trim() || undefined;
 
     // Dialect must be set for the project creator to work even if the connection URL is provided
     options.databaseDialect = getDialect(options);

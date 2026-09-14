@@ -27,9 +27,12 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
         'databaseUser',
         'databasePassword',
       ],
+      filter: projectCreateOptions.trimConnectionUrl,
       validate: projectCreateOptions.validateSqlConnectionUrl,
       prompter: {
         question: 'Database connection URL (leave blank to enter the details manually):',
+        // The URL embeds the database password: it must be masked like the password prompt.
+        secret: true,
       },
     },
     databaseDialect: {

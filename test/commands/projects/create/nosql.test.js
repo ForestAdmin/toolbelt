@@ -18,7 +18,10 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
     {
       name: 'databaseConnectionURL',
       message: 'MongoDB connection URL (leave blank to enter the details manually):',
-      type: 'input',
+      // The URL embeds the database password: masked, like the databasePassword prompt.
+      type: 'password',
+      mask: '*',
+      filter: expect.any(Function),
       validate: expect.any(Function),
     },
     {

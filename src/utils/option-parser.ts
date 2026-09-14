@@ -14,9 +14,11 @@ export type CommandOptions<T = Record<string, unknown>> = {
     choices?: Array<{ name: string; value: unknown }>;
     when?: (v: T) => boolean;
     validate?: (v: string) => boolean | string;
+    /** Normalizes the answer before it is validated and stored (inquirer runs it first). */
+    filter?: (v: string) => string;
     default?: unknown | ((v: T) => unknown);
     oclif: { char?: string; description: string };
-    prompter?: { question: string; description?: string };
+    prompter?: { question: string; description?: string; secret?: boolean };
   };
 };
 
@@ -25,13 +27,20 @@ function optionToInquirer(name: string, option: CommandOptions[string]): unknown
 
   // Use rawlist on windows because of https://github.com/SBoudrias/Inquirer.js/issues/303
   const listType = /^win/.test(os.platform()) ? 'rawlist' : 'list';
-  const inputType = name.match(/(password|secret)/i) ? 'password' : 'input';
+  // An option holding credentials must never be echoed: either its name says so, or it opts in
+  // explicitly (a connection URL carries the password but is not named like one).
+  const isSecret = option.prompter.secret || /(password|secret)/i.test(name);
+  const inputType = isSecret ? 'password' : 'input';
   let type = option.choices ? listType : inputType;
   if (option.type === 'boolean') type = 'confirm';
 
   const result: Record<string, unknown> = { name, type, message: option.prompter.question };
+  // Unlike a password, a connection URL is long and pasted: show its length so that a failed
+  // paste is distinguishable from the blank answer that falls back to the field prompts.
+  if (option.prompter.secret) result.mask = '*';
   if (option.prompter.description) result.description = option.prompter.description;
   if (option.choices) result.choices = option.choices;
+  if (option.filter) result.filter = option.filter;
   if (option.validate) result.validate = option.validate;
   if (option.default !== undefined) result.default = option.default;
   if (option.when)

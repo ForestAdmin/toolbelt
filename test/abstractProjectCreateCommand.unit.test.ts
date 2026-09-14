@@ -322,6 +322,37 @@ describe('abstractProjectCreateCommand command', () => {
       expect(stubs.eventSender.notifySuccess).toHaveBeenCalledTimes(1);
     });
 
+    describe('when the connection URL is pasted with surrounding whitespace', () => {
+      // Copying a URL out of a dashboard or a password manager routinely drags whitespace
+      // along; it must not reach the connection test nor the generated project's .env.
+      it('should trim it before deriving the dialect and connecting', async () => {
+        expect.assertions(2);
+
+        const config = { databaseConnectionURL: '  postgres://u:p@localhost:5432/db\n' };
+        const commandArgs = [
+          'testApp',
+          '--applicationHost',
+          'localhost',
+          '--applicationPort',
+          '3300',
+        ];
+
+        const { instance, stubs } = setup(config, commandArgs);
+
+        await instance.run();
+
+        expect(stubs.database.connect).toHaveBeenCalledWith(
+          expect.objectContaining({
+            dbConnectionUrl: 'postgres://u:p@localhost:5432/db',
+            dbDialect: 'postgres',
+          }),
+        );
+        expect(stubs.eventSender.meta).toStrictEqual(
+          expect.objectContaining({ dbDialect: 'postgres' }),
+        );
+      });
+    });
+
     describe('when the connection URL prompt was left blank (empty string)', () => {
       // The sql/nosql commands ask for an optional connection URL first; a blank answer
       // means "use the field prompts". The empty string must be normalized to undefined
