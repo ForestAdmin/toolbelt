@@ -1,3 +1,5 @@
+import type * as ProcessRunner from '../../src/services/process-runner';
+
 import net from 'net';
 
 import {
@@ -14,6 +16,21 @@ import {
 const SERVER = `node -e "require('net').createServer().listen(PORT,()=>console.log('listening'));setInterval(()=>{},1e3)"`;
 const wrapper = (port: number) => ['-c', `${SERVER.replace('PORT', String(port))} & wait`];
 
+// The same server, but the wrapper returns while it keeps running — `npm start` dying, or any
+// launcher that hands over and leaves. The server stays in the group the wrapper led.
+const orphaningWrapper = (port: number) => [
+  '-c',
+  `${SERVER.replace('PORT', String(port))} & sleep 0.3`,
+];
+
+// A server that traps SIGTERM to shut down gracefully, as puma and most back-ends do. SIGTERM is a
+// request it is free to ignore, so nothing but SIGKILL ever gets the port back.
+const TRAPPING_SERVER = `node -e "process.on('SIGTERM',()=>{});require('net').createServer().listen(PORT,()=>console.log('listening'));setInterval(()=>{},1e3)"`;
+const trappingWrapper = (port: number) => [
+  '-c',
+  `${TRAPPING_SERVER.replace('PORT', String(port))} & wait`,
+];
+
 function isPortFree(port: number): Promise<boolean> {
   return new Promise(resolve => {
     const probe = net.connect(port, '127.0.0.1');
@@ -26,6 +43,18 @@ function isPortFree(port: number): Promise<boolean> {
 }
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Asked of the OS rather than hardcoded. These tests are about servers that outlive what started
+// them, so a run that leaves one behind must not be able to poison the next one.
+function freePort(): Promise<number> {
+  return new Promise(resolve => {
+    const probe = net.createServer();
+    probe.listen(0, '127.0.0.1', () => {
+      const { port } = probe.address() as net.AddressInfo;
+      probe.close(() => resolve(port));
+    });
+  });
+}
 
 describe('process-runner', () => {
   describe('runStep', () => {
@@ -294,6 +323,113 @@ describe('process-runner', () => {
       } finally {
         stopProcess(child);
         await wait(300);
+      }
+    });
+  });
+
+  describe('stopProcess — a wrapper that exits first', () => {
+    it('still frees the port when the wrapper is gone and only its child is left', async () => {
+      expect.assertions(3);
+      const port = await freePort();
+      const { child, ready } = startProcess('sh', orphaningWrapper(port), { ready: /listening/ });
+      await ready;
+      await wait(800);
+
+      // The wrapper has returned; the server it started has not. Reading the leader's exit state
+      // to decide whether to signal makes `stopProcess` a no-op here — and the port stays held,
+      // which is the exact bug this module exists to fix, reached from the other side.
+      expect(child.exitCode).not.toBeNull();
+      await expect(isPortFree(port)).resolves.toBe(false);
+
+      stopProcess(child, 'SIGTERM', 200);
+      await wait(600);
+
+      await expect(isPortFree(port)).resolves.toBe(true);
+    });
+  });
+
+  describe('stopProcess — a process that traps SIGTERM', () => {
+    it('escalates to SIGKILL, because a graceful signal is a request and not an outcome', async () => {
+      expect.assertions(2);
+      const port = await freePort();
+      const { child, ready } = startProcess('sh', trappingWrapper(port), { ready: /listening/ });
+      await ready;
+
+      stopProcess(child, 'SIGTERM', 250);
+      await wait(150);
+      // Still there: it caught the signal and simply declined to leave.
+      await expect(isPortFree(port)).resolves.toBe(false);
+
+      await wait(700);
+      await expect(isPortFree(port)).resolves.toBe(true);
+    });
+
+    it('escalates through stopAllProcesses too, for a caller unwinding on an error', async () => {
+      expect.assertions(1);
+      const port = await freePort();
+      const { ready } = startProcess('sh', trappingWrapper(port), { ready: /listening/ });
+      await ready;
+
+      stopAllProcesses('SIGTERM', 250);
+      await wait(800);
+
+      await expect(isPortFree(port)).resolves.toBe(true);
+    });
+  });
+
+  describe('the exit hook', () => {
+    // The handlers are installed on the shared `process`, so they are captured and removed again:
+    // a test must not leave the runner with a listener that calls `process.exit`.
+    function installedListeners(signal: NodeJS.Signals) {
+      return new Set(process.listeners(signal));
+    }
+
+    it('kills the group synchronously on a signal, and exits 128 + the signal number', async () => {
+      expect.assertions(3);
+      const before = installedListeners('SIGHUP');
+      const beforeExit = new Set(process.listeners('exit'));
+
+      // A fresh instance, so `installExitHook` runs again in a module the suite already loaded.
+      let runner!: typeof ProcessRunner;
+      jest.isolateModules(() => {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
+        runner = require('../../src/services/process-runner');
+      });
+
+      const port = await freePort();
+      const { ready } = runner.startProcess('sh', trappingWrapper(port), { ready: /listening/ });
+      await ready;
+
+      const onHangUp = process.listeners('SIGHUP').find(listener => !before.has(listener)) as (
+        signal: NodeJS.Signals,
+      ) => void;
+      const exit = jest.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
+
+      try {
+        expect(onHangUp).toBeDefined();
+        onHangUp('SIGHUP');
+
+        // SIGHUP is 1, so 129 — not the 143 that belongs to SIGTERM.
+        expect(exit).toHaveBeenCalledWith(129);
+        // And the port is already free by the time `process.exit` was called: nothing asynchronous
+        // would ever have run, so the grace and the SIGKILL have to happen before the hook returns.
+        await expect(isPortFree(port)).resolves.toBe(true);
+      } finally {
+        jest.restoreAllMocks();
+        process
+          .listeners('SIGHUP')
+          .filter(listener => !before.has(listener))
+          .forEach(listener => process.removeListener('SIGHUP', listener));
+        (['SIGINT', 'SIGTERM'] as const).forEach(signal =>
+          process
+            .listeners(signal)
+            .filter(listener => !installedListeners(signal).has(listener))
+            .forEach(listener => process.removeListener(signal, listener)),
+        );
+        process
+          .listeners('exit')
+          .filter(listener => !beforeExit.has(listener))
+          .forEach(listener => process.removeListener('exit', listener));
       }
     });
   });
