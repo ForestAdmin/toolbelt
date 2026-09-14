@@ -576,4 +576,34 @@ describe('process-runner', () => {
       }
     });
   });
+
+  describe('startProcess — the end of a process that did start', () => {
+    it('reports a crash that happens long after ready, which nothing else surfaces', async () => {
+      expect.assertions(1);
+      // `wait $!` and not a bare `wait`: the latter reports 0 whatever the job did, which would
+      // make this pass on a runner that never propagated the code at all.
+      const { ready, exited } = startProcess(
+        'sh',
+        ['-c', `node -e "console.log('listening');setTimeout(()=>process.exit(7),300)" & wait $!`],
+        { ready: /listening/ },
+      );
+
+      await ready;
+
+      // `ready` described the start and is long settled. A back-end that dies twenty minutes in
+      // used to leave the caller with no way to notice at all.
+      await expect(exited).resolves.toStrictEqual({ code: 7, signal: null });
+    });
+
+    it('says a signal ended it, so a caller can tell a crash from its own stop', async () => {
+      expect.assertions(1);
+      const port = await freePort();
+      const { child, ready, exited } = startProcess('sh', wrapper(port), { ready: /listening/ });
+      await ready;
+
+      stopProcess(child);
+
+      await expect(exited).resolves.toStrictEqual({ code: null, signal: 'SIGTERM' });
+    });
+  });
 });

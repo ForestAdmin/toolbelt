@@ -28,10 +28,21 @@ export type RunOptions = {
   env?: Record<string, string>;
 };
 
+export type ProcessExit = { code: number | null; signal: NodeJS.Signals | null };
+
 export type StartedProcess = {
   child: ChildProcess;
   /** Resolves when the process prints something matching `ready`, rejects on timeout or a taken port. */
   ready: Promise<void>;
+  /**
+   * Resolves when the process ends, however it ends — including long after `ready` did.
+   *
+   * `ready` only ever describes the start. A back-end that dies twenty minutes in leaves it
+   * resolved and says nothing, so a caller holding one has no way to notice; this is that way.
+   * It never rejects: an exit is an outcome to read (`code`, or `signal` when something stopped
+   * it), not a failure to catch.
+   */
+  exited: Promise<ProcessExit>;
   /** Stop streaming output — before handing the terminal to something else, typically. */
   mute: () => void;
 };
@@ -435,5 +446,9 @@ export function startProcess(
   // dies before being ready produces an unhandled rejection and can take the CLI down with it.
   readyPromise.catch(() => undefined);
 
-  return { child, ready: readyPromise, mute };
+  const exited = new Promise<ProcessExit>(resolve => {
+    child.on('close', (code, signal) => resolve({ code, signal }));
+  });
+
+  return { child, ready: readyPromise, exited, mute };
 }
