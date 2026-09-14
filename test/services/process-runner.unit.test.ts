@@ -598,6 +598,22 @@ describe('process-runner', () => {
       }
     });
 
+    it('blames the clash, not a bare exit code, when it reports one with no port and dies', async () => {
+      expect.assertions(1);
+      // The die-fast path. Reading the port number to decide what killed it confuses naming the
+      // cause with having one: the clash is what was detected either way.
+      const { ready } = startProcess(
+        'sh',
+        [
+          '-c',
+          `node -e "console.error('listen EADDRINUSE: address already in use /tmp/forest.sock');process.exit(1)" & wait $!`,
+        ],
+        { ready: /never-matches/, timeoutMs: 4000 },
+      );
+
+      await expect(ready).rejects.toThrow(/A port it needs is already in use/);
+    });
+
     it('fails fast even when no port can be read from the message at all', async () => {
       expect.assertions(1);
       // A unix socket has no port to name. Naming one is a courtesy; failing fast is the point.

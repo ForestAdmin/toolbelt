@@ -325,6 +325,139 @@ export function runCapture(
 }
 
 /**
+ * The line a port clash was reported on, and the port in it when the message gives one up.
+ *
+ * Naming the port is a courtesy, and it sits on either side of the word depending on who wrote
+ * the message — node says `address already in use :::3000`, Ruby says `port 3000
+ * (Errno::EADDRINUSE)`, and a unix socket names no port at all. So the clash is what is reported
+ * here, with the port only when there is one to give.
+ */
+function portInUseError(port?: string): Error {
+  return port
+    ? new Error(`Port ${port} is already in use — free it with \`lsof -ti :${port} | xargs kill\`.`)
+    : new Error(
+        'A port it needs is already in use — free it with `lsof -ti :<port> | xargs kill`.',
+      );
+}
+
+function readPortClash(text: string): { port?: string } | undefined {
+  const line = /^.*EADDRINUSE.*$/m.exec(text);
+
+  if (!line) return undefined;
+
+  const [, port] = /:(\d{2,5})\b/.exec(line[0]) ?? /\bport (\d{2,5})\b/i.exec(line[0]) ?? [];
+
+  return { port };
+}
+
+/** Everything a starting process's output so far can say about it, which is usually nothing. */
+function classifyOutput(
+  text: string,
+  readyPattern: RegExp,
+): { ready: true } | { clash: { port?: string } } | undefined {
+  if (readyPattern.test(text)) return { ready: true };
+
+  const clash = readPortClash(text);
+
+  return clash ? { clash } : undefined;
+}
+
+/**
+ * Watch a freshly spawned process until it says it is ready, or until it is clear it never will
+ * be. Resolving is the only good outcome; every rejection also stops the process, because a
+ * failed start left behind keeps its pipes open and the CLI's event loop alive with them.
+ */
+function watchStartup(
+  child: ChildProcess,
+  command: string,
+  ready: RegExp,
+  timeoutMs: number,
+  onChunk: (text: string) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // Rebuilt without `g`/`y`: those flags make `.test()` stateful, so a caller passing `/x/g`
+    // would have its `lastIndex` advance between chunks and skip the very announcement we wait
+    // for — the process then dies on a timeout that had no cause.
+    const readyPattern = new RegExp(ready.source, ready.flags.replace(/[gy]/g, ''));
+
+    // One buffer PER STREAM. Sharing one would let a token straddling stdout and stderr match
+    // when neither stream ever produced it. Each is capped to a suffix: a chatty process that
+    // never announces itself would otherwise exhaust the heap long before the timeout fires,
+    // crashing instead of reporting. The window is far wider than any readiness line, so a
+    // pattern split across chunk boundaries still matches.
+    const WINDOW = 8192;
+    const scanned = { stdout: '', stderr: '' };
+    let settled = false;
+    let timeout: NodeJS.Timeout;
+    let portClash: NodeJS.Timeout | undefined;
+    let clashedPort: string | undefined;
+
+    const settle = () => {
+      settled = true;
+      clearTimeout(timeout);
+      clearTimeout(portClash);
+      scanned.stdout = '';
+      scanned.stderr = '';
+    };
+
+    // Never longer than the wait it is meant to cut short.
+    const clashGraceMs = Math.min(PORT_CLASH_GRACE_MS, Math.floor(timeoutMs / 2));
+
+    // A failed start must not leave the process behind: its open pipes would also keep this CLI's
+    // event loop alive, so the user would get an error and then a prompt that never returns.
+    const fail = (error: Error) => {
+      if (settled) return;
+      settle();
+      stopProcess(child);
+      reject(error);
+    };
+
+    const onData = (source: 'stdout' | 'stderr') => (text: string) => {
+      onChunk(text);
+      if (settled) return;
+      scanned[source] = (scanned[source] + text).slice(-WINDOW);
+
+      const verdict = classifyOutput(scanned[source], readyPattern);
+
+      if (!verdict) return;
+
+      if ('ready' in verdict) {
+        settle();
+        resolve();
+
+        return;
+      }
+
+      clashedPort = clashedPort ?? verdict.clash.port;
+      portClash = portClash ?? setTimeout(() => fail(portInUseError(clashedPort)), clashGraceMs);
+    };
+
+    timeout = setTimeout(
+      () => fail(new Error(`Timed out after ${timeoutMs / 1000}s waiting for \`${command}\`.`)),
+      timeoutMs,
+    );
+
+    // Decoded by the stream, not per chunk: a multibyte character split across two reads would
+    // otherwise become replacement characters, and a `ready` pattern containing one would never
+    // match — the process killed on a false timeout.
+    child.stdout?.setEncoding('utf8');
+    child.stderr?.setEncoding('utf8');
+    child.stdout?.on('data', onData('stdout'));
+    child.stderr?.on('data', onData('stderr'));
+    child.on('error', error => fail(error));
+    child.on('close', code =>
+      fail(
+        // `portClash`, not `clashedPort`: what was detected is the clash. Whether the message
+        // also gave up a port number says nothing about what killed the process.
+        portClash
+          ? portInUseError(clashedPort)
+          : new Error(`\`${command}\` stopped before it was ready (exit code ${code}).`),
+      ),
+    );
+  });
+}
+
+/**
  * Start a long-running process in the background, streaming its output through `onOutput`, and
  * resolve `ready` once it prints something matching `ready` — for an agent, the line that says its
  * schema reached Forest.
@@ -361,100 +494,7 @@ export function startProcess(
     stream = undefined;
   };
 
-  const readyPromise = new Promise<void>((resolve, reject) => {
-    // Rebuilt without `g`/`y`: those flags make `.test()` stateful, so a caller passing `/x/g`
-    // would have its `lastIndex` advance between chunks and skip the very announcement we wait
-    // for — the process then dies on a timeout that had no cause.
-    const readyPattern = new RegExp(ready.source, ready.flags.replace(/[gy]/g, ''));
-
-    // One buffer PER STREAM. Sharing one would let a token straddling stdout and stderr match
-    // when neither stream ever produced it. Each is capped to a suffix: a chatty process that
-    // never announces itself would otherwise exhaust the heap long before the timeout fires,
-    // crashing instead of reporting. The window is far wider than any readiness line, so a
-    // pattern split across chunk boundaries still matches.
-    const WINDOW = 8192;
-    const scanned = { stdout: '', stderr: '' };
-    let settled = false;
-    let timeout: NodeJS.Timeout;
-    let portClash: NodeJS.Timeout | undefined;
-    let clashedPort: string | undefined;
-
-    const settle = () => {
-      settled = true;
-      clearTimeout(timeout);
-      clearTimeout(portClash);
-      scanned.stdout = '';
-      scanned.stderr = '';
-    };
-
-    // Never longer than the wait it is meant to cut short.
-    const clashGraceMs = Math.min(PORT_CLASH_GRACE_MS, Math.floor(timeoutMs / 2));
-
-    const portInUse = () =>
-      new Error(
-        clashedPort
-          ? `Port ${clashedPort} is already in use — free it with \`lsof -ti :${clashedPort} | xargs kill\`.`
-          : 'A port it needs is already in use — free it with `lsof -ti :<port> | xargs kill`.',
-      );
-
-    // A failed start must not leave the process behind: its open pipes would also keep this CLI's
-    // event loop alive, so the user would get an error and then a prompt that never returns.
-    const fail = (error: Error) => {
-      if (settled) return;
-      settle();
-      stopProcess(child);
-      reject(error);
-    };
-
-    const onData = (source: 'stdout' | 'stderr') => (text: string) => {
-      stream?.(text);
-      if (settled) return;
-      scanned[source] = (scanned[source] + text).slice(-WINDOW);
-
-      if (readyPattern.test(scanned[source])) {
-        settle();
-        resolve();
-        return;
-      }
-
-      const clash = /^.*EADDRINUSE.*$/m.exec(scanned[source]);
-
-      if (!clash) return;
-
-      // Naming the port is a courtesy, and it sits on either side of the word depending on who
-      // wrote the message — node says `address already in use :::3000`, Ruby says
-      // `port 3000 (Errno::EADDRINUSE)`. So failing to find it must never hold up the countdown,
-      // or a `bin/rails server` that will never start waits out the whole timeout instead. Still
-      // looked for on later chunks, in case the line arrived split.
-      if (!clashedPort) {
-        [, clashedPort] = /:(\d{2,5})\b/.exec(clash[0]) ??
-          /\bport (\d{2,5})\b/i.exec(clash[0]) ?? [];
-      }
-
-      if (!portClash) portClash = setTimeout(() => fail(portInUse()), clashGraceMs);
-    };
-
-    timeout = setTimeout(
-      () => fail(new Error(`Timed out after ${timeoutMs / 1000}s waiting for \`${command}\`.`)),
-      timeoutMs,
-    );
-
-    // Decoded by the stream, not per chunk: a multibyte character split across two reads would
-    // otherwise become replacement characters, and a `ready` pattern containing one would never
-    // match — the process killed on a false timeout.
-    child.stdout?.setEncoding('utf8');
-    child.stderr?.setEncoding('utf8');
-    child.stdout?.on('data', onData('stdout'));
-    child.stderr?.on('data', onData('stderr'));
-    child.on('error', error => fail(error));
-    child.on('close', code =>
-      fail(
-        clashedPort
-          ? portInUse()
-          : new Error(`\`${command}\` stopped before it was ready (exit code ${code}).`),
-      ),
-    );
-  });
+  const readyPromise = watchStartup(child, command, ready, timeoutMs, text => stream?.(text));
 
   // The rejection is delivered to whoever awaits `ready`. Without this attachment, a process that
   // dies before being ready produces an unhandled rejection and can take the CLI down with it.
