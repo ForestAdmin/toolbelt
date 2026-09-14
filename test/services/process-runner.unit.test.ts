@@ -433,4 +433,67 @@ describe('process-runner', () => {
       }
     });
   });
+
+  describe('secrets in error messages', () => {
+    it('strips the password from a connection URL passed as an argument', async () => {
+      expect.assertions(3);
+      const error = await runCapture('node', [
+        '-e',
+        'process.exit(1)',
+        '--',
+        '--connection-url',
+        'postgres://forest:hunter2@db.internal:5432/prod',
+      ]).catch((thrown: Error) => thrown);
+
+      // The CLI masks this very value at the prompt; handing it back in the failure it caused,
+      // into a terminal and whatever collects its output, undoes that.
+      expect(error.message).not.toContain('hunter2');
+      expect(error.message).toContain('postgres://forest:***@db.internal:5432/prod');
+      // …while everything that makes the message useful survives.
+      expect(error.message).toContain('--connection-url');
+    });
+
+    it('drops the value of a secret-looking flag, in both of its spellings', async () => {
+      expect.assertions(4);
+      const spaced = await runStep('node', [
+        '-e',
+        'process.exit(1)',
+        '--',
+        '--auth-token',
+        'npm_ArEaLlYsEcReT',
+      ]).catch((thrown: Error) => thrown);
+      const joined = await runStep('node', [
+        '-e',
+        'process.exit(1)',
+        '--',
+        '--password=correct-horse',
+      ]).catch((thrown: Error) => thrown);
+
+      expect(spaced.message).not.toContain('npm_ArEaLlYsEcReT');
+      expect(spaced.message).toContain('--auth-token ***');
+      expect(joined.message).not.toContain('correct-horse');
+      expect(joined.message).toContain('--password=***');
+    });
+
+    it('strips it from the captured stderr the error carries, not just from the arguments', async () => {
+      expect.assertions(2);
+      const error = await runCapture('node', [
+        '-e',
+        'console.error("could not connect to mysql://root:s3cr3t@10.0.0.4:3306/app"); process.exit(2)',
+      ]).catch((thrown: Error) => thrown);
+
+      expect(error.message).not.toContain('s3cr3t');
+      expect(error.message).toContain('could not connect to mysql://root:***@10.0.0.4:3306/app');
+    });
+
+    it('leaves an ordinary argument alone, so the message still says what ran', async () => {
+      expect.assertions(2);
+      const error = await runCapture('node', ['-e', 'process.exit(4)', '--', '--verbose']).catch(
+        (thrown: Error) => thrown,
+      );
+
+      expect(error.message).toContain('--verbose');
+      expect(error.message).toContain('exited with code 4');
+    });
+  });
 });

@@ -185,7 +185,43 @@ function spawnOptions(options: RunOptions, extra: SpawnOptions = {}): SpawnOptio
   };
 }
 
-const formatCommand = (command: string, args: string[]) => `${command} ${args.join(' ')}`.trim();
+const SECRET_FLAG =
+  /^--?[a-z0-9-]*(token|secret|password|passwd|pwd|apikey|api-key|auth|credential)[a-z0-9-]*$/i;
+
+const URL_CREDENTIALS = /([a-z][a-z0-9+.-]*:\/\/[^\s/@:]+):[^\s/@]+@/gi;
+
+/**
+ * Take the password out of any connection string in `text`.
+ *
+ * Both an argument list and a captured stderr routinely carry one — `bundle add`, a package
+ * manager's registry token, a back-end echoing its own DATABASE_URL — and both end up inside an
+ * Error that is printed, and often logged. The CLI masks the connection URL at the prompt; it must
+ * not hand it back in the next failure message. The host and database survive — they are what makes
+ * the failure diagnosable, and they are not the secret. Scope is deliberately narrow: a secret that
+ * is neither shaped like a URL nor the value of a secret-looking flag still goes through.
+ */
+function redactSecrets(text: string): string {
+  return text.replace(URL_CREDENTIALS, '$1:***@');
+}
+
+function redactArgs(args: string[]): string[] {
+  let valueIsSecret = false;
+
+  return args.map(arg => {
+    const isSecretValue = valueIsSecret && !arg.startsWith('-');
+    const [flag, ...value] = arg.split('=');
+
+    valueIsSecret = SECRET_FLAG.test(flag) && !value.length;
+
+    if (isSecretValue) return '***';
+    if (SECRET_FLAG.test(flag) && value.length) return `${flag}=***`;
+
+    return redactSecrets(arg);
+  });
+}
+
+const formatCommand = (command: string, args: string[]) =>
+  `${command} ${redactArgs(args).join(' ')}`.trim();
 
 /**
  * Run a command to completion. stdio is inherited so the child owns the terminal: `forest login`
@@ -250,7 +286,7 @@ export function runCapture(
         return;
       }
 
-      const detail = (stderr || stdout).trim();
+      const detail = redactSecrets((stderr || stdout).trim());
       reject(
         new Error(
           `\`${formatCommand(command, args)}\` exited with code ${code}${
