@@ -2,10 +2,12 @@ const mockStdin = require('mock-stdin');
 const { stdout, stderr } = require('stdout-stderr');
 
 module.exports = {
-  mockStd: (outputs, errorOutputs, print) => {
+  // `captureStdout` must also be on when only negative assertions are made, otherwise
+  // `stdout.output` is never refreshed and still holds the previous test's output.
+  mockStd: (outputs, errorOutputs, print, captureStdout = outputs.length > 0) => {
     stdout.previousPrint = stdout.print;
     stdout.print = print;
-    if (outputs.length) stdout.start();
+    if (captureStdout) stdout.start();
 
     stderr.previousPrint = stderr.print;
     stderr.print = print;
@@ -42,10 +44,10 @@ module.exports = {
       expect(stderr.output).not.toContain(notOutputs[i]);
     }
   },
-  rollbackStd: (stdin, inputs, outputs) => {
+  rollbackStd: (stdin, inputs, outputs, captureStdout = outputs.length > 0) => {
     if (inputs.length) stdin.end();
     if (inputs.length) stdin.reset();
-    if (outputs.length) stdout.stop();
+    if (captureStdout) stdout.stop();
     stderr.stop();
 
     stdout.print = stdout.previousPrint;

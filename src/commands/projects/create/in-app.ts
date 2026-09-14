@@ -62,7 +62,43 @@ export default class InAppCommand extends AbstractProjectCreateCommand {
 
   private forestAuthSecret?: string;
 
+  // Set in run(), before anything can write: see the ordering note there.
   private jsonOutput = false;
+
+  // Nothing may prompt in JSON mode — inquirer writes its questions to stdout and
+  // waits on stdin, which no caller of `--format json` is there to answer.
+  protected override get interactive(): boolean {
+    return !this.jsonOutput;
+  }
+
+  /**
+   * `--format json` promises that stdout carries nothing but the JSON document, so
+   * the promise has to be installed before the FIRST thing that can write — and that
+   * is the login check in AbstractAuthenticatedCommand.run(), not getConfig(). Hence
+   * parsing the flag here rather than in getCommandOptions().
+   */
+  override async run(): Promise<void> {
+    const { flags } = await this.parse(InAppCommand);
+    this.jsonOutput = flags.format === 'json';
+
+    if (this.jsonOutput) {
+      // Everything human-readable is diverted to stderr from now on; stdout is left
+      // to logNextSteps(). Diagnostics and errors are not lost, only moved.
+      this.logger.reserveStdout = true;
+
+      // The login flow is interactive: refuse up front instead of hanging on a
+      // password prompt (and exit 10, the same code checkAuthentication uses).
+      if (!this.authenticator.getAuthToken()) {
+        this.logger.error(
+          `Not logged in. Run '${this.chalk.bold('forest login')}' before using --format json.`,
+        );
+
+        return this.exit(10);
+      }
+    }
+
+    return super.run();
+  }
 
   // Create the project WITHOUT an agent (like the web UI) so the server keeps
   // architecture='in-app'. The abstract otherwise falls back agent → express-sequelize.
@@ -73,20 +109,6 @@ export default class InAppCommand extends AbstractProjectCreateCommand {
     return config;
   }
 
-  protected override async getCommandOptions(): Promise<projectCreateOptions.ProjectCreateOptions> {
-    const options = await super.getCommandOptions();
-
-    this.jsonOutput =
-      (options as projectCreateOptions.ProjectCreateOptions & { format?: string }).format ===
-      'json';
-    // In JSON mode stdout must carry ONLY the JSON document printed by
-    // logNextSteps(): mute the logger's stdout lines (spinners already write to
-    // stderr, and errors keep going to stderr).
-    if (this.jsonOutput) this.logger.silentStdout = true;
-
-    return options;
-  }
-
   // Required by the abstract command, but in-app scaffolds nothing.
   // eslint-disable-next-line class-methods-use-this, @typescript-eslint/no-empty-function -- intentional no-op
   protected override async dump(): Promise<void> {}
@@ -95,18 +117,36 @@ export default class InAppCommand extends AbstractProjectCreateCommand {
   protected override async generateProject(config: Config): Promise<void> {
     this.forestEnvSecret = config.forestEnvSecret;
     this.forestAuthSecret = config.forestAuthSecret;
+
+    // The secrets ARE the deliverable here — nothing was scaffolded to fall back on.
+    // Checked before the success path runs, so we never claim success and then print
+    // `FOREST_ENV_SECRET=undefined` (text) or drop the key altogether (json, where
+    // JSON.stringify omits undefined and the caller would see a valid-looking
+    // document with exit 0).
+    if (!this.forestEnvSecret || !this.forestAuthSecret) {
+      const { projectId } = this.context.eventSender.meta;
+
+      throw new Error(
+        `The project was created (id: ${projectId ?? 'unknown'}), but Forest did not ` +
+          'return its environment secret. Read it from the project settings in the ' +
+          'Forest Admin UI.',
+      );
+    }
   }
 
   protected override logNextSteps(): void {
     if (this.jsonOutput) {
+      // The abstract command stores the created project id on the (singleton)
+      // eventSender meta; read it back from there rather than refactoring it.
+      const { projectId } = this.context.eventSender.meta;
+
       // Machine-readable contract (what `npx forest-start` parses): stdout carries
-      // ONLY this JSON document — the logger's stdout is muted in this mode and
-      // progress spinners write to stderr — so callers can JSON.parse the whole output.
+      // ONLY this JSON document — logger lines are diverted to stderr, spinners
+      // already write there, and nothing prompts — so callers can JSON.parse the
+      // whole of stdout.
       this.context.stdout.write(
         `${JSON.stringify({
-          // The abstract command stores the created project id on the (singleton)
-          // eventSender meta; read it back from there rather than refactoring it.
-          projectId: this.context.eventSender.meta.projectId,
+          projectId,
           envSecret: this.forestEnvSecret,
           authSecret: this.forestAuthSecret,
         })}\n`,

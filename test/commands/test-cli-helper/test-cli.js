@@ -108,7 +108,9 @@ async function testCli({
   process.chdir(temporaryDirectory);
   files.forEach(file => mockFile(file));
 
-  const stdin = mockStd(outputs, errorOutputs, print);
+  // Negative assertions read stdout too, so it has to be captured even with no `out`.
+  const captureStdout = outputs.length > 0 || notOutputs.length > 0;
+  const stdin = mockStd(outputs, errorOutputs, print, captureStdout);
 
   const { plan: commandPlan, mocks } = preparePlan({
     testCommandPlan,
@@ -127,7 +129,7 @@ async function testCli({
       commandPlan,
     });
   } catch (error) {
-    rollbackStd(stdin, inputs, outputs);
+    rollbackStd(stdin, inputs, outputs, captureStdout);
     throw error;
   }
 
@@ -140,7 +142,7 @@ async function testCli({
     try {
       await command.run();
     } finally {
-      rollbackStd(stdin, inputs, outputs);
+      rollbackStd(stdin, inputs, outputs, captureStdout);
     }
   } catch (error) {
     actualError = error;
