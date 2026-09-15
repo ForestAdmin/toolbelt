@@ -10,21 +10,20 @@ import {
   stopProcess,
 } from '../../src/services/process-runner';
 
-// A wrapper that stays alive and whose CHILD holds the port — the shape of `npm start`, and the
-// whole reason this service exists. `sh -c 'cmd'` alone would exec and collapse into one process,
-// which is exactly the case that never reproduced the bug.
+// A wrapper that stays alive and whose CHILD holds the port — the shape of `npm start`. A bare
+// `sh -c 'cmd'` execs and collapses into a single process, which is not the shape under test.
 const SERVER = `node -e "require('net').createServer().listen(PORT,()=>console.log('listening'));setInterval(()=>{},1e3)"`;
 const wrapper = (port: number) => ['-c', `${SERVER.replace('PORT', String(port))} & wait`];
 
-// The same server, but the wrapper returns while it keeps running — `npm start` dying, or any
-// launcher that hands over and leaves. The server stays in the group the wrapper led.
+// The same server, but the wrapper returns while it keeps running. The server stays in the group
+// the wrapper led.
 const orphaningWrapper = (port: number) => [
   '-c',
   `${SERVER.replace('PORT', String(port))} & sleep 0.3`,
 ];
 
-// A server that traps SIGTERM to shut down gracefully, as puma and most back-ends do. SIGTERM is a
-// request it is free to ignore, so nothing but SIGKILL ever gets the port back.
+// A server that traps SIGTERM, as puma and most back-ends do: nothing but SIGKILL gets the port
+// back.
 const TRAPPING_SERVER = `node -e "process.on('SIGTERM',()=>{});require('net').createServer().listen(PORT,()=>console.log('listening'));setInterval(()=>{},1e3)"`;
 const trappingWrapper = (port: number) => [
   '-c',
@@ -44,8 +43,7 @@ function isPortFree(port: number): Promise<boolean> {
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// A signal is delivered synchronously; the socket the kernel then frees is not. So the effect is
-// polled for, and what has to happen synchronously is asserted on the signals themselves.
+// A signal is delivered synchronously; the socket the kernel then frees is not.
 async function waitForPortFree(port: number, timeoutMs = 5000): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
 
@@ -59,8 +57,8 @@ async function waitForPortFree(port: number, timeoutMs = 5000): Promise<boolean>
   return isPortFree(port);
 }
 
-// Asked of the OS rather than hardcoded. These tests are about servers that outlive what started
-// them, so a run that leaves one behind must not be able to poison the next one.
+// Asked of the OS: these tests are about servers that outlive what started them, so a run that
+// strands one must not be able to poison the next.
 function freePort(): Promise<number> {
   return new Promise(resolve => {
     const probe = net.createServer();
@@ -101,18 +99,14 @@ describe('process-runner', () => {
         { onProgress: chunk => progress.push(chunk) },
       );
 
-      // Merging the two would make this parse throw, and the caller would silently get nothing.
       expect(JSON.parse(stdout)).toStrictEqual({ secret: 's3cret' });
       expect(stderr).toContain('spinner');
-      // …while the user still sees the progress that was written to stderr.
       expect(progress.join('')).toContain('spinner');
     });
 
     it('decodes multibyte characters split across pipe chunks', async () => {
       expect.assertions(1);
       // Written one byte at a time, so every accented character straddles a chunk boundary.
-      // Decoding per chunk turns each into replacement characters — and the JSON below then
-      // parses to a different string than the command produced.
       const { stdout } = await runCapture('node', [
         '-e',
         'const s = JSON.stringify({ v: "créé-àé€" }); for (const b of Buffer.from(s)) process.stdout.write(Buffer.from([b]));',
@@ -156,8 +150,8 @@ describe('process-runner', () => {
       const { child, ready } = startProcess(
         'sh',
         ['-c', 'node -e "setInterval(()=>console.log(\'server listening now\'), 30)" & wait'],
-        // `/y/` is sticky: `.test()` advances lastIndex, so a second call misses a match the
-        // first one already passed — the process would die on a timeout that had no cause.
+        // `/y/` is sticky: `.test()` advances lastIndex, so a second call misses what the first
+        // one already passed.
         { ready: /listening/y, timeoutMs: 3000 },
       );
 
@@ -248,8 +242,6 @@ describe('process-runner', () => {
       stopProcess(child);
       await wait(500);
 
-      // The whole point: `npm start` spawns the real server as its child, so signalling the
-      // process we spawned leaves the port held and the CLI hanging on its open pipes.
       await expect(isPortFree(39324)).resolves.toBe(true);
     });
 
@@ -262,15 +254,13 @@ describe('process-runner', () => {
       stopProcess(child);
       await wait(500);
 
-      // `child.killed` stays false on the group path — `process.kill()` never sets it — so the
-      // guard cannot read that, and a second call would otherwise signal a recycled pid.
+      // `child.killed` stays false on the group path: `process.kill()` never sets it.
       expect(child.killed).toBe(false);
       const probed: number[] = [];
       const signalled: number[] = [];
       const realKill = process.kill.bind(process);
       jest.spyOn(process, 'kill').mockImplementation(((pid: number, sig?: NodeJS.Signals) => {
-        // Signal 0 asks whether the group is still there and stops nothing; it is the check, not
-        // the thing being checked for.
+        // Signal 0 is the check, not the thing being checked for.
         (sig === (0 as unknown as NodeJS.Signals) ? probed : signalled).push(pid);
 
         return realKill(pid, sig);
@@ -278,10 +268,9 @@ describe('process-runner', () => {
       try {
         stopProcess(child);
         expect(signalled).toStrictEqual([]);
-        // …and not because we remember having signalled it, which says nothing about whether it
-        // stopped, but because the group was watched until it ended. That is the one thing worth
-        // remembering: a pid whose group is gone may already belong to someone else, so it is not
-        // asked about again either.
+        // Not because we remember signalling it, which says nothing about whether it stopped, but
+        // because the group was watched until it ended — and a pid whose group is gone may already
+        // belong to somebody else.
         expect(probed).toStrictEqual([]);
       } finally {
         jest.restoreAllMocks();
@@ -297,16 +286,13 @@ describe('process-runner', () => {
 
       await expect(ready).rejects.toThrow(/Timed out/);
       await wait(500);
-      // Before the fix the rejection left the child alive — and its open pipes kept the CLI's
-      // event loop alive with it, so the command never returned to the prompt.
       await expect(isPortFree(39326)).resolves.toBe(true);
     });
 
     it('keeps only a bounded window, so a chatty process cannot exhaust the heap before timing out', async () => {
       expect.assertions(1);
-      // 40 KB of noise between the two halves of the pattern. Retaining everything would match;
-      // a bounded window cannot — which is the point: before the cap, a process that never
-      // announced itself grew the buffer until the CLI crashed, instead of reporting a timeout.
+      // 40 KB between the two halves of the pattern: no bounded window can hold both, whatever
+      // the reads happen to be cut at.
       const { child, ready } = startProcess(
         'sh',
         [
@@ -358,9 +344,6 @@ describe('process-runner', () => {
       await ready;
       await wait(800);
 
-      // The wrapper has returned; the server it started has not. Reading the leader's exit state
-      // to decide whether to signal makes `stopProcess` a no-op here — and the port stays held,
-      // which is the exact bug this module exists to fix, reached from the other side.
       expect(child.exitCode).not.toBeNull();
       await expect(isPortFree(port)).resolves.toBe(false);
 
@@ -424,14 +407,13 @@ describe('process-runner', () => {
         signal: NodeJS.Signals,
       ) => void;
 
-      // What the hook signalled, as of the moment it called `process.exit` — the property under
-      // test is that both signals are already out by then, because nothing asynchronous it might
-      // have scheduled would ever run.
+      // What the hook had signalled by the time it called `process.exit`: nothing it might have
+      // scheduled would ever run.
       const realKill = process.kill.bind(process);
       const sent: string[] = [];
       let sentBeforeExit: string[] = [];
       jest.spyOn(process, 'kill').mockImplementation(((pid: number, signal?: NodeJS.Signals) => {
-        // Signal 0 only asks whether the group is still there; it stops nothing.
+        // Signal 0 stops nothing.
         if (signal !== 0) sent.push(`${pid < 0 ? 'group' : 'pid'} ${signal}`);
 
         return realKill(pid, signal);
@@ -446,7 +428,6 @@ describe('process-runner', () => {
 
         // SIGHUP is 1, so 129 — not the 143 that belongs to SIGTERM.
         expect(exit).toHaveBeenCalledWith(129);
-        // The graceful signal, then the one it cannot decline — both before the process leaves.
         expect(sentBeforeExit).toStrictEqual(['group SIGTERM', 'group SIGKILL']);
         await expect(waitForPortFree(port)).resolves.toBe(true);
       } finally {
@@ -480,11 +461,9 @@ describe('process-runner', () => {
         'postgres://forest:hunter2@db.internal:5432/prod',
       ]).catch((thrown: Error) => thrown);
 
-      // The CLI masks this very value at the prompt; handing it back in the failure it caused,
-      // into a terminal and whatever collects its output, undoes that.
+      // The CLI masks this very value at the prompt.
       expect(error.message).not.toContain('hunter2');
       expect(error.message).toContain('postgres://forest:***@db.internal:5432/prod');
-      // …while everything that makes the message useful survives.
       expect(error.message).toContain('--connection-url');
     });
 
@@ -538,8 +517,7 @@ describe('process-runner', () => {
       const taken = await freePort();
       const blocker = net.createServer().listen(taken);
 
-      // What a dev server does: report the clash, then bind the next one up and serve. Treating
-      // the word EADDRINUSE as the failure itself takes down a back-end that was about to work.
+      // What a dev server does: report the clash, then bind the next port up and serve.
       const { child, ready } = startProcess(
         'sh',
         [
@@ -564,8 +542,6 @@ describe('process-runner', () => {
       const taken = await freePort();
       const blocker = net.createServer().listen(taken);
 
-      // Reports the clash and then just sits there. Waiting out the full timeout for a start that
-      // will never happen is the thing this check exists to avoid, so the countdown must fire.
       const { child, ready } = startProcess(
         'sh',
         [
@@ -586,9 +562,7 @@ describe('process-runner', () => {
 
     it('fails fast on a message that puts the port before the word, as Ruby does', async () => {
       expect.assertions(1);
-      // `Address already in use - bind(2) for "127.0.0.1" port 3000 (Errno::EADDRINUSE)`, which is
-      // what `bin/rails server` prints. Reading the port only after the word finds nothing here,
-      // and a start that will never happen then waits out the entire timeout.
+      // What `bin/rails server` prints: the port comes before the word, not after it.
       const { child, ready } = startProcess(
         'sh',
         [
@@ -608,8 +582,6 @@ describe('process-runner', () => {
 
     it('blames the clash, not a bare exit code, when it reports one with no port and dies', async () => {
       expect.assertions(1);
-      // The die-fast path. Reading the port number to decide what killed it confuses naming the
-      // cause with having one: the clash is what was detected either way.
       const { ready } = startProcess(
         'sh',
         [
@@ -624,7 +596,6 @@ describe('process-runner', () => {
 
     it('fails fast even when no port can be read from the message at all', async () => {
       expect.assertions(1);
-      // A unix socket has no port to name. Naming one is a courtesy; failing fast is the point.
       const { child, ready } = startProcess(
         'sh',
         [
@@ -656,17 +627,14 @@ describe('process-runner', () => {
 
       await ready;
 
-      // `ready` described the start and is long settled. A back-end that dies twenty minutes in
-      // used to leave the caller with no way to notice at all.
       await expect(exited).resolves.toStrictEqual({ code: 7, signal: null });
     });
 
     it('waits for the GROUP, since a wrapper returning says nothing about what it launched', async () => {
       expect.assertions(3);
       const port = await freePort();
-      // `npm start` at its most literal: the launcher hands over and leaves, and the server it
-      // left behind logs somewhere else — so the pipes close with the wrapper, which is the one
-      // end this CLI is handed, and the one that means nothing.
+      // The launcher hands over and leaves, and the server it left behind logs elsewhere — so the
+      // pipes close with the wrapper, which is the one end this CLI is handed.
       const { child, ready, exited } = startProcess(
         'sh',
         [
@@ -686,8 +654,7 @@ describe('process-runner', () => {
       });
       await wait(200);
 
-      // The process we spawned is gone, and the back-end is answering requests. Resolving here
-      // tells a caller its server ended while it is serving.
+      // The process we spawned is gone while the back-end is answering requests.
       expect(child.exitCode).not.toBeNull();
       expect(settled).toBe(false);
 
@@ -717,9 +684,8 @@ describe('process-runner', () => {
       const { child, ready } = startProcess('sh', trappingWrapper(port), { ready: /listening/ });
       await ready;
 
-      // It was asked to stop and declined. Dropping it from the register at signal time puts it
-      // out of reach of everything that runs later — and the escalation is on an unref'd timer,
-      // so a CLI that exits first never fires it.
+      // Asked to stop and declined. The escalation is on an unref'd timer, so a CLI that leaves
+      // first never fires it.
       stopProcess(child, 'SIGTERM', 60_000);
       await wait(300);
 
@@ -735,8 +701,6 @@ describe('process-runner', () => {
       await ready;
       await wait(800);
 
-      // The wrapper's `close` has fired and the server it left behind has not. Taking that as the
-      // end of the group is how a Ctrl-C strands a port.
       expect(child.exitCode).not.toBeNull();
       stopAllProcesses('SIGTERM', 200);
 
@@ -747,10 +711,8 @@ describe('process-runner', () => {
   describe('a wrapper that exits before the server it started announces itself', () => {
     it('waits for the announcement, because the wrapper ending is not the start failing', async () => {
       expect.assertions(1);
-      // `server &` with no `wait`: the launcher is gone in milliseconds and the server it left
-      // behind holds the pipes, so `exit` fires long before the readiness line and `close` never
-      // fires at all. Treating the wrapper's exit as the failure rejects a start that succeeds —
-      // which is this module's own thesis, that the wrapper is not the server.
+      // `server &` with no `wait`: the launcher is gone in milliseconds and the server holds the
+      // pipes, so `exit` fires long before the readiness line and `close` never fires at all.
       const { child, ready } = startProcess(
         'sh',
         ['-c', `node -e "setTimeout(()=>console.log('listening'),600)" &`],
@@ -797,8 +759,7 @@ describe('process-runner', () => {
 
       expect(dashed.message).not.toContain('dashy-looking-secret');
       expect(dashed.message).toContain('--auth-token ***');
-      // …while a flag that follows is still a flag, so the message does not claim a secret was
-      // passed where none was, and still says what actually ran.
+      // …while a flag that follows is still a flag, so the message still says what ran.
       expect(boolean.message).toContain('--auth-token --verbose');
       expect(boolean.message).not.toContain('***');
     });
@@ -806,11 +767,9 @@ describe('process-runner', () => {
   describe('an announcement that lands on a read boundary', () => {
     it('sees it, because a pipe hands over exactly as much as the window keeps', async () => {
       expect.assertions(1);
-      // A pipe delivers 8192 bytes at a time, and the window keeps 8192 — so trimming before
-      // reading leaves no overlap whatsoever between two full chunks. Here the announcement
-      // straddles that seam, with enough behind it to fill the chunk that follows: a dev server
-      // printing its banner in one burst. Before the fix this server was killed on a timeout
-      // for not having said the thing it said.
+      // The announcement straddles a read boundary, with enough behind it to fill the chunk that
+      // follows — a dev server printing its banner in one burst. Windows cut flush against the
+      // reads would put a seam through it.
       const { child, ready } = startProcess(
         'node',
         [
@@ -852,10 +811,8 @@ describe('process-runner', () => {
     it('forgets it, so a pid the OS is then free to reuse is not signalled later', async () => {
       expect.assertions(3);
       const port = await freePort();
-      // A server whose own logs go elsewhere — a file, a log daemon, `>/dev/null` — so the pipes
-      // close with the wrapper while the server it left behind keeps the port. That is what makes
-      // this case different from the wrapper that exits holding nothing: `close` fires here, and
-      // it fires on a group that is still alive.
+      // A server whose logs go elsewhere, so the pipes close with the wrapper while it keeps the
+      // port: `close` fires here, and it fires on a group that is still alive.
       const { child, ready } = startProcess(
         'sh',
         [
@@ -867,13 +824,10 @@ describe('process-runner', () => {
       await ready;
       await wait(600);
 
-      // Still ours to stop, so still registered.
       expect(child.exitCode).not.toBeNull();
 
-      // Now the group ends on its own — a crash, or the user killing it from another terminal.
-      // Nothing in the module is asked anything at that moment, which is the point: the leader was
-      // reaped long ago, so from here `-pid` is a number the OS may hand to someone else, and a
-      // `kill(-pid, 0)` that answers yes is no longer answering about us.
+      // The group now ends with nothing in the module watching. The leader was reaped long ago,
+      // so from here `-pid` is a number the OS may hand to somebody else.
       process.kill(-(child.pid as number), 'SIGKILL');
       await expect(waitForPortFree(port)).resolves.toBe(true);
       await wait(600);
@@ -888,7 +842,7 @@ describe('process-runner', () => {
 
       try {
         stopAllProcesses();
-        // Not even the signal-0 probe: a group we have seen end is never asked about again.
+        // Not even the signal-0 probe.
         expect(probed).not.toContain(-(child.pid as number));
       } finally {
         jest.restoreAllMocks();
