@@ -72,8 +72,8 @@ const EXIT_CODE_BY_SIGNAL = { SIGHUP: 129, SIGINT: 130, SIGTERM: 143 } as const;
  */
 const running = new Set<ChildProcess>();
 
-/** Groups already on an escalation countdown — the one thing that must not be stacked. */
-const escalating = new WeakSet<ChildProcess>();
+/** The escalation countdown a group is on, kept so a later stop replaces it instead of stacking. */
+const escalations = new WeakMap<ChildProcess, NodeJS.Timeout>();
 
 const ended = new WeakSet<ChildProcess>();
 
@@ -164,15 +164,15 @@ export function stopProcess(
   if (!child?.pid || !groupAlive(child)) return;
 
   signalGroup(child, signal);
+  clearTimeout(escalations.get(child));
 
-  if (signal === 'SIGKILL' || escalating.has(child)) return;
-
-  escalating.add(child);
+  if (signal === 'SIGKILL') return;
 
   const escalation = setTimeout(() => {
     if (groupAlive(child)) signalGroup(child, 'SIGKILL');
   }, graceMs);
   escalation.unref();
+  escalations.set(child, escalation);
 }
 
 /**
@@ -229,8 +229,42 @@ function spawnOptions(options: RunOptions, extra: SpawnOptions = {}): SpawnOptio
   };
 }
 
-const SECRET_FLAG =
-  /^--?[a-z0-9-]*(token|secret|password|passwd|pwd|apikey|api-key|auth|credential)[a-z0-9-]*$/i;
+const SECRET_WORDS = new Set([
+  'apikey',
+  'auth',
+  'credential',
+  'credentials',
+  'passwd',
+  'password',
+  'pwd',
+  'secret',
+  'token',
+]);
+
+const FLAG_NAME = /^--?([a-z0-9][a-z0-9-]*)$/i;
+
+const CAMEL_BOUNDARY = /([a-z0-9])([A-Z])/g;
+
+/**
+ * Does this flag's name say it carries a secret?
+ *
+ * Whole words, because a substring match reads `--author` and `--oauth-callback` as credentials and
+ * drops what the failure message was there to report. Adjacent words are joined too, so `--api-key`
+ * and `--apiKey` are the same flag. A leading `no` is the boolean convention, never a value.
+ */
+function isSecretFlag(flag: string): boolean {
+  const name = FLAG_NAME.exec(flag)?.[1];
+
+  if (!name) return false;
+
+  const words = name.replace(CAMEL_BOUNDARY, '$1-$2').toLowerCase().split('-');
+
+  if (words[0] === 'no') return false;
+
+  const joined = words.slice(0, -1).map((word, index) => word + words[index + 1]);
+
+  return [...words, ...joined].some(word => SECRET_WORDS.has(word));
+}
 
 /** The username may be empty: `redis://:password@host` is how Redis and Mongo URLs are written. */
 const URL_CREDENTIALS = /([a-z][a-z0-9+.-]*:\/\/[^\s/@:]*):[^\s/@]+@/gi;
@@ -254,10 +288,10 @@ function redactArgs(args: string[]): string[] {
     const isSecretValue = valueIsSecret && !LONG_FLAG.test(arg);
     const [flag, ...value] = arg.split('=');
 
-    valueIsSecret = SECRET_FLAG.test(flag) && !value.length;
+    valueIsSecret = isSecretFlag(flag) && !value.length;
 
     if (isSecretValue) return '***';
-    if (SECRET_FLAG.test(flag) && value.length) return `${flag}=***`;
+    if (isSecretFlag(flag) && value.length) return `${flag}=***`;
 
     return redactSecrets(arg);
   });
