@@ -130,7 +130,8 @@ describe('process-runner', () => {
     it('resolves ready on the expected output and streams it to the caller', async () => {
       expect.assertions(2);
       const chunks: string[] = [];
-      const { child, ready } = startProcess('sh', wrapper(39321), {
+      const port = await freePort();
+      const { child, ready } = startProcess('sh', wrapper(port), {
         ready: /listening/,
         onOutput: chunk => chunks.push(chunk),
       });
@@ -138,7 +139,7 @@ describe('process-runner', () => {
       try {
         await ready;
         expect(chunks.join('')).toContain('listening');
-        await expect(isPortFree(39321)).resolves.toBe(false);
+        await expect(isPortFree(port)).resolves.toBe(false);
       } finally {
         stopProcess(child);
         await wait(300);
@@ -191,11 +192,12 @@ describe('process-runner', () => {
 
     it('rejects on a taken port instead of waiting for the timeout', async () => {
       expect.assertions(1);
-      const blocker = net.createServer().listen(39322);
+      const port = await freePort();
+      const blocker = net.createServer().listen(port);
 
       try {
-        const { ready } = startProcess('sh', wrapper(39322), { ready: /never-matches/ });
-        await expect(ready).rejects.toThrow(/Port 39322 is already in use/);
+        const { ready } = startProcess('sh', wrapper(port), { ready: /never-matches/ });
+        await expect(ready).rejects.toThrow(`Port ${port} is already in use`);
       } finally {
         blocker.close();
       }
@@ -203,7 +205,7 @@ describe('process-runner', () => {
 
     it('rejects on timeout when the process never announces itself', async () => {
       expect.assertions(1);
-      const { child, ready } = startProcess('sh', wrapper(39323), {
+      const { child, ready } = startProcess('sh', wrapper(await freePort()), {
         ready: /never-matches/,
         timeoutMs: 700,
       });
@@ -220,36 +222,40 @@ describe('process-runner', () => {
   describe('stopAllProcesses', () => {
     it('takes down everything still running, for a caller unwinding on an error', async () => {
       expect.assertions(2);
-      const a = startProcess('sh', wrapper(39327), { ready: /listening/ });
-      const b = startProcess('sh', wrapper(39328), { ready: /listening/ });
+      const [first, second] = [await freePort(), await freePort()];
+      const a = startProcess('sh', wrapper(first), { ready: /listening/ });
+      const b = startProcess('sh', wrapper(second), { ready: /listening/ });
       await Promise.all([a.ready, b.ready]);
 
       stopAllProcesses();
       await wait(500);
 
-      await expect(isPortFree(39327)).resolves.toBe(true);
-      await expect(isPortFree(39328)).resolves.toBe(true);
+      await expect(isPortFree(first)).resolves.toBe(true);
+      await expect(isPortFree(second)).resolves.toBe(true);
     });
   });
 
   describe('stopProcess', () => {
     it('frees the port held by a GRANDCHILD, which killing the wrapper alone does not', async () => {
       expect.assertions(2);
-      const { child, ready } = startProcess('sh', wrapper(39324), { ready: /listening/ });
+      const port = await freePort();
+      const { child, ready } = startProcess('sh', wrapper(port), { ready: /listening/ });
       await ready;
-      await expect(isPortFree(39324)).resolves.toBe(false);
+      await expect(isPortFree(port)).resolves.toBe(false);
 
       stopProcess(child);
       await wait(500);
 
-      await expect(isPortFree(39324)).resolves.toBe(true);
+      await expect(isPortFree(port)).resolves.toBe(true);
     });
 
     it('does not re-signal a process that already exited, whose pid the OS may have reused', async () => {
       expect.assertions(4);
       expect(() => stopProcess(undefined)).not.toThrow();
 
-      const { child, ready } = startProcess('sh', wrapper(39325), { ready: /listening/ });
+      const { child, ready } = startProcess('sh', wrapper(await freePort()), {
+        ready: /listening/,
+      });
       await ready;
       stopProcess(child);
       await wait(500);
@@ -279,14 +285,15 @@ describe('process-runner', () => {
 
     it('kills the process when the start fails, instead of leaving it holding the port', async () => {
       expect.assertions(2);
-      const { ready } = startProcess('sh', wrapper(39326), {
+      const port = await freePort();
+      const { ready } = startProcess('sh', wrapper(port), {
         ready: /never-matches/,
         timeoutMs: 600,
       });
 
       await expect(ready).rejects.toThrow(/Timed out/);
       await wait(500);
-      await expect(isPortFree(39326)).resolves.toBe(true);
+      await expect(isPortFree(port)).resolves.toBe(true);
     });
 
     it('keeps only a bounded window, so a chatty process cannot exhaust the heap before timing out', async () => {
@@ -366,6 +373,19 @@ describe('process-runner', () => {
       await expect(isPortFree(port)).resolves.toBe(false);
 
       await expect(waitForPortFree(port)).resolves.toBe(true);
+    });
+
+    it('takes the shorter grace of a second stop, rather than keeping the first countdown', async () => {
+      expect.assertions(1);
+      const port = await freePort();
+      const { child, ready } = startProcess('sh', trappingWrapper(port), { ready: /listening/ });
+      await ready;
+
+      stopProcess(child, 'SIGTERM', 60_000);
+      stopProcess(child, 'SIGTERM', 200);
+
+      // A caller unwinding harder must not be held to the patience of the call before it.
+      await expect(waitForPortFree(port, 3000)).resolves.toBe(true);
     });
 
     it('escalates through stopAllProcesses too, for a caller unwinding on an error', async () => {
@@ -489,6 +509,34 @@ describe('process-runner', () => {
       expect(joined.message).toContain('--password=***');
     });
 
+    it('reads the flag name as words, so a name that merely contains one is left alone', async () => {
+      expect.assertions(4);
+      const innocent = await runStep('node', [
+        '-e',
+        'process.exit(1)',
+        '--',
+        '--author',
+        'Jane Doe',
+        '--oauth-callback',
+        'https://example.com/cb',
+        '--no-auth',
+      ]).catch((thrown: Error) => thrown);
+      const camel = await runStep('node', [
+        '-e',
+        'process.exit(1)',
+        '--',
+        '--apiKey',
+        'sk_live_nope',
+      ]).catch((thrown: Error) => thrown);
+
+      // Matching `auth` as a substring reads all three of these as credentials and drops what the
+      // message was there to report.
+      expect(innocent.message).toContain('--author Jane Doe');
+      expect(innocent.message).toContain('--oauth-callback https://example.com/cb');
+      expect(innocent.message).not.toContain('***');
+      expect(camel.message).toContain('--apiKey ***');
+    });
+
     it('strips it from the captured stderr the error carries, not just from the arguments', async () => {
       expect.assertions(2);
       const error = await runCapture('node', [
@@ -569,7 +617,7 @@ describe('process-runner', () => {
           '-c',
           `node -e "console.error('Address already in use - bind(2) for 127.0.0.1 port 3000 (Errno::EADDRINUSE)');setInterval(()=>{},1e3)" & wait`,
         ],
-        { ready: /never-matches/, timeoutMs: 4000 },
+        { ready: /never-matches/, timeoutMs: 1200 },
       );
 
       try {
@@ -602,7 +650,7 @@ describe('process-runner', () => {
           '-c',
           `node -e "console.error('listen EADDRINUSE: address already in use /tmp/forest.sock');setInterval(()=>{},1e3)" & wait`,
         ],
-        { ready: /never-matches/, timeoutMs: 4000 },
+        { ready: /never-matches/, timeoutMs: 1200 },
       );
 
       try {
@@ -797,7 +845,7 @@ describe('process-runner', () => {
           '-c',
           `echo "12:34:56 web.1 | Error: listen EADDRINUSE: address already in use 0.0.0.0:3000" >&2; sleep 5`,
         ],
-        { ready: /never-matches/, timeoutMs: 4000 },
+        { ready: /never-matches/, timeoutMs: 1200 },
       );
       const error = await ready.catch((thrown: Error) => thrown);
 
