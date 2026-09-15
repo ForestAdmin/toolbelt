@@ -241,16 +241,36 @@ const SECRET_WORDS = new Set([
   'token',
 ]);
 
+/** OAuth is the protocol, not the credential: `--oauth-token` is one, `--oauth-callback` is not. */
+const NOT_SECRET_WORDS = new Set(['oauth']);
+
 const FLAG_NAME = /^--?([a-z0-9][a-z0-9-]*)$/i;
 
 const CAMEL_BOUNDARY = /([a-z0-9])([A-Z])/g;
 
+const TRAILING_DIGITS = /\d+$/;
+
+/**
+ * Does the name of this word say it is a secret?
+ *
+ * A suffix and not a substring: `dbpassword` and `authtoken` are credentials written without a
+ * separator, while `author` merely starts with one of the words and `tokenfile` names a path.
+ */
+function isSecretWord(word: string): boolean {
+  if (NOT_SECRET_WORDS.has(word)) return false;
+
+  const bare = word.replace(TRAILING_DIGITS, '');
+
+  return [...SECRET_WORDS].some(secret => bare.endsWith(secret));
+}
+
 /**
  * Does this flag's name say it carries a secret?
  *
- * Whole words, because a substring match reads `--author` and `--oauth-callback` as credentials and
- * drops what the failure message was there to report. Adjacent words are joined too, so `--api-key`
- * and `--apiKey` are the same flag. A leading `no` is the boolean convention, never a value.
+ * Read as words, because matching anywhere in the name takes `--author` and `--oauth-callback` for
+ * credentials and drops what the failure message was there to report. Adjacent words are joined
+ * too, so `--api-key` and `--apiKey` are the same flag, and a leading `no` is the boolean
+ * convention rather than a value.
  */
 function isSecretFlag(flag: string): boolean {
   const name = FLAG_NAME.exec(flag)?.[1];
@@ -263,7 +283,7 @@ function isSecretFlag(flag: string): boolean {
 
   const joined = words.slice(0, -1).map((word, index) => word + words[index + 1]);
 
-  return [...words, ...joined].some(word => SECRET_WORDS.has(word));
+  return [...words, ...joined].some(isSecretWord);
 }
 
 /** The username may be empty: `redis://:password@host` is how Redis and Mongo URLs are written. */
@@ -401,8 +421,10 @@ function classifyOutput(
 ): { ready: true } | { clash: { port?: string } } | undefined {
   if (windows.some(window => readyPattern.test(window))) return { ready: true };
 
+  // The first clash, but the first PORT: overlapping windows can cut the line before its number,
+  // and the generic message is only right when no window ever carried one.
   const clash = windows.reduce<{ port?: string } | undefined>(
-    (found, window) => found ?? readPortClash(window),
+    (found, window) => (found?.port ? found : readPortClash(window) ?? found),
     undefined,
   );
 
