@@ -510,7 +510,7 @@ describe('process-runner', () => {
     });
 
     it('reads the flag name as words, so a name that merely contains one is left alone', async () => {
-      expect.assertions(4);
+      expect.assertions(6);
       const innocent = await runStep('node', [
         '-e',
         'process.exit(1)',
@@ -528,13 +528,25 @@ describe('process-runner', () => {
         '--apiKey',
         'sk_live_nope',
       ]).catch((thrown: Error) => thrown);
+      // The same words written without a separator, which is still how the flag is named.
+      const glued = await runStep('node', [
+        '-e',
+        'process.exit(1)',
+        '--',
+        '--dbpassword',
+        'hunter2',
+        '--authtoken',
+        'npm_ArEaLlYsEcReT',
+      ]).catch((thrown: Error) => thrown);
 
-      // Matching `auth` as a substring reads all three of these as credentials and drops what the
-      // message was there to report.
+      // Matching `auth` anywhere in the name reads all three of these as credentials and drops what
+      // the message was there to report.
       expect(innocent.message).toContain('--author Jane Doe');
       expect(innocent.message).toContain('--oauth-callback https://example.com/cb');
       expect(innocent.message).not.toContain('***');
       expect(camel.message).toContain('--apiKey ***');
+      expect(glued.message).not.toContain('hunter2');
+      expect(glued.message).not.toContain('npm_ArEaLlYsEcReT');
     });
 
     it('strips it from the captured stderr the error carries, not just from the arguments', async () => {
