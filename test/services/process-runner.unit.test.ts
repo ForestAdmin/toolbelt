@@ -278,9 +278,11 @@ describe('process-runner', () => {
       try {
         stopProcess(child);
         expect(signalled).toStrictEqual([]);
-        // …and it did ask, rather than remembering: what makes this safe is that the group is
-        // gone, not that we happen to have stopped this child before.
-        expect(probed).toStrictEqual([-(child.pid as number)]);
+        // …and not because we remember having signalled it, which says nothing about whether it
+        // stopped, but because the group was watched until it ended. That is the one thing worth
+        // remembering: a pid whose group is gone may already belong to someone else, so it is not
+        // asked about again either.
+        expect(probed).toStrictEqual([]);
       } finally {
         jest.restoreAllMocks();
       }
@@ -762,6 +764,53 @@ describe('process-runner', () => {
       // passed where none was, and still says what actually ran.
       expect(boolean.message).toContain('--auth-token --verbose');
       expect(boolean.message).not.toContain('***');
+    });
+  });
+  describe('a group that ended while nothing was watching', () => {
+    it('forgets it, so a pid the OS is then free to reuse is not signalled later', async () => {
+      expect.assertions(3);
+      const port = await freePort();
+      // A server whose own logs go elsewhere — a file, a log daemon, `>/dev/null` — so the pipes
+      // close with the wrapper while the server it left behind keeps the port. That is what makes
+      // this case different from the wrapper that exits holding nothing: `close` fires here, and
+      // it fires on a group that is still alive.
+      const { child, ready } = startProcess(
+        'sh',
+        [
+          '-c',
+          `${SERVER.replace('PORT', String(port))} >/dev/null 2>&1 & echo listening; sleep 0.3`,
+        ],
+        { ready: /listening/ },
+      );
+      await ready;
+      await wait(600);
+
+      // Still ours to stop, so still registered.
+      expect(child.exitCode).not.toBeNull();
+
+      // Now the group ends on its own — a crash, or the user killing it from another terminal.
+      // Nothing in the module is asked anything at that moment, which is the point: the leader was
+      // reaped long ago, so from here `-pid` is a number the OS may hand to someone else, and a
+      // `kill(-pid, 0)` that answers yes is no longer answering about us.
+      process.kill(-(child.pid as number), 'SIGKILL');
+      await expect(waitForPortFree(port)).resolves.toBe(true);
+      await wait(600);
+
+      const probed: number[] = [];
+      const realKill = process.kill.bind(process);
+      jest.spyOn(process, 'kill').mockImplementation(((pid: number, signal?: NodeJS.Signals) => {
+        probed.push(pid);
+
+        return realKill(pid, signal);
+      }) as typeof process.kill);
+
+      try {
+        stopAllProcesses();
+        // Not even the signal-0 probe: a group we have seen end is never asked about again.
+        expect(probed).not.toContain(-(child.pid as number));
+      } finally {
+        jest.restoreAllMocks();
+      }
     });
   });
 });

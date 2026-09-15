@@ -86,27 +86,61 @@ const running = new Set<ChildProcess>();
 
 /** Groups already on an escalation countdown — the one thing that must not be stacked. */
 const escalating = new WeakSet<ChildProcess>();
+
+/**
+ * Groups we have watched end, and will therefore never touch again.
+ *
+ * A group id IS a pid, and once the last member is gone the OS is free to hand that number to
+ * somebody else — so `-pid` stops meaning us at a moment nothing announces. What keeps this safe
+ * is that the question only answers one way reliably: a probe saying the group is gone cannot be
+ * wrong about us, while a probe saying it is there can be, once we have stopped being sure. So the
+ * first "gone" is recorded as final, and after it the pid is not signalled, or even asked.
+ */
+const ended = new WeakSet<ChildProcess>();
 let exitHookInstalled = false;
 
 /**
- * Is anything still alive in the group this child leads?
+ * How often a group is looked in on once the process we spawned has been reaped.
  *
- * Signal 0 only asks the question. It is also what makes the negative pid safe to use after the
- * leader itself exited: POSIX forbids recycling a pid while a process group still carries it as
- * its id, so while this answers yes, `-pid` can only mean the group we started.
+ * Until then nothing is needed: while any member is alive POSIX forbids recycling the pid the
+ * group carries as its id, so `-pid` can only mean us. It is the end nobody is present for — a
+ * server crashing an hour in, under a CLI that started it and moved on — that has to be noticed,
+ * because from there that number is fair game.
  */
-function groupAlive(child: ChildProcess): boolean {
-  if (!child.pid) return false;
-  // No groups on Windows, so the leader's own exit state is all there is to go on.
-  if (!CAN_SIGNAL_GROUPS) return child.exitCode === null && child.signalCode === null;
+const REAP_POLL_MS = 250;
 
+/** Signal 0 only asks the question. */
+function probeGroup(pid: number): boolean {
   try {
-    process.kill(-child.pid, 0);
+    process.kill(-pid, 0);
 
     return true;
   } catch {
     return false;
   }
+}
+
+/**
+ * Is anything still alive in the group this child leads?
+ *
+ * While it answers yes the negative pid is safe to use, even after the leader itself exited:
+ * POSIX forbids recycling a pid while a process group still carries it as its id. Answering no is
+ * therefore the last word on that group, and retires the handle for good.
+ */
+function groupAlive(child: ChildProcess): boolean {
+  if (!child.pid || ended.has(child)) return false;
+
+  const alive = CAN_SIGNAL_GROUPS
+    ? probeGroup(child.pid)
+    : // No groups on Windows, so the leader's own exit state is all there is to go on.
+      child.exitCode === null && child.signalCode === null;
+
+  if (!alive) {
+    ended.add(child);
+    running.delete(child);
+  }
+
+  return alive;
 }
 
 function signalGroup(child: ChildProcess, signal: NodeJS.Signals) {
@@ -504,12 +538,23 @@ export function startProcess(
     spawnOptions(options, { stdio: ['ignore', 'pipe', 'pipe'], detached: true }),
   );
 
-  running.add(child);
-  // Not simply `running.delete(child)`: the wrapper can exit while the server it started keeps
-  // running, and dropping it here would put that server out of reach of the exit hook — stranded
-  // on the next Ctrl-C, holding its port.
-  child.on('close', () => {
-    if (!groupAlive(child)) running.delete(child);
+  // A spawn that failed has no pid, emits `error` and `close` but never `exit`, and holds
+  // nothing to stop — so it is never registered, rather than registered for good.
+  if (child.pid) running.add(child);
+  // Not `running.delete(child)` on the end this CLI can see: the wrapper can exit while the server
+  // it started keeps running, and dropping it there puts that server out of reach of the exit hook
+  // — stranded on the next Ctrl-C, holding its port. `close` is no better than `exit` for it: a
+  // server logging to a file closes the pipes with its wrapper and keeps the port regardless. So
+  // the leader being reaped starts watching rather than concluding, and the group is let go the
+  // moment it is really gone — the end nobody would otherwise be present for being exactly the one
+  // that must not be missed, since after it the pid comes back as somebody else.
+  child.on('exit', () => {
+    if (!groupAlive(child)) return;
+
+    const poll = setInterval(() => {
+      if (!groupAlive(child)) clearInterval(poll);
+    }, REAP_POLL_MS);
+    poll.unref();
   });
 
   let stream = onOutput;
