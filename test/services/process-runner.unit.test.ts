@@ -661,6 +661,43 @@ describe('process-runner', () => {
       await expect(exited).resolves.toStrictEqual({ code: 7, signal: null });
     });
 
+    it('waits for the GROUP, since a wrapper returning says nothing about what it launched', async () => {
+      expect.assertions(3);
+      const port = await freePort();
+      // `npm start` at its most literal: the launcher hands over and leaves, and the server it
+      // left behind logs somewhere else — so the pipes close with the wrapper, which is the one
+      // end this CLI is handed, and the one that means nothing.
+      const { child, ready, exited } = startProcess(
+        'sh',
+        [
+          '-c',
+          `${SERVER.replace('PORT', String(port))} >/dev/null 2>&1 & echo listening; sleep 0.3`,
+        ],
+        { ready: /listening/ },
+      );
+      await ready;
+      await wait(800);
+
+      let settled = false;
+      exited.then(() => {
+        settled = true;
+
+        return undefined;
+      });
+      await wait(200);
+
+      // The process we spawned is gone, and the back-end is answering requests. Resolving here
+      // tells a caller its server ended while it is serving.
+      expect(child.exitCode).not.toBeNull();
+      expect(settled).toBe(false);
+
+      stopProcess(child, 'SIGKILL');
+
+      await expect(
+        Promise.race([exited.then(() => 'ended'), wait(4000).then(() => 'hung')]),
+      ).resolves.toBe('ended');
+    });
+
     it('says a signal ended it, so a caller can tell a crash from its own stop', async () => {
       expect.assertions(1);
       const port = await freePort();
@@ -766,6 +803,51 @@ describe('process-runner', () => {
       expect(boolean.message).not.toContain('***');
     });
   });
+  describe('an announcement that lands on a read boundary', () => {
+    it('sees it, because a pipe hands over exactly as much as the window keeps', async () => {
+      expect.assertions(1);
+      // A pipe delivers 8192 bytes at a time, and the window keeps 8192 — so trimming before
+      // reading leaves no overlap whatsoever between two full chunks. Here the announcement
+      // straddles that seam, with enough behind it to fill the chunk that follows: a dev server
+      // printing its banner in one burst. Before the fix this server was killed on a timeout
+      // for not having said the thing it said.
+      const { child, ready } = startProcess(
+        'node',
+        [
+          '-e',
+          `process.stdout.write('x'.repeat(8188) + 'listening' + 'y'.repeat(20000));setInterval(()=>{},1e3)`,
+        ],
+        { ready: /listening/, timeoutMs: 2500 },
+      );
+
+      try {
+        await expect(ready).resolves.toBeUndefined();
+      } finally {
+        stopProcess(child);
+        await wait(300);
+      }
+    });
+  });
+
+  describe('the port named in a clash', () => {
+    it('is the address, not the clock a process manager prefixes its lines with', async () => {
+      expect.assertions(2);
+      const { ready } = startProcess(
+        'sh',
+        [
+          '-c',
+          `echo "12:34:56 web.1 | Error: listen EADDRINUSE: address already in use 0.0.0.0:3000" >&2; sleep 5`,
+        ],
+        { ready: /never-matches/, timeoutMs: 4000 },
+      );
+      const error = await ready.catch((thrown: Error) => thrown);
+
+      expect(error.message).toContain('Port 3000');
+      // `lsof -ti :34` frees nothing and says the CLI cannot read its own output.
+      expect(error.message).not.toContain('34');
+    });
+  });
+
   describe('a group that ended while nothing was watching', () => {
     it('forgets it, so a pid the OS is then free to reuse is not signalled later', async () => {
       expect.assertions(3);
