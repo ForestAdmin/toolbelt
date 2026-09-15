@@ -35,16 +35,18 @@ export type StartedProcess = {
   /** Resolves when the process prints something matching `ready`, rejects on timeout or a taken port. */
   ready: Promise<void>;
   /**
-   * Resolves when the process ends, however it ends — including long after `ready` did.
+   * Resolves when the whole GROUP has ended, however it ended — including long after `ready` did.
    *
    * `ready` only ever describes the start. A back-end that dies twenty minutes in leaves it
    * resolved and says nothing, so a caller holding one has no way to notice; this is that way.
-   * It never rejects: an exit is an outcome to read (`code`, or `signal` when something stopped
+   * It never rejects: an end is an outcome to read (`code`, or `signal` when something stopped
    * it), not a failure to catch.
    *
-   * It describes the process we spawned, which for a package manager is the WRAPPER — the same
-   * one whose exit says nothing about the server it left behind. That is the only end this CLI
-   * can observe directly; `stopProcess` is what deals with the rest of the group.
+   * The group and not the process we spawned, because for a package manager that process is the
+   * WRAPPER, and its own end says nothing — `npm start` can return in milliseconds while the
+   * server it launched serves for hours. Waiting for the last of them is the only reading of
+   * "it has ended" a caller can act on. The status carried is still the wrapper's, since that is
+   * the only one this CLI is told; it may have been settled long before this resolves.
    */
   exited: Promise<ProcessExit>;
   /** Stop streaming output — before handing the terminal to something else, typically. */
@@ -397,7 +399,12 @@ function readPortClash(text: string): { port?: string } | undefined {
 
   if (!line) return undefined;
 
-  const [, port] = /:(\d{2,5})\b/.exec(line[0]) ?? /\bport (\d{2,5})\b/i.exec(line[0]) ?? [];
+  // The clock goes first. A dev server's output is normally prefixed — `12:34:56 web.1 |` from
+  // foreman, overmind or docker-compose — and the first colon-number on the line is then the time,
+  // not the address: the user is told to free port 34, which nobody is holding, while the port
+  // that is stays in the same line unread.
+  const addressed = line[0].replace(/\b\d{1,2}:\d{2}:\d{2}(?:[.,]\d+)?\b/g, ' ');
+  const [, port] = /:(\d{2,5})\b/.exec(addressed) ?? /\bport (\d{2,5})\b/i.exec(addressed) ?? [];
 
   return { port };
 }
@@ -435,8 +442,8 @@ function watchStartup(
     // One buffer PER STREAM. Sharing one would let a token straddling stdout and stderr match
     // when neither stream ever produced it. Each is capped to a suffix: a chatty process that
     // never announces itself would otherwise exhaust the heap long before the timeout fires,
-    // crashing instead of reporting. The window is far wider than any readiness line, so a
-    // pattern split across chunk boundaries still matches.
+    // crashing instead of reporting. The cap bounds what is KEPT, never what is looked at — see
+    // `onData`, where the chunk is read together with the window before the window is trimmed.
     const WINDOW = 8192;
     const scanned = { stdout: '', stderr: '' };
     let settled = false;
@@ -467,9 +474,14 @@ function watchStartup(
     const onData = (source: 'stdout' | 'stderr') => (text: string) => {
       onChunk(text);
       if (settled) return;
-      scanned[source] = (scanned[source] + text).slice(-WINDOW);
+      // Read first, trim after. A pipe hands over 8192 bytes at a time — exactly `WINDOW` — so
+      // trimming first leaves no overlap at all between two full chunks, and an announcement
+      // landing across that seam is never seen: the server says it is listening, and is killed on
+      // a timeout for not having said it.
+      const window = scanned[source] + text;
+      scanned[source] = window.slice(-WINDOW);
 
-      const verdict = classifyOutput(scanned[source], readyPattern);
+      const verdict = classifyOutput(window, readyPattern);
 
       if (!verdict) return;
 
@@ -548,13 +560,26 @@ export function startProcess(
   // the leader being reaped starts watching rather than concluding, and the group is let go the
   // moment it is really gone — the end nobody would otherwise be present for being exactly the one
   // that must not be missed, since after it the pid comes back as somebody else.
-  child.on('exit', () => {
-    if (!groupAlive(child)) return;
+  const groupEnded = new Promise<void>(resolve => {
+    const endedIfGone = () => {
+      if (groupAlive(child)) return false;
+      resolve();
 
-    const poll = setInterval(() => {
-      if (!groupAlive(child)) clearInterval(poll);
-    }, REAP_POLL_MS);
-    poll.unref();
+      return true;
+    };
+
+    // `close` is the cheap answer when it is one: for a wrapper that waits on what it started,
+    // the pipes close with the last of the group. It is only not one when a descendant does not
+    // hold them, which is why the poll exists and why neither is trusted without asking.
+    child.on('close', endedIfGone);
+    child.on('exit', () => {
+      if (endedIfGone()) return;
+
+      const poll = setInterval(() => {
+        if (endedIfGone()) clearInterval(poll);
+      }, REAP_POLL_MS);
+      poll.unref();
+    });
   });
 
   let stream = onOutput;
@@ -568,9 +593,9 @@ export function startProcess(
   // dies before being ready produces an unhandled rejection and can take the CLI down with it.
   readyPromise.catch(() => undefined);
 
-  const exited = new Promise<ProcessExit>(resolve => {
-    child.on('close', (code, signal) => resolve({ code, signal }));
-  });
+  // Read at the group's end rather than captured at the wrapper's, so there is no order to get
+  // wrong between the two listeners: node has already settled both by the time either can fire.
+  const exited = groupEnded.then(() => ({ code: child.exitCode, signal: child.signalCode }));
 
   return { child, ready: readyPromise, exited, mute };
 }
