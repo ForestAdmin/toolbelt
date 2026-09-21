@@ -168,5 +168,42 @@ describe('projects:create connection URL prompt', () => {
       ]);
       expect(displayed).not.toContain('MyTopSecret');
     });
+
+    // The fallback branch of the default nosql run, and the only one that reaches the SRV
+    // question: its `when` used to require a dialect this command sets after prompting.
+    it('should fall back to the field prompts, SRV included, when the URL is left blank', async () => {
+      expect.assertions(3);
+
+      const { answered } = await answerPrompts(NosqlCommand as never, [
+        '', // no connection URL
+        'mydb',
+        '', // host
+        '', // port
+        '', // user
+        'pwd',
+        '', // use a SRV connection string?
+        '', // application host
+        '', // application port
+        '', // language
+      ]);
+
+      expect(Object.keys(answered)).toStrictEqual([
+        'databaseConnectionURL',
+        'databaseName',
+        'databaseHost',
+        'databasePort',
+        'databaseUser',
+        'databasePassword',
+        'mongoDBSRV',
+        'applicationHost',
+        'applicationPort',
+        'language',
+      ]);
+      expect(answered.mongoDBSRV).toBe(false);
+      // The defaults this command offers must not depend on a dialect it sets after prompting:
+      // the port had none, so pressing enter was refused by the validator, and the user was
+      // offered the SQL 'root'.
+      expect(answered).toMatchObject({ databasePort: '27017', databaseUser: '' });
+    });
   });
 });

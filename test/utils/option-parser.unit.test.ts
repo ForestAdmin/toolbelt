@@ -8,18 +8,23 @@ jest.mock('@forestadmin/context', () => ({
   inject: () => (global as unknown as { __optionParserContext: unknown }).__optionParserContext,
 }));
 
+/** The questions of the last `parseFlags` call, readable after it rejects. */
+let asked: string[] = [];
+
 /** Runs the real `projects:create:sql` options against a given set of flags. */
+
 async function parseFlags(flags: Record<string, unknown>): Promise<{
   options: Record<string, unknown>;
   questions: string[];
 }> {
-  const questions: string[] = [];
+  asked = [];
+  const questions = asked;
 
   (global as unknown as { __optionParserContext: unknown }).__optionParserContext = {
     os: { platform: () => 'darwin' },
     inquirer: {
-      prompt: (asked: Array<{ name: string }>) => {
-        questions.push(...asked.map(question => question.name));
+      prompt: (batch: Array<{ name: string }>) => {
+        questions.push(...batch.map(question => question.name));
 
         return Promise.resolve({});
       },
@@ -50,26 +55,16 @@ describe('utils > option-parser', () => {
       });
 
       describe('when the filter empties the value', () => {
-        // `-c '  '` is not a connection URL. Left as-is it suppressed every database field
-        // prompt (they are exclusive with it) and was then normalized away, leaving the
-        // command with neither a URL nor a dialect: "Missing database dialect option value".
-        it('should treat the flag as not provided and ask the questions', async () => {
+        // `-c '  '` is a flag carrying nothing, which is what an unset variable expands to.
+        // Dropping it would ask the question the flag was meant to answer, and a script has no
+        // terminal to answer it with, so the run would hang instead of failing.
+        it('should refuse the flag, name it, and ask nothing', async () => {
           expect.assertions(2);
 
-          const { options, questions } = await parseFlags({ databaseConnectionURL: '   ' });
-
-          expect(options.databaseConnectionURL).toBeUndefined();
-          expect(questions).toStrictEqual(
-            expect.arrayContaining([
-              'databaseConnectionURL',
-              'databaseDialect',
-              'databaseName',
-              'databaseHost',
-              'databasePort',
-              'databaseUser',
-              'databasePassword',
-            ]),
+          await expect(parseFlags({ databaseConnectionURL: '   ' })).rejects.toThrow(
+            'Invalid value for databaseConnectionURL: the flag was passed an empty value, omit it to be asked instead',
           );
+          expect(asked).toStrictEqual([]);
         });
       });
     });

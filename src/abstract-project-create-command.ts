@@ -14,6 +14,7 @@ import type { Config as OclifConfig } from '@oclif/core';
 import { Args } from '@oclif/core';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
+import InvalidOptionError from './errors/options/invalid-option-error';
 import { getDialect } from './services/projects/create/options';
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
@@ -110,8 +111,14 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
       await this.notifySuccess();
     } catch (error) {
+      // A value the user typed, refused by an option, is not an unexpected failure: printing the
+      // banner below over it asks them to open a GitHub issue about their own typo.
+      if (error instanceof InvalidOptionError) {
+        this.logger.error(error.userMessage);
+        this.exit(1);
+      }
       // Display customized error for non-authentication errors.
-      if (error.status !== 401 && error.status !== 403) {
+      else if (error.status !== 401 && error.status !== 403) {
         this.logger.error(['Cannot generate your project.', `${this.messages.ERROR_UNEXPECTED}`]);
         this.logger.log(`${this.chalk.red(error)}`);
         this.exit(1);

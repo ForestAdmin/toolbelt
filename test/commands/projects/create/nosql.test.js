@@ -41,15 +41,18 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
     {
       name: 'databasePort',
       type: 'input',
+      // A fixed port, not the shared dialect-derived default: this command only knows it is
+      // mongo after prompting, so that default offered nothing and the validator refused the
+      // empty answer it produced.
+      default: '27017',
       message: "What's the database port?",
-      default: expect.any(Function),
       validate: expect.any(Function),
       when: expect.any(Function),
     },
     {
       name: 'databaseUser',
       message: "What's the database user?",
-      default: expect.any(Function),
+      // No default either, for the same reason: the shared one offers the SQL 'root' here.
       type: 'input',
       when: expect.any(Function),
     },

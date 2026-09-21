@@ -6,6 +6,8 @@ import type { Command } from '@oclif/core';
 import { inject } from '@forestadmin/context';
 import { Flags as oflags } from '@oclif/core';
 
+import InvalidOptionError from '../errors/options/invalid-option-error';
+
 /** Option which can be used both as  flag or prompt */
 export type CommandOptions<T = Record<string, unknown>> = {
   [name: string]: {
@@ -98,19 +100,24 @@ export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
     if (choice) optionsFromCli[k] = choice.value;
 
     // Normalize the flag the way inquirer normalizes an answer (it runs `filter` first), so that
-    // both paths agree on what the value is. A value the filter empties was never provided:
-    // dropping it keeps the option out of the interactive skip logic below, instead of silently
-    // suppressing the questions it is exclusive with (`-c '  '` used to skip every database
-    // field prompt and leave the command with neither a connection URL nor a dialect).
+    // both paths agree on what the value is. A flag the filter empties carries nothing, and it
+    // is refused rather than dropped: dropping it would put back the question the flag was
+    // meant to answer, in front of a script with no terminal to answer it. A blank answer to
+    // the prompt keeps its own meaning, which is "ask me the fields instead".
     if (v.filter && typeof optionsFromCli[k] === 'string') {
       const filtered = v.filter(optionsFromCli[k]);
-      if (filtered === '') delete optionsFromCli[k];
-      else optionsFromCli[k] = filtered;
+
+      if (!filtered)
+        throw new InvalidOptionError(
+          `Invalid value for ${k}: the flag was passed an empty value, omit it to be asked instead`,
+        );
+
+      optionsFromCli[k] = filtered;
     }
 
     // Validate
     const error = optionsFromCli[k] !== undefined && v.validate?.(optionsFromCli[k]);
-    if (typeof error === 'string') throw new Error(`Invalid value for ${k}: ${error}`);
+    if (typeof error === 'string') throw new InvalidOptionError(`Invalid value for ${k}: ${error}`);
   });
 
   // Query missing options interactively

@@ -44,10 +44,17 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
     databasePort: {
       ...projectCreateOptions.databasePort,
       when: projectCreateOptions.skipWhenConnectionUrl,
+      // Same reason as the SRV question below: the shared default derives the port from a
+      // dialect this command only sets after prompting, so it offered none and an empty
+      // answer was refused by the port validator, with no way forward but typing 27017.
+      default: '27017',
     },
     databaseUser: {
       ...projectCreateOptions.databaseUser,
       when: projectCreateOptions.skipWhenConnectionUrl,
+      // The shared default is 'root' for every dialect it does not read as mongodb, which is
+      // this one, so the mongo path was being offered a SQL default.
+      default: undefined,
     },
     databasePassword: {
       ...projectCreateOptions.databasePassword,
@@ -60,9 +67,10 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
 
     mongoDBSRV: {
       ...projectCreateOptions.mongoDBSRV,
-      when: (args: ProjectCreateOptions) =>
-        projectCreateOptions.skipWhenConnectionUrl(args) &&
-        projectCreateOptions.getDialect(args) === 'mongodb',
+      // The shared option gates this on a mongodb dialect, which this command only sets once
+      // prompting has returned, so the question never appeared. On a mongo-only command the
+      // engine is not in question: ask whenever the fields are being filled by hand.
+      when: projectCreateOptions.skipWhenConnectionUrl,
     },
     applicationHost: projectCreateOptions.applicationHost,
     applicationPort: projectCreateOptions.applicationPort,

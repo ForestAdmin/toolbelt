@@ -3,6 +3,7 @@
 import { Config, Flags } from '@oclif/core';
 
 import AbstractProjectCreateCommand from '../src/abstract-project-create-command';
+import InvalidOptionError from '../src/errors/options/invalid-option-error';
 import Agents from '../src/utils/agents';
 import languages, { languageList } from '../src/utils/languages';
 
@@ -234,6 +235,30 @@ describe('abstractProjectCreateCommand command', () => {
 
       await instance.run();
 
+      expect(instance.exit).toHaveBeenCalledWith(1);
+    });
+
+    // A value the user typed is not an internal failure. Printing the unexpected-error banner
+    // over it asks them to open a GitHub issue about their own typo.
+    it('should print a refused option value on its own, without the unexpected-error banner', async () => {
+      expect.assertions(3);
+
+      const { stubs, instance } = setup();
+      const error = new InvalidOptionError(
+        'Invalid value for databaseConnectionURL: mariadb:// is not supported by the generated project, use mysql:// instead',
+      );
+
+      stubs.optionParser.getCommandLineOptions.mockImplementation(() => {
+        throw error;
+      });
+      jest.spyOn(instance, 'exit').mockReturnValue(true as never);
+
+      await instance.run();
+
+      expect(stubs.logger.error).toHaveBeenCalledWith(error.message);
+      expect(stubs.logger.error).not.toHaveBeenCalledWith(
+        expect.arrayContaining([expect.stringContaining('unexpected')]),
+      );
       expect(instance.exit).toHaveBeenCalledWith(1);
     });
 
