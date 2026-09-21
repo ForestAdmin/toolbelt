@@ -217,8 +217,9 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   protected async getCommandOptions(): Promise<ProjectCreateOptions> {
     const options = await this.optionParser.getCommandLineOptions<ProjectCreateOptions>(this);
 
-    // A blank answer to the optional connection URL prompt means "use the field prompts instead",
-    // and a pasted URL routinely carries surrounding whitespace. Normalize once, before the
+    // A blank answer to the optional connection URL prompt means "use the field prompts instead".
+    // The value itself is already trimmed by the option's `filter` (on the prompt and on the `-c`
+    // flag alike); what is left to do is turn the blank answer into an absent URL, before the
     // dialect is derived from it and before it reaches the connection test and the generated .env.
     options.databaseConnectionURL = options.databaseConnectionURL?.trim() || undefined;
 

@@ -97,6 +97,17 @@ export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
     const choice = v.choices?.find(c => c.name === optionsFromCli[k]);
     if (choice) optionsFromCli[k] = choice.value;
 
+    // Normalize the flag the way inquirer normalizes an answer (it runs `filter` first), so that
+    // both paths agree on what the value is. A value the filter empties was never provided:
+    // dropping it keeps the option out of the interactive skip logic below, instead of silently
+    // suppressing the questions it is exclusive with (`-c '  '` used to skip every database
+    // field prompt and leave the command with neither a connection URL nor a dialect).
+    if (v.filter && typeof optionsFromCli[k] === 'string') {
+      const filtered = v.filter(optionsFromCli[k]);
+      if (filtered === '') delete optionsFromCli[k];
+      else optionsFromCli[k] = filtered;
+    }
+
     // Validate
     const error = optionsFromCli[k] !== undefined && v.validate?.(optionsFromCli[k]);
     if (typeof error === 'string') throw new Error(`Invalid value for ${k}: ${error}`);
