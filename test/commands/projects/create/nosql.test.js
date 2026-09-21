@@ -18,7 +18,6 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
     {
       name: 'databaseConnectionURL',
       message: 'MongoDB connection URL (leave blank to enter the details manually):',
-      // The URL embeds the database password: masked, like the databasePassword prompt.
       type: 'password',
       mask: '*',
       filter: expect.any(Function),
@@ -41,9 +40,6 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
     {
       name: 'databasePort',
       type: 'input',
-      // A fixed port, not the shared dialect-derived default: this command only knows it is
-      // mongo after prompting, so that default offered nothing and the validator refused the
-      // empty answer it produced.
       default: '27017',
       message: "What's the database port?",
       validate: expect.any(Function),
@@ -52,7 +48,6 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
     {
       name: 'databaseUser',
       message: "What's the database user?",
-      // No default either, for the same reason: the shared one offers the SQL 'root' here.
       type: 'input',
       when: expect.any(Function),
     },
@@ -304,8 +299,6 @@ describe('projects:create:nosql', () => {
       });
 
       describe('when the database field flags are provided instead', () => {
-        // Regression guard for scripted/CI usage: passing the field flags must not
-        // surface the new interactive URL question (it would hang in a non-TTY).
         it('should not prompt for the connection URL', () =>
           testCli({
             commandClass: NosqlCommand,

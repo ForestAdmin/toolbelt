@@ -72,12 +72,10 @@ describe('projectCreateOptions', () => {
     });
   });
 
-  // Connection-URL onboarding helpers (used by sql/nosql to offer "paste a URL" interactively).
   describe('connection URL helpers', () => {
     it('skipWhenConnectionUrl: true without a URL (or a blank one), false with one', () => {
       expect.assertions(3);
       expect(options.skipWhenConnectionUrl({})).toBe(true);
-      // A blank answer to the URL prompt means "fill the fields instead".
       expect(options.skipWhenConnectionUrl({ databaseConnectionURL: '' })).toBe(true);
       expect(options.skipWhenConnectionUrl({ databaseConnectionURL: 'postgres://x' })).toBe(false);
     });
@@ -85,7 +83,6 @@ describe('projectCreateOptions', () => {
     it('validateSqlConnectionUrl: blank (or whitespace-only) and sql schemes are accepted', () => {
       expect.assertions(6);
       expect(options.validateSqlConnectionUrl('')).toBe(true);
-      // A whitespace-only paste means the same thing as a blank answer: fill the fields.
       expect(options.validateSqlConnectionUrl('   ')).toBe(true);
       expect(options.validateSqlConnectionUrl('postgres://u:p@h:5432/db')).toBe(true);
       expect(options.validateSqlConnectionUrl('postgresql://u:p@h:5432/db')).toBe(true);
@@ -113,7 +110,6 @@ describe('projectCreateOptions', () => {
       expect(options.validateSqlConnectionUrl('pg://u@h/db')).toBe(
         '"pg://" is not supported, expected postgres://, postgresql://, mysql://, mssql://',
       );
-      // The scheme is loosely matched by getDialect(), so it must not slip through.
       expect(options.validateSqlConnectionUrl('postgresfoo://bar')).toBe(
         '"postgresfoo://" is not supported, expected postgres://, postgresql://, mysql://, mssql://',
       );
@@ -138,7 +134,6 @@ describe('projectCreateOptions', () => {
       expect.assertions(4);
       expect(options.validateSqlConnectionUrl('Postgres://u:p@h:5432/db')).toBe(true);
       expect(options.validateSqlConnectionUrl('MYSQL://u:p@h:3306/db')).toBe(true);
-      // …and the dialect must still be derived, otherwise the generated project ships no driver.
       expect(options.getDialect({ databaseConnectionURL: 'Postgres://u:p@h:5432/db' })).toBe(
         'postgres',
       );
@@ -170,9 +165,7 @@ describe('projectCreateOptions', () => {
 
     it('validateMongoConnectionUrl: rejects uppercase, which the mongodb driver refuses', () => {
       expect.assertions(2);
-      // new MongoClient('MongoDB://…') throws "Invalid scheme, expected connection string to
-      // start with mongodb://" — catching it here keeps the failure inside the prompt, before
-      // the project is created on Forest.
+      // new MongoClient('MongoDB://…') throws on the scheme, so the prompt catches it first.
       expect(options.validateMongoConnectionUrl('MongoDB://h/db')).toBe(
         'The scheme must be lowercase: use "mongodb://"',
       );

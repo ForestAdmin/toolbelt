@@ -238,8 +238,6 @@ describe('abstractProjectCreateCommand command', () => {
       expect(instance.exit).toHaveBeenCalledWith(1);
     });
 
-    // A value the user typed is not an internal failure. Printing the unexpected-error banner
-    // over it asks them to open a GitHub issue about their own typo.
     it('should print a refused option value on its own, without the unexpected-error banner', async () => {
       expect.assertions(3);
 
@@ -348,8 +346,6 @@ describe('abstractProjectCreateCommand command', () => {
     });
 
     describe('when the connection URL is pasted with surrounding whitespace', () => {
-      // Copying a URL out of a dashboard or a password manager routinely drags whitespace
-      // along; it must not reach the connection test nor the generated project's .env.
       it('should trim it before deriving the dialect and connecting', async () => {
         expect.assertions(2);
 
@@ -379,9 +375,6 @@ describe('abstractProjectCreateCommand command', () => {
     });
 
     describe('when the connection URL prompt was left blank (empty string)', () => {
-      // The sql/nosql commands ask for an optional connection URL first; a blank answer
-      // means "use the field prompts". The empty string must be normalized to undefined
-      // so the database services use the fields instead of a blank URL.
       it('should normalize the blank URL to undefined and connect with the fields', async () => {
         expect.assertions(1);
 

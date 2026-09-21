@@ -5,9 +5,8 @@ import NosqlCommand from '../../../../src/commands/projects/create/nosql';
 import SqlCommand from '../../../../src/commands/projects/create/sql';
 import { getInteractiveOptions } from '../../../../src/utils/option-parser';
 
-// The command test helper stubs inquirer and returns canned answers, so it cannot prove that the
-// `when` predicates actually skip the field prompts. Here we run the real inquirer against the
-// real command options and assert which questions the user is asked.
+// The command test helper stubs inquirer, so it cannot prove a `when` predicate skipped a
+// question. This drives the real inquirer against the real command options.
 jest.mock('@forestadmin/context', () => ({
   ...jest.requireActual('@forestadmin/context'),
   inject: () => (global as unknown as { __promptContext: unknown }).__promptContext,
@@ -18,7 +17,7 @@ class ScriptedInput extends Readable {
   _read() {} // Pushed to manually, one answer at a time.
 }
 
-/** Resolves once inquirer stopped rendering, i.e. the next question is waiting for an answer. */
+/** Resolves once inquirer stops rendering, i.e. the next question is waiting. */
 function waitForIdle(output: PassThrough, idleMs = 40, timeoutMs = 5000): Promise<void> {
   return new Promise(resolve => {
     let idleTimer: NodeJS.Timeout;
@@ -42,10 +41,12 @@ function waitForIdle(output: PassThrough, idleMs = 40, timeoutMs = 5000): Promis
   });
 }
 
-/** Answers the interactive questions of `commandClass` in order, and reports what was displayed. */
+/** Each answer names the question it replies to, so the sequence reads as the flow under test. */
+type Answer = [question: string, answer: string];
+
 async function answerPrompts(
   commandClass: { options: unknown },
-  answers: string[],
+  answers: Answer[],
 ): Promise<{ answered: Record<string, unknown>; displayed: string }> {
   const input = new ScriptedInput();
   const output = new PassThrough();
@@ -63,7 +64,7 @@ async function answerPrompts(
   await waitForIdle(output);
 
   // eslint-disable-next-line no-restricted-syntax
-  for (const answer of answers) {
+  for (const [, answer] of answers) {
     input.push(`${answer}\n`);
     // eslint-disable-next-line no-await-in-loop
     await waitForIdle(output);
@@ -80,11 +81,11 @@ describe('projects:create connection URL prompt', () => {
       expect.assertions(2);
 
       const { answered } = await answerPrompts(SqlCommand as never, [
-        'postgres://user:secret@localhost:5432/db',
-        '', // database schema, still asked: it is not carried by the URL
-        '', // application host
-        '', // application port
-        '', // language
+        ['databaseConnectionURL', 'postgres://user:secret@localhost:5432/db'],
+        ['databaseSchema', ''],
+        ['applicationHost', ''],
+        ['applicationPort', ''],
+        ['language', ''],
       ]);
 
       expect(Object.keys(answered)).toStrictEqual([
@@ -104,17 +105,17 @@ describe('projects:create connection URL prompt', () => {
       expect.assertions(1);
 
       const { answered } = await answerPrompts(SqlCommand as never, [
-        '', // no connection URL
-        '', // dialect, first choice
-        'mydb',
-        '', // schema
-        '', // host
-        '', // port
-        '', // user
-        'pwd',
-        '', // application host
-        '', // application port
-        '', // language
+        ['databaseConnectionURL', ''],
+        ['databaseDialect', ''],
+        ['databaseName', 'mydb'],
+        ['databaseSchema', ''],
+        ['databaseHost', ''],
+        ['databasePort', ''],
+        ['databaseUser', ''],
+        ['databasePassword', 'pwd'],
+        ['applicationHost', ''],
+        ['applicationPort', ''],
+        ['language', ''],
       ]);
 
       expect(Object.keys(answered)).toStrictEqual([
@@ -136,11 +137,11 @@ describe('projects:create connection URL prompt', () => {
       expect.assertions(3);
 
       const { answered, displayed } = await answerPrompts(SqlCommand as never, [
-        '  postgres://user:MyTopSecret@localhost:5432/db  ',
-        '',
-        '',
-        '',
-        '',
+        ['databaseConnectionURL', '  postgres://user:MyTopSecret@localhost:5432/db  '],
+        ['databaseSchema', ''],
+        ['applicationHost', ''],
+        ['applicationPort', ''],
+        ['language', ''],
       ]);
 
       expect(displayed).not.toContain('MyTopSecret');
@@ -154,10 +155,10 @@ describe('projects:create connection URL prompt', () => {
       expect.assertions(2);
 
       const { answered, displayed } = await answerPrompts(NosqlCommand as never, [
-        'mongodb+srv://user:MyTopSecret@cluster/db',
-        '', // application host
-        '', // application port
-        '', // language
+        ['databaseConnectionURL', 'mongodb+srv://user:MyTopSecret@cluster/db'],
+        ['applicationHost', ''],
+        ['applicationPort', ''],
+        ['language', ''],
       ]);
 
       expect(Object.keys(answered)).toStrictEqual([
@@ -169,22 +170,20 @@ describe('projects:create connection URL prompt', () => {
       expect(displayed).not.toContain('MyTopSecret');
     });
 
-    // The fallback branch of the default nosql run, and the only one that reaches the SRV
-    // question: its `when` used to require a dialect this command sets after prompting.
     it('should fall back to the field prompts, SRV included, when the URL is left blank', async () => {
       expect.assertions(3);
 
       const { answered } = await answerPrompts(NosqlCommand as never, [
-        '', // no connection URL
-        'mydb',
-        '', // host
-        '', // port
-        '', // user
-        'pwd',
-        '', // use a SRV connection string?
-        '', // application host
-        '', // application port
-        '', // language
+        ['databaseConnectionURL', ''],
+        ['databaseName', 'mydb'],
+        ['databaseHost', ''],
+        ['databasePort', ''],
+        ['databaseUser', ''],
+        ['databasePassword', 'pwd'],
+        ['mongoDBSRV', ''],
+        ['applicationHost', ''],
+        ['applicationPort', ''],
+        ['language', ''],
       ]);
 
       expect(Object.keys(answered)).toStrictEqual([
@@ -200,9 +199,6 @@ describe('projects:create connection URL prompt', () => {
         'language',
       ]);
       expect(answered.mongoDBSRV).toBe(false);
-      // The defaults this command offers must not depend on a dialect it sets after prompting:
-      // the port had none, so pressing enter was refused by the validator, and the user was
-      // offered the SQL 'root'.
       expect(answered).toMatchObject({ databasePort: '27017', databaseUser: '' });
     });
   });

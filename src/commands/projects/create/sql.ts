@@ -12,13 +12,8 @@ import { optionsToFlags } from '../../../utils/option-parser';
 
 export default class SqlCommand extends AbstractProjectCreateCommand {
   protected static options: CommandOptions = {
-    // Ask for a connection URL first; when provided, the field prompts below are skipped
-    // (dialect/host/port/user/pass/name are derived from the URL).
     databaseConnectionURL: {
       ...projectCreateOptions.databaseConnectionURL,
-      // Mirror the field options' `exclusive: ['databaseConnectionURL']`: when any DB field
-      // flag is passed on the command line, the URL prompt is dropped (scripted/CI usage
-      // must not hang on a new interactive question).
       exclusive: [
         'databaseDialect',
         'databaseName',
@@ -31,7 +26,6 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
       validate: projectCreateOptions.validateSqlConnectionUrl,
       prompter: {
         question: 'Database connection URL (leave blank to enter the details manually):',
-        // The URL embeds the database password: it must be masked like the password prompt.
         secret: true,
       },
     },

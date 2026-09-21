@@ -11,8 +11,6 @@ jest.mock('@forestadmin/context', () => ({
 /** The questions of the last `parseFlags` call, readable after it rejects. */
 let asked: string[] = [];
 
-/** Runs the real `projects:create:sql` options against a given set of flags. */
-
 async function parseFlags(flags: Record<string, unknown>): Promise<{
   options: Record<string, unknown>;
   questions: string[];
@@ -50,14 +48,10 @@ describe('utils > option-parser', () => {
         });
 
         expect(options.databaseConnectionURL).toBe('postgres://u:p@localhost:5432/db');
-        // The URL was provided: the field prompts it is exclusive with are not asked.
         expect(questions).not.toContain('databaseName');
       });
 
       describe('when the filter empties the value', () => {
-        // `-c '  '` is a flag carrying nothing, which is what an unset variable expands to.
-        // Dropping it would ask the question the flag was meant to answer, and a script has no
-        // terminal to answer it with, so the run would hang instead of failing.
         it('should refuse the flag, name it, and ask nothing', async () => {
           expect.assertions(2);
 
@@ -70,8 +64,6 @@ describe('utils > option-parser', () => {
     });
 
     describe('when a flag without a filter is given an empty value', () => {
-      // Only a filter can empty a value, and only the options that declare one opt into this.
-      // An empty `--databaseSchema` still means "no schema", not "ask me".
       it('should keep it as provided', async () => {
         expect.assertions(2);
 

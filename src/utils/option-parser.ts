@@ -16,7 +16,7 @@ export type CommandOptions<T = Record<string, unknown>> = {
     choices?: Array<{ name: string; value: unknown }>;
     when?: (v: T) => boolean;
     validate?: (v: string) => boolean | string;
-    /** Normalizes the answer before it is validated and stored (inquirer runs it first). */
+    /** Inquirer runs this before `when` and `validate`. */
     filter?: (v: string) => string;
     default?: unknown | ((v: T) => unknown);
     oclif: { char?: string; description: string };
@@ -29,16 +29,13 @@ function optionToInquirer(name: string, option: CommandOptions[string]): unknown
 
   // Use rawlist on windows because of https://github.com/SBoudrias/Inquirer.js/issues/303
   const listType = /^win/.test(os.platform()) ? 'rawlist' : 'list';
-  // An option holding credentials must never be echoed: either its name says so, or it opts in
-  // explicitly (a connection URL carries the password but is not named like one).
   const isSecret = option.prompter.secret || /(password|secret)/i.test(name);
   const inputType = isSecret ? 'password' : 'input';
   let type = option.choices ? listType : inputType;
   if (option.type === 'boolean') type = 'confirm';
 
   const result: Record<string, unknown> = { name, type, message: option.prompter.question };
-  // Unlike a password, a connection URL is long and pasted: show its length so that a failed
-  // paste is distinguishable from the blank answer that falls back to the field prompts.
+  // A pasted value shows its length, so a failed paste is distinguishable from a blank answer.
   if (option.prompter.secret) result.mask = '*';
   if (option.prompter.description) result.description = option.prompter.description;
   if (option.choices) result.choices = option.choices;
@@ -99,11 +96,6 @@ export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
     const choice = v.choices?.find(c => c.name === optionsFromCli[k]);
     if (choice) optionsFromCli[k] = choice.value;
 
-    // Normalize the flag the way inquirer normalizes an answer (it runs `filter` first), so that
-    // both paths agree on what the value is. A flag the filter empties carries nothing, and it
-    // is refused rather than dropped: dropping it would put back the question the flag was
-    // meant to answer, in front of a script with no terminal to answer it. A blank answer to
-    // the prompt keeps its own meaning, which is "ask me the fields instead".
     if (v.filter && typeof optionsFromCli[k] === 'string') {
       const filtered = v.filter(optionsFromCli[k]);
 

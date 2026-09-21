@@ -27,9 +27,7 @@ class Database {
 
   // eslint-disable-next-line class-methods-use-this
   getDialect(dbConnectionUrl, dbDialect) {
-    // NOTICE: URL schemes are case-insensitive, and Sequelize normalizes them when it parses the
-    // connection URL. Compare on a lowercased copy only: the credentials the URL carries are
-    // case-sensitive, and the URL itself is handed over to the driver untouched.
+    // NOTICE: a copy, because the credentials the URL carries are case-sensitive.
     const url = dbConnectionUrl ? dbConnectionUrl.toLowerCase() : dbConnectionUrl;
 
     if (url) {

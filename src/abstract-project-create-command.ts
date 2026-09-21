@@ -111,8 +111,6 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
       await this.notifySuccess();
     } catch (error) {
-      // A value the user typed, refused by an option, is not an unexpected failure: printing the
-      // banner below over it asks them to open a GitHub issue about their own typo.
       if (error instanceof InvalidOptionError) {
         this.logger.error(error.userMessage);
         this.exit(1);
@@ -224,10 +222,6 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   protected async getCommandOptions(): Promise<ProjectCreateOptions> {
     const options = await this.optionParser.getCommandLineOptions<ProjectCreateOptions>(this);
 
-    // A blank answer to the optional connection URL prompt means "use the field prompts instead".
-    // The value itself is already trimmed by the option's `filter` (on the prompt and on the `-c`
-    // flag alike); what is left to do is turn the blank answer into an absent URL, before the
-    // dialect is derived from it and before it reaches the connection test and the generated .env.
     options.databaseConnectionURL = options.databaseConnectionURL?.trim() || undefined;
 
     // Dialect must be set for the project creator to work even if the connection URL is provided

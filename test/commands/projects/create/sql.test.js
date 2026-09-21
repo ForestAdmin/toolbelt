@@ -17,7 +17,6 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
     {
       name: 'databaseConnectionURL',
       message: 'Database connection URL (leave blank to enter the details manually):',
-      // The URL embeds the database password: masked, like the databasePassword prompt.
       type: 'password',
       mask: '*',
       filter: expect.any(Function),
@@ -381,8 +380,6 @@ describe('projects:create:sql', () => {
       });
 
       describe('when the database field flags are provided instead', () => {
-        // Regression guard for scripted/CI usage: passing the field flags must not
-        // surface the new interactive URL question (it would hang in a non-TTY).
         it('should not prompt for the connection URL', () =>
           testCli({
             commandClass: SqlCommand,
@@ -443,8 +440,6 @@ describe('projects:create:sql', () => {
             prompts: [
               {
                 in: makePromptInputList(),
-                // Only the URL is answered (no field values) — the dialect (postgres) is derived
-                // from it, proving the field prompts were skipped.
                 out: {
                   databaseConnectionURL: 'postgres://u:p@unreachable.invalid:5432/db',
                   language: languages.Javascript,
@@ -509,8 +504,6 @@ describe('projects:create:sql', () => {
         }));
 
       describe('when the connection URL prompt is left blank', () => {
-        // Round-trip of the "blank ⇒ enter the details manually" path: the empty answer
-        // must be normalized to undefined so the connection uses the field values.
         it('should fall back to the field prompts and generate the project', () =>
           testCli({
             commandClass: SqlCommand,
