@@ -224,6 +224,8 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
     options.databaseConnectionURL = options.databaseConnectionURL?.trim() || undefined;
 
+    this.warnOnUnsupportedConnectionUrl(options.databaseConnectionURL);
+
     // Dialect must be set for the project creator to work even if the connection URL is provided
     options.databaseDialect = getDialect(options);
 
@@ -238,6 +240,20 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     }
 
     return options;
+  }
+
+  /** The flag stays permissive, so a URL the generated project cannot run is a warning. */
+  private warnOnUnsupportedConnectionUrl(databaseConnectionURL?: string): void {
+    if (!databaseConnectionURL) return;
+
+    const { options } = this.constructor as unknown as {
+      options?: {
+        databaseConnectionURL?: { prompter?: { validate?: (v: string) => boolean | string } };
+      };
+    };
+    const advice = options?.databaseConnectionURL?.prompter?.validate?.(databaseConnectionURL);
+
+    if (typeof advice === 'string') this.logger.warn(advice);
   }
 
   protected async testDatabaseConnection(dbConfig: DbConfig) {

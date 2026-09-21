@@ -4,6 +4,7 @@ import { Config, Flags } from '@oclif/core';
 
 import AbstractProjectCreateCommand from '../src/abstract-project-create-command';
 import InvalidOptionError from '../src/errors/options/invalid-option-error';
+import { validateSqlConnectionUrl } from '../src/services/projects/create/options';
 import Agents from '../src/utils/agents';
 import languages, { languageList } from '../src/utils/languages';
 
@@ -23,6 +24,7 @@ describe('abstractProjectCreateCommand command', () => {
         error: jest.fn(),
         info: jest.fn(),
         log: jest.fn(),
+        warn: jest.fn(),
       },
       eventSender: {
         notifySuccess: jest.fn(),
@@ -75,6 +77,13 @@ describe('abstractProjectCreateCommand command', () => {
   describe('run', () => {
     class TestAbstractClass extends AbstractProjectCreateCommand {
       public agent: string | null = null;
+
+      protected static options = {
+        databaseConnectionURL: {
+          oclif: { description: 'Enter the database credentials with a connection URL.' },
+          prompter: { question: 'url?', validate: validateSqlConnectionUrl },
+        },
+      };
 
       // eslint-disable-next-line class-methods-use-this
       override dump() {
@@ -258,6 +267,24 @@ describe('abstractProjectCreateCommand command', () => {
         expect.arrayContaining([expect.stringContaining('unexpected')]),
       );
       expect(instance.exit).toHaveBeenCalledWith(1);
+    });
+
+    describe('when the connection URL flag carries a scheme the prompt would refuse', () => {
+      it('should warn and carry on, because the flag is not a gate', async () => {
+        expect.assertions(2);
+
+        const { stubs, instance } = setup({
+          databaseConnectionURL: 'mariadb://u:p@localhost:3306/db',
+          databaseDialect: undefined,
+        });
+
+        await instance.run();
+
+        expect(stubs.logger.warn).toHaveBeenCalledWith(
+          'mariadb:// is not supported by the generated project, use mysql:// instead',
+        );
+        expect(stubs.projectCreator.create).toHaveBeenCalledTimes(1);
+      });
     });
 
     it('should test that the database is connectable and disconnect', async () => {

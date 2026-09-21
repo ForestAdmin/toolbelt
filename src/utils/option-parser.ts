@@ -20,7 +20,13 @@ export type CommandOptions<T = Record<string, unknown>> = {
     filter?: (v: string) => string;
     default?: unknown | ((v: T) => unknown);
     oclif: { char?: string; description: string };
-    prompter?: { question: string; description?: string; secret?: boolean };
+    prompter?: {
+      question: string;
+      description?: string;
+      secret?: boolean;
+      /** Refuses an answer without gating the flag, which stays as permissive as it was. */
+      validate?: (v: string) => boolean | string;
+    };
   };
 };
 
@@ -40,7 +46,9 @@ function optionToInquirer(name: string, option: CommandOptions[string]): unknown
   if (option.prompter.description) result.description = option.prompter.description;
   if (option.choices) result.choices = option.choices;
   if (option.filter) result.filter = option.filter;
-  if (option.validate) result.validate = option.validate;
+
+  const validate = option.prompter.validate ?? option.validate;
+  if (validate) result.validate = validate;
   if (option.default !== undefined) result.default = option.default;
   if (option.when)
     // Make sure that the first question when() is evaluated after one tick (see hack below)

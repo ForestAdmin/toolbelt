@@ -23,8 +23,8 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
         'databasePassword',
       ],
       filter: projectCreateOptions.trimConnectionUrl,
-      validate: projectCreateOptions.validateSqlConnectionUrl,
       prompter: {
+        validate: projectCreateOptions.validateSqlConnectionUrl,
         question: 'Database connection URL (leave blank to enter the details manually):',
         secret: true,
       },

@@ -37,6 +37,33 @@ async function parseFlags(flags: Record<string, unknown>): Promise<{
   return { options: await getCommandLineOptions(instance), questions };
 }
 
+type Question = { name: string; validate?: (v: string) => boolean | string };
+
+/** The questions `projects:create:sql` asks when no flag answers them. */
+async function askedQuestions(): Promise<{ url: Question }> {
+  let questions: Question[] = [];
+
+  (global as unknown as { __optionParserContext: unknown }).__optionParserContext = {
+    os: { platform: () => 'darwin' },
+    inquirer: {
+      prompt: (batch: Question[]) => {
+        questions = batch;
+
+        return Promise.resolve({});
+      },
+    },
+  };
+
+  const instance = {
+    constructor: SqlCommand,
+    parse: async () => ({ args: {}, flags: {} }),
+  } as unknown as Command;
+
+  await getCommandLineOptions(instance);
+
+  return { url: questions.find(question => question.name === 'databaseConnectionURL') as Question };
+}
+
 describe('utils > option-parser', () => {
   describe('getCommandLineOptions', () => {
     describe('when a flag declares a filter', () => {
@@ -74,15 +101,28 @@ describe('utils > option-parser', () => {
       });
     });
 
-    describe('when a flag fails its validation', () => {
-      it('should throw before anything is asked', async () => {
+    describe('when a flag carries a value the prompt would refuse', () => {
+      it('should accept it, leaving the flag as permissive as it was', async () => {
         expect.assertions(1);
 
-        await expect(
-          parseFlags({ databaseConnectionURL: 'mariadb://u:p@localhost/db' }),
-        ).rejects.toThrow(
-          'Invalid value for databaseConnectionURL: mariadb:// is not supported by the generated project, use mysql:// instead',
+        const { options } = await parseFlags({
+          databaseConnectionURL: 'mariadb://u:p@localhost/db',
+        });
+
+        expect(options.databaseConnectionURL).toBe('mariadb://u:p@localhost/db');
+      });
+    });
+
+    describe('when an option declares a prompt validator', () => {
+      it('should hand it to the question instead of gating the flag', async () => {
+        expect.assertions(2);
+
+        const { url } = await askedQuestions();
+
+        expect(url.validate?.('mariadb://u:p@localhost/db')).toBe(
+          'mariadb:// is not supported by the generated project, use mysql:// instead',
         );
+        expect(url.validate?.('postgres://u:p@localhost:5432/db')).toBe(true);
       });
     });
   });
