@@ -1,3 +1,10 @@
+# [5.20.0](https://github.com/ForestAdmin/toolbelt/compare/v5.19.0...v5.20.0) (2026-09-22)
+
+
+### Features
+
+* **projects:** offer a connection URL in create:sql / create:nosql prompts ([#807](https://github.com/ForestAdmin/toolbelt/issues/807)) ([801a4e5](https://github.com/ForestAdmin/toolbelt/commit/801a4e594fdcb93cdd3e08b2bd9616bd29d41250))
+
 # [5.19.0](https://github.com/ForestAdmin/toolbelt/compare/v5.18.1...v5.19.0) (2026-07-16)
 
 
