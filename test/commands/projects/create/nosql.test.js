@@ -16,34 +16,46 @@ const { default: languages } = require('../../../../src/utils/languages');
 const makePromptInputList = ({ except = null, only = null } = {}) => {
   const allPromptInputs = [
     {
+      name: 'databaseConnectionURL',
+      message: 'MongoDB connection URL (leave blank to enter the details manually):',
+      type: 'password',
+      mask: '*',
+      filter: expect.any(Function),
+      validate: expect.any(Function),
+    },
+    {
       name: 'databaseName',
       type: 'input',
       message: "What's the database name?",
       validate: expect.any(Function),
+      when: expect.any(Function),
     },
     {
       name: 'databaseHost',
       message: "What's the database hostname?",
       type: 'input',
       default: 'localhost',
+      when: expect.any(Function),
     },
     {
       name: 'databasePort',
       type: 'input',
+      default: '27017',
       message: "What's the database port?",
-      default: expect.any(Function),
       validate: expect.any(Function),
+      when: expect.any(Function),
     },
     {
       name: 'databaseUser',
       message: "What's the database user?",
-      default: expect.any(Function),
       type: 'input',
+      when: expect.any(Function),
     },
     {
       name: 'databasePassword',
       message: "What's the database password? [optional]",
       type: 'password',
+      when: expect.any(Function),
     },
     {
       name: 'mongoDBSRV',
@@ -282,6 +294,82 @@ describe('projects:create:nosql', () => {
               { spinner: '× Testing connection to your database' },
             ],
             // This only validates login, options are missing thus the error.
+            exitCode: 1,
+          }));
+      });
+
+      describe('when the database field flags are provided instead', () => {
+        it('should not prompt for the connection URL', () =>
+          testCli({
+            commandClass: NosqlCommand,
+            commandArgs: [
+              'name',
+              '-n',
+              // The query string keeps the (failing) connection test fast.
+              'db?serverSelectionTimeoutMS=10',
+              '-h',
+              'localhost',
+              '-p',
+              '28999',
+              '-u',
+              'user',
+              '--databasePassword',
+              'wrong_password',
+              '-H',
+              'http://localhost',
+              '-P',
+              '3310',
+              '-l',
+              'javascript',
+            ],
+            env: testEnvWithSecret,
+            token: 'any',
+            api: [
+              () => createProject({ databaseType: 'mongodb', agent: Agents.NodeJS }),
+              () => updateNewEnvironmentEndpoint(),
+            ],
+            prompts: [
+              {
+                in: makePromptInputList({ only: ['mongoDBSRV'] }),
+                out: {
+                  mongoDBSRV: false,
+                },
+              },
+            ],
+            std: [
+              { spinner: '√ Creating your project on Forest Admin' },
+              { spinner: '× Testing connection to your database' },
+            ],
+            // The database is unreachable on purpose: only the prompt list matters here.
+            exitCode: 1,
+          }));
+      });
+
+      describe('is chosen interactively', () => {
+        it('should accept a mongodb URL and skip the field prompts', () =>
+          testCli({
+            commandClass: NosqlCommand,
+            commandArgs: ['name'],
+            env: testEnvWithSecret,
+            token: 'any',
+            api: [
+              () => createProject({ databaseType: 'mongodb', agent: Agents.NodeJS }),
+              () => updateNewEnvironmentEndpoint(),
+            ],
+            prompts: [
+              {
+                in: makePromptInputList(),
+                out: {
+                  databaseConnectionURL:
+                    'mongodb://unreachable.invalid:27017/db?serverSelectionTimeoutMS=10',
+                  language: languages.Javascript,
+                },
+              },
+            ],
+            std: [
+              { spinner: '√ Creating your project on Forest Admin' },
+              { spinner: '× Testing connection to your database' },
+            ],
             exitCode: 1,
           }));
       });

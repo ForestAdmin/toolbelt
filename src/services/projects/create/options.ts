@@ -27,15 +27,74 @@ export type ProjectCreateOptions = {
 type Option = CommandOptions<ProjectCreateOptions>[string];
 
 export function getDialect(options: ProjectCreateOptions): ProjectCreateOptions['databaseDialect'] {
-  const { databaseDialect: dialect, databaseConnectionURL: url } = options;
+  const { databaseDialect: dialect, databaseConnectionURL } = options;
 
   if (dialect) return dialect;
+
+  // A copy, because the credentials the URL carries are case-sensitive.
+  const url = databaseConnectionURL?.toLowerCase();
+
   if (url?.startsWith('postgres')) return 'postgres';
   if (url?.startsWith('mssql://')) return 'mssql';
   if (url?.startsWith('mongodb')) return 'mongodb';
   if (url?.startsWith('mysql://') || url?.startsWith('mariadb://')) return 'mysql';
 
   return null;
+}
+
+export const skipWhenConnectionUrl = (args: ProjectCreateOptions): boolean =>
+  !args.databaseConnectionURL;
+
+export const trimConnectionUrl = (value: string): string => value?.trim() ?? value;
+
+const SQL_URL_SCHEMES = ['postgres', 'postgresql', 'mysql', 'mssql'];
+const MONGO_URL_SCHEMES = ['mongodb', 'mongodb+srv'];
+
+function validateConnectionUrl(
+  value: string,
+  schemes: string[],
+  example: string,
+  {
+    lowercaseOnly = false,
+    hints = {},
+  }: { lowercaseOnly?: boolean; hints?: Record<string, string> } = {},
+): boolean | string {
+  const url = value?.trim();
+  if (!url) return true;
+
+  const [, scheme, rest] = /^([a-z0-9+.-]+):\/\/(.*)$/i.exec(url) ?? [];
+  if (!scheme) return `Enter a connection URL like ${example}`;
+  if (!rest) return `The URL is missing everything after "${scheme}://" — try ${example}`;
+
+  const lowercased = scheme.toLowerCase();
+
+  // hasOwnProperty: the scheme is user input, `constructor://…` must not resolve on the prototype.
+  if (Object.prototype.hasOwnProperty.call(hints, lowercased)) return hints[lowercased];
+  if (!schemes.includes(lowercased)) {
+    return `"${scheme}://" is not supported, expected ${schemes.map(s => `${s}://`).join(', ')}`;
+  }
+  if (lowercaseOnly && scheme !== lowercased) {
+    return `The scheme must be lowercase: use "${lowercased}://"`;
+  }
+
+  return true;
+}
+
+// No `lowercaseOnly`: Sequelize and @forestadmin/datasource-sql normalize the scheme themselves.
+export function validateSqlConnectionUrl(value: string): boolean | string {
+  return validateConnectionUrl(value, SQL_URL_SCHEMES, 'postgres://user:password@host:5432/db', {
+    hints: {
+      // getDialect() reads it as mysql, so the project ships mysql2 while the driver wants mariadb.
+      mariadb: 'mariadb:// is not supported by the generated project, use mysql:// instead',
+    },
+  });
+}
+
+// The mongodb driver compares the scheme verbatim and throws on `MongoDB://…`.
+export function validateMongoConnectionUrl(value: string): boolean | string {
+  return validateConnectionUrl(value, MONGO_URL_SCHEMES, 'mongodb://user:password@host:27017/db', {
+    lowercaseOnly: true,
+  });
 }
 
 export const applicationHost: Option = {

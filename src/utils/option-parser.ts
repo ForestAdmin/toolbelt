@@ -6,6 +6,8 @@ import type { Command } from '@oclif/core';
 import { inject } from '@forestadmin/context';
 import { Flags as oflags } from '@oclif/core';
 
+import InvalidOptionError from '../errors/options/invalid-option-error';
+
 /** Option which can be used both as  flag or prompt */
 export type CommandOptions<T = Record<string, unknown>> = {
   [name: string]: {
@@ -14,9 +16,17 @@ export type CommandOptions<T = Record<string, unknown>> = {
     choices?: Array<{ name: string; value: unknown }>;
     when?: (v: T) => boolean;
     validate?: (v: string) => boolean | string;
+    /** Inquirer runs this before `when` and `validate`. */
+    filter?: (v: string) => string;
     default?: unknown | ((v: T) => unknown);
     oclif: { char?: string; description: string };
-    prompter?: { question: string; description?: string };
+    prompter?: {
+      question: string;
+      description?: string;
+      secret?: boolean;
+      /** Refuses an answer without gating the flag, which stays as permissive as it was. */
+      validate?: (v: string) => boolean | string;
+    };
   };
 };
 
@@ -25,14 +35,20 @@ function optionToInquirer(name: string, option: CommandOptions[string]): unknown
 
   // Use rawlist on windows because of https://github.com/SBoudrias/Inquirer.js/issues/303
   const listType = /^win/.test(os.platform()) ? 'rawlist' : 'list';
-  const inputType = name.match(/(password|secret)/i) ? 'password' : 'input';
+  const isSecret = option.prompter.secret || /(password|secret)/i.test(name);
+  const inputType = isSecret ? 'password' : 'input';
   let type = option.choices ? listType : inputType;
   if (option.type === 'boolean') type = 'confirm';
 
   const result: Record<string, unknown> = { name, type, message: option.prompter.question };
+  // A pasted value shows its length, so a failed paste is distinguishable from a blank answer.
+  if (option.prompter.secret) result.mask = '*';
   if (option.prompter.description) result.description = option.prompter.description;
   if (option.choices) result.choices = option.choices;
-  if (option.validate) result.validate = option.validate;
+  if (option.filter) result.filter = option.filter;
+
+  const validate = option.prompter.validate ?? option.validate;
+  if (validate) result.validate = validate;
   if (option.default !== undefined) result.default = option.default;
   if (option.when)
     // Make sure that the first question when() is evaluated after one tick (see hack below)
@@ -88,9 +104,20 @@ export async function getCommandLineOptions<T>(instance: Command): Promise<T> {
     const choice = v.choices?.find(c => c.name === optionsFromCli[k]);
     if (choice) optionsFromCli[k] = choice.value;
 
+    if (v.filter && typeof optionsFromCli[k] === 'string') {
+      const filtered = v.filter(optionsFromCli[k]);
+
+      if (!filtered)
+        throw new InvalidOptionError(
+          `Invalid value for ${k}: the flag was passed an empty value, omit it to be asked instead`,
+        );
+
+      optionsFromCli[k] = filtered;
+    }
+
     // Validate
     const error = optionsFromCli[k] !== undefined && v.validate?.(optionsFromCli[k]);
-    if (typeof error === 'string') throw new Error(`Invalid value for ${k}: ${error}`);
+    if (typeof error === 'string') throw new InvalidOptionError(`Invalid value for ${k}: ${error}`);
   });
 
   // Query missing options interactively

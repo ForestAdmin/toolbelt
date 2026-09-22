@@ -27,18 +27,21 @@ class Database {
 
   // eslint-disable-next-line class-methods-use-this
   getDialect(dbConnectionUrl, dbDialect) {
-    if (dbConnectionUrl) {
-      if (dbConnectionUrl.startsWith('postgres')) {
+    // NOTICE: a copy, because the credentials the URL carries are case-sensitive.
+    const url = dbConnectionUrl ? dbConnectionUrl.toLowerCase() : dbConnectionUrl;
+
+    if (url) {
+      if (url.startsWith('postgres')) {
         return 'postgres';
       }
-      if (dbConnectionUrl.startsWith('mysql://')) {
+      if (url.startsWith('mysql://')) {
         return 'mysql';
       }
-      if (dbConnectionUrl.startsWith('mssql://')) {
+      if (url.startsWith('mssql://')) {
         return 'mssql';
       }
       // NOTICE: For MongoDB can be "mongodb://" or "mongodb+srv://"
-      if (dbConnectionUrl.startsWith('mongodb')) {
+      if (url.startsWith('mongodb')) {
         return 'mongodb';
       }
     }

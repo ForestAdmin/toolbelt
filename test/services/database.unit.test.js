@@ -113,6 +113,21 @@ describe('services > database', () => {
         expect.assertions(1);
         expect(database.getDialect('mongodb://user:passwd@somewhere/db')).toBe('mongodb');
       });
+
+      it('should match the scheme case-insensitively, as the driver does', () => {
+        expect.assertions(4);
+        expect(database.getDialect('Postgres://user:passwd@somewhere/db')).toBe('postgres');
+        expect(database.getDialect('MYSQL://user:passwd@somewhere/db')).toBe('mysql');
+        expect(database.getDialect('MsSql://user:passwd@somewhere/db')).toBe('mssql');
+        expect(database.getDialect('MongoDB+SRV://user:passwd@somewhere/db')).toBe('mongodb');
+      });
+
+      it('should not lowercase the credentials it is given', () => {
+        expect.assertions(1);
+        const url = 'Postgres://user:MyTopSecret@somewhere/db';
+        database.getDialect(url);
+        expect(url).toBe('Postgres://user:MyTopSecret@somewhere/db');
+      });
     });
   });
 

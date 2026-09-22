@@ -3,6 +3,8 @@
 import { Config, Flags } from '@oclif/core';
 
 import AbstractProjectCreateCommand from '../src/abstract-project-create-command';
+import InvalidOptionError from '../src/errors/options/invalid-option-error';
+import { validateSqlConnectionUrl } from '../src/services/projects/create/options';
 import Agents from '../src/utils/agents';
 import languages, { languageList } from '../src/utils/languages';
 
@@ -22,6 +24,7 @@ describe('abstractProjectCreateCommand command', () => {
         error: jest.fn(),
         info: jest.fn(),
         log: jest.fn(),
+        warn: jest.fn(),
       },
       eventSender: {
         notifySuccess: jest.fn(),
@@ -74,6 +77,13 @@ describe('abstractProjectCreateCommand command', () => {
   describe('run', () => {
     class TestAbstractClass extends AbstractProjectCreateCommand {
       public agent: string | null = null;
+
+      protected static options = {
+        databaseConnectionURL: {
+          oclif: { description: 'Enter the database credentials with a connection URL.' },
+          prompter: { question: 'url?', validate: validateSqlConnectionUrl },
+        },
+      };
 
       // eslint-disable-next-line class-methods-use-this
       override dump() {
@@ -237,6 +247,46 @@ describe('abstractProjectCreateCommand command', () => {
       expect(instance.exit).toHaveBeenCalledWith(1);
     });
 
+    it('should print a refused option value on its own, without the unexpected-error banner', async () => {
+      expect.assertions(3);
+
+      const { stubs, instance } = setup();
+      const error = new InvalidOptionError(
+        'Invalid value for databaseConnectionURL: mariadb:// is not supported by the generated project, use mysql:// instead',
+      );
+
+      stubs.optionParser.getCommandLineOptions.mockImplementation(() => {
+        throw error;
+      });
+      jest.spyOn(instance, 'exit').mockReturnValue(true as never);
+
+      await instance.run();
+
+      expect(stubs.logger.error).toHaveBeenCalledWith(error.message);
+      expect(stubs.logger.error).not.toHaveBeenCalledWith(
+        expect.arrayContaining([expect.stringContaining('unexpected')]),
+      );
+      expect(instance.exit).toHaveBeenCalledWith(1);
+    });
+
+    describe('when the connection URL flag carries a scheme the prompt would refuse', () => {
+      it('should warn and carry on, because the flag is not a gate', async () => {
+        expect.assertions(2);
+
+        const { stubs, instance } = setup({
+          databaseConnectionURL: 'mariadb://u:p@localhost:3306/db',
+          databaseDialect: undefined,
+        });
+
+        await instance.run();
+
+        expect(stubs.logger.warn).toHaveBeenCalledWith(
+          'mariadb:// is not supported by the generated project, use mysql:// instead',
+        );
+        expect(stubs.projectCreator.create).toHaveBeenCalledTimes(1);
+      });
+    });
+
     it('should test that the database is connectable and disconnect', async () => {
       expect.assertions(4);
 
@@ -320,6 +370,77 @@ describe('abstractProjectCreateCommand command', () => {
         projectId: 1,
       });
       expect(stubs.eventSender.notifySuccess).toHaveBeenCalledTimes(1);
+    });
+
+    describe('when the connection URL is pasted with surrounding whitespace', () => {
+      it('should trim it before deriving the dialect and connecting', async () => {
+        expect.assertions(2);
+
+        const config = { databaseConnectionURL: '  postgres://u:p@localhost:5432/db\n' };
+        const commandArgs = [
+          'testApp',
+          '--applicationHost',
+          'localhost',
+          '--applicationPort',
+          '3300',
+        ];
+
+        const { instance, stubs } = setup(config, commandArgs);
+
+        await instance.run();
+
+        expect(stubs.database.connect).toHaveBeenCalledWith(
+          expect.objectContaining({
+            dbConnectionUrl: 'postgres://u:p@localhost:5432/db',
+            dbDialect: 'postgres',
+          }),
+        );
+        expect(stubs.eventSender.meta).toStrictEqual(
+          expect.objectContaining({ dbDialect: 'postgres' }),
+        );
+      });
+    });
+
+    describe('when the connection URL prompt was left blank (empty string)', () => {
+      it('should normalize the blank URL to undefined and connect with the fields', async () => {
+        expect.assertions(1);
+
+        const config = {
+          databaseConnectionURL: '',
+          databaseName: 'testDb',
+          databaseHost: 'localhost',
+          databasePort: 5432,
+          databaseUser: 'testUser',
+          databasePassword: 'testPwd',
+        };
+        const commandArgs = [
+          'testApp',
+          '--applicationHost',
+          'localhost',
+          '--applicationPort',
+          '3300',
+          '--databaseSchema',
+          'public',
+        ];
+
+        const { instance, stubs } = setup(config, commandArgs);
+
+        await instance.run();
+
+        expect(stubs.database.connect).toHaveBeenCalledWith({
+          dbConnectionUrl: undefined,
+          dbDialect: 'postgres',
+          dbHostname: 'localhost',
+          dbName: 'testDb',
+          dbPassword: 'testPwd',
+          dbPort: 5432,
+          dbSchema: 'public',
+          dbUser: 'testUser',
+          mongodbSrv: undefined,
+          dbSsl: false,
+          dbSslMode: 'disabled',
+        });
+      });
     });
 
     describe('on a mongo database', () => {

@@ -11,18 +11,55 @@ import { optionsToFlags } from '../../../utils/option-parser';
 
 export default class NosqlCommand extends AbstractProjectCreateCommand {
   protected static readonly options: CommandOptions = {
-    databaseConnectionURL: projectCreateOptions.databaseConnectionURL,
-    databaseName: projectCreateOptions.databaseName,
-    databaseHost: projectCreateOptions.databaseHost,
-    databasePort: projectCreateOptions.databasePort,
-    databaseUser: projectCreateOptions.databaseUser,
-    databasePassword: projectCreateOptions.databasePassword,
+    databaseConnectionURL: {
+      ...projectCreateOptions.databaseConnectionURL,
+      exclusive: [
+        'databaseName',
+        'databaseHost',
+        'databasePort',
+        'databaseUser',
+        'databasePassword',
+        'mongoDBSRV',
+      ],
+      filter: projectCreateOptions.trimConnectionUrl,
+      prompter: {
+        validate: projectCreateOptions.validateMongoConnectionUrl,
+        question: 'MongoDB connection URL (leave blank to enter the details manually):',
+        secret: true,
+      },
+    },
+    databaseName: {
+      ...projectCreateOptions.databaseName,
+      when: projectCreateOptions.skipWhenConnectionUrl,
+    },
+    databaseHost: {
+      ...projectCreateOptions.databaseHost,
+      when: projectCreateOptions.skipWhenConnectionUrl,
+    },
+    databasePort: {
+      ...projectCreateOptions.databasePort,
+      when: projectCreateOptions.skipWhenConnectionUrl,
+      default: '27017',
+    },
+    databaseUser: {
+      ...projectCreateOptions.databaseUser,
+      when: projectCreateOptions.skipWhenConnectionUrl,
+      // Drops the shared default, which is the SQL 'root'.
+      default: undefined,
+    },
+    databasePassword: {
+      ...projectCreateOptions.databasePassword,
+      when: projectCreateOptions.skipWhenConnectionUrl,
+    },
 
     // Set prompter to null to replicate bug from previous version (we don't ask for SSL there).
     databaseSslMode: { ...projectCreateOptions.databaseSslMode, prompter: null },
     databaseSSL: { ...projectCreateOptions.databaseSSL, prompter: null },
 
-    mongoDBSRV: projectCreateOptions.mongoDBSRV,
+    mongoDBSRV: {
+      ...projectCreateOptions.mongoDBSRV,
+      when: projectCreateOptions.skipWhenConnectionUrl,
+    },
     applicationHost: projectCreateOptions.applicationHost,
     applicationPort: projectCreateOptions.applicationPort,
     language: projectCreateOptions.language,

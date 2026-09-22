@@ -14,6 +14,7 @@ import type { Config as OclifConfig } from '@oclif/core';
 import { Args } from '@oclif/core';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
+import InvalidOptionError from './errors/options/invalid-option-error';
 import { getDialect } from './services/projects/create/options';
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
@@ -110,8 +111,12 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
       await this.notifySuccess();
     } catch (error) {
+      if (error instanceof InvalidOptionError) {
+        this.logger.error(error.userMessage);
+        this.exit(1);
+      }
       // Display customized error for non-authentication errors.
-      if (error.status !== 401 && error.status !== 403) {
+      else if (error.status !== 401 && error.status !== 403) {
         this.logger.error(['Cannot generate your project.', `${this.messages.ERROR_UNEXPECTED}`]);
         this.logger.log(`${this.chalk.red(error)}`);
         this.exit(1);
@@ -217,6 +222,10 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   protected async getCommandOptions(): Promise<ProjectCreateOptions> {
     const options = await this.optionParser.getCommandLineOptions<ProjectCreateOptions>(this);
 
+    options.databaseConnectionURL = options.databaseConnectionURL?.trim() || undefined;
+
+    this.warnOnUnsupportedConnectionUrl(options.databaseConnectionURL);
+
     // Dialect must be set for the project creator to work even if the connection URL is provided
     options.databaseDialect = getDialect(options);
 
@@ -231,6 +240,20 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     }
 
     return options;
+  }
+
+  /** The flag stays permissive, so a URL the generated project cannot run is a warning. */
+  private warnOnUnsupportedConnectionUrl(databaseConnectionURL?: string): void {
+    if (!databaseConnectionURL) return;
+
+    const { options } = this.constructor as unknown as {
+      options?: {
+        databaseConnectionURL?: { prompter?: { validate?: (v: string) => boolean | string } };
+      };
+    };
+    const advice = options?.databaseConnectionURL?.prompter?.validate?.(databaseConnectionURL);
+
+    if (typeof advice === 'string') this.logger.warn(advice);
   }
 
   protected async testDatabaseConnection(dbConfig: DbConfig) {
