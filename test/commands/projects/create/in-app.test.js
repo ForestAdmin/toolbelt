@@ -209,6 +209,10 @@ describe('projects:create:in-app', () => {
           { not: 'projectId' },
           // Checked before the success path, so no contradictory "success" line.
           { not: 'Hooray' },
+          // The project WAS created, so the headline would contradict the line above.
+          { not: 'Cannot generate your project.' },
+          // The pointer to help survives that suppression, on this path as on any other.
+          { err: 'An unexpected error occurred' },
         ],
         exitCode: 1,
       }));

@@ -138,13 +138,16 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       }
       // Display customized error for non-authentication errors.
       else if (error.status !== 401 && error.status !== 403) {
-        // Once the project exists this headline is false, and the error thrown from
-        // here on carries the truthful line instead. Passing an array would print it
-        // as a raw JSON array, since the logger stringifies a non-string message.
+        // Once the project exists this headline is false, since the record was created
+        // and only what follows it failed. Passing an array would print it as a raw
+        // JSON array, since the logger stringifies a non-string message.
         if (!this.eventSender.meta?.projectId) {
-          this.logger.error('Cannot generate your project.', `${this.messages.ERROR_UNEXPECTED}`);
+          this.logger.error('Cannot generate your project.');
         }
 
+        // Unconditional: this is the only line telling the operator where help lives,
+        // and a failure after creation needs it as much as one before.
+        this.logger.error(`${this.messages.ERROR_UNEXPECTED}`);
         this.logger.log(`${this.chalk.red(error)}`);
         this.exit(1);
       } else {
