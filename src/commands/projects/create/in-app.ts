@@ -38,7 +38,7 @@ export default class InAppCommand extends AbstractProjectCreateCommand {
     format: Flags.string({
       description:
         'Output format. With `json`, stdout carries only a machine-readable ' +
-        '`{"projectId", "envSecret", "authSecret"}` document (e.g. for `npx forest-start`).',
+        '`{"projectId", "envSecret", "authSecret", "endpoint"}` document.',
       options: ['text', 'json'],
       default: 'text',
     }),
@@ -104,6 +104,10 @@ export default class InAppCommand extends AbstractProjectCreateCommand {
   // architecture='in-app'. The abstract otherwise falls back agent → express-sequelize.
   protected override async getConfig() {
     const config = await super.getConfig();
+
+    // Load-bearing null, not an omission: the server forces architecture back to
+    // 'microservice' whenever a non-null agent is sent, so sending architecture
+    // 'in-app' alone is silently ignored. Both halves are required.
     config.meta.agent = null as unknown as string;
 
     return config;
@@ -146,9 +150,12 @@ export default class InAppCommand extends AbstractProjectCreateCommand {
       // whole of stdout.
       this.context.stdout.write(
         `${JSON.stringify({
-          projectId,
+          // A JSON:API id is a string on the wire, and the deserializer passes it
+          // through uncoerced. Pinned here so the contract does not follow the server.
+          projectId: projectId === undefined ? undefined : String(projectId),
           envSecret: this.forestEnvSecret,
           authSecret: this.forestAuthSecret,
+          endpoint: this.registeredEndpoint,
         })}\n`,
       );
 
@@ -160,9 +167,12 @@ export default class InAppCommand extends AbstractProjectCreateCommand {
     // parsable). FOREST_AUTH_SECRET is a value you own (any random string works);
     // FOREST_ENV_SECRET is the sensitive one.
     this.logger.info('Set these on your app, then mount the Forest agent in your server:');
-    this.logger.info(`  FOREST_ENV_SECRET=${this.forestEnvSecret}`);
-    this.logger.info(
-      `  FOREST_AUTH_SECRET=${this.forestAuthSecret}   (you own this one — keep it or set your own)`,
+    // Straight to stdout rather than through the logger: `SILENT` drops every logger
+    // line, and this is the only place the command ever hands over the secrets. Losing
+    // them leaves a created project whose secret is reachable only from the UI.
+    this.context.stdout.write(`  FOREST_ENV_SECRET=${this.forestEnvSecret}\n`);
+    this.context.stdout.write(
+      `  FOREST_AUTH_SECRET=${this.forestAuthSecret}   (you own this one — keep it or set your own)\n`,
     );
     this.logger.info(
       this.chalk.yellow(

@@ -1534,7 +1534,9 @@ module.exports = {
         201,
         ProjectSerializer.serialize({
           name: 'name',
-          id: 4242,
+          // A JSON:API id is a string on the wire; a number here would lock a shape
+          // no compliant server ever sends.
+          id: '4242',
           defaultEnvironment: {
             id: 182,
             name: 'development',

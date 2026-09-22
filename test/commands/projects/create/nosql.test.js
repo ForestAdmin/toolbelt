@@ -172,8 +172,11 @@ describe('projects:create:nosql', () => {
             env: testEnvWithSecret,
             token: 'any',
             std: [
+              // Two lines, not one raw JSON array: the logger stringifies a
+              // non-string message, so the headline used to print as `["…","…"]`.
+              { err: '× Cannot generate your project.' },
               {
-                err: '× ["Cannot generate your project.","An unexpected error occurred. Please reach out for help in our Developers community (https://community.forestadmin.com/) or create a Github issue with following error:"]',
+                err: '× An unexpected error occurred. Please reach out for help in our Developers community (https://community.forestadmin.com/) or create a Github issue with following error:',
               },
             ],
             exitCode: 1,

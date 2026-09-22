@@ -67,7 +67,7 @@ describe('services > Logger', () => {
       });
 
       it('should leave stderr lines on stderr', () => {
-        expect.assertions(2);
+        expect.assertions(3);
         const context = makeContext();
         const { stdout, stderr } = context;
 
@@ -77,6 +77,7 @@ describe('services > Logger', () => {
 
         expect(stdout.write).toHaveBeenCalledTimes(0);
         expect(stderr.write).toHaveBeenCalledTimes(1);
+        expect(stderr.write).toHaveBeenCalledWith('an error\n');
       });
 
       it('should still honour silent, which drops everything', () => {

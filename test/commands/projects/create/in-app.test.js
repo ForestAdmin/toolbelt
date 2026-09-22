@@ -75,6 +75,36 @@ describe('projects:create:in-app', () => {
         exitCode: 0,
       }));
 
+    // The command's whole payload is the pair of secrets, and SILENT drops every
+    // logger line: delivering neither would leave a created project whose env secret
+    // is reachable only from the Forest UI.
+    it('should still hand over the secrets when SILENT drops the guidance', () =>
+      testCli({
+        commandClass: InAppCommand,
+        commandArgs: ['name'],
+        env: { ...testEnvWithSecret, SILENT: '1' },
+        token: 'any',
+        additionnalStep: plan =>
+          plan.replace('utils/keyGenerator', { generate: () => AUTH_SECRET }),
+        prompts: [
+          {
+            in: expectedPrompts,
+            out: { applicationHost: 'http://localhost', applicationPort: '3000' },
+          },
+        ],
+        api,
+        std: [
+          // The spinner is not a logger line, so SILENT does not reach it.
+          { spinner: '√ Creating your project on Forest Admin' },
+          { out: `FOREST_ENV_SECRET=${ENV_SECRET}` },
+          { out: `FOREST_AUTH_SECRET=${AUTH_SECRET}` },
+          // The guidance around them is what SILENT is for, and it does go quiet.
+          { not: 'In-app project created' },
+          { not: 'npm install @forestadmin/agent' },
+        ],
+        exitCode: 0,
+      }));
+
     it('should print ONLY a parsable JSON document on stdout, without ever prompting', () =>
       testCli({
         commandClass: InAppCommand,
@@ -97,9 +127,12 @@ describe('projects:create:in-app', () => {
           // JSON, no logger prefix, no trailing annotation.
           {
             out: {
-              projectId: 4242,
+              projectId: '4242',
               envSecret: ENV_SECRET,
               authSecret: AUTH_SECRET,
+              // Built from the silently defaulted host and port, so a caller that
+              // never saw a prompt can tell where its panel was pointed.
+              endpoint: 'http://localhost:3000',
             },
           },
           // Human-readable lines are not dropped, only diverted: stdout stays
@@ -128,9 +161,10 @@ describe('projects:create:in-app', () => {
           { spinner: '√ Creating your project on Forest Admin' },
           {
             out: {
-              projectId: 4242,
+              projectId: '4242',
               envSecret: ENV_SECRET,
               authSecret: AUTH_SECRET,
+              endpoint: 'http://localhost:8080',
             },
           },
         ],

@@ -44,7 +44,9 @@ class ProjectCreator {
    *
    * }} config
    * @param {ProjectMeta} meta
-   * @returns {Promise<{id: number, envSecret: string, authSecret: string}>}
+   * @returns {Promise<{
+   *   id: number|string, envSecret: string, authSecret: string, endpoint: string
+   * }>}
    */
   async create(sessionToken, config, meta) {
     try {
@@ -61,6 +63,10 @@ class ProjectCreator {
         id: newProject.id,
         envSecret: newProject.defaultEnvironment.secretKey,
         authSecret: this.keyGenerator.generate(),
+        // The endpoint the API just registered for the dev environment. It is built
+        // from defaulted host and port, so a caller that never saw a prompt (see
+        // `--format json`) has no other way to learn where its panel will point.
+        endpoint: newProject.defaultEnvironment.apiEndpoint,
       };
     } catch (error) {
       if (error.message === 'Conflict') {

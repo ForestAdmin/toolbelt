@@ -55,6 +55,9 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   // hosts the agent inside their own app (no scaffold).
   protected readonly architecture: string = 'microservice';
 
+  /** The dev environment endpoint the API registered, once the project exists. */
+  protected registeredEndpoint?: string;
+
   static override args = {
     applicationName: Args.string({
       name: 'applicationName',
@@ -109,9 +112,11 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
         appConfig,
         meta,
       );
-      const { id, envSecret, authSecret } = await this.spinner.attachToPromise(
+      const { id, envSecret, authSecret, endpoint } = await this.spinner.attachToPromise(
         projectCreationPromise,
       );
+
+      this.registeredEndpoint = endpoint;
 
       this.eventSender.meta.projectId = id;
 
@@ -133,7 +138,13 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       }
       // Display customized error for non-authentication errors.
       else if (error.status !== 401 && error.status !== 403) {
-        this.logger.error(['Cannot generate your project.', `${this.messages.ERROR_UNEXPECTED}`]);
+        // Once the project exists this headline is false, and the error thrown from
+        // here on carries the truthful line instead. Passing an array would print it
+        // as a raw JSON array, since the logger stringifies a non-string message.
+        if (!this.eventSender.meta?.projectId) {
+          this.logger.error('Cannot generate your project.', `${this.messages.ERROR_UNEXPECTED}`);
+        }
+
         this.logger.log(`${this.chalk.red(error)}`);
         this.exit(1);
       } else {
