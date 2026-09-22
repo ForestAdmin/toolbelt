@@ -98,6 +98,9 @@ describe('projects:create:in-app', () => {
           { spinner: '√ Creating your project on Forest Admin' },
           { out: `FOREST_ENV_SECRET=${ENV_SECRET}` },
           { out: `FOREST_AUTH_SECRET=${AUTH_SECRET}` },
+          // Delivering the secrets without this is worse than not delivering them:
+          // SILENT is what a CI run sets, and CI logs are exactly the hazard.
+          { out: '⚠ These are secrets' },
           // The guidance around them is what SILENT is for, and it does go quiet.
           { not: 'In-app project created' },
           { not: 'npm install @forestadmin/agent' },

@@ -174,10 +174,13 @@ export default class InAppCommand extends AbstractProjectCreateCommand {
     this.context.stdout.write(
       `  FOREST_AUTH_SECRET=${this.forestAuthSecret}   (you own this one — keep it or set your own)\n`,
     );
-    this.logger.info(
-      this.chalk.yellow(
+    // Travels with the secrets rather than through the logger, for the same reason:
+    // under `SILENT` a logger line disappears, and secrets delivered without the
+    // warning are worse than not delivered at all.
+    this.context.stdout.write(
+      `${this.chalk.yellow(
         '  ⚠ These are secrets — keep them out of version control and shared CI logs.',
-      ),
+      )}\n`,
     );
     // The 5 gems are all required: forest_admin_rails does not declare its companions as
     // runtime deps, so `gem 'forest_admin_rails'` alone installs but fails to boot.
