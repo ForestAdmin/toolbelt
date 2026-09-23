@@ -126,6 +126,36 @@ describe('start', () => {
       ]);
     });
 
+    it('boots without the .env values this CLI loaded, so the back-end reads its own', async () => {
+      expect.hasAssertions();
+      runStep.mockReset().mockImplementation(async (_, args) => {
+        if (args[1] !== 'projects:create:sql') return;
+        fs.mkdirSync('x');
+        fs.writeFileSync('x/package.json', JSON.stringify({ scripts: { build: 'tsc' } }));
+      });
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
+
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'x'],
+          // Loaded into this process at startup, by a dotenv older than the app's.
+          files: [
+            { name: '.env', content: 'FOREST_START_LEAK=parent # a comment dotenv 8 keeps\n' },
+          ],
+          std: [{ out: 'Your back-office is live!' }],
+        });
+      } finally {
+        delete process.env.FOREST_START_LEAK;
+      }
+
+      const [[command, args, options]] = startProcess.mock.calls;
+      expect([command, args, options.cwd]).toStrictEqual(['npm', ['start'], 'x']);
+      expect(options.env).toStrictEqual({ FOREST_START_LEAK: undefined });
+    });
+
     it('refuses a --name whose directory exists, before creating any project', async () => {
       expect.hasAssertions();
       runStep.mockReset();
@@ -376,6 +406,28 @@ describe('start', () => {
           { out: '$ forest projects:create:sql' },
         ],
       });
+    });
+  });
+
+  describe('on Windows', () => {
+    it('refuses before logging in, since every flow creates a project before its first spawn', async () => {
+      expect.hasAssertions();
+      runStep.mockReset();
+      const platform = Object.getOwnPropertyDescriptor(process, 'platform');
+      Object.defineProperty(process, 'platform', { value: 'win32' });
+
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          exitMessage:
+            '`forest start` does not run on Windows yet. Use WSL, or follow https://docs.forest.app by hand.',
+        });
+      } finally {
+        Object.defineProperty(process, 'platform', platform);
+      }
+
+      expect(runStep).not.toHaveBeenCalled();
     });
   });
 

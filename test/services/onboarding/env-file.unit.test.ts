@@ -1,8 +1,13 @@
+import dotenv from 'dotenv';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { bootSecrets, writeSecrets } from '../../../src/services/onboarding/env-file';
+import {
+  bootSecrets,
+  keysLoadedFromDotenv,
+  writeSecrets,
+} from '../../../src/services/onboarding/env-file';
 
 // A helper (not a jest hook) — this repo forbids beforeEach/afterEach (jest/no-hooks).
 function inTempDir(run: () => void): void {
@@ -138,6 +143,51 @@ describe('onboarding env-file', () => {
           written: [],
           conflicts: [],
           shadowed: [],
+        });
+      });
+    });
+  });
+
+  // Against the real process.env, loaded the way this CLI loads it at startup: an environment
+  // passed by hand cannot tell a key this CLI read from `.env` from one the shell exports.
+  describe('with the .env this CLI loaded itself', () => {
+    function withLoadedDotenv(content: string, run: () => void): void {
+      inTempDir(() => {
+        fs.writeFileSync('.env', content);
+        const loaded = Object.keys(dotenv.parse(content));
+        dotenv.config();
+        try {
+          run();
+        } finally {
+          loaded.forEach(key => delete process.env[key]);
+        }
+      });
+    }
+
+    it('lists what it loaded, and not what the shell exports', () => {
+      expect.assertions(1);
+      process.env.FOREST_START_SHELL_ONLY = 'shell';
+      try {
+        withLoadedDotenv('FOREST_ENV_SECRET=\nPORT=3001\n', () => {
+          expect(keysLoadedFromDotenv()).toStrictEqual(['FOREST_ENV_SECRET', 'PORT']);
+        });
+      } finally {
+        delete process.env.FOREST_START_SHELL_ONLY;
+      }
+    });
+
+    it('fills a placeholder and hands the first boot its value, rather than calling it exported', () => {
+      expect.assertions(2);
+      withLoadedDotenv('FOREST_ENV_SECRET=\n', () => {
+        const loaded = keysLoadedFromDotenv();
+        const shell = Object.fromEntries(
+          Object.entries(process.env).filter(([key]) => !loaded.includes(key)),
+        );
+        const written = writeSecrets({ envSecret: 'AAA' }, shell);
+
+        expect(written.shadowed).toStrictEqual([]);
+        expect(bootSecrets({ envSecret: 'AAA' }, written)).toStrictEqual({
+          FOREST_ENV_SECRET: 'AAA',
         });
       });
     });

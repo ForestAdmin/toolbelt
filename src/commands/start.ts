@@ -12,7 +12,7 @@ import {
   detectRails,
   mountHelper,
 } from '../services/onboarding/detect';
-import { bootSecrets, writeSecrets } from '../services/onboarding/env-file';
+import { bootSecrets, keysLoadedFromDotenv, writeSecrets } from '../services/onboarding/env-file';
 import {
   runCapture,
   runStep,
@@ -89,6 +89,15 @@ export default class StartCommand extends AbstractCommand {
 
   private dryRun = false;
 
+  private loadedFromDotenv: string[] = [];
+
+  /** What the user's shell exports, as opposed to what this CLI loaded from their `.env`. */
+  private get shellEnvironment(): NodeJS.ProcessEnv {
+    return Object.fromEntries(
+      Object.entries(process.env).filter(([key]) => !this.loadedFromDotenv.includes(key)),
+    );
+  }
+
   // eslint-disable-next-line class-methods-use-this -- reads the ambient TTY, not instance state
   private get interactive(): boolean {
     return Boolean(process.stdin.isTTY);
@@ -106,6 +115,16 @@ export default class StartCommand extends AbstractCommand {
   async run(): Promise<void> {
     const { flags } = await this.parse(StartCommand);
     this.dryRun = flags['dry-run'];
+
+    // Refused before `login`, since every flow creates a project server-side before its first
+    // spawn: `npm` is `npm.cmd` there, and a back-end cannot be stopped without a process group.
+    if (process.platform === 'win32' && !this.dryRun) {
+      throw new Error(
+        `\`forest start\` does not run on Windows yet. Use WSL, or follow ${DOCS_URL} by hand.`,
+      );
+    }
+
+    this.loadedFromDotenv = keysLoadedFromDotenv();
 
     try {
       await this.onboard(flags as Record<string, string | undefined>);
@@ -234,7 +253,10 @@ export default class StartCommand extends AbstractCommand {
     return startProcess(command, args, {
       ready: options.ready ?? READY,
       cwd: options.cwd,
-      env: options.env,
+      env: {
+        ...Object.fromEntries(this.loadedFromDotenv.map(key => [key, undefined])),
+        ...options.env,
+      },
       onOutput: chunk => this.logger.log(this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`)),
     });
   }
@@ -574,7 +596,7 @@ export default class StartCommand extends AbstractCommand {
       // Written, never printed: this path is where CI logs are produced, and `FOREST_ENV_SECRET`
       // is a long-lived credential — anyone who can read the retained log gets the project. A
       // warning next to the value would not have stopped that.
-      this.reportSecrets(writeSecrets(secrets));
+      this.reportSecrets(writeSecrets(secrets, this.shellEnvironment));
       this.logger.log(this.chalk.grey(`  Then run:  ${tail.restart}`));
 
       return;
@@ -582,7 +604,7 @@ export default class StartCommand extends AbstractCommand {
 
     // Persisted before booting, not just passed to this one process: everything the user is told
     // afterwards — the restart hint, `npm start` — runs without our environment.
-    const written = writeSecrets(secrets);
+    const written = writeSecrets(secrets, this.shellEnvironment);
     this.reportSecrets(written);
 
     // The agent mounts Forest with the skills, so both come before the boot waits on a mount.

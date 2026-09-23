@@ -1,3 +1,4 @@
+import dotenv from 'dotenv';
 import fs from 'fs';
 
 type Secrets = { envSecret?: string; authSecret?: string };
@@ -87,6 +88,25 @@ export function writeSecrets(
     .map(([key]) => key);
 
   return { file, written, conflicts, shadowed };
+}
+
+/**
+ * The keys this CLI's own dotenv loaded from the user's `.env` when it started. That dotenv is
+ * v8, which reads comments, backticks and multi-line values differently from the app's, so its
+ * values must not reach the app: they would win over the `.env` the app reads itself. Read before
+ * `writeSecrets` changes the file, since it compares against what was loaded.
+ */
+export function keysLoadedFromDotenv(
+  file = '.env',
+  environment: NodeJS.ProcessEnv = process.env,
+): string[] {
+  try {
+    const parsed = dotenv.parse(fs.readFileSync(file));
+
+    return Object.keys(parsed).filter(key => environment[key] === parsed[key]);
+  } catch {
+    return []; // no .env, so this CLI loaded nothing
+  }
 }
 
 /**

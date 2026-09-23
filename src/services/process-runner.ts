@@ -10,7 +10,8 @@ import { spawn } from 'child_process';
 
 export type RunOptions = {
   cwd?: string;
-  env?: Record<string, string>;
+  /** Merged over this process's environment. An `undefined` value removes the variable. */
+  env?: NodeJS.ProcessEnv;
 };
 
 export type ProcessExit = { code: number | null; signal: NodeJS.Signals | null };
