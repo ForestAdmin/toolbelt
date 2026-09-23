@@ -126,6 +126,9 @@ function signalGroup(child: ChildProcess, signal: NodeJS.Signals) {
  *
  * Neither end this CLI is handed is the group's: `close` waits on pipes a descendant need not hold,
  * `exit` is only the leader being reaped. So both are taken as a prompt to ask, never as an answer.
+ *
+ * The poll holds the event loop open. Once the pipes are closed it is all that does, and without it
+ * a caller awaiting `exited` would watch the CLI exit 0 instead, taking the group down on its way.
  */
 function trackGroup(child: ChildProcess): Promise<void> {
   if (child.pid) running.add(child);
@@ -146,7 +149,6 @@ function trackGroup(child: ChildProcess): Promise<void> {
       const poll = setInterval(() => {
         if (resolveIfGone()) clearInterval(poll);
       }, REAP_POLL_MS);
-      poll.unref();
     });
   });
 }
@@ -244,7 +246,10 @@ const SECRET_WORDS = new Set([
 /** OAuth is the protocol, not the credential: `--oauth-token` is one, `--oauth-callback` is not. */
 const NOT_SECRET_WORDS = new Set(['oauth']);
 
-const FLAG_NAME = /^--?([a-z0-9][a-z0-9-]*)$/i;
+const FLAG_NAME = /^--?([a-z0-9][a-z0-9_-]*)$/i;
+
+/** The left side of `NAME=value`, as `env` and `docker run -e` take it: never a flag, still named. */
+const ASSIGNED_NAME = /^([a-z_][a-z0-9_]*)$/i;
 
 const CAMEL_BOUNDARY = /([a-z0-9])([A-Z])/g;
 
@@ -265,25 +270,32 @@ function isSecretWord(word: string): boolean {
 }
 
 /**
- * Does this flag's name say it carries a secret?
+ * Does this name say it carries a secret?
  *
  * Read as words, because matching anywhere in the name takes `--author` and `--oauth-callback` for
  * credentials and drops what the failure message was there to report. Adjacent words are joined
- * too, so `--api-key` and `--apiKey` are the same flag, and a leading `no` is the boolean
- * convention rather than a value.
+ * too, so `--api-key`, `--api_key` and `--apiKey` are the same flag, and a leading `no` is the
+ * boolean convention rather than a value.
  */
-function isSecretFlag(flag: string): boolean {
-  const name = FLAG_NAME.exec(flag)?.[1];
-
-  if (!name) return false;
-
-  const words = name.replace(CAMEL_BOUNDARY, '$1-$2').toLowerCase().split('-');
+function isSecretName(name: string): boolean {
+  const words = name.replace(CAMEL_BOUNDARY, '$1-$2').toLowerCase().split(/[-_]/);
 
   if (words[0] === 'no') return false;
 
   const joined = words.slice(0, -1).map((word, index) => word + words[index + 1]);
 
   return [...words, ...joined].some(isSecretWord);
+}
+
+function isSecretFlag(flag: string): boolean {
+  const name = FLAG_NAME.exec(flag)?.[1];
+
+  return name ? isSecretName(name) : false;
+}
+
+/** `FOREST_ENV_SECRET=…` names its secret as plainly as `--env-secret=…` does. */
+function isSecretAssignment(name: string): boolean {
+  return ASSIGNED_NAME.test(name) && isSecretName(name);
 }
 
 /**
@@ -308,7 +320,7 @@ function redactSecrets(text: string): string {
 }
 
 /** A secret can start with a single `-`, so only this shape is read as the next flag. */
-const LONG_FLAG = /^--[a-z0-9][a-z0-9-]*$/i;
+const LONG_FLAG = /^--[a-z0-9][a-z0-9_-]*$/i;
 
 function redactArgs(args: string[]): string[] {
   let valueIsSecret = false;
@@ -320,7 +332,7 @@ function redactArgs(args: string[]): string[] {
     valueIsSecret = isSecretFlag(flag) && !value.length;
 
     if (isSecretValue) return '***';
-    if (isSecretFlag(flag) && value.length) return `${flag}=***`;
+    if (value.length && (isSecretFlag(flag) || isSecretAssignment(flag))) return `${flag}=***`;
 
     return redactSecrets(arg);
   });

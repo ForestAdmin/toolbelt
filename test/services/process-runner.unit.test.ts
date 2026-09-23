@@ -190,6 +190,13 @@ describe('process-runner', () => {
       await expect(ready).rejects.toThrow(/stopped before it was ready/);
     });
 
+    it('rejects when the command does not exist rather than waiting for the timeout', async () => {
+      expect.assertions(1);
+      const { ready } = startProcess('definitely-not-a-command', [], { ready: /listening/ });
+
+      await expect(ready).rejects.toThrow(/ENOENT/);
+    });
+
     it('rejects on a taken port instead of waiting for the timeout', async () => {
       expect.assertions(1);
       const port = await freePort();
@@ -560,6 +567,17 @@ describe('process-runner', () => {
       expect(error.message).toContain('could not connect to mysql://root:***@10.0.0.4:3306/app');
     });
 
+    it('carries and redacts the message of a command that fails on stdout alone', async () => {
+      expect.assertions(2);
+      const error = await runCapture('node', [
+        '-e',
+        'console.log("cannot reach postgres://forest:hunter2@db.internal/prod"); process.exit(3)',
+      ]).catch((thrown: Error) => thrown);
+
+      expect(error.message).not.toContain('hunter2');
+      expect(error.message).toContain('cannot reach postgres://forest:***@db.internal/prod');
+    });
+
     it('leaves an ordinary argument alone, so the message still says what ran', async () => {
       expect.assertions(2);
       const error = await runCapture('node', ['-e', 'process.exit(4)', '--', '--verbose']).catch(
@@ -725,6 +743,46 @@ describe('process-runner', () => {
       ).resolves.toBe('ended');
     });
 
+    it('keeps the CLI alive while it waits on a group whose pipes have closed', async () => {
+      expect.assertions(2);
+      const port = await freePort();
+      const intervals: NodeJS.Timeout[] = [];
+      const realSetInterval = global.setInterval;
+      jest.spyOn(global, 'setInterval').mockImplementation(((
+        ...args: Parameters<typeof setInterval>
+      ) => {
+        const timer = realSetInterval(...args);
+        intervals.push(timer);
+
+        return timer;
+      }) as typeof setInterval);
+
+      try {
+        // Nothing else holds the loop here: the pipes closed with the wrapper. Outside Jest, an
+        // unref'd wait would let the CLI exit 0 and its exit hook take the server down.
+        const { child, ready, exited } = startProcess(
+          'sh',
+          ['-c', `${SERVER.replace('PORT', String(port))} >/dev/null 2>&1 & echo listening`],
+          { ready: /listening/ },
+        );
+        await ready;
+        await wait(600);
+
+        const poll = intervals.find(timer => timer.hasRef());
+
+        expect(poll).toBeDefined();
+
+        // Held only as long as there is a group to wait for: once it has ended, the CLI may exit.
+        const cleared = jest.spyOn(global, 'clearInterval');
+        stopProcess(child, 'SIGKILL');
+        await exited;
+
+        expect(cleared).toHaveBeenCalledWith(poll);
+      } finally {
+        jest.restoreAllMocks();
+      }
+    });
+
     it('says a signal ended it, so a caller can tell a crash from its own stop', async () => {
       expect.assertions(1);
       const port = await freePort();
@@ -809,6 +867,25 @@ describe('process-runner', () => {
 
       expect(error.message).not.toContain('ghp_s3cr3t');
       expect(error.message).toContain('https://***@github.example/repo.git');
+    });
+
+    it('reads a snake_case flag and a NAME=value assignment as words too', async () => {
+      expect.assertions(4);
+      const error = await runStep('node', [
+        '-e',
+        'process.exit(1)',
+        '--',
+        '--client_secret=s3cr3t',
+        '--api_key',
+        'k3y',
+        'FOREST_ENV_SECRET=envs3cr3t',
+        'NODE_ENV=production',
+      ]).catch((thrown: Error) => thrown);
+
+      expect(error.message).not.toMatch(/s3cr3t|k3y/);
+      expect(error.message).toContain('--client_secret=***');
+      expect(error.message).toContain('--api_key ***');
+      expect(error.message).toContain('FOREST_ENV_SECRET=*** NODE_ENV=production');
     });
 
     it('redacts a secret value that starts with a dash, without eating the next flag', async () => {
