@@ -158,7 +158,7 @@ describe('start', () => {
 
     it('refuses a --name whose directory exists, before creating any project', async () => {
       expect.hasAssertions();
-      runStep.mockReset();
+      runStep.mockReset().mockResolvedValue(undefined);
 
       await testCli({
         commandClass: StartCommand,
@@ -171,6 +171,24 @@ describe('start', () => {
       expect(runStep.mock.calls).toStrictEqual([
         [process.execPath, [process.argv[1], 'login'], { cwd: undefined }],
       ]);
+    });
+
+    it('keeps the whole --db URL out of the error when create:sql fails', async () => {
+      expect.hasAssertions();
+      const db = 'postgres://host:5432/db?password=hunter2';
+      // What the runner rejects with: it masks URL userinfo, never a query parameter.
+      runStep.mockReset().mockImplementation(async (_, args) => {
+        if (args[1] === 'projects:create:sql')
+          throw new Error(`\`forest ${args.slice(1).join(' ')}\` exited with code 1`);
+      });
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'standalone', '--name', 'x', '--db', db],
+        exitMessage:
+          '`forest projects:create:sql x --databaseConnectionURL <redacted> -s public -l typescript -H http://localhost -P 3310` exited with code 1',
+        std: [{ not: 'hunter2' }],
+      });
     });
 
     it('honours --schema alongside --db', async () => {
@@ -197,7 +215,7 @@ describe('start', () => {
   describe('in-app Rails flow', () => {
     it('stops before touching the Gemfile when no secret comes back, so the failure installs nothing', async () => {
       expect.hasAssertions();
-      runStep.mockReset();
+      runStep.mockReset().mockResolvedValue(undefined);
       runCapture.mockReset().mockResolvedValue({ stdout: '{}', stderr: '' });
 
       await testCli({
@@ -433,7 +451,7 @@ describe('start', () => {
   describe('on Windows', () => {
     it('refuses before logging in, since every flow creates a project before its first spawn', async () => {
       expect.hasAssertions();
-      runStep.mockReset();
+      runStep.mockReset().mockResolvedValue(undefined);
       const platform = Object.getOwnPropertyDescriptor(process, 'platform');
       Object.defineProperty(process, 'platform', { value: 'win32' });
 

@@ -162,17 +162,37 @@ export default class StartCommand extends AbstractCommand {
    * it teaches what the wrapper does — but a database URL carries credentials and an env secret is
    * a long-lived one, so what is shown and what is run are not the same string.
    */
+  private static isHidden(command: string, args: string[], index: number): boolean {
+    const previous = args[index - 1];
+
+    return (
+      previous === '--databaseConnectionURL' ||
+      previous === '-c' ||
+      (command === 'bin/rails' && previous === 'forest_admin_rails:install')
+    );
+  }
+
   private static redact(command: string, args: string[]): string {
-    const shown = args.map((arg, index) => {
-      const previous = args[index - 1];
-
-      if (previous === '--databaseConnectionURL' || previous === '-c') return '<redacted>';
-      if (command === 'bin/rails' && previous === 'forest_admin_rails:install') return '<redacted>';
-
-      return arg;
-    });
+    const shown = args.map((arg, index) =>
+      StartCommand.isHidden(command, args, index) ? '<redacted>' : arg,
+    );
 
     return `${command} ${shown.join(' ')}`.trim();
+  }
+
+  /**
+   * The same values, out of a failure's message. The runner only knows secret-named flags and URL
+   * userinfo, so a bare positional or a URL's `?password=` would otherwise print in the clear.
+   */
+  private static scrubbed(error: unknown, command: string, args: string[]): Error {
+    const hidden = args.filter((_, index) => StartCommand.isHidden(command, args, index));
+
+    return new Error(
+      hidden.reduce(
+        (message, value) => message.split(value).join('<redacted>'),
+        (error as Error).message,
+      ),
+    );
   }
 
   /** Run a command, echoing it first. The echo is the point: it teaches what the wrapper does. */
@@ -180,7 +200,9 @@ export default class StartCommand extends AbstractCommand {
     this.logger.log(this.chalk.grey(`\n$ ${StartCommand.redact(command, args)}`));
     if (this.dryRun) return this.logger.log(this.chalk.grey('  (dry-run — not executed)'));
 
-    return runStep(command, args, { cwd });
+    return runStep(command, args, { cwd }).catch(error => {
+      throw StartCommand.scrubbed(error, command, args);
+    });
   }
 
   /** Invoke one of our own commands. Resolved through this executable, never through the PATH:
@@ -193,7 +215,9 @@ export default class StartCommand extends AbstractCommand {
       return Promise.resolve();
     }
 
-    return runStep(process.execPath, [process.argv[1], ...args], { cwd });
+    return runStep(process.execPath, [process.argv[1], ...args], { cwd }).catch(error => {
+      throw StartCommand.scrubbed(error, 'forest', args);
+    });
   }
 
   /**
@@ -381,12 +405,13 @@ export default class StartCommand extends AbstractCommand {
     ];
 
     let child: ChildProcess | undefined;
+    let exited: Promise<unknown> | undefined;
 
     if (this.dryRun) {
       this.logger.log(this.chalk.grey('\n$ npm start   (background — wait for schema push)'));
     } else {
       const booted = this.boot('npm', ['start'], { cwd: name });
-      child = booted.child;
+      ({ child, exited } = booted);
       this.logger.log(this.chalk.grey('\n$ npm start   (booting — waiting for the schema push…)'));
       await booted.ready;
       this.logger.success('Schema pushed — applying curated layout + workflows');
@@ -398,7 +423,7 @@ export default class StartCommand extends AbstractCommand {
     // One tail for both modes: --dry-run exists to review the flow, and skipping its ending would
     // hide the part most worth reviewing.
     if (this.interactive) {
-      await this.demoMenu(child, name);
+      await this.demoMenu(child, name, exited);
 
       return;
     }
@@ -497,14 +522,11 @@ export default class StartCommand extends AbstractCommand {
       'forest_admin_datasource_toolkit',
       'forest_admin_datasource_customizer',
     ]);
-    const envSecret = secrets.envSecret ?? '<FOREST_ENV_SECRET>';
-    try {
-      await this.run$('bin/rails', ['g', 'forest_admin_rails:install', envSecret]);
-    } catch (error) {
-      // The runner redacts secret flags, not a bare positional: its message would print the secret
-      // to the terminal and, on the non-interactive path, to a retained CI log.
-      throw new Error((error as Error).message.split(envSecret).join('<redacted>'));
-    }
+    await this.run$('bin/rails', [
+      'g',
+      'forest_admin_rails:install',
+      secrets.envSecret ?? '<FOREST_ENV_SECRET>',
+    ]);
 
     const tail: Tail = {
       name,
@@ -745,7 +767,11 @@ export default class StartCommand extends AbstractCommand {
   // ---------- tails ----------
 
   /** The demo is a TRAMPOLINE: its menu exists to nudge you towards connecting real data. */
-  private async demoMenu(child: ChildProcess | undefined, name: string): Promise<void> {
+  private async demoMenu(
+    child: ChildProcess | undefined,
+    name: string,
+    exited?: Promise<unknown>,
+  ): Promise<void> {
     const { next } = await this.ask({
       type: 'list',
       name: 'next',
@@ -760,7 +786,9 @@ export default class StartCommand extends AbstractCommand {
     // role, so inviting before it silently invites into nothing.
 
     if (next === 'db') {
-      stopProcess(child); // free the port for the real back-end
+      stopProcess(child);
+      // Signalled is not gone: the real back-end boots on the same port.
+      await exited;
       this.logger.log(
         this.chalk.grey('\n  (demo back-end stopped — setting up your real project)\n'),
       );
