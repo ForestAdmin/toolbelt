@@ -26,6 +26,15 @@ const DEMO_PORT = 3310;
 const RAILS_PORT = 3002;
 const NODE_PORT = 3001;
 
+/** What configures this CLI rather than a project: where its token lives, which server it calls. */
+const CLI_SETTINGS = [
+  'TOKEN_PATH',
+  'FOREST_URL',
+  'FOREST_SERVER_URL',
+  'NODE_TLS_REJECT_UNAUTHORIZED',
+  'SILENT',
+];
+
 // What `@forestadmin/agent` logs from `start()`, once its schema reached Forest. Neither "Listening
 // on http", which an app with nothing mounted prints too, nor "Successfully mounted on", which the
 // framework mounts log before `start()` has run, and so before it can fail.
@@ -118,8 +127,11 @@ export default class StartCommand extends AbstractCommand {
 
     // Loaded into this process at startup, and inherited by every child otherwise: a `forest`
     // command run in a demo would then target the project of the `.env` it was started next to,
-    // and an app would read dotenv 8's parse ahead of its own. This CLI already read its config.
-    keysLoadedFromDotenv().forEach(key => delete process.env[key]);
+    // and an app would read dotenv 8's parse ahead of its own. The CLI's own settings stay, since
+    // a child running in a scaffold reads a `.env` that does not carry them.
+    keysLoadedFromDotenv()
+      .filter(key => !CLI_SETTINGS.includes(key))
+      .forEach(key => delete process.env[key]);
 
     try {
       await this.onboard(flags as Record<string, string | undefined>);
@@ -694,9 +706,11 @@ export default class StartCommand extends AbstractCommand {
   }
 
   private static mountSeed(stack: NodeStack, secretsInDotenv: boolean): string {
+    // On a conflict the new project's secrets are in neither `.env` nor the shell: an agent told
+    // otherwise would wire the app to whichever project those hold.
     const secrets = secretsInDotenv
       ? 'FOREST_ENV_SECRET / FOREST_AUTH_SECRET are in .env'
-      : 'FOREST_ENV_SECRET / FOREST_AUTH_SECRET are read from the environment, not only from .env';
+      : "this project's FOREST_ENV_SECRET / FOREST_AUTH_SECRET are not configured yet, so ask me for them rather than reusing the ones already there";
 
     return (
       `You're in a ${stack.framework} app using ${stack.orm}. @forestadmin/agent and ` +

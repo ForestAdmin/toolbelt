@@ -98,6 +98,8 @@ export function writeSecrets(
     fs.writeFileSync(
       file,
       appended.length ? `${content}${separator}${appended.join('\n')}\n` : content,
+      // A new file is private from its first byte. An existing one is restricted just after.
+      { mode: 0o600 },
     );
     exposed = !restrictToOwner(file);
   }

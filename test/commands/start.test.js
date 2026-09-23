@@ -71,6 +71,35 @@ describe('start', () => {
       ]);
     });
 
+    it("keeps the CLI's own settings from that .env, which a scaffold's .env does not carry", async () => {
+      expect.hasAssertions();
+      // `layout:apply` runs in the scaffold: a token path set next to `forest start` must reach it.
+      const seen = [];
+      runStep.mockReset().mockImplementation(async (command, args) => {
+        if (command === process.execPath) seen.push([args[1], process.env.TOKEN_PATH]);
+      });
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
+
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          files: [{ name: '.env', content: 'TOKEN_PATH=/custom/tokens\n' }],
+          std: [{ out: 'Demo back-office live.' }],
+        });
+      } finally {
+        delete process.env.TOKEN_PATH;
+      }
+
+      expect(seen).toStrictEqual([
+        ['login', '/custom/tokens'],
+        ['projects:create:demo', '/custom/tokens'],
+        ['layout:apply', '/custom/tokens'],
+      ]);
+    });
+
     it('draws another demo name when the directory already exists, before creating the project', async () => {
       expect.hasAssertions();
       runStep.mockReset().mockResolvedValue(undefined);
