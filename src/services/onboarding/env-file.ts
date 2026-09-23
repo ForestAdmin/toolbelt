@@ -20,6 +20,18 @@ const keyed = (secrets: Secrets) =>
   });
 
 /**
+ * A value the app's dotenv reads back unchanged: bare when it can be, quoted when a `#`, a space
+ * or a quote would otherwise cut it. dotenv unescapes nothing, so the quote is one the value lacks.
+ */
+function assignment(key: string, value: string): string {
+  if (/^[\w.:/+=@-]*$/.test(value)) return `${key}=${value}`;
+
+  const quote = ["'", '"', '`'].find(candidate => !value.includes(candidate)) ?? "'";
+
+  return `${key}=${quote}${value}${quote}`;
+}
+
+/**
  * The assignment the app's dotenv would actually load for `key`: it accepts `export` and spaces
  * around `=`, keeps a quoted value whole, ends an unquoted one at its first `#`, and keeps the LAST
  * of several.
@@ -76,12 +88,13 @@ export function writeSecrets(
     const existing = effectiveAssignment(content, key);
 
     if (existing === undefined) {
-      appended.push(`${key}=${value}`);
+      appended.push(assignment(key, value));
       written.push(key);
     } else if (existing.value === '') {
       // A placeholder, not a configured value. Filled IN PLACE: appending would leave the file
       // with the same key twice, which reads as a mistake even though dotenv takes the last.
-      content = `${content.slice(0, existing.start)}${key}=${value}${content.slice(existing.end)}`;
+      const { start, end } = existing;
+      content = `${content.slice(0, start)}${assignment(key, value)}${content.slice(end)}`;
       written.push(key);
     } else if (existing.value !== value) {
       // A DIFFERENT secret is already there: overwriting it would break whatever it belongs to,

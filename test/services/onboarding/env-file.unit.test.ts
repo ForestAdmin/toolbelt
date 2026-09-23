@@ -93,6 +93,22 @@ describe('onboarding env-file', () => {
       });
     });
 
+    it.each([
+      ['a hex secret, bare as always', 'a1b2c3', 'FOREST_AUTH_SECRET=a1b2c3\n'],
+      ['a # that would start a comment', 'abc#def', "FOREST_AUTH_SECRET='abc#def'\n"],
+      ['a space that would be trimmed', 'a b ', "FOREST_AUTH_SECRET='a b '\n"],
+      ['a single quote', "it's#1", 'FOREST_AUTH_SECRET="it\'s#1"\n'],
+    ])('writes %s so that dotenv reads it back unchanged', (_, value, written) => {
+      expect.assertions(2);
+      inTempDir(() => {
+        writeSecrets({ authSecret: value }, {});
+
+        const content = fs.readFileSync('.env', 'utf8');
+        expect(content).toBe(written);
+        expect(dotenv.parse(content).FOREST_AUTH_SECRET).toBe(value);
+      });
+    });
+
     it('starts the appended secrets on a new line when the file does not end with one', () => {
       expect.assertions(1);
       inTempDir(() => {
