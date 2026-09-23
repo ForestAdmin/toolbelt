@@ -156,6 +156,31 @@ describe('start', () => {
       expect(options.env).toStrictEqual({ FOREST_START_LEAK: undefined });
     });
 
+    it('waits for the agent to be mounted, not for any server to listen', async () => {
+      expect.hasAssertions();
+      runStep.mockReset().mockImplementation(async (_, args) => {
+        if (args[1] !== 'projects:create:sql') return;
+        fs.mkdirSync('x');
+        fs.writeFileSync('x/package.json', JSON.stringify({ scripts: { build: 'tsc' } }));
+      });
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'standalone', '--name', 'x'],
+        std: [{ out: 'Your back-office is live!' }],
+      });
+
+      const [[, , { ready }]] = startProcess.mock.calls;
+      expect(ready.test('Successfully mounted on Standalone server (http://0.0.0.0:3310)')).toBe(
+        true,
+      );
+      // An app with nothing mounted prints this too: "live" must mean Forest answered.
+      expect(ready.test('Listening on http://localhost:3310')).toBe(false);
+    });
+
     it('refuses a --name whose directory exists, before creating any project', async () => {
       expect.hasAssertions();
       runStep.mockReset().mockResolvedValue(undefined);

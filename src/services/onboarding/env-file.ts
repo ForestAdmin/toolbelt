@@ -18,8 +18,9 @@ const keyed = (secrets: Secrets) =>
   });
 
 /**
- * The assignment dotenv would actually load for `key`: it accepts `export` and spaces around `=`,
- * strips quotes and trailing comments, and keeps the LAST of several.
+ * The assignment the app's dotenv would actually load for `key`: it accepts `export` and spaces
+ * around `=`, keeps a quoted value whole, ends an unquoted one at its first `#`, and keeps the LAST
+ * of several.
  */
 function effectiveAssignment(content: string, key: string) {
   const pattern = new RegExp(`^[ \\t]*(?:export[ \\t]+)?${key}[ \\t]*=(.*)$`, 'gm');
@@ -27,10 +28,10 @@ function effectiveAssignment(content: string, key: string) {
   if (!last) return undefined;
 
   const raw = last[1].trim();
-  const quoted = /^(['"`])(.*)\1$/.exec(raw);
+  const quoted = /^(['"`])(.*?)\1\s*(?:#.*)?$/.exec(raw);
 
   return {
-    value: quoted ? quoted[2] : raw.replace(/\s+#.*$/, ''),
+    value: quoted ? quoted[2] : raw.replace(/#.*$/, '').trim(),
     start: last.index as number,
     end: (last.index as number) + last[0].length,
   };
@@ -78,9 +79,10 @@ export function writeSecrets(
     fs.writeFileSync(
       file,
       appended.length ? `${content}${separator}${appended.join('\n')}\n` : content,
-      // Applies only when the file is created: the secrets are for the user alone.
-      { mode: 0o600 },
     );
+    // Also on a file that existed: the secrets written into it are new, and nobody chose to let
+    // other local users read them.
+    fs.chmodSync(file, 0o600);
   }
 
   const shadowed = keyed(secrets)

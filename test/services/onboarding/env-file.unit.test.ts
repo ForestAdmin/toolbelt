@@ -53,6 +53,28 @@ describe('onboarding env-file', () => {
       });
     });
 
+    it('restricts an existing file it writes secrets into, whatever mode it had', () => {
+      expect.assertions(1);
+      inTempDir(() => {
+        fs.writeFileSync('.env', 'PORT=3001\n', { mode: 0o644 });
+        writeSecrets({ envSecret: 'AAA' }, {});
+
+        // eslint-disable-next-line no-bitwise -- the permission bits of a file mode
+        expect(fs.statSync('.env').mode & 0o777).toBe(0o600);
+      });
+    });
+
+    it('leaves the mode of a file it had nothing to write into', () => {
+      expect.assertions(1);
+      inTempDir(() => {
+        fs.writeFileSync('.env', 'FOREST_ENV_SECRET=AAA\n', { mode: 0o644 });
+        writeSecrets({ envSecret: 'AAA' }, {});
+
+        // eslint-disable-next-line no-bitwise -- the permission bits of a file mode
+        expect(fs.statSync('.env').mode & 0o777).toBe(0o644);
+      });
+    });
+
     it('starts the appended secrets on a new line when the file does not end with one', () => {
       expect.assertions(1);
       inTempDir(() => {
@@ -108,6 +130,24 @@ describe('onboarding env-file', () => {
 
         expect(result.conflicts).toStrictEqual(['FOREST_ENV_SECRET']);
         expect(fs.readFileSync('.env', 'utf8')).toBe(existing);
+      });
+    });
+
+    // Each line read as dotenv 17 reads it: a placeholder is filled, the same value is left alone.
+    it.each([
+      ['a commented placeholder', 'FOREST_ENV_SECRET= # fill me\n', 'written'],
+      ['a placeholder that is only a comment', 'FOREST_ENV_SECRET=#x\n', 'written'],
+      ['an empty quoted placeholder with a comment', 'FOREST_ENV_SECRET=""  # empty\n', 'written'],
+      ['the same value, quoted, with a comment', 'FOREST_ENV_SECRET="AAA" # c\n', 'unchanged'],
+      ['the same value before an unspaced comment', 'FOREST_ENV_SECRET=AAA#note\n', 'unchanged'],
+    ])('reads %s as dotenv does', (_, existing, outcome) => {
+      expect.assertions(2);
+      inTempDir(() => {
+        fs.writeFileSync('.env', existing);
+        const result = writeSecrets({ envSecret: 'AAA' }, {});
+
+        expect(result.conflicts).toStrictEqual([]);
+        expect(result.written).toStrictEqual(outcome === 'written' ? ['FOREST_ENV_SECRET'] : []);
       });
     });
 

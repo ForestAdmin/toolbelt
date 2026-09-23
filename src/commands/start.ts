@@ -26,9 +26,9 @@ const DEMO_PORT = 3310;
 const RAILS_PORT = 3002;
 const NODE_PORT = 3001;
 
-// Broad "the back-end is up" marker: covers standalone ("mounted on Standalone server"), in-app
-// Node ("mounted on Express.js") and Rails ("schema was updated" / Puma).
-const READY = /Successfully mounted on|schema was (updated|not updated)|Listening on http/i;
+// What `@forestadmin/agent` logs once mounted, on every framework and on standalone. Never a bare
+// "Listening on http": an app with nothing mounted prints that too, and would read as live.
+const READY = /Successfully mounted on|schema was (updated|not updated)/i;
 
 type Flow = 'demo' | 'standalone' | 'inapp';
 type Tail = {
@@ -272,7 +272,7 @@ export default class StartCommand extends AbstractCommand {
   private boot(
     command: string,
     args: string[],
-    options: { cwd?: string; env?: Record<string, string>; ready?: RegExp } = {},
+    options: { cwd?: string; env?: NodeJS.ProcessEnv; ready?: RegExp } = {},
   ) {
     return startProcess(command, args, {
       ready: options.ready ?? READY,
@@ -464,7 +464,7 @@ export default class StartCommand extends AbstractCommand {
       name,
       dir: name, // `create:sql` scaffolded ./<name>
       restart: 'npm start',
-      stack: "standalone Forest agent (TypeScript) on the user's own database",
+      stack: "standalone Forest agent on the user's own database",
       url: `http://localhost:${DEMO_PORT}`,
     };
 
@@ -630,7 +630,14 @@ export default class StartCommand extends AbstractCommand {
     this.reportSecrets(written);
 
     // The agent mounts Forest with the skills, so both come before the boot waits on a mount.
-    if (mount === 'ai') await this.mountWithAgent(stack);
+    if (mount === 'ai') {
+      const inDotenv = !written.conflicts.length && !written.shadowed.length;
+      await this.mountWithAgent(stack, inDotenv).catch(error => {
+        // The project exists by now: a failed agent step costs the snippet, never the setup.
+        this.logger.warn(`${(error as Error).message}\n  Mount it by hand instead:`);
+        this.explainMount('manual', stack);
+      });
+    }
 
     await this.ask({
       type: 'input',
@@ -677,7 +684,7 @@ export default class StartCommand extends AbstractCommand {
   }
 
   /** Install the skills the agent mounts with, then offer to launch it on that one task. */
-  private async mountWithAgent(stack: NodeStack): Promise<void> {
+  private async mountWithAgent(stack: NodeStack, secretsInDotenv: boolean): Promise<void> {
     if (!this.canInstallSkills) return;
 
     await this.forest(['skills:init']);
@@ -685,15 +692,18 @@ export default class StartCommand extends AbstractCommand {
     const [agent] = StartCommand.launchableAgents('.');
     if (!agent || !(await this.confirm(`Launch ${agent.label} now to wire the mount?`))) return;
 
-    await this.run$(agent.bin, [StartCommand.mountSeed(stack)]);
+    await this.run$(agent.bin, [StartCommand.mountSeed(stack, secretsInDotenv)]);
   }
 
-  private static mountSeed(stack: NodeStack): string {
+  private static mountSeed(stack: NodeStack, secretsInDotenv: boolean): string {
+    const secrets = secretsInDotenv
+      ? 'FOREST_ENV_SECRET / FOREST_AUTH_SECRET are in .env'
+      : 'FOREST_ENV_SECRET / FOREST_AUTH_SECRET are read from the environment, not only from .env';
+
     return (
       `You're in a ${stack.framework} app using ${stack.orm}. @forestadmin/agent and ` +
-      `${NODE_DATASOURCE[stack.orm]} are installed, and FOREST_ENV_SECRET / FOREST_AUTH_SECRET ` +
-      "are in .env. Mount the Forest agent in my server, then stop: don't start the server, " +
-      '`forest start` boots it once you are done.'
+      `${NODE_DATASOURCE[stack.orm]} are installed, and ${secrets}. Mount the Forest agent in ` +
+      "my server, then stop: don't start the server, `forest start` boots it once you are done."
     );
   }
 
@@ -967,7 +977,8 @@ export default class StartCommand extends AbstractCommand {
         stopProcess(child, 'SIGINT');
         resolve();
       };
-      process.on('SIGINT', stop);
+      // Ahead of the process runner's own hook, which exits on SIGINT before a later listener runs.
+      process.prependOnceListener('SIGINT', stop);
       child.on('exit', () => resolve());
     });
   }
