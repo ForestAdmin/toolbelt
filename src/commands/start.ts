@@ -959,7 +959,7 @@ export default class StartCommand extends AbstractCommand {
   }
 
   /** Say what actually happened to the secrets — never the values themselves. */
-  private reportSecrets({ file, written, conflicts }: SecretsWrite): void {
+  private reportSecrets({ file, written, conflicts, shadowed }: SecretsWrite): void {
     if (written.length)
       this.logger.success(`${written.join(' and ')} written to ${file} — do not commit it.`);
     if (conflicts.length) {
@@ -968,6 +968,12 @@ export default class StartCommand extends AbstractCommand {
           ' and ',
         )} already set to a different value in ${file} — left untouched. ` +
           'Your app will keep using the existing project until you replace it.',
+      );
+    }
+    if (shadowed.length) {
+      this.logger.warn(
+        `${shadowed.join(' and ')} already exported in your shell, which wins over ${file}. ` +
+          'Unset it for your app to use this project.',
       );
     }
     if (!written.length && !conflicts.length) {

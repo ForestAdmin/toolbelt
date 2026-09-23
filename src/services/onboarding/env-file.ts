@@ -1,17 +1,49 @@
 import fs from 'fs';
 
+type Secrets = { envSecret?: string; authSecret?: string };
+
 export type SecretsWrite = {
   file: string;
   written: string[];
   conflicts: string[];
+  /** Keys the shell already exports: dotenv never overrides them, so `.env` is not what runs. */
+  shadowed: string[];
 };
+
+const keyed = (secrets: Secrets) =>
+  Object.entries({
+    FOREST_ENV_SECRET: secrets.envSecret,
+    FOREST_AUTH_SECRET: secrets.authSecret,
+  });
+
+/**
+ * The assignment dotenv would actually load for `key`: it accepts `export` and spaces around `=`,
+ * strips quotes and trailing comments, and keeps the LAST of several.
+ */
+function effectiveAssignment(content: string, key: string) {
+  const pattern = new RegExp(`^[ \\t]*(?:export[ \\t]+)?${key}[ \\t]*=(.*)$`, 'gm');
+  const last = [...content.matchAll(pattern)].pop();
+  if (!last) return undefined;
+
+  const raw = last[1].trim();
+  const quoted = /^(['"`])(.*)\1$/.exec(raw);
+
+  return {
+    value: quoted ? quoted[2] : raw.replace(/\s+#.*$/, ''),
+    start: last.index as number,
+    end: (last.index as number) + last[0].length,
+  };
+}
 
 /**
  * Put the secrets where the app reads them from, rather than on the terminal. Existing values
  * are left alone: overwriting a secret the user already configured would be worse than not
  * writing at all.
  */
-export function writeSecrets(secrets: { envSecret?: string; authSecret?: string }): SecretsWrite {
+export function writeSecrets(
+  secrets: Secrets,
+  environment: NodeJS.ProcessEnv = process.env,
+): SecretsWrite {
   const file = '.env';
   const current = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
   const written: string[] = [];
@@ -19,24 +51,20 @@ export function writeSecrets(secrets: { envSecret?: string; authSecret?: string 
   const appended: string[] = [];
   let content = current;
 
-  Object.entries({
-    FOREST_ENV_SECRET: secrets.envSecret,
-    FOREST_AUTH_SECRET: secrets.authSecret,
-  }).forEach(([key, value]) => {
+  keyed(secrets).forEach(([key, value]) => {
     if (!value) return;
 
-    const assignment = new RegExp(`^${key}=(.*)$`, 'm');
-    const existing = assignment.exec(content)?.[1]?.trim();
+    const existing = effectiveAssignment(content, key);
 
     if (existing === undefined) {
       appended.push(`${key}=${value}`);
       written.push(key);
-    } else if (existing === '') {
+    } else if (existing.value === '') {
       // A placeholder, not a configured value. Filled IN PLACE: appending would leave the file
       // with the same key twice, which reads as a mistake even though dotenv takes the last.
-      content = content.replace(assignment, `${key}=${value}`);
+      content = `${content.slice(0, existing.start)}${key}=${value}${content.slice(existing.end)}`;
       written.push(key);
-    } else if (existing !== value) {
+    } else if (existing.value !== value) {
       // A DIFFERENT secret is already there: overwriting it would break whatever it belongs to,
       // and staying silent would leave the app pointing at another project while we report
       // success. Neither is acceptable, so it is surfaced.
@@ -54,24 +82,26 @@ export function writeSecrets(secrets: { envSecret?: string; authSecret?: string 
     );
   }
 
-  return { file, written, conflicts };
+  const shadowed = keyed(secrets)
+    .filter(([key, value]) => value && environment[key] !== undefined)
+    .map(([key]) => key);
+
+  return { file, written, conflicts, shadowed };
 }
 
 /**
  * The secrets to hand the first boot, so it runs against the same project as every restart after.
- * A key `.env` kept for another project is left to `.env`, as `reportSecrets` told the user.
+ * A key `.env` kept for another project, or one the shell exports, is left where restarts read it.
  */
 export function bootSecrets(
-  secrets: { envSecret?: string; authSecret?: string },
-  { conflicts }: Pick<SecretsWrite, 'conflicts'>,
+  secrets: Secrets,
+  { conflicts, shadowed }: Pick<SecretsWrite, 'conflicts' | 'shadowed'>,
 ): Record<string, string> {
   return Object.fromEntries(
-    Object.entries({
-      FOREST_ENV_SECRET: secrets.envSecret,
-      FOREST_AUTH_SECRET: secrets.authSecret,
-      // An empty value is not a neutral default: it SHADOWS what dotenv would load from `.env`.
-    }).filter(
-      (entry): entry is [string, string] => Boolean(entry[1]) && !conflicts.includes(entry[0]),
+    // An empty value is not a neutral default: it SHADOWS what dotenv would load from `.env`.
+    keyed(secrets).filter(
+      (entry): entry is [string, string] =>
+        Boolean(entry[1]) && !conflicts.includes(entry[0]) && !shadowed.includes(entry[0]),
     ),
   );
 }
