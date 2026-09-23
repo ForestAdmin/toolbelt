@@ -9,6 +9,8 @@ export type SecretsWrite = {
   conflicts: string[];
   /** Keys the shell already exports: dotenv never overrides them, so `.env` is not what runs. */
   shadowed: string[];
+  /** Written, but still readable by others: its mode could not be restricted. */
+  exposed: boolean;
 };
 
 const keyed = (secrets: Secrets) =>
@@ -35,6 +37,21 @@ function effectiveAssignment(content: string, key: string) {
     start: last.index as number,
     end: (last.index as number) + last[0].length,
   };
+}
+
+/**
+ * Also on a file that existed: the secrets written into it are new, and nobody chose to let other
+ * local users read them. A file owned by someone else refuses, which is reported and never fatal,
+ * since the secrets are already in it and the project already exists.
+ */
+function restrictToOwner(file: string): boolean {
+  try {
+    fs.chmodSync(file, 0o600);
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -74,22 +91,22 @@ export function writeSecrets(
     }
   });
 
+  let exposed = false;
+
   if (content !== current || appended.length) {
     const separator = content && !content.endsWith('\n') ? '\n' : '';
     fs.writeFileSync(
       file,
       appended.length ? `${content}${separator}${appended.join('\n')}\n` : content,
     );
-    // Also on a file that existed: the secrets written into it are new, and nobody chose to let
-    // other local users read them.
-    fs.chmodSync(file, 0o600);
+    exposed = !restrictToOwner(file);
   }
 
   const shadowed = keyed(secrets)
     .filter(([key, value]) => value && environment[key] !== undefined)
     .map(([key]) => key);
 
-  return { file, written, conflicts, shadowed };
+  return { file, written, conflicts, shadowed, exposed };
 }
 
 /**

@@ -38,6 +38,79 @@ describe('start', () => {
     });
   });
 
+  describe('demo flow, past --dry-run', () => {
+    it('applies the demo layout without the secret of the .env it was started next to', async () => {
+      expect.hasAssertions();
+      // Each `forest` step gets this process's environment, and a child's dotenv never overrides
+      // it: the secret it sees is the project `layout:apply -f` would land on.
+      const seen = [];
+      runStep.mockReset().mockImplementation(async (command, args) => {
+        const step = command === process.execPath ? args[1] : `${command} ${args.join(' ')}`;
+        seen.push([step, process.env.FOREST_ENV_SECRET]);
+      });
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
+
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          files: [{ name: '.env', content: 'FOREST_ENV_SECRET=secret_of_a_real_project\n' }],
+          std: [{ out: 'Demo back-office live.' }],
+        });
+      } finally {
+        delete process.env.FOREST_ENV_SECRET;
+      }
+
+      expect(seen).toStrictEqual([
+        ['login', undefined],
+        ['projects:create:demo', undefined],
+        ['npm install', undefined],
+        ['layout:apply', undefined],
+      ]);
+    });
+
+    it('draws another demo name when the directory already exists, before creating the project', async () => {
+      expect.hasAssertions();
+      runStep.mockReset().mockResolvedValue(undefined);
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
+      const random = jest
+        .spyOn(Math, 'random')
+        .mockReturnValueOnce(0.123456) // forest-demo-4fzy, taken
+        .mockReturnValueOnce(0.654321); // forest-demo-nk00
+
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          files: [{ name: 'forest-demo-4fzy/package.json', content: '{}' }],
+          std: [{ out: 'Demo back-office live.' }],
+        });
+      } finally {
+        random.mockRestore();
+      }
+
+      expect(runStep.mock.calls[1]).toStrictEqual([
+        process.execPath,
+        [
+          process.argv[1],
+          'projects:create:demo',
+          'forest-demo-nk00',
+          '-l',
+          'typescript',
+          '-H',
+          'http://localhost',
+          '-P',
+          '3310',
+        ],
+        { cwd: undefined },
+      ]);
+    });
+  });
+
   describe('standalone flow', () => {
     it('passes the connection URL through to create:sql and reports both URLs', async () => {
       expect.hasAssertions();
@@ -133,9 +206,13 @@ describe('start', () => {
         fs.mkdirSync('x');
         fs.writeFileSync('x/package.json', JSON.stringify({ scripts: { build: 'tsc' } }));
       });
-      startProcess
-        .mockReset()
-        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
+      // The runner hands a child this process's environment, so that is what the back-end gets.
+      let inherited;
+      startProcess.mockReset().mockImplementation(() => {
+        inherited = process.env.FOREST_START_LEAK;
+
+        return { child: undefined, ready: Promise.resolve(), mute: () => {} };
+      });
 
       try {
         await testCli({
@@ -153,10 +230,10 @@ describe('start', () => {
 
       const [[command, args, options]] = startProcess.mock.calls;
       expect([command, args, options.cwd]).toStrictEqual(['npm', ['start'], 'x']);
-      expect(options.env).toStrictEqual({ FOREST_START_LEAK: undefined });
+      expect(inherited).toBeUndefined();
     });
 
-    it('waits for the agent to be mounted, not for any server to listen', async () => {
+    it("waits for the agent's schema push, not for a server to listen or a mount to start", async () => {
       expect.hasAssertions();
       runStep.mockReset().mockImplementation(async (_, args) => {
         if (args[1] !== 'projects:create:sql') return;
@@ -174,11 +251,11 @@ describe('start', () => {
       });
 
       const [[, , { ready }]] = startProcess.mock.calls;
-      expect(ready.test('Successfully mounted on Standalone server (http://0.0.0.0:3310)')).toBe(
-        true,
-      );
+      expect(ready.test('Schema was updated, sending new version')).toBe(true);
       // An app with nothing mounted prints this too: "live" must mean Forest answered.
       expect(ready.test('Listening on http://localhost:3310')).toBe(false);
+      // Logged by the framework mounts before `start()` has run, so before it can fail.
+      expect(ready.test('Successfully mounted on Express.js')).toBe(false);
     });
 
     it('refuses a --name whose directory exists, before creating any project', async () => {

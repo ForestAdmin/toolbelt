@@ -36,6 +36,7 @@ describe('onboarding env-file', () => {
           written: ['FOREST_ENV_SECRET', 'FOREST_AUTH_SECRET'],
           conflicts: [],
           shadowed: [],
+          exposed: false,
         });
         expect(fs.readFileSync('.env', 'utf8')).toBe(
           'FOREST_ENV_SECRET=AAA\nFOREST_AUTH_SECRET=BBB\n',
@@ -61,6 +62,23 @@ describe('onboarding env-file', () => {
 
         // eslint-disable-next-line no-bitwise -- the permission bits of a file mode
         expect(fs.statSync('.env').mode & 0o777).toBe(0o600);
+      });
+    });
+
+    it('still writes, and reports the file exposed, when its mode cannot be changed', () => {
+      expect.assertions(2);
+      inTempDir(() => {
+        const chmod = jest.spyOn(fs, 'chmodSync').mockImplementation(() => {
+          throw Object.assign(new Error('EPERM: operation not permitted'), { code: 'EPERM' });
+        });
+        try {
+          const result = writeSecrets({ envSecret: 'AAA' }, {});
+
+          expect(result.exposed).toBe(true);
+          expect(fs.readFileSync('.env', 'utf8')).toBe('FOREST_ENV_SECRET=AAA\n');
+        } finally {
+          chmod.mockRestore();
+        }
       });
     });
 
@@ -109,6 +127,7 @@ describe('onboarding env-file', () => {
           written: [],
           conflicts: ['FOREST_ENV_SECRET'],
           shadowed: [],
+          exposed: false,
         });
         expect(fs.readFileSync('.env', 'utf8')).toBe('FOREST_ENV_SECRET=SOMEONE_ELSE\n');
       });
@@ -183,6 +202,7 @@ describe('onboarding env-file', () => {
           written: [],
           conflicts: [],
           shadowed: [],
+          exposed: false,
         });
       });
     });
@@ -216,14 +236,12 @@ describe('onboarding env-file', () => {
       }
     });
 
-    it('fills a placeholder and hands the first boot its value, rather than calling it exported', () => {
+    it('fills a placeholder and hands the first boot its value once the loaded keys are forgotten', () => {
       expect.assertions(2);
       withLoadedDotenv('FOREST_ENV_SECRET=\n', () => {
-        const loaded = keysLoadedFromDotenv();
-        const shell = Object.fromEntries(
-          Object.entries(process.env).filter(([key]) => !loaded.includes(key)),
-        );
-        const written = writeSecrets({ envSecret: 'AAA' }, shell);
+        // What `forest start` does before anything else.
+        keysLoadedFromDotenv().forEach(key => delete process.env[key]);
+        const written = writeSecrets({ envSecret: 'AAA' });
 
         expect(written.shadowed).toStrictEqual([]);
         expect(bootSecrets({ envSecret: 'AAA' }, written)).toStrictEqual({

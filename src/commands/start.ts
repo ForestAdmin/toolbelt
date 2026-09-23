@@ -26,9 +26,10 @@ const DEMO_PORT = 3310;
 const RAILS_PORT = 3002;
 const NODE_PORT = 3001;
 
-// What `@forestadmin/agent` logs once mounted, on every framework and on standalone. Never a bare
-// "Listening on http": an app with nothing mounted prints that too, and would read as live.
-const READY = /Successfully mounted on|schema was (updated|not updated)/i;
+// What `@forestadmin/agent` logs from `start()`, once its schema reached Forest. Neither "Listening
+// on http", which an app with nothing mounted prints too, nor "Successfully mounted on", which the
+// framework mounts log before `start()` has run, and so before it can fail.
+const READY = /schema was (updated|not updated)/i;
 
 type Flow = 'demo' | 'standalone' | 'inapp';
 type Tail = {
@@ -89,15 +90,6 @@ export default class StartCommand extends AbstractCommand {
 
   private dryRun = false;
 
-  private loadedFromDotenv: string[] = [];
-
-  /** What the user's shell exports, as opposed to what this CLI loaded from their `.env`. */
-  private get shellEnvironment(): NodeJS.ProcessEnv {
-    return Object.fromEntries(
-      Object.entries(process.env).filter(([key]) => !this.loadedFromDotenv.includes(key)),
-    );
-  }
-
   // eslint-disable-next-line class-methods-use-this -- reads the ambient TTY, not instance state
   private get interactive(): boolean {
     return Boolean(process.stdin.isTTY);
@@ -124,7 +116,10 @@ export default class StartCommand extends AbstractCommand {
       );
     }
 
-    this.loadedFromDotenv = keysLoadedFromDotenv();
+    // Loaded into this process at startup, and inherited by every child otherwise: a `forest`
+    // command run in a demo would then target the project of the `.env` it was started next to,
+    // and an app would read dotenv 8's parse ahead of its own. This CLI already read its config.
+    keysLoadedFromDotenv().forEach(key => delete process.env[key]);
 
     try {
       await this.onboard(flags as Record<string, string | undefined>);
@@ -277,10 +272,7 @@ export default class StartCommand extends AbstractCommand {
     return startProcess(command, args, {
       ready: options.ready ?? READY,
       cwd: options.cwd,
-      env: {
-        ...Object.fromEntries(this.loadedFromDotenv.map(key => [key, undefined])),
-        ...options.env,
-      },
+      env: options.env,
       onOutput: chunk => this.logger.log(this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`)),
     });
   }
@@ -378,7 +370,11 @@ export default class StartCommand extends AbstractCommand {
   // ---------- flows ----------
 
   private async flowDemo(): Promise<void> {
-    const name = `forest-demo-${Math.random().toString(36).slice(2, 6)}`;
+    // Drawn until free: `create:demo` would register a project, then skip every existing file.
+    let name: string;
+    do {
+      name = `forest-demo-${Math.random().toString(36).slice(2, 6)}`;
+    } while (!this.dryRun && fs.existsSync(name));
 
     await this.forest([
       'projects:create:demo',
@@ -545,6 +541,8 @@ export default class StartCommand extends AbstractCommand {
     }
 
     const booted = this.boot('bin/rails', ['server', '-p', String(RAILS_PORT)], {
+      // Puma's bind line stays accepted here: when `forest_admin_rails` logs its schema push is
+      // unverified, and waiting for a line that never comes would fail every Rails boot.
       ready: /Listening on http|schema was updated/i,
     });
     this.logger.log(this.chalk.grey(`\n$ bin/rails server -p ${RAILS_PORT}   (booting…)`));
@@ -618,7 +616,7 @@ export default class StartCommand extends AbstractCommand {
       // Written, never printed: this path is where CI logs are produced, and `FOREST_ENV_SECRET`
       // is a long-lived credential — anyone who can read the retained log gets the project. A
       // warning next to the value would not have stopped that.
-      this.reportSecrets(writeSecrets(secrets, this.shellEnvironment));
+      this.reportSecrets(writeSecrets(secrets));
       this.logger.log(this.chalk.grey(`  Then run:  ${tail.restart}`));
 
       return;
@@ -626,7 +624,7 @@ export default class StartCommand extends AbstractCommand {
 
     // Persisted before booting, not just passed to this one process: everything the user is told
     // afterwards — the restart hint, `npm start` — runs without our environment.
-    const written = writeSecrets(secrets, this.shellEnvironment);
+    const written = writeSecrets(secrets);
     this.reportSecrets(written);
 
     // The agent mounts Forest with the skills, so both come before the boot waits on a mount.
@@ -955,6 +953,13 @@ export default class StartCommand extends AbstractCommand {
 
   /** Hold the back-end in the foreground so a closed window is never a dead end. */
   private keepAlive(child: ChildProcess, dir: string, restart: string): Promise<void> {
+    // Its `exit` already fired, so listening for it would hold the terminal until a Ctrl-C.
+    if (child.exitCode !== null || child.signalCode !== null) {
+      this.logger.warn(`Your back-end has stopped. Restart it: cd ${dir} && ${restart}`);
+
+      return Promise.resolve();
+    }
+
     this.logger.log(
       this.chalk.grey(
         '\n  ▸ This terminal now runs your back-end (live logs below). Keep it open.',
@@ -1035,9 +1040,14 @@ export default class StartCommand extends AbstractCommand {
   }
 
   /** Say what actually happened to the secrets — never the values themselves. */
-  private reportSecrets({ file, written, conflicts, shadowed }: SecretsWrite): void {
+  private reportSecrets({ file, written, conflicts, shadowed, exposed }: SecretsWrite): void {
     if (written.length)
       this.logger.success(`${written.join(' and ')} written to ${file} — do not commit it.`);
+    if (exposed) {
+      this.logger.warn(
+        `${file} could not be made private to you: run \`chmod 600 ${file}\` to keep it that way.`,
+      );
+    }
     if (conflicts.length) {
       this.logger.warn(
         `${conflicts.join(
