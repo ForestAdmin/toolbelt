@@ -10,20 +10,16 @@ import {
   stopProcess,
 } from '../../src/services/process-runner';
 
-// A wrapper that stays alive and whose CHILD holds the port — the shape of `npm start`. A bare
-// `sh -c 'cmd'` execs and collapses into a single process, which is not the shape under test.
+// `& wait` keeps the wrapper alive with the server as its child, like `npm start`. A bare
+// `sh -c 'cmd'` would exec into a single process.
 const SERVER = `node -e "require('net').createServer().listen(PORT,()=>console.log('listening'));setInterval(()=>{},1e3)"`;
 const wrapper = (port: number) => ['-c', `${SERVER.replace('PORT', String(port))} & wait`];
 
-// The same server, but the wrapper returns while it keeps running. The server stays in the group
-// the wrapper led.
 const orphaningWrapper = (port: number) => [
   '-c',
   `${SERVER.replace('PORT', String(port))} & sleep 0.3`,
 ];
 
-// A server that traps SIGTERM, as puma and most back-ends do: nothing but SIGKILL gets the port
-// back.
 const TRAPPING_SERVER = `node -e "process.on('SIGTERM',()=>{});require('net').createServer().listen(PORT,()=>console.log('listening'));setInterval(()=>{},1e3)"`;
 const trappingWrapper = (port: number) => [
   '-c',
@@ -43,7 +39,6 @@ function isPortFree(port: number): Promise<boolean> {
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// A signal is delivered synchronously; the socket the kernel then frees is not.
 async function waitForPortFree(port: number, timeoutMs = 5000): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
 
@@ -57,8 +52,6 @@ async function waitForPortFree(port: number, timeoutMs = 5000): Promise<boolean>
   return isPortFree(port);
 }
 
-// Asked of the OS: these tests are about servers that outlive what started them, so a run that
-// strands one must not be able to poison the next.
 function freePort(): Promise<number> {
   return new Promise(resolve => {
     const probe = net.createServer();
@@ -106,7 +99,6 @@ describe('process-runner', () => {
 
     it('decodes multibyte characters split across pipe chunks', async () => {
       expect.assertions(1);
-      // Written one byte at a time, so every accented character straddles a chunk boundary.
       const { stdout } = await runCapture('node', [
         '-e',
         'const s = JSON.stringify({ v: "créé-àé€" }); for (const b of Buffer.from(s)) process.stdout.write(Buffer.from([b]));',
@@ -151,8 +143,6 @@ describe('process-runner', () => {
       const { child, ready } = startProcess(
         'sh',
         ['-c', 'node -e "setInterval(()=>console.log(\'server listening now\'), 30)" & wait'],
-        // `/y/` is sticky: `.test()` advances lastIndex, so a second call misses what the first
-        // one already passed.
         { ready: /listening/y, timeoutMs: 3000 },
       );
 
@@ -273,17 +263,14 @@ describe('process-runner', () => {
       const signalled: number[] = [];
       const realKill = process.kill.bind(process);
       jest.spyOn(process, 'kill').mockImplementation(((pid: number, sig?: NodeJS.Signals) => {
-        // Signal 0 is the check, not the thing being checked for.
-        (sig === (0 as unknown as NodeJS.Signals) ? probed : signalled).push(pid);
+        const isProbe = sig === (0 as unknown as NodeJS.Signals);
+        (isProbe ? probed : signalled).push(pid);
 
         return realKill(pid, sig);
       }) as typeof process.kill);
       try {
         stopProcess(child);
         expect(signalled).toStrictEqual([]);
-        // Not because we remember signalling it, which says nothing about whether it stopped, but
-        // because the group was watched until it ended — and a pid whose group is gone may already
-        // belong to somebody else.
         expect(probed).toStrictEqual([]);
       } finally {
         jest.restoreAllMocks();
@@ -305,8 +292,6 @@ describe('process-runner', () => {
 
     it('keeps only a bounded window, so a chatty process cannot exhaust the heap before timing out', async () => {
       expect.assertions(1);
-      // 40 KB between the two halves of the pattern: no bounded window can hold both, whatever
-      // the reads happen to be cut at.
       const { child, ready } = startProcess(
         'sh',
         [
@@ -376,7 +361,6 @@ describe('process-runner', () => {
 
       stopProcess(child, 'SIGTERM', 250);
       await wait(150);
-      // Still there: it caught the signal and simply declined to leave.
       await expect(isPortFree(port)).resolves.toBe(false);
 
       await expect(waitForPortFree(port)).resolves.toBe(true);
@@ -391,7 +375,6 @@ describe('process-runner', () => {
       stopProcess(child, 'SIGTERM', 60_000);
       stopProcess(child, 'SIGTERM', 200);
 
-      // A caller unwinding harder must not be held to the patience of the call before it.
       await expect(waitForPortFree(port, 3000)).resolves.toBe(true);
     });
 
@@ -408,8 +391,6 @@ describe('process-runner', () => {
   });
 
   describe('the exit hook', () => {
-    // The handlers are installed on the shared `process`, so they are captured and removed again:
-    // a test must not leave the runner with a listener that calls `process.exit`.
     function installedListeners(signal: NodeJS.Signals) {
       return new Set(process.listeners(signal));
     }
@@ -419,7 +400,6 @@ describe('process-runner', () => {
       const before = installedListeners('SIGHUP');
       const beforeExit = new Set(process.listeners('exit'));
 
-      // A fresh instance, so `installExitHook` runs again in a module the suite already loaded.
       let runner!: typeof ProcessRunner;
       jest.isolateModules(() => {
         // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
@@ -434,14 +414,12 @@ describe('process-runner', () => {
         signal: NodeJS.Signals,
       ) => void;
 
-      // What the hook had signalled by the time it called `process.exit`: nothing it might have
-      // scheduled would ever run.
       const realKill = process.kill.bind(process);
       const sent: string[] = [];
       let sentBeforeExit: string[] = [];
       jest.spyOn(process, 'kill').mockImplementation(((pid: number, signal?: NodeJS.Signals) => {
-        // Signal 0 stops nothing.
-        if (signal !== 0) sent.push(`${pid < 0 ? 'group' : 'pid'} ${signal}`);
+        const isProbe = signal === 0;
+        if (!isProbe) sent.push(`${pid < 0 ? 'group' : 'pid'} ${signal}`);
 
         return realKill(pid, signal);
       }) as typeof process.kill);
@@ -453,7 +431,6 @@ describe('process-runner', () => {
         expect(onHangUp).toBeDefined();
         onHangUp('SIGHUP');
 
-        // SIGHUP is 1, so 129 — not the 143 that belongs to SIGTERM.
         expect(exit).toHaveBeenCalledWith(129);
         expect(sentBeforeExit).toStrictEqual(['group SIGTERM', 'group SIGKILL']);
         await expect(waitForPortFree(port)).resolves.toBe(true);
@@ -488,7 +465,6 @@ describe('process-runner', () => {
         'postgres://forest:hunter2@db.internal:5432/prod',
       ]).catch((thrown: Error) => thrown);
 
-      // The CLI masks this very value at the prompt.
       expect(error.message).not.toContain('hunter2');
       expect(error.message).toContain('postgres://forest:***@db.internal:5432/prod');
       expect(error.message).toContain('--connection-url');
@@ -535,7 +511,6 @@ describe('process-runner', () => {
         '--apiKey',
         'sk_live_nope',
       ]).catch((thrown: Error) => thrown);
-      // The same words written without a separator, which is still how the flag is named.
       const glued = await runStep('node', [
         '-e',
         'process.exit(1)',
@@ -546,8 +521,6 @@ describe('process-runner', () => {
         'npm_ArEaLlYsEcReT',
       ]).catch((thrown: Error) => thrown);
 
-      // Matching `auth` anywhere in the name reads all three of these as credentials and drops what
-      // the message was there to report.
       expect(innocent.message).toContain('--author Jane Doe');
       expect(innocent.message).toContain('--oauth-callback https://example.com/cb');
       expect(innocent.message).not.toContain('***');
@@ -595,7 +568,6 @@ describe('process-runner', () => {
       const taken = await freePort();
       const blocker = net.createServer().listen(taken);
 
-      // What a dev server does: report the clash, then bind the next port up and serve.
       const { child, ready } = startProcess(
         'sh',
         [
@@ -640,7 +612,6 @@ describe('process-runner', () => {
 
     it('fails fast on a message that puts the port before the word, as Ruby does', async () => {
       expect.assertions(1);
-      // What `bin/rails server` prints: the port comes before the word, not after it.
       const { child, ready } = startProcess(
         'sh',
         [
@@ -711,8 +682,6 @@ describe('process-runner', () => {
     it('waits for the GROUP, since a wrapper returning says nothing about what it launched', async () => {
       expect.assertions(3);
       const port = await freePort();
-      // The launcher hands over and leaves, and the server it left behind logs elsewhere — so the
-      // pipes close with the wrapper, which is the one end this CLI is handed.
       const { child, ready, exited } = startProcess(
         'sh',
         [
@@ -732,7 +701,6 @@ describe('process-runner', () => {
       });
       await wait(200);
 
-      // The process we spawned is gone while the back-end is answering requests.
       expect(child.exitCode).not.toBeNull();
       expect(settled).toBe(false);
 
@@ -758,8 +726,6 @@ describe('process-runner', () => {
       }) as typeof setInterval);
 
       try {
-        // Nothing else holds the loop here: the pipes closed with the wrapper. Outside Jest, an
-        // unref'd wait would let the CLI exit 0 and its exit hook take the server down.
         const { child, ready, exited } = startProcess(
           'sh',
           ['-c', `${SERVER.replace('PORT', String(port))} >/dev/null 2>&1 & echo listening`],
@@ -772,7 +738,6 @@ describe('process-runner', () => {
 
         expect(poll).toBeDefined();
 
-        // Held only as long as there is a group to wait for: once it has ended, the CLI may exit.
         const cleared = jest.spyOn(global, 'clearInterval');
         stopProcess(child, 'SIGKILL');
         await exited;
@@ -802,8 +767,6 @@ describe('process-runner', () => {
       const { child, ready } = startProcess('sh', trappingWrapper(port), { ready: /listening/ });
       await ready;
 
-      // Asked to stop and declined. The escalation is on an unref'd timer, so a CLI that leaves
-      // first never fires it.
       stopProcess(child, 'SIGTERM', 60_000);
       await wait(300);
 
@@ -829,8 +792,6 @@ describe('process-runner', () => {
   describe('a wrapper that exits before the server it started announces itself', () => {
     it('waits for the announcement, because the wrapper ending is not the start failing', async () => {
       expect.assertions(1);
-      // `server &` with no `wait`: the launcher is gone in milliseconds and the server holds the
-      // pipes, so `exit` fires long before the readiness line and `close` never fires at all.
       const { child, ready } = startProcess(
         'sh',
         ['-c', `node -e "setTimeout(()=>console.log('listening'),600)" &`],
@@ -907,7 +868,6 @@ describe('process-runner', () => {
 
       expect(dashed.message).not.toContain('dashy-looking-secret');
       expect(dashed.message).toContain('--auth-token ***');
-      // …while a flag that follows is still a flag, so the message still says what ran.
       expect(boolean.message).toContain('--auth-token --verbose');
       expect(boolean.message).not.toContain('***');
     });
@@ -915,9 +875,6 @@ describe('process-runner', () => {
   describe('an announcement that lands on a read boundary', () => {
     it('sees it, because a pipe hands over exactly as much as the window keeps', async () => {
       expect.assertions(1);
-      // The announcement straddles a read boundary, with enough behind it to fill the chunk that
-      // follows — a dev server printing its banner in one burst. Windows cut flush against the
-      // reads would put a seam through it.
       const { child, ready } = startProcess(
         'node',
         [
@@ -950,7 +907,6 @@ describe('process-runner', () => {
       const error = await ready.catch((thrown: Error) => thrown);
 
       expect(error.message).toContain('Port 3000');
-      // `lsof -ti :34` frees nothing and says the CLI cannot read its own output.
       expect(error.message).not.toContain('34');
     });
   });
@@ -959,8 +915,6 @@ describe('process-runner', () => {
     it('forgets it, so a pid the OS is then free to reuse is not signalled later', async () => {
       expect.assertions(3);
       const port = await freePort();
-      // A server whose logs go elsewhere, so the pipes close with the wrapper while it keeps the
-      // port: `close` fires here, and it fires on a group that is still alive.
       const { child, ready } = startProcess(
         'sh',
         [
@@ -974,8 +928,6 @@ describe('process-runner', () => {
 
       expect(child.exitCode).not.toBeNull();
 
-      // The group now ends with nothing in the module watching. The leader was reaped long ago,
-      // so from here `-pid` is a number the OS may hand to somebody else.
       process.kill(-(child.pid as number), 'SIGKILL');
       await expect(waitForPortFree(port)).resolves.toBe(true);
       await wait(600);
@@ -990,7 +942,6 @@ describe('process-runner', () => {
 
       try {
         stopAllProcesses();
-        // Not even the signal-0 probe.
         expect(probed).not.toContain(-(child.pid as number));
       } finally {
         jest.restoreAllMocks();
