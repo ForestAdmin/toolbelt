@@ -1,3 +1,10 @@
+# [5.21.0](https://github.com/ForestAdmin/toolbelt/compare/v5.20.0...v5.21.0) (2026-09-23)
+
+
+### Features
+
+* **projects:** add `forest projects:create:in-app` ([#806](https://github.com/ForestAdmin/toolbelt/issues/806)) ([cc17241](https://github.com/ForestAdmin/toolbelt/commit/cc172410f3ebf72bd3f988f8e69417221e47c22b))
+
 # [5.20.0](https://github.com/ForestAdmin/toolbelt/compare/v5.19.0...v5.20.0) (2026-09-22)
 
 
