@@ -286,16 +286,25 @@ function isSecretFlag(flag: string): boolean {
   return [...words, ...joined].some(isSecretWord);
 }
 
-/** The username may be empty: `redis://:password@host` is how Redis and Mongo URLs are written. */
-const URL_CREDENTIALS = /([a-z][a-z0-9+.-]*:\/\/[^\s/@:]*):[^\s/@]+@/gi;
+/**
+ * The username may be empty, as in `redis://:password@host`, and the password may be absent, as in
+ * `https://ghp_token@github.com`, where the one name there is is the credential.
+ */
+const URL_CREDENTIALS = /([a-z][a-z0-9+.-]*:\/\/)([^\s/@:]*)(:[^\s/@]+)?@/gi;
 
 /**
- * Take the password out of any connection string in `text`, which an argument list and a captured
+ * Take the credential out of any connection string in `text`, which an argument list and a captured
  * stderr both routinely carry into an error that is printed, and often logged. The host and
- * database survive: they are what makes the failure diagnosable, and they are not the secret.
+ * database survive, and so does a username a password follows: they are what makes the failure
+ * diagnosable, and they are not the secret. A username on its own is taken out, since a token is
+ * exactly what gets written there.
  */
 function redactSecrets(text: string): string {
-  return text.replace(URL_CREDENTIALS, '$1:***@');
+  return text.replace(URL_CREDENTIALS, (match, scheme: string, user: string, password?: string) => {
+    if (password) return `${scheme}${user}:***@`;
+
+    return user ? `${scheme}***@` : match;
+  });
 }
 
 /** A secret can start with a single `-`, so only this shape is read as the next flag. */

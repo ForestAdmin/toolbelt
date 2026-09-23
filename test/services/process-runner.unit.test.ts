@@ -800,6 +800,17 @@ describe('process-runner', () => {
       expect(error.message).toContain('redis://:***@cache.internal:6379/0');
     });
 
+    it('redacts a username with no password after it, where a token is written', async () => {
+      expect.assertions(2);
+      const error = await runCapture('node', [
+        '-e',
+        'console.error("fetch failed: https://ghp_s3cr3t@github.example/repo.git"); process.exit(2)',
+      ]).catch((thrown: Error) => thrown);
+
+      expect(error.message).not.toContain('ghp_s3cr3t');
+      expect(error.message).toContain('https://***@github.example/repo.git');
+    });
+
     it('redacts a secret value that starts with a dash, without eating the next flag', async () => {
       expect.assertions(4);
       const dashed = await runStep('node', [
