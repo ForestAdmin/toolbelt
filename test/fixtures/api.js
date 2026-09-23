@@ -1513,7 +1513,11 @@ module.exports = {
         }),
       ),
 
-  createProject: ({ databaseType, agent = Agents.ExpressSequelize }) =>
+  createProject: ({
+    databaseType,
+    agent = Agents.ExpressSequelize,
+    architecture = 'microservice',
+  }) =>
     nock('http://localhost:3001')
       .post('/api/projects', {
         data: {
@@ -1521,7 +1525,7 @@ module.exports = {
           attributes: {
             name: 'name',
             agent,
-            architecture: 'microservice',
+            architecture,
             database_type: databaseType,
           },
         },
@@ -1530,7 +1534,9 @@ module.exports = {
         201,
         ProjectSerializer.serialize({
           name: 'name',
-          id: 4242,
+          // A JSON:API id is a string on the wire; a number here would lock a shape
+          // no compliant server ever sends.
+          id: '4242',
           defaultEnvironment: {
             id: 182,
             name: 'development',
@@ -1541,7 +1547,7 @@ module.exports = {
           origin: 'Lumber',
         }),
       ),
-  updateNewEnvironmentEndpoint: () =>
+  updateNewEnvironmentEndpoint: (apiEndpoint = 'http://localhost:3310') =>
     nock('http://localhost:3001')
       .put('/api/environments/182', {
         data: {
@@ -1549,7 +1555,7 @@ module.exports = {
           id: '182',
           attributes: {
             name: 'development',
-            'api-endpoint': 'http://localhost:3310',
+            'api-endpoint': apiEndpoint,
             type: 'development',
           },
         },

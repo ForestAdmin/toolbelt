@@ -39,6 +39,25 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   // test, introspection) are skipped.
   protected readonly requiresDatabase: boolean = true;
 
+  /**
+   * Whether options missing from the command line may be asked interactively.
+   * Subclasses driven by a script turn this off (see `projects:create:in-app
+   * --format json`): prompts would write to stdout and wait for an answer nobody
+   * is there to give, so declared defaults are used instead.
+   */
+  // eslint-disable-next-line class-methods-use-this -- overridden per command
+  protected get interactive(): boolean {
+    return true;
+  }
+
+  // Hosting architecture sent to the server. 'microservice' = a dedicated agent
+  // we scaffold (the default for every create:* command); 'in-app' = the user
+  // hosts the agent inside their own app (no scaffold).
+  protected readonly architecture: string = 'microservice';
+
+  /** The dev environment endpoint the API registered, once the project exists. */
+  protected registeredEndpoint?: string;
+
   static override args = {
     applicationName: Args.string({
       name: 'applicationName',
@@ -93,9 +112,11 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
         appConfig,
         meta,
       );
-      const { id, envSecret, authSecret } = await this.spinner.attachToPromise(
+      const { id, envSecret, authSecret, endpoint } = await this.spinner.attachToPromise(
         projectCreationPromise,
       );
+
+      this.registeredEndpoint = endpoint;
 
       this.eventSender.meta.projectId = id;
 
@@ -117,7 +138,16 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       }
       // Display customized error for non-authentication errors.
       else if (error.status !== 401 && error.status !== 403) {
-        this.logger.error(['Cannot generate your project.', `${this.messages.ERROR_UNEXPECTED}`]);
+        // Once the project exists this headline is false, since the record was created
+        // and only what follows it failed. Passing an array would print it as a raw
+        // JSON array, since the logger stringifies a non-string message.
+        if (!this.eventSender.meta?.projectId) {
+          this.logger.error('Cannot generate your project.');
+        }
+
+        // Unconditional: this is the only line telling the operator where help lives,
+        // and a failure after creation needs it as much as one before.
+        this.logger.error(`${this.messages.ERROR_UNEXPECTED}`);
         this.logger.log(`${this.chalk.red(error)}`);
         this.exit(1);
       } else {
@@ -195,7 +225,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       agent:
         this.agent || (dbConfig.dbDialect === 'mongodb' ? 'express-mongoose' : 'express-sequelize'),
       dbDialect: dbConfig.dbDialect,
-      architecture: 'microservice',
+      architecture: this.architecture,
       isLocal: ['localhost', '127.0.0.1', '::1'].some(keyword =>
         dbConfig.dbHostname
           ? dbConfig.dbHostname.includes(keyword)
@@ -220,7 +250,9 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   }
 
   protected async getCommandOptions(): Promise<ProjectCreateOptions> {
-    const options = await this.optionParser.getCommandLineOptions<ProjectCreateOptions>(this);
+    const options = await this.optionParser.getCommandLineOptions<ProjectCreateOptions>(this, {
+      interactive: this.interactive,
+    });
 
     options.databaseConnectionURL = options.databaseConnectionURL?.trim() || undefined;
 

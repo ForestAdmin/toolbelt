@@ -51,6 +51,50 @@ describe('services > Logger', () => {
       });
     });
 
+    describe('when reserveStdout is activated', () => {
+      it('should divert stdout lines to stderr rather than drop them', () => {
+        expect.assertions(3);
+        const context = makeContext();
+        const { stdout, stderr } = context;
+
+        const logger = new Logger(context);
+        logger.reserveStdout = true;
+        logger.log('a diagnostic the operator still needs to see');
+
+        expect(stdout.write).toHaveBeenCalledTimes(0);
+        expect(stderr.write).toHaveBeenCalledTimes(1);
+        expect(stderr.write).toHaveBeenCalledWith('a diagnostic the operator still needs to see\n');
+      });
+
+      it('should leave stderr lines on stderr', () => {
+        expect.assertions(3);
+        const context = makeContext();
+        const { stdout, stderr } = context;
+
+        const logger = new Logger(context);
+        logger.reserveStdout = true;
+        logger.log('an error', { std: 'err' });
+
+        expect(stdout.write).toHaveBeenCalledTimes(0);
+        expect(stderr.write).toHaveBeenCalledTimes(1);
+        expect(stderr.write).toHaveBeenCalledWith('an error\n');
+      });
+
+      it('should still honour silent, which drops everything', () => {
+        expect.assertions(2);
+        const context = makeContext();
+        const { stdout, stderr } = context;
+
+        const logger = new Logger(context);
+        logger.reserveStdout = true;
+        logger.silent = true;
+        logger.log('should not be displayed');
+
+        expect(stdout.write).toHaveBeenCalledTimes(0);
+        expect(stderr.write).toHaveBeenCalledTimes(0);
+      });
+    });
+
     describe('when a message is an object', () => {
       it('should display the object as json', () => {
         expect.assertions(2);

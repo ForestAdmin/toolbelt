@@ -83,6 +83,7 @@ describe('project creator', () => {
         id: 'project-id',
         defaultEnvironment: {
           secretKey: 'secret-key',
+          apiEndpoint: 'http://localhost:3310',
         },
       };
       context.api.createProject.mockResolvedValue(apiResponse);
@@ -101,6 +102,7 @@ describe('project creator', () => {
         id: 'project-id',
         envSecret: 'secret-key',
         authSecret: 'generated-key',
+        endpoint: 'http://localhost:3310',
       });
     });
   });
