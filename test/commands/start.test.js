@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const StartCommand = require('../../src/commands/start').default;
 const { runCapture, runStep, startProcess } = require('../../src/services/process-runner');
 const testCli = require('./test-cli-helper/test-cli');
@@ -98,7 +100,15 @@ describe('start', () => {
 
     it('skips the TypeScript build for a JavaScript scaffold, which has no build script', async () => {
       expect.hasAssertions();
-      runStep.mockReset().mockResolvedValue(undefined);
+      // What `create:sql` scaffolds when the user picks JavaScript: no build script.
+      runStep.mockReset().mockImplementation(async (_, args) => {
+        if (args[1] !== 'projects:create:sql') return;
+        fs.mkdirSync('x');
+        fs.writeFileSync(
+          'x/package.json',
+          JSON.stringify({ scripts: { start: 'node ./index.js' } }),
+        );
+      });
       startProcess
         .mockReset()
         .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
@@ -106,12 +116,6 @@ describe('start', () => {
       await testCli({
         commandClass: StartCommand,
         commandArgs: ['--flow', 'standalone', '--name', 'x'],
-        files: [
-          {
-            name: 'x/package.json',
-            content: JSON.stringify({ scripts: { start: 'node ./index.js' } }),
-          },
-        ],
         std: [{ out: 'Your back-office is live!' }, { not: '$ npm run build' }],
       });
 
@@ -119,6 +123,23 @@ describe('start', () => {
         [process.execPath, [process.argv[1], 'login'], { cwd: undefined }],
         [process.execPath, [process.argv[1], 'projects:create:sql', 'x'], { cwd: undefined }],
         ['npm', ['install'], { cwd: 'x' }],
+      ]);
+    });
+
+    it('refuses a --name whose directory exists, before creating any project', async () => {
+      expect.hasAssertions();
+      runStep.mockReset();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'standalone', '--name', 'x'],
+        files: [{ name: 'x/package.json', content: '{}' }],
+        exitMessage: './x already exists — pass another --name.',
+      });
+
+      // Only the login ran: `create:sql` would have registered a project for the old app.
+      expect(runStep.mock.calls).toStrictEqual([
+        [process.execPath, [process.argv[1], 'login'], { cwd: undefined }],
       ]);
     });
 

@@ -304,8 +304,16 @@ export default class StartCommand extends AbstractCommand {
     fromFlag?: string,
     { def = 'my-back-office', createsDir = false } = {},
   ): Promise<string> {
-    if (fromFlag) return fromFlag;
-    if (!this.interactive) return def;
+    const collides = (name: string) => createsDir && !this.dryRun && fs.existsSync(name);
+
+    if (fromFlag || !this.interactive) {
+      const name = fromFlag ?? def;
+      // Nobody to ask, and past this point a project exists server-side while the scaffold skips
+      // every existing file: the old app would boot as if it were the new one.
+      if (collides(name)) throw new Error(`./${name} already exists — pass another --name.`);
+
+      return name;
+    }
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
@@ -316,7 +324,7 @@ export default class StartCommand extends AbstractCommand {
         message: 'Project name:',
         default: def,
       });
-      if (!createsDir || this.dryRun || !fs.existsSync(name)) return name;
+      if (!collides(name)) return name;
       this.logger.warn(`./${name} already exists — pick another name.`);
     }
   }
