@@ -269,6 +269,27 @@ describe('start', () => {
   });
 
   describe('in-app Node flow', () => {
+    it('reads both secrets from the printed output, including an auth secret that is not hex', async () => {
+      expect.hasAssertions();
+      runStep.mockReset().mockResolvedValue(undefined);
+      // The human output of `projects:create:in-app`: FOREST_AUTH_SECRET is any string the user owns.
+      runCapture.mockReset().mockResolvedValue({
+        stdout:
+          '  FOREST_ENV_SECRET=abc123\n  FOREST_AUTH_SECRET=myAuthSecret   (you own this one)\n',
+        stderr: '',
+      });
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'inapp', '--stack', 'node', '--name', 'app'],
+        files: [{ name: 'package.json', content: JSON.stringify({ name: 'app' }) }],
+        std: [
+          { out: 'FOREST_ENV_SECRET and FOREST_AUTH_SECRET written to .env' },
+          { not: 'myAuthSecret' },
+        ],
+      });
+    });
+
     it('installs the datasource matching the detected ORM and prints the mount snippet', async () => {
       expect.hasAssertions();
 

@@ -42,7 +42,7 @@ type Tail = {
   url: string;
   demo?: boolean;
   /** Stops streaming the back-end's logs — they would otherwise be drawn into a full-screen TUI. */
-  mute?: () => void;
+  mute?: () => () => void;
   /** How to start this back-end again. Rails is not started with `npm start`. */
   restart: string;
 };
@@ -898,8 +898,15 @@ export default class StartCommand extends AbstractCommand {
     );
     // The agent takes over a full-screen terminal; back-end log lines drawn into it corrupt the
     // display for the whole session. It keeps running, we just stop echoing it.
-    tail.mute?.();
-    await this.run$(agent.bin, [seed], tail.dir);
+    const unmute = tail.mute?.();
+    try {
+      await this.run$(agent.bin, [seed], tail.dir);
+    } catch (error) {
+      // The menu comes back over a live back-end, so its logs must too.
+      unmute?.();
+      throw error;
+    }
+
     stopProcess(tail.child, 'SIGINT');
     this.logger.log(
       this.chalk.grey(`\n  Forest back-end stopped. Restart it: cd ${tail.dir} && ${tail.restart}`),
@@ -1028,8 +1035,8 @@ export default class StartCommand extends AbstractCommand {
     }
 
     return {
-      envSecret: /FOREST_ENV_SECRET=([0-9a-fA-F]+)/.exec(output)?.[1],
-      authSecret: /FOREST_AUTH_SECRET=([0-9a-fA-F]+)/.exec(output)?.[1],
+      envSecret: /FOREST_ENV_SECRET=(\S+)/.exec(output)?.[1],
+      authSecret: /FOREST_AUTH_SECRET=(\S+)/.exec(output)?.[1],
     };
   }
 
