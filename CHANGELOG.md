@@ -1,3 +1,10 @@
+# [5.22.0](https://github.com/ForestAdmin/toolbelt/compare/v5.21.0...v5.22.0) (2026-09-23)
+
+
+### Features
+
+* **services:** add a process runner that can actually stop what it started ([#816](https://github.com/ForestAdmin/toolbelt/issues/816)) ([44117c1](https://github.com/ForestAdmin/toolbelt/commit/44117c199983a43012fb3cf00e17ed563342c9f4))
+
 # [5.21.0](https://github.com/ForestAdmin/toolbelt/compare/v5.20.0...v5.21.0) (2026-09-23)
 
 
