@@ -248,6 +248,30 @@ describe('start', () => {
       });
     });
 
+    it('shows the snippet for --mount ai when this CLI cannot install the skills the agent needs', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: [
+          '--dry-run',
+          '--flow',
+          'inapp',
+          '--stack',
+          'node',
+          '--name',
+          'app',
+          '--mount',
+          'ai',
+        ],
+        std: [
+          { out: 'here is the snippet instead' },
+          { out: 'Add to your server' },
+          { not: 'Your coding agent will wire the mount' },
+        ],
+      });
+    });
+
     it('names the datasource the snippet uses after the one it installs', async () => {
       expect.hasAssertions();
 

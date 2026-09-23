@@ -12,7 +12,7 @@ import {
   detectRails,
   mountHelper,
 } from '../services/onboarding/detect';
-import { writeSecrets } from '../services/onboarding/env-file';
+import { bootSecrets, writeSecrets } from '../services/onboarding/env-file';
 import {
   runCapture,
   runStep,
@@ -546,7 +546,8 @@ export default class StartCommand extends AbstractCommand {
     const tail: Tail = {
       name,
       dir: '.', // in-app scaffolds nothing: the repo is the user's own
-      restart: 'npm start',
+      // The project was registered on this port, and the user's app may default to another one.
+      restart: `PORT=${NODE_PORT} npm start`,
       stack: "Forest mounted inside the user's Node.js app",
       url: `http://localhost:${NODE_PORT}`,
     };
@@ -566,14 +567,15 @@ export default class StartCommand extends AbstractCommand {
       // is a long-lived credential — anyone who can read the retained log gets the project. A
       // warning next to the value would not have stopped that.
       this.reportSecrets(writeSecrets(secrets));
-      this.logger.log(this.chalk.grey(`  Then run:  PORT=${NODE_PORT} npm start`));
+      this.logger.log(this.chalk.grey(`  Then run:  ${tail.restart}`));
 
       return;
     }
 
     // Persisted before booting, not just passed to this one process: everything the user is told
     // afterwards — the restart hint, `npm start` — runs without our environment.
-    this.reportSecrets(writeSecrets(secrets));
+    const written = writeSecrets(secrets);
+    this.reportSecrets(written);
 
     // The agent mounts Forest with the skills, so both come before the boot waits on a mount.
     if (mount === 'ai') await this.mountWithAgent(stack);
@@ -584,14 +586,7 @@ export default class StartCommand extends AbstractCommand {
       message: 'Once Forest is mounted in your server, press Enter to boot it',
     });
     const booted = this.boot('npm', ['start'], {
-      // Only what we actually have. An empty string is not a neutral default: it SHADOWS the
-      // value dotenv would have loaded from the .env we just wrote, so the app boots with no
-      // secret at all — the one case this whole path exists to prevent.
-      env: {
-        ...(secrets.envSecret ? { FOREST_ENV_SECRET: secrets.envSecret } : {}),
-        ...(secrets.authSecret ? { FOREST_AUTH_SECRET: secrets.authSecret } : {}),
-        PORT: String(NODE_PORT),
-      },
+      env: { ...bootSecrets(secrets, written), PORT: String(NODE_PORT) },
     });
     this.logger.log(this.chalk.grey('\n$ npm start   (booting…)'));
     await booted.ready;
@@ -600,6 +595,15 @@ export default class StartCommand extends AbstractCommand {
   }
 
   private async pickMount(fromFlag?: string): Promise<string> {
+    if (fromFlag === 'ai' && !this.canInstallSkills) {
+      // Nothing would mount Forest, and the boot would then wait for a Forest it cannot see.
+      this.logger.warn(
+        'This CLI cannot install the Forest skills, so here is the snippet instead.',
+      );
+
+      return 'manual';
+    }
+
     if (fromFlag) return fromFlag;
     // Nothing here can install the skills or launch an agent, so only the snippet can be followed.
     if (!this.interactive) return 'manual';

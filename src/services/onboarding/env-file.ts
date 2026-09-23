@@ -49,8 +49,29 @@ export function writeSecrets(secrets: { envSecret?: string; authSecret?: string 
     fs.writeFileSync(
       file,
       appended.length ? `${content}${separator}${appended.join('\n')}\n` : content,
+      // Applies only when the file is created: the secrets are for the user alone.
+      { mode: 0o600 },
     );
   }
 
   return { file, written, conflicts };
+}
+
+/**
+ * The secrets to hand the first boot, so it runs against the same project as every restart after.
+ * A key `.env` kept for another project is left to `.env`, as `reportSecrets` told the user.
+ */
+export function bootSecrets(
+  secrets: { envSecret?: string; authSecret?: string },
+  { conflicts }: Pick<SecretsWrite, 'conflicts'>,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries({
+      FOREST_ENV_SECRET: secrets.envSecret,
+      FOREST_AUTH_SECRET: secrets.authSecret,
+      // An empty value is not a neutral default: it SHADOWS what dotenv would load from `.env`.
+    }).filter(
+      (entry): entry is [string, string] => Boolean(entry[1]) && !conflicts.includes(entry[0]),
+    ),
+  );
 }

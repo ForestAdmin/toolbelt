@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { writeSecrets } from '../../../src/services/onboarding/env-file';
+import { bootSecrets, writeSecrets } from '../../../src/services/onboarding/env-file';
 
 // A helper (not a jest hook) — this repo forbids beforeEach/afterEach (jest/no-hooks).
 function inTempDir(run: () => void): void {
@@ -34,6 +34,16 @@ describe('onboarding env-file', () => {
         expect(fs.readFileSync('.env', 'utf8')).toBe(
           'FOREST_ENV_SECRET=AAA\nFOREST_AUTH_SECRET=BBB\n',
         );
+      });
+    });
+
+    it('creates the file readable by its owner alone, since it holds long-lived secrets', () => {
+      expect.assertions(1);
+      inTempDir(() => {
+        writeSecrets({ envSecret: 'AAA' });
+
+        // eslint-disable-next-line no-bitwise -- the permission bits of a file mode
+        expect(fs.statSync('.env').mode & 0o777).toBe(0o600);
       });
     });
 
@@ -83,6 +93,32 @@ describe('onboarding env-file', () => {
           written: [],
           conflicts: [],
         });
+      });
+    });
+  });
+
+  describe('bootSecrets', () => {
+    it('hands the boot every secret that came back', () => {
+      expect.assertions(1);
+      expect(bootSecrets({ envSecret: 'AAA', authSecret: 'BBB' }, { conflicts: [] })).toStrictEqual(
+        {
+          FOREST_ENV_SECRET: 'AAA',
+          FOREST_AUTH_SECRET: 'BBB',
+        },
+      );
+    });
+
+    it('leaves a conflicting key to .env, so the first boot and every restart use one project', () => {
+      expect.assertions(1);
+      expect(
+        bootSecrets({ envSecret: 'AAA', authSecret: 'BBB' }, { conflicts: ['FOREST_ENV_SECRET'] }),
+      ).toStrictEqual({ FOREST_AUTH_SECRET: 'BBB' });
+    });
+
+    it('never passes an empty secret, which would shadow the value in .env', () => {
+      expect.assertions(1);
+      expect(bootSecrets({ envSecret: 'AAA', authSecret: '' }, { conflicts: [] })).toStrictEqual({
+        FOREST_ENV_SECRET: 'AAA',
       });
     });
   });
