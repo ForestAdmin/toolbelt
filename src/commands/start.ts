@@ -1,4 +1,5 @@
 import type { NodeStack } from '../services/onboarding/detect';
+import type { SecretsWrite } from '../services/onboarding/env-file';
 import type { ChildProcess } from 'child_process';
 
 import { Flags } from '@oclif/core';
@@ -11,6 +12,7 @@ import {
   detectRails,
   mountHelper,
 } from '../services/onboarding/detect';
+import { writeSecrets } from '../services/onboarding/env-file';
 import {
   runCapture,
   runStep,
@@ -92,6 +94,15 @@ export default class StartCommand extends AbstractCommand {
     return Boolean(process.stdin.isTTY);
   }
 
+  /** `skills:init` ships separately: a menu entry calling a command this CLI lacks kills the flow. */
+  private get canInstallSkills(): boolean {
+    try {
+      return Boolean(this.config.findCommand('skills:init'));
+    } catch {
+      return false;
+    }
+  }
+
   async run(): Promise<void> {
     const { flags } = await this.parse(StartCommand);
     this.dryRun = flags['dry-run'];
@@ -99,9 +110,9 @@ export default class StartCommand extends AbstractCommand {
     try {
       await this.onboard(flags as Record<string, string | undefined>);
     } catch (error) {
-      // Anything after a boot — `layout:apply`, `skills:init`, the agent launch — can fail. The
-      // back-end is detached, so it would survive, and its open pipes can keep this command alive
-      // with it: an error message followed by a prompt that never returns, and a port still held.
+      // Anything after a boot — `layout:apply`, a readiness timeout — can fail. The back-end is
+      // detached, so it would survive, and its open pipes can keep this command alive with it: an
+      // error message followed by a prompt that never returns, and a port still held.
       stopAllProcesses();
 
       throw error;
@@ -456,11 +467,14 @@ export default class StartCommand extends AbstractCommand {
       'forest_admin_datasource_toolkit',
       'forest_admin_datasource_customizer',
     ]);
-    await this.run$('bin/rails', [
-      'g',
-      'forest_admin_rails:install',
-      secrets.envSecret ?? '<FOREST_ENV_SECRET>',
-    ]);
+    const envSecret = secrets.envSecret ?? '<FOREST_ENV_SECRET>';
+    try {
+      await this.run$('bin/rails', ['g', 'forest_admin_rails:install', envSecret]);
+    } catch (error) {
+      // The runner redacts secret flags, not a bare positional: its message would print the secret
+      // to the terminal and, on the non-interactive path, to a retained CI log.
+      throw new Error((error as Error).message.split(envSecret).join('<redacted>'));
+    }
 
     const tail: Tail = {
       name,
@@ -551,7 +565,7 @@ export default class StartCommand extends AbstractCommand {
       // Written, never printed: this path is where CI logs are produced, and `FOREST_ENV_SECRET`
       // is a long-lived credential — anyone who can read the retained log gets the project. A
       // warning next to the value would not have stopped that.
-      this.reportSecrets(StartCommand.writeSecrets(secrets));
+      this.reportSecrets(writeSecrets(secrets));
       this.logger.log(this.chalk.grey(`  Then run:  PORT=${NODE_PORT} npm start`));
 
       return;
@@ -559,7 +573,10 @@ export default class StartCommand extends AbstractCommand {
 
     // Persisted before booting, not just passed to this one process: everything the user is told
     // afterwards — the restart hint, `npm start` — runs without our environment.
-    this.reportSecrets(StartCommand.writeSecrets(secrets));
+    this.reportSecrets(writeSecrets(secrets));
+
+    // The agent mounts Forest with the skills, so both come before the boot waits on a mount.
+    if (mount === 'ai') await this.mountWithAgent(stack);
 
     await this.ask({
       type: 'input',
@@ -584,14 +601,17 @@ export default class StartCommand extends AbstractCommand {
 
   private async pickMount(fromFlag?: string): Promise<string> {
     if (fromFlag) return fromFlag;
-    if (!this.interactive) return 'ai';
+    // Nothing here can install the skills or launch an agent, so only the snippet can be followed.
+    if (!this.interactive) return 'manual';
 
     const { mount } = await this.ask({
       type: 'list',
       name: 'mount',
       message: 'How do you want to mount Forest?',
       choices: [
-        { name: 'Wire it in with your coding agent', value: 'ai' },
+        ...(this.canInstallSkills
+          ? [{ name: 'Wire it in with your coding agent', value: 'ai' }]
+          : []),
         { name: 'Mount it manually (snippet)', value: 'manual' },
         { name: 'Mount on standalone', value: 'standalone' },
       ],
@@ -600,15 +620,33 @@ export default class StartCommand extends AbstractCommand {
     return mount;
   }
 
+  /** Install the skills the agent mounts with, then offer to launch it on that one task. */
+  private async mountWithAgent(stack: NodeStack): Promise<void> {
+    if (!this.canInstallSkills) return;
+
+    await this.forest(['skills:init']);
+
+    const [agent] = StartCommand.launchableAgents('.');
+    if (!agent || !(await this.confirm(`Launch ${agent.label} now to wire the mount?`))) return;
+
+    await this.run$(agent.bin, [StartCommand.mountSeed(stack)]);
+  }
+
+  private static mountSeed(stack: NodeStack): string {
+    return (
+      `You're in a ${stack.framework} app using ${stack.orm}. @forestadmin/agent and ` +
+      `${NODE_DATASOURCE[stack.orm]} are installed, and FOREST_ENV_SECRET / FOREST_AUTH_SECRET ` +
+      "are in .env. Mount the Forest agent in my server, then stop: don't start the server, " +
+      '`forest start` boots it once you are done.'
+    );
+  }
+
   private explainMount(mount: string, stack: NodeStack): void {
     if (mount === 'ai') {
-      this.instruct(
-        'Your coding agent will wire the mount (the Forest skills get installed at the end):',
-        [
-          `in your repo, ask it: ${this.chalk.cyan('"mount the Forest agent in my server"')}`,
-          this.chalk.grey('→ it reads your server, inserts the mount, shows you the diff.'),
-        ],
-      );
+      this.instruct('Your coding agent will wire the mount:', [
+        `in your repo, ask it: ${this.chalk.cyan('"mount the Forest agent in my server"')}`,
+        this.chalk.grey('→ it reads your server, inserts the mount, shows you the diff.'),
+      ]);
 
       return;
     }
@@ -616,11 +654,12 @@ export default class StartCommand extends AbstractCommand {
     // Must match the package just installed, IMPORT INCLUDED: a snippet calling
     // `createMongooseDataSource` while importing only `createAgent` does not compile, and the
     // reader has no way to know which package the missing symbol comes from.
+    const sqlDataSource = {
+      factory: 'createSqlDataSource',
+      call: 'createSqlDataSource(process.env.DATABASE_URL)',
+    };
     const { factory, call } = {
-      sql: {
-        factory: 'createSqlDataSource',
-        call: 'createSqlDataSource(process.env.DATABASE_URL)',
-      },
+      sql: sqlDataSource,
       sequelize: {
         factory: 'createSequelizeDataSource',
         call: 'createSequelizeDataSource(sequelize)',
@@ -629,8 +668,8 @@ export default class StartCommand extends AbstractCommand {
         factory: 'createMongooseDataSource',
         call: 'createMongooseDataSource(connection)',
       },
-      typeorm: { factory: 'createTypeOrmDataSource', call: 'createTypeOrmDataSource(dataSource)' },
-      prisma: { factory: 'createPrismaDataSource', call: 'createPrismaDataSource(prisma)' },
+      typeorm: sqlDataSource,
+      prisma: sqlDataSource,
     }[stack.orm];
 
     this.instruct('Add to your server (after your ORM is ready, before app.listen):', [
@@ -646,11 +685,27 @@ export default class StartCommand extends AbstractCommand {
     ]);
   }
 
-  /** The generated project pins typescript ^4.9, which cannot parse recent `.d.cts` typings. */
+  /**
+   * A TypeScript scaffold pins typescript ^4.9, which cannot parse recent `.d.cts` typings. A
+   * JavaScript one has no build step at all, and `npm run build` would fail on the missing script.
+   */
   private async installAndBuild(dir: string): Promise<void> {
     await this.run$('npm', ['install'], dir);
+    // A dry run scaffolded nothing to read, so it shows the TypeScript path the demo always takes.
+    if (!this.dryRun && !StartCommand.hasBuildScript(dir)) return;
+
     await this.run$('npm', ['install', '--save-dev', 'typescript@^5.5'], dir);
     await this.run$('npm', ['run', 'build'], dir);
+  }
+
+  private static hasBuildScript(dir: string): boolean {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(`${dir}/package.json`, 'utf8'));
+
+      return Boolean(pkg.scripts?.build);
+    } catch {
+      return false;
+    }
   }
 
   // ---------- tails ----------
@@ -715,15 +770,23 @@ export default class StartCommand extends AbstractCommand {
         name: 'next',
         message: 'Your back-office is live. What next?',
         choices: [
-          { name: 'Teach your coding agent about Forest', value: 'skills' },
+          ...(this.canInstallSkills
+            ? [{ name: 'Teach your coding agent about Forest', value: 'skills' }]
+            : []),
           { name: 'Deploy to production', value: 'deploy' },
           { name: `Get started guide (${DOCS_URL})`, value: 'docs' },
           { name: 'Keep exploring — leave the back-end running', value: 'stay' },
         ],
       });
 
+      // A failed step here is recoverable: the back-end is live, so the menu comes back rather
+      // than `run` tearing everything down.
       // eslint-disable-next-line no-await-in-loop -- sequential by nature
-      const handedOver = await this.handoffChoice(next, tail);
+      const handedOver = await this.handoffChoice(next, tail).catch(error => {
+        this.logger.warn(`${(error as Error).message}\n  Your back-end is still running.`);
+
+        return false;
+      });
       if (handedOver) return; // the coding agent owns the terminal now
       done = next === 'stay';
     }
@@ -760,6 +823,12 @@ export default class StartCommand extends AbstractCommand {
           this.chalk.cyan('"deploy this Forest project to production"'),
           this.chalk.grey('It has the Forest skills — the steps are in `deploy-heroku`.'),
         ]);
+
+        return false;
+      }
+
+      if (!this.canInstallSkills) {
+        this.instruct('Deploy by hand:', [this.chalk.cyan(DOCS_URL)]);
 
         return false;
       }
@@ -885,77 +954,8 @@ export default class StartCommand extends AbstractCommand {
     }
   }
 
-  /**
-   * Read the secrets `projects:create:in-app` printed.
-   *
-   * Two shapes on purpose: the `--format json` document when the CLI supports it, and otherwise
-   * the human output, which prints `FOREST_ENV_SECRET=…` ungated for exactly this consumer. The
-   * fallback is what makes this work against a CLI that predates the flag rather than dying on
-   * `Nonexistent flag: --format`.
-   */
-  /**
-   * Put the secrets where the app reads them from, rather than on the terminal. Existing values
-   * are left alone: overwriting a secret the user already configured would be worse than not
-   * writing at all.
-   */
-  private static writeSecrets(secrets: { envSecret?: string; authSecret?: string }): {
-    file: string;
-    written: string[];
-    conflicts: string[];
-  } {
-    const file = '.env';
-    const current = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-    const written: string[] = [];
-    const conflicts: string[] = [];
-    const appended: string[] = [];
-    let content = current;
-
-    Object.entries({
-      FOREST_ENV_SECRET: secrets.envSecret,
-      FOREST_AUTH_SECRET: secrets.authSecret,
-    }).forEach(([key, value]) => {
-      if (!value) return;
-
-      const assignment = new RegExp(`^${key}=(.*)$`, 'm');
-      const existing = assignment.exec(content)?.[1]?.trim();
-
-      if (existing === undefined) {
-        appended.push(`${key}=${value}`);
-        written.push(key);
-      } else if (existing === '') {
-        // A placeholder, not a configured value. Filled IN PLACE: appending would leave the file
-        // with the same key twice, which reads as a mistake even though dotenv takes the last.
-        content = content.replace(assignment, `${key}=${value}`);
-        written.push(key);
-      } else if (existing !== value) {
-        // A DIFFERENT secret is already there: overwriting it would break whatever it belongs to,
-        // and staying silent would leave the app pointing at another project while we report
-        // success. Neither is acceptable, so it is surfaced.
-        conflicts.push(key);
-      }
-    });
-
-    if (content !== current || appended.length) {
-      const separator = content && !content.endsWith('\n') ? '\n' : '';
-      fs.writeFileSync(
-        file,
-        appended.length ? `${content}${separator}${appended.join('\n')}\n` : content,
-      );
-    }
-
-    return { file, written, conflicts };
-  }
-
   /** Say what actually happened to the secrets — never the values themselves. */
-  private reportSecrets({
-    file,
-    written,
-    conflicts,
-  }: {
-    file: string;
-    written: string[];
-    conflicts: string[];
-  }): void {
+  private reportSecrets({ file, written, conflicts }: SecretsWrite): void {
     if (written.length)
       this.logger.success(`${written.join(' and ')} written to ${file} — do not commit it.`);
     if (conflicts.length) {
@@ -971,6 +971,14 @@ export default class StartCommand extends AbstractCommand {
     }
   }
 
+  /**
+   * Read the secrets `projects:create:in-app` printed.
+   *
+   * Two shapes on purpose: the `--format json` document when the CLI supports it, and otherwise
+   * the human output, which prints `FOREST_ENV_SECRET=…` ungated for exactly this consumer. The
+   * fallback is what makes this work against a CLI that predates the flag rather than dying on
+   * `Nonexistent flag: --format`.
+   */
   private static parseSecrets(output: string): { envSecret?: string; authSecret?: string } {
     try {
       const parsed = JSON.parse(output.trim());

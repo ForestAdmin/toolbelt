@@ -17,12 +17,15 @@ export type NodeStack = {
   detected: boolean;
 };
 
-/** The Forest datasource package matching each ORM. */
+/**
+ * The Forest datasource package matching each ORM. TypeORM and Prisma have no package of their
+ * own on npm, so they get the SQL one, which introspects the database they sit on.
+ */
 export const NODE_DATASOURCE: Record<NodeStack['orm'], string> = {
   sequelize: '@forestadmin/datasource-sequelize',
   mongoose: '@forestadmin/datasource-mongoose',
-  typeorm: '@forestadmin/datasource-typeorm',
-  prisma: '@forestadmin/datasource-prisma',
+  typeorm: '@forestadmin/datasource-sql',
+  prisma: '@forestadmin/datasource-sql',
   sql: '@forestadmin/datasource-sql',
 };
 

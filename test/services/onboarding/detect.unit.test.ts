@@ -59,17 +59,19 @@ describe('onboarding detect', () => {
     });
 
     it.each([
-      ['sequelize', 'sequelize'],
-      ['mongoose', 'mongoose'],
-      ['typeorm', 'typeorm'],
-      ['@prisma/client', 'prisma'],
-      ['prisma', 'prisma'],
-    ])('maps %s to the right datasource package', (dependency, orm) => {
+      ['sequelize', 'sequelize', '@forestadmin/datasource-sequelize'],
+      ['mongoose', 'mongoose', '@forestadmin/datasource-mongoose'],
+      // No TypeORM or Prisma datasource exists on npm: installing one would fail with E404.
+      ['typeorm', 'typeorm', '@forestadmin/datasource-sql'],
+      ['@prisma/client', 'prisma', '@forestadmin/datasource-sql'],
+      ['prisma', 'prisma', '@forestadmin/datasource-sql'],
+    ])('maps %s to %s and installs %s', (dependency, orm, datasource) => {
       expect.assertions(2);
       withTempDir(() => {
         writePkg({ [dependency]: '^1.0.0' });
-        expect(detectNodeStack().orm).toBe(orm);
-        expect(NODE_DATASOURCE[orm]).toContain('@forestadmin/datasource-');
+        const stack = detectNodeStack();
+        expect(stack.orm).toBe(orm);
+        expect(NODE_DATASOURCE[stack.orm]).toBe(datasource);
       });
     });
 
