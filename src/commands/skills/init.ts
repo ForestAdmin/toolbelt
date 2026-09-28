@@ -22,9 +22,11 @@ import {
   installSkills,
   isPluginAgent,
   manifestAgents,
+  manifestRefs,
   mergeBlock,
   pluginInstallCommand,
   readManifest,
+  refsAfter,
   removeStaleSkillFiles,
   skillDirEntries,
   writeManifest,
@@ -92,6 +94,7 @@ export default class SkillsInitCommand extends AbstractCommand {
       ref: flags.ref,
       installedAt: new Date().toISOString(),
       agents: recorded,
+      refs: refsAfter(previous ? manifestRefs(previous) : {}, installed, recorded, flags.ref),
       files: [...files, ...groups.keys()],
     });
 

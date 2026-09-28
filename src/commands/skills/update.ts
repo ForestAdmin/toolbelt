@@ -1,4 +1,4 @@
-import type { PluginAgent, PluginInstallResult } from '../../services/skills/skills-manager';
+import type { Agent, PluginAgent, PluginInstallResult } from '../../services/skills/skills-manager';
 
 import { Flags } from '@oclif/core';
 
@@ -14,8 +14,10 @@ import {
   installSkills,
   isPluginAgent,
   manifestAgents,
+  manifestRefs,
   mergeBlock,
   readManifest,
+  refsAfter,
   removeStaleSkillFiles,
   skillDirEntries,
   upgradePlugins,
@@ -46,13 +48,19 @@ export default class SkillsUpdateCommand extends AbstractCommand {
     }
 
     // An update targets the requested ref (default main) — but never silently: an install pinned
-    // to a tag/SHA jumping refs must be visible, and the way back must be obvious.
-    if (manifest.ref && manifest.ref !== flags.ref) {
+    // to a tag/SHA jumping refs must be visible, and the way back must be obvious. Each agent is
+    // judged by the ref its own content came from, since one run can leave agents on different refs.
+    const refs = manifestRefs(manifest);
+    const pinned = [...new Set(Object.values(refs))].filter(ref => ref && ref !== flags.ref);
+    pinned.forEach(ref => {
+      const labels = Object.keys(refs)
+        .filter(agent => refs[agent] === ref)
+        .map(agent => AGENT_LABELS[agent as Agent]);
       this.logger.warn(
-        `Skills were installed from "${manifest.ref}"; updating to "${flags.ref}". ` +
-          `Pass ${this.chalk.bold(`--ref ${manifest.ref}`)} to stay pinned.`,
+        `${labels.join(', ')}: skills were installed from "${ref}"; updating to "${flags.ref}". ` +
+          `Pass ${this.chalk.bold(`--ref ${ref}`)} to stay pinned.`,
       );
-    }
+    });
 
     // Refresh exactly the agents the install targeted: refreshing one agent must never treat
     // another's files as stale.
@@ -69,7 +77,7 @@ export default class SkillsUpdateCommand extends AbstractCommand {
     const pluginAgents = agents.filter(isPluginAgent);
     const copyAgents = agents.filter(agent => !isPluginAgent(agent));
 
-    pluginAgents.forEach(agent => this.upgradePluginFor(agent, flags.ref));
+    const pluginRefreshed = pluginAgents.filter(agent => this.upgradePluginFor(agent, flags.ref));
 
     const files = copyAgents.length ? await this.refreshSkills(manifest.files, flags.ref) : [];
 
@@ -81,17 +89,20 @@ export default class SkillsUpdateCommand extends AbstractCommand {
       ref: flags.ref,
       installedAt: new Date().toISOString(),
       agents,
+      // An agent whose refresh failed or was skipped keeps the ref its content still comes from.
+      refs: refsAfter(refs, [...pluginRefreshed, ...copyAgents], agents, flags.ref),
       files: [...files, ...groups.keys()],
     });
   }
 
-  private upgradePluginFor(agent: PluginAgent, ref: string): void {
+  /** True only when every Forest plugin was refreshed, so the agent now runs the requested ref. */
+  private upgradePluginFor(agent: PluginAgent, ref: string): boolean {
     if (!hasPluginCli(agent)) {
       this.logger.warn(
         `${AGENT_LABELS[agent]}: CLI not on your PATH — skipping its plugin refresh.`,
       );
 
-      return;
+      return false;
     }
     let result: PluginInstallResult;
     try {
@@ -100,7 +111,7 @@ export default class SkillsUpdateCommand extends AbstractCommand {
       // One agent's CLI failing must not cost the others their refresh, nor the run its manifest.
       this.logger.warn(`${AGENT_LABELS[agent]}: ${error.message}`);
 
-      return;
+      return false;
     }
 
     const { installed, failed } = result;
@@ -115,6 +126,8 @@ export default class SkillsUpdateCommand extends AbstractCommand {
     if (failed.length) {
       this.logger.warn(`${AGENT_LABELS[agent]}: could not refresh ${failed.join(', ')}.`);
     }
+
+    return installed.length > 0 && !failed.length;
   }
 
   private async refreshSkills(previousFiles: string[], ref: string): Promise<string[]> {

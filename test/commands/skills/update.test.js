@@ -235,7 +235,7 @@ describe('skills:update', () => {
         commandClass: SkillsUpdateCommand,
         files,
         std: [
-          { out: 'Skills were installed from "v2.1.0"; updating to "main".' },
+          { out: 'Cursor: skills were installed from "v2.1.0"; updating to "main".' },
           { out: '--ref v2.1.0' }, // the way back to the pin is spelled out
           { out: 'Forest skills refreshed' },
         ],
@@ -247,6 +247,71 @@ describe('skills:update', () => {
           fs.readFileSync(path.join(projectDir, '.forest/skills-manifest.json'), 'utf8'),
         );
         expect(manifest.ref).toBe('main');
+        expect(manifest.refs).toStrictEqual({ cursor: 'main' });
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
+    });
+
+    it('warns only for the agent whose own content came from another ref', async () => {
+      expect.hasAssertions();
+      mockPipeline();
+      const manifest = {
+        ref: 'main',
+        installedAt: '2026-01-01T00:00:00.000Z',
+        agents: ['claude', 'cursor'],
+        refs: { claude: 'main', cursor: 'v1' },
+        files: [skill('layout', 'SKILL.md')],
+      };
+
+      const projectDir = await runCliKeepingProjectDir({
+        commandClass: SkillsUpdateCommand,
+        files: [
+          { name: '.forest/skills-manifest.json', content: JSON.stringify(manifest) },
+          { name: skill('layout', 'SKILL.md'), content: 'outdated content' },
+        ],
+        std: [
+          { out: 'Cursor: skills were installed from "v1"; updating to "main".' },
+          { out: 'Forest skills refreshed' },
+        ],
+      });
+
+      try {
+        const written = JSON.parse(
+          fs.readFileSync(path.join(projectDir, '.forest/skills-manifest.json'), 'utf8'),
+        );
+        expect(written.refs).toStrictEqual({ claude: 'main', cursor: 'main' });
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
+    });
+
+    it('keeps the old ref for a plugin agent whose refresh did not complete', async () => {
+      expect.hasAssertions();
+      mockPipeline();
+      upgradePlugins.mockImplementation(agent => ({
+        agent,
+        installed: ['forest'],
+        failed: ['forest-code'],
+      }));
+
+      const projectDir = await runCliKeepingProjectDir({
+        commandClass: SkillsUpdateCommand,
+        commandArgs: ['--ref', 'v2'],
+        files: [
+          {
+            name: '.forest/skills-manifest.json',
+            content: previousManifest('v1', ['CLAUDE.md'], ['claude']),
+          },
+        ],
+        std: [{ out: 'Claude Code: could not refresh forest-code.' }],
+      });
+
+      try {
+        const written = JSON.parse(
+          fs.readFileSync(path.join(projectDir, '.forest/skills-manifest.json'), 'utf8'),
+        );
+        expect(written.refs).toStrictEqual({ claude: 'v1' });
       } finally {
         fs.rmSync(projectDir, { recursive: true, force: true });
       }

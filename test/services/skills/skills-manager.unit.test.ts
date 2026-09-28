@@ -18,8 +18,10 @@ import {
   installSkills,
   isPluginAgent,
   manifestAgents,
+  manifestRefs,
   mergeBlock,
   readManifest,
+  refsAfter,
   removeStaleSkillFiles,
   skillDirEntries,
   upgradePlugins,
@@ -781,6 +783,34 @@ describe('skills-manager', () => {
       expect(
         manifestAgents({ ref: 'main', installedAt: 'x', agents: [], files: [] }),
       ).toStrictEqual([]);
+    });
+  });
+
+  describe('per-agent refs', () => {
+    it('reads a manifest with no refs as every agent installed from its ref', () => {
+      expect.assertions(1);
+      expect(
+        manifestRefs({ ref: 'v1', installedAt: 'x', agents: ['claude', 'cursor'], files: [] }),
+      ).toStrictEqual({ claude: 'v1', cursor: 'v1' });
+    });
+
+    it('moves only the refreshed agents, and every copy agent once the shared dir is re-copied', () => {
+      expect.assertions(2);
+      const previous = { claude: 'v1', cursor: 'v1', opencode: 'v1' };
+      expect(refsAfter(previous, ['claude'], ['claude', 'cursor', 'opencode'], 'v2')).toStrictEqual(
+        {
+          claude: 'v2',
+          cursor: 'v1',
+          opencode: 'v1',
+        },
+      );
+      expect(refsAfter(previous, ['cursor'], ['claude', 'cursor', 'opencode'], 'v2')).toStrictEqual(
+        {
+          claude: 'v1',
+          cursor: 'v2',
+          opencode: 'v2',
+        },
+      );
     });
   });
 

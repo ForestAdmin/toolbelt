@@ -128,6 +128,9 @@ export type Manifest = {
   installedAt: string;
   /** Absent on manifests written before the field existed — those are copy-route installs. */
   agents?: string[];
+  /** The ref each agent's content came from. Absent on manifests that predate it, whose agents all
+   *  came from `ref`. */
+  refs?: Record<string, string>;
   files: string[];
 };
 
@@ -635,6 +638,32 @@ export function manifestAgents(manifest: Manifest): Agent[] {
   return (manifest.agents ?? ['other']) as Agent[];
 }
 
+/**
+ * The ref each recorded agent's content was installed from. `ref` alone cannot say it: a run that
+ * adds one agent leaves the others' content where it was, at whatever ref they came from.
+ */
+export function manifestRefs(manifest: Manifest): Record<string, string> {
+  return Object.fromEntries(
+    manifestAgents(manifest).map(agent => [agent, manifest.refs?.[agent] ?? manifest.ref]),
+  );
+}
+
+/** Copy-route agents share one skills dir, so refreshing it moves every one of them to `ref`. */
+export function refsAfter(
+  previous: Record<string, string>,
+  refreshed: Agent[],
+  recorded: Agent[],
+  ref: string,
+): Record<string, string> {
+  const moved = refreshed.some(agent => !isPluginAgent(agent))
+    ? [...refreshed, ...recorded.filter(agent => !isPluginAgent(agent))]
+    : refreshed;
+
+  return Object.fromEntries(
+    recorded.map(agent => [agent, moved.includes(agent) ? ref : previous[agent] ?? ref]),
+  );
+}
+
 export function readManifest(): Manifest | null {
   try {
     const parsed = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
@@ -645,7 +674,15 @@ export function readManifest(): Manifest | null {
     // `agents` is normalized rather than required: a manifest predating the field is a legitimate
     // copy-route install that callers handle, but anything that is not an array (`{}`, a string)
     // must not reach their `.filter` — it would throw instead of degrading.
-    return { ...parsed, agents: Array.isArray(parsed.agents) ? parsed.agents : undefined };
+    // `refs` likewise: a malformed one is dropped, and its agents fall back to `ref`.
+    const { refs, ...rest } = parsed;
+    const hasRefs = Boolean(refs) && typeof refs === 'object' && !Array.isArray(refs);
+
+    return {
+      ...rest,
+      agents: Array.isArray(parsed.agents) ? parsed.agents : undefined,
+      ...(hasRefs ? { refs } : {}),
+    };
   } catch {
     return null;
   }

@@ -256,6 +256,39 @@ describe('skills:init', () => {
       }
     });
 
+    it('keeps the ref of the copy-route content it did not re-copy', async () => {
+      expect.hasAssertions();
+      mockPipeline();
+
+      const projectDir = await runCliKeepingProjectDir({
+        commandClass: SkillsInitCommand,
+        commandArgs: ['--agent', 'claude'],
+        files: [
+          {
+            name: '.forest/skills-manifest.json',
+            content: JSON.stringify({
+              ref: 'v1',
+              installedAt: '2026-01-01T00:00:00.000Z',
+              agents: ['cursor'],
+              files: [skill('layout', 'SKILL.md')],
+            }),
+          },
+          { name: skill('layout', 'SKILL.md'), content: '# layout skill' },
+        ],
+        std: [{ out: 'Claude Code: installed the Forest plugins' }],
+      });
+
+      try {
+        const manifest = JSON.parse(
+          fs.readFileSync(path.join(projectDir, '.forest/skills-manifest.json'), 'utf8'),
+        );
+        // Cursor's files were left at v1, so a later update must still see Cursor as pinned there.
+        expect(manifest.refs).toStrictEqual({ claude: 'main', cursor: 'v1' });
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
+    });
+
     it('keeps the copy-route agent and files an earlier run recorded', async () => {
       expect.hasAssertions();
       mockPipeline();
