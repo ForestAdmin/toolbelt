@@ -144,6 +144,54 @@ function buildColumns(roles, envId) {
   return collectColumns(collectionNamesOf(roles, envId), roles, envId);
 }
 
+/**
+ * Each collection the roles grant anything on in this environment, with the smart
+ * actions they carry on it.
+ * @param {Array} roles
+ * @param {string|number} envId
+ * @returns {Map<string, Set<string>>}
+ */
+function environmentCollectionsOf(roles, envId) {
+  return new Map(
+    collectionNamesOf(roles, envId).map(name => [
+      name,
+      new Set(collectSmartActionsForCollection(roles, envId, name)),
+    ]),
+  );
+}
+
+function booleanFields(source, fields) {
+  return Object.fromEntries(fields.map(field => [field, Boolean(source[field])]));
+}
+
+/**
+ * The roles' permissions in this environment, in the shape parseWide returns. Built
+ * from the roles themselves: re-parsing their own export would have to guess where a
+ * colon-named collection ends, which the roles already say.
+ * @param {Array} roles
+ * @param {string|number} envId
+ */
+function currentStateOf(roles, envId) {
+  return roles.map(role => {
+    const envPerms = (role.permissions.environments || []).find(
+      e => String(e.environmentId ?? e.id) === String(envId),
+    );
+    return {
+      name: role.name,
+      enabled: Boolean(envPerms?.enabled),
+      envId: String(envId),
+      collections: (envPerms?.collections || []).map(col => ({
+        collectionName: col.collectionName,
+        ...booleanFields(col, CRUD_FIELDS),
+        smartActions: (col.smartActions || []).map(sa => ({
+          smartActionName: sa.smartActionName,
+          ...booleanFields(sa, SA_FIELDS),
+        })),
+      })),
+    };
+  });
+}
+
 // ---------------------------------------------------------------------------
 // formatWide helpers
 // ---------------------------------------------------------------------------
@@ -258,10 +306,16 @@ function collectionNamesFromCrudHeaders(headers) {
   return [...new Set(names)];
 }
 
-function smartActionCollectionName(header, prefix, knownCollectionNames) {
-  const owners = knownCollectionNames.filter(
+function smartActionCollectionName(header, prefix, knownCollections) {
+  const owners = [...knownCollections.keys()].filter(
     name => prefix.startsWith(`${name}:`) && prefix.length > name.length + 1,
   );
+  // Two collections can own the column's prefix, as `billing` and `billing:invoices`
+  // do for `billing:invoices:Refund:trigger`: the one that has the action settles it.
+  const ownersWithTheAction = owners.filter(name =>
+    knownCollections.get(name).has(prefix.slice(name.length + 1)),
+  );
+  if (owners.length > 1 && ownersWithTheAction.length === 1) return ownersWithTheAction[0];
   if (owners.length > 1) {
     const candidates = owners.map(name => `"${name}"`).join(' or ');
     throw new Error(`Ambiguous CSV column "${header}": its collection could be ${candidates}.`);
@@ -288,13 +342,13 @@ function smartActionCollectionName(header, prefix, knownCollectionNames) {
  * suffix sets are disjoint, so the trailing segment tells the two column shapes apart.
  * @returns {{ collectionName: string, actionName?: string, suffix: string }|null}
  */
-function parseHeader(header, knownCollectionNames) {
+function parseHeader(header, knownCollections) {
   const split = splitSuffix(header);
   if (!split || !split.prefix) return null;
   const { prefix, suffix } = split;
 
   if (SMART_ACTION_SUFFIXES.includes(suffix)) {
-    const collectionName = smartActionCollectionName(header, prefix, knownCollectionNames);
+    const collectionName = smartActionCollectionName(header, prefix, knownCollections);
     if (collectionName === null) return null;
     return { collectionName, actionName: prefix.slice(collectionName.length + 1), suffix };
   }
@@ -303,8 +357,8 @@ function parseHeader(header, knownCollectionNames) {
   return { collectionName: prefix, suffix };
 }
 
-function applyHeader(collectionMap, header, rawValue, knownCollectionNames) {
-  const parsed = parseHeader(header, knownCollectionNames);
+function applyHeader(collectionMap, header, rawValue, knownCollections) {
+  const parsed = parseHeader(header, knownCollections);
   if (!parsed) throw new Error(`Unrecognized CSV column "${header}".`);
   if (parsed.actionName === undefined) {
     return applyTwoPartHeader(collectionMap, parsed.collectionName, parsed.suffix, rawValue);
@@ -318,7 +372,7 @@ function applyHeader(collectionMap, header, rawValue, knownCollectionNames) {
   );
 }
 
-function parseRow(headers, cells, envId, knownCollectionNames) {
+function parseRow(headers, cells, envId, knownCollections) {
   if (cells.length !== headers.length) {
     throw new Error(`CSV row has ${cells.length} cell(s) but the header has ${headers.length}.`);
   }
@@ -328,7 +382,7 @@ function parseRow(headers, cells, envId, knownCollectionNames) {
 
   const collectionMap = Object.keys(row)
     .filter(h => h !== 'role' && h !== 'enabled')
-    .reduce((map, h) => applyHeader(map, h, row[h], knownCollectionNames), {});
+    .reduce((map, h) => applyHeader(map, h, row[h], knownCollections), {});
 
   return { name, enabled, envId: String(envId), collections: Object.values(collectionMap) };
 }
@@ -337,23 +391,23 @@ function parseRow(headers, cells, envId, knownCollectionNames) {
  * Parse a wide CSV string back into a structured desired-state array.
  * @param {string} csvContent
  * @param {string|number} envId
- * @param {string[]} [environmentCollectionNames] the collections that exist in the
- *   environment, so a smart-action column finds its collection even when no CRUD
- *   column in the file names it. A permission whose column the file omits is left
- *   off its collection or action, and computeDiff leaves it unchanged.
+ * @param {Map<string, Set<string>>} [environmentCollections] the environment's
+ *   collections and their smart actions, from environmentCollectionsOf, so a
+ *   smart-action column finds its collection even when no CRUD column in the file
+ *   names it. A permission whose column the file omits is left off its collection or
+ *   action, and computeDiff leaves it unchanged.
  */
-function parseWide(csvContent, envId, environmentCollectionNames = []) {
+function parseWide(csvContent, envId, environmentCollections = new Map()) {
   // Split on CRLF or LF: a CSV saved by Excel/Windows uses \r\n, and a trailing
   // \r would otherwise taint the last field (e.g. `enabled\r`) and break parsing.
   const lines = csvContent.split(/\r?\n/).filter(l => l.trim() !== '');
   if (lines.length < 2) return [];
   const headers = parseCsvLine(lines[0]);
-  const knownCollectionNames = [
-    ...new Set([...environmentCollectionNames, ...collectionNamesFromCrudHeaders(headers)]),
-  ];
-  return lines
-    .slice(1)
-    .map(line => parseRow(headers, parseCsvLine(line), envId, knownCollectionNames));
+  const knownCollections = new Map(environmentCollections);
+  collectionNamesFromCrudHeaders(headers)
+    .filter(name => !knownCollections.has(name))
+    .forEach(name => knownCollections.set(name, new Set()));
+  return lines.slice(1).map(line => parseRow(headers, parseCsvLine(line), envId, knownCollections));
 }
 
 // ---------------------------------------------------------------------------
@@ -456,4 +510,4 @@ function computeDiff(current, parsed) {
   return parsed.map(desired => diffRole(current, desired));
 }
 
-module.exports = { collectionNamesOf, formatWide, parseWide, computeDiff };
+module.exports = { currentStateOf, environmentCollectionsOf, formatWide, parseWide, computeDiff };

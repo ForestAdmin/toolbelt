@@ -288,10 +288,42 @@ describe('roles-csv parseWide', () => {
     expect.assertions(2);
     const csv = ['role,enabled,schema:orders:Act:trigger', 'Ops,true,true'].join('\n');
 
-    const [collection] = parseWide(csv, '3', ['orders', 'schema:orders'])[0].collections;
+    const environment = new Map([
+      ['orders', new Set()],
+      ['schema:orders', new Set(['Act'])],
+    ]);
+
+    const [collection] = parseWide(csv, '3', environment)[0].collections;
 
     expect(collection.collectionName).toBe('schema:orders');
     expect(collection.smartActions.map(a => a.smartActionName)).toStrictEqual(['Act']);
+  });
+
+  it('settles a column two collections could own by the one whose action it names', () => {
+    expect.assertions(2);
+    const csv = ['role,enabled,billing:invoices:Refund:trigger', 'Ops,true,true'].join('\n');
+    const environment = new Map([
+      ['billing', new Set()],
+      ['billing:invoices', new Set(['Refund'])],
+    ]);
+
+    const [collection] = parseWide(csv, '3', environment)[0].collections;
+
+    expect(collection.collectionName).toBe('billing:invoices');
+    expect(collection.smartActions.map(a => a.smartActionName)).toStrictEqual(['Refund']);
+  });
+
+  it('rejects a column that names an action of both collections that could own it', () => {
+    expect.assertions(1);
+    const csv = ['role,enabled,billing:invoices:Refund:trigger', 'Ops,true,true'].join('\n');
+    const environment = new Map([
+      ['billing', new Set(['invoices:Refund'])],
+      ['billing:invoices', new Set(['Refund'])],
+    ]);
+
+    expect(() => parseWide(csv, '3', environment)).toThrow(
+      'Ambiguous CSV column "billing:invoices:Refund:trigger": its collection could be "billing" or "billing:invoices".',
+    );
   });
 
   it('takes the first segment as the collection when nothing knows it and the split is certain', () => {

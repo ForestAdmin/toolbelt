@@ -155,6 +155,42 @@ describe('roles:apply', () => {
       }));
   });
 
+  describe('when a collection name is the colon-prefix of another that has a smart action', () => {
+    it('still applies a change to either collection', () =>
+      testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: RolesApplyCommand,
+        commandArgs: ['--env', 'name1', '-p', '2', '--force', 'roles.csv'],
+        files: [{ name: 'roles.csv', content: 'role,enabled,billing:browse\nAdmin,true,true\n' }],
+        api: [
+          () => getEnvironmentListValid(),
+          () => getRolesValid(),
+          () =>
+            roleById('3', 'Admin', [
+              { collectionName: 'billing', browseEnabled: false, smartActions: [] },
+              {
+                collectionName: 'billing:invoices',
+                smartActions: [{ smartActionName: 'Refund', triggerEnabled: true }],
+              },
+            ]),
+          () => roleById('4', 'Viewer', []),
+          () =>
+            nock('http://localhost:3001')
+              .patch('/api/roles/3/permissions', [
+                {
+                  op: 'replace',
+                  path: '/environments/3/collections/billing/browseEnabled',
+                  value: true,
+                },
+              ])
+              .reply(204),
+        ],
+        std: [{ out: 'Role Admin: 1 change(s)' }, { out: 'Applied changes to 1 role(s).' }],
+        assertNoStdError: false,
+      }));
+  });
+
   describe('with an unknown environment name', () => {
     it('errors and lists available environments', () =>
       testCli({
