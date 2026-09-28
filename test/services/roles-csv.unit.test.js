@@ -234,7 +234,7 @@ describe('roles-csv parseWide', () => {
     expect(parsed.collections[0].browseEnabled).toBe(true);
   });
 
-  it('round-trips a smart action whose name contains a colon (PRD-535 regression)', () => {
+  it('parses a smart-action column whose action name contains a colon (PRD-535 regression)', () => {
     expect.assertions(2);
     // Verbatim shape of the column `roles:export` produced for Spendesk, which
     // `roles:apply` then rejected as an unrecognized column.
@@ -262,6 +262,65 @@ describe('roles-csv parseWide', () => {
     const csv = ['role,enabled,schema:orders:browse', 'Ops,true,true'].join('\n');
 
     expect(parseWide(csv, '3')[0].collections[0].collectionName).toBe('schema:orders');
+  });
+
+  it('round-trips smart actions through formatWide then parseWide when names contain colons', () => {
+    expect.assertions(2);
+    const smartAction = smartActionName => ({
+      smartActionName,
+      triggerEnabled: true,
+      approvalRequired: false,
+      userApprovalEnabled: false,
+      selfApprovalEnabled: false,
+    });
+    const collections = [
+      {
+        collectionName: 'Organisation',
+        browseEnabled: true,
+        smartActions: [smartAction('SAML SSO #2: Edit SSO config')],
+      },
+      { collectionName: 'schema:orders', browseEnabled: true, smartActions: [smartAction('Act')] },
+    ];
+    const roles = [role('Ops', [{ environmentId: 3, enabled: true, collections }])];
+
+    const [parsed] = parseWide(formatWide(roles, 3), '3');
+    const byName = Object.fromEntries(parsed.collections.map(c => [c.collectionName, c]));
+
+    expect(Object.keys(byName).sort()).toStrictEqual(['Organisation', 'schema:orders']);
+    expect(byName['schema:orders'].smartActions).toStrictEqual([smartAction('Act')]);
+  });
+
+  it('rejects a smart-action column whose collection two known collections could own', () => {
+    expect.assertions(1);
+    const csv = [
+      'role,enabled,schema:browse,schema:orders:browse,schema:orders:Act:trigger',
+      'Ops,true,true,true,true',
+    ].join('\n');
+
+    expect(() => parseWide(csv, '3')).toThrow(
+      'Ambiguous CSV column "schema:orders:Act:trigger": its collection could be "schema" or "schema:orders".',
+    );
+  });
+
+  it('rejects a smart-action column with no action name', () => {
+    expect.assertions(1);
+    const csv = ['role,enabled,orders:trigger', 'Ops,true,true'].join('\n');
+
+    expect(() => parseWide(csv, '3')).toThrow('Unrecognized CSV column "orders:trigger"');
+  });
+
+  it('rejects a column with no collection name', () => {
+    expect.assertions(1);
+    const csv = ['role,enabled,:browse', 'Ops,true,true'].join('\n');
+
+    expect(() => parseWide(csv, '3')).toThrow('Unrecognized CSV column ":browse"');
+  });
+
+  it('rejects a column with no colon at all', () => {
+    expect.assertions(1);
+    const csv = ['role,enabled,orders', 'Ops,true,true'].join('\n');
+
+    expect(() => parseWide(csv, '3')).toThrow('Unrecognized CSV column "orders"');
   });
 
   it('rejects an invalid boolean cell (write-safety: no silent coercion)', () => {

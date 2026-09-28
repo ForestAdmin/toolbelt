@@ -246,41 +246,62 @@ function applyThreePartHeader(collectionMap, colName, actionName, suffix, rawVal
   return { ...collectionMap, [colName]: { ...col, smartActions: updatedSmartActions } };
 }
 
+function splitSuffix(header) {
+  const lastColon = header.lastIndexOf(':');
+  if (lastColon === -1) return null;
+  return { prefix: header.slice(0, lastColon), suffix: header.slice(lastColon + 1) };
+}
+
+// A CRUD column carries its collection name whole, colons included, and the export
+// writes one for every collection: they pin where a smart-action column's collection ends.
+function collectionNamesFromCrudHeaders(headers) {
+  const names = headers
+    .map(splitSuffix)
+    .filter(split => split && split.prefix && CRUD_SUFFIXES.includes(split.suffix))
+    .map(split => split.prefix);
+  return [...new Set(names)];
+}
+
+function smartActionCollectionName(header, prefix, knownCollectionNames) {
+  const owners = knownCollectionNames.filter(
+    name => prefix.startsWith(`${name}:`) && prefix.length > name.length + 1,
+  );
+  if (owners.length > 1) {
+    const candidates = owners.map(name => `"${name}"`).join(' or ');
+    throw new Error(`Ambiguous CSV column "${header}": its collection could be ${candidates}.`);
+  }
+  if (owners.length === 1) return owners[0];
+
+  // No CRUD column names this collection (a hand-written CSV): keep the export's
+  // convention that the collection is the first segment.
+  const firstColon = prefix.indexOf(':');
+  return firstColon === -1 ? null : prefix.slice(0, firstColon);
+}
+
 /**
  * Split a column header into its parts, keying off the trailing suffix instead of
  * splitting on every colon: smart-action names routinely contain one (e.g.
- * "Organisation:SAML SSO #2: Edit SSO config:trigger"), so a naive split
- * over-slices them. The CRUD and smart-action suffix sets are disjoint, which
- * makes the trailing segment enough to tell the two column shapes apart.
- *
- * A collection name containing a colon stays ambiguous in the smart-action case;
- * we keep the export's convention that the collection is the first segment.
+ * "Organisation:SAML SSO #2: Edit SSO config:trigger"). The CRUD and smart-action
+ * suffix sets are disjoint, so the trailing segment tells the two column shapes apart.
  * @returns {{ collectionName: string, actionName?: string, suffix: string }|null}
  */
-function parseHeader(header) {
-  const lastColon = header.lastIndexOf(':');
-  if (lastColon === -1) return null;
-  const suffix = header.slice(lastColon + 1);
-  const prefix = header.slice(0, lastColon);
-  if (!prefix) return null;
+function parseHeader(header, knownCollectionNames) {
+  const split = splitSuffix(header);
+  if (!split || !split.prefix) return null;
+  const { prefix, suffix } = split;
 
   if (SMART_ACTION_SUFFIXES.includes(suffix)) {
-    const firstColon = prefix.indexOf(':');
-    if (firstColon === -1) return null;
-    return {
-      collectionName: prefix.slice(0, firstColon),
-      actionName: prefix.slice(firstColon + 1),
-      suffix,
-    };
+    const collectionName = smartActionCollectionName(header, prefix, knownCollectionNames);
+    if (collectionName === null) return null;
+    return { collectionName, actionName: prefix.slice(collectionName.length + 1), suffix };
   }
-  // Not a smart-action suffix: the whole prefix is the collection name, colons
-  // included. Unknown suffixes fall through here and are rejected downstream
-  // with the more precise "Unknown permission column" message.
+  // Unknown suffixes land here too, and applyTwoPartHeader rejects them with the
+  // more precise "Unknown permission column" message.
   return { collectionName: prefix, suffix };
 }
 
-function applyHeader(collectionMap, header, rawValue) {
-  const parsed = parseHeader(header);
+function applyHeader(collectionMap, header, rawValue, knownCollectionNames) {
+  const parsed = parseHeader(header, knownCollectionNames);
   if (!parsed) throw new Error(`Unrecognized CSV column "${header}".`);
   if (parsed.actionName === undefined) {
     return applyTwoPartHeader(collectionMap, parsed.collectionName, parsed.suffix, rawValue);
@@ -294,7 +315,7 @@ function applyHeader(collectionMap, header, rawValue) {
   );
 }
 
-function parseRow(headers, cells, envId) {
+function parseRow(headers, cells, envId, knownCollectionNames) {
   if (cells.length !== headers.length) {
     throw new Error(`CSV row has ${cells.length} cell(s) but the header has ${headers.length}.`);
   }
@@ -304,7 +325,7 @@ function parseRow(headers, cells, envId) {
 
   const collectionMap = Object.keys(row)
     .filter(h => h !== 'role' && h !== 'enabled')
-    .reduce((map, h) => applyHeader(map, h, row[h]), {});
+    .reduce((map, h) => applyHeader(map, h, row[h], knownCollectionNames), {});
 
   return { name, enabled, envId: String(envId), collections: Object.values(collectionMap) };
 }
@@ -320,7 +341,10 @@ function parseWide(csvContent, envId) {
   const lines = csvContent.split(/\r?\n/).filter(l => l.trim() !== '');
   if (lines.length < 2) return [];
   const headers = parseCsvLine(lines[0]);
-  return lines.slice(1).map(line => parseRow(headers, parseCsvLine(line), envId));
+  const knownCollectionNames = collectionNamesFromCrudHeaders(headers);
+  return lines
+    .slice(1)
+    .map(line => parseRow(headers, parseCsvLine(line), envId, knownCollectionNames));
 }
 
 // ---------------------------------------------------------------------------
