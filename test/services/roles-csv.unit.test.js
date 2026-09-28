@@ -236,7 +236,7 @@ describe('roles-csv parseWide', () => {
 
   it('parses a smart-action column whose action name contains a colon (PRD-535 regression)', () => {
     expect.assertions(2);
-    // Verbatim shape of the column `roles:export` produced for Spendesk, which
+    // Verbatim shape of the column `roles:export` produced for a customer, which
     // `roles:apply` then rejected as an unrecognized column.
     const csv = [
       'role,enabled,Organisation:browse,Organisation:SAML SSO #2: Edit SSO config:trigger',

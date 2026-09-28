@@ -351,8 +351,8 @@ function parseRow(headers, cells, envId, knownCollectionNames) {
  * @param {string} csvContent
  * @param {string|number} envId
  * @param {string[]} [environmentCollectionNames] the collections that exist in the
- *   environment, so a smart-action column resolves its collection even in a CSV
- *   that dropped that collection's CRUD columns
+ *   environment, so a smart-action column finds its collection even when no CRUD
+ *   column in the file names it. A missing CRUD column still reads as not granted.
  */
 function parseWide(csvContent, envId, environmentCollectionNames = []) {
   // Split on CRLF or LF: a CSV saved by Excel/Windows uses \r\n, and a trailing
