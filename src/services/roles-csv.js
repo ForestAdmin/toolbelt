@@ -122,7 +122,13 @@ function collectColumns(collections, roles, envId) {
   }, []);
 }
 
-function buildColumns(roles, envId) {
+/**
+ * The sorted collection names the roles grant anything on in this environment.
+ * @param {Array} roles
+ * @param {string|number} envId
+ * @returns {string[]}
+ */
+function collectionNamesOf(roles, envId) {
   const collectionSet = new Set();
   roles.forEach(role => {
     const envPerms = (role.permissions.environments || []).find(
@@ -131,8 +137,11 @@ function buildColumns(roles, envId) {
     if (!envPerms) return;
     (envPerms.collections || []).forEach(col => collectionSet.add(col.collectionName));
   });
-  const collections = Array.from(collectionSet).sort();
-  return collectColumns(collections, roles, envId);
+  return Array.from(collectionSet).sort();
+}
+
+function buildColumns(roles, envId) {
+  return collectColumns(collectionNamesOf(roles, envId), roles, envId);
 }
 
 // ---------------------------------------------------------------------------
@@ -272,7 +281,7 @@ function smartActionCollectionName(header, prefix, knownCollectionNames) {
   }
   if (owners.length === 1) return owners[0];
 
-  // No CRUD column names this collection (a hand-written CSV): keep the export's
+  // A collection neither the environment nor a CRUD column knows: keep the export's
   // convention that the collection is the first segment.
   const firstColon = prefix.indexOf(':');
   return firstColon === -1 ? null : prefix.slice(0, firstColon);
@@ -334,14 +343,19 @@ function parseRow(headers, cells, envId, knownCollectionNames) {
  * Parse a wide CSV string back into a structured desired-state array.
  * @param {string} csvContent
  * @param {string|number} envId
+ * @param {string[]} [environmentCollectionNames] the collections that exist in the
+ *   environment, so a smart-action column resolves its collection even in a CSV
+ *   that dropped that collection's CRUD columns
  */
-function parseWide(csvContent, envId) {
+function parseWide(csvContent, envId, environmentCollectionNames = []) {
   // Split on CRLF or LF: a CSV saved by Excel/Windows uses \r\n, and a trailing
   // \r would otherwise taint the last field (e.g. `enabled\r`) and break parsing.
   const lines = csvContent.split(/\r?\n/).filter(l => l.trim() !== '');
   if (lines.length < 2) return [];
   const headers = parseCsvLine(lines[0]);
-  const knownCollectionNames = collectionNamesFromCrudHeaders(headers);
+  const knownCollectionNames = [
+    ...new Set([...environmentCollectionNames, ...collectionNamesFromCrudHeaders(headers)]),
+  ];
   return lines
     .slice(1)
     .map(line => parseRow(headers, parseCsvLine(line), envId, knownCollectionNames));
@@ -431,4 +445,4 @@ function computeDiff(current, parsed) {
   return parsed.map(desired => diffRole(current, desired));
 }
 
-module.exports = { formatWide, parseWide, computeDiff };
+module.exports = { collectionNamesOf, formatWide, parseWide, computeDiff };

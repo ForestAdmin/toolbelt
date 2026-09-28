@@ -290,6 +290,26 @@ describe('roles-csv parseWide', () => {
     expect(byName['schema:orders'].smartActions).toStrictEqual([smartAction('Act')]);
   });
 
+  it("resolves a smart-action column's collection from the environment when its CRUD columns are absent", () => {
+    expect.assertions(2);
+    const csv = ['role,enabled,schema:orders:Act:trigger', 'Ops,true,true'].join('\n');
+
+    const [collection] = parseWide(csv, '3', ['orders', 'schema:orders'])[0].collections;
+
+    expect(collection.collectionName).toBe('schema:orders');
+    expect(collection.smartActions.map(a => a.smartActionName)).toStrictEqual(['Act']);
+  });
+
+  it('takes the first segment as the collection when nothing knows the collection', () => {
+    expect.assertions(2);
+    const csv = ['role,enabled,orders:Refund: partial:trigger', 'Ops,true,true'].join('\n');
+
+    const [collection] = parseWide(csv, '3')[0].collections;
+
+    expect(collection.collectionName).toBe('orders');
+    expect(collection.smartActions.map(a => a.smartActionName)).toStrictEqual(['Refund: partial']);
+  });
+
   it('rejects a smart-action column whose collection two known collections could own', () => {
     expect.assertions(1);
     const csv = [
