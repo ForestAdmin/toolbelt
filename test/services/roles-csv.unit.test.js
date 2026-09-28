@@ -300,14 +300,23 @@ describe('roles-csv parseWide', () => {
     expect(collection.smartActions.map(a => a.smartActionName)).toStrictEqual(['Act']);
   });
 
-  it('takes the first segment as the collection when nothing knows the collection', () => {
+  it('takes the first segment as the collection when nothing knows it and the split is certain', () => {
     expect.assertions(2);
-    const csv = ['role,enabled,orders:Refund: partial:trigger', 'Ops,true,true'].join('\n');
+    const csv = ['role,enabled,orders:ship:trigger', 'Ops,true,true'].join('\n');
 
     const [collection] = parseWide(csv, '3')[0].collections;
 
     expect(collection.collectionName).toBe('orders');
-    expect(collection.smartActions.map(a => a.smartActionName)).toStrictEqual(['Refund: partial']);
+    expect(collection.smartActions.map(a => a.smartActionName)).toStrictEqual(['ship']);
+  });
+
+  it('rejects a smart-action column with several colons whose collection nothing knows', () => {
+    expect.assertions(1);
+    const csv = ['role,enabled,schema:orders:Act:trigger', 'Ops,true,true'].join('\n');
+
+    expect(() => parseWide(csv, '3')).toThrow(
+      'Ambiguous CSV column "schema:orders:Act:trigger": no known collection matches it',
+    );
   });
 
   it('rejects a smart-action column whose collection two known collections could own', () => {

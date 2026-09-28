@@ -281,10 +281,17 @@ function smartActionCollectionName(header, prefix, knownCollectionNames) {
   }
   if (owners.length === 1) return owners[0];
 
-  // A collection neither the environment nor a CRUD column knows: keep the export's
-  // convention that the collection is the first segment.
+  // A collection neither the environment nor a CRUD column knows. With one colon the
+  // split is certain; with more, either name could hold one, so guessing could patch
+  // the wrong collection.
   const firstColon = prefix.indexOf(':');
-  return firstColon === -1 ? null : prefix.slice(0, firstColon);
+  if (firstColon === -1) return null;
+  if (prefix.indexOf(':', firstColon + 1) !== -1) {
+    throw new Error(
+      `Ambiguous CSV column "${header}": no known collection matches it, and its name has more than one colon. Add a CRUD column for its collection.`,
+    );
+  }
+  return prefix.slice(0, firstColon);
 }
 
 /**
