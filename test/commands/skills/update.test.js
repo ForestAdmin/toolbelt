@@ -284,6 +284,42 @@ describe('skills:update', () => {
     });
   });
 
+  describe('when one agent CLI fails outright', () => {
+    it('still refreshes the other agents and rewrites the manifest', async () => {
+      expect.hasAssertions();
+      mockPipeline();
+      upgradePlugins.mockImplementation(() => {
+        throw new Error('`claude plugin marketplace update` failed: network down.');
+      });
+
+      const projectDir = await runCliKeepingProjectDir({
+        commandClass: SkillsUpdateCommand,
+        files: [
+          {
+            name: '.forest/skills-manifest.json',
+            content: previousManifest('main', [skill('layout', 'SKILL.md')], ['claude', 'cursor']),
+          },
+          { name: skill('layout', 'SKILL.md'), content: 'outdated content' },
+        ],
+        std: [
+          { out: 'Claude Code: `claude plugin marketplace update` failed: network down.' },
+          { out: 'Forest skills refreshed in .agents/skills/' },
+        ],
+      });
+
+      try {
+        const at = p => path.join(projectDir, p);
+        expect(fs.readFileSync(at(skill('layout', 'SKILL.md')), 'utf8')).toBe(
+          '# layout skill (fresh)',
+        );
+        const manifest = JSON.parse(fs.readFileSync(at('.forest/skills-manifest.json'), 'utf8'));
+        expect(manifest.agents).toStrictEqual(['claude', 'cursor']);
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
+    });
+  });
+
   describe('with a manifest that records no agent', () => {
     it('refreshes nothing rather than copying skills nobody picked', async () => {
       expect.hasAssertions();

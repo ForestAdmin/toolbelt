@@ -349,6 +349,21 @@ describe('skills-manager', () => {
       });
     });
 
+    it('restores a skill file the user deleted on a re-run without force, keeping other edits', () => {
+      expect.assertions(3);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        const { written: first } = installSkills(root, false, null);
+        const reference = path.join(SKILLS_DIR, 'layout', 'references', 'a.md');
+        fs.writeFileSync(reference, 'edited');
+        fs.rmSync(layoutSkill);
+        const { written } = installSkills(root, false, first);
+        expect(fs.readFileSync(layoutSkill, 'utf8')).toBe('# layout skill');
+        expect(fs.readFileSync(reference, 'utf8')).toBe('edited');
+        expect(written).toContain(layoutSkill);
+      });
+    });
+
     it('does not blame the marketplace when every skill dir is already on disk', () => {
       expect.assertions(1);
       withTempDir(dir => {
@@ -670,6 +685,15 @@ describe('skills-manager', () => {
         ['plugin', 'add', `${FOREST_PLUGINS[0]}@forest-admin-ai`, '--json'],
         expect.anything(),
       );
+    });
+
+    it('refuses to pin Claude Code to a commit SHA, which it cannot clone, before running anything', () => {
+      expect.assertions(2);
+      mockCli();
+      expect(() => installPlugins('claude', 'a0a505f3c1d2')).toThrow(
+        'Claude Code clones the marketplace by branch or tag, so it cannot pin commit "a0a505f3c1d2". Pass a tag or a branch as --ref instead.',
+      );
+      expect(spawnSync).not.toHaveBeenCalled();
     });
 
     it('gives an agent CLI a finite time, shorter for the version check', () => {

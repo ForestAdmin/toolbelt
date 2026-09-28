@@ -219,15 +219,6 @@ function assertNoSymlinkedAncestor(target: string): void {
   }
 }
 
-/** Recursively list the files under `dir` (dest paths), mirroring copyDir's return without copying. */
-function listFiles(dir: string): string[] {
-  return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
-    const p = path.join(dir, entry.name);
-
-    return entry.isDirectory() ? listFiles(p) : [p];
-  });
-}
-
 /** The skill directories a plugin ships: every subdirectory holding a SKILL.md. A symlinked entry
  *  is ignored — copyDir would refuse it anyway, and it must not fabricate a dest dir. */
 function listSkillDirs(skillsRoot: string): string[] {
@@ -308,17 +299,16 @@ function installSkill(
       return { written: [], skipped: [dest] };
     }
     if (!force) {
-      // Installed and no --force: nothing is written here, so only carry over files that are BOTH
-      // in the incoming bundle (derived from source, mapped to dest — never the actual dir
-      // contents, which may include user-added files) AND in the previous manifest (proof a past
-      // run wrote them). A dir that pre-existed the first run was authored by the user: claiming
-      // its files would mark them managed and a later refresh would prune them. The ones on disk
-      // that we never wrote are reported, so the user learns why they did not get our version.
-      const incoming = listFiles(src).map(f => path.join(dest, path.relative(src, f)));
+      // Installed and no --force: nothing on disk is overwritten, managed or not, so a local edit
+      // survives a re-run. Files missing from disk are copied, which is what makes deleting one to
+      // take the Forest version work. Of the files left in place, only those the previous manifest
+      // lists stay claimed: a dir that pre-existed the first run was authored by the user, and
+      // claiming its files would let a later refresh prune them. The rest are reported as kept.
+      const { written, skipped } = copyDir(src, dest, () => false);
 
       return {
-        written: incoming.filter(isManaged),
-        skipped: incoming.filter(file => !isManaged(file) && fs.existsSync(file)),
+        written: [...written, ...skipped.filter(isManaged)],
+        skipped: skipped.filter(file => !isManaged(file)),
       };
     }
     // With --force on an existing dir we fall through and overlay the incoming bundle on top. We
@@ -485,12 +475,20 @@ export function hasPluginCli(agent: PluginAgent): boolean {
   return runCli(PLUGIN_BINS[agent], ['--version'], VERSION_CHECK_TIMEOUT_MS).ok;
 }
 
+const looksLikeCommitSha = (ref: string) => /^[0-9a-f]{7,40}$/i.test(ref);
+
 /**
  * Marketplace source for an agent CLI. Both read the same `.claude-plugin/marketplace.json`.
  * A non-default ref is passed the way each CLI accepts it: Codex has `--ref`, Claude Code takes
  * it appended to a full git URL (`....git#ref`) since the `owner/repo` shorthand has no ref form.
  */
 function marketplaceAddArgs(agent: PluginAgent, ref: string): string[] {
+  if (agent === 'claude' && looksLikeCommitSha(ref)) {
+    throw new Error(
+      `Claude Code clones the marketplace by branch or tag, so it cannot pin commit "${ref}". ` +
+        'Pass a tag or a branch as --ref instead.',
+    );
+  }
   if (agent === 'codex') {
     return [
       'plugin',
@@ -514,6 +512,11 @@ function pluginInstallArgs(agent: PluginAgent, plugin: string): string[] {
   return agent === 'codex'
     ? ['plugin', 'add', `${plugin}@${MARKETPLACE_NAME}`, '--json']
     : ['plugin', 'install', `${plugin}@${MARKETPLACE_NAME}`, '--scope', 'project'];
+}
+
+/** The exact command that installs one Forest plugin, for a user retrying a failure by hand. */
+export function pluginInstallCommand(agent: PluginAgent, plugin: string): string {
+  return [PLUGIN_BINS[agent], ...pluginInstallArgs(agent, plugin)].join(' ');
 }
 
 export type PluginInstallResult = { agent: PluginAgent; installed: string[]; failed: string[] };

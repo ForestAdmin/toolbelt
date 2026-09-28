@@ -1,4 +1,9 @@
-import type { Agent, Manifest, PluginAgent } from '../../services/skills/skills-manager';
+import type {
+  Agent,
+  Manifest,
+  PluginAgent,
+  PluginInstallResult,
+} from '../../services/skills/skills-manager';
 
 import { Flags } from '@oclif/core';
 
@@ -18,6 +23,7 @@ import {
   isPluginAgent,
   manifestAgents,
   mergeBlock,
+  pluginInstallCommand,
   readManifest,
   removeStaleSkillFiles,
   skillDirEntries,
@@ -140,7 +146,17 @@ export default class SkillsInitCommand extends AbstractCommand {
       return false;
     }
 
-    const { installed, failed } = installPlugins(agent, ref);
+    let result: PluginInstallResult;
+    try {
+      result = installPlugins(agent, ref);
+    } catch (error) {
+      // One agent's CLI failing must not cost the others their install, nor the run its manifest.
+      this.logger.warn(`${AGENT_LABELS[agent]}: ${error.message}`);
+
+      return false;
+    }
+
+    const { installed, failed } = result;
     if (installed.length) {
       this.logger.success(
         `${AGENT_LABELS[agent]}: installed the Forest plugin${
@@ -151,8 +167,9 @@ export default class SkillsInitCommand extends AbstractCommand {
     }
     if (failed.length) {
       this.logger.warn(
-        `${AGENT_LABELS[agent]}: could not install ${failed.join(', ')}. ` +
-          `Retry by hand with \`${agent} plugin install <name>@forest-admin-ai\`.`,
+        `${AGENT_LABELS[agent]}: could not install ${failed.join(', ')}. Retry by hand with ${failed
+          .map(plugin => `\`${pluginInstallCommand(agent, plugin)}\``)
+          .join(' and ')}.`,
       );
     }
 

@@ -84,6 +84,18 @@ async function runCliKeepingProjectDir(options) {
 const skill = (...parts) => path.join(SKILLS_DIR, ...parts);
 
 // The command asks only when stdout is a terminal, so a scripted run is one whose stdout is not.
+const withTerminal = plan =>
+  plan.replace(
+    'env/others/process',
+    Object.create(process, { stdout: { value: { isTTY: true } } }),
+  );
+
+// Matches the prompt's `validate` by what it does, since a function never equals another.
+const refusesAnEmptyPick = {
+  asymmetricMatch: validate =>
+    validate([]) === 'Pick at least one agent.' && validate(['cursor']) === true,
+};
+
 const withoutTerminal = plan =>
   plan.replace(
     'env/others/process',
@@ -179,12 +191,69 @@ describe('skills:init', () => {
         commandArgs: ['--agent', 'claude'],
         std: [
           { out: 'Claude Code: installed the Forest plugin (forest).' },
-          { out: 'Claude Code: could not install forest-docs' },
+          {
+            out: 'Claude Code: could not install forest-docs. Retry by hand with `claude plugin install forest-docs@forest-admin-ai --scope project`.',
+          },
         ],
       });
 
       expect(installPlugins).toHaveBeenCalledTimes(1);
       expect(installPlugins).toHaveBeenCalledWith('claude', 'main');
+    });
+
+    it('exits non-zero and records nothing when every Forest plugin fails to install', async () => {
+      expect.hasAssertions();
+      mockPipeline();
+      installPlugins.mockImplementation(agent => ({
+        agent,
+        installed: [],
+        failed: ['forest', 'forest-code', 'forest-docs'],
+      }));
+
+      const projectDir = await runCliKeepingProjectDir({
+        commandClass: SkillsInitCommand,
+        commandArgs: ['--agent', 'claude'],
+        files: [{ name: 'placeholder', content: 'x' }],
+        exitCode: 1,
+        std: [
+          { out: 'Claude Code: could not install forest, forest-code, forest-docs.' },
+          { err: 'Nothing was installed, so nothing was recorded.' },
+        ],
+      });
+
+      try {
+        expect(fs.existsSync(path.join(projectDir, '.forest/skills-manifest.json'))).toBe(false);
+        expect(fs.existsSync(path.join(projectDir, 'CLAUDE.md'))).toBe(false);
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
+    });
+
+    it('sets up the other agents when one agent CLI fails to add the marketplace', async () => {
+      expect.hasAssertions();
+      mockPipeline();
+      installPlugins.mockImplementation(agent => {
+        if (agent === 'codex')
+          throw new Error('`codex plugin marketplace add` failed: unknown command.');
+
+        return { agent, installed: ['forest', 'forest-code', 'forest-docs'], failed: [] };
+      });
+
+      const projectDir = await runCliKeepingProjectDir({
+        commandClass: SkillsInitCommand,
+        commandArgs: ['--agent', 'claude', '--agent', 'codex', '--agent', 'cursor'],
+        files: [{ name: 'placeholder', content: 'x' }],
+        std: [{ out: 'Codex: `codex plugin marketplace add` failed: unknown command.' }],
+      });
+
+      try {
+        const at = p => path.join(projectDir, p);
+        const manifest = JSON.parse(fs.readFileSync(at('.forest/skills-manifest.json'), 'utf8'));
+        expect(manifest.agents).toStrictEqual(['claude', 'cursor']);
+        expect(fs.existsSync(at(skill('layout', 'SKILL.md')))).toBe(true);
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
     });
 
     it('keeps the copy-route agent and files an earlier run recorded', async () => {
@@ -330,6 +399,39 @@ describe('skills:init', () => {
       } finally {
         fs.rmSync(projectDir, { recursive: true, force: true });
       }
+    });
+  });
+
+  describe('without --agent, in a terminal', () => {
+    it('asks which agents to set up, pre-checking the detected ones', async () => {
+      expect.hasAssertions();
+      mockPipeline({ detected: ['claude'] });
+      // testCli's own prompt double knows no checkbox, so this test brings its own inquirer.
+      const inquirer = { prompt: jest.fn().mockResolvedValue({ chosen: ['claude'] }) };
+
+      await testCli({
+        commandClass: SkillsInitCommand,
+        additionnalStep: plan =>
+          withTerminal(plan).replace('dependencies/inquirer/inquirer', inquirer),
+        std: [{ out: 'Claude Code: installed the Forest plugins' }],
+      });
+
+      expect(inquirer.prompt).toHaveBeenCalledWith([
+        {
+          type: 'checkbox',
+          name: 'chosen',
+          message: 'Which coding agent(s) do you use? (space to select, enter to confirm)',
+          choices: [
+            { name: 'Claude Code', value: 'claude', checked: true },
+            { name: 'Codex', value: 'codex', checked: false },
+            { name: 'Cursor', value: 'cursor', checked: false },
+            { name: 'OpenCode', value: 'opencode', checked: false },
+            { name: 'Other (any SKILL.md-compatible agent)', value: 'other', checked: false },
+          ],
+          validate: refusesAnEmptyPick,
+        },
+      ]);
+      expect(installPlugins).toHaveBeenCalledWith('claude', 'main');
     });
   });
 

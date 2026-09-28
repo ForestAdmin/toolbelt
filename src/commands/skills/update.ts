@@ -1,4 +1,4 @@
-import type { PluginAgent } from '../../services/skills/skills-manager';
+import type { PluginAgent, PluginInstallResult } from '../../services/skills/skills-manager';
 
 import { Flags } from '@oclif/core';
 
@@ -93,7 +93,17 @@ export default class SkillsUpdateCommand extends AbstractCommand {
 
       return;
     }
-    const { installed, failed } = upgradePlugins(agent, ref);
+    let result: PluginInstallResult;
+    try {
+      result = upgradePlugins(agent, ref);
+    } catch (error) {
+      // One agent's CLI failing must not cost the others their refresh, nor the run its manifest.
+      this.logger.warn(`${AGENT_LABELS[agent]}: ${error.message}`);
+
+      return;
+    }
+
+    const { installed, failed } = result;
     if (installed.length) {
       this.logger.success(
         `${AGENT_LABELS[agent]}: Forest plugins refreshed (${installed.join(', ')}).`,
