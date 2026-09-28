@@ -208,27 +208,14 @@ function formatWide(roles, envId) {
 // parseWide helpers
 // ---------------------------------------------------------------------------
 
+// A permission field is set only when the CSV has its column: computeDiff leaves an
+// absent field alone, so a CSV that omits a column never revokes it.
 function emptyCollection(colName) {
-  return {
-    collectionName: colName,
-    browseEnabled: false,
-    readEnabled: false,
-    addEnabled: false,
-    editEnabled: false,
-    deleteEnabled: false,
-    exportEnabled: false,
-    smartActions: [],
-  };
+  return { collectionName: colName, smartActions: [] };
 }
 
 function emptySa(actionName) {
-  return {
-    smartActionName: actionName,
-    triggerEnabled: false,
-    approvalRequired: false,
-    userApprovalEnabled: false,
-    selfApprovalEnabled: false,
-  };
+  return { smartActionName: actionName };
 }
 
 function applyTwoPartHeader(collectionMap, colName, suffix, rawValue) {
@@ -352,7 +339,8 @@ function parseRow(headers, cells, envId, knownCollectionNames) {
  * @param {string|number} envId
  * @param {string[]} [environmentCollectionNames] the collections that exist in the
  *   environment, so a smart-action column finds its collection even when no CRUD
- *   column in the file names it. A missing CRUD column still reads as not granted.
+ *   column in the file names it. A permission whose column the file omits is left
+ *   off its collection or action, and computeDiff leaves it unchanged.
  */
 function parseWide(csvContent, envId, environmentCollectionNames = []) {
   // Split on CRLF or LF: a CSV saved by Excel/Windows uses \r\n, and a trailing
@@ -378,20 +366,27 @@ function diffEnabled(cur, desired, envId) {
   return [{ op: 'replace', path: `/environments/${envId}/enabled`, value: desired.enabled }];
 }
 
+// The server decodes each name segment and rejects a raw space, colon or slash in one.
+function permissionPath(envId, ...segments) {
+  return `/environments/${envId}/${segments.map(encodeURIComponent).join('/')}`;
+}
+
 function diffCrudField(envId, colName, curCol, field, desiredVal) {
   const curVal = curCol ? Boolean(curCol[field]) : false;
   if (curVal === desiredVal) return null;
   return {
     op: 'replace',
-    path: `/environments/${envId}/collections/${colName}/${field}`,
+    path: permissionPath(envId, 'collections', colName, field),
     value: desiredVal,
   };
 }
 
 function diffCrud(envId, desiredCol, curCol) {
-  return CRUD_FIELDS.map(field =>
-    diffCrudField(envId, desiredCol.collectionName, curCol, field, Boolean(desiredCol[field])),
-  ).filter(Boolean);
+  return CRUD_FIELDS.filter(field => desiredCol[field] !== undefined)
+    .map(field =>
+      diffCrudField(envId, desiredCol.collectionName, curCol, field, Boolean(desiredCol[field])),
+    )
+    .filter(Boolean);
 }
 
 function diffSaField(envId, colName, actionName, curSa, field, desiredVal) {
@@ -399,7 +394,7 @@ function diffSaField(envId, colName, actionName, curSa, field, desiredVal) {
   if (curVal === desiredVal) return null;
   return {
     op: 'replace',
-    path: `/environments/${envId}/collections/${colName}/smartActions/${actionName}/${field}`,
+    path: permissionPath(envId, 'collections', colName, 'smartActions', actionName, field),
     value: desiredVal,
   };
 }
@@ -408,9 +403,18 @@ function diffSmartAction(envId, colName, desiredSa, curCol) {
   const curSa = curCol
     ? (curCol.smartActions || []).find(a => a.smartActionName === desiredSa.smartActionName)
     : null;
-  return SA_FIELDS.map(field =>
-    diffSaField(envId, colName, desiredSa.smartActionName, curSa, field, Boolean(desiredSa[field])),
-  ).filter(Boolean);
+  return SA_FIELDS.filter(field => desiredSa[field] !== undefined)
+    .map(field =>
+      diffSaField(
+        envId,
+        colName,
+        desiredSa.smartActionName,
+        curSa,
+        field,
+        Boolean(desiredSa[field]),
+      ),
+    )
+    .filter(Boolean);
 }
 
 function diffCollection(envId, desiredCol, cur) {

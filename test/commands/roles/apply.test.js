@@ -114,7 +114,7 @@ describe('roles:apply', () => {
   });
 
   describe('when a CSV keeps only a smart-action column of a collection whose name has a colon', () => {
-    it('patches that collection, not the one its first segment names', () =>
+    it('patches only that action, on an encoded path to that collection', () =>
       testCli({
         env: testEnvWithoutSecret,
         token: 'any',
@@ -133,16 +133,18 @@ describe('roles:apply', () => {
             roleById('3', 'Admin', [
               {
                 collectionName: 'schema:orders',
+                browseEnabled: true,
                 smartActions: [{ smartActionName: 'Act', triggerEnabled: true }],
               },
             ]),
           () => roleById('4', 'Viewer', []),
           () =>
             nock('http://localhost:3001')
+              // The CSV has no `schema:orders:browse` column, so browse is left alone.
               .patch('/api/roles/3/permissions', [
                 {
                   op: 'replace',
-                  path: '/environments/3/collections/schema:orders/smartActions/Act/triggerEnabled',
+                  path: '/environments/3/collections/schema%3Aorders/smartActions/Act/triggerEnabled',
                   value: false,
                 },
               ])

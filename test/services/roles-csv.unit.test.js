@@ -247,13 +247,7 @@ describe('roles-csv parseWide', () => {
 
     expect(collection.browseEnabled).toBe(true);
     expect(collection.smartActions).toStrictEqual([
-      {
-        smartActionName: 'SAML SSO #2: Edit SSO config',
-        triggerEnabled: true,
-        approvalRequired: false,
-        userApprovalEnabled: false,
-        selfApprovalEnabled: false,
-      },
+      { smartActionName: 'SAML SSO #2: Edit SSO config', triggerEnabled: true },
     ]);
   });
 
@@ -441,5 +435,68 @@ describe('roles-csv computeDiff', () => {
       path: '/environments/3/collections/orders/smartActions/ship/triggerEnabled',
       value: true,
     });
+  });
+
+  it('encodes collection and action names as URI components in op paths', () => {
+    expect.assertions(1);
+    const desired = [
+      {
+        name: 'Admin',
+        enabled: true,
+        envId: '3',
+        collections: [
+          {
+            collectionName: 'schema:orders',
+            browseEnabled: true,
+            smartActions: [{ smartActionName: 'Refund / cancel: now', triggerEnabled: true }],
+          },
+        ],
+      },
+    ];
+
+    const [diff] = computeDiff(
+      [{ name: 'Admin', id: '3', enabled: true, collections: [] }],
+      desired,
+    );
+
+    expect(diff.ops.map(op => op.path)).toStrictEqual([
+      '/environments/3/collections/schema%3Aorders/browseEnabled',
+      '/environments/3/collections/schema%3Aorders/smartActions/Refund%20%2F%20cancel%3A%20now/triggerEnabled',
+    ]);
+  });
+
+  it('leaves alone every permission whose column the CSV omits', () => {
+    expect.assertions(1);
+    const current = [
+      {
+        name: 'Admin',
+        id: '3',
+        enabled: true,
+        collections: [
+          {
+            collectionName: 'orders',
+            browseEnabled: true,
+            readEnabled: true,
+            smartActions: [
+              { smartActionName: 'ship', triggerEnabled: true, approvalRequired: true },
+            ],
+          },
+        ],
+      },
+    ];
+    const csv = ['role,enabled,orders:read,orders:ship:trigger', 'Admin,true,false,false'].join(
+      '\n',
+    );
+
+    const [diff] = computeDiff(current, parseWide(csv, '3'));
+
+    expect(diff.ops).toStrictEqual([
+      { op: 'replace', path: '/environments/3/collections/orders/readEnabled', value: false },
+      {
+        op: 'replace',
+        path: '/environments/3/collections/orders/smartActions/ship/triggerEnabled',
+        value: false,
+      },
+    ]);
   });
 });
