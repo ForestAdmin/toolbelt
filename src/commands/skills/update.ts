@@ -1,4 +1,4 @@
-import type { Agent, PluginAgent } from '../../services/skills/skills-manager';
+import type { PluginAgent } from '../../services/skills/skills-manager';
 
 import { Flags } from '@oclif/core';
 
@@ -13,6 +13,7 @@ import {
   hasPluginCli,
   installSkills,
   isPluginAgent,
+  manifestAgents,
   mergeBlock,
   readManifest,
   removeStaleSkillFiles,
@@ -54,10 +55,17 @@ export default class SkillsUpdateCommand extends AbstractCommand {
     }
 
     // Refresh exactly the agents the install targeted: refreshing one agent must never treat
-    // another's files as stale. A manifest with no `agents` predates that field; it can only have
-    // come from a copy-route install, so treat it as one — reading it as "no agents" would refresh
-    // nothing AND rewrite the manifest without its files, orphaning every skill on disk.
-    const agents = (manifest.agents?.length ? manifest.agents : ['other']) as Agent[];
+    // another's files as stale.
+    const agents = manifestAgents(manifest);
+    if (!agents.length) {
+      this.logger.warn(
+        `No coding agent is recorded in this repo. Run ${this.chalk.bold(
+          'forest skills:init --agent <name>',
+        )} to set one up.`,
+      );
+
+      return;
+    }
     const pluginAgents = agents.filter(isPluginAgent);
     const copyAgents = agents.filter(agent => !isPluginAgent(agent));
 

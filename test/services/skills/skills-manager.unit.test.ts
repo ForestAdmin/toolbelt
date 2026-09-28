@@ -1,6 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import * as tar from 'tar';
 
 import {
   FOREST_PLUGINS,
@@ -10,21 +11,50 @@ import {
   contextFileGroups,
   copyDir,
   detectAgents,
+  fetchMarketplace,
   forestBlock,
   hasPluginCli,
   installPlugins,
   installSkills,
   isPluginAgent,
+  manifestAgents,
   mergeBlock,
   readManifest,
   removeStaleSkillFiles,
   skillDirEntries,
+  upgradePlugins,
   writeManifest,
 } from '../../../src/services/skills/skills-manager';
 
 const spawnSync = jest.fn();
 
 jest.mock('child_process', () => ({ spawnSync: (...args) => spawnSync(...args) }));
+
+const httpGet = jest.fn();
+
+jest.mock('superagent', () => ({ get: (...args) => httpGet(...args) }));
+
+// superagent's chain (`get().timeout().responseType()`) resolving to `outcome`, or rejecting with it.
+function mockHttp(outcome: { body?: Buffer } | Record<string, unknown>, { fails = false } = {}) {
+  httpGet.mockReset();
+  httpGet.mockReturnValue({
+    timeout: () => ({
+      responseType: () => (fails ? Promise.reject(outcome) : Promise.resolve(outcome)),
+    }),
+  });
+}
+
+// The temp dir `fetchMarketplace` creates, so a test can check it is gone afterwards.
+function spyOnTempDir(): () => string {
+  const spy = jest.spyOn(fs, 'mkdtempSync');
+
+  return () => {
+    const created = spy.mock.results[0].value as string;
+    spy.mockRestore();
+
+    return created;
+  };
+}
 
 // Every CLI call succeeds, unless `failing` matches the joined args.
 function mockCli({ failing = null }: { failing?: RegExp | null } = {}) {
@@ -572,6 +602,46 @@ describe('skills-manager', () => {
       expect(installed).toStrictEqual([FOREST_PLUGINS[0], FOREST_PLUGINS[2]]);
     });
 
+    it('pulls the Claude Code catalog, then installs and updates every plugin at project scope', () => {
+      expect.assertions(3);
+      mockCli();
+      const { installed } = upgradePlugins('claude');
+      expect(spawnSync).toHaveBeenCalledWith(
+        'claude',
+        ['plugin', 'marketplace', 'update', 'forest-admin-ai'],
+        expect.anything(),
+      );
+      expect(spawnSync).toHaveBeenCalledWith(
+        'claude',
+        ['plugin', 'update', `${FOREST_PLUGINS[0]}@forest-admin-ai`, '--scope', 'project'],
+        expect.anything(),
+      );
+      expect(installed).toStrictEqual(FOREST_PLUGINS);
+    });
+
+    it('reports a Claude Code plugin whose update fails as not refreshed', () => {
+      expect.assertions(1);
+      mockCli({ failing: new RegExp(`update ${FOREST_PLUGINS[1]}@`) });
+      expect(upgradePlugins('claude').failed).toStrictEqual([FOREST_PLUGINS[1]]);
+    });
+
+    it('throws when the Claude Code catalog cannot be pulled', () => {
+      expect.assertions(1);
+      mockCli({ failing: /marketplace update/ });
+      expect(() => upgradePlugins('claude')).toThrow(/marketplace update` failed/);
+    });
+
+    it('keeps the re-install path for Codex', () => {
+      expect.assertions(1);
+      mockCli();
+      upgradePlugins('codex');
+      expect(spawnSync).toHaveBeenCalledWith(
+        'codex',
+        ['plugin', 'add', `${FOREST_PLUGINS[0]}@forest-admin-ai`, '--json'],
+        expect.anything(),
+      );
+    });
+
     it('reports a missing CLI rather than throwing', () => {
       expect.assertions(1);
       spawnSync.mockReset();
@@ -617,6 +687,70 @@ describe('skills-manager', () => {
       withTempDir(() => {
         expect(detectAgents()).toStrictEqual([]);
       });
+    });
+  });
+
+  describe('manifestAgents', () => {
+    it('reads a manifest with no agents field as a copy-route install', () => {
+      expect.assertions(1);
+      expect(manifestAgents({ ref: 'main', installedAt: 'x', files: [] })).toStrictEqual(['other']);
+    });
+
+    it('reads an empty agents list as no agent, not as a copy-route install', () => {
+      expect.assertions(1);
+      expect(
+        manifestAgents({ ref: 'main', installedAt: 'x', agents: [], files: [] }),
+      ).toStrictEqual([]);
+    });
+  });
+
+  describe('fetchMarketplace', () => {
+    it('names the --ref when the marketplace has no such ref, and removes its temp dir', async () => {
+      expect.assertions(3);
+      mockHttp({ status: 404 }, { fails: true });
+      const tempDir = spyOnTempDir();
+      await expect(fetchMarketplace('nope')).rejects.toThrow(
+        `Forest marketplace ref "nope" not found in ${MARKETPLACE_REPO}. Check the --ref value.`,
+      );
+      expect(httpGet).toHaveBeenCalledWith(
+        `https://codeload.github.com/${MARKETPLACE_REPO}/tar.gz/nope`,
+      );
+      expect(fs.existsSync(tempDir())).toBe(false);
+    });
+
+    it('says the connection timed out when the fetch times out', async () => {
+      expect.assertions(1);
+      mockHttp({ timeout: 15000 }, { fails: true });
+      await expect(fetchMarketplace()).rejects.toThrow(
+        'Timed out reaching the Forest marketplace — check your connection and retry.',
+      );
+    });
+
+    it('reports any other fetch failure with its cause', async () => {
+      expect.assertions(1);
+      mockHttp({ message: 'socket hang up' }, { fails: true });
+      await expect(fetchMarketplace()).rejects.toThrow(
+        `Could not fetch the Forest marketplace (${MARKETPLACE_REPO}): socket hang up`,
+      );
+    });
+
+    it('rejects a tarball without the marketplace root, and removes its temp dir', async () => {
+      expect.assertions(2);
+      const staging = fs.mkdtempSync(path.join(os.tmpdir(), 'skills-tarball-'));
+      try {
+        fs.mkdirSync(path.join(staging, 'unrelated'));
+        fs.writeFileSync(path.join(staging, 'unrelated', 'file'), 'x');
+        const tgz = path.join(staging, 'bundle.tgz');
+        tar.c({ gzip: true, file: tgz, cwd: staging, sync: true }, ['unrelated']);
+        mockHttp({ body: fs.readFileSync(tgz) });
+        const tempDir = spyOnTempDir();
+        await expect(fetchMarketplace()).rejects.toThrow(
+          'Could not extract the marketplace tarball.',
+        );
+        expect(fs.existsSync(tempDir())).toBe(false);
+      } finally {
+        fs.rmSync(staging, { recursive: true, force: true });
+      }
     });
   });
 

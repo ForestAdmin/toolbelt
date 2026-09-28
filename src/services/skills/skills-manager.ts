@@ -492,12 +492,15 @@ function pluginInstallArgs(agent: PluginAgent, plugin: string): string[] {
 
 export type PluginInstallResult = { agent: PluginAgent; installed: string[]; failed: string[] };
 
-/**
- * Register the Forest marketplace with the agent's CLI and install the Forest plugins.
- * Throws when the marketplace cannot be added at all (nothing else can work); a single plugin
- * that fails to install is reported, not fatal — the others are still worth having.
- */
-export function installPlugins(agent: PluginAgent, ref = 'main'): PluginInstallResult {
+const claudePluginUpdateArgs = (plugin: string) => [
+  'plugin',
+  'update',
+  `${plugin}@${MARKETPLACE_NAME}`,
+  '--scope',
+  'project',
+];
+
+function addMarketplace(agent: PluginAgent, ref: string): void {
   const bin = PLUGIN_BINS[agent];
   const added = runCli(bin, marketplaceAddArgs(agent, ref));
   if (!added.ok) {
@@ -506,22 +509,59 @@ export function installPlugins(agent: PluginAgent, ref = 'main'): PluginInstallR
         'Nothing was changed for this agent.',
     );
   }
-
-  const installed: string[] = [];
-  const failed: string[] = [];
-  FOREST_PLUGINS.forEach(plugin => {
-    if (runCli(bin, pluginInstallArgs(agent, plugin)).ok) installed.push(plugin);
-    else failed.push(plugin);
-  });
-
-  return { agent, installed, failed };
 }
 
-/** Refresh already-installed plugins (the plugin-route equivalent of re-copying files). */
+function eachForestPlugin(
+  agent: PluginAgent,
+  succeeds: (plugin: string) => boolean,
+): PluginInstallResult {
+  const installed = FOREST_PLUGINS.filter(succeeds);
+
+  return {
+    agent,
+    installed,
+    failed: FOREST_PLUGINS.filter(plugin => !installed.includes(plugin)),
+  };
+}
+
+/**
+ * Register the Forest marketplace with the agent's CLI and install the Forest plugins.
+ * Throws when the marketplace cannot be added at all (nothing else can work); a single plugin
+ * that fails to install is reported, not fatal — the others are still worth having.
+ */
+export function installPlugins(agent: PluginAgent, ref = 'main'): PluginInstallResult {
+  addMarketplace(agent, ref);
+
+  return eachForestPlugin(
+    agent,
+    plugin => runCli(PLUGIN_BINS[agent], pluginInstallArgs(agent, plugin)).ok,
+  );
+}
+
+/**
+ * Refresh already-installed plugins (the plugin-route equivalent of re-copying files).
+ *
+ * Re-running `install` is not a refresh on Claude Code: it answers "already installed", exits 0 and
+ * fetches nothing. So its catalog is pulled first, then each plugin is installed (a no-op unless it
+ * was removed by hand) and updated. Codex keeps the re-install path.
+ */
 export function upgradePlugins(agent: PluginAgent, ref = 'main'): PluginInstallResult {
-  // Both CLIs are idempotent on add/install, and re-running them is the one path that works the
-  // same whether the plugin is present, stale, or was removed by hand.
-  return installPlugins(agent, ref);
+  if (agent === 'codex') return installPlugins(agent, ref);
+
+  addMarketplace(agent, ref);
+  const pulled = runCli('claude', ['plugin', 'marketplace', 'update', MARKETPLACE_NAME]);
+  if (!pulled.ok) {
+    throw new Error(
+      `\`claude plugin marketplace update\` failed: ${pulled.output || 'unknown error'}.`,
+    );
+  }
+
+  return eachForestPlugin(
+    agent,
+    plugin =>
+      runCli('claude', pluginInstallArgs(agent, plugin)).ok &&
+      runCli('claude', claudePluginUpdateArgs(plugin)).ok,
+  );
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -555,6 +595,15 @@ export function detectAgents(): Agent[] {
   if (fromRepo.length) return fromRepo;
 
   return (PLUGIN_AGENTS as readonly PluginAgent[]).filter(hasPluginCli);
+}
+
+/**
+ * The agents a manifest records. One with no `agents` predates the field, when only the copy route
+ * existed. An empty list is recorded, not missing: reading it as a copy install would copy skills
+ * nobody picked.
+ */
+export function manifestAgents(manifest: Manifest): Agent[] {
+  return (manifest.agents ?? ['other']) as Agent[];
 }
 
 export function readManifest(): Manifest | null {

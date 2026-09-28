@@ -284,6 +284,30 @@ describe('skills:update', () => {
     });
   });
 
+  describe('with a manifest that records no agent', () => {
+    it('refreshes nothing rather than copying skills nobody picked', async () => {
+      expect.hasAssertions();
+      mockPipeline();
+
+      const projectDir = await runCliKeepingProjectDir({
+        commandClass: SkillsUpdateCommand,
+        files: [
+          { name: '.forest/skills-manifest.json', content: previousManifest('main', [], []) },
+        ],
+        std: [{ out: 'No coding agent is recorded in this repo.' }],
+      });
+
+      try {
+        expect(fetchMarketplace).not.toHaveBeenCalled();
+        expect(upgradePlugins).not.toHaveBeenCalled();
+        expect(fs.existsSync(path.join(projectDir, SKILLS_DIR))).toBe(false);
+        expect(fs.existsSync(path.join(projectDir, 'AGENTS.md'))).toBe(false);
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
+    });
+  });
+
   describe('on the plugin route', () => {
     it('re-installs the plugin and never fetches the tarball', async () => {
       expect.hasAssertions();

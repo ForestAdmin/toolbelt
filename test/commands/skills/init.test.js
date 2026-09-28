@@ -8,6 +8,7 @@ const testCli = require('../test-cli-helper/test-cli');
 // (route split, install, block merge, manifest write) runs for real against a fake bundle.
 jest.mock('../../../src/services/skills/skills-manager', () => ({
   ...jest.requireActual('../../../src/services/skills/skills-manager'),
+  detectAgents: jest.fn(),
   fetchMarketplace: jest.fn(),
   hasPluginCli: jest.fn(),
   installPlugins: jest.fn(),
@@ -16,6 +17,7 @@ jest.mock('../../../src/services/skills/skills-manager', () => ({
 const SkillsInitCommand = require('../../../src/commands/skills/init').default;
 const {
   SKILLS_DIR,
+  detectAgents,
   fetchMarketplace,
   hasPluginCli,
   installPlugins,
@@ -49,7 +51,9 @@ function makeFakeBundle() {
   return root;
 }
 
-function mockPipeline({ cliPresent = true, failed = [] } = {}) {
+function mockPipeline({ cliPresent = true, failed = [], detected = [] } = {}) {
+  detectAgents.mockReset();
+  detectAgents.mockReturnValue(detected);
   fetchMarketplace.mockReset();
   fetchMarketplace.mockImplementation(async () => {
     const root = makeFakeBundle();
@@ -78,6 +82,13 @@ async function runCliKeepingProjectDir(options) {
 }
 
 const skill = (...parts) => path.join(SKILLS_DIR, ...parts);
+
+// The command asks only when stdout is a terminal, so a scripted run is one whose stdout is not.
+const withoutTerminal = plan =>
+  plan.replace(
+    'env/others/process',
+    Object.create(process, { stdout: { value: { isTTY: false } } }),
+  );
 
 describe('skills:init', () => {
   describe('with a plugin-route agent (--agent claude)', () => {
@@ -111,17 +122,28 @@ describe('skills:init', () => {
       }
     });
 
-    it('warns and skips the agent when its CLI is not on the PATH', async () => {
+    it('exits non-zero and records nothing when the only agent asked for could not be set up', async () => {
       expect.hasAssertions();
       mockPipeline({ cliPresent: false });
 
-      await testCli({
+      const projectDir = await runCliKeepingProjectDir({
         commandClass: SkillsInitCommand,
         commandArgs: ['--agent', 'claude'],
-        std: [{ out: "Claude Code selected but its CLI isn't on your PATH" }],
+        files: [{ name: 'placeholder', content: 'x' }],
+        exitCode: 1,
+        std: [
+          { out: "Claude Code selected but its CLI isn't on your PATH" },
+          { err: 'Nothing was installed, so nothing was recorded.' },
+        ],
       });
 
-      expect(installPlugins).not.toHaveBeenCalled();
+      try {
+        expect(installPlugins).not.toHaveBeenCalled();
+        // No manifest, so a later `skills:update` has nothing to misread as a copy install.
+        expect(fs.existsSync(path.join(projectDir, '.forest/skills-manifest.json'))).toBe(false);
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
     });
 
     it('does not claim a skipped agent in the manifest or its context file', async () => {
@@ -162,6 +184,45 @@ describe('skills:init', () => {
       });
 
       expect(installPlugins).toHaveBeenCalledTimes(1);
+      expect(installPlugins).toHaveBeenCalledWith('claude', 'main');
+    });
+
+    it('keeps the copy-route agent and files an earlier run recorded', async () => {
+      expect.hasAssertions();
+      mockPipeline();
+      const earlierFiles = [skill('layout', 'SKILL.md'), 'AGENTS.md'];
+
+      const projectDir = await runCliKeepingProjectDir({
+        commandClass: SkillsInitCommand,
+        commandArgs: ['--agent', 'claude'],
+        files: [
+          {
+            name: '.forest/skills-manifest.json',
+            content: JSON.stringify({
+              ref: 'main',
+              installedAt: '2026-01-01T00:00:00.000Z',
+              agents: ['cursor'],
+              files: earlierFiles,
+            }),
+          },
+          { name: skill('layout', 'SKILL.md'), content: '# layout skill' },
+        ],
+        std: [{ out: 'Claude Code: installed the Forest plugins' }],
+      });
+
+      try {
+        const manifest = JSON.parse(
+          fs.readFileSync(path.join(projectDir, '.forest/skills-manifest.json'), 'utf8'),
+        );
+        expect(manifest.agents).toStrictEqual(['claude', 'cursor']);
+        expect(manifest.files).toStrictEqual([
+          skill('layout', 'SKILL.md'),
+          'CLAUDE.md',
+          'AGENTS.md',
+        ]);
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
     });
   });
 
@@ -269,6 +330,36 @@ describe('skills:init', () => {
       } finally {
         fs.rmSync(projectDir, { recursive: true, force: true });
       }
+    });
+  });
+
+  describe('without --agent, outside a terminal', () => {
+    it('fails with the flag to pass when no agent is detected', async () => {
+      expect.hasAssertions();
+      mockPipeline({ detected: [] });
+
+      await testCli({
+        commandClass: SkillsInitCommand,
+        additionnalStep: withoutTerminal,
+        exitMessage:
+          'No coding agent detected and no --agent given. Re-run with --agent <claude|codex|cursor|opencode|other>.',
+      });
+
+      expect(installPlugins).not.toHaveBeenCalled();
+      expect(fetchMarketplace).not.toHaveBeenCalled();
+    });
+
+    it('sets up the detected agents without prompting', async () => {
+      expect.hasAssertions();
+      mockPipeline({ detected: ['claude'] });
+
+      await testCli({
+        commandClass: SkillsInitCommand,
+        additionnalStep: withoutTerminal,
+        std: [{ out: 'Detected Claude Code.' }],
+      });
+
+      expect(installPlugins).toHaveBeenCalledWith('claude', 'main');
     });
   });
 

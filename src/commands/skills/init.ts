@@ -1,4 +1,4 @@
-import type { Agent, PluginAgent } from '../../services/skills/skills-manager';
+import type { Agent, Manifest, PluginAgent } from '../../services/skills/skills-manager';
 
 import { Flags } from '@oclif/core';
 
@@ -16,6 +16,7 @@ import {
   installPlugins,
   installSkills,
   isPluginAgent,
+  manifestAgents,
   mergeBlock,
   readManifest,
   removeStaleSkillFiles,
@@ -48,18 +49,31 @@ export default class SkillsInitCommand extends AbstractCommand {
 
     const pluginAgents = agents.filter(isPluginAgent);
     const copyAgents = agents.filter(agent => !isPluginAgent(agent));
+    const previous = readManifest();
 
     // Plugin route first: it touches nothing in the repo beyond `.claude/settings.json`, so a
     // failure here leaves the working tree as it was.
     const pluginOk = pluginAgents.filter(agent => this.installPluginFor(agent, flags.ref));
 
-    const files = copyAgents.length ? await this.copySkills(flags.ref, flags.force) : [];
-
     // Only what actually got set up: a plugin agent whose CLI is missing was skipped, so claiming
     // it in the manifest would have `skills:update` refresh a plugin that was never installed, and
     // its context file would tell the agent about a plugin it does not have.
     const installed = [...pluginOk, ...copyAgents];
-    const groups = contextFileGroups(installed);
+    if (!installed.length) {
+      this.logger.error('Nothing was installed, so nothing was recorded.');
+      this.exit(1);
+
+      return;
+    }
+
+    const files = copyAgents.length
+      ? await this.copySkills(flags.ref, flags.force, previous)
+      : skillDirEntries(previous?.files ?? []);
+
+    // An earlier run's agents stay recorded: this run adds to the install, it does not replace it,
+    // or the skills copied for an agent it did not name would never be refreshed again.
+    const recorded = [...new Set([...installed, ...(previous ? manifestAgents(previous) : [])])];
+    const groups = contextFileGroups(recorded);
     // One merged block per FILE, not per agent: AGENTS.md serves Codex, Cursor and OpenCode alike,
     // and a second merge would replace the first instead of adding to it.
     groups.forEach((groupAgents, file) => mergeBlock(file, forestBlock(groupAgents)));
@@ -67,7 +81,7 @@ export default class SkillsInitCommand extends AbstractCommand {
     writeManifest({
       ref: flags.ref,
       installedAt: new Date().toISOString(),
-      agents: installed,
+      agents: recorded,
       files: [...files, ...groups.keys()],
     });
 
@@ -146,9 +160,11 @@ export default class SkillsInitCommand extends AbstractCommand {
   }
 
   /** Copy the curated skills into `.agents/skills/` for the agents that only read SKILL.md files. */
-  private async copySkills(ref: string, force: boolean): Promise<string[]> {
-    const previous = readManifest(); // to prune Forest files that left the bundle on a re-install
-
+  private async copySkills(
+    ref: string,
+    force: boolean,
+    previous: Manifest | null,
+  ): Promise<string[]> {
     this.logger.info(`Fetching Forest skills from ${this.chalk.bold(MARKETPLACE_REPO)}@${ref}…`);
     const { root: srcRoot, cleanup } = await fetchMarketplace(ref);
     try {
