@@ -100,12 +100,17 @@ export function forestBlock(agents: Agent[]): string {
   if (agents.some(agent => !isPluginAgent(agent)))
     where.push(`installed in \`${SKILLS_DIR}/\` — e.g. \`layout\`, \`onboard\`, \`forest-code\``);
 
-  return [
+  const lines = [
     `This project uses **Forest Admin**. Skills to build and customize it are ${where.join(
       ', and ',
     )}.`,
-    'Forest documentation is searchable via the `forest-docs` MCP server.',
-  ].join('\n');
+  ];
+  // Only the plugin route wires the docs MCP: announcing it to a copy-route agent points it at a
+  // server it does not have.
+  if (agents.some(isPluginAgent))
+    lines.push('Forest documentation is searchable via the `forest-docs` MCP server.');
+
+  return lines.join('\n');
 }
 
 /** Group agents by the context file they write to, so each file gets exactly one merged block. */
@@ -307,12 +312,13 @@ function installSkill(
       // in the incoming bundle (derived from source, mapped to dest — never the actual dir
       // contents, which may include user-added files) AND in the previous manifest (proof a past
       // run wrote them). A dir that pre-existed the first run was authored by the user: claiming
-      // its files would mark them managed and a later refresh would prune them.
+      // its files would mark them managed and a later refresh would prune them. The ones on disk
+      // that we never wrote are reported, so the user learns why they did not get our version.
+      const incoming = listFiles(src).map(f => path.join(dest, path.relative(src, f)));
+
       return {
-        written: listFiles(src)
-          .map(f => path.join(dest, path.relative(src, f)))
-          .filter(isManaged),
-        skipped: [],
+        written: incoming.filter(isManaged),
+        skipped: incoming.filter(file => !isManaged(file) && fs.existsSync(file)),
       };
     }
     // With --force on an existing dir we fall through and overlay the incoming bundle on top. We
@@ -332,8 +338,9 @@ function installSkill(
  *
  * The same `FOREST_PLUGINS` the plugin route installs — one list, so the two routes cannot drift.
  * A plugin with no `skills/` is simply skipped rather than rejected: `forest-docs` legitimately
- * carries only an MCP config, which this route cannot wire anyway. What must not pass silently is
- * copying NOTHING, so that is what the guard checks — a marketplace whose layout moved under us.
+ * carries only an MCP config, which this route cannot wire anyway. What must not pass silently is a
+ * bundle carrying no skill at all, so that is what the guard checks — a marketplace whose layout
+ * moved under us.
  *
  * `previousFiles` is the file list from the previous manifest (`null` on a first run). It bounds
  * what we may claim as managed AND what we may overwrite: a file we never wrote is the user's,
@@ -352,25 +359,27 @@ export function installSkills(
   // project. Checked once here so the run aborts whole rather than half-applied.
   assertNoSymlinkedAncestor(path.join(SKILLS_DIR, 'x'));
 
-  const result = mergeCopy(
-    FOREST_PLUGINS.flatMap(plugin => {
-      const skillsRoot = path.join(srcRoot, plugin, 'skills');
-      if (!fs.existsSync(skillsRoot)) return [];
+  const skills = FOREST_PLUGINS.flatMap(plugin => {
+    const skillsRoot = path.join(srcRoot, plugin, 'skills');
+    if (!fs.existsSync(skillsRoot)) return [];
 
-      return listSkillDirs(skillsRoot).map(skill =>
-        installSkill(path.join(skillsRoot, skill), path.join(SKILLS_DIR, skill), force, isManaged),
-      );
-    }),
-  );
+    return listSkillDirs(skillsRoot).map(skill => path.join(skillsRoot, skill));
+  });
 
-  if (!result.written.length && !result.skipped.length) {
+  // What the bundle carries, not what this run copied: a re-run over skills already on disk copies
+  // nothing, and that is not a marketplace whose layout moved.
+  if (!skills.length) {
     throw new Error(
       `No skills found in the marketplace for ${FOREST_PLUGINS.join(', ')} (expected ` +
         '`<plugin>/skills/<name>/SKILL.md`). The marketplace layout changed — check the --ref value.',
     );
   }
 
-  return result;
+  return mergeCopy(
+    skills.map(src =>
+      installSkill(src, path.join(SKILLS_DIR, path.basename(src)), force, isManaged),
+    ),
+  );
 }
 
 /** From a manifest file list, the entries that live under the skills dir (normalized for Windows,
@@ -445,10 +454,27 @@ export function mergeBlock(file: string, content: string): void {
 
 const PLUGIN_BINS: Record<PluginAgent, string> = { claude: 'claude', codex: 'codex' };
 
+/** Long enough for a marketplace clone on a slow link, short enough that a CLI stuck on a prompt
+ *  nobody can see (its output is piped) ends the run instead of hanging it. */
+const CLI_TIMEOUT_MS = 120_000;
+const VERSION_CHECK_TIMEOUT_MS = 10_000;
+
 /** Run an agent CLI and return its outcome. Never throws on a non-zero exit — callers decide. */
-function runCli(bin: string, args: string[]): { ok: boolean; output: string } {
-  const res = spawnSync(bin, args, { encoding: 'utf8' });
+function runCli(
+  bin: string,
+  args: string[],
+  timeout = CLI_TIMEOUT_MS,
+): { ok: boolean; output: string } {
+  const res = spawnSync(bin, args, { encoding: 'utf8', timeout });
   const output = `${res.stdout ?? ''}${res.stderr ?? ''}`.trim();
+  if ((res.error as NodeJS.ErrnoException)?.code === 'ETIMEDOUT') {
+    return {
+      ok: false,
+      output: `\`${bin} ${args.join(' ')}\` did not answer within ${
+        timeout / 1000
+      }s. Run it by hand once to see what it waits for.`,
+    };
+  }
   if (res.error) return { ok: false, output: res.error.message };
 
   return { ok: res.status === 0, output };
@@ -456,7 +482,7 @@ function runCli(bin: string, args: string[]): { ok: boolean; output: string } {
 
 /** True if the agent's CLI is installed and runnable. */
 export function hasPluginCli(agent: PluginAgent): boolean {
-  return runCli(PLUGIN_BINS[agent], ['--version']).ok;
+  return runCli(PLUGIN_BINS[agent], ['--version'], VERSION_CHECK_TIMEOUT_MS).ok;
 }
 
 /**

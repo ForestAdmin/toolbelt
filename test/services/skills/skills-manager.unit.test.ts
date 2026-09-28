@@ -139,6 +139,13 @@ describe('skills-manager', () => {
       expect(forestBlock(['cursor'])).not.toContain('`forest` plugin');
     });
 
+    it('announces the docs MCP only when a plugin agent, which gets it wired, reads the file', () => {
+      expect.assertions(3);
+      expect(forestBlock(['claude'])).toContain('`forest-docs` MCP');
+      expect(forestBlock(['codex', 'cursor'])).toContain('`forest-docs` MCP');
+      expect(forestBlock(['cursor', 'opencode'])).not.toContain('MCP');
+    });
+
     it('covers BOTH routes in one block when a single context file serves both', () => {
       expect.assertions(2);
       // AGENTS.md is Codex's (plugin) and Cursor's (copy) alike.
@@ -326,6 +333,29 @@ describe('skills-manager', () => {
         expect(fs.readFileSync(layoutSkill, 'utf8')).toBe('edited');
         installSkills(root, true, first); // force → overwrite a file we wrote before
         expect(fs.readFileSync(layoutSkill, 'utf8')).toBe('# layout skill');
+      });
+    });
+
+    it('reports the files of a pre-existing user skill dir as kept, and nothing that is not on disk', () => {
+      expect.assertions(2);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        fs.mkdirSync(path.join(SKILLS_DIR, 'layout'), { recursive: true });
+        fs.writeFileSync(layoutSkill, 'my own skill');
+        const { skipped } = installSkills(root, false, null);
+        expect(skipped).toContain(layoutSkill);
+        // The bundle's other layout file is absent here, so it is nobody's version to keep.
+        expect(skipped).not.toContain(path.join(SKILLS_DIR, 'layout', 'references', 'a.md'));
+      });
+    });
+
+    it('does not blame the marketplace when every skill dir is already on disk', () => {
+      expect.assertions(1);
+      withTempDir(dir => {
+        const root = fakeMarketplace(path.join(dir, 'src'));
+        installSkills(root, false, null);
+        // A teammate's clone: the skills are committed, the manifest is not.
+        expect(() => installSkills(root, false, null)).not.toThrow();
       });
     });
 
@@ -639,6 +669,32 @@ describe('skills-manager', () => {
         'codex',
         ['plugin', 'add', `${FOREST_PLUGINS[0]}@forest-admin-ai`, '--json'],
         expect.anything(),
+      );
+    });
+
+    it('gives an agent CLI a finite time, shorter for the version check', () => {
+      expect.assertions(2);
+      mockCli();
+      installPlugins('claude');
+      expect(spawnSync).toHaveBeenCalledWith('claude', expect.any(Array), {
+        encoding: 'utf8',
+        timeout: 120_000,
+      });
+      hasPluginCli('claude');
+      expect(spawnSync).toHaveBeenLastCalledWith('claude', ['--version'], {
+        encoding: 'utf8',
+        timeout: 10_000,
+      });
+    });
+
+    it('says which CLI call stalled when it runs out of time', () => {
+      expect.assertions(1);
+      spawnSync.mockReset();
+      spawnSync.mockReturnValue({
+        error: Object.assign(new Error('spawnSync claude ETIMEDOUT'), { code: 'ETIMEDOUT' }),
+      });
+      expect(() => installPlugins('claude')).toThrow(
+        `\`claude plugin marketplace add ${MARKETPLACE_REPO} --scope project\` did not answer within 120s.`,
       );
     });
 
