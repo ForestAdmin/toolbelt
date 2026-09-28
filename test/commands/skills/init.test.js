@@ -378,6 +378,63 @@ describe('skills:init', () => {
     });
   });
 
+  describe('when the copy route fails after the plugin route installed', () => {
+    it('still records the plugin agent in the manifest and its context file', async () => {
+      expect.hasAssertions();
+      mockPipeline();
+      fetchMarketplace.mockImplementation(async () => {
+        throw new Error('Timed out reaching the Forest marketplace.');
+      });
+
+      const projectDir = await runCliKeepingProjectDir({
+        commandClass: SkillsInitCommand,
+        commandArgs: ['--agent', 'claude', '--agent', 'cursor'],
+        files: [{ name: 'placeholder', content: 'x' }],
+        std: [
+          { out: 'Claude Code: installed the Forest plugins' },
+          {
+            out: 'Could not copy the Forest skills into .agents/skills/: Timed out reaching the Forest marketplace.',
+          },
+        ],
+      });
+
+      try {
+        const at = p => path.join(projectDir, p);
+        const manifest = JSON.parse(fs.readFileSync(at('.forest/skills-manifest.json'), 'utf8'));
+        expect(manifest.agents).toStrictEqual(['claude']);
+        expect(fs.existsSync(at('CLAUDE.md'))).toBe(true);
+        expect(fs.existsSync(at('AGENTS.md'))).toBe(false);
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
+    });
+
+    it('exits non-zero and records nothing when the copy route was the only one asked for', async () => {
+      expect.hasAssertions();
+      mockPipeline();
+      fetchMarketplace.mockImplementation(async () => {
+        throw new Error('Timed out reaching the Forest marketplace.');
+      });
+
+      const projectDir = await runCliKeepingProjectDir({
+        commandClass: SkillsInitCommand,
+        commandArgs: ['--agent', 'cursor'],
+        files: [{ name: 'placeholder', content: 'x' }],
+        exitCode: 1,
+        std: [
+          { out: 'Could not copy the Forest skills into .agents/skills/' },
+          { err: 'Nothing was installed, so nothing was recorded.' },
+        ],
+      });
+
+      try {
+        expect(fs.existsSync(path.join(projectDir, '.forest/skills-manifest.json'))).toBe(false);
+      } finally {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      }
+    });
+  });
+
   describe('when one context file serves both routes (--agent codex --agent cursor)', () => {
     it('writes a single AGENTS.md block covering the plugin AND the copied skills', async () => {
       expect.hasAssertions();

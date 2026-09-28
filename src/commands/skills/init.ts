@@ -61,10 +61,16 @@ export default class SkillsInitCommand extends AbstractCommand {
     // failure here leaves the working tree as it was.
     const pluginOk = pluginAgents.filter(agent => this.installPluginFor(agent, flags.ref));
 
+    // A copy route that fails leaves the files an earlier run recorded exactly where they were.
+    const copied = copyAgents.length
+      ? await this.copySkills(flags.ref, flags.force, previous)
+      : null;
+    const copyOk = copied ? copyAgents : [];
+
     // Only what actually got set up: a plugin agent whose CLI is missing was skipped, so claiming
     // it in the manifest would have `skills:update` refresh a plugin that was never installed, and
     // its context file would tell the agent about a plugin it does not have.
-    const installed = [...pluginOk, ...copyAgents];
+    const installed = [...pluginOk, ...copyOk];
     if (!installed.length) {
       this.logger.error('Nothing was installed, so nothing was recorded.');
       this.exit(1);
@@ -72,9 +78,7 @@ export default class SkillsInitCommand extends AbstractCommand {
       return;
     }
 
-    const files = copyAgents.length
-      ? await this.copySkills(flags.ref, flags.force, previous)
-      : skillDirEntries(previous?.files ?? []);
+    const files = copied ?? skillDirEntries(previous?.files ?? []);
 
     // An earlier run's agents stay recorded: this run adds to the install, it does not replace it,
     // or the skills copied for an agent it did not name would never be refreshed again.
@@ -91,7 +95,7 @@ export default class SkillsInitCommand extends AbstractCommand {
       files: [...files, ...groups.keys()],
     });
 
-    this.logNextSteps(pluginOk, copyAgents);
+    this.logNextSteps(pluginOk, copyOk);
   }
 
   /** Explicit `--agent` wins; otherwise detect, and only ask when there's a terminal to ask in. */
@@ -176,8 +180,26 @@ export default class SkillsInitCommand extends AbstractCommand {
     return installed.length > 0;
   }
 
-  /** Copy the curated skills into `.agents/skills/` for the agents that only read SKILL.md files. */
+  /**
+   * Copy the curated skills into `.agents/skills/` for the agents that only read SKILL.md files.
+   * Returns null, having warned, when the route fails: the plugin route may already have installed,
+   * and throwing here would leave that install out of the manifest and the context files.
+   */
   private async copySkills(
+    ref: string,
+    force: boolean,
+    previous: Manifest | null,
+  ): Promise<string[] | null> {
+    try {
+      return await this.copySkillsFromMarketplace(ref, force, previous);
+    } catch (error) {
+      this.logger.warn(`Could not copy the Forest skills into ${SKILLS_DIR}/: ${error.message}`);
+
+      return null;
+    }
+  }
+
+  private async copySkillsFromMarketplace(
     ref: string,
     force: boolean,
     previous: Manifest | null,
