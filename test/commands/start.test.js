@@ -398,6 +398,52 @@ describe('start', () => {
       });
     });
 
+    it('says the schema never arrived, rather than live, when the agent reports the sync failed', async () => {
+      expect.hasAssertions();
+      runCapture
+        .mockReset()
+        .mockResolvedValue({ stdout: JSON.stringify({ envSecret: 'deadbeef' }), stderr: '' });
+      runStep.mockReset().mockResolvedValue(undefined);
+      // Rails boots and serves either way — the only sign is this line, on the same stream.
+      startProcess.mockReset().mockImplementation((command, args, options) => {
+        options.onOutput('[ForestAdmin] Schema sync failed, continuing without it.');
+        options.onOutput('* Listening on http://127.0.0.1:3002');
+
+        return { child: undefined, ready: Promise.resolve(), mute: () => {} };
+      });
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+        std: [
+          { out: 'Forest is mounted, but your schema never reached it.' },
+          { out: 'your app exposes at least one model' },
+          // The dashboard link still shows: the project exists, it is the schema that is missing.
+          { out: 'https://app.forestadmin.com/app' },
+          { not: 'Forest is live in your app!' },
+        ],
+      });
+    });
+
+    it('still reports success when the boot says nothing about a failed sync', async () => {
+      expect.hasAssertions();
+      runCapture
+        .mockReset()
+        .mockResolvedValue({ stdout: JSON.stringify({ envSecret: 'deadbeef' }), stderr: '' });
+      runStep.mockReset().mockResolvedValue(undefined);
+      startProcess.mockReset().mockImplementation((command, args, options) => {
+        options.onOutput('* Listening on http://127.0.0.1:3002');
+
+        return { child: undefined, ready: Promise.resolve(), mute: () => {} };
+      });
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+        std: [{ out: 'Forest is live in your app!' }, { not: 'your schema never reached it' }],
+      });
+    });
+
     it('registers an in-app project then installs the five gems the boot actually needs', async () => {
       expect.hasAssertions();
 

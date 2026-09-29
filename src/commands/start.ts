@@ -40,6 +40,10 @@ const CLI_SETTINGS = [
 // framework mounts log before `start()` has run, and so before it can fail.
 const READY = /schema was (updated|not updated)/i;
 
+// What `forest_admin_rails` logs when its schema never reached Forest. It boots anyway — the app
+// serves, `/forest` answers — so nothing else in the flow can tell that the panel will be empty.
+const SCHEMA_SYNC_FAILED = /schema sync failed/i;
+
 type Flow = 'demo' | 'standalone' | 'inapp';
 type Tail = {
   child?: ChildProcess;
@@ -279,14 +283,24 @@ export default class StartCommand extends AbstractCommand {
   private boot(
     command: string,
     args: string[],
-    options: { cwd?: string; env?: NodeJS.ProcessEnv; ready?: RegExp } = {},
+    options: { cwd?: string; env?: NodeJS.ProcessEnv; ready?: RegExp; trouble?: RegExp } = {},
   ) {
-    return startProcess(command, args, {
+    // A boot can succeed and still not deliver what the flow promised. `trouble` is the line that
+    // says so, read off the same stream `ready` watches, so the caller can report what happened
+    // instead of the tail it would have printed. Non-global on purpose: `test()` on a /g regex
+    // carries `lastIndex` between chunks and would start missing matches.
+    let troubled = false;
+    const started = startProcess(command, args, {
       ready: options.ready ?? READY,
       cwd: options.cwd,
       env: options.env,
-      onOutput: chunk => this.logger.log(this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`)),
+      onOutput: chunk => {
+        if (options.trouble?.test(chunk)) troubled = true;
+        this.logger.log(this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`));
+      },
     });
+
+    return Object.assign(started, { troubled: () => troubled });
   }
 
   private ask(question: Record<string, unknown>) {
@@ -556,10 +570,13 @@ export default class StartCommand extends AbstractCommand {
       // Puma's bind line stays accepted here: when `forest_admin_rails` logs its schema push is
       // unverified, and waiting for a line that never comes would fail every Rails boot.
       ready: /Listening on http|schema was updated/i,
+      // So the success line is read instead from the failure the agent does print.
+      trouble: SCHEMA_SYNC_FAILED,
     });
     this.logger.log(this.chalk.grey(`\n$ bin/rails server -p ${RAILS_PORT}   (booting…)`));
     await booted.ready;
-    this.doneInApp(name, RAILS_PORT);
+    if (booted.troubled()) this.doneInAppWithoutSchema(name, RAILS_PORT);
+    else this.doneInApp(name, RAILS_PORT);
     await this.handoff({ ...tail, child: booted.child, mute: booted.mute });
   }
 
@@ -1127,6 +1144,30 @@ export default class StartCommand extends AbstractCommand {
     );
     this.logger.log(
       `  ${this.chalk.bold('Served by →')} http://localhost:${port}   (this terminal)`,
+    );
+  }
+
+  /**
+   * The app is up and `/forest` answers, but Forest has no schema for it: the panel opens empty.
+   * Said here rather than in `doneInApp`, because "live" would be the one thing the user should
+   * not conclude. The two causes seen in practice are named — an app with no model for the
+   * datasource to read, and Rails < 8.1, whose ActiveSupport passes an option `json` 3 rejects.
+   */
+  private doneInAppWithoutSchema(name: string, port: number): void {
+    this.logger.warn('Forest is mounted, but your schema never reached it.');
+    this.logger.log('  The back-office will open empty until the next boot pushes it.');
+    this.logger.log(`  ${this.chalk.bold('Check →')} your app exposes at least one model`);
+    this.logger.log(
+      `  ${this.chalk.bold('Check →')} Rails 8.1+ or 7.2.4+ (older ones break on \`json\` 3)`,
+    );
+    this.logger.log(
+      `  ${this.chalk.bold('Then →')} ${this.chalk.grey(`bin/rails server -p ${port}`)}`,
+    );
+    this.logger.log(`  ${this.chalk.bold('Local /forest →')} http://localhost:${port}/forest`);
+    this.logger.log(
+      `  ${this.chalk.bold('Dashboard →')} ${this.chalk.cyan(
+        `https://app.forestadmin.com/${name}`,
+      )}`,
     );
   }
 
