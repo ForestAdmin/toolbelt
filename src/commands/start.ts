@@ -154,7 +154,13 @@ export default class StartCommand extends AbstractCommand {
       `\nWelcome to ${this.chalk.green('Forest')}. Let's get your back-office running.`,
     );
 
-    await this.forest(['login']); // OIDC device flow (browser signup/login)
+    // A session still valid here is the one every step below reads, from the same TOKEN_PATH:
+    // sending the user through the browser device flow again would only cost them a code.
+    if (this.context.authenticator.getAuthToken()) {
+      this.logger.log(this.chalk.grey('  (already logged in — skipping `forest login`)'));
+    } else {
+      await this.forest(['login']); // OIDC device flow (browser signup/login)
+    }
 
     const flow = await this.pickFlow(flags.flow as Flow | undefined);
 

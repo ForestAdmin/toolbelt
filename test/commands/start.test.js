@@ -647,6 +647,29 @@ describe('start', () => {
     });
   });
 
+  describe('login', () => {
+    it('skips the browser device flow when a valid session exists', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--dry-run', '--flow', 'demo'],
+        token: 'valid-token',
+        std: [{ out: 'already logged in' }, { not: '$ forest login' }],
+      });
+    });
+
+    it('logs in when there is no session', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--dry-run', '--flow', 'demo'],
+        std: [{ out: '$ forest login' }, { not: 'already logged in' }],
+      });
+    });
+  });
+
   describe('--dry-run', () => {
     it('runs nothing at all', async () => {
       expect.hasAssertions();
