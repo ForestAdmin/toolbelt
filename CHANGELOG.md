@@ -1,3 +1,10 @@
+## [5.22.1](https://github.com/ForestAdmin/toolbelt/compare/v5.22.0...v5.22.1) (2026-09-30)
+
+
+### Bug Fixes
+
+* **roles:** support colons in smart-action names in the roles CSV ([#813](https://github.com/ForestAdmin/toolbelt/issues/813)) ([26eda89](https://github.com/ForestAdmin/toolbelt/commit/26eda8954f6044dc29e4986fb3365af371735c72))
+
 # [5.22.0](https://github.com/ForestAdmin/toolbelt/compare/v5.21.0...v5.22.0) (2026-09-23)
 
 
