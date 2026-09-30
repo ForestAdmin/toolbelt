@@ -68,4 +68,31 @@ describe('formatPlan', () => {
     expect(plan).toContain('layout (1 change)');
     expect(plan).toContain('1 operation to send (1 PATCH /api/layout)');
   });
+
+  it('drops the per-op listing in summary mode, and keeps the counts', () => {
+    expect.assertions(3);
+    const ops = [
+      op({ op: 'replace', label: 'collections.customers.displayName' }),
+      op({ op: 'add', label: 'collections.customers.segments' }),
+    ];
+
+    const plan = formatPlan(ops, [], true);
+
+    expect(plan).toContain('layout (2 changes)');
+    expect(plan).toContain('2 operations to send (2 PATCH /api/layout)');
+    // The listing is what summary mode exists to remove.
+    expect(plan).not.toContain('collections.customers.displayName');
+  });
+
+  it('keeps every warning in summary mode — what is cut is the chatter, not the signals', () => {
+    expect.assertions(2);
+    const plan = formatPlan(
+      [op({ op: 'replace', label: 'collections.customers.displayName' })],
+      ['cannot remove « transaction_id » (items defined by the agent schema)'],
+      true,
+    );
+
+    expect(plan).toContain('transaction_id');
+    expect(plan).not.toContain('collections.customers.displayName');
+  });
 });
