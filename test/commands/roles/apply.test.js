@@ -10,7 +10,11 @@ const { testEnvWithoutSecret } = require('../../fixtures/env');
 
 // Distinct role names (Admin=3, Viewer=4). Permissions live under env 3 (name1),
 // so applying to name2 (env 4) sees an empty current state — a clean baseline.
-function roleById(id, name) {
+function roleById(
+  id,
+  name,
+  collections = [{ collectionName: 'orders', browseEnabled: true, smartActions: [] }],
+) {
   return nock('http://localhost:3001')
     .get(`/api/roles/${id}`)
     .reply(200, {
@@ -19,15 +23,7 @@ function roleById(id, name) {
         id,
         attributes: {
           name,
-          permissions: {
-            environments: [
-              {
-                environmentId: 3,
-                enabled: true,
-                collections: [{ collectionName: 'orders', browseEnabled: true, smartActions: [] }],
-              },
-            ],
-          },
+          permissions: { environments: [{ environmentId: 3, enabled: true, collections }] },
         },
       },
     });
@@ -113,6 +109,84 @@ describe('roles:apply', () => {
           },
         ],
         std: [{ out: 'Aborted: no change made.' }],
+        assertNoStdError: false,
+      }));
+  });
+
+  describe('when a CSV keeps only a smart-action column of a collection whose name has a colon', () => {
+    it('patches only that action, on an encoded path to that collection', () =>
+      testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: RolesApplyCommand,
+        commandArgs: ['--env', 'name1', '-p', '2', '--force', 'roles.csv'],
+        files: [
+          {
+            name: 'roles.csv',
+            content: 'role,enabled,schema:orders:Act:trigger\nAdmin,true,false\n',
+          },
+        ],
+        api: [
+          () => getEnvironmentListValid(),
+          () => getRolesValid(),
+          () =>
+            roleById('3', 'Admin', [
+              {
+                collectionName: 'schema:orders',
+                browseEnabled: true,
+                smartActions: [{ smartActionName: 'Act', triggerEnabled: true }],
+              },
+            ]),
+          () => roleById('4', 'Viewer', []),
+          () =>
+            nock('http://localhost:3001')
+              // The CSV has no `schema:orders:browse` column, so browse is left alone.
+              .patch('/api/roles/3/permissions', [
+                {
+                  op: 'replace',
+                  path: '/environments/3/collections/schema%3Aorders/smartActions/Act/triggerEnabled',
+                  value: false,
+                },
+              ])
+              .reply(204),
+        ],
+        std: [{ out: 'Role Admin: 1 change(s)' }, { out: 'Applied changes to 1 role(s).' }],
+        assertNoStdError: false,
+      }));
+  });
+
+  describe('when a collection name is the colon-prefix of another that has a smart action', () => {
+    it('still applies a change to either collection', () =>
+      testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: RolesApplyCommand,
+        commandArgs: ['--env', 'name1', '-p', '2', '--force', 'roles.csv'],
+        files: [{ name: 'roles.csv', content: 'role,enabled,billing:browse\nAdmin,true,true\n' }],
+        api: [
+          () => getEnvironmentListValid(),
+          () => getRolesValid(),
+          () =>
+            roleById('3', 'Admin', [
+              { collectionName: 'billing', browseEnabled: false, smartActions: [] },
+              {
+                collectionName: 'billing:invoices',
+                smartActions: [{ smartActionName: 'Refund', triggerEnabled: true }],
+              },
+            ]),
+          () => roleById('4', 'Viewer', []),
+          () =>
+            nock('http://localhost:3001')
+              .patch('/api/roles/3/permissions', [
+                {
+                  op: 'replace',
+                  path: '/environments/3/collections/billing/browseEnabled',
+                  value: true,
+                },
+              ])
+              .reply(204),
+        ],
+        std: [{ out: 'Role Admin: 1 change(s)' }, { out: 'Applied changes to 1 role(s).' }],
         assertNoStdError: false,
       }));
   });

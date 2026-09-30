@@ -6,7 +6,12 @@ import { readFileSync } from 'fs';
 import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
 import EnvironmentManager from '../../services/environment-manager';
 import RoleManager from '../../services/role-manager';
-import { computeDiff, formatWide, parseWide } from '../../services/roles-csv';
+import {
+  computeDiff,
+  currentStateOf,
+  environmentCollectionsOf,
+  parseWide,
+} from '../../services/roles-csv';
 import withCurrentProject from '../../services/with-current-project';
 
 type NamedEntity = { id: number | string; name: string };
@@ -110,7 +115,7 @@ export default class RolesApplyCommand extends AbstractAuthenticatedCommand {
       fullRoles.push(await roleManager.getRoleById(role.id));
     }
 
-    const desired = parseWide(csvContent, envId);
+    const desired = parseWide(csvContent, envId, environmentCollectionsOf(fullRoles, envId));
     const diffs = computeDiff(this.buildCurrentState(fullRoles, envId), desired) as RoleDiff[];
 
     // apply only updates existing roles; creating roles is `roles:create`'s job.
@@ -138,15 +143,12 @@ export default class RolesApplyCommand extends AbstractAuthenticatedCommand {
     await this.patchAll(roleManager, diffs);
   }
 
-  // Normalize fetched roles into the parseWide shape, re-pairing ids by NAME (not
-  // array index) so a reordering in format/parse can't misattribute them.
+  // currentStateOf keeps fullRoles' order, so each state pairs with its role's id.
   // eslint-disable-next-line class-methods-use-this -- pure helper kept beside its caller
   private buildCurrentState(fullRoles: FullRole[], envId: string): unknown[] {
-    const idByName = new Map(fullRoles.map(role => [role.name, role.id]));
-
-    return parseWide(formatWide(fullRoles, envId), envId).map(role => ({
+    return currentStateOf(fullRoles, envId).map((role, index) => ({
       ...role,
-      id: idByName.get(role.name),
+      id: fullRoles[index].id,
     }));
   }
 

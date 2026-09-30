@@ -100,17 +100,35 @@ function collectSmartActionsForCollection(roles, envId, colName) {
 
 function collectColumns(collections, roles, envId) {
   return collections.reduce((cols, colName) => {
-    const crudCols = CRUD_SUFFIXES.map(s => `${colName}:${s}`);
+    const crudCols = CRUD_SUFFIXES.map(s => ({
+      header: `${colName}:${s}`,
+      collectionName: colName,
+      suffix: s,
+    }));
     const actions = collectSmartActionsForCollection(roles, envId, colName);
     const saCols = actions.reduce(
-      (acc, action) => [...acc, ...SMART_ACTION_SUFFIXES.map(s => `${colName}:${action}:${s}`)],
+      (acc, action) => [
+        ...acc,
+        ...SMART_ACTION_SUFFIXES.map(s => ({
+          header: `${colName}:${action}:${s}`,
+          collectionName: colName,
+          actionName: action,
+          suffix: s,
+        })),
+      ],
       [],
     );
     return [...cols, ...crudCols, ...saCols];
   }, []);
 }
 
-function buildColumns(roles, envId) {
+/**
+ * The sorted collection names the roles grant anything on in this environment.
+ * @param {Array} roles
+ * @param {string|number} envId
+ * @returns {string[]}
+ */
+function collectionNamesOf(roles, envId) {
   const collectionSet = new Set();
   roles.forEach(role => {
     const envPerms = (role.permissions.environments || []).find(
@@ -119,8 +137,59 @@ function buildColumns(roles, envId) {
     if (!envPerms) return;
     (envPerms.collections || []).forEach(col => collectionSet.add(col.collectionName));
   });
-  const collections = Array.from(collectionSet).sort();
-  return collectColumns(collections, roles, envId);
+  return Array.from(collectionSet).sort();
+}
+
+function buildColumns(roles, envId) {
+  return collectColumns(collectionNamesOf(roles, envId), roles, envId);
+}
+
+/**
+ * Each collection the roles grant anything on in this environment, with the smart
+ * actions they carry on it.
+ * @param {Array} roles
+ * @param {string|number} envId
+ * @returns {Map<string, Set<string>>}
+ */
+function environmentCollectionsOf(roles, envId) {
+  return new Map(
+    collectionNamesOf(roles, envId).map(name => [
+      name,
+      new Set(collectSmartActionsForCollection(roles, envId, name)),
+    ]),
+  );
+}
+
+function booleanFields(source, fields) {
+  return Object.fromEntries(fields.map(field => [field, Boolean(source[field])]));
+}
+
+/**
+ * The roles' permissions in this environment, in the shape parseWide returns. Built
+ * from the roles themselves: re-parsing their own export would have to guess where a
+ * colon-named collection ends, which the roles already say.
+ * @param {Array} roles
+ * @param {string|number} envId
+ */
+function currentStateOf(roles, envId) {
+  return roles.map(role => {
+    const envPerms = (role.permissions.environments || []).find(
+      e => String(e.environmentId ?? e.id) === String(envId),
+    );
+    return {
+      name: role.name,
+      enabled: Boolean(envPerms?.enabled),
+      envId: String(envId),
+      collections: (envPerms?.collections || []).map(col => ({
+        collectionName: col.collectionName,
+        ...booleanFields(col, CRUD_FIELDS),
+        smartActions: (col.smartActions || []).map(sa => ({
+          smartActionName: sa.smartActionName,
+          ...booleanFields(sa, SA_FIELDS),
+        })),
+      })),
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -146,17 +215,13 @@ function getSmartActionValue(col, actionName, suffix) {
   return Boolean(sa[SA_FIELD_MAP[suffix]]);
 }
 
-function buildCellForColumn(colHeader, colByName) {
-  const parts = colHeader.split(':');
-  if (parts.length === 2) {
-    const [colName, suffix] = parts;
-    return String(getCrudValue(colByName[colName], suffix));
-  }
-  if (parts.length === 3) {
-    const [colName, actionName, suffix] = parts;
-    return String(getSmartActionValue(colByName[colName], actionName, suffix));
-  }
-  return 'false';
+// Reads the structured column descriptor built by collectColumns rather than
+// re-splitting its `header`: a smart-action name may itself contain a colon
+// (e.g. "SAML SSO #2: Edit SSO config"), which a split would mis-slice.
+function buildCellForColumn(column, colByName) {
+  const col = colByName[column.collectionName];
+  if (column.actionName === undefined) return String(getCrudValue(col, column.suffix));
+  return String(getSmartActionValue(col, column.actionName, column.suffix));
 }
 
 function buildRoleRow(role, columns, envId) {
@@ -182,7 +247,7 @@ function buildRoleRow(role, columns, envId) {
  */
 function formatWide(roles, envId) {
   const columns = buildColumns(roles, envId);
-  const header = ['role', 'enabled', ...columns].map(escapeCsv).join(',');
+  const header = ['role', 'enabled', ...columns.map(c => c.header)].map(escapeCsv).join(',');
   const rows = [header, ...roles.map(role => buildRoleRow(role, columns, envId))];
   return `${rows.join('\n')}\n`;
 }
@@ -191,27 +256,14 @@ function formatWide(roles, envId) {
 // parseWide helpers
 // ---------------------------------------------------------------------------
 
+// A permission field is set only when the CSV has its column: computeDiff leaves an
+// absent field alone, so a CSV that omits a column never revokes it.
 function emptyCollection(colName) {
-  return {
-    collectionName: colName,
-    browseEnabled: false,
-    readEnabled: false,
-    addEnabled: false,
-    editEnabled: false,
-    deleteEnabled: false,
-    exportEnabled: false,
-    smartActions: [],
-  };
+  return { collectionName: colName, smartActions: [] };
 }
 
 function emptySa(actionName) {
-  return {
-    smartActionName: actionName,
-    triggerEnabled: false,
-    approvalRequired: false,
-    userApprovalEnabled: false,
-    selfApprovalEnabled: false,
-  };
+  return { smartActionName: actionName };
 }
 
 function applyTwoPartHeader(collectionMap, colName, suffix, rawValue) {
@@ -238,15 +290,89 @@ function applyThreePartHeader(collectionMap, colName, actionName, suffix, rawVal
   return { ...collectionMap, [colName]: { ...col, smartActions: updatedSmartActions } };
 }
 
-function applyHeader(collectionMap, header, rawValue) {
-  const parts = header.split(':');
-  if (parts.length === 2) return applyTwoPartHeader(collectionMap, parts[0], parts[1], rawValue);
-  if (parts.length === 3)
-    return applyThreePartHeader(collectionMap, parts[0], parts[1], parts[2], rawValue);
-  throw new Error(`Unrecognized CSV column "${header}".`);
+function splitSuffix(header) {
+  const lastColon = header.lastIndexOf(':');
+  if (lastColon === -1) return null;
+  return { prefix: header.slice(0, lastColon), suffix: header.slice(lastColon + 1) };
 }
 
-function parseRow(headers, cells, envId) {
+// A CRUD column carries its collection name whole, colons included, and the export
+// writes one for every collection: they pin where a smart-action column's collection ends.
+function collectionNamesFromCrudHeaders(headers) {
+  const names = headers
+    .map(splitSuffix)
+    .filter(split => split && split.prefix && CRUD_SUFFIXES.includes(split.suffix))
+    .map(split => split.prefix);
+  return [...new Set(names)];
+}
+
+function smartActionCollectionName(header, prefix, knownCollections) {
+  const owners = [...knownCollections.keys()].filter(
+    name => prefix.startsWith(`${name}:`) && prefix.length > name.length + 1,
+  );
+  // Two collections can own the column's prefix, as `billing` and `billing:invoices`
+  // do for `billing:invoices:Refund:trigger`: the one that has the action settles it.
+  const ownersWithTheAction = owners.filter(name =>
+    knownCollections.get(name).has(prefix.slice(name.length + 1)),
+  );
+  if (owners.length > 1 && ownersWithTheAction.length === 1) return ownersWithTheAction[0];
+  if (owners.length > 1) {
+    const candidates = owners.map(name => `"${name}"`).join(' or ');
+    throw new Error(`Ambiguous CSV column "${header}": its collection could be ${candidates}.`);
+  }
+  if (owners.length === 1) return owners[0];
+
+  // A collection neither the environment nor a CRUD column knows. With one colon the
+  // split is certain; with more, either name could hold one, so guessing could patch
+  // the wrong collection.
+  const firstColon = prefix.indexOf(':');
+  if (firstColon === -1) return null;
+  if (prefix.indexOf(':', firstColon + 1) !== -1) {
+    throw new Error(
+      `Ambiguous CSV column "${header}": no known collection matches it, and its name has more than one colon. Add a CRUD column for its collection.`,
+    );
+  }
+  return prefix.slice(0, firstColon);
+}
+
+/**
+ * Split a column header into its parts, keying off the trailing suffix instead of
+ * splitting on every colon: smart-action names routinely contain one (e.g.
+ * "Organisation:SAML SSO #2: Edit SSO config:trigger"). The CRUD and smart-action
+ * suffix sets are disjoint, so the trailing segment tells the two column shapes apart.
+ * @returns {{ collectionName: string, actionName?: string, suffix: string }|null}
+ */
+function parseHeader(header, knownCollections) {
+  const split = splitSuffix(header);
+  if (!split || !split.prefix) return null;
+  const { prefix, suffix } = split;
+
+  if (SMART_ACTION_SUFFIXES.includes(suffix)) {
+    const collectionName = smartActionCollectionName(header, prefix, knownCollections);
+    if (collectionName === null) return null;
+    return { collectionName, actionName: prefix.slice(collectionName.length + 1), suffix };
+  }
+  // Unknown suffixes land here too, and applyTwoPartHeader rejects them with the
+  // more precise "Unknown permission column" message.
+  return { collectionName: prefix, suffix };
+}
+
+function applyHeader(collectionMap, header, rawValue, knownCollections) {
+  const parsed = parseHeader(header, knownCollections);
+  if (!parsed) throw new Error(`Unrecognized CSV column "${header}".`);
+  if (parsed.actionName === undefined) {
+    return applyTwoPartHeader(collectionMap, parsed.collectionName, parsed.suffix, rawValue);
+  }
+  return applyThreePartHeader(
+    collectionMap,
+    parsed.collectionName,
+    parsed.actionName,
+    parsed.suffix,
+    rawValue,
+  );
+}
+
+function parseRow(headers, cells, envId, knownCollections) {
   if (cells.length !== headers.length) {
     throw new Error(`CSV row has ${cells.length} cell(s) but the header has ${headers.length}.`);
   }
@@ -256,7 +382,7 @@ function parseRow(headers, cells, envId) {
 
   const collectionMap = Object.keys(row)
     .filter(h => h !== 'role' && h !== 'enabled')
-    .reduce((map, h) => applyHeader(map, h, row[h]), {});
+    .reduce((map, h) => applyHeader(map, h, row[h], knownCollections), {});
 
   return { name, enabled, envId: String(envId), collections: Object.values(collectionMap) };
 }
@@ -265,14 +391,23 @@ function parseRow(headers, cells, envId) {
  * Parse a wide CSV string back into a structured desired-state array.
  * @param {string} csvContent
  * @param {string|number} envId
+ * @param {Map<string, Set<string>>} [environmentCollections] the environment's
+ *   collections and their smart actions, from environmentCollectionsOf, so a
+ *   smart-action column finds its collection even when no CRUD column in the file
+ *   names it. A permission whose column the file omits is left off its collection or
+ *   action, and computeDiff leaves it unchanged.
  */
-function parseWide(csvContent, envId) {
+function parseWide(csvContent, envId, environmentCollections = new Map()) {
   // Split on CRLF or LF: a CSV saved by Excel/Windows uses \r\n, and a trailing
   // \r would otherwise taint the last field (e.g. `enabled\r`) and break parsing.
   const lines = csvContent.split(/\r?\n/).filter(l => l.trim() !== '');
   if (lines.length < 2) return [];
   const headers = parseCsvLine(lines[0]);
-  return lines.slice(1).map(line => parseRow(headers, parseCsvLine(line), envId));
+  const knownCollections = new Map(environmentCollections);
+  collectionNamesFromCrudHeaders(headers)
+    .filter(name => !knownCollections.has(name))
+    .forEach(name => knownCollections.set(name, new Set()));
+  return lines.slice(1).map(line => parseRow(headers, parseCsvLine(line), envId, knownCollections));
 }
 
 // ---------------------------------------------------------------------------
@@ -285,20 +420,27 @@ function diffEnabled(cur, desired, envId) {
   return [{ op: 'replace', path: `/environments/${envId}/enabled`, value: desired.enabled }];
 }
 
+// The server decodes each name segment and rejects a raw space, colon or slash in one.
+function permissionPath(envId, ...segments) {
+  return `/environments/${envId}/${segments.map(encodeURIComponent).join('/')}`;
+}
+
 function diffCrudField(envId, colName, curCol, field, desiredVal) {
   const curVal = curCol ? Boolean(curCol[field]) : false;
   if (curVal === desiredVal) return null;
   return {
     op: 'replace',
-    path: `/environments/${envId}/collections/${colName}/${field}`,
+    path: permissionPath(envId, 'collections', colName, field),
     value: desiredVal,
   };
 }
 
 function diffCrud(envId, desiredCol, curCol) {
-  return CRUD_FIELDS.map(field =>
-    diffCrudField(envId, desiredCol.collectionName, curCol, field, Boolean(desiredCol[field])),
-  ).filter(Boolean);
+  return CRUD_FIELDS.filter(field => desiredCol[field] !== undefined)
+    .map(field =>
+      diffCrudField(envId, desiredCol.collectionName, curCol, field, Boolean(desiredCol[field])),
+    )
+    .filter(Boolean);
 }
 
 function diffSaField(envId, colName, actionName, curSa, field, desiredVal) {
@@ -306,7 +448,7 @@ function diffSaField(envId, colName, actionName, curSa, field, desiredVal) {
   if (curVal === desiredVal) return null;
   return {
     op: 'replace',
-    path: `/environments/${envId}/collections/${colName}/smartActions/${actionName}/${field}`,
+    path: permissionPath(envId, 'collections', colName, 'smartActions', actionName, field),
     value: desiredVal,
   };
 }
@@ -315,9 +457,18 @@ function diffSmartAction(envId, colName, desiredSa, curCol) {
   const curSa = curCol
     ? (curCol.smartActions || []).find(a => a.smartActionName === desiredSa.smartActionName)
     : null;
-  return SA_FIELDS.map(field =>
-    diffSaField(envId, colName, desiredSa.smartActionName, curSa, field, Boolean(desiredSa[field])),
-  ).filter(Boolean);
+  return SA_FIELDS.filter(field => desiredSa[field] !== undefined)
+    .map(field =>
+      diffSaField(
+        envId,
+        colName,
+        desiredSa.smartActionName,
+        curSa,
+        field,
+        Boolean(desiredSa[field]),
+      ),
+    )
+    .filter(Boolean);
 }
 
 function diffCollection(envId, desiredCol, cur) {
@@ -359,4 +510,4 @@ function computeDiff(current, parsed) {
   return parsed.map(desired => diffRole(current, desired));
 }
 
-module.exports = { formatWide, parseWide, computeDiff };
+module.exports = { currentStateOf, environmentCollectionsOf, formatWide, parseWide, computeDiff };
