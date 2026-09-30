@@ -966,6 +966,11 @@
               "id": "updated_at",
               "isVisible": true,
               "position": 35
+            },
+            {
+              "id": "transaction_id",
+              "isVisible": false,
+              "position": 36
             }
           ],
           "fields": [
@@ -1294,6 +1299,17 @@
             {
               "id": "transaction_date",
               "displayName": "transaction date",
+              "description": null,
+              "isReadOnly": false,
+              "isFilterDisplayed": true,
+              "widgetEdit": null,
+              "widgetDisplay": null,
+              "mappingValues": [],
+              "conditionalFormatting": null
+            },
+            {
+              "id": "transaction_id",
+              "displayName": "transaction id",
               "description": null,
               "isReadOnly": false,
               "isFilterDisplayed": true,
@@ -3074,6 +3090,11 @@
               "id": "transaction_date",
               "isVisible": false,
               "position": 15
+            },
+            {
+              "id": "transaction_id",
+              "isVisible": false,
+              "position": 16
             }
           ],
           "fields": [
@@ -3254,6 +3275,17 @@
             {
               "id": "transaction_date",
               "displayName": "transaction date",
+              "description": null,
+              "isReadOnly": false,
+              "isFilterDisplayed": true,
+              "widgetEdit": null,
+              "widgetDisplay": null,
+              "mappingValues": [],
+              "conditionalFormatting": null
+            },
+            {
+              "id": "transaction_id",
+              "displayName": "transaction id",
               "description": null,
               "isReadOnly": false,
               "isFilterDisplayed": true,

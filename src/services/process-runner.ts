@@ -10,7 +10,8 @@ import { spawn } from 'child_process';
 
 export type RunOptions = {
   cwd?: string;
-  env?: Record<string, string>;
+  /** Merged over this process's environment. An `undefined` value removes the variable. */
+  env?: NodeJS.ProcessEnv;
 };
 
 export type ProcessExit = { code: number | null; signal: NodeJS.Signals | null };
@@ -20,7 +21,8 @@ export type StartedProcess = {
   ready: Promise<void>;
   /** Resolves, never rejects, once the whole group has ended. The status is the wrapper's own. */
   exited: Promise<ProcessExit>;
-  mute: () => void;
+  /** Stops forwarding output, and returns what turns it back on. */
+  mute: () => () => void;
 };
 
 export type CaptureResult = { stdout: string; stderr: string };
@@ -487,6 +489,10 @@ export function startProcess(
   let forwardOutput = onOutput;
   const mute = () => {
     forwardOutput = undefined;
+
+    return () => {
+      forwardOutput = onOutput;
+    };
   };
 
   const readyOrFailed = watchStartup(child, command, ready, timeoutMs, text =>

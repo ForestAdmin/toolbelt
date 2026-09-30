@@ -333,6 +333,32 @@ describe('process-runner', () => {
         await wait(300);
       }
     });
+
+    it('streams again once unmuted, so a terminal taken back shows the live back-end', async () => {
+      expect.assertions(1);
+      const chunks: string[] = [];
+      const { child, ready, mute } = startProcess(
+        'sh',
+        [
+          '-c',
+          "node -e \"console.log('listening'); setInterval(()=>console.log('noise'), 20)\" & wait",
+        ],
+        { ready: /listening/, onOutput: chunk => chunks.push(chunk) },
+      );
+
+      try {
+        await ready;
+        const unmute = mute();
+        await wait(100);
+        const whileMuted = chunks.length;
+        unmute();
+        await wait(300);
+        expect(chunks.length).toBeGreaterThan(whileMuted);
+      } finally {
+        stopProcess(child);
+        await wait(300);
+      }
+    });
   });
 
   describe('stopProcess — a wrapper that exits first', () => {
