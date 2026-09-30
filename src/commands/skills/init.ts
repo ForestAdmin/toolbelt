@@ -40,7 +40,7 @@ export default class SkillsInitCommand extends AbstractCommand {
     agent: Flags.string({
       description: `Coding agent(s) to set up: ${ALL_AGENTS.join(
         ', ',
-      )}. Repeatable. Skips the prompt — required in non-interactive runs.`,
+      )}. Repeatable. Skips the prompt; without it, the agents this repo or this machine points to are detected and used. Required only when nothing is detected.`,
       multiple: true,
       options: [...ALL_AGENTS],
     }),
