@@ -1,3 +1,10 @@
+# [5.24.0](https://github.com/ForestAdmin/toolbelt/compare/v5.23.0...v5.24.0) (2026-09-30)
+
+
+### Features
+
+* **skills:** install the Forest plugin on Claude Code / Codex, copy the skills for the rest ([#814](https://github.com/ForestAdmin/toolbelt/issues/814)) ([521d2e7](https://github.com/ForestAdmin/toolbelt/commit/521d2e73e4923fb7c01e8f6d69248cb685dc82f7))
+
 # [5.23.0](https://github.com/ForestAdmin/toolbelt/compare/v5.22.1...v5.23.0) (2026-09-30)
 
 
