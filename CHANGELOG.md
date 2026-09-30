@@ -1,3 +1,10 @@
+# [5.23.0](https://github.com/ForestAdmin/toolbelt/compare/v5.22.1...v5.23.0) (2026-09-30)
+
+
+### Features
+
+* **start:** move the onboarding into the CLI as `forest start` ([#817](https://github.com/ForestAdmin/toolbelt/issues/817)) ([8aa2900](https://github.com/ForestAdmin/toolbelt/commit/8aa29001fb71751b3bee8029c4d87d97fb720880))
+
 ## [5.22.1](https://github.com/ForestAdmin/toolbelt/compare/v5.22.0...v5.22.1) (2026-09-30)
 
 
