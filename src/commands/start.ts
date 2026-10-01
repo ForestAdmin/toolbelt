@@ -13,7 +13,7 @@ import {
   mountHelper,
 } from '../services/onboarding/detect';
 import { bootSecrets, keysLoadedFromDotenv, writeSecrets } from '../services/onboarding/env-file';
-import { firstFreePort, isPortFree } from '../services/onboarding/ports';
+import { firstFreePort, isPortFree, parsePort } from '../services/onboarding/ports';
 import {
   runCapture,
   runStep,
@@ -367,10 +367,12 @@ export default class StartCommand extends AbstractCommand {
   /**
    * Every scaffold's executor defaults to the same loopback port, so a second back-end on this
    * machine — another demo, a project from last week — would crash on it after its schema push.
-   * Moved to a free port in the scaffold's `.env`, so the restarts we suggest keep it too.
+   * Moved to a free port in the scaffold's `.env`, so the restarts we suggest keep it too. Returns
+   * what the boot must be given on top: a port the shell exports wins over `.env`, so `.env` alone
+   * would not move it.
    */
-  private async reserveExecutorPort(dir: string): Promise<void> {
-    if (this.dryRun || !StartCommand.runsExecutor(dir)) return;
+  private async reserveExecutorPort(dir: string): Promise<NodeJS.ProcessEnv | undefined> {
+    if (this.dryRun || !StartCommand.runsExecutor(dir)) return undefined;
 
     const file = `${dir}/.env`;
     let env = '';
@@ -380,13 +382,24 @@ export default class StartCommand extends AbstractCommand {
       // No .env yet: the executor runs on its default, and the line below creates one.
     }
 
+    const exported = process.env.WORKFLOW_EXECUTOR_PORT;
     const assigned = /^WORKFLOW_EXECUTOR_PORT=(\d+)/m.exec(env)?.[1];
-    const wanted = assigned ? Number(assigned) : EXECUTOR_PORT;
-    if (await isPortFree(wanted)) return;
+    const wanted = parsePort(exported ?? assigned) ?? EXECUTOR_PORT;
+    if (await isPortFree(wanted)) return undefined;
 
     const port = await firstFreePort(wanted + 1);
     // Nothing free nearby: the boot then fails on the clash, and says which port to free.
-    if (!port) return;
+    if (!port) return undefined;
+
+    if (exported !== undefined) {
+      this.logger.log(
+        this.chalk.grey(
+          `  (:${wanted}, exported as WORKFLOW_EXECUTOR_PORT, is taken — this boot's workflow executor uses :${port}; change or unset that export before restarting)`,
+        ),
+      );
+
+      return { WORKFLOW_EXECUTOR_PORT: String(port) };
+    }
 
     const line = `WORKFLOW_EXECUTOR_PORT=${port}`;
     fs.writeFileSync(
@@ -400,6 +413,8 @@ export default class StartCommand extends AbstractCommand {
         `  (:${wanted} is taken, by another Forest back-end probably — this one's workflow executor uses :${port}, saved in ${file})`,
       ),
     );
+
+    return undefined;
   }
 
   private ask(question: Record<string, unknown>) {
@@ -530,8 +545,8 @@ export default class StartCommand extends AbstractCommand {
     if (this.dryRun) {
       this.logger.log(this.chalk.grey('\n$ npm start   (background — wait for schema push)'));
     } else {
-      await this.reserveExecutorPort(name);
-      booted = this.boot('npm', ['start'], { cwd: name, ready: StartCommand.readyFor(name) });
+      const env = await this.reserveExecutorPort(name);
+      booted = this.boot('npm', ['start'], { cwd: name, env, ready: StartCommand.readyFor(name) });
       this.logger.log(this.chalk.grey('\n$ npm start   (booting — waiting for the schema push…)'));
       await booted.ready;
       this.logger.success('Schema pushed — applying curated layout + workflows');
@@ -604,8 +619,12 @@ export default class StartCommand extends AbstractCommand {
     const port = StartCommand.readPort(name) ?? DEMO_PORT;
     tail.url = `http://localhost:${port}`;
 
-    await this.reserveExecutorPort(name);
-    const booted = this.boot('npm', ['start'], { cwd: name, ready: StartCommand.readyFor(name) });
+    const env = await this.reserveExecutorPort(name);
+    const booted = this.boot('npm', ['start'], {
+      cwd: name,
+      env,
+      ready: StartCommand.readyFor(name),
+    });
     this.logger.log(this.chalk.grey('  (waiting for the schema push…)'));
     await booted.ready;
     StartCommand.assertRunning(booted, name, tail.restart);

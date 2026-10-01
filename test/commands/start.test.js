@@ -433,6 +433,41 @@ describe('start', () => {
       expect(moved).toBeGreaterThan(taken);
       expect(envAtBoot).toContain('APPLICATION_PORT=3310\n');
     });
+
+    it('hands the free port to the boot itself when the shell exports the taken one', async () => {
+      expect.hasAssertions();
+      const holder = net.createServer();
+      await new Promise(resolve => holder.listen(0, resolve));
+      const { port: taken } = holder.address();
+      runStep.mockReset().mockImplementation(async (_, args) => {
+        if (args[1] !== 'projects:create:sql') return;
+        fs.mkdirSync('x');
+        fs.writeFileSync('x/package.json', JSON.stringify({ scripts: { build: 'tsc' } }));
+        fs.writeFileSync('x/index.ts', 'agent.addWorkflowExecutor({ inMemory: true });\n');
+      });
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
+      // dotenv never overrides an exported variable, so a port moved in .env would not move.
+      process.env.WORKFLOW_EXECUTOR_PORT = String(taken);
+
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'x'],
+          std: [
+            { out: 'exported as WORKFLOW_EXECUTOR_PORT' },
+            { out: 'Your back-office is live!' },
+          ],
+        });
+      } finally {
+        delete process.env.WORKFLOW_EXECUTOR_PORT;
+        holder.close();
+      }
+
+      const [[, , { env }]] = startProcess.mock.calls;
+      expect(Number(env.WORKFLOW_EXECUTOR_PORT)).toBeGreaterThan(taken);
+    });
   });
 
   describe('in-app Rails flow', () => {
