@@ -1,4 +1,5 @@
 const fs = require('fs');
+const net = require('net');
 
 const StartCommand = require('../../src/commands/start').default;
 const { runCapture, runStep, startProcess } = require('../../src/services/process-runner');
@@ -137,6 +138,36 @@ describe('start', () => {
         ],
         { cwd: undefined },
       ]);
+    });
+
+    it('reports the boot failure, never "live", when the back-end died during layout:apply', async () => {
+      expect.hasAssertions();
+      // `layout:apply` only talks to Forest, so it succeeds against a back-end that is gone.
+      const child = { exitCode: null, signalCode: null };
+      runStep.mockReset().mockImplementation(async (_, args) => {
+        if (args[1] === 'layout:apply') child.exitCode = 1;
+      });
+      startProcess.mockReset().mockImplementation((command, args, { onOutput }) => {
+        onOutput('error: Forest Admin agent failed to start\n');
+
+        return { child, ready: Promise.resolve(), mute: () => {} };
+      });
+      const random = jest.spyOn(Math, 'random').mockReturnValue(0.654321); // forest-demo-nk00
+
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          exitMessage: [
+            'Your back-end stopped right after booting (exit code 1). Its last lines:',
+            '  | error: Forest Admin agent failed to start',
+            'Fix what it reports, then restart it: cd forest-demo-nk00 && npm start',
+          ].join('\n'),
+          std: [{ not: 'Demo back-office live.' }],
+        });
+      } finally {
+        random.mockRestore();
+      }
     });
   });
 
@@ -340,6 +371,67 @@ describe('start', () => {
         ],
         std: [{ out: '-s analytics' }],
       });
+    });
+  });
+
+  describe('standalone flow, embedded workflow executor', () => {
+    it('waits for the embedded executor when the scaffold runs one, since it starts after the schema push', async () => {
+      expect.hasAssertions();
+      runStep.mockReset().mockImplementation(async (_, args) => {
+        if (args[1] !== 'projects:create:sql') return;
+        fs.mkdirSync('x');
+        fs.writeFileSync('x/package.json', JSON.stringify({ scripts: { build: 'tsc' } }));
+        fs.writeFileSync('x/index.ts', 'agent.addWorkflowExecutor({ inMemory: true });\n');
+      });
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'standalone', '--name', 'x'],
+        std: [{ out: 'Your back-office is live!' }],
+      });
+
+      const [[, , { ready }]] = startProcess.mock.calls;
+      expect(ready.test('Embedded workflow executor started (loopback port 3400)')).toBe(true);
+      // Past this line `start()` still binds the executor's port, and a clash there exits.
+      expect(ready.test('Schema was updated, sending new version')).toBe(false);
+    });
+
+    it("moves the executor to a free port when another back-end holds this one's", async () => {
+      expect.hasAssertions();
+      const holder = net.createServer();
+      await new Promise(resolve => holder.listen(0, resolve));
+      const { port: taken } = holder.address();
+      runStep.mockReset().mockImplementation(async (_, args) => {
+        if (args[1] !== 'projects:create:sql') return;
+        fs.mkdirSync('x');
+        fs.writeFileSync('x/package.json', JSON.stringify({ scripts: { build: 'tsc' } }));
+        fs.writeFileSync('x/index.ts', 'agent.addWorkflowExecutor({ inMemory: true });\n');
+        fs.writeFileSync('x/.env', `APPLICATION_PORT=3310\nWORKFLOW_EXECUTOR_PORT=${taken}\n`);
+      });
+      let envAtBoot;
+      startProcess.mockReset().mockImplementation(() => {
+        envAtBoot = fs.readFileSync('x/.env', 'utf8');
+
+        return { child: undefined, ready: Promise.resolve(), mute: () => {} };
+      });
+
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'x'],
+          std: [{ out: `:${taken} is taken` }, { out: 'Your back-office is live!' }],
+        });
+      } finally {
+        holder.close();
+      }
+
+      // Written before the boot, into the .env every suggested restart reads too.
+      const moved = Number(/^WORKFLOW_EXECUTOR_PORT=(\d+)$/m.exec(envAtBoot)[1]);
+      expect(moved).toBeGreaterThan(taken);
+      expect(envAtBoot).toContain('APPLICATION_PORT=3310\n');
     });
   });
 
