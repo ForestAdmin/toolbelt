@@ -96,7 +96,12 @@ agent.addDataSource(
 
 // Run Forest Admin workflows in this process, using an in-memory run store.
 // Runs are lost on restart; switch to `{ database: { uri: process.env.DATABASE_URL } }` to persist them.
-agent.addWorkflowExecutor({ inMemory: true });
+// It listens on a loopback port of its own, 3400 unless WORKFLOW_EXECUTOR_PORT says otherwise: each
+// back-end running on the same machine needs a different one.
+agent.addWorkflowExecutor({
+  inMemory: true,
+  port: Number(process.env.WORKFLOW_EXECUTOR_PORT) || undefined,
+});
 
 // Expose an HTTP endpoint.
 agent.mountOnStandaloneServer(Number(process.env.APPLICATION_PORT));
