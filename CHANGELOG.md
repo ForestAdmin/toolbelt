@@ -1,3 +1,10 @@
+## [5.24.1](https://github.com/ForestAdmin/toolbelt/compare/v5.24.0...v5.24.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **start:** remove punycode deprecation warning breaking first prompt ([#828](https://github.com/ForestAdmin/toolbelt/issues/828)) ([27676a3](https://github.com/ForestAdmin/toolbelt/commit/27676a3ee8e6c9869fea3f09a140522304e96da0))
+
 # [5.24.0](https://github.com/ForestAdmin/toolbelt/compare/v5.23.0...v5.24.0) (2026-09-30)
 
 
