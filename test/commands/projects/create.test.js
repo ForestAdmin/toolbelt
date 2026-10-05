@@ -70,7 +70,7 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
     },
     {
       name: 'applicationHost',
-      message: "What's the IP/hostname on which your application will be running?",
+      message: 'URL your browser will use to reach the back-end:',
       type: 'input',
       default: 'http://localhost',
       validate: expect.any(Function),

@@ -4,6 +4,7 @@ import type { CommandOptions } from '../../../utils/option-parser';
 import type { Config as OclifConfig } from '@oclif/core';
 
 import AbstractProjectCreateCommand from '../../../abstract-project-create-command';
+import { isStartStep } from '../../../services/onboarding/step';
 import * as projectCreateOptions from '../../../services/projects/create/options';
 import Agents from '../../../utils/agents';
 import { optionsToFlags } from '../../../utils/option-parser';
@@ -47,6 +48,9 @@ export default class DemoCommand extends AbstractProjectCreateCommand {
 
   protected override logNextSteps(): void {
     this.logger.info('This demo runs on in-memory sample data — no database required.');
+    // Under `forest start`, its menu offers this very step, and the command would be the wrong one
+    // to run by hand mid-flow.
+    if (isStartStep()) return;
     this.logger.info(
       `Next step — connect your real database: ${this.chalk.bold('forest projects:create:sql')}.`,
     );

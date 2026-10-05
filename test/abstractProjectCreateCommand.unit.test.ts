@@ -342,6 +342,23 @@ describe('abstractProjectCreateCommand command', () => {
       expect(stubs.eventSender.notifySuccess).toHaveBeenCalledTimes(1);
     });
 
+    it('says only that the project was created when run as a step of `forest start`', async () => {
+      expect.assertions(2);
+
+      const { stubs, instance } = setup();
+      process.env.FOREST_START_STEP = '1';
+
+      try {
+        await instance.run();
+      } finally {
+        delete process.env.FOREST_START_STEP;
+      }
+
+      // Install, build and boot are still ahead: "installation success" would read as "done".
+      expect(stubs.logger.info).toHaveBeenCalledWith('Project "testApp" created on Forest.');
+      expect(stubs.logger.info).not.toHaveBeenCalledWith('Hooray, installation success!');
+    });
+
     it('should log the installation success and send the event with supabase url', async () => {
       expect.assertions(9);
 

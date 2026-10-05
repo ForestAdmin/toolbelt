@@ -21,10 +21,10 @@ describe('projects:create:demo', () => {
                 message: 'In which language would you like to generate your sources?',
                 type: 'list',
                 choices: [
-                  { name: languages.Javascript.name, value: languages.Javascript },
                   { name: languages.Typescript.name, value: languages.Typescript },
+                  { name: languages.Javascript.name, value: languages.Javascript },
                 ],
-                default: languages.Javascript,
+                default: languages.Typescript,
               },
             ],
             out: { language: languages.Javascript },
@@ -44,5 +44,58 @@ describe('projects:create:demo', () => {
         ],
         exitCode: 0,
       }));
+
+    it('says only that the project was created when `forest start` runs it, whose menu offers the next step', async () => {
+      expect.hasAssertions();
+      process.env.FOREST_START_STEP = '1';
+
+      try {
+        await testCli({
+          commandClass: DemoCommand,
+          commandArgs: [
+            'name',
+            '--applicationHost',
+            'http://localhost',
+            '--applicationPort',
+            '3310',
+          ],
+          env: testEnvWithSecret,
+          token: 'any',
+          prompts: [
+            {
+              in: [
+                {
+                  name: 'language',
+                  message: 'In which language would you like to generate your sources?',
+                  type: 'list',
+                  choices: [
+                    { name: languages.Typescript.name, value: languages.Typescript },
+                    { name: languages.Javascript.name, value: languages.Javascript },
+                  ],
+                  default: languages.Typescript,
+                },
+              ],
+              out: { language: languages.Javascript },
+            },
+          ],
+          api: [
+            () => createProject({ databaseType: null, agent: Agents.NodeJS }),
+            () => updateNewEnvironmentEndpoint(),
+          ],
+          std: [
+            { spinner: '√ Creating your project on Forest Admin' },
+            // No "Testing connection" spinner: requiresDatabase = false → DB steps skipped.
+            { spinner: '√ Creating your project files' },
+            { out: 'create index.js' },
+            { out: '> Project "name" created on Forest.' },
+            { not: 'Hooray' },
+            { not: 'forest projects:create:sql' },
+          ],
+          exitCode: 0,
+        });
+      } finally {
+        delete process.env.FOREST_START_STEP;
+      }
+    });
   });
 });

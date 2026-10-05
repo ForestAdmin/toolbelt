@@ -1,4 +1,7 @@
-const { ObjectId } = require('mongodb');
+// From the driver's own BSON module, so `instanceof` matches the ids it returns, without loading
+// the client: its URL parser pulls in Node's deprecated `punycode`, and the warning that prints
+// lands in the middle of whatever prompt is on screen.
+const { ObjectId } = require('mongodb/lib/bson');
 
 /**
  * Retrieves simple mongoose type from value if detectable

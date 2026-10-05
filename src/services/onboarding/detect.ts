@@ -13,6 +13,8 @@ export type NodeStack = {
   framework: 'express' | 'nestJs' | 'fastify' | 'koa';
   orm: 'sequelize' | 'mongoose' | 'typeorm' | 'prisma' | 'sql';
   typescript: boolean;
+  /** `"type": "module"` in package.json: plain `.js` files there are ES modules. */
+  esm: boolean;
   /** False when there is no package.json at all — nothing was detected, we only have defaults. */
   detected: boolean;
 };
@@ -70,6 +72,7 @@ export function detectNodeStack(): NodeStack {
     framework: framework ?? 'express',
     orm: orm ?? 'sql',
     typescript: has('typescript') || fs.existsSync('tsconfig.json'),
+    esm: pkg.type === 'module',
     detected: Boolean(pkg.name),
   };
 }
