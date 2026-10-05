@@ -2,7 +2,13 @@
 module.exports = plan =>
   plan
     .addModule('Sequelize', () => require('sequelize'))
-    .addModule('mongodb', () => require('mongodb'))
+    // Every command builds this plan, so the driver is only loaded once a NoSQL path connects:
+    // its URL parser pulls in Node's deprecated `punycode`, whose warning breaks into prompts.
+    .addModule('mongodb', () => ({
+      get MongoClient() {
+        return require('mongodb').MongoClient;
+      },
+    }))
     .addModule('Handlebars', () => require('handlebars'))
     .addUsingClass('database', () => require('../services/schema/update/database'))
     .addUsingClass('agentNodejsDumper', () => require('../services/dumpers/agent-nodejs').default)

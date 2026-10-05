@@ -48,7 +48,10 @@ function Authenticator({
     const path = `${env.TOKEN_PATH}/.forest.d`;
     await mkdirp(path);
     const forestrcPath = `${path}/.forestrc`;
-    fs.writeFileSync(forestrcPath, token);
+    // A long-lived credential: readable by its owner only. `mode` applies to a new file alone, so
+    // one written by an older CLI is tightened too.
+    fs.writeFileSync(forestrcPath, token, { mode: 0o600 });
+    fs.chmodSync(forestrcPath, 0o600);
   };
 
   this.verify = token => {
