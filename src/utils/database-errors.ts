@@ -3,51 +3,94 @@
  * without their password.
  */
 
-const SCHEME = /[a-z][a-z0-9+.-]*:\/\//i;
+const SCHEME = /[a-z][a-z0-9+.-]*:\/\//gi;
+
+/** `host`, `host:port`, `[::1]:port`, or a MongoDB list of them. */
+const HOST = /^(\[[0-9a-f:.]+\]|[a-z0-9._%-]+)(:\d+)?$/i;
+
+/** Characters a password must URL-encode: unencoded, they end the credentials early. */
+const ENDS_CREDENTIALS = /[\s/?#]/;
+
+const startsWithHost = (text: string) =>
+  text
+    .split(/[/?#\s]/, 1)[0]
+    .split(',')
+    .every(host => HOST.test(host));
 
 /**
- * Hide the credentials of every connection URL in `text`. Robust to a password that was not
- * URL-encoded: the credentials run from `://` to the LAST `@` of the URL, so `p@ss:w/rd#1` is
- * masked whole, where a parser-based mask finds no URL at all and prints it in the clear.
+ * The `@` that closes the credentials of `rest` (a URL past its `://`), or -1 when none can.
+ *
+ * Neither "the first `@`" nor "the last one" works: an unencoded password holds `@`, and a query
+ * value may too (`?application_name=cli@host`). A candidate is an `@` followed by a real host, with
+ * a clean user part before it.
+ *
+ * - `strict`, for validation: the first candidate whose whole credentials are clean, and no other
+ *   `@` before the query. A later one there means the password held an unencoded `/`, so the URL
+ *   reads as another host: ambiguous, and no driver connects with it.
+ * - otherwise, for masking: the LAST candidate. Masking a bit too much is the safe side.
  */
-export function maskUrlCredentials(text: string): string {
-  return text
-    .split(/(\s+)/)
-    .map(token => {
-      const scheme = SCHEME.exec(token);
-      if (!scheme) return token;
+function credentialsEnd(rest: string, strict: boolean): number {
+  let found = -1;
 
-      const credentialsStart = scheme.index + scheme[0].length;
-      const at = token.lastIndexOf('@');
-      if (at < credentialsStart) return token;
+  for (let at = rest.indexOf('@'); at !== -1; at = rest.indexOf('@', at + 1)) {
+    const credentials = rest.slice(0, at);
+    const [user] = credentials.split(':');
+    const clean = !ENDS_CREDENTIALS.test(strict ? credentials : user) && !user.includes('@');
 
-      const user = token.slice(credentialsStart, at).split(':')[0];
-      const masked =
-        user && token.slice(credentialsStart, at).includes(':') ? `${user}:***` : '***';
+    if (clean && startsWithHost(rest.slice(at + 1))) {
+      if (!strict) found = at;
+      else {
+        const beforeQuery = rest.slice(at + 1).split(/[?#]/, 1)[0];
 
-      return `${token.slice(0, credentialsStart)}${masked}${token.slice(at)}`;
-    })
-    .join('');
+        return beforeQuery.includes('@') ? -1 : at;
+      }
+    }
+  }
+
+  return found;
 }
 
 /**
- * Characters that end the credentials of a URL. In a password they must be URL-encoded, or the
- * URL reads as another host, port or path, and no driver can connect with it.
+ * Hide the credentials of every connection URL in `text`. Robust to a password that was not
+ * URL-encoded, `/`, `#` or spaces included: a parser-based mask finds no URL there at all and
+ * prints the password in the clear.
  */
-const UNENCODED_IN_CREDENTIALS = /[/?#]/;
+export function maskUrlCredentials(text: string): string {
+  return text.replace(/[^\n]+/g, line => {
+    const schemes = [...line.matchAll(SCHEME)];
+
+    return schemes.reduceRight((masked, scheme, index) => {
+      const credentialsStart = scheme.index + scheme[0].length;
+      // A URL ends at the next one: its credentials never span two.
+      const urlEnd = schemes[index + 1]?.index ?? masked.length;
+      const at = credentialsEnd(masked.slice(credentialsStart, urlEnd), false);
+      if (at === -1) return masked;
+
+      const credentials = masked.slice(credentialsStart, credentialsStart + at);
+      const [user] = credentials.split(':');
+      const hidden = user && credentials.includes(':') ? `${user}:***` : '***';
+
+      return `${masked.slice(0, credentialsStart)}${hidden}${masked.slice(credentialsStart + at)}`;
+    }, line);
+  });
+}
 
 export const ENCODE_PASSWORD_HINT =
-  'Special characters in the password must be URL-encoded: @ → %40, : → %3A, / → %2F, ? → %3F, # → %23.';
+  'Special characters in the password must be URL-encoded: @ → %40, : → %3A, / → %2F, ? → %3F, # → %23, space → %20.';
 
-/** True when the credentials of `url` hold a character that must be URL-encoded there. */
+/**
+ * True when `url` has credentials no driver can read, because a character in the password was
+ * not URL-encoded: `/`, `?`, `#` or a space end them early, and the URL reads as another host.
+ */
 export function hasUnencodedCredentials(url: string): boolean {
-  const scheme = SCHEME.exec(url);
+  const scheme = new RegExp(SCHEME.source, 'i').exec(url);
   if (!scheme) return false;
 
   const rest = url.slice(scheme.index + scheme[0].length);
-  const at = rest.lastIndexOf('@');
 
-  return at > 0 && UNENCODED_IN_CREDENTIALS.test(rest.slice(0, at));
+  return (
+    rest.includes('@') && credentialsEnd(rest, true) === -1 && credentialsEnd(rest, false) !== -1
+  );
 }
 
 type ErrorLike = {
@@ -77,11 +120,14 @@ function textOf(error: ErrorLike, depth = 0): string {
 
 /** Where the URL points, for the messages: never its credentials. */
 function target(url?: string): { host?: string; database?: string } {
-  const scheme = url && SCHEME.exec(url);
+  const scheme = url && new RegExp(SCHEME.source, 'i').exec(url);
   if (!scheme) return {};
 
   const rest = url.slice(scheme.index + scheme[0].length);
-  const afterCredentials = rest.slice(rest.lastIndexOf('@') + 1);
+  const strictEnd = credentialsEnd(rest, true);
+  const afterCredentials = rest.slice(
+    (strictEnd !== -1 ? strictEnd : credentialsEnd(rest, false)) + 1,
+  );
   const [host, path = ''] = afterCredentials.split(/\/(.*)/s);
 
   return { host: host || undefined, database: path.split(/[?#]/)[0] || undefined };

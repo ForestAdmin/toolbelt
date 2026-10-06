@@ -43,7 +43,7 @@ describe('services > database', () => {
 
       expect(terminatorMock.terminate).toHaveBeenCalledWith(1, {
         logs: [
-          'The database refused this user or password. Special characters in the password must be URL-encoded: @ → %40, : → %3A, / → %2F, ? → %3F, # → %23.',
+          'The database refused this user or password. Special characters in the password must be URL-encoded: @ → %40, : → %3A, / → %2F, ? → %3F, # → %23, space → %20.',
         ],
         errorCode: 'database_authentication_error',
         errorMessage: 'Authentication failed for mongodb://admin:***@db.local:27017/shop',

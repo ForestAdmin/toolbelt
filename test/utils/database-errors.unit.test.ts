@@ -35,6 +35,20 @@ describe('utils > database-errors', () => {
       );
     });
 
+    it('masks a password with an unencoded space, which splits the URL in two tokens', () => {
+      expect.assertions(1);
+      expect(maskUrlCredentials('cannot reach postgres://user:my secret@db/app today')).toBe(
+        'cannot reach postgres://user:***@db/app today',
+      );
+    });
+
+    it('masks a password whose unencoded `@` is followed by something host-like', () => {
+      expect.assertions(1);
+      expect(maskUrlCredentials('failed for mongodb://admin:p@ss/w0rd@db.local:27017/shop')).toBe(
+        'failed for mongodb://admin:***@db.local:27017/shop',
+      );
+    });
+
     it('keeps a multi-host MongoDB URL readable', () => {
       expect.assertions(1);
       expect(maskUrlCredentials('mongodb://u:pw@h1:27017,h2:27017/db?replicaSet=rs')).toBe(
@@ -53,6 +67,20 @@ describe('utils > database-errors', () => {
       expect(hasUnencodedCredentials('postgres://u:p@ss:wd@localhost/db')).toBe(false);
       expect(hasUnencodedCredentials('postgres://u:p%40ss%2Fwd@localhost/db')).toBe(false);
       expect(hasUnencodedCredentials('mongodb://u:pw@h1:27017,h2:27017/db?x=1')).toBe(false);
+    });
+
+    it('accepts an `@` in a query value, and flags a space or an `@` before the path', () => {
+      expect.assertions(5);
+      expect(
+        hasUnencodedCredentials(
+          'postgres://user:password@db.example/app?application_name=cli@host',
+        ),
+      ).toBe(false);
+      expect(hasUnencodedCredentials('postgres://user:my secret@db/app')).toBe(true);
+      // An unencoded `/` makes `ss` read as the host: the later `@` before the query gives it away.
+      expect(hasUnencodedCredentials('mongodb://admin:p@ss/w0rd@db.local:27017/shop')).toBe(true);
+      expect(hasUnencodedCredentials('postgres://localhost:5432/db')).toBe(false);
+      expect(hasUnencodedCredentials('postgres://[::1]:5432/db')).toBe(false);
     });
   });
 

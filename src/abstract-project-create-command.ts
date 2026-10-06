@@ -109,6 +109,9 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     this.databaseAnalyzer = databaseAnalyzer;
   }
 
+  /** Set while the database itself is being reached, so a failure there is explained as such. */
+  private inDatabaseStep = false;
+
   protected async runAuthenticated(): Promise<void> {
     // Kept for the error below: it names where the connection failed, never with its credentials.
     let databaseUrl: string | null = null;
@@ -130,7 +133,11 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
       this.eventSender.meta.projectId = id;
 
-      if (this.requiresDatabase) await this.testDatabaseConnection(dbConfig);
+      if (this.requiresDatabase) {
+        this.inDatabaseStep = true;
+        await this.testDatabaseConnection(dbConfig);
+        this.inDatabaseStep = false;
+      }
 
       await this.generateProject({
         dbConfig,
@@ -155,24 +162,35 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
           this.logger.error('Cannot generate your project.');
         }
 
-        // A database that is down, a wrong password, a typo in its name: the user fixes those
-        // from their URL. Asking them to open an issue — with the error, URL included — is wrong.
-        const explanation = explainDatabaseError(error, databaseUrl ?? undefined);
-        if (explanation) {
-          this.logger.error(explanation);
-          this.exit(1);
-        }
-
-        // Unconditional: this is the only line telling the operator where help lives,
-        // and a failure after creation needs it as much as one before.
-        this.logger.error(`${this.messages.ERROR_UNEXPECTED}`);
-        // Masked: the message is meant to be pasted into an issue, and drivers quote the URL.
-        this.logger.log(`${this.chalk.red(maskUrlCredentials(String(error)))}`);
-        this.exit(1);
+        this.reportFailure(error, databaseUrl);
       } else {
         throw error;
       }
     }
+  }
+
+  /** What went wrong, for a failure that is neither a refused option nor an auth error. */
+  private reportFailure(error: unknown, databaseUrl: string | null): void {
+    // A database that is down, a wrong password, a typo in its name: the user fixes those from
+    // their URL, and asking them to open an issue — with the error, URL included — is wrong. Only
+    // for a failure of the database itself: the Forest API being unreachable raises ECONNREFUSED
+    // too, and must not send the user to "fix" a healthy database URL.
+    const explanation = this.inDatabaseStep
+      ? explainDatabaseError(error as Error, databaseUrl ?? undefined)
+      : null;
+    if (explanation) {
+      this.logger.error(explanation);
+      this.exit(1);
+
+      return;
+    }
+
+    // Unconditional: this is the only line telling the operator where help lives,
+    // and a failure after creation needs it as much as one before.
+    this.logger.error(`${this.messages.ERROR_UNEXPECTED}`);
+    // Masked: the message is meant to be pasted into an issue, and drivers quote the URL.
+    this.logger.log(`${this.chalk.red(maskUrlCredentials(String(error)))}`);
+    this.exit(1);
   }
 
   protected async generateProject(config: Config): Promise<void> {
@@ -185,6 +203,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   protected abstract dump(config: Config, schema?): Promise<void>;
 
   protected async analyzeDatabase(dbConfig: DbConfig) {
+    this.inDatabaseStep = true;
     const connection = await this.database.connect(dbConfig);
     this.spinner.start({ text: 'Analyzing the database' });
 
@@ -199,6 +218,8 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     const schema = await this.spinner.attachToPromise(schemaPromise);
     this.logger.success('Database is analyzed', { lineColor: 'green' });
     await this.database.disconnect(connection);
+    this.inDatabaseStep = false;
+
     return schema;
   }
 

@@ -133,7 +133,7 @@ describe('projectCreateOptions', () => {
     it('rejects a password that was not URL-encoded, before the driver quotes it back in an error', () => {
       expect.assertions(3);
       const hint =
-        'Special characters in the password must be URL-encoded: @ → %40, : → %3A, / → %2F, ? → %3F, # → %23.';
+        'Special characters in the password must be URL-encoded: @ → %40, : → %3A, / → %2F, ? → %3F, # → %23, space → %20.';
       expect(options.validateSqlConnectionUrl('postgres://u:p@ss:w/rd#1@localhost:5432/db')).toBe(
         hint,
       );
