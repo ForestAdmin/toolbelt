@@ -130,6 +130,19 @@ describe('projectCreateOptions', () => {
       expect(options.validateSqlConnectionUrl('MariaDB://u:p@h:3306/db')).toBe(message);
     });
 
+    it('rejects a password that was not URL-encoded, before the driver quotes it back in an error', () => {
+      expect.assertions(3);
+      const hint =
+        'Special characters in the password must be URL-encoded: @ → %40, : → %3A, / → %2F, ? → %3F, # → %23, space → %20.';
+      expect(options.validateSqlConnectionUrl('postgres://u:p@ss:w/rd#1@localhost:5432/db')).toBe(
+        hint,
+      );
+      expect(options.validateMongoConnectionUrl('mongodb://u:a/b@localhost:27017/db')).toBe(hint);
+      expect(
+        options.validateSqlConnectionUrl('postgres://u:p%40ss%3Aw%2Frd%231@localhost:5432/db'),
+      ).toBe(true);
+    });
+
     it('validateSqlConnectionUrl: accepts uppercase schemes (the SQL drivers normalize them)', () => {
       expect.assertions(4);
       expect(options.validateSqlConnectionUrl('Postgres://u:p@h:5432/db')).toBe(true);
