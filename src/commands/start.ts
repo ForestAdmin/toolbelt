@@ -910,7 +910,11 @@ export default class StartCommand extends AbstractCommand {
     if (!this.interactive) {
       if (tail.child) {
         stopProcess(tail.child);
-        this.logger.log(this.chalk.grey(`  Launch it anytime: cd ${tail.dir} && ${tail.restart}`));
+        this.logger.log(
+          this.chalk.grey(
+            `  Launch it anytime: ${StartCommand.restartCommand(tail.dir, tail.restart)}`,
+          ),
+        );
       }
 
       return;
@@ -1010,7 +1014,12 @@ export default class StartCommand extends AbstractCommand {
 
     stopProcess(tail.child, 'SIGINT');
     this.logger.log(
-      this.chalk.grey(`\n  Forest back-end stopped. Restart it: cd ${tail.dir} && ${tail.restart}`),
+      this.chalk.grey(
+        `\n  Forest back-end stopped. Restart it: ${StartCommand.restartCommand(
+          tail.dir,
+          tail.restart,
+        )}`,
+      ),
     );
 
     return true;
@@ -1020,7 +1029,9 @@ export default class StartCommand extends AbstractCommand {
   private keepAlive(child: ChildProcess, dir: string, restart: string): Promise<void> {
     // Its `exit` already fired, so listening for it would hold the terminal until a Ctrl-C.
     if (child.exitCode !== null || child.signalCode !== null) {
-      this.logger.warn(`Your back-end has stopped. Restart it: cd ${dir} && ${restart}`);
+      this.logger.warn(
+        `Your back-end has stopped. Restart it: ${StartCommand.restartCommand(dir, restart)}`,
+      );
 
       return Promise.resolve();
     }
@@ -1031,17 +1042,19 @@ export default class StartCommand extends AbstractCommand {
       ),
     );
     this.logger.log(
-      this.chalk.grey(`     Ctrl-C to stop  ·  restart later: cd ${dir} && ${restart}`),
+      this.chalk.grey(
+        `     Ctrl-C to stop  ·  restart later: ${StartCommand.restartCommand(dir, restart)}`,
+      ),
     );
 
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let stopped = false;
       const stop = () => {
         if (stopped) return;
         stopped = true;
         this.logger.log(
           `\n\n${this.chalk.yellow('■')} Back-end stopped. Restart it anytime → ${this.chalk.cyan(
-            `cd ${dir} && ${restart}`,
+            StartCommand.restartCommand(dir, restart),
           )}`,
         );
         stopProcess(child, 'SIGINT');
@@ -1049,8 +1062,32 @@ export default class StartCommand extends AbstractCommand {
       };
       // Ahead of the process runner's own hook, which exits on SIGINT before a later listener runs.
       process.prependOnceListener('SIGINT', stop);
-      child.on('exit', () => resolve());
+      child.on('exit', (code, signal) => {
+        if (stopped) return resolve();
+
+        // Nobody asked it to stop: ending here in silence, and with success, would leave the user
+        // at a prompt with a dead back-office and nothing saying so.
+        stopped = true;
+        process.removeListener('SIGINT', stop);
+        const status = signal ?? `exit code ${code}`;
+        const restartIt = StartCommand.restartCommand(dir, restart);
+        this.logger.warn(
+          `Your back-end stopped on its own (${status}). Its logs are above.\n  Restart it: ${restartIt}`,
+        );
+        try {
+          this.exit(1);
+        } catch (exit) {
+          reject(exit);
+        }
+
+        return undefined;
+      });
     });
+  }
+
+  /** How to start a back-end again. In-app flows run in the user's own folder: no `cd .` there. */
+  private static restartCommand(dir: string, restart: string): string {
+    return dir === '.' ? restart : `cd ${dir} && ${restart}`;
   }
 
   // ---------- seeds & helpers ----------
