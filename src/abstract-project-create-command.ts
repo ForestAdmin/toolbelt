@@ -16,6 +16,13 @@ import { Args } from '@oclif/core';
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
 import InvalidOptionError from './errors/options/invalid-option-error';
 import { getDialect } from './services/projects/create/options';
+import {
+  ENCODE_PASSWORD_HINT,
+  explainDatabaseError,
+  hasUnencodedCredentials,
+  maskUrlCredentials,
+} from './utils/database-errors';
+import buildDatabaseUrl from './utils/database-url';
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
   private readonly eventSender: EventSender;
@@ -103,8 +110,11 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   }
 
   protected async runAuthenticated(): Promise<void> {
+    // Kept for the error below: it names where the connection failed, never with its credentials.
+    let databaseUrl: string | null = null;
     try {
       const { appConfig, dbConfig, language, meta, authenticationToken } = await this.getConfig();
+      databaseUrl = this.requiresDatabase ? buildDatabaseUrl(dbConfig) : null;
 
       this.spinner.start({ text: 'Creating your project on Forest Admin' });
       const projectCreationPromise = this.projectCreator.create(
@@ -145,10 +155,19 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
           this.logger.error('Cannot generate your project.');
         }
 
+        // A database that is down, a wrong password, a typo in its name: the user fixes those
+        // from their URL. Asking them to open an issue — with the error, URL included — is wrong.
+        const explanation = explainDatabaseError(error, databaseUrl ?? undefined);
+        if (explanation) {
+          this.logger.error(explanation);
+          this.exit(1);
+        }
+
         // Unconditional: this is the only line telling the operator where help lives,
         // and a failure after creation needs it as much as one before.
         this.logger.error(`${this.messages.ERROR_UNEXPECTED}`);
-        this.logger.log(`${this.chalk.red(error)}`);
+        // Masked: the message is meant to be pasted into an issue, and drivers quote the URL.
+        this.logger.log(`${this.chalk.red(maskUrlCredentials(String(error)))}`);
         this.exit(1);
       } else {
         throw error;
@@ -277,6 +296,10 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   /** The flag stays permissive, so a URL the generated project cannot run is a warning. */
   private warnOnUnsupportedConnectionUrl(databaseConnectionURL?: string): void {
     if (!databaseConnectionURL) return;
+    // Except a URL no driver can read: carrying on would only fail later, at the connection.
+    if (hasUnencodedCredentials(databaseConnectionURL)) {
+      throw new InvalidOptionError(ENCODE_PASSWORD_HINT);
+    }
 
     const { options } = this.constructor as unknown as {
       options?: {

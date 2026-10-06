@@ -1,6 +1,7 @@
 import type { Language } from '../../../utils/languages';
 import type { CommandOptions } from '../../../utils/option-parser';
 
+import { ENCODE_PASSWORD_HINT, hasUnencodedCredentials } from '../../../utils/database-errors';
 import languages from '../../../utils/languages';
 import { validateAppHostname, validateDbName, validatePort } from '../../../utils/validators';
 
@@ -76,6 +77,9 @@ function validateConnectionUrl(
   if (lowercaseOnly && scheme !== lowercased) {
     return `The scheme must be lowercase: use "${lowercased}://"`;
   }
+  // Caught here, before anything is created: past this point the driver fails to read the URL,
+  // and its error quotes it — password included.
+  if (hasUnencodedCredentials(url)) return ENCODE_PASSWORD_HINT;
 
   return true;
 }
