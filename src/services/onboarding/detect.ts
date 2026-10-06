@@ -1,3 +1,4 @@
+import dotenv from 'dotenv';
 import fs from 'fs';
 
 /**
@@ -19,6 +20,9 @@ export type NodeStack = {
   detected: boolean;
 };
 
+/** The package of the SQL datasource, the one that needs a driver installed next to it. */
+export const SQL_DATASOURCE = '@forestadmin/datasource-sql';
+
 /**
  * The Forest datasource package matching each ORM. TypeORM and Prisma have no package of their
  * own on npm, so they get the SQL one, which introspects the database they sit on.
@@ -26,9 +30,9 @@ export type NodeStack = {
 export const NODE_DATASOURCE: Record<NodeStack['orm'], string> = {
   sequelize: '@forestadmin/datasource-sequelize',
   mongoose: '@forestadmin/datasource-mongoose',
-  typeorm: '@forestadmin/datasource-sql',
-  prisma: '@forestadmin/datasource-sql',
-  sql: '@forestadmin/datasource-sql',
+  typeorm: SQL_DATASOURCE,
+  prisma: SQL_DATASOURCE,
+  sql: SQL_DATASOURCE,
 };
 
 function readJson(file: string): Record<string, unknown> | null {
@@ -37,6 +41,64 @@ function readJson(file: string): Record<string, unknown> | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * The driver Sequelize loads for each URL scheme. `@forestadmin/datasource-sql` ships none of them,
+ * so an app without one crashes at boot with "Please install pg package manually". The versions
+ * are the ones `create:sql` scaffolds.
+ */
+const SQL_DRIVERS: Record<string, { name: string; version: string }> = {
+  postgres: { name: 'pg', version: '^8.8.0' },
+  postgresql: { name: 'pg', version: '^8.8.0' },
+  mysql: { name: 'mysql2', version: '^3.0.1' },
+  mariadb: { name: 'mariadb', version: '^3.0.2' },
+  mssql: { name: 'tedious', version: '^18.6.1' },
+};
+
+const KNOWN_SQL_DRIVERS = ['pg', 'mysql2', 'mariadb', 'tedious', 'sqlite3'];
+
+/** For the messages: which package goes with which database. */
+export const SQL_DRIVER_NAMES =
+  'pg for Postgres, mysql2 for MySQL, mariadb, tedious for SQL Server';
+
+export type SqlDriver =
+  /** The app declares one already. */
+  | { status: 'declared'; name: string }
+  /** Read from the app's DATABASE_URL: `package` is what to install. */
+  | { status: 'from-url'; name: string; package: string }
+  /** Nothing to go on: the user has to install it. */
+  | { status: 'unknown' };
+
+/** The scheme of the app's DATABASE_URL, from its `.env` first — where Prisma keeps it — then the shell. */
+function databaseUrlScheme(): string | undefined {
+  let fromDotenv: string | undefined;
+  try {
+    fromDotenv = dotenv.parse(fs.readFileSync('.env', 'utf8')).DATABASE_URL;
+  } catch {
+    // No .env: the shell may still export it.
+  }
+
+  return /^([a-z][a-z0-9+.-]*):\/\//i.exec(fromDotenv ?? process.env.DATABASE_URL ?? '')?.[1];
+}
+
+/** The SQL driver the app needs for `@forestadmin/datasource-sql`, and whether to install it. */
+export function sqlDriver(): SqlDriver {
+  const pkg = readJson('package.json') ?? {};
+  const dependencies = {
+    ...((pkg.dependencies as Record<string, string>) ?? {}),
+    ...((pkg.devDependencies as Record<string, string>) ?? {}),
+  };
+  const declared = KNOWN_SQL_DRIVERS.find(name =>
+    Object.prototype.hasOwnProperty.call(dependencies, name),
+  );
+  if (declared) return { status: 'declared', name: declared };
+
+  const driver = SQL_DRIVERS[databaseUrlScheme()?.toLowerCase() ?? ''];
+
+  return driver
+    ? { status: 'from-url', name: driver.name, package: `${driver.name}@${driver.version}` }
+    : { status: 'unknown' };
 }
 
 /**
