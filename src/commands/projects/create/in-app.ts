@@ -117,6 +117,13 @@ export default class InAppCommand extends AbstractProjectCreateCommand {
   // eslint-disable-next-line class-methods-use-this, @typescript-eslint/no-empty-function -- intentional no-op
   protected override async dump(): Promise<void> {}
 
+  // Nothing is installed here, so "installation success" would be false even on its own. In text
+  // mode logNextSteps() says what was created; with --format json it prints only the document, so
+  // this line is what tells the operator on stderr.
+  protected override successMessage(): string | null {
+    return this.jsonOutput ? this.projectCreatedMessage() : null;
+  }
+
   // Skip file generation entirely; keep the secrets to surface in logNextSteps().
   protected override async generateProject(config: Config): Promise<void> {
     this.forestEnvSecret = config.forestEnvSecret;

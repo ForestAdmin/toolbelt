@@ -14,7 +14,7 @@ const AUTH_SECRET = 'myAuthSecret';
 const expectedPrompts = [
   {
     name: 'applicationHost',
-    message: "What's the IP/hostname on which your application will be running?",
+    message: 'URL your browser will use to reach the back-end:',
     type: 'input',
     default: 'http://localhost',
     validate: expect.any(Function),
@@ -59,7 +59,7 @@ describe('projects:create:in-app', () => {
         api,
         std: [
           { spinner: '√ Creating your project on Forest Admin' },
-          { out: '> Hooray, installation success!' },
+          { not: 'Hooray' },
           { out: 'In-app project created — no code was scaffolded.' },
           // Full values (not just the prefixes): `undefined` must not slip through.
           { out: `FOREST_ENV_SECRET=${ENV_SECRET}` },
@@ -140,7 +140,7 @@ describe('projects:create:in-app', () => {
           },
           // Human-readable lines are not dropped, only diverted: stdout stays
           // parsable AND the operator still sees what happened on stderr.
-          { err: 'Hooray, installation success!' },
+          { err: 'Project "name" created on Forest.' },
           { not: 'Testing connection' },
           { not: 'Analyzing' },
         ],

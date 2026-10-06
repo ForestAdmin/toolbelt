@@ -13,6 +13,8 @@ export type NodeStack = {
   framework: 'express' | 'nestJs' | 'fastify' | 'koa';
   orm: 'sequelize' | 'mongoose' | 'typeorm' | 'prisma' | 'sql';
   typescript: boolean;
+  /** The server is an ES module: `"type": "module"`, unless its entrypoint's extension says otherwise. */
+  esm: boolean;
   /** False when there is no package.json at all — nothing was detected, we only have defaults. */
   detected: boolean;
 };
@@ -35,6 +37,22 @@ function readJson(file: string): Record<string, unknown> | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Whether the app's server is an ES module. Node decides per file: `.mjs` is ESM and `.cjs` is
+ * CommonJS whatever the package says, and only other files follow `"type"`. The file the snippet
+ * goes into is not known, so the entrypoint `scripts.start` or `main` names stands in for it.
+ */
+function isEsm(pkg: Record<string, unknown>): boolean {
+  const start = (pkg.scripts as Record<string, string> | undefined)?.start ?? '';
+  const entry =
+    /[^\s'"]+\.[cm]?[jt]s\b/.exec(start)?.[0] ?? (typeof pkg.main === 'string' ? pkg.main : '');
+
+  if (/\.m[jt]s$/.test(entry)) return true;
+  if (/\.c[jt]s$/.test(entry)) return false;
+
+  return pkg.type === 'module';
 }
 
 /** Guess a Node application's framework and ORM from its declared dependencies. */
@@ -70,6 +88,7 @@ export function detectNodeStack(): NodeStack {
     framework: framework ?? 'express',
     orm: orm ?? 'sql',
     typescript: has('typescript') || fs.existsSync('tsconfig.json'),
+    esm: isEsm(pkg),
     detected: Boolean(pkg.name),
   };
 }

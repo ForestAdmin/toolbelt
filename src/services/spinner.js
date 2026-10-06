@@ -1,6 +1,22 @@
+/* eslint-disable max-classes-per-file -- the spinnies override below is kept next to its only use */
 const { v4: uuidv4 } = require('uuid');
 const chalk = require('chalk');
+const readline = require('readline');
 const Spinnies = require('spinnies');
+
+// Spinnies' own Ctrl-C handler removes every other SIGINT listener and exits 0. Since the context
+// builds a spinner for every command, any Ctrl-C ended as a success: a caller such as `forest start`
+// read an interrupted `create:sql` as done and carried on. This one restores the cursor and exits
+// as an interrupt should.
+class InterruptibleSpinnies extends Spinnies {
+  bindSigint() {
+    process.on('SIGINT', () => {
+      process.stderr.write('\u001B[?25h'); // show the cursor the spinner hid
+      readline.moveCursor(process.stderr, 0, this.lineCount);
+      process.exit(130);
+    });
+  }
+}
 
 const spinniesConstructorParameters = {
   color: 'yellow',
@@ -16,7 +32,8 @@ const spinniesConstructorParameters = {
 // NOTICE: Singleton used here to attach all generated spinner to the same spinnies instance.
 let spinniesInstance;
 function getSpinniesInstance() {
-  if (!spinniesInstance) spinniesInstance = new Spinnies(spinniesConstructorParameters);
+  if (!spinniesInstance)
+    spinniesInstance = new InterruptibleSpinnies(spinniesConstructorParameters);
   return spinniesInstance;
 }
 

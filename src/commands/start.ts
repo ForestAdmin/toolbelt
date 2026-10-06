@@ -13,7 +13,9 @@ import {
   mountHelper,
 } from '../services/onboarding/detect';
 import { bootSecrets, keysLoadedFromDotenv, writeSecrets } from '../services/onboarding/env-file';
+import { START_STEP_ENV } from '../services/onboarding/step';
 import {
+  INTERRUPTED_EXIT_CODE,
   runCapture,
   runStep,
   startProcess,
@@ -25,6 +27,12 @@ const DOCS_URL = 'https://docs.forest.app';
 const DEMO_PORT = 3310;
 const RAILS_PORT = 3002;
 const NODE_PORT = 3001;
+
+/** How many back-end lines are kept while a question is on screen; older ones are dropped. */
+const HELD_LINES = 200;
+
+/** Marks each `forest` command run here as one step, so none of them announces the setup done. */
+const STEP_ENV = { [START_STEP_ENV]: '1' };
 
 /** What configures this CLI rather than a project: where its token lives, which server it calls. */
 const CLI_SETTINGS = [
@@ -102,6 +110,9 @@ export default class StartCommand extends AbstractCommand {
   };
 
   private dryRun = false;
+
+  /** Back-end output held while a question is on screen, or null when none is. */
+  private heldOutput: string[] | null = null;
 
   // eslint-disable-next-line class-methods-use-this -- reads the ambient TTY, not instance state
   private get interactive(): boolean {
@@ -217,9 +228,11 @@ export default class StartCommand extends AbstractCommand {
     this.logger.log(this.chalk.grey(`\n$ ${StartCommand.redact(command, args)}`));
     if (this.dryRun) return this.logger.log(this.chalk.grey('  (dry-run — not executed)'));
 
-    return runStep(command, args, { cwd }).catch(error => {
-      throw StartCommand.scrubbed(error, command, args);
-    });
+    return this.holdingOutput(() =>
+      runStep(command, args, { cwd }).catch(error => {
+        throw StartCommand.scrubbed(error, command, args);
+      }),
+    );
   }
 
   /** Invoke one of our own commands. Resolved through this executable, never through the PATH:
@@ -232,9 +245,13 @@ export default class StartCommand extends AbstractCommand {
       return Promise.resolve();
     }
 
-    return runStep(process.execPath, [process.argv[1], ...args], { cwd }).catch(error => {
-      throw StartCommand.scrubbed(error, 'forest', args);
-    });
+    return this.holdingOutput(() =>
+      runStep(process.execPath, [process.argv[1], ...args], { cwd, env: STEP_ENV }).catch(error => {
+        // Ctrl-C in one of its prompts: the user stopped the setup, not a failure to report.
+        if (error.exitCode === INTERRUPTED_EXIT_CODE) this.exit(INTERRUPTED_EXIT_CODE);
+        throw StartCommand.scrubbed(error, 'forest', args);
+      }),
+    );
   }
 
   /**
@@ -257,6 +274,7 @@ export default class StartCommand extends AbstractCommand {
     try {
       const { stdout } = await runCapture(process.execPath, [process.argv[1], ...args], {
         onProgress,
+        env: STEP_ENV,
       });
 
       return stdout;
@@ -276,10 +294,11 @@ export default class StartCommand extends AbstractCommand {
       // NO onProgress here, unlike above: this retry captures the human output precisely because
       // that is where the secrets are printed. Echoing it would put a long-lived credential in
       // the terminal, the scrollback and — on the non-interactive path — a retained CI log.
-      const { stdout, stderr } = await runCapture(process.execPath, [
-        process.argv[1],
-        ...withoutFormat,
-      ]);
+      const { stdout, stderr } = await runCapture(
+        process.execPath,
+        [process.argv[1], ...withoutFormat],
+        { env: STEP_ENV },
+      );
 
       return `${stdout}\n${stderr}`;
     }
@@ -302,15 +321,40 @@ export default class StartCommand extends AbstractCommand {
       env: options.env,
       onOutput: chunk => {
         if (options.trouble?.test(chunk)) troubled = true;
-        this.logger.log(this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`));
+        const line = this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`);
+        if (!this.heldOutput) this.logger.log(line);
+        // Bounded: a menu can stay open for hours over a chatty back-end.
+        else if (this.heldOutput.push(line) > HELD_LINES) this.heldOutput.shift();
       },
     });
 
     return Object.assign(started, { troubled: () => troubled });
   }
 
-  private ask(question: Record<string, unknown>) {
-    return this.context.inquirer.prompt([question]);
+  /**
+   * Hold a running back-end's logs while something else owns the terminal: a question here, or a
+   * command run in the foreground, which may ask its own (`skills:init` does). inquirer redraws a
+   * menu by erasing the lines it drew, so a log line printed meanwhile — a request, as soon as the
+   * user opens the back-office — gets erased instead, and the menu is drawn again below its old
+   * copy. The held lines are printed once it is done.
+   */
+  private async holdingOutput<T>(run: () => Promise<T>): Promise<T> {
+    if (this.heldOutput) return run();
+
+    this.heldOutput = [];
+    try {
+      return await run();
+    } finally {
+      const held = this.heldOutput;
+      this.heldOutput = null;
+      held.forEach(line => this.logger.log(line));
+    }
+  }
+
+  // The answers stay loosely typed, as `inquirer.prompt` returns them.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private ask(question: Record<string, unknown>): Promise<any> {
+    return this.holdingOutput(() => this.context.inquirer.prompt([question]));
   }
 
   private async confirm(message: string): Promise<boolean> {
@@ -465,20 +509,19 @@ export default class StartCommand extends AbstractCommand {
     const name = await this.promptName(flags.name, { createsDir: true });
     // `create:sql` prompts for the database itself — including the connection URL — so nothing
     // about the user's credentials ever passes through this wrapper.
-    const args = ['projects:create:sql', name];
+    // TypeScript, as every other flow generates, and localhost, which a back-end on this machine
+    // always is: neither question has another answer here. JavaScript stays one flag away, on
+    // `create:sql` itself.
+    const args = ['projects:create:sql', name, '-l', 'typescript', '-H', 'http://localhost'];
 
-    // Without a --db, `create:sql` asks for everything itself — language and hostname included.
-    // Forcing them here would quietly take away the choice of JavaScript or of a free port.
+    // Without a --db, `create:sql` asks for the database itself, and for a port: forcing one would
+    // take away the choice of a free one.
     if (flags.db) {
       args.push(
         '--databaseConnectionURL',
         flags.db,
         '-s',
         flags.schema ?? 'public',
-        '-l',
-        'typescript',
-        '-H',
-        'http://localhost',
         '-P',
         String(DEMO_PORT),
       );
@@ -773,29 +816,33 @@ export default class StartCommand extends AbstractCommand {
       prisma: sqlDataSource,
     }[stack.orm];
 
+    // `import` breaks a CommonJS app ("Cannot use import statement outside a module"), which is
+    // what most existing Express apps are: it is only printed where it compiles.
+    const load = (names: string, from: string) =>
+      stack.typescript || stack.esm
+        ? `import { ${names} } from '${from}';`
+        : `const { ${names} } = require('${from}');`;
+
     this.instruct('Add to your server (after your ORM is ready, before app.listen):', [
-      this.chalk.cyan("import { createAgent } from '@forestadmin/agent';"),
-      this.chalk.cyan(`import { ${factory} } from '${NODE_DATASOURCE[stack.orm]}';`),
+      this.chalk.cyan(load('createAgent', '@forestadmin/agent')),
+      this.chalk.cyan(load(factory, NODE_DATASOURCE[stack.orm])),
       this.chalk.cyan(
         'createAgent({ authSecret: process.env.FOREST_AUTH_SECRET, envSecret: process.env.FOREST_ENV_SECRET, isProduction: false })',
       ),
       this.chalk.cyan(
         `  .addDataSource(${call}).mountOn${mountHelper(stack.framework)}(app).start();`,
       ),
-      this.chalk.grey(`Exact per-stack snippet → ${DOCS_URL}/…/in-app/${stack.framework}`),
+      this.chalk.grey(`Mount options → ${DOCS_URL}/reference/agent-api/nodejs`),
     ]);
   }
 
-  /**
-   * A TypeScript scaffold pins typescript ^4.9, which cannot parse recent `.d.cts` typings. A
-   * JavaScript one has no build step at all, and `npm run build` would fail on the missing script.
-   */
+  /** A JavaScript scaffold has no build step at all, and `npm run build` would fail on the missing
+   *  script. */
   private async installAndBuild(dir: string): Promise<void> {
     await this.run$('npm', ['install'], dir);
     // A dry run scaffolded nothing to read, so it shows the TypeScript path the demo always takes.
     if (!this.dryRun && !StartCommand.hasBuildScript(dir)) return;
 
-    await this.run$('npm', ['install', '--save-dev', 'typescript@^5.5'], dir);
     await this.run$('npm', ['run', 'build'], dir);
   }
 
@@ -820,7 +867,7 @@ export default class StartCommand extends AbstractCommand {
     const { next } = await this.ask({
       type: 'list',
       name: 'next',
-      message: `Your demo back-end is live on :${DEMO_PORT}. What next?`,
+      message: 'What next?',
       choices: [
         { name: 'Connect my real database (create a real project)', value: 'db' },
         { name: 'Keep exploring — leave the back-end running', value: 'stay' },
@@ -863,7 +910,11 @@ export default class StartCommand extends AbstractCommand {
     if (!this.interactive) {
       if (tail.child) {
         stopProcess(tail.child);
-        this.logger.log(this.chalk.grey(`  Launch it anytime: cd ${tail.dir} && ${tail.restart}`));
+        this.logger.log(
+          this.chalk.grey(
+            `  Launch it anytime: ${StartCommand.restartCommand(tail.dir, tail.restart)}`,
+          ),
+        );
       }
 
       return;
@@ -914,37 +965,18 @@ export default class StartCommand extends AbstractCommand {
       // repo-aware detection. One question, asked once, where the answer belongs.
       await this.forest(['skills:init'], tail.dir);
 
-      return this.offerLaunch(tail, StartCommand.seed('customise', tail));
+      return this.offerLaunch(tail, StartCommand.seed(tail));
     }
 
     if (choice === 'deploy') {
-      // Deploying lives in the `deploy-heroku` SKILL, so it needs the skills installed first —
-      // `forest deploy` ships layout changes, it does not deploy the app.
-      if (await this.launch(tail, StartCommand.seed('deploy', tail))) return true;
-
-      // Skills present, but no agent we can start from here — Cursor and OpenCode have them and
-      // are not launchable. Sending those users back to `skills:init` loops them on a step they
-      // have already done, with no way to ever reach a deploy.
-      if (StartCommand.hasSkills(tail.dir)) {
-        this.instruct('Ask your coding agent to deploy:', [
-          this.chalk.cyan('"deploy this Forest project to production"'),
-          this.chalk.grey('It has the Forest skills — the steps are in `deploy-heroku`.'),
-        ]);
-
-        return false;
-      }
-
-      if (!this.canInstallSkills) {
-        this.instruct('Deploy by hand:', [this.chalk.cyan(DOCS_URL)]);
-
-        return false;
-      }
-
-      this.instruct('Deploying needs your coding agent set up first:', [
-        `Pick ${this.chalk.cyan(
-          '"Teach your coding agent about Forest"',
-        )} above, then come back here.`,
-        this.chalk.grey(`Prefer to do it by hand? ${DOCS_URL}`),
+      // The docs, not a skill: no skill covers deploying any more, and nothing here sets up the
+      // production side (its environment, its secrets) either. A pointer that exists beats a
+      // coding agent sent after steps it does not have.
+      this.instruct('Deploy to production:', [
+        `Follow ${this.chalk.cyan(`${DOCS_URL}/get-started/deploy`)}`,
+        this.chalk.grey(
+          'Host this back-end anywhere that runs Node.js, then add a production environment in Forest that points at it.',
+        ),
       ]);
     }
 
@@ -982,7 +1014,12 @@ export default class StartCommand extends AbstractCommand {
 
     stopProcess(tail.child, 'SIGINT');
     this.logger.log(
-      this.chalk.grey(`\n  Forest back-end stopped. Restart it: cd ${tail.dir} && ${tail.restart}`),
+      this.chalk.grey(
+        `\n  Forest back-end stopped. Restart it: ${StartCommand.restartCommand(
+          tail.dir,
+          tail.restart,
+        )}`,
+      ),
     );
 
     return true;
@@ -992,7 +1029,9 @@ export default class StartCommand extends AbstractCommand {
   private keepAlive(child: ChildProcess, dir: string, restart: string): Promise<void> {
     // Its `exit` already fired, so listening for it would hold the terminal until a Ctrl-C.
     if (child.exitCode !== null || child.signalCode !== null) {
-      this.logger.warn(`Your back-end has stopped. Restart it: cd ${dir} && ${restart}`);
+      this.logger.warn(
+        `Your back-end has stopped. Restart it: ${StartCommand.restartCommand(dir, restart)}`,
+      );
 
       return Promise.resolve();
     }
@@ -1003,17 +1042,19 @@ export default class StartCommand extends AbstractCommand {
       ),
     );
     this.logger.log(
-      this.chalk.grey(`     Ctrl-C to stop  ·  restart later: cd ${dir} && ${restart}`),
+      this.chalk.grey(
+        `     Ctrl-C to stop  ·  restart later: ${StartCommand.restartCommand(dir, restart)}`,
+      ),
     );
 
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let stopped = false;
       const stop = () => {
         if (stopped) return;
         stopped = true;
         this.logger.log(
           `\n\n${this.chalk.yellow('■')} Back-end stopped. Restart it anytime → ${this.chalk.cyan(
-            `cd ${dir} && ${restart}`,
+            StartCommand.restartCommand(dir, restart),
           )}`,
         );
         stopProcess(child, 'SIGINT');
@@ -1021,8 +1062,32 @@ export default class StartCommand extends AbstractCommand {
       };
       // Ahead of the process runner's own hook, which exits on SIGINT before a later listener runs.
       process.prependOnceListener('SIGINT', stop);
-      child.on('exit', () => resolve());
+      child.on('exit', (code, signal) => {
+        if (stopped) return resolve();
+
+        // Nobody asked it to stop: ending here in silence, and with success, would leave the user
+        // at a prompt with a dead back-office and nothing saying so.
+        stopped = true;
+        process.removeListener('SIGINT', stop);
+        const status = signal ?? `exit code ${code}`;
+        const restartIt = StartCommand.restartCommand(dir, restart);
+        this.logger.warn(
+          `Your back-end stopped on its own (${status}). Its logs are above.\n  Restart it: ${restartIt}`,
+        );
+        try {
+          this.exit(1);
+        } catch (exit) {
+          reject(exit);
+        }
+
+        return undefined;
+      });
     });
+  }
+
+  /** How to start a back-end again. In-app flows run in the user's own folder: no `cd .` there. */
+  private static restartCommand(dir: string, restart: string): string {
+    return dir === '.' ? restart : `cd ${dir} && ${restart}`;
   }
 
   // ---------- seeds & helpers ----------
@@ -1033,7 +1098,7 @@ export default class StartCommand extends AbstractCommand {
    * boot it, which collides on the port or kills the live one), and nothing is deployed yet, so no
    * role exists and inviting anyone is premature. Everything durable belongs in the skills.
    */
-  private static seed(intent: 'customise' | 'deploy', tail: Tail): string {
+  private static seed(tail: Tail): string {
     const situation = [
       `Stack: ${tail.stack}.`,
       `Its back-end is already running on ${tail.url} — it is live, don't start it.`,
@@ -1044,9 +1109,7 @@ export default class StartCommand extends AbstractCommand {
     ].join(' ');
 
     const task =
-      intent === 'customise'
-        ? 'Help me customise my back-office — e.g. add a segment to a collection, a Smart Action, or an approval workflow.'
-        : "Deploy it to production, then invite my team — the first deploy is what creates the project's first role, so inviting only works once it has succeeded.";
+      'Help me customise my back-office — e.g. add a segment to a collection, a Smart Action, or an approval workflow.';
 
     return `You're in a Forest project. ${situation} ${task}`;
   }
@@ -1056,11 +1119,6 @@ export default class StartCommand extends AbstractCommand {
    * We deliberately do not detect them here: the toolbelt already does it, better — from the repo's
    * own marks, and knowing Cursor and OpenCode too — and asking twice makes a flow feel like a form.
    */
-  /** Whether `skills:init` ran here at all — regardless of which agent it set up. */
-  private static hasSkills(dir: string): boolean {
-    return fs.existsSync(`${dir}/.forest/skills-manifest.json`);
-  }
-
   private static launchableAgents(cwd: string): { bin: string; label: string }[] {
     const labels: Record<string, string> = { claude: 'Claude Code', codex: 'Codex' };
     try {
@@ -1128,7 +1186,18 @@ export default class StartCommand extends AbstractCommand {
 
   private doneDemo(name: string): void {
     this.logger.success(
-      `Demo back-office live. Open ${this.chalk.cyan(`https://app.forestadmin.com/${name}`)}`,
+      `Demo back-office live → ${this.chalk.cyan(`https://app.forestadmin.com/${name}`)}`,
+    );
+    this.servedByThisTerminal(DEMO_PORT);
+  }
+
+  /**
+   * The link and the port, tied together. The UI is hosted, but the browser loads the records from
+   * the back-end in this terminal: closing it is what breaks the link, and nothing else says so.
+   */
+  private servedByThisTerminal(port: number): void {
+    this.logger.log(
+      `  Your browser reads its data from the back-end in this terminal (localhost:${port}): keep it open.`,
     );
   }
 
@@ -1148,9 +1217,7 @@ export default class StartCommand extends AbstractCommand {
     this.logger.log(
       `  ${this.chalk.bold('Open it →')} ${this.chalk.cyan(`https://app.forestadmin.com/${name}`)}`,
     );
-    this.logger.log(
-      `  ${this.chalk.bold('Served by →')} http://localhost:${port}   (this terminal)`,
-    );
+    this.servedByThisTerminal(port);
   }
 
   /**

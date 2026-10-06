@@ -25,7 +25,9 @@ export default class SqlCommand extends AbstractProjectCreateCommand {
       filter: projectCreateOptions.trimConnectionUrl,
       prompter: {
         validate: projectCreateOptions.validateSqlConnectionUrl,
-        question: 'Database connection URL (leave blank to enter the details manually):',
+        question:
+          `Database connection URL, e.g. ${projectCreateOptions.SQL_URL_EXAMPLE}\n` +
+          '  (postgres, mysql or mssql; leave blank to enter the details manually):',
         secret: true,
       },
     },

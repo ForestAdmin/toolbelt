@@ -95,6 +95,29 @@ describe('onboarding detect', () => {
       });
     });
 
+    it('reads ES modules from the entrypoint extension first, as Node does, then from "type"', () => {
+      expect.assertions(4);
+      const esmResults: boolean[] = [];
+      const esmOf = (pkg: Record<string, unknown>) =>
+        withTempDir(() => {
+          fs.writeFileSync('package.json', JSON.stringify({ name: 'app', ...pkg }));
+          esmResults.push(detectNodeStack().esm);
+        });
+
+      // `.cjs` is CommonJS even in a "type": "module" package: `import` there would not parse.
+      esmOf({ type: 'module', scripts: { start: 'node --env-file=.env server.cjs' } });
+      // …and `.mjs` is ESM in a CommonJS one.
+      esmOf({ main: 'src/server.mjs' });
+      // Any other entrypoint follows "type".
+      esmOf({ type: 'module', scripts: { start: 'node index.js' } });
+      esmOf({ scripts: { start: 'node index.js' } });
+
+      expect(esmResults[0]).toBe(false);
+      expect(esmResults[1]).toBe(true);
+      expect(esmResults[2]).toBe(true);
+      expect(esmResults[3]).toBe(false);
+    });
+
     it('survives an unreadable package.json instead of crashing the onboarding', () => {
       expect.assertions(1);
       withTempDir(() => {

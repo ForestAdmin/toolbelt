@@ -116,7 +116,8 @@ export default class AgentNodeJs extends AbstractDumper {
         start: 'node ./dist/index.js',
         'start:watch': 'nodemon ./index.ts',
       };
-      devDependencies.typescript = '^4.9.4';
+      // 4.x cannot parse the `.d.cts` typings recent dependencies ship, so `npm run build` fails.
+      devDependencies.typescript = '^5.5.0';
       devDependencies['ts-node'] = '^10.9.1';
       nodemonConfig.ignore.push('./typings.ts');
     }

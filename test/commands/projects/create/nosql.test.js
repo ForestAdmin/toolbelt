@@ -17,7 +17,9 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
   const allPromptInputs = [
     {
       name: 'databaseConnectionURL',
-      message: 'MongoDB connection URL (leave blank to enter the details manually):',
+      message:
+        'MongoDB connection URL, e.g. mongodb://user:password@host:27017/db\n' +
+        '  (leave blank to enter the details manually):',
       type: 'password',
       mask: '*',
       filter: expect.any(Function),
@@ -66,7 +68,7 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
     },
     {
       name: 'applicationHost',
-      message: "What's the IP/hostname on which your application will be running?",
+      message: 'URL your browser will use to reach the back-end:',
       type: 'input',
       default: 'http://localhost',
       validate: expect.any(Function),
@@ -83,10 +85,10 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
       message: 'In which language would you like to generate your sources?',
       type: 'list',
       choices: [
-        { name: languages.Javascript.name, value: languages.Javascript },
         { name: languages.Typescript.name, value: languages.Typescript },
+        { name: languages.Javascript.name, value: languages.Javascript },
       ],
-      default: languages.Javascript,
+      default: languages.Typescript,
     },
   ];
   let inputs = allPromptInputs;
