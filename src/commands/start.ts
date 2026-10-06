@@ -1,4 +1,4 @@
-import type { NodeStack } from '../services/onboarding/detect';
+import type { NodeStack, SqlDriver } from '../services/onboarding/detect';
 import type { SecretsWrite } from '../services/onboarding/env-file';
 import type { ChildProcess } from 'child_process';
 
@@ -8,9 +8,12 @@ import fs from 'fs';
 import AbstractCommand from '../abstract-command';
 import {
   NODE_DATASOURCE,
+  SQL_DATASOURCE,
+  SQL_DRIVER_NAMES,
   detectNodeStack,
   detectRails,
   mountHelper,
+  sqlDriver,
 } from '../services/onboarding/detect';
 import { bootSecrets, keysLoadedFromDotenv, writeSecrets } from '../services/onboarding/env-file';
 import { START_STEP_ENV } from '../services/onboarding/step';
@@ -667,9 +670,18 @@ export default class StartCommand extends AbstractCommand {
     }
 
     const stack = detectNodeStack();
-    await this.run$('npm', ['install', '@forestadmin/agent', NODE_DATASOURCE[stack.orm]]);
+    // The SQL datasource reaches the database through a driver it does not ship: without one the
+    // agent crashes at boot. An app on Sequelize or Mongoose brings its own with its ORM.
+    const driver: SqlDriver | undefined =
+      NODE_DATASOURCE[stack.orm] === SQL_DATASOURCE ? sqlDriver() : undefined;
+    await this.run$('npm', [
+      'install',
+      '@forestadmin/agent',
+      NODE_DATASOURCE[stack.orm],
+      ...(driver?.status === 'from-url' ? [driver.package] : []),
+    ]);
 
-    this.explainMount(mount, stack);
+    this.explainMount(mount, stack, driver);
 
     const tail: Tail = {
       name,
@@ -708,10 +720,10 @@ export default class StartCommand extends AbstractCommand {
     // The agent mounts Forest with the skills, so both come before the boot waits on a mount.
     if (mount === 'ai') {
       const inDotenv = !written.conflicts.length && !written.shadowed.length;
-      await this.mountWithAgent(stack, inDotenv).catch(error => {
+      await this.mountWithAgent(stack, inDotenv, driver).catch(error => {
         // The project exists by now: a failed agent step costs the snippet, never the setup.
         this.logger.warn(`${(error as Error).message}\n  Mount it by hand instead:`);
-        this.explainMount('manual', stack);
+        this.explainMount('manual', stack, driver);
       });
     }
 
@@ -760,7 +772,11 @@ export default class StartCommand extends AbstractCommand {
   }
 
   /** Install the skills the agent mounts with, then offer to launch it on that one task. */
-  private async mountWithAgent(stack: NodeStack, secretsInDotenv: boolean): Promise<void> {
+  private async mountWithAgent(
+    stack: NodeStack,
+    secretsInDotenv: boolean,
+    driver?: SqlDriver,
+  ): Promise<void> {
     if (!this.canInstallSkills) return;
 
     await this.forest(['skills:init']);
@@ -768,24 +784,30 @@ export default class StartCommand extends AbstractCommand {
     const [agent] = StartCommand.launchableAgents('.');
     if (!agent || !(await this.confirm(`Launch ${agent.label} now to wire the mount?`))) return;
 
-    await this.run$(agent.bin, [StartCommand.mountSeed(stack, secretsInDotenv)]);
+    await this.run$(agent.bin, [StartCommand.mountSeed(stack, secretsInDotenv, driver)]);
   }
 
-  private static mountSeed(stack: NodeStack, secretsInDotenv: boolean): string {
+  private static mountSeed(stack: NodeStack, secretsInDotenv: boolean, driver?: SqlDriver): string {
     // On a conflict the new project's secrets are in neither `.env` nor the shell: an agent told
     // otherwise would wire the app to whichever project those hold.
     const secrets = secretsInDotenv
       ? 'FOREST_ENV_SECRET / FOREST_AUTH_SECRET are in .env'
       : "this project's FOREST_ENV_SECRET / FOREST_AUTH_SECRET are not configured yet, so ask me for them rather than reusing the ones already there";
+    const installed = ['@forestadmin/agent', NODE_DATASOURCE[stack.orm]];
+    if (driver && driver.status !== 'unknown') installed.push(driver.name);
+    const missingDriver =
+      driver?.status === 'unknown'
+        ? ` Its database driver is not installed: install the one matching DATABASE_URL (${SQL_DRIVER_NAMES}).`
+        : '';
 
     return (
-      `You're in a ${stack.framework} app using ${stack.orm}. @forestadmin/agent and ` +
-      `${NODE_DATASOURCE[stack.orm]} are installed, and ${secrets}. Mount the Forest agent in ` +
-      "my server, then stop: don't start the server, `forest start` boots it once you are done."
+      `You're in a ${stack.framework} app using ${stack.orm}. ${installed.join(', ')} are ` +
+      `installed, and ${secrets}.${missingDriver} Mount the Forest agent in my server, then ` +
+      "stop: don't start the server, `forest start` boots it once you are done."
     );
   }
 
-  private explainMount(mount: string, stack: NodeStack): void {
+  private explainMount(mount: string, stack: NodeStack, driver?: SqlDriver): void {
     if (mount === 'ai') {
       this.instruct('Your coding agent will wire the mount:', [
         `in your repo, ask it: ${this.chalk.cyan('"mount the Forest agent in my server"')}`,
@@ -833,6 +855,14 @@ export default class StartCommand extends AbstractCommand {
         `  .addDataSource(${call}).mountOn${mountHelper(stack.framework)}(app).start();`,
       ),
       this.chalk.grey(`Mount options → ${DOCS_URL}/reference/agent-api/nodejs`),
+      // Without a driver the agent crashes at boot, and nothing here could tell which one.
+      ...(driver?.status === 'unknown'
+        ? [
+            this.chalk.yellow(
+              `No DATABASE_URL found, so no database driver was installed: add yours too (${SQL_DRIVER_NAMES}).`,
+            ),
+          ]
+        : []),
     ]);
   }
 
