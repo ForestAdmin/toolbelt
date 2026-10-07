@@ -64,9 +64,10 @@ describe('onboarding > existing-project', () => {
           'package.json': JSON.stringify({
             dependencies: { '@forestadmin/agent': '^1', express: '^4' },
           }),
-          'index.js': 'createAgent(options).mountOnExpress(app).start();',
+          'index.js':
+            "const { createAgent } = require('@forestadmin/agent');\ncreateAgent(options).mountOnExpress(app).start();",
         });
-        expect(findForestProject(dir)?.kind).toBe('node-app');
+        expect(findForestProject(dir)).toMatchObject({ kind: 'node-app', mounted: true });
       });
     });
 
@@ -81,6 +82,38 @@ describe('onboarding > existing-project', () => {
           kind: 'rails-app',
           envSecret: 'from-rails',
         });
+      });
+    });
+
+    it("skips a commented-out secret, often an older one left above the initializer's real one", () => {
+      expect.assertions(1);
+      withTempDir(dir => {
+        write(dir, {
+          'config/initializers/forest_admin_rails.rb':
+            "ForestAdminRails.configure do |config|\n  # config.env_secret = 'old-one'\n  config.env_secret = 'current'\nend\n",
+        });
+        expect(findForestProject(dir)?.envSecret).toBe('current');
+      });
+    });
+
+    it('tells a Node app that mounts Forest from one whose onboarding stopped before the mount', () => {
+      expect.assertions(2);
+      withTempDir(dir => {
+        write(dir, {
+          '.env': 'FOREST_ENV_SECRET=abc\n',
+          'package.json': JSON.stringify({ dependencies: { '@forestadmin/agent': '^1' } }),
+          'index.js': "const app = require('express')();\napp.listen(3000);",
+          // Dependencies load the agent too: they are not the app's code.
+          'node_modules/x/index.js':
+            "require('@forestadmin/agent').createAgent().mountOnExpress(app);",
+        });
+        expect(findForestProject(dir)?.mounted).toBe(false);
+
+        write(dir, {
+          'src/forest.ts':
+            "import { createAgent } from '@forestadmin/agent';\nexport default (app) => createAgent(o).mountOnExpress(app).start();",
+        });
+        expect(findForestProject(dir)?.mounted).toBe(true);
       });
     });
 

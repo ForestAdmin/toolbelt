@@ -21,6 +21,12 @@ export type ExistingProject = {
   kind: 'scaffold' | 'node-app' | 'rails-app';
   /** Sample data rather than the user's database. */
   demo: boolean;
+  /**
+   * For a Node app: whether its code mounts Forest. In-app onboarding installs the agent and writes
+   * the secrets before the user pastes the mount, so an interrupted one looks reopenable but would
+   * boot an app with no Forest in it.
+   */
+  mounted?: boolean;
   envSecret: string;
 };
 
@@ -43,11 +49,56 @@ function envSecretFromRailsInitializer(dir: string): string | undefined {
   const initializer = read(path.join(dir, 'config/initializers/forest_admin_rails.rb'));
   if (!initializer) return undefined;
 
+  // Active lines only: a commented-out assignment is often an older secret left above the real one.
   return (
-    /env_secret\s*=\s*['"]([^'"]+)['"]/.exec(initializer)?.[1] ??
+    /^[ \t]*(?:config\.)?env_secret\s*=\s*['"]([^'"]+)['"]/m.exec(initializer)?.[1] ??
     // `config.env_secret = ENV['FOREST_ENV_SECRET']`: then it is in `.env` after all.
-    (/ENV\[['"]FOREST_ENV_SECRET['"]\]/.test(initializer) ? envSecretFromDotenv(dir) : undefined)
+    (/^[ \t]*(?:config\.)?env_secret\s*=\s*ENV\[['"]FOREST_ENV_SECRET['"]\]/m.test(initializer)
+      ? envSecretFromDotenv(dir)
+      : undefined)
   );
+}
+
+const SOURCE = /\.[cm]?[jt]s$/;
+const NOT_SOURCES = new Set(['node_modules', 'dist', 'build', 'coverage', 'out']);
+const MAX_FILES = 500;
+
+function entriesOf(dir: string): fs.Dirent[] {
+  try {
+    return fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+}
+
+/** The app's own source files, breadth first and bounded: never its dependencies or builds. */
+function sourceFiles(dir: string): string[] {
+  const files: string[] = [];
+  const folders = [dir];
+
+  while (folders.length && files.length < MAX_FILES) {
+    const folder = folders.shift() as string;
+    entriesOf(folder)
+      .filter(entry => !entry.name.startsWith('.'))
+      .forEach(entry => {
+        const file = path.join(folder, entry.name);
+        if (entry.isDirectory() && !NOT_SOURCES.has(entry.name)) folders.push(file);
+        else if (entry.isFile() && SOURCE.test(entry.name) && !entry.name.endsWith('.d.ts')) {
+          files.push(file);
+        }
+      });
+  }
+
+  return files.slice(0, MAX_FILES);
+}
+
+/** Whether the app's own code loads the agent and mounts it: the mount can live in any file. */
+function mountsForest(dir: string): boolean {
+  return sourceFiles(dir).some(file => {
+    const source = read(file) ?? '';
+
+    return source.includes('@forestadmin/agent') && /\.mountOn[A-Z]\w*\(/.test(source);
+  });
 }
 
 /** The Forest project `dir` holds, or null when it holds none. */
@@ -71,12 +122,16 @@ export function findForestProject(dir: string): ExistingProject | null {
   const entry = ['index.ts', 'index.js'].map(file => read(path.join(dir, file))).find(Boolean);
   const scaffold = Boolean(entry?.includes('mountOnStandaloneServer'));
 
-  return {
-    dir,
-    kind: scaffold ? 'scaffold' : 'node-app',
-    demo: Boolean(dependencies['@forestadmin/datasource-demo-fintech']),
-    envSecret,
-  };
+  if (scaffold) {
+    return {
+      dir,
+      kind: 'scaffold',
+      demo: Boolean(dependencies['@forestadmin/datasource-demo-fintech']),
+      envSecret,
+    };
+  }
+
+  return { dir, kind: 'node-app', demo: false, envSecret, mounted: mountsForest(dir) };
 }
 
 /** The Forest projects in the immediate subfolders of `dir`, sorted by name. */

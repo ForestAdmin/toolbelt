@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import fs from 'fs';
+import path from 'path';
 
 /**
  * Reading what an existing application is built with, to install the right packages when Forest is
@@ -71,10 +72,10 @@ export type SqlDriver =
   | { status: 'unknown' };
 
 /** The scheme of the app's DATABASE_URL, from its `.env` first — where Prisma keeps it — then the shell. */
-function databaseUrlScheme(): string | undefined {
+function databaseUrlScheme(dir: string): string | undefined {
   let fromDotenv: string | undefined;
   try {
-    fromDotenv = dotenv.parse(fs.readFileSync('.env', 'utf8')).DATABASE_URL;
+    fromDotenv = dotenv.parse(fs.readFileSync(path.join(dir, '.env'), 'utf8')).DATABASE_URL;
   } catch {
     // No .env: the shell may still export it.
   }
@@ -83,8 +84,8 @@ function databaseUrlScheme(): string | undefined {
 }
 
 /** The SQL driver the app needs for `@forestadmin/datasource-sql`, and whether to install it. */
-export function sqlDriver(): SqlDriver {
-  const pkg = readJson('package.json') ?? {};
+export function sqlDriver(dir = '.'): SqlDriver {
+  const pkg = readJson(path.join(dir, 'package.json')) ?? {};
   const dependencies = {
     ...((pkg.dependencies as Record<string, string>) ?? {}),
     ...((pkg.devDependencies as Record<string, string>) ?? {}),
@@ -94,7 +95,7 @@ export function sqlDriver(): SqlDriver {
   );
   if (declared) return { status: 'declared', name: declared };
 
-  const driver = SQL_DRIVERS[databaseUrlScheme()?.toLowerCase() ?? ''];
+  const driver = SQL_DRIVERS[databaseUrlScheme(dir)?.toLowerCase() ?? ''];
 
   return driver
     ? { status: 'from-url', name: driver.name, package: `${driver.name}@${driver.version}` }
@@ -118,8 +119,8 @@ function isEsm(pkg: Record<string, unknown>): boolean {
 }
 
 /** Guess a Node application's framework and ORM from its declared dependencies. */
-export function detectNodeStack(): NodeStack {
-  const pkg = readJson('package.json') ?? {};
+export function detectNodeStack(dir = '.'): NodeStack {
+  const pkg = readJson(path.join(dir, 'package.json')) ?? {};
   const dependencies = {
     ...((pkg.dependencies as Record<string, string>) ?? {}),
     ...((pkg.devDependencies as Record<string, string>) ?? {}),
@@ -149,7 +150,7 @@ export function detectNodeStack(): NodeStack {
   return {
     framework: framework ?? 'express',
     orm: orm ?? 'sql',
-    typescript: has('typescript') || fs.existsSync('tsconfig.json'),
+    typescript: has('typescript') || fs.existsSync(path.join(dir, 'tsconfig.json')),
     esm: isEsm(pkg),
     detected: Boolean(pkg.name),
   };

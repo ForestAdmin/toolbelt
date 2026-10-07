@@ -145,6 +145,56 @@ describe('start', () => {
       expect(startProcess.mock.calls[0][2].cwd).toBe('my-shop');
     });
 
+    it('picks up an in-app setup that stopped before the mount, instead of booting an app without Forest', async () => {
+      expect.hasAssertions();
+      mockGetByEnvSecret.mockReset().mockResolvedValue({ name: 'my-app' });
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => () => {} });
+
+      await asTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: [],
+          token: 'valid-token',
+          files: [
+            { name: '.env', content: 'FOREST_ENV_SECRET=secret-of-my-app\n' },
+            {
+              name: 'package.json',
+              content: JSON.stringify({
+                dependencies: { '@forestadmin/agent': '^1', express: '^4' },
+              }),
+            },
+            { name: 'index.js', content: "require('express')().listen(3000);" },
+          ],
+          prompts: [
+            {
+              ...listPrompt('This folder is the Forest project "my-app". What do you want to do?'),
+              out: { next: 'reopen' },
+            },
+            {
+              in: [
+                {
+                  type: 'input',
+                  name: 'go',
+                  message: 'Once Forest is mounted in your server, press Enter to boot it',
+                },
+              ],
+              out: { go: '' },
+            },
+            { ...listPrompt('Your back-office is live. What next?'), out: { next: 'stay' } },
+          ],
+          std: [
+            { out: "Forest isn't mounted in this app's code yet" },
+            { out: 'Add to your server' },
+            { out: 'Forest is live in your app!' },
+          ],
+        }),
+      );
+
+      expect(startProcess.mock.calls[0][2].env).toStrictEqual({ PORT: '3001' });
+    });
+
     it('never offers a project the account does not know: it could only fail on "Not found"', async () => {
       expect.hasAssertions();
       // Deleted since, or another account's.
