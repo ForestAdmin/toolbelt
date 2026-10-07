@@ -509,7 +509,7 @@ export default class StartCommand extends AbstractCommand {
     return this.handoff({ ...tail, child: booted.child, mute: booted.mute });
   }
 
-  private async reopenNodeApp({ name, dir }: Reopenable): Promise<void> {
+  private async reopenNodeApp({ name, dir, mounted }: Reopenable): Promise<void> {
     const tail: Tail = {
       name,
       dir,
@@ -518,6 +518,9 @@ export default class StartCommand extends AbstractCommand {
       stack: "Forest mounted inside the user's Node.js app",
       url: `http://localhost:${NODE_PORT}`,
     };
+    // An onboarding that stopped before the mount: booting now would wait on a Forest that is not
+    // in the app. It picks up where it stopped instead — the snippet, then the boot once mounted.
+    if (!mounted) await this.resumeMount(dir);
     if (this.dryRun) return this.reopenedDryRun(tail);
 
     const booted = this.boot('npm', ['start'], { cwd: dir, env: { PORT: String(NODE_PORT) } });
@@ -526,6 +529,21 @@ export default class StartCommand extends AbstractCommand {
     this.doneInApp(name, NODE_PORT);
 
     return this.handoff({ ...tail, child: booted.child, mute: booted.mute });
+  }
+
+  private async resumeMount(dir: string): Promise<void> {
+    this.logger.warn("Forest isn't mounted in this app's code yet — picking up the setup there.");
+
+    const stack = detectNodeStack(dir);
+    const driver = NODE_DATASOURCE[stack.orm] === SQL_DATASOURCE ? sqlDriver(dir) : undefined;
+    this.explainMount('manual', stack, driver);
+
+    if (this.dryRun) return;
+    await this.ask({
+      type: 'input',
+      name: 'go',
+      message: 'Once Forest is mounted in your server, press Enter to boot it',
+    });
   }
 
   /**
