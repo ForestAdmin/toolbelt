@@ -1,11 +1,63 @@
 const fs = require('fs');
 
 const StartCommand = require('../../src/commands/start').default;
-const { runCapture, runStep, startProcess } = require('../../src/services/process-runner');
+const {
+  runCapture,
+  runStep,
+  startProcess,
+  stopProcess,
+} = require('../../src/services/process-runner');
 const testCli = require('./test-cli-helper/test-cli');
 
 // The process boundary: a test that goes past --dry-run spawns nothing, and says what came back.
 jest.mock('../../src/services/process-runner');
+
+// The account's record of a project found on disk: who it is, without calling the API.
+const mockGetByEnvSecret = jest.fn();
+jest.mock('../../src/services/project-manager', () =>
+  jest.fn().mockImplementation(() => ({ getByEnvSecret: mockGetByEnvSecret })),
+);
+
+/** Run as if a person sat at a terminal: only then is reopening offered. */
+async function asTerminal(run) {
+  // The harness swaps process.stdin for a mock, so the TTY is faked on the command itself.
+  const interactive = jest
+    .spyOn(StartCommand.prototype, 'interactive', 'get')
+    .mockReturnValue(true);
+  try {
+    return await run();
+  } finally {
+    interactive.mockRestore();
+  }
+}
+
+function writeSkillsManifest() {
+  fs.mkdirSync('x/.forest', { recursive: true });
+  fs.writeFileSync('x/.forest/skills-manifest.json', JSON.stringify({ agents: ['claude'] }));
+}
+
+/** What `create:sql` scaffolds as ./x, with the manifest `skills:init` writes when asked. */
+function scaffoldX({ withSkills }) {
+  fs.mkdirSync('x');
+  fs.writeFileSync('x/package.json', JSON.stringify({ scripts: { build: 'tsc' } }));
+  if (withSkills) writeSkillsManifest();
+}
+
+const listPrompt = (message, extra = {}) => ({
+  in: [{ type: 'list', name: expect.any(String), message, choices: expect.any(Array), ...extra }],
+});
+
+const scaffoldFiles = dir => [
+  { name: `${dir}/.env`, content: 'FOREST_ENV_SECRET=secret-of-my-shop\nAPPLICATION_PORT=3310\n' },
+  {
+    name: `${dir}/package.json`,
+    content: JSON.stringify({
+      scripts: { build: 'tsc' },
+      dependencies: { '@forestadmin/agent': '^1' },
+    }),
+  },
+  { name: `${dir}/index.ts`, content: 'agent.mountOnStandaloneServer(3310);' },
+];
 
 // `--dry-run` prints every command instead of running it, so the whole orchestration can be
 // asserted with no project created, no package installed and no process spawned. It is also what
@@ -15,6 +67,327 @@ jest.mock('../../src/services/process-runner');
 // one flow's command sequence, deterministically.
 
 describe('start', () => {
+  describe('reopening a project this machine already has', () => {
+    it('boots the project in the current folder instead of creating another', async () => {
+      expect.hasAssertions();
+      mockGetByEnvSecret.mockReset().mockResolvedValue({ name: 'my-shop' });
+      runStep.mockReset().mockResolvedValue(undefined);
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
+
+      await asTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: [],
+          token: 'valid-token',
+          files: scaffoldFiles('.'),
+          prompts: [
+            {
+              ...listPrompt('This folder is the Forest project "my-shop". What do you want to do?'),
+              out: { next: 'reopen' },
+            },
+            { ...listPrompt('Your back-office is live. What next?'), out: { next: 'stay' } },
+          ],
+          std: [{ out: '(reopening "my-shop"' }, { out: 'Your back-office is live!' }],
+        }),
+      );
+
+      // Nothing created: no `projects:create:*`, a build (the agent may have changed the code), a boot.
+      expect(
+        runStep.mock.calls.map(([command, args]) => [command, ...args].join(' ')),
+      ).toStrictEqual(['npm install', 'npm run build']);
+      expect(startProcess.mock.calls[0].slice(0, 2)).toStrictEqual(['npm', ['start']]);
+      expect(startProcess.mock.calls[0][2].cwd).toBe('.');
+    });
+
+    it('offers the projects of its subfolders as one more way to start', async () => {
+      expect.hasAssertions();
+      mockGetByEnvSecret.mockReset().mockResolvedValue({ name: 'my-shop' });
+      runStep.mockReset().mockResolvedValue(undefined);
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
+
+      await asTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: [],
+          token: 'valid-token',
+          files: [...scaffoldFiles('my-shop'), ...scaffoldFiles('forest-demo-ab12')],
+          prompts: [
+            {
+              ...listPrompt('How will you run Forest?', {
+                choices: expect.arrayContaining([
+                  { name: 'Reopen a project in this folder (2 found)', value: 'reopen' },
+                ]),
+              }),
+              out: { flow: 'reopen' },
+            },
+            {
+              ...listPrompt('Which one?'),
+              out: {
+                project: {
+                  dir: 'my-shop',
+                  kind: 'scaffold',
+                  demo: false,
+                  envSecret: 'secret-of-my-shop',
+                  name: 'my-shop',
+                },
+              },
+            },
+            { ...listPrompt('Your back-office is live. What next?'), out: { next: 'stay' } },
+          ],
+          std: [{ out: '(reopening "my-shop" — ./my-shop)' }],
+        }),
+      );
+
+      expect(startProcess.mock.calls[0][2].cwd).toBe('my-shop');
+    });
+
+    it('picks up an in-app setup that stopped before the mount, instead of booting an app without Forest', async () => {
+      expect.hasAssertions();
+      mockGetByEnvSecret.mockReset().mockResolvedValue({ name: 'my-app' });
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => () => {} });
+
+      await asTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: [],
+          token: 'valid-token',
+          files: [
+            { name: '.env', content: 'FOREST_ENV_SECRET=secret-of-my-app\n' },
+            {
+              name: 'package.json',
+              content: JSON.stringify({
+                dependencies: { '@forestadmin/agent': '^1', express: '^4' },
+              }),
+            },
+            { name: 'index.js', content: "require('express')().listen(3000);" },
+          ],
+          prompts: [
+            {
+              ...listPrompt('This folder is the Forest project "my-app". What do you want to do?'),
+              out: { next: 'reopen' },
+            },
+            {
+              in: [
+                {
+                  type: 'input',
+                  name: 'go',
+                  message: 'Once Forest is mounted in your server, press Enter to boot it',
+                },
+              ],
+              out: { go: '' },
+            },
+            { ...listPrompt('Your back-office is live. What next?'), out: { next: 'stay' } },
+          ],
+          std: [
+            { out: "Forest isn't mounted in this app's code yet" },
+            { out: 'Add to your server' },
+            { out: 'Forest is live in your app!' },
+          ],
+        }),
+      );
+
+      expect(startProcess.mock.calls[0][2].env).toStrictEqual({ PORT: '3001' });
+    });
+
+    it('never offers a project the account does not know: it could only fail on "Not found"', async () => {
+      expect.hasAssertions();
+      // Deleted since, or another account's.
+      mockGetByEnvSecret
+        .mockReset()
+        .mockRejectedValue(Object.assign(new Error('Not Found'), { status: 404 }));
+
+      await asTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--dry-run'],
+          token: 'valid-token',
+          files: scaffoldFiles('.'),
+          prompts: [
+            {
+              ...listPrompt('How will you run Forest?', {
+                choices: [
+                  { name: 'Try it with demo data', value: 'demo' },
+                  {
+                    name: 'Standalone — dedicated server on my database (recommended)',
+                    value: 'standalone',
+                  },
+                  { name: 'In-app — add Forest to my existing app', value: 'inapp' },
+                ],
+              }),
+              out: { flow: 'demo' },
+            },
+            { ...listPrompt('What next?'), out: { next: 'stop' } },
+          ],
+          std: [{ not: 'reopening' }, { out: '$ forest projects:create:demo' }],
+        }),
+      );
+    });
+  });
+
+  describe('handing over to an agent this terminal cannot open', () => {
+    it('points to an agent this terminal cannot open, instead of offering the setup again', async () => {
+      expect.hasAssertions();
+      const steps = [];
+      runStep.mockReset().mockImplementation(async (command, args) => {
+        if (args[1] === 'projects:create:sql') {
+          scaffoldX({ withSkills: false });
+          fs.mkdirSync('x/.forest');
+          fs.writeFileSync(
+            'x/.forest/skills-manifest.json',
+            JSON.stringify({ agents: ['cursor'] }),
+          );
+        }
+        steps.push(command === process.execPath ? args[1] : command);
+      });
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => () => {} });
+
+      await asTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'x', '--db', 'postgres://u:p@h:5432/db'],
+          token: 'valid-token',
+          prompts: [
+            {
+              ...listPrompt('Your back-office is live. What next?', {
+                choices: expect.arrayContaining([
+                  { name: 'Use the Forest skills in Cursor', value: 'agent' },
+                ]),
+              }),
+              out: { next: 'agent' },
+            },
+            { ...listPrompt('Your back-office is live. What next?'), out: { next: 'stay' } },
+          ],
+          std: [{ out: 'The Forest skills are installed for Cursor:' }],
+        }),
+      );
+
+      // Neither the setup again nor an agent: Cursor is an editor, opened by the user.
+      expect(steps).not.toContain('skills:init');
+      expect(steps).not.toContain('cursor');
+    });
+  });
+
+  describe('handing over to the coding agent', () => {
+    it('says what the entry does, opens the agent on the situation alone, and comes back to the menu', async () => {
+      expect.hasAssertions();
+      const agentRuns = [];
+      const sigintBefore = process.listenerCount('SIGINT');
+      runStep.mockReset().mockImplementation(async (command, args, options) => {
+        if (args[1] === 'projects:create:sql') scaffoldX({ withSkills: true });
+        if (command === 'claude') {
+          agentRuns.push({
+            seed: args[0],
+            cwd: options.cwd,
+            // Only the no-op is left: Ctrl-C is the agent's own key, and must not end `start`.
+            sigintListeners: process.listenerCount('SIGINT'),
+          });
+        }
+      });
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => () => {} });
+      stopProcess.mockReset();
+
+      await asTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'x', '--db', 'postgres://u:p@h:5432/db'],
+          token: 'valid-token',
+          prompts: [
+            {
+              ...listPrompt('Your back-office is live. What next?', {
+                choices: expect.arrayContaining([
+                  { name: 'Open Claude Code here, with the Forest skills', value: 'agent' },
+                  { name: 'Keep the back-end running here (Ctrl-C to stop)', value: 'stay' },
+                ]),
+              }),
+              out: { next: 'agent' },
+            },
+            { ...listPrompt('Your back-office is live. What next?'), out: { next: 'stay' } },
+          ],
+          std: [{ out: 'quitting it brings you back here' }, { out: 'back from Claude Code' }],
+        }),
+      );
+
+      expect(agentRuns).toHaveLength(1);
+      expect(agentRuns[0].cwd).toBe('x');
+      expect(agentRuns[0].seed).toContain('then wait for my request');
+      expect(agentRuns[0].seed).not.toContain('Help me customise');
+      expect(agentRuns[0].sigintListeners).toBe(1);
+      // Its handlers are back once the agent is gone…
+      expect(process.listenerCount('SIGINT')).toBe(sigintBefore);
+      // …and the back-end was never stopped on the way.
+      expect(stopProcess).not.toHaveBeenCalled();
+    });
+
+    it('sets the skills up first when none are, then asks before opening the agent', async () => {
+      expect.hasAssertions();
+      const steps = [];
+      runStep.mockReset().mockImplementation(async (command, args) => {
+        if (args[1] === 'projects:create:sql') scaffoldX({ withSkills: false });
+        if (args[1] === 'skills:init') {
+          fs.mkdirSync('x/.forest');
+          fs.writeFileSync(
+            'x/.forest/skills-manifest.json',
+            JSON.stringify({ agents: ['claude'] }),
+          );
+        }
+        steps.push(command === process.execPath ? args[1] : command);
+      });
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => () => {} });
+      // `skills:init` is not among this harness's commands.
+      const canInstallSkills = jest
+        .spyOn(StartCommand.prototype, 'canInstallSkills', 'get')
+        .mockReturnValue(true);
+
+      await asTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'x', '--db', 'postgres://u:p@h:5432/db'],
+          token: 'valid-token',
+          prompts: [
+            {
+              ...listPrompt('Your back-office is live. What next?', {
+                choices: expect.arrayContaining([
+                  {
+                    name: 'Set up your coding agent with the Forest skills, then open it here',
+                    value: 'agent',
+                  },
+                ]),
+              }),
+              out: { next: 'agent' },
+            },
+            {
+              in: [
+                {
+                  type: 'confirm',
+                  name: 'value',
+                  message: 'Open Claude Code here now?',
+                  default: true,
+                },
+              ],
+              out: { value: true },
+            },
+            { ...listPrompt('Your back-office is live. What next?'), out: { next: 'stay' } },
+          ],
+          std: [{ out: '$ forest skills:init' }],
+        }),
+      ).finally(() => canInstallSkills.mockRestore());
+
+      expect(steps.slice(-2)).toStrictEqual(['skills:init', 'claude']);
+    });
+  });
+
   describe('demo flow', () => {
     it('creates a demo project, builds it and applies the curated layout', async () => {
       expect.hasAssertions();

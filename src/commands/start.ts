@@ -1,9 +1,11 @@
 import type { NodeStack, SqlDriver } from '../services/onboarding/detect';
 import type { SecretsWrite } from '../services/onboarding/env-file';
+import type { ExistingProject } from '../services/onboarding/existing-project';
 import type { ChildProcess } from 'child_process';
 
 import { Flags } from '@oclif/core';
 import fs from 'fs';
+import path from 'path';
 
 import AbstractCommand from '../abstract-command';
 import {
@@ -16,6 +18,7 @@ import {
   sqlDriver,
 } from '../services/onboarding/detect';
 import { bootSecrets, keysLoadedFromDotenv, writeSecrets } from '../services/onboarding/env-file';
+import { findForestProject, findForestProjectsIn } from '../services/onboarding/existing-project';
 import { START_STEP_ENV } from '../services/onboarding/step';
 import {
   INTERRUPTED_EXIT_CODE,
@@ -25,11 +28,24 @@ import {
   stopAllProcesses,
   stopProcess,
 } from '../services/process-runner';
+import ProjectManager from '../services/project-manager';
 
 const DOCS_URL = 'https://docs.forest.app';
 const DEMO_PORT = 3310;
 const RAILS_PORT = 3002;
 const NODE_PORT = 3001;
+
+/** How the skills manifest's agents read in a sentence. */
+const SKILL_AGENT_LABELS: Record<string, string> = {
+  claude: 'Claude Code',
+  codex: 'Codex',
+  cursor: 'Cursor',
+  opencode: 'OpenCode',
+  other: 'your coding agent',
+};
+
+/** The menu entry that ends `forest start` with the back-end running in the foreground. */
+const KEEP_RUNNING = 'Keep the back-end running here (Ctrl-C to stop)';
 
 /** How many back-end lines are kept while a question is on screen; older ones are dropped. */
 const HELD_LINES = 200;
@@ -56,6 +72,9 @@ const READY = /schema was (updated|not updated)/i;
 const SCHEMA_SYNC_FAILED = /schema sync failed/i;
 
 type Flow = 'demo' | 'standalone' | 'inapp';
+
+/** A project found on this machine, with its name on the account it belongs to. */
+type Reopenable = ExistingProject & { name: string };
 type Tail = {
   child?: ChildProcess;
   /** Forest project name — a label, not necessarily a directory. */
@@ -176,8 +195,17 @@ export default class StartCommand extends AbstractCommand {
       await this.forest(['login']); // OIDC device flow (browser signup/login)
     }
 
-    const flow = await this.pickFlow(flags.flow as Flow | undefined);
+    // Reopening is offered only to someone who can answer, and who did not already say what to do.
+    const lookAround = this.interactive && !flags.flow;
 
+    const here = lookAround ? await StartCommand.reopenable(findForestProject('.')) : null;
+    if (here && (await this.chooseToReopen(here))) return this.reopen(here);
+
+    const nearby =
+      lookAround && !here ? await StartCommand.reopenables(findForestProjectsIn('.')) : [];
+    const flow = await this.pickFlow(flags.flow as Flow | undefined, nearby.length);
+
+    if (flow === 'reopen') return this.reopen(await this.pickNearby(nearby));
     if (flow === 'demo') return this.flowDemo();
     if (flow === 'standalone') return this.flowStandalone(flags);
 
@@ -371,7 +399,7 @@ export default class StartCommand extends AbstractCommand {
 
   // ---------- questions ----------
 
-  private async pickFlow(fromFlag?: Flow): Promise<Flow> {
+  private async pickFlow(fromFlag?: Flow, nearby = 0): Promise<Flow | 'reopen'> {
     if (fromFlag) return fromFlag;
     if (!this.interactive) {
       this.logger.log(this.chalk.grey('  (non-interactive — defaulting to demo data)'));
@@ -387,10 +415,183 @@ export default class StartCommand extends AbstractCommand {
         { name: 'Try it with demo data', value: 'demo' },
         { name: 'Standalone — dedicated server on my database (recommended)', value: 'standalone' },
         { name: 'In-app — add Forest to my existing app', value: 'inapp' },
+        ...(nearby
+          ? [
+              {
+                name: `Reopen a project in this folder (${nearby} found)`,
+                value: 'reopen',
+              },
+            ]
+          : []),
       ],
     });
 
     return flow;
+  }
+
+  // ---------- reopening ----------
+
+  /**
+   * A project found on disk, named after the account's record of it. Null when the account does not
+   * know its secret — deleted, or another account's: booting it would only fail on "Not found".
+   */
+  private static async reopenable(project: ExistingProject | null): Promise<Reopenable | null> {
+    if (!project) return null;
+
+    try {
+      const found = await new ProjectManager({}).getByEnvSecret(project.envSecret);
+
+      return found?.name ? { ...project, name: found.name } : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private static async reopenables(projects: ExistingProject[]): Promise<Reopenable[]> {
+    const named = await Promise.all(projects.map(project => StartCommand.reopenable(project)));
+
+    return named.filter((project): project is Reopenable => project !== null);
+  }
+
+  private async chooseToReopen(project: Reopenable): Promise<boolean> {
+    const { next } = await this.ask({
+      type: 'list',
+      name: 'next',
+      message: `This folder is the Forest project "${project.name}". What do you want to do?`,
+      choices: [
+        { name: `Start it — boot its back-end and pick up from there`, value: 'reopen' },
+        { name: 'Create a new project', value: 'new' },
+      ],
+    });
+
+    return next === 'reopen';
+  }
+
+  private async pickNearby(projects: Reopenable[]): Promise<Reopenable> {
+    if (projects.length === 1) return projects[0];
+
+    const { project } = await this.ask({
+      type: 'list',
+      name: 'project',
+      message: 'Which one?',
+      choices: projects.map(candidate => ({
+        name: `${candidate.name}  ${this.chalk.grey(`./${candidate.dir}`)}`,
+        value: candidate,
+      })),
+    });
+
+    return project;
+  }
+
+  /** Boot a project this machine already has, then hand over as if it had just been created. */
+  private async reopen(project: Reopenable): Promise<void> {
+    const where = project.dir === '.' ? 'this folder' : `./${project.dir}`;
+    this.logger.log(this.chalk.grey(`\n  (reopening "${project.name}" — ${where})`));
+
+    if (project.kind === 'rails-app') return this.reopenRailsApp(project);
+    if (project.kind === 'node-app') return this.reopenNodeApp(project);
+
+    return this.reopenScaffold(project);
+  }
+
+  private async reopenRailsApp({ name, dir }: Reopenable): Promise<void> {
+    const restart = `bin/rails server -p ${RAILS_PORT}`;
+    const tail: Tail = {
+      name,
+      dir,
+      restart,
+      stack: "Forest mounted inside the user's Ruby on Rails app",
+      url: `http://localhost:${RAILS_PORT}`,
+    };
+    if (this.dryRun) return this.reopenedDryRun(tail);
+
+    const booted = this.boot('bin/rails', ['server', '-p', String(RAILS_PORT)], {
+      cwd: dir,
+      ready: /Listening on http|schema was updated/i,
+      trouble: SCHEMA_SYNC_FAILED,
+    });
+    this.logger.log(this.chalk.grey(`\n$ ${restart}   (booting…)`));
+    await booted.ready;
+    if (booted.troubled()) this.doneInAppWithoutSchema(name, RAILS_PORT);
+    else this.doneInApp(name, RAILS_PORT);
+
+    return this.handoff({ ...tail, child: booted.child, mute: booted.mute });
+  }
+
+  private async reopenNodeApp({ name, dir, mounted }: Reopenable): Promise<void> {
+    const tail: Tail = {
+      name,
+      dir,
+      // The port `forest start` registered the project on, whatever the app defaults to.
+      restart: `PORT=${NODE_PORT} npm start`,
+      stack: "Forest mounted inside the user's Node.js app",
+      url: `http://localhost:${NODE_PORT}`,
+    };
+    // An onboarding that stopped before the mount: booting now would wait on a Forest that is not
+    // in the app. It picks up where it stopped instead — the snippet, then the boot once mounted.
+    if (!mounted) await this.resumeMount(dir);
+    if (this.dryRun) return this.reopenedDryRun(tail);
+
+    const booted = this.boot('npm', ['start'], { cwd: dir, env: { PORT: String(NODE_PORT) } });
+    this.logger.log(this.chalk.grey(`\n$ ${tail.restart}   (booting…)`));
+    await booted.ready;
+    this.doneInApp(name, NODE_PORT);
+
+    return this.handoff({ ...tail, child: booted.child, mute: booted.mute });
+  }
+
+  private async resumeMount(dir: string): Promise<void> {
+    this.logger.warn("Forest isn't mounted in this app's code yet — picking up the setup there.");
+
+    const stack = detectNodeStack(dir);
+    const driver = NODE_DATASOURCE[stack.orm] === SQL_DATASOURCE ? sqlDriver(dir) : undefined;
+    this.explainMount('manual', stack, driver);
+
+    if (this.dryRun) return;
+    await this.ask({
+      type: 'input',
+      name: 'go',
+      message: 'Once Forest is mounted in your server, press Enter to boot it',
+    });
+  }
+
+  /**
+   * A scaffold's code may have changed since — the coding agent works on it — so it is built
+   * again, and installed first if it never was.
+   */
+  private async reopenScaffold({ name, dir, demo }: Reopenable): Promise<void> {
+    if (this.dryRun || !fs.existsSync(path.join(dir, 'node_modules'))) {
+      await this.run$('npm', ['install'], dir);
+    }
+    if (this.dryRun || StartCommand.hasBuildScript(dir)) {
+      await this.run$('npm', ['run', 'build'], dir);
+    }
+
+    const port = StartCommand.readPort(dir) ?? DEMO_PORT;
+    const tail: Tail = {
+      name,
+      dir,
+      restart: 'npm start',
+      stack: demo
+        ? 'Forest demo back-end on sample data'
+        : "standalone Forest agent on the user's own database",
+      url: `http://localhost:${port}`,
+      demo,
+    };
+    if (this.dryRun) return this.reopenedDryRun(tail);
+
+    const booted = this.boot('npm', ['start'], { cwd: dir });
+    this.logger.log(this.chalk.grey('\n$ npm start   (booting — waiting for the schema push…)'));
+    await booted.ready;
+    this.doneStandalone(name, port);
+
+    return this.handoff({ ...tail, child: booted.child, mute: booted.mute });
+  }
+
+  private async reopenedDryRun(tail: Tail): Promise<void> {
+    this.logger.log(this.chalk.grey(`\n$ ${StartCommand.restartCommand(tail.dir, tail.restart)}`));
+
+    return this.handoff(tail);
   }
 
   private async pickStack(fromFlag?: 'rails' | 'node'): Promise<'rails' | 'node'> {
@@ -784,7 +985,9 @@ export default class StartCommand extends AbstractCommand {
     const [agent] = StartCommand.launchableAgents('.');
     if (!agent || !(await this.confirm(`Launch ${agent.label} now to wire the mount?`))) return;
 
-    await this.run$(agent.bin, [StartCommand.mountSeed(stack, secretsInDotenv, driver)]);
+    await StartCommand.leavingCtrlCTo(() =>
+      this.run$(agent.bin, [StartCommand.mountSeed(stack, secretsInDotenv, driver)]),
+    );
   }
 
   private static mountSeed(stack: NodeStack, secretsInDotenv: boolean, driver?: SqlDriver): string {
@@ -900,7 +1103,7 @@ export default class StartCommand extends AbstractCommand {
       message: 'What next?',
       choices: [
         { name: 'Connect my real database (create a real project)', value: 'db' },
-        { name: 'Keep exploring — leave the back-end running', value: 'stay' },
+        { name: KEEP_RUNNING, value: 'stay' },
         { name: 'Stop', value: 'stop' },
       ],
     });
@@ -958,44 +1161,74 @@ export default class StartCommand extends AbstractCommand {
         name: 'next',
         message: 'Your back-office is live. What next?',
         choices: [
-          ...(this.canInstallSkills
-            ? [{ name: 'Teach your coding agent about Forest', value: 'skills' }]
-            : []),
-          { name: 'Deploy to production', value: 'deploy' },
+          ...this.agentChoice(tail),
+          { name: 'Deploy to production (guide)', value: 'deploy' },
           { name: `Get started guide (${DOCS_URL})`, value: 'docs' },
-          { name: 'Keep exploring — leave the back-end running', value: 'stay' },
+          { name: KEEP_RUNNING, value: 'stay' },
         ],
       });
 
       // A failed step here is recoverable: the back-end is live, so the menu comes back rather
       // than `run` tearing everything down.
       // eslint-disable-next-line no-await-in-loop -- sequential by nature
-      const handedOver = await this.handoffChoice(next, tail).catch(error => {
+      await this.handoffChoice(next, tail).catch(error => {
         this.logger.warn(`${(error as Error).message}\n  Your back-end is still running.`);
-
-        return false;
       });
-      if (handedOver) return; // the coding agent owns the terminal now
       done = next === 'stay';
     }
 
     if (tail.child) await this.keepAlive(tail.child, tail.dir, tail.restart);
   }
 
-  /** One menu choice. Returns true when the terminal was handed to a coding agent. */
-  private async handoffChoice(choice: string, tail: Tail): Promise<boolean> {
+  /**
+   * The coding-agent entry, saying what it does before it is picked: open the agent the skills were
+   * set up for, or set them up first. None when this CLI cannot install the skills.
+   */
+  private agentChoice(tail: Tail): { name: string; value: string }[] {
+    const [agent] = StartCommand.launchableAgents(tail.dir);
+    if (agent)
+      return [{ name: `Open ${agent.label} here, with the Forest skills`, value: 'agent' }];
+    // Set up for an agent this terminal cannot open — Cursor is an editor. Offering the setup again
+    // would only run it again, and open nothing.
+    const others = StartCommand.skillsAgents(tail.dir);
+    if (others) return [{ name: `Use the Forest skills in ${others}`, value: 'agent' }];
+    if (!this.canInstallSkills) return [];
+
+    return [
+      {
+        name: 'Set up your coding agent with the Forest skills, then open it here',
+        value: 'agent',
+      },
+    ];
+  }
+
+  /** One menu choice. Every one of them comes back to the menu. */
+  private async handoffChoice(choice: string, tail: Tail): Promise<void> {
     if (choice === 'docs') {
       this.instruct('Get started guide:', [this.chalk.cyan(DOCS_URL)]);
 
-      return false;
+      return;
     }
 
-    if (choice === 'skills') {
-      // No --agent: `skills:init` asks which agents this repo uses, with the full list and its own
-      // repo-aware detection. One question, asked once, where the answer belongs.
-      await this.forest(['skills:init'], tail.dir);
+    if (choice === 'agent') {
+      if (!StartCommand.launchableAgents(tail.dir).length) {
+        if (!StartCommand.skillsAgents(tail.dir)) {
+          // No --agent: `skills:init` asks which agents this repo uses, with the full list and its
+          // own repo-aware detection. One question, asked once, where the answer belongs.
+          await this.forest(['skills:init'], tail.dir);
+        }
+        // Set up for an agent this terminal cannot open: say where to use them instead.
+        if (!StartCommand.launchableAgents(tail.dir).length) {
+          this.explainSkillsUse(tail);
 
-      return this.offerLaunch(tail, StartCommand.seed(tail));
+          return;
+        }
+        if (!(await this.offerLaunch(tail))) return;
+      }
+
+      await this.launch(tail, StartCommand.seed(tail));
+
+      return;
     }
 
     if (choice === 'deploy') {
@@ -1009,50 +1242,73 @@ export default class StartCommand extends AbstractCommand {
         ),
       ]);
     }
-
-    return false;
   }
 
-  private async offerLaunch(tail: Tail, seed: string): Promise<boolean> {
-    const [agent] = StartCommand.launchableAgents(tail.dir);
-    if (!agent) return false;
-    if (!(await this.confirm(`Launch ${agent.label} here now?`))) return false;
-
-    return this.launch(tail, seed);
+  /** For skills set up for an agent this terminal cannot open, such as Cursor. */
+  private explainSkillsUse(tail: Tail): void {
+    const agents = StartCommand.skillsAgents(tail.dir) || 'your coding agent';
+    this.instruct(`The Forest skills are installed for ${agents}:`, [
+      `Open ${this.chalk.cyan(
+        path.resolve(tail.dir),
+      )} in it, and ask it to customise your back-office.`,
+      this.chalk.grey(
+        'Your back-end keeps running here. To open Claude Code or Codex from this menu instead, run `forest skills:init` in that folder and pick one.',
+      ),
+    ]);
   }
 
-  /** Hand the terminal to a coding agent, seeded with a task. False when none was set up. */
-  private async launch(tail: Tail, seed: string): Promise<boolean> {
+  /** Whether to open the agent the skills were just set up for: there may be none to open. */
+  private async offerLaunch(tail: Tail): Promise<boolean> {
     const [agent] = StartCommand.launchableAgents(tail.dir);
     if (!agent) return false;
+
+    return this.confirm(`Open ${agent.label} here now?`);
+  }
+
+  /**
+   * Hand the terminal to a coding agent, then take it back: the back-end keeps running throughout,
+   * and quitting the agent returns to the menu — the next step (deploy, another session) is there.
+   */
+  private async launch(tail: Tail, seed: string): Promise<void> {
+    const [agent] = StartCommand.launchableAgents(tail.dir);
+    if (!agent) return;
 
     this.logger.log(
       this.chalk.grey(
-        `\n  (your Forest back-end keeps running underneath — opening ${agent.label}…)`,
+        `\n  (opening ${agent.label} — your Forest back-end keeps running underneath, and quitting it brings you back here)`,
       ),
     );
     // The agent takes over a full-screen terminal; back-end log lines drawn into it corrupt the
     // display for the whole session. It keeps running, we just stop echoing it.
     const unmute = tail.mute?.();
     try {
-      await this.run$(agent.bin, [seed], tail.dir);
-    } catch (error) {
-      // The menu comes back over a live back-end, so its logs must too.
+      await StartCommand.leavingCtrlCTo(() => this.run$(agent.bin, [seed], tail.dir));
+    } finally {
       unmute?.();
-      throw error;
     }
 
-    stopProcess(tail.child, 'SIGINT');
     this.logger.log(
-      this.chalk.grey(
-        `\n  Forest back-end stopped. Restart it: ${StartCommand.restartCommand(
-          tail.dir,
-          tail.restart,
-        )}`,
-      ),
+      this.chalk.grey(`\n  (back from ${agent.label} — your back-end is still running)`),
     );
+  }
 
-    return true;
+  /**
+   * Run a foreground program that handles Ctrl-C itself — a coding agent, for which it is an
+   * ordinary key. The terminal sends the signal to this process too, whose handlers exit and take
+   * the back-end down mid-session. They are set aside for the duration, and put back after.
+   */
+  private static async leavingCtrlCTo<T>(run: () => Promise<T>): Promise<T> {
+    const listeners = process.rawListeners('SIGINT') as ((...args: unknown[]) => void)[];
+    const ignore = () => undefined;
+    process.removeAllListeners('SIGINT');
+    process.on('SIGINT', ignore);
+
+    try {
+      return await run();
+    } finally {
+      process.removeListener('SIGINT', ignore);
+      listeners.forEach(listener => process.on('SIGINT', listener));
+    }
   }
 
   /** Hold the back-end in the foreground so a closed window is never a dead end. */
@@ -1138,10 +1394,12 @@ export default class StartCommand extends AbstractCommand {
       'The Forest skills and the Forest docs MCP are installed in this repo.',
     ].join(' ');
 
-    const task =
-      'Help me customise my back-office — e.g. add a segment to a collection, a Smart Action, or an approval workflow.';
+    // The situation, not a task: worded as the user's request, examples become a to-do list the
+    // agent starts on unasked.
+    const ask =
+      'Briefly tell me what you can help with in this Forest project, then wait for my request.';
 
-    return `You're in a Forest project. ${situation} ${task}`;
+    return `You're in a Forest project. ${situation} ${ask}`;
   }
 
   /**
@@ -1149,6 +1407,19 @@ export default class StartCommand extends AbstractCommand {
    * We deliberately do not detect them here: the toolbelt already does it, better — from the repo's
    * own marks, and knowing Cursor and OpenCode too — and asking twice makes a flow feel like a form.
    */
+  /** The agents the skills were set up for, as a readable list — '' when never set up. */
+  private static skillsAgents(cwd: string): string {
+    try {
+      const { agents = [] } = JSON.parse(
+        fs.readFileSync(`${cwd}/.forest/skills-manifest.json`, 'utf8'),
+      ) as { agents?: string[] };
+
+      return agents.map(agent => SKILL_AGENT_LABELS[agent] ?? agent).join(' / ');
+    } catch {
+      return '';
+    }
+  }
+
   private static launchableAgents(cwd: string): { bin: string; label: string }[] {
     const labels: Record<string, string> = { claude: 'Claude Code', codex: 'Codex' };
     try {
