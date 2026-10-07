@@ -230,6 +230,51 @@ describe('start', () => {
     });
   });
 
+  describe('handing over to an agent this terminal cannot open', () => {
+    it('points to an agent this terminal cannot open, instead of offering the setup again', async () => {
+      expect.hasAssertions();
+      const steps = [];
+      runStep.mockReset().mockImplementation(async (command, args) => {
+        if (args[1] === 'projects:create:sql') {
+          scaffoldX({ withSkills: false });
+          fs.mkdirSync('x/.forest');
+          fs.writeFileSync(
+            'x/.forest/skills-manifest.json',
+            JSON.stringify({ agents: ['cursor'] }),
+          );
+        }
+        steps.push(command === process.execPath ? args[1] : command);
+      });
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => () => {} });
+
+      await asTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'x', '--db', 'postgres://u:p@h:5432/db'],
+          token: 'valid-token',
+          prompts: [
+            {
+              ...listPrompt('Your back-office is live. What next?', {
+                choices: expect.arrayContaining([
+                  { name: 'Use the Forest skills in Cursor', value: 'agent' },
+                ]),
+              }),
+              out: { next: 'agent' },
+            },
+            { ...listPrompt('Your back-office is live. What next?'), out: { next: 'stay' } },
+          ],
+          std: [{ out: 'The Forest skills are installed for Cursor:' }],
+        }),
+      );
+
+      // Neither the setup again nor an agent: Cursor is an editor, opened by the user.
+      expect(steps).not.toContain('skills:init');
+      expect(steps).not.toContain('cursor');
+    });
+  });
+
   describe('handing over to the coding agent', () => {
     it('says what the entry does, opens the agent on the situation alone, and comes back to the menu', async () => {
       expect.hasAssertions();

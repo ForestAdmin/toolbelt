@@ -35,6 +35,15 @@ const DEMO_PORT = 3310;
 const RAILS_PORT = 3002;
 const NODE_PORT = 3001;
 
+/** How the skills manifest's agents read in a sentence. */
+const SKILL_AGENT_LABELS: Record<string, string> = {
+  claude: 'Claude Code',
+  codex: 'Codex',
+  cursor: 'Cursor',
+  opencode: 'OpenCode',
+  other: 'your coding agent',
+};
+
 /** The menu entry that ends `forest start` with the back-end running in the foreground. */
 const KEEP_RUNNING = 'Keep the back-end running here (Ctrl-C to stop)';
 
@@ -1179,6 +1188,10 @@ export default class StartCommand extends AbstractCommand {
     const [agent] = StartCommand.launchableAgents(tail.dir);
     if (agent)
       return [{ name: `Open ${agent.label} here, with the Forest skills`, value: 'agent' }];
+    // Set up for an agent this terminal cannot open — Cursor is an editor. Offering the setup again
+    // would only run it again, and open nothing.
+    const others = StartCommand.skillsAgents(tail.dir);
+    if (others) return [{ name: `Use the Forest skills in ${others}`, value: 'agent' }];
     if (!this.canInstallSkills) return [];
 
     return [
@@ -1199,9 +1212,17 @@ export default class StartCommand extends AbstractCommand {
 
     if (choice === 'agent') {
       if (!StartCommand.launchableAgents(tail.dir).length) {
-        // No --agent: `skills:init` asks which agents this repo uses, with the full list and its
-        // own repo-aware detection. One question, asked once, where the answer belongs.
-        await this.forest(['skills:init'], tail.dir);
+        if (!StartCommand.skillsAgents(tail.dir)) {
+          // No --agent: `skills:init` asks which agents this repo uses, with the full list and its
+          // own repo-aware detection. One question, asked once, where the answer belongs.
+          await this.forest(['skills:init'], tail.dir);
+        }
+        // Set up for an agent this terminal cannot open: say where to use them instead.
+        if (!StartCommand.launchableAgents(tail.dir).length) {
+          this.explainSkillsUse(tail);
+
+          return;
+        }
         if (!(await this.offerLaunch(tail))) return;
       }
 
@@ -1221,6 +1242,19 @@ export default class StartCommand extends AbstractCommand {
         ),
       ]);
     }
+  }
+
+  /** For skills set up for an agent this terminal cannot open, such as Cursor. */
+  private explainSkillsUse(tail: Tail): void {
+    const agents = StartCommand.skillsAgents(tail.dir) || 'your coding agent';
+    this.instruct(`The Forest skills are installed for ${agents}:`, [
+      `Open ${this.chalk.cyan(
+        path.resolve(tail.dir),
+      )} in it, and ask it to customise your back-office.`,
+      this.chalk.grey(
+        'Your back-end keeps running here. To open Claude Code or Codex from this menu instead, run `forest skills:init` in that folder and pick one.',
+      ),
+    ]);
   }
 
   /** Whether to open the agent the skills were just set up for: there may be none to open. */
@@ -1373,6 +1407,19 @@ export default class StartCommand extends AbstractCommand {
    * We deliberately do not detect them here: the toolbelt already does it, better — from the repo's
    * own marks, and knowing Cursor and OpenCode too — and asking twice makes a flow feel like a form.
    */
+  /** The agents the skills were set up for, as a readable list — '' when never set up. */
+  private static skillsAgents(cwd: string): string {
+    try {
+      const { agents = [] } = JSON.parse(
+        fs.readFileSync(`${cwd}/.forest/skills-manifest.json`, 'utf8'),
+      ) as { agents?: string[] };
+
+      return agents.map(agent => SKILL_AGENT_LABELS[agent] ?? agent).join(' / ');
+    } catch {
+      return '';
+    }
+  }
+
   private static launchableAgents(cwd: string): { bin: string; label: string }[] {
     const labels: Record<string, string> = { claude: 'Claude Code', codex: 'Codex' };
     try {
