@@ -7,6 +7,41 @@ const testCli = require('./test-cli-helper/test-cli');
 // The process boundary: a test that goes past --dry-run spawns nothing, and says what came back.
 jest.mock('../../src/services/process-runner');
 
+// The account's record of a project found on disk: who it is, without calling the API.
+const mockGetByEnvSecret = jest.fn();
+jest.mock('../../src/services/project-manager', () =>
+  jest.fn().mockImplementation(() => ({ getByEnvSecret: mockGetByEnvSecret })),
+);
+
+/** Run as if a person sat at a terminal: only then is reopening offered. */
+async function asTerminal(run) {
+  // The harness swaps process.stdin for a mock, so the TTY is faked on the command itself.
+  const interactive = jest
+    .spyOn(StartCommand.prototype, 'interactive', 'get')
+    .mockReturnValue(true);
+  try {
+    return await run();
+  } finally {
+    interactive.mockRestore();
+  }
+}
+
+const listPrompt = (message, extra = {}) => ({
+  in: [{ type: 'list', name: expect.any(String), message, choices: expect.any(Array), ...extra }],
+});
+
+const scaffoldFiles = dir => [
+  { name: `${dir}/.env`, content: 'FOREST_ENV_SECRET=secret-of-my-shop\nAPPLICATION_PORT=3310\n' },
+  {
+    name: `${dir}/package.json`,
+    content: JSON.stringify({
+      scripts: { build: 'tsc' },
+      dependencies: { '@forestadmin/agent': '^1' },
+    }),
+  },
+  { name: `${dir}/index.ts`, content: 'agent.mountOnStandaloneServer(3310);' },
+];
+
 // `--dry-run` prints every command instead of running it, so the whole orchestration can be
 // asserted with no project created, no package installed and no process spawned. It is also what
 // the flow is reviewed with, so testing it keeps the reviewed thing and the tested thing the same.
@@ -15,6 +50,119 @@ jest.mock('../../src/services/process-runner');
 // one flow's command sequence, deterministically.
 
 describe('start', () => {
+  describe('reopening a project this machine already has', () => {
+    it('boots the project in the current folder instead of creating another', async () => {
+      expect.hasAssertions();
+      mockGetByEnvSecret.mockReset().mockResolvedValue({ name: 'my-shop' });
+      runStep.mockReset().mockResolvedValue(undefined);
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
+
+      await asTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: [],
+          token: 'valid-token',
+          files: scaffoldFiles('.'),
+          prompts: [
+            {
+              ...listPrompt('This folder is the Forest project "my-shop". What do you want to do?'),
+              out: { next: 'reopen' },
+            },
+            { ...listPrompt('Your back-office is live. What next?'), out: { next: 'stay' } },
+          ],
+          std: [{ out: '(reopening "my-shop"' }, { out: 'Your back-office is live!' }],
+        }),
+      );
+
+      // Nothing created: no `projects:create:*`, a build (the agent may have changed the code), a boot.
+      expect(
+        runStep.mock.calls.map(([command, args]) => [command, ...args].join(' ')),
+      ).toStrictEqual(['npm install', 'npm run build']);
+      expect(startProcess.mock.calls[0].slice(0, 2)).toStrictEqual(['npm', ['start']]);
+      expect(startProcess.mock.calls[0][2].cwd).toBe('.');
+    });
+
+    it('offers the projects of its subfolders as one more way to start', async () => {
+      expect.hasAssertions();
+      mockGetByEnvSecret.mockReset().mockResolvedValue({ name: 'my-shop' });
+      runStep.mockReset().mockResolvedValue(undefined);
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
+
+      await asTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: [],
+          token: 'valid-token',
+          files: [...scaffoldFiles('my-shop'), ...scaffoldFiles('forest-demo-ab12')],
+          prompts: [
+            {
+              ...listPrompt('How will you run Forest?', {
+                choices: expect.arrayContaining([
+                  { name: 'Reopen a project in this folder (2 found)', value: 'reopen' },
+                ]),
+              }),
+              out: { flow: 'reopen' },
+            },
+            {
+              ...listPrompt('Which one?'),
+              out: {
+                project: {
+                  dir: 'my-shop',
+                  kind: 'scaffold',
+                  demo: false,
+                  envSecret: 'secret-of-my-shop',
+                  name: 'my-shop',
+                },
+              },
+            },
+            { ...listPrompt('Your back-office is live. What next?'), out: { next: 'stay' } },
+          ],
+          std: [{ out: '(reopening "my-shop" — ./my-shop)' }],
+        }),
+      );
+
+      expect(startProcess.mock.calls[0][2].cwd).toBe('my-shop');
+    });
+
+    it('never offers a project the account does not know: it could only fail on "Not found"', async () => {
+      expect.hasAssertions();
+      // Deleted since, or another account's.
+      mockGetByEnvSecret
+        .mockReset()
+        .mockRejectedValue(Object.assign(new Error('Not Found'), { status: 404 }));
+
+      await asTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--dry-run'],
+          token: 'valid-token',
+          files: scaffoldFiles('.'),
+          prompts: [
+            {
+              ...listPrompt('How will you run Forest?', {
+                choices: [
+                  { name: 'Try it with demo data', value: 'demo' },
+                  {
+                    name: 'Standalone — dedicated server on my database (recommended)',
+                    value: 'standalone',
+                  },
+                  { name: 'In-app — add Forest to my existing app', value: 'inapp' },
+                ],
+              }),
+              out: { flow: 'demo' },
+            },
+            { ...listPrompt('What next?'), out: { next: 'stop' } },
+          ],
+          std: [{ not: 'reopening' }, { out: '$ forest projects:create:demo' }],
+        }),
+      );
+    });
+  });
+
   describe('demo flow', () => {
     it('creates a demo project, builds it and applies the curated layout', async () => {
       expect.hasAssertions();

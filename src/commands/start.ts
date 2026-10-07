@@ -1,9 +1,11 @@
 import type { NodeStack, SqlDriver } from '../services/onboarding/detect';
 import type { SecretsWrite } from '../services/onboarding/env-file';
+import type { ExistingProject } from '../services/onboarding/existing-project';
 import type { ChildProcess } from 'child_process';
 
 import { Flags } from '@oclif/core';
 import fs from 'fs';
+import path from 'path';
 
 import AbstractCommand from '../abstract-command';
 import {
@@ -16,6 +18,7 @@ import {
   sqlDriver,
 } from '../services/onboarding/detect';
 import { bootSecrets, keysLoadedFromDotenv, writeSecrets } from '../services/onboarding/env-file';
+import { findForestProject, findForestProjectsIn } from '../services/onboarding/existing-project';
 import { START_STEP_ENV } from '../services/onboarding/step';
 import {
   INTERRUPTED_EXIT_CODE,
@@ -25,6 +28,7 @@ import {
   stopAllProcesses,
   stopProcess,
 } from '../services/process-runner';
+import ProjectManager from '../services/project-manager';
 
 const DOCS_URL = 'https://docs.forest.app';
 const DEMO_PORT = 3310;
@@ -56,6 +60,9 @@ const READY = /schema was (updated|not updated)/i;
 const SCHEMA_SYNC_FAILED = /schema sync failed/i;
 
 type Flow = 'demo' | 'standalone' | 'inapp';
+
+/** A project found on this machine, with its name on the account it belongs to. */
+type Reopenable = ExistingProject & { name: string };
 type Tail = {
   child?: ChildProcess;
   /** Forest project name — a label, not necessarily a directory. */
@@ -176,8 +183,17 @@ export default class StartCommand extends AbstractCommand {
       await this.forest(['login']); // OIDC device flow (browser signup/login)
     }
 
-    const flow = await this.pickFlow(flags.flow as Flow | undefined);
+    // Reopening is offered only to someone who can answer, and who did not already say what to do.
+    const lookAround = this.interactive && !flags.flow;
 
+    const here = lookAround ? await StartCommand.reopenable(findForestProject('.')) : null;
+    if (here && (await this.chooseToReopen(here))) return this.reopen(here);
+
+    const nearby =
+      lookAround && !here ? await StartCommand.reopenables(findForestProjectsIn('.')) : [];
+    const flow = await this.pickFlow(flags.flow as Flow | undefined, nearby.length);
+
+    if (flow === 'reopen') return this.reopen(await this.pickNearby(nearby));
     if (flow === 'demo') return this.flowDemo();
     if (flow === 'standalone') return this.flowStandalone(flags);
 
@@ -371,7 +387,7 @@ export default class StartCommand extends AbstractCommand {
 
   // ---------- questions ----------
 
-  private async pickFlow(fromFlag?: Flow): Promise<Flow> {
+  private async pickFlow(fromFlag?: Flow, nearby = 0): Promise<Flow | 'reopen'> {
     if (fromFlag) return fromFlag;
     if (!this.interactive) {
       this.logger.log(this.chalk.grey('  (non-interactive — defaulting to demo data)'));
@@ -387,10 +403,164 @@ export default class StartCommand extends AbstractCommand {
         { name: 'Try it with demo data', value: 'demo' },
         { name: 'Standalone — dedicated server on my database (recommended)', value: 'standalone' },
         { name: 'In-app — add Forest to my existing app', value: 'inapp' },
+        ...(nearby
+          ? [
+              {
+                name: `Reopen a project in this folder (${nearby} found)`,
+                value: 'reopen',
+              },
+            ]
+          : []),
       ],
     });
 
     return flow;
+  }
+
+  // ---------- reopening ----------
+
+  /**
+   * A project found on disk, named after the account's record of it. Null when the account does not
+   * know its secret — deleted, or another account's: booting it would only fail on "Not found".
+   */
+  private static async reopenable(project: ExistingProject | null): Promise<Reopenable | null> {
+    if (!project) return null;
+
+    try {
+      const found = await new ProjectManager({}).getByEnvSecret(project.envSecret);
+
+      return found?.name ? { ...project, name: found.name } : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private static async reopenables(projects: ExistingProject[]): Promise<Reopenable[]> {
+    const named = await Promise.all(projects.map(project => StartCommand.reopenable(project)));
+
+    return named.filter((project): project is Reopenable => project !== null);
+  }
+
+  private async chooseToReopen(project: Reopenable): Promise<boolean> {
+    const { next } = await this.ask({
+      type: 'list',
+      name: 'next',
+      message: `This folder is the Forest project "${project.name}". What do you want to do?`,
+      choices: [
+        { name: `Start it — boot its back-end and pick up from there`, value: 'reopen' },
+        { name: 'Create a new project', value: 'new' },
+      ],
+    });
+
+    return next === 'reopen';
+  }
+
+  private async pickNearby(projects: Reopenable[]): Promise<Reopenable> {
+    if (projects.length === 1) return projects[0];
+
+    const { project } = await this.ask({
+      type: 'list',
+      name: 'project',
+      message: 'Which one?',
+      choices: projects.map(candidate => ({
+        name: `${candidate.name}  ${this.chalk.grey(`./${candidate.dir}`)}`,
+        value: candidate,
+      })),
+    });
+
+    return project;
+  }
+
+  /** Boot a project this machine already has, then hand over as if it had just been created. */
+  private async reopen(project: Reopenable): Promise<void> {
+    this.logger.log(this.chalk.grey(`\n  (reopening "${project.name}" — ./${project.dir})`));
+
+    if (project.kind === 'rails-app') return this.reopenRailsApp(project);
+    if (project.kind === 'node-app') return this.reopenNodeApp(project);
+
+    return this.reopenScaffold(project);
+  }
+
+  private async reopenRailsApp({ name, dir }: Reopenable): Promise<void> {
+    const restart = `bin/rails server -p ${RAILS_PORT}`;
+    const tail: Tail = {
+      name,
+      dir,
+      restart,
+      stack: "Forest mounted inside the user's Ruby on Rails app",
+      url: `http://localhost:${RAILS_PORT}`,
+    };
+    if (this.dryRun) return this.reopenedDryRun(tail);
+
+    const booted = this.boot('bin/rails', ['server', '-p', String(RAILS_PORT)], {
+      cwd: dir,
+      ready: /Listening on http|schema was updated/i,
+      trouble: SCHEMA_SYNC_FAILED,
+    });
+    this.logger.log(this.chalk.grey(`\n$ ${restart}   (booting…)`));
+    await booted.ready;
+    if (booted.troubled()) this.doneInAppWithoutSchema(name, RAILS_PORT);
+    else this.doneInApp(name, RAILS_PORT);
+
+    return this.handoff({ ...tail, child: booted.child, mute: booted.mute });
+  }
+
+  private async reopenNodeApp({ name, dir }: Reopenable): Promise<void> {
+    const tail: Tail = {
+      name,
+      dir,
+      // The port `forest start` registered the project on, whatever the app defaults to.
+      restart: `PORT=${NODE_PORT} npm start`,
+      stack: "Forest mounted inside the user's Node.js app",
+      url: `http://localhost:${NODE_PORT}`,
+    };
+    if (this.dryRun) return this.reopenedDryRun(tail);
+
+    const booted = this.boot('npm', ['start'], { cwd: dir, env: { PORT: String(NODE_PORT) } });
+    this.logger.log(this.chalk.grey(`\n$ ${tail.restart}   (booting…)`));
+    await booted.ready;
+    this.doneInApp(name, NODE_PORT);
+
+    return this.handoff({ ...tail, child: booted.child, mute: booted.mute });
+  }
+
+  /**
+   * A scaffold's code may have changed since — the coding agent works on it — so it is built
+   * again, and installed first if it never was.
+   */
+  private async reopenScaffold({ name, dir, demo }: Reopenable): Promise<void> {
+    if (this.dryRun || !fs.existsSync(path.join(dir, 'node_modules'))) {
+      await this.run$('npm', ['install'], dir);
+    }
+    if (this.dryRun || StartCommand.hasBuildScript(dir)) {
+      await this.run$('npm', ['run', 'build'], dir);
+    }
+
+    const port = StartCommand.readPort(dir) ?? DEMO_PORT;
+    const tail: Tail = {
+      name,
+      dir,
+      restart: 'npm start',
+      stack: demo
+        ? 'Forest demo back-end on sample data'
+        : "standalone Forest agent on the user's own database",
+      url: `http://localhost:${port}`,
+      demo,
+    };
+    if (this.dryRun) return this.reopenedDryRun(tail);
+
+    const booted = this.boot('npm', ['start'], { cwd: dir });
+    this.logger.log(this.chalk.grey('\n$ npm start   (booting — waiting for the schema push…)'));
+    await booted.ready;
+    this.doneStandalone(name, port);
+
+    return this.handoff({ ...tail, child: booted.child, mute: booted.mute });
+  }
+
+  private async reopenedDryRun(tail: Tail): Promise<void> {
+    this.logger.log(this.chalk.grey(`\n$ ${StartCommand.restartCommand(tail.dir, tail.restart)}`));
+
+    return this.handoff(tail);
   }
 
   private async pickStack(fromFlag?: 'rails' | 'node'): Promise<'rails' | 'node'> {
