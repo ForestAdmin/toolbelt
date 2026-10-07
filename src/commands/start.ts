@@ -35,6 +35,9 @@ const DEMO_PORT = 3310;
 const RAILS_PORT = 3002;
 const NODE_PORT = 3001;
 
+/** The menu entry that ends `forest start` with the back-end running in the foreground. */
+const KEEP_RUNNING = 'Keep the back-end running here (Ctrl-C to stop)';
+
 /** How many back-end lines are kept while a question is on screen; older ones are dropped. */
 const HELD_LINES = 200;
 
@@ -473,7 +476,8 @@ export default class StartCommand extends AbstractCommand {
 
   /** Boot a project this machine already has, then hand over as if it had just been created. */
   private async reopen(project: Reopenable): Promise<void> {
-    this.logger.log(this.chalk.grey(`\n  (reopening "${project.name}" — ./${project.dir})`));
+    const where = project.dir === '.' ? 'this folder' : `./${project.dir}`;
+    this.logger.log(this.chalk.grey(`\n  (reopening "${project.name}" — ${where})`));
 
     if (project.kind === 'rails-app') return this.reopenRailsApp(project);
     if (project.kind === 'node-app') return this.reopenNodeApp(project);
@@ -954,7 +958,9 @@ export default class StartCommand extends AbstractCommand {
     const [agent] = StartCommand.launchableAgents('.');
     if (!agent || !(await this.confirm(`Launch ${agent.label} now to wire the mount?`))) return;
 
-    await this.run$(agent.bin, [StartCommand.mountSeed(stack, secretsInDotenv, driver)]);
+    await StartCommand.leavingCtrlCTo(() =>
+      this.run$(agent.bin, [StartCommand.mountSeed(stack, secretsInDotenv, driver)]),
+    );
   }
 
   private static mountSeed(stack: NodeStack, secretsInDotenv: boolean, driver?: SqlDriver): string {
@@ -1070,7 +1076,7 @@ export default class StartCommand extends AbstractCommand {
       message: 'What next?',
       choices: [
         { name: 'Connect my real database (create a real project)', value: 'db' },
-        { name: 'Keep exploring — leave the back-end running', value: 'stay' },
+        { name: KEEP_RUNNING, value: 'stay' },
         { name: 'Stop', value: 'stop' },
       ],
     });
@@ -1128,44 +1134,62 @@ export default class StartCommand extends AbstractCommand {
         name: 'next',
         message: 'Your back-office is live. What next?',
         choices: [
-          ...(this.canInstallSkills
-            ? [{ name: 'Teach your coding agent about Forest', value: 'skills' }]
-            : []),
-          { name: 'Deploy to production', value: 'deploy' },
+          ...this.agentChoice(tail),
+          { name: 'Deploy to production (guide)', value: 'deploy' },
           { name: `Get started guide (${DOCS_URL})`, value: 'docs' },
-          { name: 'Keep exploring — leave the back-end running', value: 'stay' },
+          { name: KEEP_RUNNING, value: 'stay' },
         ],
       });
 
       // A failed step here is recoverable: the back-end is live, so the menu comes back rather
       // than `run` tearing everything down.
       // eslint-disable-next-line no-await-in-loop -- sequential by nature
-      const handedOver = await this.handoffChoice(next, tail).catch(error => {
+      await this.handoffChoice(next, tail).catch(error => {
         this.logger.warn(`${(error as Error).message}\n  Your back-end is still running.`);
-
-        return false;
       });
-      if (handedOver) return; // the coding agent owns the terminal now
       done = next === 'stay';
     }
 
     if (tail.child) await this.keepAlive(tail.child, tail.dir, tail.restart);
   }
 
-  /** One menu choice. Returns true when the terminal was handed to a coding agent. */
-  private async handoffChoice(choice: string, tail: Tail): Promise<boolean> {
+  /**
+   * The coding-agent entry, saying what it does before it is picked: open the agent the skills were
+   * set up for, or set them up first. None when this CLI cannot install the skills.
+   */
+  private agentChoice(tail: Tail): { name: string; value: string }[] {
+    const [agent] = StartCommand.launchableAgents(tail.dir);
+    if (agent)
+      return [{ name: `Open ${agent.label} here, with the Forest skills`, value: 'agent' }];
+    if (!this.canInstallSkills) return [];
+
+    return [
+      {
+        name: 'Set up your coding agent with the Forest skills, then open it here',
+        value: 'agent',
+      },
+    ];
+  }
+
+  /** One menu choice. Every one of them comes back to the menu. */
+  private async handoffChoice(choice: string, tail: Tail): Promise<void> {
     if (choice === 'docs') {
       this.instruct('Get started guide:', [this.chalk.cyan(DOCS_URL)]);
 
-      return false;
+      return;
     }
 
-    if (choice === 'skills') {
-      // No --agent: `skills:init` asks which agents this repo uses, with the full list and its own
-      // repo-aware detection. One question, asked once, where the answer belongs.
-      await this.forest(['skills:init'], tail.dir);
+    if (choice === 'agent') {
+      if (!StartCommand.launchableAgents(tail.dir).length) {
+        // No --agent: `skills:init` asks which agents this repo uses, with the full list and its
+        // own repo-aware detection. One question, asked once, where the answer belongs.
+        await this.forest(['skills:init'], tail.dir);
+        if (!(await this.offerLaunch(tail))) return;
+      }
 
-      return this.offerLaunch(tail, StartCommand.seed(tail));
+      await this.launch(tail, StartCommand.seed(tail));
+
+      return;
     }
 
     if (choice === 'deploy') {
@@ -1179,50 +1203,60 @@ export default class StartCommand extends AbstractCommand {
         ),
       ]);
     }
-
-    return false;
   }
 
-  private async offerLaunch(tail: Tail, seed: string): Promise<boolean> {
+  /** Whether to open the agent the skills were just set up for: there may be none to open. */
+  private async offerLaunch(tail: Tail): Promise<boolean> {
     const [agent] = StartCommand.launchableAgents(tail.dir);
     if (!agent) return false;
-    if (!(await this.confirm(`Launch ${agent.label} here now?`))) return false;
 
-    return this.launch(tail, seed);
+    return this.confirm(`Open ${agent.label} here now?`);
   }
 
-  /** Hand the terminal to a coding agent, seeded with a task. False when none was set up. */
-  private async launch(tail: Tail, seed: string): Promise<boolean> {
+  /**
+   * Hand the terminal to a coding agent, then take it back: the back-end keeps running throughout,
+   * and quitting the agent returns to the menu — the next step (deploy, another session) is there.
+   */
+  private async launch(tail: Tail, seed: string): Promise<void> {
     const [agent] = StartCommand.launchableAgents(tail.dir);
-    if (!agent) return false;
+    if (!agent) return;
 
     this.logger.log(
       this.chalk.grey(
-        `\n  (your Forest back-end keeps running underneath — opening ${agent.label}…)`,
+        `\n  (opening ${agent.label} — your Forest back-end keeps running underneath, and quitting it brings you back here)`,
       ),
     );
     // The agent takes over a full-screen terminal; back-end log lines drawn into it corrupt the
     // display for the whole session. It keeps running, we just stop echoing it.
     const unmute = tail.mute?.();
     try {
-      await this.run$(agent.bin, [seed], tail.dir);
-    } catch (error) {
-      // The menu comes back over a live back-end, so its logs must too.
+      await StartCommand.leavingCtrlCTo(() => this.run$(agent.bin, [seed], tail.dir));
+    } finally {
       unmute?.();
-      throw error;
     }
 
-    stopProcess(tail.child, 'SIGINT');
     this.logger.log(
-      this.chalk.grey(
-        `\n  Forest back-end stopped. Restart it: ${StartCommand.restartCommand(
-          tail.dir,
-          tail.restart,
-        )}`,
-      ),
+      this.chalk.grey(`\n  (back from ${agent.label} — your back-end is still running)`),
     );
+  }
 
-    return true;
+  /**
+   * Run a foreground program that handles Ctrl-C itself — a coding agent, for which it is an
+   * ordinary key. The terminal sends the signal to this process too, whose handlers exit and take
+   * the back-end down mid-session. They are set aside for the duration, and put back after.
+   */
+  private static async leavingCtrlCTo<T>(run: () => Promise<T>): Promise<T> {
+    const listeners = process.rawListeners('SIGINT') as ((...args: unknown[]) => void)[];
+    const ignore = () => undefined;
+    process.removeAllListeners('SIGINT');
+    process.on('SIGINT', ignore);
+
+    try {
+      return await run();
+    } finally {
+      process.removeListener('SIGINT', ignore);
+      listeners.forEach(listener => process.on('SIGINT', listener));
+    }
   }
 
   /** Hold the back-end in the foreground so a closed window is never a dead end. */
@@ -1308,10 +1342,12 @@ export default class StartCommand extends AbstractCommand {
       'The Forest skills and the Forest docs MCP are installed in this repo.',
     ].join(' ');
 
-    const task =
-      'Help me customise my back-office — e.g. add a segment to a collection, a Smart Action, or an approval workflow.';
+    // The situation, not a task: worded as the user's request, examples become a to-do list the
+    // agent starts on unasked.
+    const ask =
+      'Briefly tell me what you can help with in this Forest project, then wait for my request.';
 
-    return `You're in a Forest project. ${situation} ${task}`;
+    return `You're in a Forest project. ${situation} ${ask}`;
   }
 
   /**

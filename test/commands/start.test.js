@@ -1,7 +1,12 @@
 const fs = require('fs');
 
 const StartCommand = require('../../src/commands/start').default;
-const { runCapture, runStep, startProcess } = require('../../src/services/process-runner');
+const {
+  runCapture,
+  runStep,
+  startProcess,
+  stopProcess,
+} = require('../../src/services/process-runner');
 const testCli = require('./test-cli-helper/test-cli');
 
 // The process boundary: a test that goes past --dry-run spawns nothing, and says what came back.
@@ -24,6 +29,18 @@ async function asTerminal(run) {
   } finally {
     interactive.mockRestore();
   }
+}
+
+function writeSkillsManifest() {
+  fs.mkdirSync('x/.forest', { recursive: true });
+  fs.writeFileSync('x/.forest/skills-manifest.json', JSON.stringify({ agents: ['claude'] }));
+}
+
+/** What `create:sql` scaffolds as ./x, with the manifest `skills:init` writes when asked. */
+function scaffoldX({ withSkills }) {
+  fs.mkdirSync('x');
+  fs.writeFileSync('x/package.json', JSON.stringify({ scripts: { build: 'tsc' } }));
+  if (withSkills) writeSkillsManifest();
 }
 
 const listPrompt = (message, extra = {}) => ({
@@ -160,6 +177,119 @@ describe('start', () => {
           std: [{ not: 'reopening' }, { out: '$ forest projects:create:demo' }],
         }),
       );
+    });
+  });
+
+  describe('handing over to the coding agent', () => {
+    it('says what the entry does, opens the agent on the situation alone, and comes back to the menu', async () => {
+      expect.hasAssertions();
+      const agentRuns = [];
+      const sigintBefore = process.listenerCount('SIGINT');
+      runStep.mockReset().mockImplementation(async (command, args, options) => {
+        if (args[1] === 'projects:create:sql') scaffoldX({ withSkills: true });
+        if (command === 'claude') {
+          agentRuns.push({
+            seed: args[0],
+            cwd: options.cwd,
+            // Only the no-op is left: Ctrl-C is the agent's own key, and must not end `start`.
+            sigintListeners: process.listenerCount('SIGINT'),
+          });
+        }
+      });
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => () => {} });
+      stopProcess.mockReset();
+
+      await asTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'x', '--db', 'postgres://u:p@h:5432/db'],
+          token: 'valid-token',
+          prompts: [
+            {
+              ...listPrompt('Your back-office is live. What next?', {
+                choices: expect.arrayContaining([
+                  { name: 'Open Claude Code here, with the Forest skills', value: 'agent' },
+                  { name: 'Keep the back-end running here (Ctrl-C to stop)', value: 'stay' },
+                ]),
+              }),
+              out: { next: 'agent' },
+            },
+            { ...listPrompt('Your back-office is live. What next?'), out: { next: 'stay' } },
+          ],
+          std: [{ out: 'quitting it brings you back here' }, { out: 'back from Claude Code' }],
+        }),
+      );
+
+      expect(agentRuns).toHaveLength(1);
+      expect(agentRuns[0].cwd).toBe('x');
+      expect(agentRuns[0].seed).toContain('then wait for my request');
+      expect(agentRuns[0].seed).not.toContain('Help me customise');
+      expect(agentRuns[0].sigintListeners).toBe(1);
+      // Its handlers are back once the agent is gone…
+      expect(process.listenerCount('SIGINT')).toBe(sigintBefore);
+      // …and the back-end was never stopped on the way.
+      expect(stopProcess).not.toHaveBeenCalled();
+    });
+
+    it('sets the skills up first when none are, then asks before opening the agent', async () => {
+      expect.hasAssertions();
+      const steps = [];
+      runStep.mockReset().mockImplementation(async (command, args) => {
+        if (args[1] === 'projects:create:sql') scaffoldX({ withSkills: false });
+        if (args[1] === 'skills:init') {
+          fs.mkdirSync('x/.forest');
+          fs.writeFileSync(
+            'x/.forest/skills-manifest.json',
+            JSON.stringify({ agents: ['claude'] }),
+          );
+        }
+        steps.push(command === process.execPath ? args[1] : command);
+      });
+      startProcess
+        .mockReset()
+        .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => () => {} });
+      // `skills:init` is not among this harness's commands.
+      const canInstallSkills = jest
+        .spyOn(StartCommand.prototype, 'canInstallSkills', 'get')
+        .mockReturnValue(true);
+
+      await asTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'x', '--db', 'postgres://u:p@h:5432/db'],
+          token: 'valid-token',
+          prompts: [
+            {
+              ...listPrompt('Your back-office is live. What next?', {
+                choices: expect.arrayContaining([
+                  {
+                    name: 'Set up your coding agent with the Forest skills, then open it here',
+                    value: 'agent',
+                  },
+                ]),
+              }),
+              out: { next: 'agent' },
+            },
+            {
+              in: [
+                {
+                  type: 'confirm',
+                  name: 'value',
+                  message: 'Open Claude Code here now?',
+                  default: true,
+                },
+              ],
+              out: { value: true },
+            },
+            { ...listPrompt('Your back-office is live. What next?'), out: { next: 'stay' } },
+          ],
+          std: [{ out: '$ forest skills:init' }],
+        }),
+      ).finally(() => canInstallSkills.mockRestore());
+
+      expect(steps.slice(-2)).toStrictEqual(['skills:init', 'claude']);
     });
   });
 
