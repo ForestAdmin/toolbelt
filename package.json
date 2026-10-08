@@ -32,7 +32,7 @@
     "dotenv": "8.2.0",
     "handlebars": "4.7.9",
     "inquirer": "6.2.0",
-    "joi": "17.13.6",
+    "joi": "17.13.7",
     "json-diff": "1.0.0",
     "jsonapi-serializer": "3.6.2",
     "jsonwebtoken": "9.0.3",
@@ -140,6 +140,11 @@
   "resolutions": {
     "uuid": "^11.1.1",
     "inquirer/**/tmp": "^0.2.6",
-    "mongodb/mongodb-connection-string-url": "^3.0.2"
+    "mongodb/mongodb-connection-string-url": "^3.0.2",
+    "ip-address": "^10.7.1",
+    "moment": "^2.31.0",
+    "filelist": "^2.0.2",
+    "undici": "^6.28.1",
+    "fast-xml-parser": "^5.7.0"
   }
 }
