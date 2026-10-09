@@ -32,7 +32,7 @@
     "dotenv": "8.2.0",
     "handlebars": "4.7.9",
     "inquirer": "6.2.0",
-    "joi": "17.13.7",
+    "joi": "17.13.8",
     "json-diff": "1.0.0",
     "jsonapi-serializer": "3.6.2",
     "jsonwebtoken": "9.0.3",
