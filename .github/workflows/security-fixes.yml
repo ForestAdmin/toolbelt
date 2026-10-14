@@ -12,7 +12,7 @@ name: Security fixes
 
 on:
   schedule:
-    - cron: "0 11 * * 4" # Thursdays 11:00 UTC — same slot as the former routine
+    - cron: "0 11 * * 1" # Mondays 11:00 UTC — same slot as the former routine
   workflow_dispatch: {}
 
 permissions:
