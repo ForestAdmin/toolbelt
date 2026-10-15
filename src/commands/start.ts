@@ -13,6 +13,7 @@ import {
   mountHelper,
 } from '../services/onboarding/detect';
 import { bootSecrets, keysLoadedFromDotenv, writeSecrets } from '../services/onboarding/env-file';
+import { firstFreePort, isPortFree, parsePort } from '../services/onboarding/ports';
 import {
   runCapture,
   runStep,
@@ -39,6 +40,17 @@ const CLI_SETTINGS = [
 // on http", which an app with nothing mounted prints too, nor "Successfully mounted on", which the
 // framework mounts log before `start()` has run, and so before it can fail.
 const READY = /schema was (updated|not updated)/i;
+
+// What `start()` logs last in a scaffold that embeds the workflow executor. The executor boots after
+// the schema push and the mount, and a taken port fails `start()` there: on the schema line alone,
+// the back-end would be called live moments before it exits.
+const EXECUTOR_READY = /Embedded workflow executor started/i;
+
+/** The embedded executor's own default, when `WORKFLOW_EXECUTOR_PORT` is not set. */
+const EXECUTOR_PORT = 3400;
+
+/** How much of a back-end's output to show when it stopped after booting. */
+const LAST_LINES = 8;
 
 // What `forest_admin_rails` logs when its schema never reached Forest. It boots anyway — the app
 // serves, `/forest` answers — so nothing else in the flow can tell that the panel will be empty.
@@ -296,17 +308,113 @@ export default class StartCommand extends AbstractCommand {
     // instead of the tail it would have printed. Non-global on purpose: `test()` on a /g regex
     // carries `lastIndex` between chunks and would start missing matches.
     let troubled = false;
+    // Kept so a back-end that dies after its boot can be reported with what it said, rather than
+    // with a pointer to logs since buried under the steps that ran meanwhile.
+    let lastLines: string[] = [];
     const started = startProcess(command, args, {
       ready: options.ready ?? READY,
       cwd: options.cwd,
       env: options.env,
       onOutput: chunk => {
         if (options.trouble?.test(chunk)) troubled = true;
+        const lines = chunk.split('\n').filter(line => line.trim());
+        lastLines = [...lastLines, ...lines].slice(-LAST_LINES);
         this.logger.log(this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`));
       },
     });
 
-    return Object.assign(started, { troubled: () => troubled });
+    return Object.assign(started, { troubled: () => troubled, lastLines: () => lastLines });
+  }
+
+  /**
+   * "Live" is only ever said of a back-end that still runs. A boot can fail after its ready line,
+   * and a step since — `layout:apply` only talks to Forest — succeeds against a dead one.
+   */
+  private static assertRunning(
+    booted: { child?: ChildProcess; lastLines?: () => string[] } | undefined,
+    dir: string,
+    restart: string,
+  ): void {
+    const child = booted?.child;
+    if (!child || (child.exitCode === null && child.signalCode === null)) return;
+
+    const status = child.signalCode ?? `exit code ${child.exitCode}`;
+    throw new Error(
+      [
+        `Your back-end stopped right after booting (${status}). Its last lines:`,
+        ...(booted.lastLines?.() ?? []).map(line => `  | ${line}`),
+        `Fix what it reports, then restart it: cd ${dir} && ${restart}`,
+      ].join('\n'),
+    );
+  }
+
+  /** Whether a scaffold embeds the workflow executor, which needs a port of its own. */
+  private static runsExecutor(dir: string): boolean {
+    return ['index.ts', 'index.js'].some(file => {
+      try {
+        return fs.readFileSync(`${dir}/${file}`, 'utf8').includes('addWorkflowExecutor(');
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  /** The line that says a scaffold's back-end finished starting, executor included. */
+  private static readyFor(dir: string): RegExp {
+    return StartCommand.runsExecutor(dir) ? EXECUTOR_READY : READY;
+  }
+
+  /**
+   * Every scaffold's executor defaults to the same loopback port, so a second back-end on this
+   * machine — another demo, a project from last week — would crash on it after its schema push.
+   * Moved to a free port in the scaffold's `.env`, so the restarts we suggest keep it too. Returns
+   * what the boot must be given on top: a port the shell exports wins over `.env`, so `.env` alone
+   * would not move it.
+   */
+  private async reserveExecutorPort(dir: string): Promise<NodeJS.ProcessEnv | undefined> {
+    if (this.dryRun || !StartCommand.runsExecutor(dir)) return undefined;
+
+    const file = `${dir}/.env`;
+    let env = '';
+    try {
+      env = fs.readFileSync(file, 'utf8');
+    } catch {
+      // No .env yet: the executor runs on its default, and the line below creates one.
+    }
+
+    const exported = process.env.WORKFLOW_EXECUTOR_PORT;
+    const assigned = /^WORKFLOW_EXECUTOR_PORT=(\d+)/m.exec(env)?.[1];
+    const wanted = parsePort(exported ?? assigned) ?? EXECUTOR_PORT;
+    if (await isPortFree(wanted)) return undefined;
+
+    const port = await firstFreePort(wanted + 1);
+    // Nothing free nearby: the boot then fails on the clash, and says which port to free.
+    if (!port) return undefined;
+
+    if (exported !== undefined) {
+      this.logger.log(
+        this.chalk.grey(
+          `  (:${wanted}, exported as WORKFLOW_EXECUTOR_PORT, is taken — this boot's workflow executor uses :${port}; change or unset that export before restarting)`,
+        ),
+      );
+
+      return { WORKFLOW_EXECUTOR_PORT: String(port) };
+    }
+
+    const line = `WORKFLOW_EXECUTOR_PORT=${port}`;
+    fs.writeFileSync(
+      file,
+      assigned
+        ? env.replace(/^WORKFLOW_EXECUTOR_PORT=\d+/m, line)
+        : `${env}${env && !env.endsWith('\n') ? '\n' : ''}${line}\n`,
+    );
+    this.logger.log(
+      this.chalk.grey(
+        `  (:${wanted} is taken, by another Forest back-end probably — this one's workflow executor uses :${port}, saved in ${file})`,
+      ),
+    );
+
+    return undefined;
   }
 
   private ask(question: Record<string, unknown>) {
@@ -432,26 +540,27 @@ export default class StartCommand extends AbstractCommand {
       '-f',
     ];
 
-    let child: ChildProcess | undefined;
-    let exited: Promise<unknown> | undefined;
+    let booted: ReturnType<StartCommand['boot']> | undefined;
 
     if (this.dryRun) {
       this.logger.log(this.chalk.grey('\n$ npm start   (background — wait for schema push)'));
     } else {
-      const booted = this.boot('npm', ['start'], { cwd: name });
-      ({ child, exited } = booted);
+      const env = await this.reserveExecutorPort(name);
+      booted = this.boot('npm', ['start'], { cwd: name, env, ready: StartCommand.readyFor(name) });
       this.logger.log(this.chalk.grey('\n$ npm start   (booting — waiting for the schema push…)'));
       await booted.ready;
       this.logger.success('Schema pushed — applying curated layout + workflows');
     }
 
+    const child = booted?.child;
     await this.forest(layout, name);
+    StartCommand.assertRunning(booted, name, 'npm start');
     this.doneDemo(name);
 
     // One tail for both modes: --dry-run exists to review the flow, and skipping its ending would
     // hide the part most worth reviewing.
     if (this.interactive) {
-      await this.demoMenu(child, name, exited);
+      await this.demoMenu(child, name, booted?.exited);
 
       return;
     }
@@ -510,9 +619,15 @@ export default class StartCommand extends AbstractCommand {
     const port = StartCommand.readPort(name) ?? DEMO_PORT;
     tail.url = `http://localhost:${port}`;
 
-    const booted = this.boot('npm', ['start'], { cwd: name });
+    const env = await this.reserveExecutorPort(name);
+    const booted = this.boot('npm', ['start'], {
+      cwd: name,
+      env,
+      ready: StartCommand.readyFor(name),
+    });
     this.logger.log(this.chalk.grey('  (waiting for the schema push…)'));
     await booted.ready;
+    StartCommand.assertRunning(booted, name, tail.restart);
     this.doneStandalone(name, port);
     await this.handoff({ ...tail, child: booted.child, mute: booted.mute });
   }
@@ -581,6 +696,7 @@ export default class StartCommand extends AbstractCommand {
     });
     this.logger.log(this.chalk.grey(`\n$ bin/rails server -p ${RAILS_PORT}   (booting…)`));
     await booted.ready;
+    StartCommand.assertRunning(booted, tail.dir, tail.restart);
     if (booted.troubled()) this.doneInAppWithoutSchema(name, RAILS_PORT);
     else this.doneInApp(name, RAILS_PORT);
     await this.handoff({ ...tail, child: booted.child, mute: booted.mute });
@@ -682,6 +798,7 @@ export default class StartCommand extends AbstractCommand {
     });
     this.logger.log(this.chalk.grey('\n$ npm start   (booting…)'));
     await booted.ready;
+    StartCommand.assertRunning(booted, tail.dir, tail.restart);
     this.doneInApp(name, NODE_PORT);
     await this.handoff({ ...tail, child: booted.child, mute: booted.mute });
   }
