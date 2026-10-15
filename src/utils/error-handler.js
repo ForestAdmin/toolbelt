@@ -1,3 +1,4 @@
+const { maskUrlCredentials } = require('./database-errors');
 const ForestCLIError = require('../errors/forest-cli-error');
 
 class ErrorHandler {
@@ -47,7 +48,10 @@ class ErrorHandler {
         logs: this.getMessages(error),
       });
     } else {
-      const message = `${this.messages.ERROR_UNEXPECTED} ${this.chalk.red(error.message)}`;
+      // Masked: this message invites an issue, and a driver's error may quote a connection URL.
+      const message = `${this.messages.ERROR_UNEXPECTED} ${this.chalk.red(
+        maskUrlCredentials(error.message),
+      )}`;
       await this.terminator.terminate(1, {
         logs: [message],
       });

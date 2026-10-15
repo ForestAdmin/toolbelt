@@ -21,9 +21,32 @@ describe('services > database', () => {
 
       expect(terminatorMock.terminate).toHaveBeenCalledTimes(1);
       expect(terminatorMock.terminate).toHaveBeenCalledWith(1, {
-        logs: ['Cannot connect to the database due to the following error:', error],
+        logs: ['Cannot connect to the database due to the following error:', 'an error message'],
         errorCode: 'database_authentication_error',
         errorMessage: error.message,
+      });
+    });
+
+    it('explains a failure the user can fix, and masks the URL everywhere, telemetry included', async () => {
+      expect.assertions(1);
+
+      const terminatorMock = { terminate: jest.fn() };
+      const database = setupDatabase({ terminator: terminatorMock });
+
+      const error = new Error(
+        'Authentication failed for mongodb://admin:p@ss/w0rd@db.local:27017/shop',
+      );
+      await database.handleAuthenticationError(
+        error,
+        'mongodb://admin:p@ss/w0rd@db.local:27017/shop',
+      );
+
+      expect(terminatorMock.terminate).toHaveBeenCalledWith(1, {
+        logs: [
+          'The database refused this user or password. Special characters in the password must be URL-encoded: @ → %40, : → %3A, / → %2F, ? → %3F, # → %23, space → %20.',
+        ],
+        errorCode: 'database_authentication_error',
+        errorMessage: 'Authentication failed for mongodb://admin:***@db.local:27017/shop',
       });
     });
   });
@@ -70,7 +93,7 @@ describe('services > database', () => {
       await database.sequelizeAuthenticate(connectionMock);
 
       expect(handleAuthenticationErrorSpy).toHaveBeenCalledTimes(1);
-      expect(handleAuthenticationErrorSpy).toHaveBeenCalledWith(authenticationError);
+      expect(handleAuthenticationErrorSpy).toHaveBeenCalledWith(authenticationError, undefined);
     });
   });
 
@@ -235,7 +258,10 @@ describe('services > database', () => {
       await database.connectToMongodb({});
 
       expect(handleAuthenticationErrorSpy).toHaveBeenCalledTimes(1);
-      expect(handleAuthenticationErrorSpy).toHaveBeenCalledWith(connectError);
+      expect(handleAuthenticationErrorSpy).toHaveBeenCalledWith(
+        connectError,
+        'mongodb://undefined:undefined/undefined',
+      );
     });
   });
 
@@ -270,7 +296,7 @@ describe('services > database', () => {
         await database.connect(options);
 
         expect(sequelizeAuthenticateMock).toHaveBeenCalledTimes(1);
-        expect(sequelizeAuthenticateMock).toHaveBeenCalledWith(connection);
+        expect(sequelizeAuthenticateMock).toHaveBeenCalledWith(connection, undefined);
       });
 
       describe('when no connectionUrl is provided', () => {
