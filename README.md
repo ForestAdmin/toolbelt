@@ -8,7 +8,13 @@
 [![Test Coverage](https://api.codeclimate.com/v1/badges/8c0c80478866e3399c92/test_coverage)](https://codeclimate.com/github/ForestAdmin/toolbelt/test_coverage)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
-The Lumberjacks' toolbelt is the Forest Admin CLI which makes easy to manage your back office application directly from the terminal.
+The Forest CLI sets up and manages your Forest back-office from the terminal.
+
+## Get started
+
+    $ npx forest-cli@latest start
+
+One command, from an empty terminal to a running back-office: it logs you in, creates the project, boots its back-end and can hand your coding agent the Forest skills. Pick demo data to try it, a standalone back-end on your own database, or Forest mounted in your existing Node.js or Rails app.
 
 ## Install
 
@@ -20,6 +26,7 @@ The Lumberjacks' toolbelt is the Forest Admin CLI which makes easy to manage you
 
 ### General
 
+- `start` set up Forest from scratch: log in, create a project, boot its back-end.
 - `user` display the current logged in user.
 - `login` sign in to your Forest Admin account.
 - `logout` sign out of your Forest Admin account.
