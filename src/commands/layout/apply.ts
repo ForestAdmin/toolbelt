@@ -157,6 +157,12 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       char: 'f',
       description: 'Skip the confirmation prompt.',
     }),
+    summary: Flags.boolean({
+      description:
+        'Print how many changes each domain gets instead of listing them one by one. ' +
+        'Warnings and errors are still printed in full.',
+      default: false,
+    }),
     'with-workflows': Flags.boolean({
       description:
         'Also upload workflow BPMN sidecars (workflows/<id>.bpmn) to the target env — the round-trip counterpart of `pull --with-workflows`.',
@@ -241,6 +247,7 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       sidecarMissing: sidecarMissingSplit,
       sidecarOrphaned,
       sidecarPlans,
+      summary: flags.summary,
       warnings,
     });
 
@@ -400,6 +407,7 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
     sidecarMissing: { createdWithoutBpmn: MissingSidecar[]; targetKeepsOwn: MissingSidecar[] };
     sidecarOrphaned: string[];
     sidecarPlans: SidecarUpload[];
+    summary?: boolean;
     warnings: Parameters<typeof formatPlan>[1];
   }): void {
     const { createdWithoutBpmn, targetKeepsOwn } = preview.sidecarMissing;
@@ -427,7 +435,17 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       );
     }
 
-    this.log(formatPlan(preview.ops, preview.warnings));
+    this.log(formatPlan(preview.ops, preview.warnings, preview.summary));
+
+    // Same rule as the ops above: one line per workflow when the caller is reviewing, a count
+    // when it is not.
+    if (preview.summary) {
+      const bpmnCount = preview.bpmnToUpload.length + preview.sidecarPlans.length;
+      if (bpmnCount > 0) this.log(`  ⚙ ${bpmnCount} workflow BPMN to upload.`);
+
+      return;
+    }
+
     preview.bpmnToUpload.forEach(plan =>
       this.log(
         `  ⚙ workflow « ${plan.workflow.name} »: compile + upload BPMN (${plan.workflow.steps.length} steps)`,

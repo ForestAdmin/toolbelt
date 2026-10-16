@@ -29,7 +29,9 @@ describe('start', () => {
           { out: '-l typescript -H http://localhost -P 3310' },
           { out: '$ npm install' },
           { out: '$ npm run build' },
+          // --summary: the demo layout is ours, so its 228 ops are noise in the onboarding.
           { out: '$ forest layout:apply forest-layout.json --with-workflows' },
+          { out: '--summary' },
           { out: 'Demo back-office live.' },
           // Non-interactive: no menu, but never a dead end either.
           { out: 'Connect real data: forest projects:create:sql' },
