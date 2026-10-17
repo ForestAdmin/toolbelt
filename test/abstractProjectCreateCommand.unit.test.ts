@@ -247,6 +247,41 @@ describe('abstractProjectCreateCommand command', () => {
       expect(instance.exit).toHaveBeenCalledWith(1);
     });
 
+    it('explains a database the connection test cannot reach, without the unexpected-error banner', async () => {
+      expect.assertions(2);
+
+      const { stubs, instance } = setup();
+      stubs.spinner.attachToPromise
+        .mockResolvedValueOnce({ id: 1, envSecret: 'e', authSecret: 'a', endpoint: 'x' })
+        .mockRejectedValueOnce(new Error('connect ECONNREFUSED 127.0.0.1:5432'));
+      jest.spyOn(instance, 'exit').mockReturnValue(true as never);
+
+      await instance.run();
+
+      expect(stubs.logger.error).toHaveBeenCalledWith(
+        expect.stringMatching(/^Nothing answers at .+: is your database running/),
+      );
+      expect(stubs.logger.error).not.toHaveBeenCalledWith(stubs.messages.ERROR_UNEXPECTED);
+    });
+
+    it('does not blame the database when the Forest API is the one refusing the connection', async () => {
+      expect.assertions(2);
+
+      const { stubs, instance } = setup();
+      // Creating the project is the first step: no database has been reached yet.
+      stubs.spinner.attachToPromise.mockRejectedValueOnce(
+        new Error('connect ECONNREFUSED 52.1.2.3:443'),
+      );
+      jest.spyOn(instance, 'exit').mockReturnValue(true as never);
+
+      await instance.run();
+
+      expect(stubs.logger.error).toHaveBeenCalledWith(stubs.messages.ERROR_UNEXPECTED);
+      expect(stubs.logger.error).not.toHaveBeenCalledWith(
+        expect.stringMatching(/is your database running/),
+      );
+    });
+
     it('should print a refused option value on its own, without the unexpected-error banner', async () => {
       expect.assertions(3);
 
