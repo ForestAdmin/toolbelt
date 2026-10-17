@@ -80,9 +80,12 @@ function validateConnectionUrl(
   return true;
 }
 
+export const SQL_URL_EXAMPLE = 'postgres://user:password@host:5432/db';
+export const MONGO_URL_EXAMPLE = 'mongodb://user:password@host:27017/db';
+
 // No `lowercaseOnly`: Sequelize and @forestadmin/datasource-sql normalize the scheme themselves.
 export function validateSqlConnectionUrl(value: string): boolean | string {
-  return validateConnectionUrl(value, SQL_URL_SCHEMES, 'postgres://user:password@host:5432/db', {
+  return validateConnectionUrl(value, SQL_URL_SCHEMES, SQL_URL_EXAMPLE, {
     hints: {
       // getDialect() reads it as mysql, so the project ships mysql2 while the driver wants mariadb.
       mariadb: 'mariadb:// is not supported by the generated project, use mysql:// instead',
@@ -92,7 +95,7 @@ export function validateSqlConnectionUrl(value: string): boolean | string {
 
 // The mongodb driver compares the scheme verbatim and throws on `MongoDB://…`.
 export function validateMongoConnectionUrl(value: string): boolean | string {
-  return validateConnectionUrl(value, MONGO_URL_SCHEMES, 'mongodb://user:password@host:27017/db', {
+  return validateConnectionUrl(value, MONGO_URL_SCHEMES, MONGO_URL_EXAMPLE, {
     lowercaseOnly: true,
   });
 }
@@ -101,7 +104,8 @@ export const applicationHost: Option = {
   default: 'http://localhost',
   validate: validateAppHostname,
   oclif: { char: 'H', description: 'Hostname of your admin backend application.' },
-  prompter: { question: "What's the IP/hostname on which your application will be running?" },
+  // It becomes the environment's API endpoint: the address the browser calls, not the app's own.
+  prompter: { question: 'URL your browser will use to reach the back-end:' },
 };
 
 export const applicationPort: Option = {
@@ -177,8 +181,10 @@ export const databaseSslMode: Option = {
 };
 
 export const language: Option = {
-  choices: Object.values(languages).map(l => ({ name: l.name, value: l })),
-  default: Object.values(languages)[0],
+  // TypeScript first and by default, as every `forest start` flow generates: types are what let
+  // `tsc` catch a coding agent's mistakes before the back-end boots.
+  choices: [languages.Typescript, languages.Javascript].map(l => ({ name: l.name, value: l })),
+  default: languages.Typescript,
   oclif: { char: 'l', description: 'Choose the language you want to use for your project.' },
   prompter: { question: 'In which language would you like to generate your sources?' },
 };

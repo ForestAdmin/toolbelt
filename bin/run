@@ -2,5 +2,9 @@
 
 (async () => {
   const oclif = await import('@oclif/core');
+  // The CLI always runs its compiled `dist/`. Without this, a `NODE_ENV=development` — which every
+  // generated project's `.env` sets, and this CLI loads — makes oclif look for ts-node and warn
+  // "Could not find typescript" before falling back to that same `dist/`.
+  oclif.settings.tsnodeEnabled = false;
   await oclif.execute({ development: false, dir: __dirname });
 })();

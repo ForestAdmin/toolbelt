@@ -8,7 +8,11 @@ module.exports = plan =>
         .addUsingFunction('stderr', () => process.stderr),
     )
     .addPackage('inquirer', planInquirer =>
-      planInquirer.addInstance('inquirer', () => require('inquirer')),
+      planInquirer.addInstance('inquirer', () => {
+        require('../utils/exit-on-ctrl-c')(require('inquirer/lib/ui/baseUI'));
+
+        return require('inquirer');
+      }),
     )
     .addPackage('jwtDecode', planJWTDecode =>
       planJWTDecode.addInstance('jwtDecode', () => require('jwt-decode')),
