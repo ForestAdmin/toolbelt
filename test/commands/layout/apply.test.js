@@ -127,7 +127,7 @@ describe('layout:apply', () => {
       segmentIds: [],
     };
 
-    it('uploads the sidecar and links the fresh S3 version (source ref stripped)', () =>
+    const applyWithSidecar = ({ flags = [], std }) =>
       testCli({
         env: testEnvWithoutSecret,
         token: 'any',
@@ -141,6 +141,7 @@ describe('layout:apply', () => {
           'Operations',
           '-f',
           '--with-workflows',
+          ...flags,
           LAYOUT_FILE,
         ],
         files: [
@@ -187,8 +188,23 @@ describe('layout:apply', () => {
               ])
               .reply(204),
         ],
-        std: [{ out: 'upload BPMN sidecar' }, { out: 'Applied 0 changes + 1 workflow BPMN' }],
+        std,
         assertNoStdError: false,
+      });
+
+    it('uploads the sidecar and links the fresh S3 version (source ref stripped)', () =>
+      applyWithSidecar({
+        std: [{ out: 'upload BPMN sidecar' }, { out: 'Applied 0 changes + 1 workflow BPMN' }],
+      }));
+
+    it('prints one workflow count instead of the per-workflow line with --summary', () =>
+      applyWithSidecar({
+        flags: ['--summary'],
+        std: [
+          { out: '1 workflow BPMN to upload.' },
+          { out: 'Applied 0 changes + 1 workflow BPMN' },
+          { not: 'upload BPMN sidecar' },
+        ],
       }));
   });
 

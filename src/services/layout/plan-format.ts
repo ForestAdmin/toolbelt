@@ -6,8 +6,17 @@ import { LAYOUT_DOMAINS } from './types';
 
 const OP_PREFIX: Record<string, string> = { add: '+', remove: '-', replace: '~', test: '?' };
 
-/** Render the plan grouped by domain, with warnings and a final count. */
-export function formatPlan(ops: PlannedOp[], warnings: string[]): string {
+/**
+ * Render the plan grouped by domain, with warnings and a final count.
+ *
+ * `summary` keeps the per-domain headers, every warning and the final count, and drops the
+ * one-line-per-operation listing. That listing is the point of the command when someone runs it
+ * to review what will change; it is noise when the plan is a curated file the caller did not
+ * write — applying the demo layout prints 228 of those lines, and nobody reads that a column
+ * moved from position 7 to position 2. Warnings are never dropped: what is cut is the chatter,
+ * not the signals.
+ */
+export function formatPlan(ops: PlannedOp[], warnings: string[], summary = false): string {
   if (ops.length === 0 && warnings.length === 0) {
     return '✓ No changes: the remote layout already matches the file.';
   }
@@ -19,7 +28,9 @@ export function formatPlan(ops: PlannedOp[], warnings: string[]): string {
     if (domainOps.length === 0) return;
 
     lines.push(`${domain} (${domainOps.length} change${domainOps.length > 1 ? 's' : ''})`);
-    domainOps.forEach(op => lines.push(`  ${OP_PREFIX[op.op] ?? '·'} ${op.label}`));
+    if (!summary) {
+      domainOps.forEach(op => lines.push(`  ${OP_PREFIX[op.op] ?? '·'} ${op.label}`));
+    }
   });
 
   warnings.forEach(warning => lines.push(`  ⚠ ${warning}`));
