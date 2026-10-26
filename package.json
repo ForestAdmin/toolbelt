@@ -104,7 +104,7 @@
   "keywords": [
     "forestadmin"
   ],
-  "license": "GPL-3.0",
+  "license": "Apache-2.0",
   "main": "dist/index.js",
   "oclif": {
     "commands": "./dist/commands",
