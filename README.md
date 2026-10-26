@@ -1,88 +1,140 @@
-# Forest Admin CLI
 <p align="center">
-  <img src="https://github.com/ForestAdmin/toolbelt/blob/main/assets/logo.png?raw=true" alt="Toolbelt logo">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/header-toolbelt-dark.svg">
+    <img alt="Forest CLI: set up, build and ship your Forest project from the terminal." src="./assets/header-toolbelt-light.svg" width="100%">
+  </picture>
 </p>
 
-[![npm package](https://badge.fury.io/js/forest-cli.svg)](https://badge.fury.io/js/forest-cli)
-[![Build Status](https://github.com/ForestAdmin/toolbelt/workflows/Build,%20Test%20and%20Deploy/badge.svg?branch=main)](https://github.com/ForestAdmin/toolbelt/actions)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/8c0c80478866e3399c92/test_coverage)](https://codeclimate.com/github/ForestAdmin/toolbelt/test_coverage)
-[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
+<p align="center">
+  <a href="https://www.npmjs.com/package/forest-cli"><img alt="npm" src="https://img.shields.io/npm/v/forest-cli?color=3f5b1e&labelColor=262d1e"></a>
+  <a href="https://github.com/ForestAdmin/toolbelt/actions/workflows/build.yml"><img alt="CI" src="https://github.com/ForestAdmin/toolbelt/actions/workflows/build.yml/badge.svg?branch=main"></a>
+  <a href="./LICENSE"><img alt="License" src="https://img.shields.io/github/license/ForestAdmin/toolbelt?color=3f5b1e&labelColor=262d1e"></a>
+</p>
 
-The Lumberjacks' toolbelt is the Forest Admin CLI which makes easy to manage your back office application directly from the terminal.
+**Forest is the back office for operations teams in regulated companies.** Ops teams review, decide and act on your data from one interface, or let AI agents do it through MCP, within the roles, permissions and audit logs you define.
 
-## Install
+This repository is the **Forest CLI** (`forest`): it creates your project, boots its agent, and manages layouts, workflows, roles, users and environments from the terminal. Everything you do in the Forest settings, you can script, review and version.
 
-    $ npm install -g forest-cli
+## Quick start
+
+```bash
+npm install -g forest-cli
+forest start
+```
+
+`forest start` takes you from nothing to a running back office: it logs you in, creates the project, boots its agent locally, and gives your coding agent the Forest skills to build on it. Pick a flow:
+
+| Flow | For | Command |
+|---|---|---|
+| Demo | Seeing Forest on realistic data, no database needed | `forest start --flow demo` |
+| Standalone | A Node.js agent generated on your SQL or MongoDB database | `forest start --flow standalone --db <DATABASE_URL>` |
+| In-app | Mounting Forest in an app you already run (Rails, Node.js) | `forest start --flow inapp --stack rails` |
+
+Add `--dry-run` to print every step instead of running it.
+Full guide: [docs.forest.app/get-started/quickstart](https://docs.forest.app/get-started/quickstart)
+
+## Requirements
+
+| | |
+|---|---|
+| Node.js | `>= 18` |
+| Account | A Forest account. `forest login` opens the browser to sign in. |
 
 ## Commands
 
-    $ forest [command]
+Run `forest help <command>` for the flags of any command.
 
-### General
+<details open>
+<summary><b>Set up a project</b></summary>
 
-- `user` display the current logged in user.
-- `login` sign in to your Forest Admin account.
-- `logout` sign out of your Forest Admin account.
-- `help [cmd]` display help for [cmd].
+| Command | What it does |
+|---|---|
+| `start` | Set up Forest from scratch: log in, create a project, boot its back-end, hand your coding agent the skills |
+| `login` / `logout` / `user` | Sign in, sign out, show the logged-in user |
+| `projects:create:demo` | Create a project with demo data, no database required |
+| `projects:create:sql` / `projects:create:nosql` | Create a project with a Node.js agent generated on your SQL or MongoDB database |
+| `projects:create:in-app` | Register a project for an app you host yourself and print its environment secret |
+| `projects` / `projects:get` | List your projects, get a project's configuration |
+| `skills:init` / `skills:update` | Install or refresh the Forest skills for your coding agent (Claude Code, Codex, Cursor, OpenCode…) |
 
-### Projects
+</details>
 
-Manage Forest Admin projects.
+<details open>
+<summary><b>Build the back office</b></summary>
 
-- `projects` list your projects.
-- `projects:create <appName>` generate a backend application with an ORM/ODM configured.
-- `projects:get` get the configuration of a project.
+| Command | What it does |
+|---|---|
+| `layout:pull` / `layout:apply` | Pull an environment's layout into `forest-layout.json`, edit it, apply it back |
+| `layout:patch` | Patch the layout directly from a JSON file or stdin |
+| `workflow:apply` | Create or update a workflow from a JSON steps spec |
+| `schema:update` / `schema:apply` / `schema:diff` | Refresh, apply or compare `.forestadmin-schema.json` |
 
-### Environments
+</details>
 
-Manage Forest Admin environments.
+<details>
+<summary><b>Manage access</b></summary>
 
-- `environments` list your environments.
-- `environments:get` get the configuration of an environment.
-- `environments:create` create a new environment.
-- `environments:delete` delete an environment.
+| Command | What it does |
+|---|---|
+| `users:list` / `users:invite` / `users:edit` | List, invite and edit users (role, teams, permission level) |
+| `roles:create` / `roles:copy` | Create a role, copy role permissions between environments |
+| `roles:export` / `roles:apply` | Export every role's permissions to a CSV, edit it, apply it back |
+| `teams:create` / `teams:delete` / `teams:copy-layout` | Manage teams and copy a team's layout onto another |
 
-Without the Development Workflow experience.
-- `environments:copy-layout` copy the layout from one environment to another.
+</details>
 
-With the Development Workflow activated.
-- `init` set up your development environment in your current folder.
-- `branch` create a new branch or list your existing branches.
-- `switch` switch to another branch in your local development environment.
-- `push` push layout changes of your current branch to a remote environment.
-- `deploy` deploy layout changes of an environment to the reference one.
-- `environments:reset` reset a remote environment by removing all layout changes.
+<details>
+<summary><b>Develop and deploy</b></summary>
 
-### Schema
+| Command | What it does |
+|---|---|
+| `init` | Set up your development environment in the current folder |
+| `branch` / `switch` / `set-origin` | Create, list and switch layout branches, set a branch's origin |
+| `push` | Push the layout changes of your branch to its origin |
+| `deploy` | Deploy layout changes to the reference environment |
+| `environments` / `environments:get` | List environments, get an environment's configuration |
+| `environments:create` / `environments:update` / `environments:delete` / `environments:reset` | Manage environments |
 
-Manage Forest Admin schema.
+</details>
 
-- `schema:apply` apply the current schema of your repository to the specified environment (using your `.forestadmin-schema.json` file).
-- `schema:diff` allow to compare two environment schemas.
-- `schema:update` refresh your schema by generating files that do not currently exist.
+## With a coding agent
+
+The CLI is built to be driven by an AI coding agent as well as by you. `forest skills:init` installs the Forest skills (the Forest plugin for Claude Code and Codex, plain skill files for the others), so your agent knows how to customize the agent code, edit layouts and write workflows with these commands. Listing and `get` commands accept `--format json`, and `layout:patch` and `workflow:apply` read their spec from stdin.
 
 ## Docker
 
-### ENV variables
-
-- `DATABASE_SCHEMA` the schema used by the database. (not for all commands)
-- `DATABASE_URL` the connection string. (not fot all commands)
-- `FOREST_ENV_SECRET` the env secret token used to access your Forest Admin environment.
-- `SILENT` used to not log commands results. (optional)
-- `TOKEN_PATH` path where store the session token. (need to be "/usr/src/cli" to work with the docker image)
-
-If you have an `.env` file in you current folder docker should take it to run commands. So you can define the missing ENV variable inside.
-Otherwise you should pass all env variable you need in the `docker run` command, eg: `-e TOKEN_PATH="/usr/src/app"`.
-
-### Using Forest Admin CLI
-- `TOKEN_PATH`="/usr/src/cli"
-
 ```bash
-docker run --rm --init -it -v `pwd`:/usr/src/app -v ~/.forest.d:/usr/src/cli/.forest.d -e TOKEN_PATH="/usr/src/cli" forestadmin/toolbelt:latest [command]
+docker run --rm --init -it \
+  -v `pwd`:/usr/src/app \
+  -v ~/.forest.d:/usr/src/cli/.forest.d \
+  -e TOKEN_PATH="/usr/src/cli" \
+  forestadmin/toolbelt:latest [command]
 ```
 
-## Community
+| Variable | Use |
+|---|---|
+| `TOKEN_PATH` | Where the session token is stored. Must be `/usr/src/cli` with the image. |
+| `FOREST_ENV_SECRET` | Environment secret, for commands that target an environment |
+| `DATABASE_URL`, `DATABASE_SCHEMA` | Database connection, for the commands that need one |
+| `SILENT` | Do not log command results (optional) |
 
-👇 Join our Developers community for support and more
+A `.env` file in the current folder is picked up; otherwise pass each variable with `-e`.
 
-[![Discourse developers community](https://img.shields.io/discourse/posts?label=discourse&server=https%3A%2F%2Fcommunity.forestadmin.com)](https://community.forestadmin.com)
+## Documentation
+
+| | |
+|---|---|
+| Get started | https://docs.forest.app/get-started/quickstart |
+| CLI reference | https://docs.forest.app/reference/cli/overview |
+
+## Contributing
+
+Bug reports and pull requests are welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, tests and commit conventions.
+
+```bash
+yarn install && yarn build && yarn test
+```
+
+## License
+
+Apache-2.0. See [LICENSE](./LICENSE).
