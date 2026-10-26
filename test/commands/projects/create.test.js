@@ -172,7 +172,7 @@ describe('projects:create', () => {
               // non-string message, so the headline used to print as `["…","…"]`.
               { err: '× Cannot generate your project.' },
               {
-                err: '× An unexpected error occurred. Please reach out for help in our Developers community (https://community.forestadmin.com/) or create a Github issue with following error:',
+                err: '× An unexpected error occurred. Please contact our support (https://forest.app/forms/support) or create a Github issue with following error:',
               },
             ],
             exitCode: 1,
