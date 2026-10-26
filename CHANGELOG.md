@@ -1,3 +1,10 @@
+## [5.24.2](https://github.com/ForestAdmin/toolbelt/compare/v5.24.1...v5.24.2) (2026-10-26)
+
+
+### Bug Fixes
+
+* **license:** relicense from GPL-3.0 to Apache-2.0 ([#840](https://github.com/ForestAdmin/toolbelt/issues/840)) ([a8151f2](https://github.com/ForestAdmin/toolbelt/commit/a8151f216507e3776ec279bf66d73f34887b14ff))
+
 ## [5.24.1](https://github.com/ForestAdmin/toolbelt/compare/v5.24.0...v5.24.1) (2026-10-02)
 
 
