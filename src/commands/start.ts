@@ -63,6 +63,8 @@ type Tail = {
   stack: string;
   url: string;
   demo?: boolean;
+  /** Forest runs inside the user's own app, so that app is what gets deployed. */
+  inApp?: boolean;
   /** Stops streaming the back-end's logs — they would otherwise be drawn into a full-screen TUI. */
   mute?: () => () => void;
   /** How to start this back-end again. Rails is not started with `npm start`. */
@@ -604,6 +606,7 @@ export default class StartCommand extends AbstractCommand {
       dir: '.', // in-app scaffolds nothing: the repo is the user's own
       restart: `bin/rails server -p ${RAILS_PORT}`,
       stack: "Forest mounted inside the user's Ruby on Rails app",
+      inApp: true,
       url: `http://localhost:${RAILS_PORT}`,
     };
 
@@ -677,6 +680,7 @@ export default class StartCommand extends AbstractCommand {
       // The project was registered on this port, and the user's app may default to another one.
       restart: `PORT=${NODE_PORT} npm start`,
       stack: "Forest mounted inside the user's Node.js app",
+      inApp: true,
       url: `http://localhost:${NODE_PORT}`,
     };
 
@@ -975,7 +979,9 @@ export default class StartCommand extends AbstractCommand {
       this.instruct('Deploy to production:', [
         `Follow ${this.chalk.cyan(`${DOCS_URL}/get-started/deploy`)}`,
         this.chalk.grey(
-          'Host this back-end anywhere that runs Node.js, then add a production environment in Forest that points at it.',
+          tail.inApp
+            ? 'Deploy your app as you usually do, then add a production environment in Forest that points at it.'
+            : 'Host this back-end anywhere that runs Node.js, then add a production environment in Forest that points at it.',
         ),
       ]);
     }
