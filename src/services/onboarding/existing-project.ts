@@ -1,4 +1,3 @@
-import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 
@@ -38,10 +37,23 @@ function read(file: string): string | null {
   }
 }
 
+/**
+ * The line format of the app's own dotenv (16+), not this CLI's 8.2.0: that one keeps a trailing
+ * `# comment` in the value and skips `export FOREST_ENV_SECRET=…` lines altogether.
+ */
+const DOTENV_SECRET =
+  /^[ \t]*(?:export[ \t]+)?FOREST_ENV_SECRET[ \t]*=[ \t]*('[^'\n]*'|"[^"\n]*"|`[^`\n]*`|[^#\r\n]*)/gm;
+
 function envSecretFromDotenv(dir: string): string | undefined {
   const dotenvFile = read(path.join(dir, '.env'));
+  if (!dotenvFile) return undefined;
 
-  return (dotenvFile && dotenv.parse(dotenvFile).FOREST_ENV_SECRET) || undefined;
+  // The last assignment wins, as it does for dotenv.
+  const values = [...dotenvFile.matchAll(DOTENV_SECRET)].map(([, value]) =>
+    value.trim().replace(/^(['"`])(.*)\1$/, '$2'),
+  );
+
+  return values.pop() || undefined;
 }
 
 /** `forest_admin_rails`'s generator writes the secret into its initializer, not into `.env`. */
@@ -92,12 +104,20 @@ function sourceFiles(dir: string): string[] {
   return files.slice(0, MAX_FILES);
 }
 
-/** Whether the app's own code loads the agent and mounts it: the mount can live in any file. */
+/**
+ * Whether the app's own code loads the agent and mounts it. Either can live in any file, and not
+ * necessarily the same one: the agent is often built in a module the server file imports.
+ */
 function mountsForest(dir: string): boolean {
+  let loads = false;
+  let mounts = false;
+
   return sourceFiles(dir).some(file => {
     const source = read(file) ?? '';
+    loads = loads || source.includes('@forestadmin/agent');
+    mounts = mounts || /\.mountOn[A-Z]\w*\(/.test(source);
 
-    return source.includes('@forestadmin/agent') && /\.mountOn[A-Z]\w*\(/.test(source);
+    return loads && mounts;
   });
 }
 

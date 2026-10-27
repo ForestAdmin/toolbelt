@@ -117,6 +117,39 @@ describe('onboarding > existing-project', () => {
       });
     });
 
+    it('sees the mount when the agent is built in one file and mounted from another', () => {
+      expect.assertions(1);
+      withTempDir(dir => {
+        write(dir, {
+          '.env': 'FOREST_ENV_SECRET=abc\n',
+          'package.json': JSON.stringify({ dependencies: { '@forestadmin/agent': '^1' } }),
+          'src/forest.ts':
+            "import { createAgent } from '@forestadmin/agent';\nexport const agent = createAgent(o);",
+          'src/server.ts': "import { agent } from './forest';\nagent.mountOnExpress(app).start();",
+        });
+        expect(findForestProject(dir)?.mounted).toBe(true);
+      });
+    });
+
+    it('reads the .env secret the way the app does: `export`, quotes, trailing comment, last one wins', () => {
+      expect.assertions(4);
+      withTempDir(dir => {
+        write(dir, scaffold({ '.env': 'FOREST_ENV_SECRET=abc # development\n' }));
+        expect(findForestProject(dir)?.envSecret).toBe('abc');
+
+        write(dir, { '.env': 'export FOREST_ENV_SECRET=abc\n' });
+        expect(findForestProject(dir)?.envSecret).toBe('abc');
+
+        write(dir, { '.env': 'FOREST_ENV_SECRET="abc" # quoted\n' });
+        expect(findForestProject(dir)?.envSecret).toBe('abc');
+
+        write(dir, {
+          '.env': 'FOREST_ENV_SECRET=old\n# FOREST_ENV_SECRET=commented\nFOREST_ENV_SECRET=abc\n',
+        });
+        expect(findForestProject(dir)?.envSecret).toBe('abc');
+      });
+    });
+
     it('ignores a folder without a Forest secret, or without the agent it would boot', () => {
       expect.assertions(2);
       withTempDir(dir => {
