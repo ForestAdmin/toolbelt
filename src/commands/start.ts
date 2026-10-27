@@ -503,6 +503,7 @@ export default class StartCommand extends AbstractCommand {
       dir,
       restart,
       stack: "Forest mounted inside the user's Ruby on Rails app",
+      inApp: true,
       url: `http://localhost:${RAILS_PORT}`,
     };
     if (this.dryRun) return this.reopenedDryRun(tail);
@@ -527,6 +528,7 @@ export default class StartCommand extends AbstractCommand {
       // The port `forest start` registered the project on, whatever the app defaults to.
       restart: `PORT=${NODE_PORT} npm start`,
       stack: "Forest mounted inside the user's Node.js app",
+      inApp: true,
       url: `http://localhost:${NODE_PORT}`,
     };
     // An onboarding that stopped before the mount: booting now would wait on a Forest that is not
@@ -1235,19 +1237,23 @@ export default class StartCommand extends AbstractCommand {
       return;
     }
 
-    if (choice === 'deploy') {
-      // The docs, not a skill: no skill covers deploying any more, and nothing here sets up the
-      // production side (its environment, its secrets) either. A pointer that exists beats a
-      // coding agent sent after steps it does not have.
-      this.instruct('Deploy to production:', [
-        `Follow ${this.chalk.cyan(`${DOCS_URL}/get-started/deploy`)}`,
-        this.chalk.grey(
-          tail.inApp
-            ? 'Deploy your app as you usually do, then add a production environment in Forest that points at it.'
-            : 'Host this back-end anywhere that runs Node.js, then add a production environment in Forest that points at it.',
-        ),
-      ]);
-    }
+    if (choice === 'deploy') this.explainDeploy(tail);
+  }
+
+  /**
+   * The docs, not a skill: no skill covers deploying any more, and nothing here sets up the
+   * production side (its environment, its secrets) either. A pointer that exists beats a coding
+   * agent sent after steps it does not have.
+   */
+  private explainDeploy(tail: Tail): void {
+    this.instruct('Deploy to production:', [
+      `Follow ${this.chalk.cyan(`${DOCS_URL}/get-started/deploy`)}`,
+      this.chalk.grey(
+        tail.inApp
+          ? 'Deploy your app as you usually do, then add a production environment in Forest that points at it.'
+          : 'Host this back-end anywhere that runs Node.js, then add a production environment in Forest that points at it.',
+      ),
+    ]);
   }
 
   /** For skills set up for an agent this terminal cannot open, such as Cursor. */
