@@ -80,6 +80,15 @@ export default class OidcAuthenticator {
         `Click on "Log in" on the browser tab which opened automatically or open this link: ${flow.verification_uri_complete}\n`,
       );
       this.process.stdout.write(`Your confirmation code: ${flow.user_code}\n`);
+      // Said up front: past the deadline the browser only calls the code "invalid", and nothing
+      // tells the user it was a time limit. The code is to compare, not to type.
+      if (expiresIn) {
+        this.process.stdout.write(
+          `Check the browser shows this code, then log in within ${Math.round(
+            expiresIn / 60,
+          )} minutes.\n`,
+        );
+      }
 
       await this.tryOpen(flow.verification_uri_complete);
 
