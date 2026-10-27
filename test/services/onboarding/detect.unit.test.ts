@@ -7,6 +7,7 @@ import {
   detectNodeStack,
   detectRails,
   mountHelper,
+  sqlDriver,
 } from '../../../src/services/onboarding/detect';
 
 // Run `fn` inside a throwaway temp dir (cwd), restoring + cleaning up afterwards.
@@ -123,6 +124,40 @@ describe('onboarding detect', () => {
       withTempDir(() => {
         fs.writeFileSync('package.json', '{ not json');
         expect(detectNodeStack()).toMatchObject({ framework: 'express', detected: false });
+      });
+    });
+  });
+
+  describe('sqlDriver', () => {
+    it('leaves a driver the app already declares alone', () => {
+      expect.assertions(1);
+      withTempDir(() => {
+        writePkg({ express: '^4', mysql2: '^3' });
+        fs.writeFileSync('.env', 'DATABASE_URL=postgres://u:p@h/db\n');
+        expect(sqlDriver()).toStrictEqual({ status: 'declared', name: 'mysql2' });
+      });
+    });
+
+    it("reads the driver from the app's DATABASE_URL, Prisma's quoted form included", () => {
+      expect.assertions(2);
+      withTempDir(() => {
+        writePkg({ express: '^4', '@prisma/client': '^5' });
+        fs.writeFileSync(
+          '.env',
+          'DATABASE_URL="postgresql://u:p@localhost:5432/db?schema=public"\n',
+        );
+        expect(sqlDriver()).toStrictEqual({ status: 'from-url', name: 'pg', package: 'pg@^8.8.0' });
+
+        fs.writeFileSync('.env', 'DATABASE_URL=mysql://u:p@localhost:3306/db\n');
+        expect(sqlDriver()).toMatchObject({ status: 'from-url', package: 'mysql2@^3.0.1' });
+      });
+    });
+
+    it('says when there is nothing to go on, so the user is told to install one', () => {
+      expect.assertions(1);
+      withTempDir(() => {
+        writePkg({ express: '^4' });
+        expect(sqlDriver()).toStrictEqual({ status: 'unknown' });
       });
     });
   });

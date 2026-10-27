@@ -600,6 +600,63 @@ describe('start', () => {
       });
     });
 
+    it("installs the database driver the SQL datasource needs, read from the app's DATABASE_URL", async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: [
+          '--dry-run',
+          '--flow',
+          'inapp',
+          '--stack',
+          'node',
+          '--name',
+          'app',
+          '--mount',
+          'manual',
+        ],
+        files: [
+          {
+            name: 'package.json',
+            content: JSON.stringify({ name: 'app', dependencies: { '@prisma/client': '^5' } }),
+          },
+          { name: '.env', content: 'DATABASE_URL="postgresql://u:p@localhost:5432/db"\n' },
+        ],
+        // Without `pg` the agent crashes at boot: "Please install pg package manually".
+        std: [{ out: '$ npm install @forestadmin/agent @forestadmin/datasource-sql pg@^8.8.0' }],
+      });
+    });
+
+    it('says which driver to add when there is no DATABASE_URL to read it from', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: [
+          '--dry-run',
+          '--flow',
+          'inapp',
+          '--stack',
+          'node',
+          '--name',
+          'app',
+          '--mount',
+          'manual',
+        ],
+        files: [
+          {
+            name: 'package.json',
+            content: JSON.stringify({ name: 'app', dependencies: { express: '^4' } }),
+          },
+        ],
+        std: [
+          { out: '$ npm install @forestadmin/agent @forestadmin/datasource-sql\n' },
+          { out: 'No DATABASE_URL found, so no database driver was installed' },
+        ],
+      });
+    });
+
     it('prints `import` only for an app that can parse it: ES modules or TypeScript', async () => {
       expect.hasAssertions();
 
