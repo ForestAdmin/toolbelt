@@ -1,3 +1,10 @@
+## [5.24.3](https://github.com/ForestAdmin/toolbelt/compare/v5.24.2...v5.24.3) (2026-10-27)
+
+
+### Bug Fixes
+
+* **deps:** stop pinning lodash to the release npm tells everyone not to use ([#823](https://github.com/ForestAdmin/toolbelt/issues/823)) ([d7367fe](https://github.com/ForestAdmin/toolbelt/commit/d7367fe1333bc65e7be3b34c1b38f31d4f2cd404))
+
 ## [5.24.2](https://github.com/ForestAdmin/toolbelt/compare/v5.24.1...v5.24.2) (2026-10-26)
 
 
