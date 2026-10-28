@@ -29,7 +29,7 @@ describe('utils > Mongo Primitive Type', () => {
 
     it('should return `Mongoose.Schema.Types.ObjectId`', () => {
       expect.assertions(1);
-      expect(getMongooseTypeFromValue(new ObjectId('objectIdFake'))).toBe(
+      expect(getMongooseTypeFromValue(new ObjectId('5f1d7f3b9c1e4a0012345678'))).toBe(
         'Mongoose.Schema.Types.ObjectId',
       );
     });
@@ -50,7 +50,7 @@ describe('utils > Mongo Primitive Type', () => {
       expect(isOfMongooseType(1)).toBe(true);
       expect(isOfMongooseType(true)).toBe(true);
       expect(isOfMongooseType(new Date())).toBe(true);
-      expect(isOfMongooseType(new ObjectId('objectIdFake'))).toBe(true);
+      expect(isOfMongooseType(new ObjectId('5f1d7f3b9c1e4a0012345678'))).toBe(true);
     });
 
     it('should return false', () => {
