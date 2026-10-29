@@ -430,6 +430,9 @@ export default class StartCommand extends AbstractCommand {
       '-t',
       'Operations',
       '-f',
+      // The demo layout is ours, not the user's: listing its 228 operations one by one buries the
+      // three lines that matter under a diff nobody asked for. Warnings still print in full.
+      '--summary',
     ];
 
     let child: ChildProcess | undefined;
