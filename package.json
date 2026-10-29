@@ -39,7 +39,7 @@
     "jwt-decode": "2.2.0",
     "lodash": "^4.17.21",
     "mkdirp": "1.0.4",
-    "mongodb": "4.17.2",
+    "mongodb": "6.21.0",
     "mysql2": "3.23.1",
     "open": "7.3.0",
     "openid-client": "^5.7.1",
@@ -140,7 +140,6 @@
   "resolutions": {
     "uuid": "^11.1.1",
     "inquirer/**/tmp": "^0.2.6",
-    "mongodb/mongodb-connection-string-url": "^3.0.2",
     "filelist": "^2.0.2",
     "fast-xml-parser": "^5.7.0",
     "semantic-release/**/handlebars": "^4.7.10"
