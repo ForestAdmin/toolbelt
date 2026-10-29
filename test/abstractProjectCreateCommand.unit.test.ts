@@ -45,7 +45,7 @@ describe('abstractProjectCreateCommand command', () => {
       },
       messages: {
         ERROR_UNEXPECTED:
-          'An unexpected error occurred. Please reach out for help in our Developers community (https://community.forestadmin.com/) or create a Github issue with following error:',
+          'An unexpected error occurred. Please contact our support (https://forest.app/forms/support) or create a Github issue with following error:',
       },
       databaseAnalyzer: {
         analyzeMongoDb: jest.fn(),
