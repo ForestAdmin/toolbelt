@@ -1,3 +1,10 @@
+## [5.24.4](https://github.com/ForestAdmin/toolbelt/compare/v5.24.3...v5.24.4) (2026-10-29)
+
+
+### Bug Fixes
+
+* point unexpected errors to the support form instead of the community forum ([#841](https://github.com/ForestAdmin/toolbelt/issues/841)) ([352f563](https://github.com/ForestAdmin/toolbelt/commit/352f563d1f34e0382ef9226ce58d23972a9558e6))
+
 ## [5.24.3](https://github.com/ForestAdmin/toolbelt/compare/v5.24.2...v5.24.3) (2026-10-27)
 
 
