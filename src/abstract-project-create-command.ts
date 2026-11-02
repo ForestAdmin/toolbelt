@@ -15,6 +15,7 @@ import { Args } from '@oclif/core';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
 import InvalidOptionError from './errors/options/invalid-option-error';
+import { isStartStep } from './services/onboarding/step';
 import { getDialect } from './services/projects/create/options';
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
@@ -297,9 +298,21 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   }
 
   private async notifySuccess(): Promise<void> {
-    this.logger.info(`Hooray, ${this.chalk.green('installation success')}!`);
+    const message = this.successMessage();
+    if (message) this.logger.info(message);
     this.logNextSteps();
     await this.eventSender.notifySuccess();
+  }
+
+  protected successMessage(): string | null {
+    return isStartStep()
+      ? this.projectCreatedMessage()
+      : `Hooray, ${this.chalk.green('installation success')}!`;
+  }
+
+  /** What actually happened when nothing was installed: the project exists on Forest, that's all. */
+  protected projectCreatedMessage(): string {
+    return `Project "${this.eventSender.applicationName}" created on Forest.`;
   }
 
   // Overridable no-op: subcommands print follow-up guidance here (the demo points to create:sql).

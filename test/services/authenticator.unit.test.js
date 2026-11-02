@@ -18,6 +18,7 @@ describe('services > authenticator', () => {
       unlinkSync: jest.fn(),
       readFileSync: jest.fn(),
       writeFileSync: jest.fn(),
+      chmodSync: jest.fn(),
     };
     const chalk = {
       red: jest.fn().mockImplementation(value => `[red]${value}[/red]`),
@@ -239,15 +240,18 @@ describe('services > authenticator', () => {
   });
 
   describe('saveToken', () => {
-    it('creates path and token file', async () => {
-      expect.assertions(2);
+    it('creates path and token file, readable by its owner only', async () => {
+      expect.assertions(3);
       const { authenticator, mkdirp, fs } = setup();
       const token = Symbol('token');
 
       await authenticator.saveToken(token);
 
       expect(mkdirp).toHaveBeenCalledWith('sweet-home/.forest.d');
-      expect(fs.writeFileSync).toHaveBeenCalledWith('sweet-home/.forest.d/.forestrc', token);
+      expect(fs.writeFileSync).toHaveBeenCalledWith('sweet-home/.forest.d/.forestrc', token, {
+        mode: 0o600,
+      });
+      expect(fs.chmodSync).toHaveBeenCalledWith('sweet-home/.forest.d/.forestrc', 0o600);
     });
   });
 
@@ -292,7 +296,9 @@ describe('services > authenticator', () => {
         expect(applicationTokenService.generateApplicationToken).toHaveBeenCalledWith(
           'SESSION-TOKEN',
         );
-        expect(fs.writeFileSync).toHaveBeenCalledWith(`${FOREST_D_PATH}`, 'APP-TOKEN');
+        expect(fs.writeFileSync).toHaveBeenCalledWith(`${FOREST_D_PATH}`, 'APP-TOKEN', {
+          mode: 0o600,
+        });
       });
     });
 
@@ -400,7 +406,9 @@ describe('services > authenticator', () => {
           await authenticator.tryLogin({ token: 'valid', email: 'bob@foo.com' });
 
           expect(logger.error).not.toHaveBeenCalled();
-          expect(fs.writeFileSync).toHaveBeenCalledWith('sweet-home/.forest.d/.forestrc', 'valid');
+          expect(fs.writeFileSync).toHaveBeenCalledWith('sweet-home/.forest.d/.forestrc', 'valid', {
+            mode: 0o600,
+          });
         });
       });
     });

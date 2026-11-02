@@ -16,7 +16,9 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
   const allPromptInputs = [
     {
       name: 'databaseConnectionURL',
-      message: 'Database connection URL (leave blank to enter the details manually):',
+      message:
+        'Database connection URL, e.g. postgres://user:password@host:5432/db\n' +
+        '  (postgres, mysql or mssql; leave blank to enter the details manually):',
       type: 'password',
       mask: '*',
       filter: expect.any(Function),
@@ -78,7 +80,7 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
     },
     {
       name: 'applicationHost',
-      message: "What's the IP/hostname on which your application will be running?",
+      message: 'URL your browser will use to reach the back-end:',
       type: 'input',
       default: 'http://localhost',
       validate: expect.any(Function),
@@ -95,10 +97,10 @@ const makePromptInputList = ({ except = null, only = null } = {}) => {
       message: 'In which language would you like to generate your sources?',
       type: 'list',
       choices: [
-        { name: languages.Javascript.name, value: languages.Javascript },
         { name: languages.Typescript.name, value: languages.Typescript },
+        { name: languages.Javascript.name, value: languages.Javascript },
       ],
-      default: languages.Javascript,
+      default: languages.Typescript,
     },
   ];
   let inputs = allPromptInputs;

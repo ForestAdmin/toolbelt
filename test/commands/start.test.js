@@ -30,7 +30,7 @@ describe('start', () => {
           { out: '$ npm install' },
           { out: '$ npm run build' },
           { out: '$ forest layout:apply forest-layout.json --with-workflows' },
-          { out: 'Demo back-office live.' },
+          { out: 'Demo back-office live →' },
           // Non-interactive: no menu, but never a dead end either.
           { out: 'Connect real data: forest projects:create:sql' },
         ],
@@ -57,7 +57,7 @@ describe('start', () => {
           commandClass: StartCommand,
           commandArgs: ['--flow', 'demo'],
           files: [{ name: '.env', content: 'FOREST_ENV_SECRET=secret_of_a_real_project\n' }],
-          std: [{ out: 'Demo back-office live.' }],
+          std: [{ out: 'Demo back-office live →' }],
         });
       } finally {
         delete process.env.FOREST_ENV_SECRET;
@@ -87,7 +87,7 @@ describe('start', () => {
           commandClass: StartCommand,
           commandArgs: ['--flow', 'demo'],
           files: [{ name: '.env', content: 'TOKEN_PATH=/custom/tokens\n' }],
-          std: [{ out: 'Demo back-office live.' }],
+          std: [{ out: 'Demo back-office live →' }],
         });
       } finally {
         delete process.env.TOKEN_PATH;
@@ -116,7 +116,7 @@ describe('start', () => {
           commandClass: StartCommand,
           commandArgs: ['--flow', 'demo'],
           files: [{ name: 'forest-demo-4fzy/package.json', content: '{}' }],
-          std: [{ out: 'Demo back-office live.' }],
+          std: [{ out: 'Demo back-office live →' }],
         });
       } finally {
         random.mockRestore();
@@ -135,7 +135,7 @@ describe('start', () => {
           '-P',
           '3310',
         ],
-        { cwd: undefined },
+        { cwd: undefined, env: { FOREST_START_STEP: '1' } },
       ]);
     });
   });
@@ -158,26 +158,26 @@ describe('start', () => {
         std: [
           // The URL carries credentials: echoed redacted, passed through intact.
           {
-            out: '$ forest projects:create:sql my-back-office --databaseConnectionURL <redacted>',
+            out: '$ forest projects:create:sql my-back-office -l typescript -H http://localhost --databaseConnectionURL <redacted>',
           },
           { out: 'Setup complete — booting your back-end on :3310' },
           { out: 'Your back-office is live!' },
           { out: 'Open it → https://app.forestadmin.com/my-back-office' },
-          { out: 'Served by → http://localhost:3310' },
+          { out: 'back-end in this terminal (localhost:3310): keep it open.' },
         ],
       });
     });
 
-    it('leaves every prompt to create:sql when no URL is given', async () => {
+    it('leaves the database and port prompts to create:sql when no URL is given', async () => {
       expect.hasAssertions();
 
       await testCli({
         commandClass: StartCommand,
         commandArgs: ['--dry-run', '--flow', 'standalone', '--name', 'x'],
-        // Bare on purpose: forcing -l/-H/-P here would silently remove the choice of JavaScript,
-        // of a hostname, or of a free port. Credentials never pass through this command either.
-        // The trailing newline is the assertion: nothing follows the project name on that line.
-        std: [{ out: '$ forest projects:create:sql x\n' }],
+        // No -P: forcing a port would remove the choice of a free one. Credentials never pass
+        // through this command either. The trailing newline is the assertion: nothing else follows.
+        // Language and hostname have one answer here; the database and port are still asked.
+        std: [{ out: '$ forest projects:create:sql x -l typescript -H http://localhost\n' }],
       });
     });
 
@@ -222,8 +222,24 @@ describe('start', () => {
       });
 
       expect(runStep.mock.calls).toStrictEqual([
-        [process.execPath, [process.argv[1], 'login'], { cwd: undefined }],
-        [process.execPath, [process.argv[1], 'projects:create:sql', 'x'], { cwd: undefined }],
+        [
+          process.execPath,
+          [process.argv[1], 'login'],
+          { cwd: undefined, env: { FOREST_START_STEP: '1' } },
+        ],
+        [
+          process.execPath,
+          [
+            process.argv[1],
+            'projects:create:sql',
+            'x',
+            '-l',
+            'typescript',
+            '-H',
+            'http://localhost',
+          ],
+          { cwd: undefined, env: { FOREST_START_STEP: '1' } },
+        ],
         ['npm', ['install'], { cwd: 'x' }],
       ]);
     });
@@ -300,7 +316,11 @@ describe('start', () => {
 
       // Only the login ran: `create:sql` would have registered a project for the old app.
       expect(runStep.mock.calls).toStrictEqual([
-        [process.execPath, [process.argv[1], 'login'], { cwd: undefined }],
+        [
+          process.execPath,
+          [process.argv[1], 'login'],
+          { cwd: undefined, env: { FOREST_START_STEP: '1' } },
+        ],
       ]);
     });
 
@@ -317,7 +337,7 @@ describe('start', () => {
         commandClass: StartCommand,
         commandArgs: ['--flow', 'standalone', '--name', 'x', '--db', db],
         exitMessage:
-          '`forest projects:create:sql x --databaseConnectionURL <redacted> -s public -l typescript -H http://localhost -P 3310` exited with code 1',
+          '`forest projects:create:sql x -l typescript -H http://localhost --databaseConnectionURL <redacted> -s public -P 3310` exited with code 1',
         std: [{ not: 'hunter2' }],
       });
     });
@@ -370,12 +390,16 @@ describe('start', () => {
           '--format',
           'json',
         ],
-        { onProgress: expect.any(Function) },
+        { onProgress: expect.any(Function), env: { FOREST_START_STEP: '1' } },
       );
       // Only the login ran: past `bundle add`, five gems and a lockfile change are in the user's
       // repo while the error claims nothing was installed.
       expect(runStep.mock.calls).toStrictEqual([
-        [process.execPath, [process.argv[1], 'login'], { cwd: undefined }],
+        [
+          process.execPath,
+          [process.argv[1], 'login'],
+          { cwd: undefined, env: { FOREST_START_STEP: '1' } },
+        ],
       ]);
     });
 
@@ -566,8 +590,47 @@ describe('start', () => {
           // Telling a mongoose app to call createSequelizeDataSource sends it into an import that
           // does not exist…
           { out: 'createMongooseDataSource(connection)' },
-          // …and calling a factory that is never imported does not compile either.
-          { out: "import { createMongooseDataSource } from '@forestadmin/datasource-mongoose';" },
+          // …and calling a factory that is never loaded does not run either. A CommonJS app gets
+          // `require`: `import` there is a SyntaxError.
+          {
+            out: "const { createMongooseDataSource } = require('@forestadmin/datasource-mongoose');",
+          },
+          { not: 'import {' },
+        ],
+      });
+    });
+
+    it('prints `import` only for an app that can parse it: ES modules or TypeScript', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: [
+          '--dry-run',
+          '--flow',
+          'inapp',
+          '--stack',
+          'node',
+          '--name',
+          'app',
+          '--mount',
+          'manual',
+        ],
+        files: [
+          {
+            name: 'package.json',
+            content: JSON.stringify({
+              name: 'app',
+              type: 'module',
+              dependencies: { express: '^4' },
+            }),
+          },
+        ],
+        std: [
+          { out: "import { createAgent } from '@forestadmin/agent';" },
+          { out: "import { createSqlDataSource } from '@forestadmin/datasource-sql';" },
+          // A page that exists, not a placeholder path.
+          { out: 'Mount options → https://docs.forest.app/reference/agent-api/nodejs' },
         ],
       });
     });

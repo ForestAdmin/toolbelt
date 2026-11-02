@@ -24,7 +24,9 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
       filter: projectCreateOptions.trimConnectionUrl,
       prompter: {
         validate: projectCreateOptions.validateMongoConnectionUrl,
-        question: 'MongoDB connection URL (leave blank to enter the details manually):',
+        question:
+          `MongoDB connection URL, e.g. ${projectCreateOptions.MONGO_URL_EXAMPLE}\n` +
+          '  (leave blank to enter the details manually):',
         secret: true,
       },
     },

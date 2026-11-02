@@ -44,6 +44,9 @@ const CAN_SIGNAL_GROUPS = process.platform !== 'win32';
 
 const EXIT_CODE_BY_SIGNAL = { SIGHUP: 129, SIGINT: 130, SIGTERM: 143 } as const;
 
+/** What a command exits with once the user pressed Ctrl-C in it. */
+export const INTERRUPTED_EXIT_CODE = EXIT_CODE_BY_SIGNAL.SIGINT;
+
 const runningGroups = new Set<ChildProcess>();
 
 const pendingKills = new WeakMap<ChildProcess, NodeJS.Timeout>();
@@ -268,7 +271,12 @@ export function runStep(command: string, args: string[], options: RunOptions = {
     child.on('close', code =>
       code === 0
         ? resolve()
-        : reject(new Error(`\`${formatCommand(command, args)}\` exited with code ${code}`)),
+        : reject(
+            Object.assign(
+              new Error(`\`${formatCommand(command, args)}\` exited with code ${code}`),
+              { exitCode: code },
+            ),
+          ),
     );
   });
 }
