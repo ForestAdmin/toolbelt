@@ -143,7 +143,7 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
           const emit = jest.fn();
           const store = Symbol('store');
-          const keys = { anObject: [ObjectId()] };
+          const keys = { anObject: [new ObjectId()] };
 
           mapCollection(keys, emit, store);
 
@@ -162,7 +162,7 @@ describe('services > mongoCollectionsAnalyzer', () => {
 
           const emit = jest.fn();
           const store = Symbol('store');
-          const keys = { anObject: [ObjectId(), 10] };
+          const keys = { anObject: [new ObjectId(), 10] };
 
           mapCollection(keys, emit, store);
 

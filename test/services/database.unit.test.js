@@ -162,10 +162,7 @@ describe('services > database', () => {
 
           expect(context.mongodb.MongoClient.connect).toHaveBeenCalledWith(
             'mongodb://forest:forest@mongodbhost:27017/mydatabase',
-            {
-              useNewUrlParser: true,
-              useUnifiedTopology: true,
-            },
+            {},
           );
         });
 
@@ -185,11 +182,7 @@ describe('services > database', () => {
 
           expect(context.mongodb.MongoClient.connect).toHaveBeenCalledWith(
             'mongodb+srv://forest:forest@mongodbhost/mydatabase',
-            {
-              ssl: true,
-              useNewUrlParser: true,
-              useUnifiedTopology: true,
-            },
+            { tls: true },
           );
         });
       });
@@ -207,10 +200,7 @@ describe('services > database', () => {
 
           expect(context.mongodb.MongoClient.connect).toHaveBeenCalledWith(
             'mongodb://forest:forest@mongodbhost:27018/anotherdatabase',
-            {
-              useNewUrlParser: true,
-              useUnifiedTopology: true,
-            },
+            {},
           );
         });
       });
