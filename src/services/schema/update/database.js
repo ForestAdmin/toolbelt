@@ -1,3 +1,5 @@
+const { explainDatabaseError, maskUrlCredentials } = require('../../../utils/database-errors');
+
 class Database {
   constructor({ assertPresent, mongodb, Sequelize, terminator }) {
     assertPresent({
@@ -10,19 +12,25 @@ class Database {
     this.terminator = terminator;
   }
 
-  async handleAuthenticationError(error) {
+  async handleAuthenticationError(error, url) {
+    // Masked everywhere it goes, the telemetry included: drivers quote the URL in their errors.
+    const message = maskUrlCredentials(error.message || String(error));
+    const explanation = explainDatabaseError(error, url);
+
     return this.terminator.terminate(1, {
-      logs: ['Cannot connect to the database due to the following error:', error],
+      logs: explanation
+        ? [explanation]
+        : ['Cannot connect to the database due to the following error:', message],
       errorCode: 'database_authentication_error',
-      errorMessage: error.message,
+      errorMessage: message,
     });
   }
 
-  sequelizeAuthenticate(connection) {
+  sequelizeAuthenticate(connection, url) {
     return connection
       .authenticate()
       .then(() => connection)
-      .catch(error => this.handleAuthenticationError(error));
+      .catch(error => this.handleAuthenticationError(error, url));
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -84,7 +92,7 @@ class Database {
     }
 
     return this.mongodb.MongoClient.connect(connectionUrl, connectionOptionsMongoClient).catch(
-      error => this.handleAuthenticationError(error),
+      error => this.handleAuthenticationError(error, connectionUrl),
     );
   }
 
@@ -121,7 +129,7 @@ class Database {
       );
     }
 
-    return this.sequelizeAuthenticate(connection);
+    return this.sequelizeAuthenticate(connection, options.dbConnectionUrl);
   }
 
   async connect(options) {
