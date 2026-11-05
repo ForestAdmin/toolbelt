@@ -2,7 +2,7 @@
 import type { Config } from '../../../../src/interfaces/project-create-interface';
 import type { Language } from '../../../../src/utils/languages';
 
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
 import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
@@ -112,7 +112,7 @@ describe('services > dumpers > AgentNodeJs', () => {
     language => {
       const demoConfig = (base: Config): Config => ({ ...base, isDemo: true });
 
-      it('uses the demo-fintech datasource dependency, not sql', async () => {
+      it('uses the demo-bank datasource dependency, not sql', async () => {
         expect.assertions(2);
         const { dumper, context, defaultConfig } = createDumper(language);
 
@@ -121,8 +121,20 @@ describe('services > dumpers > AgentNodeJs', () => {
         const pkgCall = context.fs.writeFileSync.mock.calls.find(([p]: [string]) =>
           p.endsWith('package.json'),
         );
-        expect(pkgCall[1]).toContain('@forestadmin/datasource-demo-fintech');
+        expect(pkgCall[1]).toContain('@forestadmin/datasource-demo-bank');
         expect(pkgCall[1]).not.toContain('@forestadmin/datasource-sql');
+      });
+
+      it('lets npm run the SQLite driver install script', async () => {
+        expect.assertions(1);
+        const { dumper, context, defaultConfig } = createDumper(language);
+
+        await dumper.dump(demoConfig(defaultConfig));
+
+        const pkgCall = context.fs.writeFileSync.mock.calls.find(([p]: [string]) =>
+          p.endsWith('package.json'),
+        );
+        expect(JSON.parse(pkgCall[1]).allowScripts).toStrictEqual({ sqlite3: true });
       });
 
       it('passes isDemo to the index and .env templates', async () => {
@@ -675,46 +687,22 @@ describe('services > dumpers > AgentNodeJs', () => {
 });
 
 describe('demo forest-layout.json asset', () => {
-  // Guards on the bundled (hand-trimmed) layout: it must stay valid JSON and
-  // consistent with the @forestadmin/datasource-demo-fintech schema (the version
-  // pinned in src/services/dumpers/agent-nodejs.ts). Full schema validation
-  // belongs to a real `forest layout pull` regeneration.
+  // Guards on the bundled demo bank layout: valid JSON, no project of its own, and consistent with the
+  // @forestadmin/datasource-demo-bank schema (the version pinned in
+  // src/services/dumpers/agent-nodejs.ts): datasource-demo-bank-schema.json lists its collections,
+  // relations and Smart Action endpoints, as its agent describes them.
   const file = path.join(
     __dirname,
     '../../../../src/services/dumpers/templates/agent-nodejs/common/forest-layout.json',
   );
-
-  const FINTECH_COLLECTIONS = [
-    'aml_alerts',
-    'cards',
-    'chargebacks',
-    'customers',
-    'kyc_cases',
-    'kyc_documents',
-    'refund_requests',
-    'sar_reports',
-  ];
-
-  // Relation names registered by @forestadmin/datasource-demo-fintech@1.0.1
-  // (dist/customizations/*.js — addManyToOneRelation / addOneToManyRelation calls).
-  const FINTECH_RELATIONS: Record<string, string[]> = {
-    aml_alerts: ['customer', 'sarReports'],
-    cards: ['customer', 'chargebacks'],
-    chargebacks: ['customer', 'card', 'refundRequest'],
-    customers: [
-      'cards',
-      'amlAlerts',
-      'kycCases',
-      'kycDocuments',
-      'chargebacks',
-      'refundRequests',
-      'sarReports',
-    ],
-    kyc_cases: ['customer', 'documents'],
-    kyc_documents: ['customer', 'kycCase'],
-    refund_requests: ['customer', 'chargebacks'],
-    sar_reports: ['customer', 'alert'],
+  const schema = JSON.parse(
+    readFileSync(path.join(__dirname, 'datasource-demo-bank-schema.json'), 'utf8'),
+  ) as {
+    collections: string[];
+    relations: Record<string, string[]>;
+    actions: Record<string, Record<string, string>>;
   };
+  const read = () => JSON.parse(readFileSync(file, 'utf8'));
 
   /** Depth-first walk yielding every object of the parsed JSON tree. */
   function* walkObjects(node: unknown): Generator<Record<string, unknown>> {
@@ -728,158 +716,108 @@ describe('demo forest-layout.json asset', () => {
     }
   }
 
-  it('is valid JSON declaring the 8 fintech collections', () => {
-    expect.assertions(9);
-    const layout = JSON.parse(readFileSync(file, 'utf8'));
-    const collectionIds = (layout.layout?.collections ?? []).map(
+  it('is valid JSON declaring only collections of the demo bank', () => {
+    expect.hasAssertions();
+    const collectionIds = (read().layout?.collections ?? []).map(
       (collection: { id: string }) => collection.id,
     );
 
     expect(collectionIds.length).toBeGreaterThan(0);
-    FINTECH_COLLECTIONS.forEach(id => expect(collectionIds).toContain(id));
+    collectionIds.forEach((id: string) => expect(schema.collections).toContain(id));
   });
 
-  it('contains no leftover of the removed BaaSDemo collections', () => {
-    expect.assertions(3);
-    const raw = readFileSync(file, 'utf8');
-
-    // Collections that existed in the original BaaSDemo export but are not part
-    // of the fintech datasource; none of their names may survive anywhere.
-    expect(raw).not.toContain('mambu_');
-    expect(raw).not.toContain('pg_stat_');
-    expect(raw).not.toContain('internal_notes');
-  });
-
-  it('contains no BaaSDemo provenance metadata', () => {
-    expect.assertions(5);
+  it('names no project, environment or machine of its own', () => {
+    expect.assertions(6);
     const raw = readFileSync(file, 'utf8');
     const layout = JSON.parse(raw);
 
-    // The `forest` header is required by `layout apply` but is provenance-only:
-    // it must carry neutral placeholders, not the internal project it was pulled from.
-    expect(raw).not.toContain('BaaSDemo');
-    expect(raw).not.toContain('Alasta');
+    // The `forest` header is required by `layout apply` but is provenance-only.
     expect(layout.forest.project.id).toBe(0);
     expect(layout.forest.environment.id).toBe(0);
     expect(layout.forest.team.id).toBe(0);
+    // Custom components load their files from the package (a CDN), never from an agent.
+    expect(raw).not.toMatch(/localhost:\d+\/forest\//);
+    // A link to one project's workspace, or an inbox automated as one project's service account.
+    expect(raw).not.toMatch(/app\.forestadmin\.com\/[^/"]+\/[^/"]+\/[^/"]+\/workspaces\//);
+    expect(raw).not.toMatch(/"serviceAccountUserId":\s*\d+/);
   });
 
-  it('only references the 8 fintech collections in folders', () => {
+  it('only references collections of the demo bank in folders', () => {
     expect.hasAssertions();
-    const layout = JSON.parse(readFileSync(file, 'utf8'));
-    const referenced = (layout.folders ?? []).flatMap(
-      (folder: { children: Array<{ id: string; type: string }> }) =>
-        folder.children.filter(child => child.type === 'collection').map(child => child.id),
-    );
+    const referenced = [...walkObjects(read().folders)]
+      .filter(node => node.type === 'collection')
+      .map(node => node.id as string);
 
     expect(referenced.length).toBeGreaterThan(0);
-    referenced.forEach((id: string) => expect(FINTECH_COLLECTIONS).toContain(id));
+    referenced.forEach(id => expect(schema.collections).toContain(id));
   });
 
-  it('only uses relation names that exist in the fintech datasource', () => {
+  it('only uses relation names that exist in the demo bank', () => {
     expect.hasAssertions();
-    const layout = JSON.parse(readFileSync(file, 'utf8'));
-
+    const layout = read();
     // Summary views: `has-many` blocks reference a relation of their collection.
-    const hasManyRefs = (layout.layout?.collections ?? []).flatMap(
+    const refs = (layout.layout?.collections ?? []).flatMap(
       (collection: { id: string; layout: { viewEdit?: { summaryView?: unknown } } }) =>
         [...walkObjects(collection.layout?.viewEdit?.summaryView)]
           .filter(node => String(node.type).endsWith('/has-many'))
-          .map(node => ({
-            collectionId: collection.id,
-            name: (node.data as { name: string }).name,
-          })),
+          .map(node => [collection.id, (node.data as { name: string }).name]),
     );
-
-    expect(hasManyRefs.length).toBeGreaterThan(0);
-    hasManyRefs.forEach(({ collectionId, name }: { collectionId: string; name: string }) =>
-      expect(FINTECH_RELATIONS[collectionId]).toContain(name),
-    );
-
-    // Workspace components: a filter condition with a subFieldName traverses a
-    // relation of the component's collection (drives master-detail bindings).
-    (layout.layout?.workspaces ?? []).forEach((workspace: { components?: unknown[] }) => {
-      (workspace.components ?? []).forEach((component: unknown) => {
-        const options = (component as { options?: Record<string, unknown> }).options ?? {};
-        const collectionId = options.collectionId as string | undefined;
-        const conditions =
-          ((options.filter as { conditions?: unknown[] })?.conditions as Array<{
-            fieldName: string;
-            subFieldName: string | null;
-          }>) ?? [];
-
-        conditions
-          .filter(condition => condition.subFieldName && collectionId)
+    // Workspace components: a filter condition with a subFieldName goes through a relation.
+    [...walkObjects(layout.layout?.workspaces)]
+      .filter(node => typeof (node.collectionId ?? node.sourceCollectionId) === 'string')
+      .filter(node => node.filter)
+      .forEach(node =>
+        [...walkObjects(node.filter)]
+          .filter(condition => condition.subFieldName && condition.fieldName)
           .forEach(condition =>
-            expect(FINTECH_RELATIONS[collectionId as string]).toContain(condition.fieldName),
-          );
-      });
-    });
+            refs.push([node.collectionId ?? node.sourceCollectionId, condition.fieldName]),
+          ),
+      );
+
+    expect(refs.length).toBeGreaterThan(0);
+    refs.forEach(([collectionId, name]) => expect(schema.relations[collectionId]).toContain(name));
   });
 
-  it('numbers smart action endpoints by the datasource addAction order', () => {
+  it('calls each Smart Action at the endpoint the demo bank serves it on', () => {
     expect.hasAssertions();
-    const layout = JSON.parse(readFileSync(file, 'utf8'));
-
-    // addAction calls in @forestadmin/datasource-demo-fintech@1.0.1
-    // (dist/customizations/*.js), in declaration order: the agent exposes each
-    // action under /forest/_actions/<collection>/<addAction index>/<slug>.
-    const expectedEndpointIndexes: Record<string, Record<string, number>> = {
-      aml_alerts: {
-        'Clear Alert (False Positive)': 0,
-        'Create SAR': 1,
-        'Escalate to Compliance': 2,
-        'File SAR': 3,
-        'Request Enhanced Due Diligence': 4,
-      },
-      cards: { 'Block Card': 0, 'Unblock Card': 1, 'Replace Card': 2 },
-      chargebacks: {
-        'File with Network': 0,
-        'Request Cardholder Info': 1,
-        'Block Linked Card': 2,
-        'Accept Liability & Refund Customer': 3,
-        'Mark Won': 4,
-        'Mark Lost': 5,
-        'Dismiss Dispute': 6,
-      },
-      kyc_cases: { 'Approve KYC': 0, 'Reject KYC': 1, 'Escalate KYC': 2 },
-      kyc_documents: { 'Verify Document': 0 },
-      refund_requests: { 'Decline Refund': 0, 'Open Chargeback': 1 },
-      sar_reports: { 'File SAR': 0 },
-    };
-
-    (layout.layout?.collections ?? []).forEach(
+    (read().layout?.collections ?? []).forEach(
       (collection: {
         id: string;
         layout: { actions?: Array<{ endpoint: string; name: string }> };
-      }) => {
-        const expected = expectedEndpointIndexes[collection.id] ?? {};
-        const actions = collection.layout.actions ?? [];
-
-        expect(actions.map(action => action.name).sort()).toStrictEqual(
-          Object.keys(expected).sort(),
-        );
-        actions.forEach(action =>
-          expect(action.endpoint).toMatch(
-            new RegExp(`^/forest/_actions/${collection.id}/${expected[action.name]}/`),
-          ),
-        );
-      },
+      }) =>
+        (collection.layout.actions ?? []).forEach(action =>
+          expect(action.endpoint).toBe(schema.actions[collection.id]?.[action.name]),
+        ),
     );
   });
 
-  it('keeps the non-executable workflows hidden', () => {
+  it('loads each Custom component file from the components it ships', () => {
     expect.hasAssertions();
-    const layout = JSON.parse(readFileSync(file, 'utf8'));
-    const workflows = (layout.workflows ?? []) as Array<{ isVisible: boolean; steps?: unknown }>;
+    const raw = readFileSync(file, 'utf8');
+    // Each component address: what follows /common/components/, up to its query or closing quote.
+    const loaded = raw
+      .split('/common/components/')
+      .slice(1)
+      .map(part => part.split(/[?"]/)[0]);
+
+    expect(loaded.length).toBeGreaterThan(0);
+    new Set(loaded).forEach(name =>
+      expect(existsSync(path.join(path.dirname(file), 'components', name))).toBe(true),
+    );
+  });
+
+  it('ships each workflow as a BPMN file, with no file id of its own', () => {
+    expect.hasAssertions();
+    const workflows = (read().workflows ?? []) as Array<{
+      id: string;
+      bpmnAwsS3Identifier?: string;
+    }>;
+    const folder = path.join(path.dirname(file), 'workflows');
 
     expect(workflows.length).toBeGreaterThan(0);
-    // The bundled workflows only carry a BaaSDemo S3 BPMN identifier (dead
-    // cross-project reference) and no `steps` graph: they must stay hidden
-    // until they are recompiled with executable steps.
     workflows.forEach(workflow => {
-      expect(workflow.isVisible).toBe(false);
-      expect(workflow.steps).toBeUndefined();
+      expect(workflow.bpmnAwsS3Identifier).toBeUndefined();
+      expect(existsSync(path.join(folder, `${workflow.id}.bpmn`))).toBe(true);
     });
   });
 });

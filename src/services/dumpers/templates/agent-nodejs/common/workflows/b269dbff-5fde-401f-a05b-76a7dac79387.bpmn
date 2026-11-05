@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:forest="https://app.forestadmin.com" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="Start_1"><bpmn:outgoing>flow_Start_1_take</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="take" name="Start the review" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="true" forest:description="Run &quot;Start review&quot;: the alert shows as in review, under your name."><bpmn:outgoing>flow_take_alert</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="alert" name="Read what triggered the alert" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;alert_rule&quot;,&quot;alert_score&quot;]}" forest:description="Read both of these fields of this alert (every one is needed): &quot;Alert · Rule&quot; and &quot;Alert · Score and time&quot;: the rule that fired and what it looks for, the score and when it fired."><bpmn:outgoing>flow_alert_customer</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="customer" name="Compare with the declared profile" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;customer_profile&quot;,&quot;customer_expected&quot;,&quot;customer_activity&quot;,&quot;customer_risk&quot;]}" forest:description="Read all 4 of these fields of this alert (every one is needed): &quot;Customer · Declared profile&quot;, &quot;Customer · Expected each month&quot;, &quot;Customer · Activity against declared&quot; and &quot;Customer · Risk and KYC&quot;: the job or business the customer declared, the money in and out they said to expect each month, the last 30 days against it, and their risk rating and KYC."><bpmn:outgoing>flow_customer_transactions</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="transactions" name="Read the alert's transactions" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;tx_summary&quot;,&quot;tx_counterparties&quot;,&quot;tx_countries&quot;,&quot;tx_flow&quot;]}" forest:description="Read all 4 of these fields of this alert (every one is needed): &quot;Transactions · Summary&quot;, &quot;Transactions · Counterparties&quot;, &quot;Transactions · Countries&quot; and &quot;Transactions · Money in, money out&quot;: how many and how much (and the largest), who paid or was paid, which countries, and how fast the money in left again."><bpmn:outgoing>flow_transactions_history</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="history" name="Check the customer's history" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;history_alerts&quot;,&quot;history_cases&quot;]}" forest:description="Read both of these fields of this alert (every one is needed): &quot;History · Earlier alerts&quot; and &quot;History · Investigations&quot;: earlier alerts on this customer and how they ended, and any investigation."><bpmn:outgoing>flow_history_explainable</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="explainable" name="Does the profile explain it?" forest:description="Explained when what the customer declared accounts for the money: a bonus from their own employer, a company's usual clients or suppliers. Not explained when money passes through to strangers or abroad, or lands just under a threshold. Not sure: ask a senior."><bpmn:outgoing>flow_explainable_clear</bpmn:outgoing><bpmn:outgoing>flow_explainable_second_look</bpmn:outgoing><bpmn:outgoing>flow_explainable_escalate</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="second_look" name="Send for a second look" forest:alternative="trigger-action" forest:automaticCompletion="true" forest:description="Run &quot;Send for a second look&quot; and say what you are unsure about: the alert leaves the AML queue and waits for a senior."><bpmn:outgoing>flow_second_look_to_senior</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:intermediateThrowEvent id="to_senior" name="Ask a senior analyst" forest:inboxId="0f6561e7-1145-5698-8d3a-261b98e5e7a1"><bpmn:outgoing>flow_to_senior_senior_read</bpmn:outgoing></bpmn:intermediateThrowEvent>
+    <bpmn:serviceTask id="senior_read" name="Read why the analyst asks" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;result_outcome&quot;]}" forest:description="Read the field &quot;Result · Outcome&quot; of this alert: who sent it for a second look, and why."><bpmn:outgoing>flow_senior_read_senior</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:userTask id="senior" name="Senior review" forest:alternative="guideline" forest:completionType="user-input" forest:inputType="free-text" forest:description="You take over from the analyst: read the &quot;Customer ·&quot;, &quot;Transactions ·&quot; and &quot;History ·&quot; lines above, then write in one or two sentences why you clear or escalate."><bpmn:outgoing>flow_senior_senior_decide</bpmn:outgoing></bpmn:userTask>
+    <bpmn:exclusiveGateway id="senior_decide" name="Clear or escalate?" forest:description="Your decision, as the senior analyst."><bpmn:outgoing>flow_senior_decide_clear</bpmn:outgoing><bpmn:outgoing>flow_senior_decide_escalate</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="clear" name="Clear the alert" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Clear alert&quot;: the reason and the note are pre-filled; say what explains the money. The result card sums up the decision."><bpmn:outgoing>flow_clear_end_cleared</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_cleared" name="Alert cleared"></bpmn:endEvent>
+    <bpmn:serviceTask id="escalate" name="Escalate to an investigation" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Escalate&quot;: it opens an investigation with the alert's transactions, or adds them to the customer's open one. The result card names the investigation, new or already open, and the transactions it holds."><bpmn:outgoing>flow_escalate_end_escalated</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_escalated" name="Sent to investigations"></bpmn:endEvent>
+    <bpmn:sequenceFlow id="flow_Start_1_take" sourceRef="Start_1" targetRef="take" />
+    <bpmn:sequenceFlow id="flow_take_alert" sourceRef="take" targetRef="alert" />
+    <bpmn:sequenceFlow id="flow_alert_customer" sourceRef="alert" targetRef="customer" />
+    <bpmn:sequenceFlow id="flow_customer_transactions" sourceRef="customer" targetRef="transactions" />
+    <bpmn:sequenceFlow id="flow_transactions_history" sourceRef="transactions" targetRef="history" />
+    <bpmn:sequenceFlow id="flow_history_explainable" sourceRef="history" targetRef="explainable" />
+    <bpmn:sequenceFlow id="flow_explainable_clear" sourceRef="explainable" targetRef="clear" name="Explained, clear" />
+    <bpmn:sequenceFlow id="flow_explainable_second_look" sourceRef="explainable" targetRef="second_look" name="Not sure" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_explainable_escalate" sourceRef="explainable" targetRef="escalate" name="Not explained, escalate" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_second_look_to_senior" sourceRef="second_look" targetRef="to_senior" />
+    <bpmn:sequenceFlow id="flow_to_senior_senior_read" sourceRef="to_senior" targetRef="senior_read" />
+    <bpmn:sequenceFlow id="flow_senior_read_senior" sourceRef="senior_read" targetRef="senior" />
+    <bpmn:sequenceFlow id="flow_senior_senior_decide" sourceRef="senior" targetRef="senior_decide" />
+    <bpmn:sequenceFlow id="flow_senior_decide_clear" sourceRef="senior_decide" targetRef="clear" name="Clear" />
+    <bpmn:sequenceFlow id="flow_senior_decide_escalate" sourceRef="senior_decide" targetRef="escalate" name="Escalate" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_clear_end_cleared" sourceRef="clear" targetRef="end_cleared" />
+    <bpmn:sequenceFlow id="flow_escalate_end_escalated" sourceRef="escalate" targetRef="end_escalated" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1"><dc:Bounds x="160" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="take_di" bpmnElement="take"><dc:Bounds x="256" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="alert_di" bpmnElement="alert"><dc:Bounds x="416" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="customer_di" bpmnElement="customer"><dc:Bounds x="576" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="transactions_di" bpmnElement="transactions"><dc:Bounds x="736" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="history_di" bpmnElement="history"><dc:Bounds x="896" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="explainable_di" bpmnElement="explainable"><dc:Bounds x="1056" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="second_look_di" bpmnElement="second_look"><dc:Bounds x="1166" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="to_senior_di" bpmnElement="to_senior"><dc:Bounds x="1326" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="senior_read_di" bpmnElement="senior_read"><dc:Bounds x="1422" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="senior_di" bpmnElement="senior"><dc:Bounds x="1582" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="senior_decide_di" bpmnElement="senior_decide"><dc:Bounds x="1742" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="clear_di" bpmnElement="clear"><dc:Bounds x="1852" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_cleared_di" bpmnElement="end_cleared"><dc:Bounds x="2012" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="escalate_di" bpmnElement="escalate"><dc:Bounds x="2108" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_escalated_di" bpmnElement="end_escalated"><dc:Bounds x="2268" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_Start_1_take_di" bpmnElement="flow_Start_1_take"><di:waypoint x="196" y="160" /><di:waypoint x="256" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_take_alert_di" bpmnElement="flow_take_alert"><di:waypoint x="356" y="160" /><di:waypoint x="416" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_alert_customer_di" bpmnElement="flow_alert_customer"><di:waypoint x="516" y="160" /><di:waypoint x="576" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_customer_transactions_di" bpmnElement="flow_customer_transactions"><di:waypoint x="676" y="160" /><di:waypoint x="736" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_transactions_history_di" bpmnElement="flow_transactions_history"><di:waypoint x="836" y="160" /><di:waypoint x="896" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_history_explainable_di" bpmnElement="flow_history_explainable"><di:waypoint x="996" y="160" /><di:waypoint x="1056" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_explainable_clear_di" bpmnElement="flow_explainable_clear"><di:waypoint x="1106" y="160" /><di:waypoint x="1852" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_explainable_second_look_di" bpmnElement="flow_explainable_second_look"><di:waypoint x="1106" y="160" /><di:waypoint x="1166" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_explainable_escalate_di" bpmnElement="flow_explainable_escalate"><di:waypoint x="1106" y="160" /><di:waypoint x="2108" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_second_look_to_senior_di" bpmnElement="flow_second_look_to_senior"><di:waypoint x="1266" y="160" /><di:waypoint x="1326" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_to_senior_senior_read_di" bpmnElement="flow_to_senior_senior_read"><di:waypoint x="1362" y="160" /><di:waypoint x="1422" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_senior_read_senior_di" bpmnElement="flow_senior_read_senior"><di:waypoint x="1522" y="160" /><di:waypoint x="1582" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_senior_senior_decide_di" bpmnElement="flow_senior_senior_decide"><di:waypoint x="1682" y="160" /><di:waypoint x="1742" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_senior_decide_clear_di" bpmnElement="flow_senior_decide_clear"><di:waypoint x="1792" y="160" /><di:waypoint x="1852" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_senior_decide_escalate_di" bpmnElement="flow_senior_decide_escalate"><di:waypoint x="1792" y="160" /><di:waypoint x="2108" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_clear_end_cleared_di" bpmnElement="flow_clear_end_cleared"><di:waypoint x="1952" y="160" /><di:waypoint x="2012" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_escalate_end_escalated_di" bpmnElement="flow_escalate_end_escalated"><di:waypoint x="2208" y="160" /><di:waypoint x="2268" y="160" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

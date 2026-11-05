@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:forest="https://app.forestadmin.com" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="Start_1"><bpmn:outgoing>flow_Start_1_risk</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="risk" name="Read the risk" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;risk_decided&quot;,&quot;risk_rating_suggested&quot;,&quot;risk_hits&quot;,&quot;risk_pep&quot;,&quot;risk_residence&quot;,&quot;risk_funds&quot;,&quot;risk_volumes&quot;]}" forest:description="Read all 7 of these fields of this KYC case (every one is needed): &quot;Risk rating · Decided&quot;, &quot;Risk · Suggested rating&quot;, &quot;Risk · Screening hits&quot;, &quot;Risk · PEP&quot;, &quot;Risk · Residence&quot;, &quot;Risk · Occupation and funds&quot; and &quot;Risk · Income vs volumes&quot;."><bpmn:outgoing>flow_risk_why</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:userTask id="why" name="Why the bank says yes, or not" forest:alternative="guideline" forest:completionType="user-input" forest:inputType="free-text" forest:description="You are the second pair of eyes: read the risk lines above, then write in one or two sentences why the bank accepts this risk, needs a proof of the source of funds first, or refuses."><bpmn:outgoing>flow_why_decide</bpmn:outgoing></bpmn:userTask>
+    <bpmn:exclusiveGateway id="decide" name="Onboard this customer?" forest:description="Your decision, as the senior officer."><bpmn:outgoing>flow_decide_approve</bpmn:outgoing><bpmn:outgoing>flow_decide_ask_funds</bpmn:outgoing><bpmn:outgoing>flow_decide_reject</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="approve" name="Approve KYC - Medium or High" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Approve KYC - Medium or High&quot;: the senior approves the risk the operator rated; your note says why the bank accepts it. It refuses when a document, an ID or a screening hit is still open."><bpmn:outgoing>flow_approve_end_ok</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_ok" name="Customer onboarded"></bpmn:endEvent>
+    <bpmn:serviceTask id="ask_funds" name="Ask for a proof of funds" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Request missing documents&quot;: with every paper on file, it asks where the money comes from (notary deed, sale contract, payslips). The case waits on the client; the result card shows the request."><bpmn:outgoing>flow_ask_funds_end_waiting</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_waiting" name="Waiting on the client"></bpmn:endEvent>
+    <bpmn:serviceTask id="reject" name="Reject KYC" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Reject KYC&quot;: the reason is pre-filled from the failed checks."><bpmn:outgoing>flow_reject_end_rejected</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_rejected" name="Onboarding refused"></bpmn:endEvent>
+    <bpmn:sequenceFlow id="flow_Start_1_risk" sourceRef="Start_1" targetRef="risk" />
+    <bpmn:sequenceFlow id="flow_risk_why" sourceRef="risk" targetRef="why" />
+    <bpmn:sequenceFlow id="flow_why_decide" sourceRef="why" targetRef="decide" />
+    <bpmn:sequenceFlow id="flow_decide_approve" sourceRef="decide" targetRef="approve" name="Approve" />
+    <bpmn:sequenceFlow id="flow_decide_ask_funds" sourceRef="decide" targetRef="ask_funds" name="Ask for proof of funds" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_decide_reject" sourceRef="decide" targetRef="reject" name="Reject" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_approve_end_ok" sourceRef="approve" targetRef="end_ok" />
+    <bpmn:sequenceFlow id="flow_ask_funds_end_waiting" sourceRef="ask_funds" targetRef="end_waiting" />
+    <bpmn:sequenceFlow id="flow_reject_end_rejected" sourceRef="reject" targetRef="end_rejected" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1"><dc:Bounds x="160" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="risk_di" bpmnElement="risk"><dc:Bounds x="256" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="why_di" bpmnElement="why"><dc:Bounds x="416" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="decide_di" bpmnElement="decide"><dc:Bounds x="576" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="approve_di" bpmnElement="approve"><dc:Bounds x="686" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_ok_di" bpmnElement="end_ok"><dc:Bounds x="846" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ask_funds_di" bpmnElement="ask_funds"><dc:Bounds x="942" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_waiting_di" bpmnElement="end_waiting"><dc:Bounds x="1102" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="reject_di" bpmnElement="reject"><dc:Bounds x="1198" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_rejected_di" bpmnElement="end_rejected"><dc:Bounds x="1358" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_Start_1_risk_di" bpmnElement="flow_Start_1_risk"><di:waypoint x="196" y="160" /><di:waypoint x="256" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_risk_why_di" bpmnElement="flow_risk_why"><di:waypoint x="356" y="160" /><di:waypoint x="416" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_why_decide_di" bpmnElement="flow_why_decide"><di:waypoint x="516" y="160" /><di:waypoint x="576" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_approve_di" bpmnElement="flow_decide_approve"><di:waypoint x="626" y="160" /><di:waypoint x="686" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_ask_funds_di" bpmnElement="flow_decide_ask_funds"><di:waypoint x="626" y="160" /><di:waypoint x="942" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_reject_di" bpmnElement="flow_decide_reject"><di:waypoint x="626" y="160" /><di:waypoint x="1198" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_approve_end_ok_di" bpmnElement="flow_approve_end_ok"><di:waypoint x="786" y="160" /><di:waypoint x="846" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_ask_funds_end_waiting_di" bpmnElement="flow_ask_funds_end_waiting"><di:waypoint x="1042" y="160" /><di:waypoint x="1102" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_reject_end_rejected_di" bpmnElement="flow_reject_end_rejected"><di:waypoint x="1298" y="160" /><di:waypoint x="1358" y="160" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

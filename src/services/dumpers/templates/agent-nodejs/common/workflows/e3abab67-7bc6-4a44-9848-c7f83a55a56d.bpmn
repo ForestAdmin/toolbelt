@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:forest="https://app.forestadmin.com" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="Start_1"><bpmn:outgoing>flow_Start_1_original</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="original" name="Read the original payment" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;og_received&quot;,&quot;og_payer&quot;]}" forest:description="Read both of these fields of this SEPA dispute (every one is needed): &quot;Original payment · Received&quot; and &quot;Original payment · Payer&quot;: when the money reached our customer, and who sent it."><bpmn:outgoing>flow_original_recall</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="recall" name="Read the recall" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;rc_reason&quot;,&quot;rc_bank&quot;,&quot;rc_amount&quot;,&quot;rc_deadline&quot;]}" forest:description="Read all 4 of these fields of this SEPA dispute (every one is needed): &quot;Recall · Reason&quot;, &quot;Recall · Asking bank&quot;, &quot;Recall · Amount&quot; and &quot;Recall · Deadline&quot;: the reason code, the bank asking, the amount and the deadline to answer."><bpmn:outgoing>flow_recall_reason</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="reason" name="Fraud or a mistake?" forest:aiDecision="true" forest:description="Fraud when &quot;Recall · Reason&quot; starts with &quot;FRAD&quot;. Customer must agree otherwise (DUPL, TECH, AC03, AM09): the money is our customer's until they say yes."><bpmn:outgoing>flow_reason_fraud</bpmn:outgoing><bpmn:outgoing>flow_reason_customer</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="fraud" name="Escalate to fraud" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Escalate to fraud&quot;: the money mule alert goes to the fraud team (monitoring may have raised it already) and what is left of the money is held until we answer."><bpmn:outgoing>flow_fraud_funds</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="customer" name="Read the customer's consent" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;cu_consent&quot;,&quot;cu_holder&quot;]}" forest:description="Read both of these fields of this SEPA dispute (every one is needed): &quot;Customer · Consent&quot; and &quot;Customer · Account holder&quot;: who holds the account, and whether they were asked, agreed or refused."><bpmn:outgoing>flow_customer_consent</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="consent" name="Customer's answer?" forest:aiDecision="true" forest:description="Not asked when &quot;Customer · Consent&quot; starts with &quot;⚠ Not asked yet&quot;. Agreed when it starts with &quot;✓ Agreed&quot;. Refused when it starts with &quot;✗&quot;."><bpmn:outgoing>flow_consent_ask</bpmn:outgoing><bpmn:outgoing>flow_consent_funds</bpmn:outgoing><bpmn:outgoing>flow_consent_refuse</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="ask" name="Ask the customer for consent" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Ask the customer for consent&quot;: a request goes to the customer in the app and the recall leaves &quot;Recalls we received&quot; until they answer. Nothing is held: the money is theirs until they agree. The result card shows the request, when it was sent and when the answer is due."><bpmn:outgoing>flow_ask_end_waiting</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_waiting" name="Waiting on the customer"></bpmn:endEvent>
+    <bpmn:serviceTask id="funds" name="Is the money still there?" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;fd_there&quot;,&quot;fd_holds&quot;]}" forest:description="Read both of these fields of this SEPA dispute (every one is needed): &quot;Funds · On the account&quot; and &quot;Funds · Holds&quot;: what can still go back (held for this recall, on a fraud or once the customer agreed, or free on the account), and the holds."><bpmn:outgoing>flow_funds_funds_ok</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="funds_ok" name="Money to send back?" forest:aiDecision="true" forest:description="Money to send back when &quot;Funds · On the account&quot; starts with &quot;✓ All there&quot; or &quot;⚠ Part left&quot;. Nothing left when it starts with &quot;✗ Spent&quot;."><bpmn:outgoing>flow_funds_ok_return</bpmn:outgoing><bpmn:outgoing>flow_funds_ok_refuse</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="return" name="Accept and return the funds" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Accept and return funds&quot;: the money goes back to the other bank through STET (a pacs.004 return) and the hold is released. The result card shows what went back, and the interbank message."><bpmn:outgoing>flow_return_end_returned</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_returned" name="Funds returned"></bpmn:endEvent>
+    <bpmn:serviceTask id="refuse" name="Refuse with a reason" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Refuse with a reason&quot;: the SEPA refusal code is pre-filled (AM04 when no money is left, CUST when the customer refuses); the other bank gets a negative answer through STET. The result card shows the refusal, and the interbank message."><bpmn:outgoing>flow_refuse_end_refused</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_refused" name="Recall refused"></bpmn:endEvent>
+    <bpmn:sequenceFlow id="flow_Start_1_original" sourceRef="Start_1" targetRef="original" />
+    <bpmn:sequenceFlow id="flow_original_recall" sourceRef="original" targetRef="recall" />
+    <bpmn:sequenceFlow id="flow_recall_reason" sourceRef="recall" targetRef="reason" />
+    <bpmn:sequenceFlow id="flow_reason_fraud" sourceRef="reason" targetRef="fraud" name="Fraud" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_reason_customer" sourceRef="reason" targetRef="customer" name="Customer must agree" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_fraud_funds" sourceRef="fraud" targetRef="funds" />
+    <bpmn:sequenceFlow id="flow_customer_consent" sourceRef="customer" targetRef="consent" />
+    <bpmn:sequenceFlow id="flow_consent_ask" sourceRef="consent" targetRef="ask" name="Not asked yet" />
+    <bpmn:sequenceFlow id="flow_consent_funds" sourceRef="consent" targetRef="funds" name="Agreed" />
+    <bpmn:sequenceFlow id="flow_consent_refuse" sourceRef="consent" targetRef="refuse" name="Refused" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_ask_end_waiting" sourceRef="ask" targetRef="end_waiting" />
+    <bpmn:sequenceFlow id="flow_funds_funds_ok" sourceRef="funds" targetRef="funds_ok" />
+    <bpmn:sequenceFlow id="flow_funds_ok_return" sourceRef="funds_ok" targetRef="return" name="Money to send back" />
+    <bpmn:sequenceFlow id="flow_funds_ok_refuse" sourceRef="funds_ok" targetRef="refuse" name="Nothing left" forest:buttonColor="orange" />
+    <bpmn:sequenceFlow id="flow_return_end_returned" sourceRef="return" targetRef="end_returned" />
+    <bpmn:sequenceFlow id="flow_refuse_end_refused" sourceRef="refuse" targetRef="end_refused" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1"><dc:Bounds x="160" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="original_di" bpmnElement="original"><dc:Bounds x="256" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="recall_di" bpmnElement="recall"><dc:Bounds x="416" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="reason_di" bpmnElement="reason"><dc:Bounds x="576" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="fraud_di" bpmnElement="fraud"><dc:Bounds x="686" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="customer_di" bpmnElement="customer"><dc:Bounds x="846" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="consent_di" bpmnElement="consent"><dc:Bounds x="1006" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ask_di" bpmnElement="ask"><dc:Bounds x="1116" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_waiting_di" bpmnElement="end_waiting"><dc:Bounds x="1276" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="funds_di" bpmnElement="funds"><dc:Bounds x="1372" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="funds_ok_di" bpmnElement="funds_ok"><dc:Bounds x="1532" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="return_di" bpmnElement="return"><dc:Bounds x="1642" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_returned_di" bpmnElement="end_returned"><dc:Bounds x="1802" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="refuse_di" bpmnElement="refuse"><dc:Bounds x="1898" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_refused_di" bpmnElement="end_refused"><dc:Bounds x="2058" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_Start_1_original_di" bpmnElement="flow_Start_1_original"><di:waypoint x="196" y="160" /><di:waypoint x="256" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_original_recall_di" bpmnElement="flow_original_recall"><di:waypoint x="356" y="160" /><di:waypoint x="416" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_recall_reason_di" bpmnElement="flow_recall_reason"><di:waypoint x="516" y="160" /><di:waypoint x="576" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_reason_fraud_di" bpmnElement="flow_reason_fraud"><di:waypoint x="626" y="160" /><di:waypoint x="686" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_reason_customer_di" bpmnElement="flow_reason_customer"><di:waypoint x="626" y="160" /><di:waypoint x="846" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_fraud_funds_di" bpmnElement="flow_fraud_funds"><di:waypoint x="786" y="160" /><di:waypoint x="1372" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_customer_consent_di" bpmnElement="flow_customer_consent"><di:waypoint x="946" y="160" /><di:waypoint x="1006" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_consent_ask_di" bpmnElement="flow_consent_ask"><di:waypoint x="1056" y="160" /><di:waypoint x="1116" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_consent_funds_di" bpmnElement="flow_consent_funds"><di:waypoint x="1056" y="160" /><di:waypoint x="1372" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_consent_refuse_di" bpmnElement="flow_consent_refuse"><di:waypoint x="1056" y="160" /><di:waypoint x="1898" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_ask_end_waiting_di" bpmnElement="flow_ask_end_waiting"><di:waypoint x="1216" y="160" /><di:waypoint x="1276" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_funds_funds_ok_di" bpmnElement="flow_funds_funds_ok"><di:waypoint x="1472" y="160" /><di:waypoint x="1532" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_funds_ok_return_di" bpmnElement="flow_funds_ok_return"><di:waypoint x="1582" y="160" /><di:waypoint x="1642" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_funds_ok_refuse_di" bpmnElement="flow_funds_ok_refuse"><di:waypoint x="1582" y="160" /><di:waypoint x="1898" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_return_end_returned_di" bpmnElement="flow_return_end_returned"><di:waypoint x="1742" y="160" /><di:waypoint x="1802" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_refuse_end_refused_di" bpmnElement="flow_refuse_end_refused"><di:waypoint x="1998" y="160" /><di:waypoint x="2058" y="160" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

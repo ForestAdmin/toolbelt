@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:forest="https://app.forestadmin.com" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="Start_1"><bpmn:outgoing>flow_Start_1_transfer</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="transfer" name="Read the transfer" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;tr_amount&quot;,&quot;tr_scheme&quot;,&quot;tr_requested&quot;,&quot;tr_via&quot;,&quot;tr_sca&quot;]}" forest:description="Read all 5 of these fields of this transfer (every one is needed): &quot;Transfer · Amount&quot;, &quot;Transfer · Scheme&quot;, &quot;Transfer · Requested&quot;, &quot;Transfer · Initiated via&quot; and &quot;Transfer · Customer authentication&quot;: the amount and the account, the scheme, when it was asked, how it was sent and how the customer confirmed it."><bpmn:outgoing>flow_transfer_payee</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="payee" name="Read the payee" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;py_beneficiary&quot;,&quot;py_saved&quot;,&quot;py_history&quot;]}" forest:description="Read all 3 of these fields of this transfer (every one is needed): &quot;Payee · Beneficiary&quot;, &quot;Payee · Saved or new&quot; and &quot;Payee · Earlier payments&quot;: who receives the money (name, IBAN, bank, country), whether the payee is saved or new, and the earlier payments to it."><bpmn:outgoing>flow_payee_check_payee</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="check_payee" name="Check the payee (Verification of Payee)" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Check the payee&quot;: through STET, the payee's bank says whether the name the customer typed is the name on the account, and the IBAN is checked. The answer is recorded on the transfer."><bpmn:outgoing>flow_check_payee_payee_check</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="payee_check" name="Read the payee check" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;pc_result&quot;,&quot;pc_iban&quot;]}" forest:description="Read both of these fields of this transfer (every one is needed): &quot;Payee check · Result&quot; and &quot;Payee check · IBAN&quot;: the name check and the IBAN check."><bpmn:outgoing>flow_payee_check_payee_ok</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="payee_ok" name="Name on the account?" forest:aiDecision="true" forest:description="Matches when &quot;Payee check · Result&quot; starts with &quot;✓ Match&quot;, &quot;⚠ Close match&quot; or &quot;⚠ Not possible&quot;. No match when it starts with &quot;✗ No match&quot;: the money would go to someone else, stop the transfer."><bpmn:outgoing>flow_payee_ok_account</bpmn:outgoing><bpmn:outgoing>flow_payee_ok_reject</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="account" name="Read the account" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;ac_after&quot;,&quot;ac_usual&quot;]}" forest:description="Read both of these fields of this transfer (every one is needed): &quot;Account · Balance after&quot; and &quot;Account · Usual largest payment&quot;: what is left once it is sent, and the largest payment of the last 6 months."><bpmn:outgoing>flow_account_signals</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="signals" name="Read the risk signals" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;sg_result&quot;,&quot;sg_device&quot;,&quot;sg_changes&quot;,&quot;sg_alerts&quot;]}" forest:description="Read all 4 of these fields of this transfer (every one is needed): &quot;Signals · Result&quot;, &quot;Signals · Device&quot;, &quot;Signals · Recent changes&quot; and &quot;Signals · Alerts&quot;: the device, recent changes of phone, email or address, open alerts, and the list of risk signals."><bpmn:outgoing>flow_signals_any_signal</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="any_signal" name="Any risk signal?" forest:aiDecision="true" forest:description="None when &quot;Signals · Result&quot; starts with &quot;✓ No risk signal&quot;. Signals found when it starts with &quot;⚠&quot;: call the customer back."><bpmn:outgoing>flow_any_signal_approve</bpmn:outgoing><bpmn:outgoing>flow_any_signal_call</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="call" name="Call the customer back" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Call customer back&quot;: Aircall dials the number on file, the one before any recent change. Ask whether they made this transfer, to whom and why, then pick what they said and note their words."><bpmn:outgoing>flow_call_call_read</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="call_read" name="Read the call" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;call_result&quot;,&quot;call_number&quot;]}" forest:description="Read both of these fields of this transfer (every one is needed): &quot;Call · Result&quot; and &quot;Call · Number called&quot;: what the customer said, and the number called."><bpmn:outgoing>flow_call_read_confirms</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="confirms" name="Customer confirms?" forest:aiDecision="true" forest:description="Confirms when &quot;Call · Result&quot; starts with &quot;✓ Confirmed&quot;. Denies when it starts with &quot;✗&quot;. Not reached when it starts with &quot;⚠ Not reached&quot;."><bpmn:outgoing>flow_confirms_approve</bpmn:outgoing><bpmn:outgoing>flow_confirms_reject</bpmn:outgoing><bpmn:outgoing>flow_confirms_reject_2</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="approve" name="Approve the transfer" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Approve transfer&quot;: the money leaves now. Above 50,000 EUR a second operator approves (role setting). The result card shows the transfer sent."><bpmn:outgoing>flow_approve_end_ok</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_ok" name="Transfer sent"></bpmn:endEvent>
+    <bpmn:serviceTask id="reject" name="Reject the transfer" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Reject transfer&quot;: the reason is pre-filled from the payee check or the call. When the customer denied it, an account takeover alert opens for the fraud team. The result card shows the transfer stopped."><bpmn:outgoing>flow_reject_end_rejected</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_rejected" name="Transfer stopped"></bpmn:endEvent>
+    <bpmn:sequenceFlow id="flow_Start_1_transfer" sourceRef="Start_1" targetRef="transfer" />
+    <bpmn:sequenceFlow id="flow_transfer_payee" sourceRef="transfer" targetRef="payee" />
+    <bpmn:sequenceFlow id="flow_payee_check_payee" sourceRef="payee" targetRef="check_payee" />
+    <bpmn:sequenceFlow id="flow_check_payee_payee_check" sourceRef="check_payee" targetRef="payee_check" />
+    <bpmn:sequenceFlow id="flow_payee_check_payee_ok" sourceRef="payee_check" targetRef="payee_ok" />
+    <bpmn:sequenceFlow id="flow_payee_ok_account" sourceRef="payee_ok" targetRef="account" name="Matches or close" />
+    <bpmn:sequenceFlow id="flow_payee_ok_reject" sourceRef="payee_ok" targetRef="reject" name="No match" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_account_signals" sourceRef="account" targetRef="signals" />
+    <bpmn:sequenceFlow id="flow_signals_any_signal" sourceRef="signals" targetRef="any_signal" />
+    <bpmn:sequenceFlow id="flow_any_signal_approve" sourceRef="any_signal" targetRef="approve" name="None" />
+    <bpmn:sequenceFlow id="flow_any_signal_call" sourceRef="any_signal" targetRef="call" name="Signals found" forest:buttonColor="orange" />
+    <bpmn:sequenceFlow id="flow_call_call_read" sourceRef="call" targetRef="call_read" />
+    <bpmn:sequenceFlow id="flow_call_read_confirms" sourceRef="call_read" targetRef="confirms" />
+    <bpmn:sequenceFlow id="flow_confirms_approve" sourceRef="confirms" targetRef="approve" name="Confirms" />
+    <bpmn:sequenceFlow id="flow_confirms_reject" sourceRef="confirms" targetRef="reject" name="Denies" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_confirms_reject_2" sourceRef="confirms" targetRef="reject" name="Not reached" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_approve_end_ok" sourceRef="approve" targetRef="end_ok" />
+    <bpmn:sequenceFlow id="flow_reject_end_rejected" sourceRef="reject" targetRef="end_rejected" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1"><dc:Bounds x="160" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="transfer_di" bpmnElement="transfer"><dc:Bounds x="256" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="payee_di" bpmnElement="payee"><dc:Bounds x="416" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="check_payee_di" bpmnElement="check_payee"><dc:Bounds x="576" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="payee_check_di" bpmnElement="payee_check"><dc:Bounds x="736" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="payee_ok_di" bpmnElement="payee_ok"><dc:Bounds x="896" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="account_di" bpmnElement="account"><dc:Bounds x="1006" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="signals_di" bpmnElement="signals"><dc:Bounds x="1166" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="any_signal_di" bpmnElement="any_signal"><dc:Bounds x="1326" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="call_di" bpmnElement="call"><dc:Bounds x="1436" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="call_read_di" bpmnElement="call_read"><dc:Bounds x="1596" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="confirms_di" bpmnElement="confirms"><dc:Bounds x="1756" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="approve_di" bpmnElement="approve"><dc:Bounds x="1866" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_ok_di" bpmnElement="end_ok"><dc:Bounds x="2026" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="reject_di" bpmnElement="reject"><dc:Bounds x="2122" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_rejected_di" bpmnElement="end_rejected"><dc:Bounds x="2282" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_Start_1_transfer_di" bpmnElement="flow_Start_1_transfer"><di:waypoint x="196" y="160" /><di:waypoint x="256" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_transfer_payee_di" bpmnElement="flow_transfer_payee"><di:waypoint x="356" y="160" /><di:waypoint x="416" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_payee_check_payee_di" bpmnElement="flow_payee_check_payee"><di:waypoint x="516" y="160" /><di:waypoint x="576" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_check_payee_payee_check_di" bpmnElement="flow_check_payee_payee_check"><di:waypoint x="676" y="160" /><di:waypoint x="736" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_payee_check_payee_ok_di" bpmnElement="flow_payee_check_payee_ok"><di:waypoint x="836" y="160" /><di:waypoint x="896" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_payee_ok_account_di" bpmnElement="flow_payee_ok_account"><di:waypoint x="946" y="160" /><di:waypoint x="1006" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_payee_ok_reject_di" bpmnElement="flow_payee_ok_reject"><di:waypoint x="946" y="160" /><di:waypoint x="2122" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_account_signals_di" bpmnElement="flow_account_signals"><di:waypoint x="1106" y="160" /><di:waypoint x="1166" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_signals_any_signal_di" bpmnElement="flow_signals_any_signal"><di:waypoint x="1266" y="160" /><di:waypoint x="1326" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_any_signal_approve_di" bpmnElement="flow_any_signal_approve"><di:waypoint x="1376" y="160" /><di:waypoint x="1866" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_any_signal_call_di" bpmnElement="flow_any_signal_call"><di:waypoint x="1376" y="160" /><di:waypoint x="1436" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_call_call_read_di" bpmnElement="flow_call_call_read"><di:waypoint x="1536" y="160" /><di:waypoint x="1596" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_call_read_confirms_di" bpmnElement="flow_call_read_confirms"><di:waypoint x="1696" y="160" /><di:waypoint x="1756" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_confirms_approve_di" bpmnElement="flow_confirms_approve"><di:waypoint x="1806" y="160" /><di:waypoint x="1866" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_confirms_reject_di" bpmnElement="flow_confirms_reject"><di:waypoint x="1806" y="160" /><di:waypoint x="2122" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_confirms_reject_2_di" bpmnElement="flow_confirms_reject_2"><di:waypoint x="1806" y="160" /><di:waypoint x="2122" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_approve_end_ok_di" bpmnElement="flow_approve_end_ok"><di:waypoint x="1966" y="160" /><di:waypoint x="2026" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_reject_end_rejected_di" bpmnElement="flow_reject_end_rejected"><di:waypoint x="2222" y="160" /><di:waypoint x="2282" y="160" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

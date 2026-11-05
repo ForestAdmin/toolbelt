@@ -25,7 +25,8 @@ module.exports = {
   env: {
     node: true,
   },
-  ignorePatterns: ['expected'],
+  // The demo's Custom components are browser files, loaded by the Forest app from a CDN.
+  ignorePatterns: ['expected', 'src/services/dumpers/templates/**/components/**'],
   rules: {
     'jest/valid-describe': 0, // This rule does not exist anymore. It has been replaced by jest/valid-describe-callback
     'jest/require-hook': 0, // This rule does not seem to be functional at this time (eslint-plugin-jest-25.2.2)
