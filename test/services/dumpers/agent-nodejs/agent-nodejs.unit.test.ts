@@ -806,7 +806,7 @@ describe('demo forest-layout.json asset', () => {
     );
   });
 
-  it('ships each workflow as a BPMN file, with no file id of its own', () => {
+  it('ships each workflow with its BPMN file, so layout:apply uploads it', () => {
     expect.hasAssertions();
     const workflows = (read().workflows ?? []) as Array<{
       id: string;
@@ -816,7 +816,7 @@ describe('demo forest-layout.json asset', () => {
 
     expect(workflows.length).toBeGreaterThan(0);
     workflows.forEach(workflow => {
-      expect(workflow.bpmnAwsS3Identifier).toBeUndefined();
+      expect(workflow.bpmnAwsS3Identifier).toStrictEqual(expect.any(String));
       expect(existsSync(path.join(folder, `${workflow.id}.bpmn`))).toBe(true);
     });
   });
