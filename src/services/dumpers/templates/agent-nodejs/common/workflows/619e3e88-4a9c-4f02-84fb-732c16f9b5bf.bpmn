@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:forest="https://app.forestadmin.com" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="Start_1"><bpmn:outgoing>flow_Start_1_chargeback</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="chargeback" name="Read the chargeback" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;cb_network&quot;,&quot;cb_reason&quot;,&quot;cb_amount&quot;,&quot;cb_deadline&quot;,&quot;cb_round&quot;]}" forest:description="Read all 5 of these fields of this chargeback (every one is needed): &quot;Chargeback · Network&quot;, &quot;Chargeback · Reason code&quot;, &quot;Chargeback · Amount&quot;, &quot;Chargeback · Deadline&quot; and &quot;Chargeback · Round&quot;: card network, reason code, amount, the deadline to push back, and where the case stands."><bpmn:outgoing>flow_chargeback_merchant</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="merchant" name="Read the merchant's answer" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;merchant_name&quot;,&quot;merchant_answer&quot;,&quot;merchant_suggested&quot;]}" forest:description="Read all 3 of these fields of this chargeback (every one is needed): &quot;Merchant · Name&quot;, &quot;Merchant · Answer&quot; and &quot;Merchant · Suggested decision&quot;: who the merchant is, what it answered, and what the rules suggest."><bpmn:outgoing>flow_merchant_evidence</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="evidence" name="Compare with the cardholder's evidence" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;ev_answers&quot;,&quot;ev_documents&quot;,&quot;ev_3ds&quot;,&quot;ev_complete&quot;]}" forest:description="Read all 4 of these fields of this chargeback (every one is needed): &quot;Evidence · Cardholder answers&quot;, &quot;Evidence · Documents&quot;, &quot;Evidence · 3-D Secure&quot; and &quot;Evidence · Complete&quot;: what the cardholder said and sent, and 3-D Secure on the payment."><bpmn:outgoing>flow_evidence_decide</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="decide" name="Push back or accept?" forest:description="Push back when the cardholder's evidence answers the merchant's point (&quot;Merchant · Suggested decision&quot; starts with ✓). Accept when the merchant proved its case, or under 50 EUR."><bpmn:outgoing>flow_decide_push</bpmn:outgoing><bpmn:outgoing>flow_decide_accept</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="push" name="File pre-arbitration" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;File pre-arbitration&quot; with our answer to the merchant: it goes to Visa Resolve Online or Mastercom. The case waits for the merchant's bank, out of &quot;Merchant answered&quot;. The result card shows the pre-arbitration filed and when the merchant's bank must answer."><bpmn:outgoing>flow_push_end_pushed</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_pushed" name="Pre-arbitration filed"></bpmn:endEvent>
+    <bpmn:serviceTask id="accept" name="Accept the merchant's answer" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Accept representment&quot;: the claim is lost. Only an unauthorised payment was credited before the decision, and it keeps the money (the bank bears the loss); the others got nothing, so nothing is taken back. The result card shows the claim lost and the money kept or never credited."><bpmn:outgoing>flow_accept_end_lost</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_lost" name="Claim lost"></bpmn:endEvent>
+    <bpmn:sequenceFlow id="flow_Start_1_chargeback" sourceRef="Start_1" targetRef="chargeback" />
+    <bpmn:sequenceFlow id="flow_chargeback_merchant" sourceRef="chargeback" targetRef="merchant" />
+    <bpmn:sequenceFlow id="flow_merchant_evidence" sourceRef="merchant" targetRef="evidence" />
+    <bpmn:sequenceFlow id="flow_evidence_decide" sourceRef="evidence" targetRef="decide" />
+    <bpmn:sequenceFlow id="flow_decide_push" sourceRef="decide" targetRef="push" name="Push back (pre-arbitration)" />
+    <bpmn:sequenceFlow id="flow_decide_accept" sourceRef="decide" targetRef="accept" name="Accept" forest:buttonColor="orange" />
+    <bpmn:sequenceFlow id="flow_push_end_pushed" sourceRef="push" targetRef="end_pushed" />
+    <bpmn:sequenceFlow id="flow_accept_end_lost" sourceRef="accept" targetRef="end_lost" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1"><dc:Bounds x="160" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="chargeback_di" bpmnElement="chargeback"><dc:Bounds x="256" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="merchant_di" bpmnElement="merchant"><dc:Bounds x="416" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="evidence_di" bpmnElement="evidence"><dc:Bounds x="576" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="decide_di" bpmnElement="decide"><dc:Bounds x="736" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="push_di" bpmnElement="push"><dc:Bounds x="846" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_pushed_di" bpmnElement="end_pushed"><dc:Bounds x="1006" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="accept_di" bpmnElement="accept"><dc:Bounds x="1102" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_lost_di" bpmnElement="end_lost"><dc:Bounds x="1262" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_Start_1_chargeback_di" bpmnElement="flow_Start_1_chargeback"><di:waypoint x="196" y="160" /><di:waypoint x="256" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_chargeback_merchant_di" bpmnElement="flow_chargeback_merchant"><di:waypoint x="356" y="160" /><di:waypoint x="416" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_merchant_evidence_di" bpmnElement="flow_merchant_evidence"><di:waypoint x="516" y="160" /><di:waypoint x="576" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_evidence_decide_di" bpmnElement="flow_evidence_decide"><di:waypoint x="676" y="160" /><di:waypoint x="736" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_push_di" bpmnElement="flow_decide_push"><di:waypoint x="786" y="160" /><di:waypoint x="846" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_accept_di" bpmnElement="flow_decide_accept"><di:waypoint x="786" y="160" /><di:waypoint x="1102" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_push_end_pushed_di" bpmnElement="flow_push_end_pushed"><di:waypoint x="946" y="160" /><di:waypoint x="1006" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_accept_end_lost_di" bpmnElement="flow_accept_end_lost"><di:waypoint x="1202" y="160" /><di:waypoint x="1262" y="160" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

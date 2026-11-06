@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:forest="https://app.forestadmin.com" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="Start_1"><bpmn:outgoing>flow_Start_1_assign</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="assign" name="Take the case" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="true" forest:description="Run &quot;Assign&quot; to yourself: the case moves to IN_PROGRESS."><bpmn:outgoing>flow_assign_case</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="case" name="Read the case" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;case_type&quot;,&quot;case_summary&quot;,&quot;case_due&quot;,&quot;case_status&quot;]}" forest:description="Read all 4 of these fields of this investigation (every one is needed): &quot;Case · Type and origin&quot;, &quot;Case · Summary&quot;, &quot;Case · Due date&quot; and &quot;Case · Status&quot;: type and origin, summary, due date and status."><bpmn:outgoing>flow_case_signals</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="signals" name="Read the alerts and hits" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;signals_alerts&quot;,&quot;signals_hits&quot;]}" forest:description="Read both of these fields of this investigation (every one is needed): &quot;Alerts and hits · Alerts&quot; and &quot;Alerts and hits · Screening hits&quot;: the alerts and screening hits behind the case, or how it was opened."><bpmn:outgoing>flow_signals_activity</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="activity" name="Read the money flows" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;tx_totals&quot;,&quot;tx_counterparties&quot;,&quot;tx_countries&quot;]}" forest:description="Read all 3 of these fields of this investigation (every one is needed): &quot;Transactions · Totals&quot;, &quot;Transactions · Counterparties&quot; and &quot;Transactions · Countries&quot;: totals in and out over the period, who paid and who was paid, and the countries."><bpmn:outgoing>flow_activity_profile</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="profile" name="Read the customer and their KYC" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;customer_profile&quot;,&quot;customer_activity&quot;,&quot;customer_accounts&quot;,&quot;kyc_status&quot;,&quot;kyc_review&quot;]}" forest:description="Read all 5 of these fields of this investigation (every one is needed): &quot;Customer · Profile&quot;, &quot;Customer · Activity vs profile&quot;, &quot;Customer · Accounts&quot;, &quot;KYC · Status&quot; and &quot;KYC · Next review&quot;: what they declared against what came in, their accounts, their KYC status and next review."><bpmn:outgoing>flow_profile_requests</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="requests" name="Read what was asked" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;req_open&quot;,&quot;req_answers&quot;]}" forest:description="Read both of these fields of this investigation (every one is needed): &quot;Requests · Open&quot; and &quot;Requests · Answers&quot;: questions still open, and the answers the customer gave."><bpmn:outgoing>flow_requests_need_info</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="need_info" name="Need information from the customer?" forest:description="Ask when money came in that nothing on file explains and nobody asked yet. A full KYC review when the activity no longer fits the business itself. Never mention the investigation to the customer: tipping off is an offence."><bpmn:outgoing>flow_need_info_outcome</bpmn:outgoing><bpmn:outgoing>flow_need_info_ask</bpmn:outgoing><bpmn:outgoing>flow_need_info_edd</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="ask" name="Ask the customer" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Request information&quot;: the request is linked to the case, its wording reads like a routine check. The case waits for the answer, out of the analyst queue. The result card shows the request with its due date, and the case waiting for information."><bpmn:outgoing>flow_ask_end_ask</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_ask" name="Waiting for the customer"></bpmn:endEvent>
+    <bpmn:serviceTask id="edd" name="Request enhanced due diligence" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Request enhanced due diligence&quot;: it opens a KYC review for the onboarding desk, or uses the one this case opened already. The case waits for it, out of the analyst queue. The result card shows the KYC review, and the case waiting for it."><bpmn:outgoing>flow_edd_end_edd</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_edd" name="Waiting for the KYC review"></bpmn:endEvent>
+    <bpmn:exclusiveGateway id="outcome" name="Proposed outcome" forest:description="File a SAR when the money flows show a pattern nobody explained (mule, scam proceeds). No SAR when the answers and the profile explain the activity. Exit when the customer will not document it, or the risk is outside our appetite."><bpmn:outgoing>flow_outcome_draft</bpmn:outgoing><bpmn:outgoing>flow_outcome_no_sar</bpmn:outgoing><bpmn:outgoing>flow_outcome_exit</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="draft" name="Draft the SAR" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Draft SAR&quot;: it writes the report from the ticked transactions as a PDF and sends the case to the MLRO, out of the analyst queue."><bpmn:outgoing>flow_draft_mlro</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:intermediateThrowEvent id="mlro" name="Send to the MLRO" forest:inboxId="6da90fa0-4110-52c6-a85e-aca0f23fe1e0"><bpmn:outgoing>flow_mlro_mlro_read</bpmn:outgoing></bpmn:intermediateThrowEvent>
+    <bpmn:serviceTask id="mlro_read" name="Read the draft SAR" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;case_type&quot;,&quot;case_summary&quot;,&quot;case_due&quot;,&quot;case_status&quot;,&quot;sar_draft&quot;,&quot;sar_narrative&quot;,&quot;sar_filing&quot;]}" forest:description="You are the MLRO. Read all 7 of these fields of this investigation (every one is needed): &quot;Case · Type and origin&quot;, &quot;Case · Summary&quot;, &quot;Case · Due date&quot;, &quot;Case · Status&quot;, &quot;SAR · Draft&quot;, &quot;SAR · Narrative&quot; and &quot;SAR · Filing&quot;: the case, then the draft: period, transactions, total and narrative."><bpmn:outgoing>flow_mlro_read_mlro_decide</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="mlro_decide" name="MLRO decision" forest:description="File it when the narrative and the transactions support the suspicion. Send it back when something is missing: say what in the reason."><bpmn:outgoing>flow_mlro_decide_file</bpmn:outgoing><bpmn:outgoing>flow_mlro_decide_send_back</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="file" name="File the SAR with TRACFIN" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;File SAR&quot;: the report goes to TRACFIN through the ERMES portal and the case closes. Every account of the customer is frozen until TRACFIN answers (Ali's rule); the SAR waits in &quot;Waiting for TRACFIN&quot; for &quot;Record TRACFIN answer&quot;. The result card shows the ERMES declaration number, the case closed and the accounts frozen."><bpmn:outgoing>flow_file_end_filed</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_filed" name="SAR filed"></bpmn:endEvent>
+    <bpmn:serviceTask id="send_back" name="Send back to the analyst" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Send back to the analyst&quot; with what to add: the draft is discarded and the case goes back to the open investigations, where the analyst finds your reason in &quot;Case · Status&quot;. The result card sums it up."><bpmn:outgoing>flow_send_back_end_sent_back</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_sent_back" name="Back with the analyst"></bpmn:endEvent>
+    <bpmn:serviceTask id="no_sar" name="Close without SAR" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Close without SAR&quot; with the reason. Needs the MLRO's approval (role setting). Accounts frozen for the suspicion are unfrozen. The result card shows the case closed with no SAR, and the accounts as they stand."><bpmn:outgoing>flow_no_sar_end_closed</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_closed" name="Closed, no SAR"></bpmn:endEvent>
+    <bpmn:serviceTask id="exit" name="Exit the relationship" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Exit relationship&quot;: it opens a closure for the closure team (or refuses an onboarding not finished yet) and closes the case. The result card shows the case closed, and the closure opened or the onboarding refused."><bpmn:outgoing>flow_exit_end_exit</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_exit" name="Customer exited"></bpmn:endEvent>
+    <bpmn:sequenceFlow id="flow_Start_1_assign" sourceRef="Start_1" targetRef="assign" />
+    <bpmn:sequenceFlow id="flow_assign_case" sourceRef="assign" targetRef="case" />
+    <bpmn:sequenceFlow id="flow_case_signals" sourceRef="case" targetRef="signals" />
+    <bpmn:sequenceFlow id="flow_signals_activity" sourceRef="signals" targetRef="activity" />
+    <bpmn:sequenceFlow id="flow_activity_profile" sourceRef="activity" targetRef="profile" />
+    <bpmn:sequenceFlow id="flow_profile_requests" sourceRef="profile" targetRef="requests" />
+    <bpmn:sequenceFlow id="flow_requests_need_info" sourceRef="requests" targetRef="need_info" />
+    <bpmn:sequenceFlow id="flow_need_info_outcome" sourceRef="need_info" targetRef="outcome" name="No" />
+    <bpmn:sequenceFlow id="flow_need_info_ask" sourceRef="need_info" targetRef="ask" name="Yes, a question" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_need_info_edd" sourceRef="need_info" targetRef="edd" name="Yes, a full KYC review" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_ask_end_ask" sourceRef="ask" targetRef="end_ask" />
+    <bpmn:sequenceFlow id="flow_edd_end_edd" sourceRef="edd" targetRef="end_edd" />
+    <bpmn:sequenceFlow id="flow_outcome_draft" sourceRef="outcome" targetRef="draft" name="File a SAR" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_outcome_no_sar" sourceRef="outcome" targetRef="no_sar" name="No SAR" />
+    <bpmn:sequenceFlow id="flow_outcome_exit" sourceRef="outcome" targetRef="exit" name="Exit the relationship" forest:buttonColor="orange" />
+    <bpmn:sequenceFlow id="flow_draft_mlro" sourceRef="draft" targetRef="mlro" />
+    <bpmn:sequenceFlow id="flow_mlro_mlro_read" sourceRef="mlro" targetRef="mlro_read" />
+    <bpmn:sequenceFlow id="flow_mlro_read_mlro_decide" sourceRef="mlro_read" targetRef="mlro_decide" />
+    <bpmn:sequenceFlow id="flow_mlro_decide_file" sourceRef="mlro_decide" targetRef="file" name="File it" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_mlro_decide_send_back" sourceRef="mlro_decide" targetRef="send_back" name="Send back" forest:buttonColor="orange" />
+    <bpmn:sequenceFlow id="flow_file_end_filed" sourceRef="file" targetRef="end_filed" />
+    <bpmn:sequenceFlow id="flow_send_back_end_sent_back" sourceRef="send_back" targetRef="end_sent_back" />
+    <bpmn:sequenceFlow id="flow_no_sar_end_closed" sourceRef="no_sar" targetRef="end_closed" />
+    <bpmn:sequenceFlow id="flow_exit_end_exit" sourceRef="exit" targetRef="end_exit" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1"><dc:Bounds x="160" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="assign_di" bpmnElement="assign"><dc:Bounds x="256" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="case_di" bpmnElement="case"><dc:Bounds x="416" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="signals_di" bpmnElement="signals"><dc:Bounds x="576" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="activity_di" bpmnElement="activity"><dc:Bounds x="736" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="profile_di" bpmnElement="profile"><dc:Bounds x="896" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="requests_di" bpmnElement="requests"><dc:Bounds x="1056" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="need_info_di" bpmnElement="need_info"><dc:Bounds x="1216" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ask_di" bpmnElement="ask"><dc:Bounds x="1326" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_ask_di" bpmnElement="end_ask"><dc:Bounds x="1486" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="edd_di" bpmnElement="edd"><dc:Bounds x="1582" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_edd_di" bpmnElement="end_edd"><dc:Bounds x="1742" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="outcome_di" bpmnElement="outcome"><dc:Bounds x="1838" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="draft_di" bpmnElement="draft"><dc:Bounds x="1948" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="mlro_di" bpmnElement="mlro"><dc:Bounds x="2108" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="mlro_read_di" bpmnElement="mlro_read"><dc:Bounds x="2204" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="mlro_decide_di" bpmnElement="mlro_decide"><dc:Bounds x="2364" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="file_di" bpmnElement="file"><dc:Bounds x="2474" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_filed_di" bpmnElement="end_filed"><dc:Bounds x="2634" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="send_back_di" bpmnElement="send_back"><dc:Bounds x="2730" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_sent_back_di" bpmnElement="end_sent_back"><dc:Bounds x="2890" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="no_sar_di" bpmnElement="no_sar"><dc:Bounds x="2986" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_closed_di" bpmnElement="end_closed"><dc:Bounds x="3146" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="exit_di" bpmnElement="exit"><dc:Bounds x="3242" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_exit_di" bpmnElement="end_exit"><dc:Bounds x="3402" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_Start_1_assign_di" bpmnElement="flow_Start_1_assign"><di:waypoint x="196" y="160" /><di:waypoint x="256" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_assign_case_di" bpmnElement="flow_assign_case"><di:waypoint x="356" y="160" /><di:waypoint x="416" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_case_signals_di" bpmnElement="flow_case_signals"><di:waypoint x="516" y="160" /><di:waypoint x="576" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_signals_activity_di" bpmnElement="flow_signals_activity"><di:waypoint x="676" y="160" /><di:waypoint x="736" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_activity_profile_di" bpmnElement="flow_activity_profile"><di:waypoint x="836" y="160" /><di:waypoint x="896" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_profile_requests_di" bpmnElement="flow_profile_requests"><di:waypoint x="996" y="160" /><di:waypoint x="1056" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_requests_need_info_di" bpmnElement="flow_requests_need_info"><di:waypoint x="1156" y="160" /><di:waypoint x="1216" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_need_info_outcome_di" bpmnElement="flow_need_info_outcome"><di:waypoint x="1266" y="160" /><di:waypoint x="1838" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_need_info_ask_di" bpmnElement="flow_need_info_ask"><di:waypoint x="1266" y="160" /><di:waypoint x="1326" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_need_info_edd_di" bpmnElement="flow_need_info_edd"><di:waypoint x="1266" y="160" /><di:waypoint x="1582" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_ask_end_ask_di" bpmnElement="flow_ask_end_ask"><di:waypoint x="1426" y="160" /><di:waypoint x="1486" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_edd_end_edd_di" bpmnElement="flow_edd_end_edd"><di:waypoint x="1682" y="160" /><di:waypoint x="1742" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_outcome_draft_di" bpmnElement="flow_outcome_draft"><di:waypoint x="1888" y="160" /><di:waypoint x="1948" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_outcome_no_sar_di" bpmnElement="flow_outcome_no_sar"><di:waypoint x="1888" y="160" /><di:waypoint x="2986" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_outcome_exit_di" bpmnElement="flow_outcome_exit"><di:waypoint x="1888" y="160" /><di:waypoint x="3242" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_draft_mlro_di" bpmnElement="flow_draft_mlro"><di:waypoint x="2048" y="160" /><di:waypoint x="2108" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_mlro_mlro_read_di" bpmnElement="flow_mlro_mlro_read"><di:waypoint x="2144" y="160" /><di:waypoint x="2204" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_mlro_read_mlro_decide_di" bpmnElement="flow_mlro_read_mlro_decide"><di:waypoint x="2304" y="160" /><di:waypoint x="2364" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_mlro_decide_file_di" bpmnElement="flow_mlro_decide_file"><di:waypoint x="2414" y="160" /><di:waypoint x="2474" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_mlro_decide_send_back_di" bpmnElement="flow_mlro_decide_send_back"><di:waypoint x="2414" y="160" /><di:waypoint x="2730" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_file_end_filed_di" bpmnElement="flow_file_end_filed"><di:waypoint x="2574" y="160" /><di:waypoint x="2634" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_send_back_end_sent_back_di" bpmnElement="flow_send_back_end_sent_back"><di:waypoint x="2830" y="160" /><di:waypoint x="2890" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_no_sar_end_closed_di" bpmnElement="flow_no_sar_end_closed"><di:waypoint x="3086" y="160" /><di:waypoint x="3146" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_exit_end_exit_di" bpmnElement="flow_exit_end_exit"><di:waypoint x="3342" y="160" /><di:waypoint x="3402" y="160" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

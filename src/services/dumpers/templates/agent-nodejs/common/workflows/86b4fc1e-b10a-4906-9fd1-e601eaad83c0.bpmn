@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:forest="https://app.forestadmin.com" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="Start_1"><bpmn:outgoing>flow_Start_1_check_docs</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="check_docs" name="Check the documents" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="true" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;actionName&quot;:&quot;Check documents&quot;}" forest:description="Run &quot;Check documents&quot;: each paper on file is checked against the onboarding rules; the result card lists each one, valid or what is wrong."><bpmn:outgoing>flow_check_docs_verify</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="verify" name="Verify the ID document (Onfido)" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="true" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;actionName&quot;:&quot;Verify document&quot;}" forest:description="Run &quot;Verify document&quot;: Onfido checks the applicant's ID live and matches the selfie to it; the result card shows each check."><bpmn:outgoing>flow_verify_screen</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="screen" name="Screen the applicant (ComplyAdvantage)" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="true" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;actionName&quot;:&quot;Screen against sanctions lists&quot;}" forest:description="Run &quot;Screen against sanctions lists&quot;: the result card lists each name checked and any match."><bpmn:outgoing>flow_screen_evidence</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="evidence" name="Read the deciding evidence" forest:alternative="get-data" forest:automaticCompletion="true" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;auto_check&quot;,&quot;docs_complete&quot;,&quot;idcheck_result&quot;,&quot;screening_result&quot;,&quot;risk_rating_suggested&quot;]}" forest:description="Read all 5 of these fields of this KYC case (every one is needed): &quot;Automatic check · Result&quot;, &quot;Documents · Complete&quot;, &quot;ID checks · Result&quot;, &quot;Screening · Result&quot; and &quot;Risk · Suggested rating&quot;."><bpmn:outgoing>flow_evidence_clean</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="clean" name="Clean file?" forest:optionConditions="{&quot;version&quot;:1,&quot;options&quot;:[{&quot;flowId&quot;:&quot;flow_clean_approve&quot;,&quot;aggregator&quot;:&quot;and&quot;,&quot;conditions&quot;:[{&quot;sourceStepId&quot;:&quot;evidence&quot;,&quot;fieldName&quot;:&quot;auto_check&quot;,&quot;operator&quot;:&quot;equal&quot;,&quot;value&quot;:&quot;CLEAN&quot;}]}],&quot;fallbackFlowId&quot;:&quot;flow_clean_handover&quot;}" forest:description="Clean when &quot;Automatic check · Result&quot; is CLEAN: documents complete, every ID and selfie passed, nobody found by the screening, suggested rating LOW. Anything else goes to a person, with the first check that failed."><bpmn:outgoing>flow_clean_approve</bpmn:outgoing><bpmn:outgoing>flow_clean_handover</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="approve" name="Approve KYC" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="true" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;actionName&quot;:&quot;Approve KYC&quot;}" forest:description="Run &quot;Approve KYC&quot;: the risk rating is the pre-score (LOW); the case is decided by the service account and the customer becomes active."><bpmn:outgoing>flow_approve_end_ok</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_ok" name="Approved automatically"></bpmn:endEvent>
+    <bpmn:serviceTask id="handover" name="Hand the file to a person" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="true" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;actionName&quot;:&quot;Hand to a person&quot;}" forest:description="Run &quot;Hand to a person&quot;: the robot started the review, so the case leaves its service account; the result card says which check did not come back clean."><bpmn:outgoing>flow_handover_review</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:userTask id="review" name="Review the file" forest:alternative="guideline" forest:description="The robot paused here: a check did not come back clean (the step above says which). Read &quot;ID checks · Result&quot; and &quot;Documents · Complete&quot; in the Case tab and open the ID in the Documents tab, then click Done and decide."><bpmn:outgoing>flow_review_decide</bpmn:outgoing></bpmn:userTask>
+    <bpmn:exclusiveGateway id="decide" name="Onboard this customer?" forest:description="Your decision. An ID cut off or with another name: ask for a new ID, or reject. Approve only when every check shows ✓: Approve KYC refuses an ID that failed or needs a closer look."><bpmn:outgoing>flow_decide_request_id</bpmn:outgoing><bpmn:outgoing>flow_decide_reject</bpmn:outgoing><bpmn:outgoing>flow_decide_request_docs</bpmn:outgoing><bpmn:outgoing>flow_decide_approve_manual</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="approve_manual" name="Approve KYC" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;actionName&quot;:&quot;Approve KYC&quot;}" forest:description="Run &quot;Approve KYC&quot; with the risk rating decided: it refuses when a document, an ID or a screening hit is still open."><bpmn:outgoing>flow_approve_manual_end_ok_manual</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_ok_manual" name="Customer onboarded"></bpmn:endEvent>
+    <bpmn:serviceTask id="request_id" name="Request a new ID document" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;actionName&quot;:&quot;Request ID document&quot;}" forest:description="Run &quot;Request ID document&quot;: the applicant gets a request in the app to upload a valid ID, with the reason Onfido gave."><bpmn:outgoing>flow_request_id_end_waiting</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="request_docs" name="Request the missing documents" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;actionName&quot;:&quot;Request missing documents&quot;}" forest:description="Run &quot;Request missing documents&quot;: the request is pre-filled with what the file lacks."><bpmn:outgoing>flow_request_docs_end_waiting</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_waiting" name="Waiting on the client"></bpmn:endEvent>
+    <bpmn:serviceTask id="reject" name="Reject KYC" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;actionName&quot;:&quot;Reject KYC&quot;}" forest:description="Run &quot;Reject KYC&quot;: the reason is pre-filled from the failed checks."><bpmn:outgoing>flow_reject_end_rejected</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_rejected" name="Onboarding refused"></bpmn:endEvent>
+    <bpmn:sequenceFlow id="flow_Start_1_check_docs" sourceRef="Start_1" targetRef="check_docs" />
+    <bpmn:sequenceFlow id="flow_check_docs_verify" sourceRef="check_docs" targetRef="verify" />
+    <bpmn:sequenceFlow id="flow_verify_screen" sourceRef="verify" targetRef="screen" />
+    <bpmn:sequenceFlow id="flow_screen_evidence" sourceRef="screen" targetRef="evidence" />
+    <bpmn:sequenceFlow id="flow_evidence_clean" sourceRef="evidence" targetRef="clean" />
+    <bpmn:sequenceFlow id="flow_clean_approve" sourceRef="clean" targetRef="approve" name="Clean" />
+    <bpmn:sequenceFlow id="flow_clean_handover" sourceRef="clean" targetRef="handover" name="Fallback" />
+    <bpmn:sequenceFlow id="flow_approve_end_ok" sourceRef="approve" targetRef="end_ok" />
+    <bpmn:sequenceFlow id="flow_handover_review" sourceRef="handover" targetRef="review" />
+    <bpmn:sequenceFlow id="flow_review_decide" sourceRef="review" targetRef="decide" />
+    <bpmn:sequenceFlow id="flow_decide_request_id" sourceRef="decide" targetRef="request_id" name="Ask for a new ID" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_decide_reject" sourceRef="decide" targetRef="reject" name="Reject" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_decide_request_docs" sourceRef="decide" targetRef="request_docs" name="Ask for missing documents" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_decide_approve_manual" sourceRef="decide" targetRef="approve_manual" name="Approve" />
+    <bpmn:sequenceFlow id="flow_approve_manual_end_ok_manual" sourceRef="approve_manual" targetRef="end_ok_manual" />
+    <bpmn:sequenceFlow id="flow_request_id_end_waiting" sourceRef="request_id" targetRef="end_waiting" />
+    <bpmn:sequenceFlow id="flow_request_docs_end_waiting" sourceRef="request_docs" targetRef="end_waiting" />
+    <bpmn:sequenceFlow id="flow_reject_end_rejected" sourceRef="reject" targetRef="end_rejected" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1"><dc:Bounds x="160" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="check_docs_di" bpmnElement="check_docs"><dc:Bounds x="256" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="verify_di" bpmnElement="verify"><dc:Bounds x="416" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="screen_di" bpmnElement="screen"><dc:Bounds x="576" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="evidence_di" bpmnElement="evidence"><dc:Bounds x="736" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="clean_di" bpmnElement="clean"><dc:Bounds x="896" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="approve_di" bpmnElement="approve"><dc:Bounds x="1006" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_ok_di" bpmnElement="end_ok"><dc:Bounds x="1166" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="handover_di" bpmnElement="handover"><dc:Bounds x="1262" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="review_di" bpmnElement="review"><dc:Bounds x="1422" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="decide_di" bpmnElement="decide"><dc:Bounds x="1582" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="approve_manual_di" bpmnElement="approve_manual"><dc:Bounds x="1692" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_ok_manual_di" bpmnElement="end_ok_manual"><dc:Bounds x="1852" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="request_id_di" bpmnElement="request_id"><dc:Bounds x="1948" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="request_docs_di" bpmnElement="request_docs"><dc:Bounds x="2108" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_waiting_di" bpmnElement="end_waiting"><dc:Bounds x="2268" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="reject_di" bpmnElement="reject"><dc:Bounds x="2364" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_rejected_di" bpmnElement="end_rejected"><dc:Bounds x="2524" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_Start_1_check_docs_di" bpmnElement="flow_Start_1_check_docs"><di:waypoint x="196" y="160" /><di:waypoint x="256" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_check_docs_verify_di" bpmnElement="flow_check_docs_verify"><di:waypoint x="356" y="160" /><di:waypoint x="416" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_verify_screen_di" bpmnElement="flow_verify_screen"><di:waypoint x="516" y="160" /><di:waypoint x="576" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_screen_evidence_di" bpmnElement="flow_screen_evidence"><di:waypoint x="676" y="160" /><di:waypoint x="736" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_evidence_clean_di" bpmnElement="flow_evidence_clean"><di:waypoint x="836" y="160" /><di:waypoint x="896" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_clean_approve_di" bpmnElement="flow_clean_approve"><di:waypoint x="946" y="160" /><di:waypoint x="1006" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_clean_handover_di" bpmnElement="flow_clean_handover"><di:waypoint x="946" y="160" /><di:waypoint x="1262" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_approve_end_ok_di" bpmnElement="flow_approve_end_ok"><di:waypoint x="1106" y="160" /><di:waypoint x="1166" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_handover_review_di" bpmnElement="flow_handover_review"><di:waypoint x="1362" y="160" /><di:waypoint x="1422" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_review_decide_di" bpmnElement="flow_review_decide"><di:waypoint x="1522" y="160" /><di:waypoint x="1582" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_request_id_di" bpmnElement="flow_decide_request_id"><di:waypoint x="1632" y="160" /><di:waypoint x="1948" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_reject_di" bpmnElement="flow_decide_reject"><di:waypoint x="1632" y="160" /><di:waypoint x="2364" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_request_docs_di" bpmnElement="flow_decide_request_docs"><di:waypoint x="1632" y="160" /><di:waypoint x="2108" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_approve_manual_di" bpmnElement="flow_decide_approve_manual"><di:waypoint x="1632" y="160" /><di:waypoint x="1692" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_approve_manual_end_ok_manual_di" bpmnElement="flow_approve_manual_end_ok_manual"><di:waypoint x="1792" y="160" /><di:waypoint x="1852" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_request_id_end_waiting_di" bpmnElement="flow_request_id_end_waiting"><di:waypoint x="2048" y="160" /><di:waypoint x="2268" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_request_docs_end_waiting_di" bpmnElement="flow_request_docs_end_waiting"><di:waypoint x="2208" y="160" /><di:waypoint x="2268" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_reject_end_rejected_di" bpmnElement="flow_reject_end_rejected"><di:waypoint x="2464" y="160" /><di:waypoint x="2524" y="160" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

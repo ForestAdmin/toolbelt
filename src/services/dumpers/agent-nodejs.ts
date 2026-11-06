@@ -76,7 +76,7 @@ export default class AgentNodeJs extends AbstractDumper {
     };
 
     if (isDemo) {
-      dependencies['@forestadmin/datasource-demo-fintech'] = '^1.0.1';
+      dependencies['@forestadmin/datasource-demo-bank'] = '^1.0.0';
     } else if (dbDialect === 'mongodb') {
       dependencies['@forestadmin/datasource-mongo'] = '^1.0.0';
     } else {
@@ -129,6 +129,9 @@ export default class AgentNodeJs extends AbstractDumper {
       nodemonConfig,
       dependencies,
       devDependencies,
+      // npm 11 skips install scripts it was not told to run: the demo's SQLite driver needs its
+      // own to build its binary on a machine with no cached copy.
+      ...(isDemo ? { allowScripts: { sqlite3: true } } : {}),
     };
 
     this.writeFile('package.json', `${JSON.stringify(pkg, null, 2)}\n`);

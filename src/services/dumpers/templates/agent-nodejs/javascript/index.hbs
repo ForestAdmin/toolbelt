@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { createAgent } = require('@forestadmin/agent');
 {{#if isDemo}}
-const { createDemoFintechDataSource } = require('@forestadmin/datasource-demo-fintech');
+const { createDemoBankDataSource } = require('@forestadmin/datasource-demo-bank');
 {{else}}
 {{#if isMongo}}
 const { createMongoDataSource } = require('@forestadmin/datasource-mongo');
@@ -33,10 +33,10 @@ const agent = createAgent({
 // Connect your datasources
 // All options are documented at https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
 {{#if isDemo}}
-// Demo data source: realistic fintech sample data on a self-contained local SQLite
-// database — no external database to connect.
+// Demo data source: a bank's back office (onboarding, alerts, disputes…) with realistic sample
+// data on a self-contained local SQLite database — no external database to connect.
 // Replace it with your real database: https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
-agent.addDataSource(createDemoFintechDataSource());
+agent.addDataSource(createDemoBankDataSource());
 {{else}}
 {{#if isMongo}}
 agent.addDataSource(
