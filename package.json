@@ -142,6 +142,10 @@
     "inquirer/**/tmp": "^0.2.6",
     "mongodb/mongodb-connection-string-url": "^3.0.2",
     "filelist": "^2.0.2",
-    "fast-xml-parser": "^5.7.0"
+    "fast-xml-parser": "^5.7.0",
+    "undici": "^6.29.1",
+    "superagent/qs": "^6.16.1",
+    "fast-uri": "^3.1.9",
+    "ip-address": "^10.7.4"
   }
 }
