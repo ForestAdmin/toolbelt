@@ -134,7 +134,7 @@ app.use(
   express.static(path.resolve('public')),
 );
 agent.mountOnExpress(app);
-app.listen(Number(process.env.APPLICATION_PORT));
+const server = app.listen(Number(process.env.APPLICATION_PORT));
 {{else}}
 // Expose an HTTP endpoint.
 agent.mountOnStandaloneServer(Number(process.env.APPLICATION_PORT));
@@ -151,6 +151,12 @@ agent.start().catch(error => {
 // Stop the agent gracefully on shutdown, so in-flight work drains before the process exits.
 async function shutdown(): Promise<void> {
   try {
+{{#if isDemo}}
+    // Stop taking requests and let the ones in flight finish, then stop the agent.
+    await new Promise<void>((resolve, reject) => {
+      server.close((error?: Error) => (error ? reject(error) : resolve()));
+    });
+{{/if}}
     await agent.stop();
     process.exit(0);
   } catch (error) {

@@ -855,6 +855,19 @@ describe('demo forest-layout.json asset', () => {
     );
   });
 
+  it('closes the demo server on shutdown, as the standalone server does', () => {
+    expect.hasAssertions();
+    ['javascript', 'typescript'].forEach(language => {
+      const index = readFileSync(
+        path.join(path.dirname(file), '..', language, 'index.hbs'),
+        'utf8',
+      );
+
+      expect(index).toContain('const server = app.listen(');
+      expect(index.indexOf('server.close(')).toBeLessThan(index.indexOf('await agent.stop()'));
+    });
+  });
+
   it('ships each workflow with its BPMN file, so layout:apply uploads it', () => {
     expect.hasAssertions();
     const workflows = (read().workflows ?? []) as Array<{
