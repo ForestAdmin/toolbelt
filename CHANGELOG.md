@@ -1,3 +1,10 @@
+# [5.25.0](https://github.com/ForestAdmin/toolbelt/compare/v5.24.4...v5.25.0) (2026-11-10)
+
+
+### Features
+
+* **demo:** build the demo on the demo bank ([#844](https://github.com/ForestAdmin/toolbelt/issues/844)) ([095694c](https://github.com/ForestAdmin/toolbelt/commit/095694c4a19d7f809cc1b270e5c0403b382055fb))
+
 ## [5.24.4](https://github.com/ForestAdmin/toolbelt/compare/v5.24.3...v5.24.4) (2026-10-29)
 
 
