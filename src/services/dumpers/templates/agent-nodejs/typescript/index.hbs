@@ -8,7 +8,9 @@ import type { Schema } from './typings';
 import 'dotenv/config';
 import { createAgent } from '@forestadmin/agent';
 {{#if isDemo}}
-import { createDemoFintechDataSource } from '@forestadmin/datasource-demo-fintech';
+import { createDemoBankDataSource } from '@forestadmin/datasource-demo-bank';
+import express from 'express';
+import path from 'path';
 {{else}}
 {{#if isMongo}}
 import { createMongoDataSource } from '@forestadmin/datasource-mongo';
@@ -37,10 +39,10 @@ const agent = createAgent<Schema>({
 // Connect your datasources
 // All options are documented at https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
 {{#if isDemo}}
-// Demo data source: realistic fintech sample data on a self-contained local SQLite
-// database — no external database to connect.
+// Demo data source: a bank's back office (onboarding, alerts, disputes…) with realistic sample
+// data on a self-contained local SQLite database — no external database to connect.
 // Replace it with your real database: https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
-agent.addDataSource(createDemoFintechDataSource());
+agent.addDataSource(createDemoBankDataSource());
 {{else}}
 {{#if isMongo}}
 agent.addDataSource(
@@ -100,10 +102,43 @@ agent.addDataSource(
 
 // Run Forest Admin workflows in this process, using an in-memory run store.
 // Runs are lost on restart; switch to `{ database: { uri: process.env.DATABASE_URL } }` to persist them.
+{{#if isDemo}}
+// The demo's agent runs on express (below), so the executor is told where it answers.
+agent.addWorkflowExecutor({
+  inMemory: true,
+  agentUrl: `http://localhost:${process.env.APPLICATION_PORT}`,
+});
+{{else}}
 agent.addWorkflowExecutor({ inMemory: true });
+{{/if}}
 
+{{#if isDemo}}
+// Expose an HTTP endpoint. It also serves the demo's Custom components (the Hub, the desk guides…)
+// from public/: the layout loads them from this agent, at /public/smart-components/…. CORS as the
+// agent answers it: the caller's origin with credentials, and Chrome's check for a public page
+// calling localhost.
+const app = express();
+app.use(
+  '/public',
+  (req, res, next) => {
+    res.set({
+      'Access-Control-Allow-Origin': req.headers.origin || '*',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Headers': req.headers['access-control-request-headers'] || '*',
+      'Access-Control-Allow-Private-Network': 'true',
+      Vary: 'Origin',
+    });
+    if (req.method === 'OPTIONS') res.sendStatus(204);
+    else next();
+  },
+  express.static(path.resolve('public')),
+);
+agent.mountOnExpress(app);
+const server = app.listen(Number(process.env.APPLICATION_PORT));
+{{else}}
 // Expose an HTTP endpoint.
 agent.mountOnStandaloneServer(Number(process.env.APPLICATION_PORT));
+{{/if}}
 
 // Start the agent.
 agent.start().catch(error => {
@@ -116,6 +151,12 @@ agent.start().catch(error => {
 // Stop the agent gracefully on shutdown, so in-flight work drains before the process exits.
 async function shutdown(): Promise<void> {
   try {
+{{#if isDemo}}
+    // Stop taking requests and let the ones in flight finish, then stop the agent.
+    await new Promise<void>((resolve, reject) => {
+      server.close((error?: Error) => (error ? reject(error) : resolve()));
+    });
+{{/if}}
     await agent.stop();
     process.exit(0);
   } catch (error) {

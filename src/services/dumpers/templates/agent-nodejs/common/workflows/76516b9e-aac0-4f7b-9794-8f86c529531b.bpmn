@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:forest="https://app.forestadmin.com" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="Start_1"><bpmn:outgoing>flow_Start_1_chargeback</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="chargeback" name="Read the chargeback" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;cb_reason&quot;,&quot;cb_network&quot;,&quot;cb_amount&quot;,&quot;cb_deadline&quot;,&quot;cb_round&quot;]}" forest:description="Read all 5 of these fields of this chargeback (every one is needed): &quot;Chargeback · Reason code&quot;, &quot;Chargeback · Network&quot;, &quot;Chargeback · Amount&quot;, &quot;Chargeback · Deadline&quot; and &quot;Chargeback · Round&quot;: card network, reason code and what it means, amount, deadline to file, and where the case stands."><bpmn:outgoing>flow_chargeback_fraud</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="fraud" name="Fraud reason code?" forest:aiDecision="true" forest:description="Fraud when &quot;Chargeback · Reason code&quot; starts with &quot;⚠ Fraud code&quot; (Visa 10.x, Mastercard 4837 or 4863). Not fraud otherwise."><bpmn:outgoing>flow_fraud_card</bpmn:outgoing><bpmn:outgoing>flow_fraud_evidence</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="card" name="Check the card is blocked" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;card_status&quot;]}" forest:description="Read the field &quot;Card · Status&quot; of this chargeback: the intake desk blocks the card when it routes a fraud claim, so it should show blocked at intake, when, and by which processor."><bpmn:outgoing>flow_card_card_ok</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="card_ok" name="Card blocked?" forest:aiDecision="true" forest:description="Blocked when &quot;Card · Status&quot; starts with &quot;✓&quot; or &quot;○&quot; (blocked, expired or cancelled: nobody can use it). Still active when it starts with &quot;⚠&quot;."><bpmn:outgoing>flow_card_ok_evidence</bpmn:outgoing><bpmn:outgoing>flow_card_ok_block</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="block" name="Block the card" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Block linked card&quot;: Marqeta, our card processor, blocks the card at once so nobody can use it again."><bpmn:outgoing>flow_block_blocked</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="blocked" name="Check the block" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;card_status&quot;]}" forest:description="Read the field &quot;Card · Status&quot; of this chargeback: blocked now, by which processor."><bpmn:outgoing>flow_blocked_evidence</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="evidence" name="Check the evidence" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;ev_complete&quot;,&quot;ev_answers&quot;,&quot;ev_documents&quot;,&quot;ev_3ds&quot;]}" forest:description="Read all 4 of these fields of this chargeback (every one is needed): &quot;Evidence · Complete&quot;, &quot;Evidence · Cardholder answers&quot;, &quot;Evidence · Documents&quot; and &quot;Evidence · 3-D Secure&quot;: the cardholder's answers, their documents, 3-D Secure on the payment, and whether the file is complete."><bpmn:outgoing>flow_evidence_evidence_ok</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="evidence_ok" name="Evidence complete?" forest:aiDecision="true" forest:description="Complete when &quot;Evidence · Complete&quot; starts with &quot;✓&quot;. Missing when it shows ✗: ask the cardholder."><bpmn:outgoing>flow_evidence_ok_decide</bpmn:outgoing><bpmn:outgoing>flow_evidence_ok_ask</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="ask" name="Ask the cardholder" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Request cardholder info&quot;: the questions fit the reason code. The chargeback waits on the cardholder, out of &quot;Chargebacks to file&quot;. The result card shows the request and its due date."><bpmn:outgoing>flow_ask_end_waiting</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_waiting" name="Waiting on the cardholder"></bpmn:endEvent>
+    <bpmn:exclusiveGateway id="decide" name="File or accept?" forest:description="Look at &quot;Chargeback · Amount&quot; and &quot;Chargeback · Deadline&quot; read above: accepting is cheaper under 50 EUR (the amount shows ⚠) or with less than 3 days left. File otherwise."><bpmn:outgoing>flow_decide_file</bpmn:outgoing><bpmn:outgoing>flow_decide_accept</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="file" name="File with the network" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;File with network&quot;: the file goes to Visa Resolve Online or Mastercom. An unauthorised payment was credited to the customer when the claim opened (PSD2); the other chargebacks are credited only if won. The result card shows the network case, the merchant's deadline and the credit, or none until the chargeback is won."><bpmn:outgoing>flow_file_end_filed</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_filed" name="Filed, waiting for the network"></bpmn:endEvent>
+    <bpmn:serviceTask id="accept" name="Accept liability and refund" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Accept Liability &amp; Refund Customer&quot;: the bank drops the claim and refunds the customer now (an unauthorised payment keeps the credit it got when the claim opened). The result card shows the claim withdrawn and the money refunded or kept."><bpmn:outgoing>flow_accept_end_accepted</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_accepted" name="Customer refunded"></bpmn:endEvent>
+    <bpmn:sequenceFlow id="flow_Start_1_chargeback" sourceRef="Start_1" targetRef="chargeback" />
+    <bpmn:sequenceFlow id="flow_chargeback_fraud" sourceRef="chargeback" targetRef="fraud" />
+    <bpmn:sequenceFlow id="flow_fraud_card" sourceRef="fraud" targetRef="card" name="Fraud" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_fraud_evidence" sourceRef="fraud" targetRef="evidence" name="Not fraud" />
+    <bpmn:sequenceFlow id="flow_card_card_ok" sourceRef="card" targetRef="card_ok" />
+    <bpmn:sequenceFlow id="flow_card_ok_evidence" sourceRef="card_ok" targetRef="evidence" name="Blocked" />
+    <bpmn:sequenceFlow id="flow_card_ok_block" sourceRef="card_ok" targetRef="block" name="Still active" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_block_blocked" sourceRef="block" targetRef="blocked" />
+    <bpmn:sequenceFlow id="flow_blocked_evidence" sourceRef="blocked" targetRef="evidence" />
+    <bpmn:sequenceFlow id="flow_evidence_evidence_ok" sourceRef="evidence" targetRef="evidence_ok" />
+    <bpmn:sequenceFlow id="flow_evidence_ok_decide" sourceRef="evidence_ok" targetRef="decide" name="Complete" />
+    <bpmn:sequenceFlow id="flow_evidence_ok_ask" sourceRef="evidence_ok" targetRef="ask" name="Missing" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_ask_end_waiting" sourceRef="ask" targetRef="end_waiting" />
+    <bpmn:sequenceFlow id="flow_decide_file" sourceRef="decide" targetRef="file" name="File with the network" />
+    <bpmn:sequenceFlow id="flow_decide_accept" sourceRef="decide" targetRef="accept" name="Accept the loss" forest:buttonColor="orange" />
+    <bpmn:sequenceFlow id="flow_file_end_filed" sourceRef="file" targetRef="end_filed" />
+    <bpmn:sequenceFlow id="flow_accept_end_accepted" sourceRef="accept" targetRef="end_accepted" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1"><dc:Bounds x="160" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="chargeback_di" bpmnElement="chargeback"><dc:Bounds x="256" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="fraud_di" bpmnElement="fraud"><dc:Bounds x="416" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="card_di" bpmnElement="card"><dc:Bounds x="526" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="card_ok_di" bpmnElement="card_ok"><dc:Bounds x="686" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="block_di" bpmnElement="block"><dc:Bounds x="796" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="blocked_di" bpmnElement="blocked"><dc:Bounds x="956" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="evidence_di" bpmnElement="evidence"><dc:Bounds x="1116" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="evidence_ok_di" bpmnElement="evidence_ok"><dc:Bounds x="1276" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ask_di" bpmnElement="ask"><dc:Bounds x="1386" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_waiting_di" bpmnElement="end_waiting"><dc:Bounds x="1546" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="decide_di" bpmnElement="decide"><dc:Bounds x="1642" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="file_di" bpmnElement="file"><dc:Bounds x="1752" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_filed_di" bpmnElement="end_filed"><dc:Bounds x="1912" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="accept_di" bpmnElement="accept"><dc:Bounds x="2008" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_accepted_di" bpmnElement="end_accepted"><dc:Bounds x="2168" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_Start_1_chargeback_di" bpmnElement="flow_Start_1_chargeback"><di:waypoint x="196" y="160" /><di:waypoint x="256" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_chargeback_fraud_di" bpmnElement="flow_chargeback_fraud"><di:waypoint x="356" y="160" /><di:waypoint x="416" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_fraud_card_di" bpmnElement="flow_fraud_card"><di:waypoint x="466" y="160" /><di:waypoint x="526" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_fraud_evidence_di" bpmnElement="flow_fraud_evidence"><di:waypoint x="466" y="160" /><di:waypoint x="1116" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_card_card_ok_di" bpmnElement="flow_card_card_ok"><di:waypoint x="626" y="160" /><di:waypoint x="686" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_card_ok_evidence_di" bpmnElement="flow_card_ok_evidence"><di:waypoint x="736" y="160" /><di:waypoint x="1116" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_card_ok_block_di" bpmnElement="flow_card_ok_block"><di:waypoint x="736" y="160" /><di:waypoint x="796" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_block_blocked_di" bpmnElement="flow_block_blocked"><di:waypoint x="896" y="160" /><di:waypoint x="956" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_blocked_evidence_di" bpmnElement="flow_blocked_evidence"><di:waypoint x="1056" y="160" /><di:waypoint x="1116" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_evidence_evidence_ok_di" bpmnElement="flow_evidence_evidence_ok"><di:waypoint x="1216" y="160" /><di:waypoint x="1276" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_evidence_ok_decide_di" bpmnElement="flow_evidence_ok_decide"><di:waypoint x="1326" y="160" /><di:waypoint x="1642" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_evidence_ok_ask_di" bpmnElement="flow_evidence_ok_ask"><di:waypoint x="1326" y="160" /><di:waypoint x="1386" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_ask_end_waiting_di" bpmnElement="flow_ask_end_waiting"><di:waypoint x="1486" y="160" /><di:waypoint x="1546" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_file_di" bpmnElement="flow_decide_file"><di:waypoint x="1692" y="160" /><di:waypoint x="1752" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_accept_di" bpmnElement="flow_decide_accept"><di:waypoint x="1692" y="160" /><di:waypoint x="2008" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_file_end_filed_di" bpmnElement="flow_file_end_filed"><di:waypoint x="1852" y="160" /><di:waypoint x="1912" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_accept_end_accepted_di" bpmnElement="flow_accept_end_accepted"><di:waypoint x="2108" y="160" /><di:waypoint x="2168" y="160" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

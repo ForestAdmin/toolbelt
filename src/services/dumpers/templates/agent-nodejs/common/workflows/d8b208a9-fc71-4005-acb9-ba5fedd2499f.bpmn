@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:forest="https://app.forestadmin.com" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="Start_1"><bpmn:outgoing>flow_Start_1_hit</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="hit" name="Read the hit" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;hit_list&quot;,&quot;hit_entry&quot;,&quot;hit_entry_birth&quot;,&quot;hit_entry_country&quot;,&quot;hit_score&quot;,&quot;hit_found&quot;]}" forest:description="Read all 6 of these fields of this screening hit (every one is needed): &quot;Hit · List&quot;, &quot;Hit · List entry&quot;, &quot;Hit · Date of birth on the list&quot;, &quot;Hit · Country on the list&quot;, &quot;Hit · Match score&quot; and &quot;Hit · Found by&quot;: the list and its entry, the date of birth and country on the list, the match score, and how ComplyAdvantage found it."><bpmn:outgoing>flow_hit_customer</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="customer" name="Read who we screened" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;customer_name&quot;,&quot;customer_birth&quot;,&quot;customer_country&quot;,&quot;customer_relationship&quot;]}" forest:description="Read all 4 of these fields of this screening hit (every one is needed): &quot;Customer · Name&quot;, &quot;Customer · Date of birth&quot;, &quot;Customer · Country&quot; and &quot;Customer · Relationship&quot;: our customer, their payee or company, with the date of birth, country and relationship to compare."><bpmn:outgoing>flow_customer_compare</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="compare" name="Compare the two" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;compare_verdict&quot;,&quot;compare_name&quot;,&quot;compare_birth&quot;,&quot;compare_country&quot;]}" forest:description="Read all 4 of these fields of this screening hit (every one is needed): &quot;Comparison · Verdict&quot;, &quot;Comparison · Name&quot;, &quot;Comparison · Date of birth&quot; and &quot;Comparison · Country&quot;: name, date of birth and country side by side, and the verdict they add up to."><bpmn:outgoing>flow_compare_same_person</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="same_person" name="Same person?" forest:aiDecision="true" forest:description="Clearly different when &quot;Comparison · Verdict&quot; starts with &quot;✓ Different&quot;. Possible match when it starts with ⚠ or ✗: you decide in the next step."><bpmn:outgoing>flow_same_person_payment</bpmn:outgoing><bpmn:outgoing>flow_same_person_decide</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="decide" name="Your decision" forest:description="Compare the date of birth, the country and the list entry above. True match only when they point to the same person or company: it freezes their accounts and stops their payments."><bpmn:outgoing>flow_decide_payment</bpmn:outgoing><bpmn:outgoing>flow_decide_confirm</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="payment" name="Is a payment held?" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;payment_held&quot;]}" forest:description="Read the field &quot;Payment · Held payment&quot; of this screening hit: the payment screening stopped, or no payment."><bpmn:outgoing>flow_payment_held</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="held" name="Release a payment?" forest:aiDecision="true" forest:description="Yes when &quot;Payment · Held payment&quot; starts with &quot;⚠ Held&quot;. No otherwise."><bpmn:outgoing>flow_held_discard_release</bpmn:outgoing><bpmn:outgoing>flow_held_discard</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="discard" name="Discard as false positive" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Discard as false positive&quot; with the reason the comparison gives (another date of birth or another country). An onboarding parked for this hit goes back to its queue. The result card sums up the decision and says no payment is held."><bpmn:outgoing>flow_discard_end_discarded</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="discard_release" name="Discard as false positive" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Discard as false positive&quot; with the reason the comparison gives (another date of birth or another country). An onboarding parked for this hit goes back to its queue. The result card shows the payment still held: you release it next."><bpmn:outgoing>flow_discard_release_release</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="release" name="Release the held payment" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Release held payment&quot;: the payment leaves through the SEPA network and the money set aside is booked. The result card shows the payment sent, with the time. Every outcome is a human call: you trigger it."><bpmn:outgoing>flow_release_end_released</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_released" name="False positive, payment released"></bpmn:endEvent>
+    <bpmn:endEvent id="end_discarded" name="False positive closed"></bpmn:endEvent>
+    <bpmn:serviceTask id="confirm" name="Confirm true match" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Confirm true match&quot; with what matched. A second analyst approves it (role setting). It flags the person or company, freezes their accounts, blocks their cards, holds the money, stops a held payment and reports the freeze to the DG Trésor (simulated); the result card sums it up."><bpmn:outgoing>flow_confirm_to_mlro</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="to_mlro" name="Escalate to the MLRO" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Escalate to MLRO&quot;: it opens an urgent sanctions investigation due today, waiting for the MLRO, with the stopped payment attached. The result card shows what was done: the decision and the DG Trésor report, the accounts frozen and cards blocked, the money held, the payment stopped and the investigation number."><bpmn:outgoing>flow_to_mlro_end_mlro</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_mlro" name="With the MLRO"></bpmn:endEvent>
+    <bpmn:sequenceFlow id="flow_Start_1_hit" sourceRef="Start_1" targetRef="hit" />
+    <bpmn:sequenceFlow id="flow_hit_customer" sourceRef="hit" targetRef="customer" />
+    <bpmn:sequenceFlow id="flow_customer_compare" sourceRef="customer" targetRef="compare" />
+    <bpmn:sequenceFlow id="flow_compare_same_person" sourceRef="compare" targetRef="same_person" />
+    <bpmn:sequenceFlow id="flow_same_person_payment" sourceRef="same_person" targetRef="payment" name="Clearly different" />
+    <bpmn:sequenceFlow id="flow_same_person_decide" sourceRef="same_person" targetRef="decide" name="Possible match" forest:buttonColor="orange" />
+    <bpmn:sequenceFlow id="flow_decide_payment" sourceRef="decide" targetRef="payment" name="False positive" />
+    <bpmn:sequenceFlow id="flow_decide_confirm" sourceRef="decide" targetRef="confirm" name="True match" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_payment_held" sourceRef="payment" targetRef="held" />
+    <bpmn:sequenceFlow id="flow_held_discard_release" sourceRef="held" targetRef="discard_release" name="Yes" />
+    <bpmn:sequenceFlow id="flow_held_discard" sourceRef="held" targetRef="discard" name="No" />
+    <bpmn:sequenceFlow id="flow_discard_end_discarded" sourceRef="discard" targetRef="end_discarded" />
+    <bpmn:sequenceFlow id="flow_discard_release_release" sourceRef="discard_release" targetRef="release" />
+    <bpmn:sequenceFlow id="flow_release_end_released" sourceRef="release" targetRef="end_released" />
+    <bpmn:sequenceFlow id="flow_confirm_to_mlro" sourceRef="confirm" targetRef="to_mlro" />
+    <bpmn:sequenceFlow id="flow_to_mlro_end_mlro" sourceRef="to_mlro" targetRef="end_mlro" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1"><dc:Bounds x="160" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="hit_di" bpmnElement="hit"><dc:Bounds x="256" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="customer_di" bpmnElement="customer"><dc:Bounds x="416" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="compare_di" bpmnElement="compare"><dc:Bounds x="576" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="same_person_di" bpmnElement="same_person"><dc:Bounds x="736" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="decide_di" bpmnElement="decide"><dc:Bounds x="846" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="payment_di" bpmnElement="payment"><dc:Bounds x="956" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="held_di" bpmnElement="held"><dc:Bounds x="1116" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="discard_di" bpmnElement="discard"><dc:Bounds x="1226" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="discard_release_di" bpmnElement="discard_release"><dc:Bounds x="1386" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="release_di" bpmnElement="release"><dc:Bounds x="1546" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_released_di" bpmnElement="end_released"><dc:Bounds x="1706" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_discarded_di" bpmnElement="end_discarded"><dc:Bounds x="1802" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="confirm_di" bpmnElement="confirm"><dc:Bounds x="1898" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="to_mlro_di" bpmnElement="to_mlro"><dc:Bounds x="2058" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_mlro_di" bpmnElement="end_mlro"><dc:Bounds x="2218" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_Start_1_hit_di" bpmnElement="flow_Start_1_hit"><di:waypoint x="196" y="160" /><di:waypoint x="256" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_hit_customer_di" bpmnElement="flow_hit_customer"><di:waypoint x="356" y="160" /><di:waypoint x="416" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_customer_compare_di" bpmnElement="flow_customer_compare"><di:waypoint x="516" y="160" /><di:waypoint x="576" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_compare_same_person_di" bpmnElement="flow_compare_same_person"><di:waypoint x="676" y="160" /><di:waypoint x="736" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_same_person_payment_di" bpmnElement="flow_same_person_payment"><di:waypoint x="786" y="160" /><di:waypoint x="956" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_same_person_decide_di" bpmnElement="flow_same_person_decide"><di:waypoint x="786" y="160" /><di:waypoint x="846" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_payment_di" bpmnElement="flow_decide_payment"><di:waypoint x="896" y="160" /><di:waypoint x="956" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_confirm_di" bpmnElement="flow_decide_confirm"><di:waypoint x="896" y="160" /><di:waypoint x="1898" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_payment_held_di" bpmnElement="flow_payment_held"><di:waypoint x="1056" y="160" /><di:waypoint x="1116" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_held_discard_release_di" bpmnElement="flow_held_discard_release"><di:waypoint x="1166" y="160" /><di:waypoint x="1386" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_held_discard_di" bpmnElement="flow_held_discard"><di:waypoint x="1166" y="160" /><di:waypoint x="1226" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_discard_end_discarded_di" bpmnElement="flow_discard_end_discarded"><di:waypoint x="1326" y="160" /><di:waypoint x="1802" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_discard_release_release_di" bpmnElement="flow_discard_release_release"><di:waypoint x="1486" y="160" /><di:waypoint x="1546" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_release_end_released_di" bpmnElement="flow_release_end_released"><di:waypoint x="1646" y="160" /><di:waypoint x="1706" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_confirm_to_mlro_di" bpmnElement="flow_confirm_to_mlro"><di:waypoint x="1998" y="160" /><di:waypoint x="2058" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_to_mlro_end_mlro_di" bpmnElement="flow_to_mlro_end_mlro"><di:waypoint x="2158" y="160" /><di:waypoint x="2218" y="160" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

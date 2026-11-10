@@ -76,7 +76,9 @@ export default class AgentNodeJs extends AbstractDumper {
     };
 
     if (isDemo) {
-      dependencies['@forestadmin/datasource-demo-fintech'] = '^1.0.1';
+      dependencies['@forestadmin/datasource-demo-bank'] = '^1.0.0';
+      // Serves the Custom components of the demo's layout, next to the agent (index template).
+      dependencies.express = '^5.1.0';
     } else if (dbDialect === 'mongodb') {
       dependencies['@forestadmin/datasource-mongo'] = '^1.0.0';
     } else {
@@ -129,6 +131,9 @@ export default class AgentNodeJs extends AbstractDumper {
       nodemonConfig,
       dependencies,
       devDependencies,
+      // npm 11 skips install scripts it was not told to run: the demo's SQLite driver needs its
+      // own to build its binary on a machine with no cached copy.
+      ...(isDemo ? { allowScripts: { sqlite3: true } } : {}),
     };
 
     this.writeFile('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
@@ -270,12 +275,14 @@ export default class AgentNodeJs extends AbstractDumper {
   private writeLayoutFile() {
     this.copyHandleBarsTemplate('common/forest-layout.json', 'forest-layout.json');
     this.copyWorkflowBpmnSidecars();
+    // The layout's Custom components: the demo's agent serves this folder (index template).
+    this.copyTemplateDirectory('common/components/hub', 'public/smart-components/hub');
   }
 
   // The curated workflows ship their compiled BPMN as portable sidecar files
   // (workflows/<id>.bpmn). `forest layout apply --with-workflows` re-uploads each
-  // one to the target environment's own S3 bucket and links the fresh version, so
-  // the layout file carries no (non-portable) bpmnAwsS3Identifier of its own.
+  // one to the target environment's own S3 bucket and links the fresh version. A
+  // workflow's bpmnAwsS3Identifier only marks that it has a file: it is never sent.
   private copyWorkflowBpmnSidecars() {
     this.copyTemplateDirectory('common/workflows', 'workflows');
   }

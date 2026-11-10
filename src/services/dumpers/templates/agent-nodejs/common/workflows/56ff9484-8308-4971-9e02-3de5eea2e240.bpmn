@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:forest="https://app.forestadmin.com" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="Start_1"><bpmn:outgoing>flow_Start_1_dispute</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="dispute" name="Read the dispute" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;dispute_reason&quot;,&quot;dispute_amount&quot;,&quot;dispute_payment&quot;,&quot;dispute_date&quot;,&quot;dispute_channel&quot;]}" forest:description="Read all 5 of these fields of this dispute request (every one is needed): &quot;Dispute · Reason&quot;, &quot;Dispute · Amount&quot;, &quot;Dispute · Payment type&quot;, &quot;Dispute · Filed on&quot; and &quot;Dispute · Channel&quot;: what the customer says, the amount, the kind of payment, when and how they filed it."><bpmn:outgoing>flow_dispute_payment</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="payment" name="Read the disputed payment" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;payment_party&quot;,&quot;payment_date&quot;,&quot;payment_auth&quot;,&quot;payment_device&quot;]}" forest:description="Read all 4 of these fields of this dispute request (every one is needed): &quot;Payment · Paid to&quot;, &quot;Payment · Date&quot;, &quot;Payment · Authentication&quot; and &quot;Payment · Device&quot;: who was paid, when, how the payment was authenticated (3-D Secure, chip, PIN, app confirmation), and from which device or terminal."><bpmn:outgoing>flow_payment_eligibility</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="eligibility" name="Check the eligibility" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;route_suggested&quot;,&quot;elig_deadline&quot;,&quot;elig_merchant&quot;,&quot;elig_history&quot;,&quot;elig_refund&quot;]}" forest:description="Read all 5 of these fields of this dispute request (every one is needed): &quot;Eligibility · Suggested route&quot;, &quot;Eligibility · Time to claim&quot;, &quot;Eligibility · Merchant contacted&quot;, &quot;Eligibility · Earlier disputes&quot; and &quot;Eligibility · Refund by the next business day (PSD2)&quot;: the time left to claim (card 120 days, SEPA rules), whether the merchant was contacted, earlier disputes (3 in 6 months raises an alert), the refund owed by the next business day on an unauthorised payment (PSD2), and the route these rules suggest."><bpmn:outgoing>flow_eligibility_route</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="route" name="Where does it go?" forest:aiDecision="true" forest:description="Take the route &quot;Eligibility · Suggested route&quot; names after its symbol: Card chargeback, SEPA dispute, Bank refund, Merchant first or Not eligible."><bpmn:outgoing>flow_route_to_cb</bpmn:outgoing><bpmn:outgoing>flow_route_to_sepa</bpmn:outgoing><bpmn:outgoing>flow_route_refund</bpmn:outgoing><bpmn:outgoing>flow_route_merchant</bpmn:outgoing><bpmn:outgoing>flow_route_decline</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="to_cb" name="Open a chargeback" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Route dispute&quot; with route CHARGEBACK: it opens the chargeback for the &quot;Chargebacks to file&quot; queue. On an unauthorised payment it also blocks the card (Marqeta) and credits the customer at once. The result card shows the chargeback opened and its deadline to file, the card blocked on an unauthorised payment, and the money credited to the customer."><bpmn:outgoing>flow_to_cb_end_cb</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_cb" name="Chargeback opened"></bpmn:endEvent>
+    <bpmn:serviceTask id="to_sepa" name="Open a SEPA dispute" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Route dispute&quot; with route SEPA_DISPUTE: the recall or refund request goes to the other bank through the SEPA network (STET). On an unauthorised payment the customer is refunded at once (PSD2). The result card shows the SEPA dispute sent and when the other bank must answer, and the refund on an unauthorised payment."><bpmn:outgoing>flow_to_sepa_end_sepa</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_sepa" name="SEPA dispute sent"></bpmn:endEvent>
+    <bpmn:serviceTask id="refund" name="Refund the customer" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Route dispute&quot; with route BANK_REFUND: the bank refunds the payment now and bears the loss (no chargeback right, or past the network's 120 days). A card still active is blocked (Marqeta). The result card shows the request closed with the card's block, and the refund booked on the account."><bpmn:outgoing>flow_refund_end_refund</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_refund" name="Customer refunded"></bpmn:endEvent>
+    <bpmn:serviceTask id="merchant" name="Ask the customer to contact the merchant" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Ask to contact the merchant&quot;: a request in the app asks them to contact the merchant first and send us its answer. The dispute waits on the customer, out of &quot;New disputes&quot;. The result card shows the request sent and when they must answer."><bpmn:outgoing>flow_merchant_end_merchant</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_merchant" name="Waiting on the customer"></bpmn:endEvent>
+    <bpmn:serviceTask id="decline" name="Decline with the reason" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Route dispute&quot; with route DECLINED and, as the note, the reason &quot;Eligibility · Suggested route&quot; gives. Check it before you confirm: the customer receives it. The result card shows the request closed and the reason given."><bpmn:outgoing>flow_decline_end_declined</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_declined" name="Declined"></bpmn:endEvent>
+    <bpmn:sequenceFlow id="flow_Start_1_dispute" sourceRef="Start_1" targetRef="dispute" />
+    <bpmn:sequenceFlow id="flow_dispute_payment" sourceRef="dispute" targetRef="payment" />
+    <bpmn:sequenceFlow id="flow_payment_eligibility" sourceRef="payment" targetRef="eligibility" />
+    <bpmn:sequenceFlow id="flow_eligibility_route" sourceRef="eligibility" targetRef="route" />
+    <bpmn:sequenceFlow id="flow_route_to_cb" sourceRef="route" targetRef="to_cb" name="Card chargeback" />
+    <bpmn:sequenceFlow id="flow_route_to_sepa" sourceRef="route" targetRef="to_sepa" name="SEPA dispute" />
+    <bpmn:sequenceFlow id="flow_route_refund" sourceRef="route" targetRef="refund" name="Bank refund" />
+    <bpmn:sequenceFlow id="flow_route_merchant" sourceRef="route" targetRef="merchant" name="Merchant first" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_route_decline" sourceRef="route" targetRef="decline" name="Not eligible" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_to_cb_end_cb" sourceRef="to_cb" targetRef="end_cb" />
+    <bpmn:sequenceFlow id="flow_to_sepa_end_sepa" sourceRef="to_sepa" targetRef="end_sepa" />
+    <bpmn:sequenceFlow id="flow_refund_end_refund" sourceRef="refund" targetRef="end_refund" />
+    <bpmn:sequenceFlow id="flow_merchant_end_merchant" sourceRef="merchant" targetRef="end_merchant" />
+    <bpmn:sequenceFlow id="flow_decline_end_declined" sourceRef="decline" targetRef="end_declined" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1"><dc:Bounds x="160" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="dispute_di" bpmnElement="dispute"><dc:Bounds x="256" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="payment_di" bpmnElement="payment"><dc:Bounds x="416" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="eligibility_di" bpmnElement="eligibility"><dc:Bounds x="576" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="route_di" bpmnElement="route"><dc:Bounds x="736" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="to_cb_di" bpmnElement="to_cb"><dc:Bounds x="846" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_cb_di" bpmnElement="end_cb"><dc:Bounds x="1006" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="to_sepa_di" bpmnElement="to_sepa"><dc:Bounds x="1102" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_sepa_di" bpmnElement="end_sepa"><dc:Bounds x="1262" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="refund_di" bpmnElement="refund"><dc:Bounds x="1358" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_refund_di" bpmnElement="end_refund"><dc:Bounds x="1518" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="merchant_di" bpmnElement="merchant"><dc:Bounds x="1614" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_merchant_di" bpmnElement="end_merchant"><dc:Bounds x="1774" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="decline_di" bpmnElement="decline"><dc:Bounds x="1870" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_declined_di" bpmnElement="end_declined"><dc:Bounds x="2030" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_Start_1_dispute_di" bpmnElement="flow_Start_1_dispute"><di:waypoint x="196" y="160" /><di:waypoint x="256" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_dispute_payment_di" bpmnElement="flow_dispute_payment"><di:waypoint x="356" y="160" /><di:waypoint x="416" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_payment_eligibility_di" bpmnElement="flow_payment_eligibility"><di:waypoint x="516" y="160" /><di:waypoint x="576" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_eligibility_route_di" bpmnElement="flow_eligibility_route"><di:waypoint x="676" y="160" /><di:waypoint x="736" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_route_to_cb_di" bpmnElement="flow_route_to_cb"><di:waypoint x="786" y="160" /><di:waypoint x="846" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_route_to_sepa_di" bpmnElement="flow_route_to_sepa"><di:waypoint x="786" y="160" /><di:waypoint x="1102" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_route_refund_di" bpmnElement="flow_route_refund"><di:waypoint x="786" y="160" /><di:waypoint x="1358" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_route_merchant_di" bpmnElement="flow_route_merchant"><di:waypoint x="786" y="160" /><di:waypoint x="1614" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_route_decline_di" bpmnElement="flow_route_decline"><di:waypoint x="786" y="160" /><di:waypoint x="1870" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_to_cb_end_cb_di" bpmnElement="flow_to_cb_end_cb"><di:waypoint x="946" y="160" /><di:waypoint x="1006" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_to_sepa_end_sepa_di" bpmnElement="flow_to_sepa_end_sepa"><di:waypoint x="1202" y="160" /><di:waypoint x="1262" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_refund_end_refund_di" bpmnElement="flow_refund_end_refund"><di:waypoint x="1458" y="160" /><di:waypoint x="1518" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_merchant_end_merchant_di" bpmnElement="flow_merchant_end_merchant"><di:waypoint x="1714" y="160" /><di:waypoint x="1774" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decline_end_declined_di" bpmnElement="flow_decline_end_declined"><di:waypoint x="1970" y="160" /><di:waypoint x="2030" y="160" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:forest="https://app.forestadmin.com" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="Start_1"><bpmn:outgoing>flow_Start_1_company</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="company" name="Read the company file" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;company_identity&quot;,&quot;company_activity&quot;,&quot;company_volumes&quot;,&quot;company_cards&quot;]}" forest:description="Read all 4 of these fields of this KYC case (every one is needed): &quot;Company · Identity&quot;, &quot;Company · Activity&quot;, &quot;Company · Expected volumes&quot; and &quot;Company · Card acceptance&quot;: identity, activity, expected volumes, card acceptance."><bpmn:outgoing>flow_company_check_docs</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="check_docs" name="Check the company documents" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Check documents&quot;: the Kbis extract (under 3 months), the articles of association and the beneficial owners declaration are checked; the result card lists each one, valid or what is wrong."><bpmn:outgoing>flow_check_docs_documents</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="documents" name="Read the document results" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;docs_complete&quot;,&quot;doc_kbis&quot;,&quot;doc_articles&quot;,&quot;doc_ubo&quot;]}" forest:description="Read all 4 of these fields of this KYC case (every one is needed): &quot;Documents · Complete&quot;, &quot;Documents · Kbis extract&quot;, &quot;Documents · Articles of association&quot; and &quot;Documents · Beneficial owners declaration&quot;."><bpmn:outgoing>flow_documents_register</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="register" name="Check the company register (INPI)" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Check the company register&quot;: INPI's register of companies (RNE) and register of beneficial owners, compared line by line with our documents and customer file. It records each company paper as passed or failed, now."><bpmn:outgoing>flow_register_register_read</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="register_read" name="Read the INPI result" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;register_result&quot;,&quot;register_differences&quot;,&quot;docs_complete&quot;]}" forest:description="Read all 3 of these fields of this KYC case (every one is needed): &quot;Register · Result&quot; and &quot;Register · Differences&quot; (the INPI check and the differences with our file), and &quot;Documents · Complete&quot; again for the next decision."><bpmn:outgoing>flow_register_read_docs_ok</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="docs_ok" name="Company documents complete?" forest:aiDecision="true" forest:description="Complete when &quot;Documents · Complete&quot; says &quot;✓ Yes&quot; and &quot;Register · Result&quot; starts with &quot;✓ Matches&quot;. Missing or outdated otherwise."><bpmn:outgoing>flow_docs_ok_owners</bpmn:outgoing><bpmn:outgoing>flow_docs_ok_request_docs</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="request_docs" name="Request company documents" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Request company documents&quot;: the request asks for what is missing or outdated; the result card shows it with its due date."><bpmn:outgoing>flow_request_docs_end_waiting</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_waiting" name="Waiting on the client"></bpmn:endEvent>
+    <bpmn:serviceTask id="owners" name="Check the beneficial owners" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;owners_ubo&quot;,&quot;owners_directors&quot;,&quot;owners_minor&quot;,&quot;owners_structure&quot;]}" forest:description="Read all 4 of these fields of this KYC case (every one is needed): &quot;Owners · More than 25%&quot;, &quot;Owners · Directors&quot;, &quot;Owners · 25% or less&quot; and &quot;Owners · Structure&quot;: who holds more than 25% (directly or through holdings), who holds less, the directors, and the structure."><bpmn:outgoing>flow_owners_owners_ok</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="owners_ok" name="Beneficial owners identified?" forest:description="Yes when &quot;Owners · More than 25%&quot; names each owner with a country (or, with nobody above 25%, the legal representative by default) and &quot;Owners · Directors&quot; names a director (both ✓). No when one shows ✗: ask the company for its register of beneficial owners."><bpmn:outgoing>flow_owners_ok_verify_ids</bpmn:outgoing><bpmn:outgoing>flow_owners_ok_request_docs</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="verify_ids" name="Verify the ID documents" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Verify document&quot;: Onfido checks every ID of the company's people still waiting, live, and matches each selfie to its ID; one result card per ID."><bpmn:outgoing>flow_verify_ids_ids_read</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="ids_read" name="Read the ID check results" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;idcheck_result&quot;,&quot;idcheck_documents&quot;,&quot;idcheck_faces&quot;]}" forest:description="Read all 3 of these fields of this KYC case (every one is needed): &quot;ID checks · Result&quot;, &quot;ID checks · Documents&quot; and &quot;ID checks · Face match&quot;: each ID with its result and confidence, each selfie matched to its ID, and the overall result."><bpmn:outgoing>flow_ids_read_ids_ok</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="ids_ok" name="ID documents valid?" forest:description="Valid when &quot;ID checks · Result&quot; starts with &quot;✓ Passed&quot;. Not valid when it shows ✗ Failed or ⚠ Needs a closer look: ask for a new ID."><bpmn:outgoing>flow_ids_ok_screen</bpmn:outgoing><bpmn:outgoing>flow_ids_ok_request_id</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="request_id" name="Request a new ID document" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Request ID document&quot;: the person gets a request in the app to upload a valid ID; the result card shows the request and its due date."><bpmn:outgoing>flow_request_id_end_waiting</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="screen" name="Screen the company and its people" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Screen against sanctions lists&quot;: the result card lists each name checked and any match."><bpmn:outgoing>flow_screen_screening</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="screening" name="Read the screening result" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;screening_result&quot;]}" forest:description="Read the field &quot;Screening · Result&quot; of this KYC case: each hit on the company or its people (✗ open or confirmed, ○ cleared before), or no hit."><bpmn:outgoing>flow_screening_hit_open</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="hit_open" name="Open screening hit?" forest:aiDecision="true" forest:description="Open hit when &quot;Screening · Result&quot; lists a hit marked ✗ and &quot;open&quot;. Clear otherwise: &quot;✓ No hit&quot;, or only hits cleared before (○)."><bpmn:outgoing>flow_hit_open_cards_read</bpmn:outgoing><bpmn:outgoing>flow_hit_open_park</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="park" name="Park the case for screening" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Park for screening&quot;: the case leaves the onboarding queue until the screening team decides on the hit; the result card lists the open hits."><bpmn:outgoing>flow_park_end_screening</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_screening" name="Sent to screening"></bpmn:endEvent>
+    <bpmn:serviceTask id="cards_read" name="Read the card acceptance request" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;company_cards&quot;]}" forest:description="Read the field &quot;Company · Card acceptance&quot; of this KYC case: not requested, granted already, or requested with the sales profile (what is sold, how far ahead it is paid, chargebacks)."><bpmn:outgoing>flow_cards_read_cards_asked</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="cards_asked" name="Card acceptance requested?" forest:aiDecision="true" forest:description="Requested when &quot;Company · Card acceptance&quot; starts with &quot;⚠ Requested, to decide&quot;. Not requested otherwise (&quot;✓ Not requested&quot; or &quot;✓ Granted already&quot;)."><bpmn:outgoing>flow_cards_asked_acceptance</bpmn:outgoing><bpmn:outgoing>flow_cards_asked_risk_inputs</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="acceptance" name="Card acceptance" forest:description="Look at the sales profile in &quot;Company · Card acceptance&quot;: what would the bank pay back if the company stopped delivering? Mostly online or delivered after 14 days is riskier: approve with a reserve."><bpmn:outgoing>flow_acceptance_approve_cards</bpmn:outgoing><bpmn:outgoing>flow_acceptance_reserve</bpmn:outgoing><bpmn:outgoing>flow_acceptance_risk_inputs</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="approve_cards" name="Approve card acceptance" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Approve card acceptance&quot;."><bpmn:outgoing>flow_approve_cards_risk_inputs</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="reserve" name="Set a reserve" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Set a reserve&quot;: 5 to 20% of sales held for 90 to 180 days."><bpmn:outgoing>flow_reserve_risk_inputs</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="risk_inputs" name="Read the risk inputs" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;risk_rating_suggested&quot;,&quot;risk_hits&quot;,&quot;risk_pep&quot;,&quot;risk_residence&quot;,&quot;risk_structure&quot;,&quot;risk_cards&quot;]}" forest:description="Read all 6 of these fields of this KYC case (every one is needed): &quot;Risk · Suggested rating&quot;, &quot;Risk · Screening hits&quot;, &quot;Risk · PEP&quot;, &quot;Risk · Residence&quot;, &quot;Risk · Structure&quot; and &quot;Risk · Card sales&quot;."><bpmn:outgoing>flow_risk_inputs_risk</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="risk" name="Risk rating?" forest:description="Low when every &quot;Risk ·&quot; line shows ✓: no open hit, no PEP, owners in the EU, at most 2 holding levels, card sales within limits. &quot;Risk · Suggested rating&quot; applies these rules; you decide."><bpmn:outgoing>flow_risk_approve</bpmn:outgoing><bpmn:outgoing>flow_risk_signoff</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="signoff" name="Ask for a senior sign-off" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="true" forest:description="Run &quot;Send for senior sign-off&quot;: the case waits for a senior, out of the onboarding queue."><bpmn:outgoing>flow_signoff_escalate</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:intermediateThrowEvent id="escalate" name="Send to a senior operator" forest:inboxId="b242a83c-cb54-5a81-8dca-e848a5169c8a"><bpmn:outgoing>flow_escalate_senior</bpmn:outgoing></bpmn:intermediateThrowEvent>
+    <bpmn:userTask id="senior" name="Senior review" forest:alternative="guideline" forest:completionType="user-input" forest:inputType="free-text" forest:description="You take over from the operator: read the &quot;Risk ·&quot; lines above, then write in one or two sentences why the bank accepts or refuses this risk."><bpmn:outgoing>flow_senior_decide</bpmn:outgoing></bpmn:userTask>
+    <bpmn:exclusiveGateway id="decide" name="Onboard this company?" forest:description="Your decision, as the senior operator."><bpmn:outgoing>flow_decide_approve</bpmn:outgoing><bpmn:outgoing>flow_decide_reject</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="approve" name="Approve KYC" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Approve KYC&quot;: it refuses when a document, an ID or a screening hit is still open."><bpmn:outgoing>flow_approve_end_ok</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_ok" name="Company onboarded"></bpmn:endEvent>
+    <bpmn:serviceTask id="reject" name="Reject KYC" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Reject KYC&quot;: the reason is pre-filled from the failed checks."><bpmn:outgoing>flow_reject_end_rejected</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_rejected" name="Onboarding refused"></bpmn:endEvent>
+    <bpmn:sequenceFlow id="flow_Start_1_company" sourceRef="Start_1" targetRef="company" />
+    <bpmn:sequenceFlow id="flow_company_check_docs" sourceRef="company" targetRef="check_docs" />
+    <bpmn:sequenceFlow id="flow_check_docs_documents" sourceRef="check_docs" targetRef="documents" />
+    <bpmn:sequenceFlow id="flow_documents_register" sourceRef="documents" targetRef="register" />
+    <bpmn:sequenceFlow id="flow_register_register_read" sourceRef="register" targetRef="register_read" />
+    <bpmn:sequenceFlow id="flow_register_read_docs_ok" sourceRef="register_read" targetRef="docs_ok" />
+    <bpmn:sequenceFlow id="flow_docs_ok_owners" sourceRef="docs_ok" targetRef="owners" name="Complete" />
+    <bpmn:sequenceFlow id="flow_docs_ok_request_docs" sourceRef="docs_ok" targetRef="request_docs" name="Missing or outdated" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_request_docs_end_waiting" sourceRef="request_docs" targetRef="end_waiting" />
+    <bpmn:sequenceFlow id="flow_owners_owners_ok" sourceRef="owners" targetRef="owners_ok" />
+    <bpmn:sequenceFlow id="flow_owners_ok_verify_ids" sourceRef="owners_ok" targetRef="verify_ids" name="Yes" />
+    <bpmn:sequenceFlow id="flow_owners_ok_request_docs" sourceRef="owners_ok" targetRef="request_docs" name="No" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_verify_ids_ids_read" sourceRef="verify_ids" targetRef="ids_read" />
+    <bpmn:sequenceFlow id="flow_ids_read_ids_ok" sourceRef="ids_read" targetRef="ids_ok" />
+    <bpmn:sequenceFlow id="flow_ids_ok_screen" sourceRef="ids_ok" targetRef="screen" name="Valid" />
+    <bpmn:sequenceFlow id="flow_ids_ok_request_id" sourceRef="ids_ok" targetRef="request_id" name="Not valid" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_request_id_end_waiting" sourceRef="request_id" targetRef="end_waiting" />
+    <bpmn:sequenceFlow id="flow_screen_screening" sourceRef="screen" targetRef="screening" />
+    <bpmn:sequenceFlow id="flow_screening_hit_open" sourceRef="screening" targetRef="hit_open" />
+    <bpmn:sequenceFlow id="flow_hit_open_cards_read" sourceRef="hit_open" targetRef="cards_read" name="Clear" />
+    <bpmn:sequenceFlow id="flow_hit_open_park" sourceRef="hit_open" targetRef="park" name="Open hit" forest:buttonColor="orange" />
+    <bpmn:sequenceFlow id="flow_park_end_screening" sourceRef="park" targetRef="end_screening" />
+    <bpmn:sequenceFlow id="flow_cards_read_cards_asked" sourceRef="cards_read" targetRef="cards_asked" />
+    <bpmn:sequenceFlow id="flow_cards_asked_acceptance" sourceRef="cards_asked" targetRef="acceptance" name="Requested" />
+    <bpmn:sequenceFlow id="flow_cards_asked_risk_inputs" sourceRef="cards_asked" targetRef="risk_inputs" name="Not requested" />
+    <bpmn:sequenceFlow id="flow_acceptance_approve_cards" sourceRef="acceptance" targetRef="approve_cards" name="Approve" />
+    <bpmn:sequenceFlow id="flow_acceptance_reserve" sourceRef="acceptance" targetRef="reserve" name="Approve with a reserve" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_acceptance_risk_inputs" sourceRef="acceptance" targetRef="risk_inputs" name="Refuse" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_approve_cards_risk_inputs" sourceRef="approve_cards" targetRef="risk_inputs" />
+    <bpmn:sequenceFlow id="flow_reserve_risk_inputs" sourceRef="reserve" targetRef="risk_inputs" />
+    <bpmn:sequenceFlow id="flow_risk_inputs_risk" sourceRef="risk_inputs" targetRef="risk" />
+    <bpmn:sequenceFlow id="flow_risk_approve" sourceRef="risk" targetRef="approve" name="Low" />
+    <bpmn:sequenceFlow id="flow_risk_signoff" sourceRef="risk" targetRef="signoff" name="Medium or high" forest:buttonColor="orange" />
+    <bpmn:sequenceFlow id="flow_signoff_escalate" sourceRef="signoff" targetRef="escalate" />
+    <bpmn:sequenceFlow id="flow_escalate_senior" sourceRef="escalate" targetRef="senior" />
+    <bpmn:sequenceFlow id="flow_senior_decide" sourceRef="senior" targetRef="decide" />
+    <bpmn:sequenceFlow id="flow_decide_approve" sourceRef="decide" targetRef="approve" name="Approve" />
+    <bpmn:sequenceFlow id="flow_decide_reject" sourceRef="decide" targetRef="reject" name="Reject" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_approve_end_ok" sourceRef="approve" targetRef="end_ok" />
+    <bpmn:sequenceFlow id="flow_reject_end_rejected" sourceRef="reject" targetRef="end_rejected" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1"><dc:Bounds x="160" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="company_di" bpmnElement="company"><dc:Bounds x="256" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="check_docs_di" bpmnElement="check_docs"><dc:Bounds x="416" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="documents_di" bpmnElement="documents"><dc:Bounds x="576" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="register_di" bpmnElement="register"><dc:Bounds x="736" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="register_read_di" bpmnElement="register_read"><dc:Bounds x="896" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="docs_ok_di" bpmnElement="docs_ok"><dc:Bounds x="1056" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="request_docs_di" bpmnElement="request_docs"><dc:Bounds x="1166" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_waiting_di" bpmnElement="end_waiting"><dc:Bounds x="1326" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="owners_di" bpmnElement="owners"><dc:Bounds x="1422" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="owners_ok_di" bpmnElement="owners_ok"><dc:Bounds x="1582" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="verify_ids_di" bpmnElement="verify_ids"><dc:Bounds x="1692" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ids_read_di" bpmnElement="ids_read"><dc:Bounds x="1852" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ids_ok_di" bpmnElement="ids_ok"><dc:Bounds x="2012" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="request_id_di" bpmnElement="request_id"><dc:Bounds x="2122" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="screen_di" bpmnElement="screen"><dc:Bounds x="2282" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="screening_di" bpmnElement="screening"><dc:Bounds x="2442" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="hit_open_di" bpmnElement="hit_open"><dc:Bounds x="2602" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="park_di" bpmnElement="park"><dc:Bounds x="2712" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_screening_di" bpmnElement="end_screening"><dc:Bounds x="2872" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="cards_read_di" bpmnElement="cards_read"><dc:Bounds x="2968" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="cards_asked_di" bpmnElement="cards_asked"><dc:Bounds x="3128" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="acceptance_di" bpmnElement="acceptance"><dc:Bounds x="3238" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="approve_cards_di" bpmnElement="approve_cards"><dc:Bounds x="3348" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="reserve_di" bpmnElement="reserve"><dc:Bounds x="3508" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="risk_inputs_di" bpmnElement="risk_inputs"><dc:Bounds x="3668" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="risk_di" bpmnElement="risk"><dc:Bounds x="3828" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="signoff_di" bpmnElement="signoff"><dc:Bounds x="3938" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="escalate_di" bpmnElement="escalate"><dc:Bounds x="4098" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="senior_di" bpmnElement="senior"><dc:Bounds x="4194" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="decide_di" bpmnElement="decide"><dc:Bounds x="4354" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="approve_di" bpmnElement="approve"><dc:Bounds x="4464" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_ok_di" bpmnElement="end_ok"><dc:Bounds x="4624" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="reject_di" bpmnElement="reject"><dc:Bounds x="4720" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_rejected_di" bpmnElement="end_rejected"><dc:Bounds x="4880" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_Start_1_company_di" bpmnElement="flow_Start_1_company"><di:waypoint x="196" y="160" /><di:waypoint x="256" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_company_check_docs_di" bpmnElement="flow_company_check_docs"><di:waypoint x="356" y="160" /><di:waypoint x="416" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_check_docs_documents_di" bpmnElement="flow_check_docs_documents"><di:waypoint x="516" y="160" /><di:waypoint x="576" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_documents_register_di" bpmnElement="flow_documents_register"><di:waypoint x="676" y="160" /><di:waypoint x="736" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_register_register_read_di" bpmnElement="flow_register_register_read"><di:waypoint x="836" y="160" /><di:waypoint x="896" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_register_read_docs_ok_di" bpmnElement="flow_register_read_docs_ok"><di:waypoint x="996" y="160" /><di:waypoint x="1056" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_docs_ok_owners_di" bpmnElement="flow_docs_ok_owners"><di:waypoint x="1106" y="160" /><di:waypoint x="1422" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_docs_ok_request_docs_di" bpmnElement="flow_docs_ok_request_docs"><di:waypoint x="1106" y="160" /><di:waypoint x="1166" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_request_docs_end_waiting_di" bpmnElement="flow_request_docs_end_waiting"><di:waypoint x="1266" y="160" /><di:waypoint x="1326" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_owners_owners_ok_di" bpmnElement="flow_owners_owners_ok"><di:waypoint x="1522" y="160" /><di:waypoint x="1582" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_owners_ok_verify_ids_di" bpmnElement="flow_owners_ok_verify_ids"><di:waypoint x="1632" y="160" /><di:waypoint x="1692" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_owners_ok_request_docs_di" bpmnElement="flow_owners_ok_request_docs"><di:waypoint x="1632" y="160" /><di:waypoint x="1166" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_verify_ids_ids_read_di" bpmnElement="flow_verify_ids_ids_read"><di:waypoint x="1792" y="160" /><di:waypoint x="1852" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_ids_read_ids_ok_di" bpmnElement="flow_ids_read_ids_ok"><di:waypoint x="1952" y="160" /><di:waypoint x="2012" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_ids_ok_screen_di" bpmnElement="flow_ids_ok_screen"><di:waypoint x="2062" y="160" /><di:waypoint x="2282" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_ids_ok_request_id_di" bpmnElement="flow_ids_ok_request_id"><di:waypoint x="2062" y="160" /><di:waypoint x="2122" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_request_id_end_waiting_di" bpmnElement="flow_request_id_end_waiting"><di:waypoint x="2222" y="160" /><di:waypoint x="1326" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_screen_screening_di" bpmnElement="flow_screen_screening"><di:waypoint x="2382" y="160" /><di:waypoint x="2442" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_screening_hit_open_di" bpmnElement="flow_screening_hit_open"><di:waypoint x="2542" y="160" /><di:waypoint x="2602" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_hit_open_cards_read_di" bpmnElement="flow_hit_open_cards_read"><di:waypoint x="2652" y="160" /><di:waypoint x="2968" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_hit_open_park_di" bpmnElement="flow_hit_open_park"><di:waypoint x="2652" y="160" /><di:waypoint x="2712" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_park_end_screening_di" bpmnElement="flow_park_end_screening"><di:waypoint x="2812" y="160" /><di:waypoint x="2872" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_cards_read_cards_asked_di" bpmnElement="flow_cards_read_cards_asked"><di:waypoint x="3068" y="160" /><di:waypoint x="3128" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_cards_asked_acceptance_di" bpmnElement="flow_cards_asked_acceptance"><di:waypoint x="3178" y="160" /><di:waypoint x="3238" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_cards_asked_risk_inputs_di" bpmnElement="flow_cards_asked_risk_inputs"><di:waypoint x="3178" y="160" /><di:waypoint x="3668" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_acceptance_approve_cards_di" bpmnElement="flow_acceptance_approve_cards"><di:waypoint x="3288" y="160" /><di:waypoint x="3348" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_acceptance_reserve_di" bpmnElement="flow_acceptance_reserve"><di:waypoint x="3288" y="160" /><di:waypoint x="3508" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_acceptance_risk_inputs_di" bpmnElement="flow_acceptance_risk_inputs"><di:waypoint x="3288" y="160" /><di:waypoint x="3668" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_approve_cards_risk_inputs_di" bpmnElement="flow_approve_cards_risk_inputs"><di:waypoint x="3448" y="160" /><di:waypoint x="3668" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_reserve_risk_inputs_di" bpmnElement="flow_reserve_risk_inputs"><di:waypoint x="3608" y="160" /><di:waypoint x="3668" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_risk_inputs_risk_di" bpmnElement="flow_risk_inputs_risk"><di:waypoint x="3768" y="160" /><di:waypoint x="3828" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_risk_approve_di" bpmnElement="flow_risk_approve"><di:waypoint x="3878" y="160" /><di:waypoint x="4464" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_risk_signoff_di" bpmnElement="flow_risk_signoff"><di:waypoint x="3878" y="160" /><di:waypoint x="3938" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_signoff_escalate_di" bpmnElement="flow_signoff_escalate"><di:waypoint x="4038" y="160" /><di:waypoint x="4098" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_escalate_senior_di" bpmnElement="flow_escalate_senior"><di:waypoint x="4134" y="160" /><di:waypoint x="4194" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_senior_decide_di" bpmnElement="flow_senior_decide"><di:waypoint x="4294" y="160" /><di:waypoint x="4354" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_approve_di" bpmnElement="flow_decide_approve"><di:waypoint x="4404" y="160" /><di:waypoint x="4464" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_decide_reject_di" bpmnElement="flow_decide_reject"><di:waypoint x="4404" y="160" /><di:waypoint x="4720" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_approve_end_ok_di" bpmnElement="flow_approve_end_ok"><di:waypoint x="4564" y="160" /><di:waypoint x="4624" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_reject_end_rejected_di" bpmnElement="flow_reject_end_rejected"><di:waypoint x="4820" y="160" /><di:waypoint x="4880" y="160" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

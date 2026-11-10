@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:forest="https://app.forestadmin.com" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="Start_1"><bpmn:outgoing>flow_Start_1_take</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:serviceTask id="take" name="Start the review" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="true" forest:description="Run &quot;Start review&quot;: the alert shows as in review, under your name."><bpmn:outgoing>flow_take_alert</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="alert" name="Read the alert and the payment" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;alert_rule&quot;,&quot;alert_score&quot;,&quot;payment_status&quot;,&quot;payment_payee&quot;]}" forest:description="Read all 4 of these fields of this alert (every one is needed): &quot;Alert · Rule&quot;, &quot;Alert · Score and time&quot;, &quot;Payment · Status&quot; and &quot;Payment · Payee&quot;: the rule that fired, the score, and the transfer at stake (held, sent or none) with its payee."><bpmn:outgoing>flow_alert_kind</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="kind" name="Takeover or other fraud?" forest:aiDecision="true" forest:description="Takeover when &quot;Alert · Rule&quot; starts with &quot;Account takeover&quot; (a new device and payee, or logins too far apart). Other fraud otherwise (card testing, a recall received, disputes, an invoice)."><bpmn:outgoing>flow_kind_device</bpmn:outgoing><bpmn:outgoing>flow_kind_tx_read</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="device" name="Read the login behind it" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;device_login&quot;,&quot;device_place&quot;,&quot;device_timing&quot;,&quot;device_changes&quot;]}" forest:description="Read all 4 of these fields of this alert (every one is needed): &quot;Device · Login device&quot;, &quot;Device · Login place&quot;, &quot;Device · Login to payment&quot; and &quot;Device · Security and contact changes&quot;: the device (new or known), where it logged in against the usual place, the time from login to payment, and any MFA reset or change of phone or email."><bpmn:outgoing>flow_device_ip_check</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="ip_check" name="Check the device and IP (SEON)" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Check device and IP&quot;: SEON looks up the device and the IP address of the login (hosting provider, roaming, home broadband) and gives a risk score."><bpmn:outgoing>flow_ip_check_ip_read</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="ip_read" name="Read the SEON result" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;device_check&quot;]}" forest:description="Read the field &quot;Device check · Result&quot; of this alert: takeover signals or not, the risk score and why."><bpmn:outgoing>flow_ip_read_signals</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="signals" name="Takeover signals?" forest:aiDecision="true" forest:description="Takeover signals when &quot;Device check · Result&quot; starts with &quot;✗ Takeover signals&quot;. No takeover signal when it starts with &quot;✓&quot;."><bpmn:outgoing>flow_signals_revoke</bpmn:outgoing><bpmn:outgoing>flow_signals_call</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="revoke" name="Revoke the new device" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="true" forest:description="Run &quot;Revoke device&quot;: the login's device is signed out and no longer trusted."><bpmn:outgoing>flow_revoke_freeze</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="freeze" name="Freeze the account" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="true" forest:description="Run &quot;Freeze account&quot; with reason FRAUD_SUSPICION: no payment leaves the account until we know."><bpmn:outgoing>flow_freeze_call</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="call" name="Call the customer (Aircall)" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="false" forest:description="Run &quot;Call the customer&quot;: Aircall calls the number on file before any recent change (never a new one) and records what the customer says."><bpmn:outgoing>flow_call_call_read</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="call_read" name="Read the call" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;call_result&quot;,&quot;call_details&quot;]}" forest:description="Read both of these fields of this alert (every one is needed): &quot;Call · Outcome&quot; and &quot;Call · Details&quot;: what the customer said, and the call's number, time and length."><bpmn:outgoing>flow_call_read_confirms</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="confirms" name="Was it the customer?" forest:aiDecision="true" forest:description="It was the customer when &quot;Call · Outcome&quot; starts with &quot;✓ It was the customer&quot;. Not the customer when it starts with &quot;✗ Not the customer&quot;. Not reached when it starts with &quot;⚠ Not reached&quot;."><bpmn:outgoing>flow_confirms_unfreeze</bpmn:outgoing><bpmn:outgoing>flow_confirms_money</bpmn:outgoing><bpmn:outgoing>flow_confirms_second_look</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="unfreeze" name="Unfreeze the account" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="true" forest:description="Run &quot;Unfreeze account&quot;: it lifts the fraud freeze. Nothing to undo when the account was not frozen; a freeze for another reason (sanctions, a seizure) is not this alert's and stays."><bpmn:outgoing>flow_unfreeze_payment</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="payment" name="Read the payment" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;payment_status&quot;]}" forest:description="Read the field &quot;Payment · Status&quot; of this alert: a transfer held by the fraud rules, sent, released, already stopped or recalled, or no transfer on this alert."><bpmn:outgoing>flow_payment_held</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="held" name="A payment to release?" forest:aiDecision="true" forest:description="Release it when &quot;Payment · Status&quot; starts with &quot;⚠ Held&quot;. Nothing to release in every other case: no transfer on this alert, already stopped (○ Stopped), released (✓ Released), sent (✗ Sent) or recalled (⚠ Recall)."><bpmn:outgoing>flow_held_release</bpmn:outgoing><bpmn:outgoing>flow_held_clear</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="release" name="Release the payment" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Approve transfer&quot;: the held transfer is booked and sent."><bpmn:outgoing>flow_release_clear</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="money" name="Read the payment" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;payment_status&quot;]}" forest:description="Read the field &quot;Payment · Status&quot; of this alert: a transfer held by the fraud rules, sent, released, already stopped or recalled, or no transfer on this alert."><bpmn:outgoing>flow_money_stop</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="stop" name="Where is the money?" forest:aiDecision="true" forest:description="Stop it when &quot;Payment · Status&quot; starts with &quot;⚠ Held&quot;. Recall it when it starts with &quot;✗ Sent&quot; or &quot;✓ Released&quot; (the money has left). Nothing to stop in every other case: no transfer on this alert, already stopped (○ Stopped) or a recall already sent (⚠ Recall)."><bpmn:outgoing>flow_stop_reject</bpmn:outgoing><bpmn:outgoing>flow_stop_recall</bpmn:outgoing><bpmn:outgoing>flow_stop_escalate</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="reject" name="Stop the payment" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Reject transfer&quot;: the reason is pre-filled from the call; the money stays on the account."><bpmn:outgoing>flow_reject_escalate</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="recall" name="Recall the transfer (SEPA)" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Recall transfer&quot;: a fraud recall (FRAD) goes to the beneficiary bank through STET; it has 15 business days to answer."><bpmn:outgoing>flow_recall_refund</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="refund" name="Refund the customer (PSD2)" forest:alternative="trigger-action" forest:automaticExecution="true" forest:automaticCompletion="true" forest:description="Run &quot;Refund the customer (PSD2)&quot;: the customer did not make this transfer, so the law (PSD2) has us refund it by the end of the next business day, whatever the recall brings back. What the recall recovers then goes to the bank."><bpmn:outgoing>flow_refund_recall_read</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="recall_read" name="Read the recall and the refund" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;payment_status&quot;]}" forest:description="Read the field &quot;Payment · Status&quot; of this alert: the recall's reference, the bank it went to and when the answer is due, then the refund credited to the customer."><bpmn:outgoing>flow_recall_read_escalate</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:serviceTask id="tx_read" name="Read the transactions and the history" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;tx_summary&quot;,&quot;tx_counterparties&quot;,&quot;tx_countries&quot;,&quot;tx_flow&quot;,&quot;history_alerts&quot;,&quot;history_cases&quot;]}" forest:description="Read all 6 of these fields of this alert (every one is needed): &quot;Transactions · Summary&quot;, &quot;Transactions · Counterparties&quot;, &quot;Transactions · Countries&quot;, &quot;Transactions · Money in, money out&quot;, &quot;History · Earlier alerts&quot; and &quot;History · Investigations&quot;: what moved, with whom, where, and the customer's earlier alerts and investigations."><bpmn:outgoing>flow_tx_read_other_decide</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="other_decide" name="Clear or escalate?" forest:description="Escalate when the transactions show the fraud (a card being tested, money from a fraud victim, a supplier's IBAN changed). Clear when explained. Not sure: ask a senior."><bpmn:outgoing>flow_other_decide_clear</bpmn:outgoing><bpmn:outgoing>flow_other_decide_second_look</bpmn:outgoing><bpmn:outgoing>flow_other_decide_escalate</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="second_look" name="Send for a second look" forest:alternative="trigger-action" forest:automaticCompletion="true" forest:description="Run &quot;Send for a second look&quot; and say what is missing: the alert leaves the fraud queue and waits for a senior."><bpmn:outgoing>flow_second_look_to_senior</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:intermediateThrowEvent id="to_senior" name="Ask a senior analyst" forest:inboxId="0f6561e7-1145-5698-8d3a-261b98e5e7a1"><bpmn:outgoing>flow_to_senior_senior_read</bpmn:outgoing></bpmn:intermediateThrowEvent>
+    <bpmn:serviceTask id="senior_read" name="Read why the analyst asks" forest:alternative="get-data" forest:automaticCompletion="false" forest:preRecordedArgs="{&quot;selectedRecordStepId&quot;:&quot;workflow-start&quot;,&quot;fieldNames&quot;:[&quot;result_outcome&quot;]}" forest:description="Read the field &quot;Result · Outcome&quot; of this alert: who sent it for a second look, and why."><bpmn:outgoing>flow_senior_read_senior</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:userTask id="senior" name="Senior review" forest:alternative="guideline" forest:completionType="user-input" forest:inputType="free-text" forest:description="You take over from the analyst: read the lines above (device, call, transactions), then write in one or two sentences why you clear or escalate."><bpmn:outgoing>flow_senior_senior_decide</bpmn:outgoing></bpmn:userTask>
+    <bpmn:exclusiveGateway id="senior_decide" name="Clear or escalate?" forest:description="Your decision, as the senior analyst."><bpmn:outgoing>flow_senior_decide_clear</bpmn:outgoing><bpmn:outgoing>flow_senior_decide_escalate</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="clear" name="Clear the alert" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Clear alert&quot;: after a call where the customer confirmed, the reason and note say so. The result card sums up the decision, the payment and the account."><bpmn:outgoing>flow_clear_end_cleared</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_cleared" name="Alert closed"></bpmn:endEvent>
+    <bpmn:serviceTask id="escalate" name="Open a fraud investigation" forest:alternative="trigger-action" forest:automaticCompletion="false" forest:description="Run &quot;Escalate&quot;: the priority is pre-filled (urgent for a takeover); the alert's transactions go with it. The result card names the investigation, new or already open, with the payment and the account as they stand."><bpmn:outgoing>flow_escalate_end_escalated</bpmn:outgoing></bpmn:serviceTask>
+    <bpmn:endEvent id="end_escalated" name="Fraud case opened"></bpmn:endEvent>
+    <bpmn:sequenceFlow id="flow_Start_1_take" sourceRef="Start_1" targetRef="take" />
+    <bpmn:sequenceFlow id="flow_take_alert" sourceRef="take" targetRef="alert" />
+    <bpmn:sequenceFlow id="flow_alert_kind" sourceRef="alert" targetRef="kind" />
+    <bpmn:sequenceFlow id="flow_kind_device" sourceRef="kind" targetRef="device" name="Takeover" />
+    <bpmn:sequenceFlow id="flow_kind_tx_read" sourceRef="kind" targetRef="tx_read" name="Other fraud" />
+    <bpmn:sequenceFlow id="flow_device_ip_check" sourceRef="device" targetRef="ip_check" />
+    <bpmn:sequenceFlow id="flow_ip_check_ip_read" sourceRef="ip_check" targetRef="ip_read" />
+    <bpmn:sequenceFlow id="flow_ip_read_signals" sourceRef="ip_read" targetRef="signals" />
+    <bpmn:sequenceFlow id="flow_signals_revoke" sourceRef="signals" targetRef="revoke" name="Takeover signals" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_signals_call" sourceRef="signals" targetRef="call" name="No takeover signal" />
+    <bpmn:sequenceFlow id="flow_revoke_freeze" sourceRef="revoke" targetRef="freeze" />
+    <bpmn:sequenceFlow id="flow_freeze_call" sourceRef="freeze" targetRef="call" />
+    <bpmn:sequenceFlow id="flow_call_call_read" sourceRef="call" targetRef="call_read" />
+    <bpmn:sequenceFlow id="flow_call_read_confirms" sourceRef="call_read" targetRef="confirms" />
+    <bpmn:sequenceFlow id="flow_confirms_unfreeze" sourceRef="confirms" targetRef="unfreeze" name="It was the customer" />
+    <bpmn:sequenceFlow id="flow_confirms_money" sourceRef="confirms" targetRef="money" name="Not the customer" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_confirms_second_look" sourceRef="confirms" targetRef="second_look" name="Not reached" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_unfreeze_payment" sourceRef="unfreeze" targetRef="payment" />
+    <bpmn:sequenceFlow id="flow_payment_held" sourceRef="payment" targetRef="held" />
+    <bpmn:sequenceFlow id="flow_held_release" sourceRef="held" targetRef="release" name="Release the held payment" />
+    <bpmn:sequenceFlow id="flow_held_clear" sourceRef="held" targetRef="clear" name="Nothing to release: clear the alert" />
+    <bpmn:sequenceFlow id="flow_release_clear" sourceRef="release" targetRef="clear" />
+    <bpmn:sequenceFlow id="flow_money_stop" sourceRef="money" targetRef="stop" />
+    <bpmn:sequenceFlow id="flow_stop_reject" sourceRef="stop" targetRef="reject" name="Stop the held payment" />
+    <bpmn:sequenceFlow id="flow_stop_recall" sourceRef="stop" targetRef="recall" name="Recall the sent payment" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_stop_escalate" sourceRef="stop" targetRef="escalate" name="Nothing to stop: escalate" />
+    <bpmn:sequenceFlow id="flow_reject_escalate" sourceRef="reject" targetRef="escalate" />
+    <bpmn:sequenceFlow id="flow_recall_refund" sourceRef="recall" targetRef="refund" />
+    <bpmn:sequenceFlow id="flow_refund_recall_read" sourceRef="refund" targetRef="recall_read" />
+    <bpmn:sequenceFlow id="flow_recall_read_escalate" sourceRef="recall_read" targetRef="escalate" />
+    <bpmn:sequenceFlow id="flow_tx_read_other_decide" sourceRef="tx_read" targetRef="other_decide" />
+    <bpmn:sequenceFlow id="flow_other_decide_clear" sourceRef="other_decide" targetRef="clear" name="Clear" />
+    <bpmn:sequenceFlow id="flow_other_decide_second_look" sourceRef="other_decide" targetRef="second_look" name="Not sure" forest:buttonColor="yellow" />
+    <bpmn:sequenceFlow id="flow_other_decide_escalate" sourceRef="other_decide" targetRef="escalate" name="Escalate" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_second_look_to_senior" sourceRef="second_look" targetRef="to_senior" />
+    <bpmn:sequenceFlow id="flow_to_senior_senior_read" sourceRef="to_senior" targetRef="senior_read" />
+    <bpmn:sequenceFlow id="flow_senior_read_senior" sourceRef="senior_read" targetRef="senior" />
+    <bpmn:sequenceFlow id="flow_senior_senior_decide" sourceRef="senior" targetRef="senior_decide" />
+    <bpmn:sequenceFlow id="flow_senior_decide_clear" sourceRef="senior_decide" targetRef="clear" name="Clear" />
+    <bpmn:sequenceFlow id="flow_senior_decide_escalate" sourceRef="senior_decide" targetRef="escalate" name="Escalate" forest:buttonColor="red" />
+    <bpmn:sequenceFlow id="flow_clear_end_cleared" sourceRef="clear" targetRef="end_cleared" />
+    <bpmn:sequenceFlow id="flow_escalate_end_escalated" sourceRef="escalate" targetRef="end_escalated" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1"><dc:Bounds x="160" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="take_di" bpmnElement="take"><dc:Bounds x="256" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="alert_di" bpmnElement="alert"><dc:Bounds x="416" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="kind_di" bpmnElement="kind"><dc:Bounds x="576" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="device_di" bpmnElement="device"><dc:Bounds x="686" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ip_check_di" bpmnElement="ip_check"><dc:Bounds x="846" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ip_read_di" bpmnElement="ip_read"><dc:Bounds x="1006" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="signals_di" bpmnElement="signals"><dc:Bounds x="1166" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="revoke_di" bpmnElement="revoke"><dc:Bounds x="1276" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="freeze_di" bpmnElement="freeze"><dc:Bounds x="1436" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="call_di" bpmnElement="call"><dc:Bounds x="1596" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="call_read_di" bpmnElement="call_read"><dc:Bounds x="1756" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="confirms_di" bpmnElement="confirms"><dc:Bounds x="1916" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="unfreeze_di" bpmnElement="unfreeze"><dc:Bounds x="2026" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="payment_di" bpmnElement="payment"><dc:Bounds x="2186" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="held_di" bpmnElement="held"><dc:Bounds x="2346" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="release_di" bpmnElement="release"><dc:Bounds x="2456" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="money_di" bpmnElement="money"><dc:Bounds x="2616" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="stop_di" bpmnElement="stop"><dc:Bounds x="2776" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="reject_di" bpmnElement="reject"><dc:Bounds x="2886" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="recall_di" bpmnElement="recall"><dc:Bounds x="3046" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="refund_di" bpmnElement="refund"><dc:Bounds x="3206" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="recall_read_di" bpmnElement="recall_read"><dc:Bounds x="3366" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="tx_read_di" bpmnElement="tx_read"><dc:Bounds x="3526" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="other_decide_di" bpmnElement="other_decide"><dc:Bounds x="3686" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="second_look_di" bpmnElement="second_look"><dc:Bounds x="3796" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="to_senior_di" bpmnElement="to_senior"><dc:Bounds x="3956" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="senior_read_di" bpmnElement="senior_read"><dc:Bounds x="4052" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="senior_di" bpmnElement="senior"><dc:Bounds x="4212" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="senior_decide_di" bpmnElement="senior_decide"><dc:Bounds x="4372" y="135" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="clear_di" bpmnElement="clear"><dc:Bounds x="4482" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_cleared_di" bpmnElement="end_cleared"><dc:Bounds x="4642" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="escalate_di" bpmnElement="escalate"><dc:Bounds x="4738" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_escalated_di" bpmnElement="end_escalated"><dc:Bounds x="4898" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_Start_1_take_di" bpmnElement="flow_Start_1_take"><di:waypoint x="196" y="160" /><di:waypoint x="256" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_take_alert_di" bpmnElement="flow_take_alert"><di:waypoint x="356" y="160" /><di:waypoint x="416" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_alert_kind_di" bpmnElement="flow_alert_kind"><di:waypoint x="516" y="160" /><di:waypoint x="576" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_kind_device_di" bpmnElement="flow_kind_device"><di:waypoint x="626" y="160" /><di:waypoint x="686" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_kind_tx_read_di" bpmnElement="flow_kind_tx_read"><di:waypoint x="626" y="160" /><di:waypoint x="3526" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_device_ip_check_di" bpmnElement="flow_device_ip_check"><di:waypoint x="786" y="160" /><di:waypoint x="846" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_ip_check_ip_read_di" bpmnElement="flow_ip_check_ip_read"><di:waypoint x="946" y="160" /><di:waypoint x="1006" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_ip_read_signals_di" bpmnElement="flow_ip_read_signals"><di:waypoint x="1106" y="160" /><di:waypoint x="1166" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_signals_revoke_di" bpmnElement="flow_signals_revoke"><di:waypoint x="1216" y="160" /><di:waypoint x="1276" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_signals_call_di" bpmnElement="flow_signals_call"><di:waypoint x="1216" y="160" /><di:waypoint x="1596" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_revoke_freeze_di" bpmnElement="flow_revoke_freeze"><di:waypoint x="1376" y="160" /><di:waypoint x="1436" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_freeze_call_di" bpmnElement="flow_freeze_call"><di:waypoint x="1536" y="160" /><di:waypoint x="1596" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_call_call_read_di" bpmnElement="flow_call_call_read"><di:waypoint x="1696" y="160" /><di:waypoint x="1756" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_call_read_confirms_di" bpmnElement="flow_call_read_confirms"><di:waypoint x="1856" y="160" /><di:waypoint x="1916" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_confirms_unfreeze_di" bpmnElement="flow_confirms_unfreeze"><di:waypoint x="1966" y="160" /><di:waypoint x="2026" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_confirms_money_di" bpmnElement="flow_confirms_money"><di:waypoint x="1966" y="160" /><di:waypoint x="2616" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_confirms_second_look_di" bpmnElement="flow_confirms_second_look"><di:waypoint x="1966" y="160" /><di:waypoint x="3796" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_unfreeze_payment_di" bpmnElement="flow_unfreeze_payment"><di:waypoint x="2126" y="160" /><di:waypoint x="2186" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_payment_held_di" bpmnElement="flow_payment_held"><di:waypoint x="2286" y="160" /><di:waypoint x="2346" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_held_release_di" bpmnElement="flow_held_release"><di:waypoint x="2396" y="160" /><di:waypoint x="2456" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_held_clear_di" bpmnElement="flow_held_clear"><di:waypoint x="2396" y="160" /><di:waypoint x="4482" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_release_clear_di" bpmnElement="flow_release_clear"><di:waypoint x="2556" y="160" /><di:waypoint x="4482" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_money_stop_di" bpmnElement="flow_money_stop"><di:waypoint x="2716" y="160" /><di:waypoint x="2776" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_stop_reject_di" bpmnElement="flow_stop_reject"><di:waypoint x="2826" y="160" /><di:waypoint x="2886" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_stop_recall_di" bpmnElement="flow_stop_recall"><di:waypoint x="2826" y="160" /><di:waypoint x="3046" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_stop_escalate_di" bpmnElement="flow_stop_escalate"><di:waypoint x="2826" y="160" /><di:waypoint x="4738" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_reject_escalate_di" bpmnElement="flow_reject_escalate"><di:waypoint x="2986" y="160" /><di:waypoint x="4738" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_recall_refund_di" bpmnElement="flow_recall_refund"><di:waypoint x="3146" y="160" /><di:waypoint x="3206" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_refund_recall_read_di" bpmnElement="flow_refund_recall_read"><di:waypoint x="3306" y="160" /><di:waypoint x="3366" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_recall_read_escalate_di" bpmnElement="flow_recall_read_escalate"><di:waypoint x="3466" y="160" /><di:waypoint x="4738" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_tx_read_other_decide_di" bpmnElement="flow_tx_read_other_decide"><di:waypoint x="3626" y="160" /><di:waypoint x="3686" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_other_decide_clear_di" bpmnElement="flow_other_decide_clear"><di:waypoint x="3736" y="160" /><di:waypoint x="4482" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_other_decide_second_look_di" bpmnElement="flow_other_decide_second_look"><di:waypoint x="3736" y="160" /><di:waypoint x="3796" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_other_decide_escalate_di" bpmnElement="flow_other_decide_escalate"><di:waypoint x="3736" y="160" /><di:waypoint x="4738" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_second_look_to_senior_di" bpmnElement="flow_second_look_to_senior"><di:waypoint x="3896" y="160" /><di:waypoint x="3956" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_to_senior_senior_read_di" bpmnElement="flow_to_senior_senior_read"><di:waypoint x="3992" y="160" /><di:waypoint x="4052" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_senior_read_senior_di" bpmnElement="flow_senior_read_senior"><di:waypoint x="4152" y="160" /><di:waypoint x="4212" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_senior_senior_decide_di" bpmnElement="flow_senior_senior_decide"><di:waypoint x="4312" y="160" /><di:waypoint x="4372" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_senior_decide_clear_di" bpmnElement="flow_senior_decide_clear"><di:waypoint x="4422" y="160" /><di:waypoint x="4482" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_senior_decide_escalate_di" bpmnElement="flow_senior_decide_escalate"><di:waypoint x="4422" y="160" /><di:waypoint x="4738" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_clear_end_cleared_di" bpmnElement="flow_clear_end_cleared"><di:waypoint x="4582" y="160" /><di:waypoint x="4642" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_escalate_end_escalated_di" bpmnElement="flow_escalate_end_escalated"><di:waypoint x="4838" y="160" /><di:waypoint x="4898" y="160" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
