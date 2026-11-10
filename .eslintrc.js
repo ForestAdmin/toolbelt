@@ -25,7 +25,7 @@ module.exports = {
   env: {
     node: true,
   },
-  // The demo's Custom components are browser files, loaded by the Forest app from a CDN.
+  // The demo's Custom components are browser files, served by the demo's agent.
   ignorePatterns: ['expected', 'src/services/dumpers/templates/**/components/**'],
   rules: {
     'jest/valid-describe': 0, // This rule does not exist anymore. It has been replaced by jest/valid-describe-callback

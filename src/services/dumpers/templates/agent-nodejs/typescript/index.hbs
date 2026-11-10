@@ -9,6 +9,8 @@ import 'dotenv/config';
 import { createAgent } from '@forestadmin/agent';
 {{#if isDemo}}
 import { createDemoBankDataSource } from '@forestadmin/datasource-demo-bank';
+import express from 'express';
+import path from 'path';
 {{else}}
 {{#if isMongo}}
 import { createMongoDataSource } from '@forestadmin/datasource-mongo';
@@ -100,10 +102,43 @@ agent.addDataSource(
 
 // Run Forest Admin workflows in this process, using an in-memory run store.
 // Runs are lost on restart; switch to `{ database: { uri: process.env.DATABASE_URL } }` to persist them.
+{{#if isDemo}}
+// The demo's agent runs on express (below), so the executor is told where it answers.
+agent.addWorkflowExecutor({
+  inMemory: true,
+  agentUrl: `http://localhost:${process.env.APPLICATION_PORT}`,
+});
+{{else}}
 agent.addWorkflowExecutor({ inMemory: true });
+{{/if}}
 
+{{#if isDemo}}
+// Expose an HTTP endpoint. It also serves the demo's Custom components (the Hub, the desk guides…)
+// from public/: the layout loads them from this agent, at /public/smart-components/…. CORS as the
+// agent answers it: the caller's origin with credentials, and Chrome's check for a public page
+// calling localhost.
+const app = express();
+app.use(
+  '/public',
+  (req, res, next) => {
+    res.set({
+      'Access-Control-Allow-Origin': req.headers.origin || '*',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Headers': req.headers['access-control-request-headers'] || '*',
+      'Access-Control-Allow-Private-Network': 'true',
+      Vary: 'Origin',
+    });
+    if (req.method === 'OPTIONS') res.sendStatus(204);
+    else next();
+  },
+  express.static(path.resolve('public')),
+);
+agent.mountOnExpress(app);
+app.listen(Number(process.env.APPLICATION_PORT));
+{{else}}
 // Expose an HTTP endpoint.
 agent.mountOnStandaloneServer(Number(process.env.APPLICATION_PORT));
+{{/if}}
 
 // Start the agent.
 agent.start().catch(error => {

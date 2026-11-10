@@ -137,6 +137,37 @@ describe('services > dumpers > AgentNodeJs', () => {
         expect(JSON.parse(pkgCall[1]).allowScripts).toStrictEqual({ sqlite3: true });
       });
 
+      it('depends on express, which serves the Custom components', async () => {
+        expect.assertions(1);
+        const { dumper, context, defaultConfig } = createDumper(language);
+
+        await dumper.dump(demoConfig(defaultConfig));
+
+        const pkgCall = context.fs.writeFileSync.mock.calls.find(([p]: [string]) =>
+          p.endsWith('package.json'),
+        );
+        expect(JSON.parse(pkgCall[1]).dependencies.express).toStrictEqual(expect.any(String));
+      });
+
+      it('copies the Custom components the agent serves', async () => {
+        expect.assertions(1);
+        const { dumper, context, defaultConfig } = createDumper(language);
+        context.fs.existsSync.mockImplementation((p: string) =>
+          p.endsWith('/common/components/hub'),
+        );
+        Object.assign(context.fs, {
+          readdirSync: jest.fn().mockReturnValue(['go-to.js']),
+          mkdirSync: jest.fn(),
+        });
+
+        await dumper.dump(demoConfig(defaultConfig));
+
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          `/test/a${language.name}Application/public/smart-components/hub/go-to.js`,
+          'mockedContent',
+        );
+      });
+
       it('passes isDemo to the index and .env templates', async () => {
         expect.assertions(2);
         const { dumper, context, defaultConfig } = createDumper(language);
@@ -735,8 +766,9 @@ describe('demo forest-layout.json asset', () => {
     expect(layout.forest.project.id).toBe(0);
     expect(layout.forest.environment.id).toBe(0);
     expect(layout.forest.team.id).toBe(0);
-    // Custom components load their files from the package (a CDN), never from an agent.
-    expect(raw).not.toMatch(/localhost:\d+\/forest\//);
+    // Custom components load their files from the environment's agent (relative URLs), never
+    // from one machine.
+    expect(raw).not.toMatch(/localhost:\d+\//);
     // A link to one project's workspace, or an inbox automated as one project's service account.
     expect(raw).not.toMatch(/app\.forestadmin\.com\/[^/"]+\/[^/"]+\/[^/"]+\/workspaces\//);
     expect(raw).not.toMatch(/"serviceAccountUserId":\s*\d+/);
@@ -791,18 +823,35 @@ describe('demo forest-layout.json asset', () => {
     );
   });
 
-  it('loads each Custom component file from the components it ships', () => {
+  it('loads each Custom component file from the agent, which serves the components it ships', () => {
     expect.hasAssertions();
     const raw = readFileSync(file, 'utf8');
-    // Each component address: what follows /common/components/, up to its query or closing quote.
-    const loaded = raw
-      .split('/common/components/')
-      .slice(1)
-      .map(part => part.split(/[?"]/)[0]);
+    const urls = [...raw.matchAll(/"(?:component|template|style)Url": "([^"]*)"/g)].map(
+      ([, url]) => url,
+    );
 
-    expect(loaded.length).toBeGreaterThan(0);
-    new Set(loaded).forEach(name =>
+    const base = '/public/smart-components/';
+
+    expect(urls.length).toBeGreaterThan(0);
+    // A relative URL: the Forest app fetches it from the environment's agent.
+    urls.forEach(url => expect(url.startsWith(base)).toBe(true));
+    new Set(urls.map(url => url.split('?')[0].slice(base.length))).forEach(name =>
       expect(existsSync(path.join(path.dirname(file), 'components', name))).toBe(true),
+    );
+    // The demo's agent serves the project's public/ folder (the dumper copies them into it).
+    ['javascript', 'typescript'].forEach(language =>
+      expect(
+        readFileSync(path.join(path.dirname(file), '..', language, 'index.hbs'), 'utf8'),
+      ).toContain("app.use(\n  '/public',"),
+    );
+  });
+
+  it('tells the workflow executor where the demo agent answers, as it runs on express', () => {
+    expect.hasAssertions();
+    ['javascript', 'typescript'].forEach(language =>
+      expect(
+        readFileSync(path.join(path.dirname(file), '..', language, 'index.hbs'), 'utf8'),
+      ).toContain('agentUrl: `http://localhost:'),
     );
   });
 

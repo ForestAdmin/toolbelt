@@ -31395,9 +31395,9 @@
               "height": 4
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/style.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.js"
+              "styleUrl": "/public/smart-components/hub/style.css",
+              "templateUrl": "/public/smart-components/hub/back.hbs",
+              "componentUrl": "/public/smart-components/hub/back.js"
             },
             "visibility": {
               "type": "always"
@@ -32493,9 +32493,9 @@
               "height": 3
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.js?list=List_Untreated"
+              "styleUrl": "/public/smart-components/hub/select-first.css",
+              "templateUrl": "/public/smart-components/hub/select-first.hbs",
+              "componentUrl": "/public/smart-components/hub/select-first.js?list=List_Untreated"
             },
             "visibility": {
               "type": "always"
@@ -32602,9 +32602,9 @@
               "height": 7
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=a1741d04-6ff4-4a65-a0e9-6dc69c22fa28&label=Now+let%E2%80%99s+apply+this+to+a+full+KYC+Case&unlock=simplified"
+              "styleUrl": "/public/smart-components/hub/select-first.css",
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=a1741d04-6ff4-4a65-a0e9-6dc69c22fa28&label=Now+let%E2%80%99s+apply+this+to+a+full+KYC+Case&unlock=simplified"
             },
             "visibility": {
               "type": "always"
@@ -33067,9 +33067,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=654efc2e-e63e-4bf5-89aa-a220fec2855b&label=Open+the+Onboarding+desk+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=654efc2e-e63e-4bf5-89aa-a220fec2855b&label=Open+the+Onboarding+desk+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -33086,9 +33086,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=654efc2e-e63e-4bf5-89aa-a220fec2855b&label=Open+the+Onboarding+desk+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=654efc2e-e63e-4bf5-89aa-a220fec2855b&label=Open+the+Onboarding+desk+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -33105,9 +33105,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=0de6234b-0b10-47fd-862b-a7f88f4c3845&label=Start+on+the+Alerts+desk+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=0de6234b-0b10-47fd-862b-a7f88f4c3845&label=Start+on+the+Alerts+desk+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -33492,9 +33492,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=6edb4352-9147-4d77-8cfc-4b31ec903f72&label=Open+the+Ops+overview+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=6edb4352-9147-4d77-8cfc-4b31ec903f72&label=Open+the+Ops+overview+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -33511,9 +33511,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=b4b80f61-2e70-4e10-8cb6-33e3926a5839&label=How+workspaces+are+built+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=b4b80f61-2e70-4e10-8cb6-33e3926a5839&label=How+workspaces+are+built+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -33530,9 +33530,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=e2607278-3d14-48e7-880c-36610417b4a2&label=Start+with+Workflows+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=e2607278-3d14-48e7-880c-36610417b4a2&label=Start+with+Workflows+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -33650,9 +33650,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=654efc2e-e63e-4bf5-89aa-a220fec2855b&label=%F0%9F%9B%82+Onboarding+desk+%E2%86%92&look=link&color=%232F6FED&size=15&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=654efc2e-e63e-4bf5-89aa-a220fec2855b&label=%F0%9F%9B%82+Onboarding+desk+%E2%86%92&look=link&color=%232F6FED&size=15&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -33691,9 +33691,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=0de6234b-0b10-47fd-862b-a7f88f4c3845&label=%F0%9F%9A%A8+Alerts+desk+%E2%86%92&look=link&color=%232F6FED&size=15&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=0de6234b-0b10-47fd-862b-a7f88f4c3845&label=%F0%9F%9A%A8+Alerts+desk+%E2%86%92&look=link&color=%232F6FED&size=15&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -33732,9 +33732,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=3b609bd4-8c1e-45b0-8ca5-04a2a18b9929&label=%F0%9F%94%8E+Investigations+desk+%E2%86%92&look=link&color=%232F6FED&size=15&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=3b609bd4-8c1e-45b0-8ca5-04a2a18b9929&label=%F0%9F%94%8E+Investigations+desk+%E2%86%92&look=link&color=%232F6FED&size=15&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -33773,9 +33773,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=a20b591a-fc4d-4d01-8c85-559d571b1c29&label=%E2%9A%96%EF%B8%8F+MLRO+desk+%E2%86%92&look=link&color=%232F6FED&size=15&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=a20b591a-fc4d-4d01-8c85-559d571b1c29&label=%E2%9A%96%EF%B8%8F+MLRO+desk+%E2%86%92&look=link&color=%232F6FED&size=15&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -33814,9 +33814,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=35e0620c-79c2-45c3-8c6d-cac353ba9342&label=%F0%9F%92%B6+Payments+desk+%E2%86%92&look=link&color=%232F6FED&size=15&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=35e0620c-79c2-45c3-8c6d-cac353ba9342&label=%F0%9F%92%B6+Payments+desk+%E2%86%92&look=link&color=%232F6FED&size=15&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -33855,9 +33855,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=9d9fa26f-31c8-4c99-874e-2154843f6ba5&label=%F0%9F%92%B3+Disputes+desk+%E2%86%92&look=link&color=%232F6FED&size=15&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=9d9fa26f-31c8-4c99-874e-2154843f6ba5&label=%F0%9F%92%B3+Disputes+desk+%E2%86%92&look=link&color=%232F6FED&size=15&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -33896,9 +33896,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=6edb4352-9147-4d77-8cfc-4b31ec903f72&label=%F0%9F%93%8A+Ops+overview+%E2%86%92&look=link&color=%232F6FED&size=15&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=6edb4352-9147-4d77-8cfc-4b31ec903f72&label=%F0%9F%93%8A+Ops+overview+%E2%86%92&look=link&color=%232F6FED&size=15&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -34000,9 +34000,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=015fe3f1-901b-46de-8cab-33d6f79025bc&label=Collections+%26+record+pages+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=015fe3f1-901b-46de-8cab-33d6f79025bc&label=Collections+%26+record+pages+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -34041,9 +34041,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=3822638d-f3ec-41f3-8bd4-136d7e01dc26&label=Segments+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=3822638d-f3ec-41f3-8bd4-136d7e01dc26&label=Segments+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -34082,9 +34082,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=ae9d5300-7124-41c7-8557-49758f9cda30&label=Inboxes+%26+queues+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=ae9d5300-7124-41c7-8557-49758f9cda30&label=Inboxes+%26+queues+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -34123,9 +34123,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=e2607278-3d14-48e7-880c-36610417b4a2&label=Workflows+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=e2607278-3d14-48e7-880c-36610417b4a2&label=Workflows+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -34164,9 +34164,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=8da7be9d-4b5c-4916-8e38-36c0f1a6004d&label=Smart+Actions+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=8da7be9d-4b5c-4916-8e38-36c0f1a6004d&label=Smart+Actions+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -34205,9 +34205,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=d714bf27-ffca-429d-8b7d-86f7c56b8441&label=Charts+%26+analytics+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=d714bf27-ffca-429d-8b7d-86f7c56b8441&label=Charts+%26+analytics+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -34246,9 +34246,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=b4b80f61-2e70-4e10-8cb6-33e3926a5839&label=Workspaces+%26+the+layout+editor+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=b4b80f61-2e70-4e10-8cb6-33e3926a5839&label=Workspaces+%26+the+layout+editor+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -34287,9 +34287,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=41af05cf-b309-4601-8c7d-6912c5719da2&label=Custom+components+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=41af05cf-b309-4601-8c7d-6912c5719da2&label=Custom+components+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -34328,9 +34328,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=df6f1e14-8e6e-441f-8a36-ac38932019d6&label=Roles%2C+teams+%26+permissions+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=df6f1e14-8e6e-441f-8a36-ac38932019d6&label=Roles%2C+teams+%26+permissions+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -34369,9 +34369,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=cf02cd81-1f7f-4476-8057-45e19220ba66&label=The+agent+%26+data+privacy+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=cf02cd81-1f7f-4476-8057-45e19220ba66&label=The+agent+%26+data+privacy+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -34410,9 +34410,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=525f3c1f-cb4d-44f1-8242-5614d9fdbce6&label=AI+in+Forest+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=525f3c1f-cb4d-44f1-8242-5614d9fdbce6&label=AI+in+Forest+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -34451,9 +34451,9 @@
               "height": 2
             },
             "options": {
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=2ce0420b-42fd-4e69-81b6-39b1788c407c&label=Activity+log+%26+audit+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css"
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=2ce0420b-42fd-4e69-81b6-39b1788c407c&label=Activity+log+%26+audit+%E2%86%92&look=link&color=%232F6FED&size=14&weight=bold&align=left",
+              "styleUrl": "/public/smart-components/hub/select-first.css"
             },
             "visibility": {
               "type": "always"
@@ -34718,9 +34718,9 @@
               "height": 4
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/style.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.js"
+              "styleUrl": "/public/smart-components/hub/style.css",
+              "templateUrl": "/public/smart-components/hub/back.hbs",
+              "componentUrl": "/public/smart-components/hub/back.js"
             },
             "visibility": {
               "type": "always"
@@ -34737,9 +34737,9 @@
               "height": 37
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/kyc-flow.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/kyc-flow.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/kyc-flow.js"
+              "styleUrl": "/public/smart-components/hub/kyc-flow.css",
+              "templateUrl": "/public/smart-components/hub/kyc-flow.hbs",
+              "componentUrl": "/public/smart-components/hub/kyc-flow.js"
             },
             "visibility": {
               "type": "always"
@@ -35074,9 +35074,9 @@
               "height": 5
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/run-action.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/run-action.js?collection=kyc_cases&action=Reset+the+demo+cases&label=Reset+the+demo+cases"
+              "styleUrl": "/public/smart-components/hub/select-first.css",
+              "templateUrl": "/public/smart-components/hub/run-action.hbs",
+              "componentUrl": "/public/smart-components/hub/run-action.js?collection=kyc_cases&action=Reset+the+demo+cases&label=Reset+the+demo+cases"
             },
             "visibility": {
               "type": "always"
@@ -35760,9 +35760,9 @@
               "height": 83
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/demo-guide.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/demo-guide.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/demo-guide.js?list=List_Untreated"
+              "styleUrl": "/public/smart-components/hub/demo-guide.css",
+              "templateUrl": "/public/smart-components/hub/demo-guide.hbs",
+              "componentUrl": "/public/smart-components/hub/demo-guide.js?list=List_Untreated"
             },
             "visibility": {
               "type": "always"
@@ -35823,9 +35823,9 @@
               "height": 4
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=59d602ed-70de-43b8-8690-6b7b274affc4&label=%E2%86%90+Back+to+the+Simplified+desk&look=back"
+              "styleUrl": "/public/smart-components/hub/select-first.css",
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=59d602ed-70de-43b8-8690-6b7b274affc4&label=%E2%86%90+Back+to+the+Simplified+desk&look=back"
             },
             "visibility": {
               "type": "always"
@@ -35925,9 +35925,9 @@
               "height": 3
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.js?list=List_Untreated&ref=KYC-DEMO-0001&label=Take+first+case"
+              "styleUrl": "/public/smart-components/hub/select-first.css",
+              "templateUrl": "/public/smart-components/hub/select-first.hbs",
+              "componentUrl": "/public/smart-components/hub/select-first.js?list=List_Untreated&ref=KYC-DEMO-0001&label=Take+first+case"
             },
             "visibility": {
               "type": "always"
@@ -35944,9 +35944,9 @@
               "height": 3
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.js?list=List_Untreated&ref=KYC-DEMO-0002&label=Take+second+case&after=KYC-DEMO-0001"
+              "styleUrl": "/public/smart-components/hub/select-first.css",
+              "templateUrl": "/public/smart-components/hub/select-first.hbs",
+              "componentUrl": "/public/smart-components/hub/select-first.js?list=List_Untreated&ref=KYC-DEMO-0002&label=Take+second+case&after=KYC-DEMO-0001"
             },
             "visibility": {
               "type": "always"
@@ -35963,9 +35963,9 @@
               "height": 16
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=51f5d498-7058-4e4d-85b3-7fbc67c9c5dd&label=Go+to+the+senior+officer%E2%80%99s+desk+%E2%86%92&list=List_Untreated&after=KYC-DEMO-0002&afterStatus=PENDING_APPROVAL%2CAPPROVED"
+              "styleUrl": "/public/smart-components/hub/select-first.css",
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=51f5d498-7058-4e4d-85b3-7fbc67c9c5dd&label=Go+to+the+senior+officer%E2%80%99s+desk+%E2%86%92&list=List_Untreated&after=KYC-DEMO-0002&afterStatus=PENDING_APPROVAL%2CAPPROVED"
             },
             "visibility": {
               "type": "always"
@@ -36537,9 +36537,9 @@
               "height": 61
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/demo-guide.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/senior-guide.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/senior-guide.js"
+              "styleUrl": "/public/smart-components/hub/demo-guide.css",
+              "templateUrl": "/public/smart-components/hub/senior-guide.hbs",
+              "componentUrl": "/public/smart-components/hub/senior-guide.js"
             },
             "visibility": {
               "type": "always"
@@ -36576,9 +36576,9 @@
               "height": 4
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/select-first.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/go-to.js?workspace=a1741d04-6ff4-4a65-a0e9-6dc69c22fa28&label=%E2%86%90+Back+to+the+KYC+Case+desk&look=back"
+              "styleUrl": "/public/smart-components/hub/select-first.css",
+              "templateUrl": "/public/smart-components/hub/go-to.hbs",
+              "componentUrl": "/public/smart-components/hub/go-to.js?workspace=a1741d04-6ff4-4a65-a0e9-6dc69c22fa28&label=%E2%86%90+Back+to+the+KYC+Case+desk&look=back"
             },
             "visibility": {
               "type": "always"
@@ -36645,9 +36645,9 @@
               "height": 4
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/style.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.js"
+              "styleUrl": "/public/smart-components/hub/style.css",
+              "templateUrl": "/public/smart-components/hub/back.hbs",
+              "componentUrl": "/public/smart-components/hub/back.js"
             },
             "visibility": {
               "type": "always"
@@ -36664,9 +36664,9 @@
               "height": 80
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/data-map.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/data-map.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/data-map.js"
+              "styleUrl": "/public/smart-components/hub/data-map.css",
+              "templateUrl": "/public/smart-components/hub/data-map.hbs",
+              "componentUrl": "/public/smart-components/hub/data-map.js"
             },
             "visibility": {
               "type": "always"
@@ -36692,9 +36692,9 @@
               "height": 100
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/style.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/template.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/component.js"
+              "styleUrl": "/public/smart-components/hub/style.css",
+              "templateUrl": "/public/smart-components/hub/template.hbs",
+              "componentUrl": "/public/smart-components/hub/component.js"
             },
             "visibility": {
               "type": "always"
@@ -39532,9 +39532,9 @@
               "height": 2
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/style.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.js"
+              "styleUrl": "/public/smart-components/hub/style.css",
+              "templateUrl": "/public/smart-components/hub/back.hbs",
+              "componentUrl": "/public/smart-components/hub/back.js"
             },
             "visibility": {
               "type": "always"
@@ -41819,9 +41819,9 @@
               "height": 2
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/style.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.js"
+              "styleUrl": "/public/smart-components/hub/style.css",
+              "templateUrl": "/public/smart-components/hub/back.hbs",
+              "componentUrl": "/public/smart-components/hub/back.js"
             },
             "visibility": {
               "type": "always"
@@ -43289,9 +43289,9 @@
               "height": 2
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/style.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.js"
+              "styleUrl": "/public/smart-components/hub/style.css",
+              "templateUrl": "/public/smart-components/hub/back.hbs",
+              "componentUrl": "/public/smart-components/hub/back.js"
             },
             "visibility": {
               "type": "always"
@@ -44815,9 +44815,9 @@
               "height": 2
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/style.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.js"
+              "styleUrl": "/public/smart-components/hub/style.css",
+              "templateUrl": "/public/smart-components/hub/back.hbs",
+              "componentUrl": "/public/smart-components/hub/back.js"
             },
             "visibility": {
               "type": "always"
@@ -46271,9 +46271,9 @@
               "height": 2
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/style.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.js"
+              "styleUrl": "/public/smart-components/hub/style.css",
+              "templateUrl": "/public/smart-components/hub/back.hbs",
+              "componentUrl": "/public/smart-components/hub/back.js"
             },
             "visibility": {
               "type": "always"
@@ -48608,9 +48608,9 @@
               "height": 2
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/style.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.js"
+              "styleUrl": "/public/smart-components/hub/style.css",
+              "templateUrl": "/public/smart-components/hub/back.hbs",
+              "componentUrl": "/public/smart-components/hub/back.js"
             },
             "visibility": {
               "type": "always"
@@ -49496,9 +49496,9 @@
               "height": 2
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/style.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/back.js"
+              "styleUrl": "/public/smart-components/hub/style.css",
+              "templateUrl": "/public/smart-components/hub/back.hbs",
+              "componentUrl": "/public/smart-components/hub/back.js"
             },
             "visibility": {
               "type": "always"
@@ -49524,9 +49524,9 @@
               "height": 100
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature-collections.js"
+              "styleUrl": "/public/smart-components/hub/feature.css",
+              "templateUrl": "/public/smart-components/hub/feature.hbs",
+              "componentUrl": "/public/smart-components/hub/feature-collections.js"
             },
             "visibility": {
               "type": "always"
@@ -49552,9 +49552,9 @@
               "height": 100
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature-segments.js"
+              "styleUrl": "/public/smart-components/hub/feature.css",
+              "templateUrl": "/public/smart-components/hub/feature.hbs",
+              "componentUrl": "/public/smart-components/hub/feature-segments.js"
             },
             "visibility": {
               "type": "always"
@@ -49580,9 +49580,9 @@
               "height": 100
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature-inboxes.js"
+              "styleUrl": "/public/smart-components/hub/feature.css",
+              "templateUrl": "/public/smart-components/hub/feature.hbs",
+              "componentUrl": "/public/smart-components/hub/feature-inboxes.js"
             },
             "visibility": {
               "type": "always"
@@ -49608,9 +49608,9 @@
               "height": 100
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature-workflows.js"
+              "styleUrl": "/public/smart-components/hub/feature.css",
+              "templateUrl": "/public/smart-components/hub/feature.hbs",
+              "componentUrl": "/public/smart-components/hub/feature-workflows.js"
             },
             "visibility": {
               "type": "always"
@@ -49636,9 +49636,9 @@
               "height": 100
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature-smart-actions.js"
+              "styleUrl": "/public/smart-components/hub/feature.css",
+              "templateUrl": "/public/smart-components/hub/feature.hbs",
+              "componentUrl": "/public/smart-components/hub/feature-smart-actions.js"
             },
             "visibility": {
               "type": "always"
@@ -49664,9 +49664,9 @@
               "height": 100
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature-charts.js"
+              "styleUrl": "/public/smart-components/hub/feature.css",
+              "templateUrl": "/public/smart-components/hub/feature.hbs",
+              "componentUrl": "/public/smart-components/hub/feature-charts.js"
             },
             "visibility": {
               "type": "always"
@@ -49692,9 +49692,9 @@
               "height": 100
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature-workspaces.js"
+              "styleUrl": "/public/smart-components/hub/feature.css",
+              "templateUrl": "/public/smart-components/hub/feature.hbs",
+              "componentUrl": "/public/smart-components/hub/feature-workspaces.js"
             },
             "visibility": {
               "type": "always"
@@ -49720,9 +49720,9 @@
               "height": 100
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature-custom-components.js"
+              "styleUrl": "/public/smart-components/hub/feature.css",
+              "templateUrl": "/public/smart-components/hub/feature.hbs",
+              "componentUrl": "/public/smart-components/hub/feature-custom-components.js"
             },
             "visibility": {
               "type": "always"
@@ -49748,9 +49748,9 @@
               "height": 100
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature-roles.js"
+              "styleUrl": "/public/smart-components/hub/feature.css",
+              "templateUrl": "/public/smart-components/hub/feature.hbs",
+              "componentUrl": "/public/smart-components/hub/feature-roles.js"
             },
             "visibility": {
               "type": "always"
@@ -49776,9 +49776,9 @@
               "height": 100
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature-agent.js"
+              "styleUrl": "/public/smart-components/hub/feature.css",
+              "templateUrl": "/public/smart-components/hub/feature.hbs",
+              "componentUrl": "/public/smart-components/hub/feature-agent.js"
             },
             "visibility": {
               "type": "always"
@@ -49804,9 +49804,9 @@
               "height": 100
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature-ai.js"
+              "styleUrl": "/public/smart-components/hub/feature.css",
+              "templateUrl": "/public/smart-components/hub/feature.hbs",
+              "componentUrl": "/public/smart-components/hub/feature-ai.js"
             },
             "visibility": {
               "type": "always"
@@ -49832,9 +49832,9 @@
               "height": 100
             },
             "options": {
-              "styleUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.css",
-              "templateUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature.hbs",
-              "componentUrl": "https://cdn.jsdelivr.net/npm/forest-cli@5/dist/services/dumpers/templates/agent-nodejs/common/components/hub/feature-activity.js"
+              "styleUrl": "/public/smart-components/hub/feature.css",
+              "templateUrl": "/public/smart-components/hub/feature.hbs",
+              "componentUrl": "/public/smart-components/hub/feature-activity.js"
             },
             "visibility": {
               "type": "always"
