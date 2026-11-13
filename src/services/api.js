@@ -68,6 +68,22 @@ function Api({
     }
   };
 
+  this.inspectInvitationClaim = async (claim, sessionToken) =>
+    agent
+      .post(`${this.endpoint()}/api/developer-invitations/claim/inspect`)
+      .set(headers)
+      .set('Authorization', `Bearer ${sessionToken}`)
+      .send({ claim })
+      .then(response => {
+        if (response.status !== 200) {
+          throw Object.assign(new Error('Unexpected invitation check status'), {
+            status: response.status,
+          });
+        }
+
+        return response.body;
+      });
+
   this.createProject = async (config, sessionToken, project) => {
     let newProject;
 
@@ -80,7 +96,7 @@ function Api({
         .send(projectSerializer.serialize(project))
         .then(response => projectDeserializer.deserialize(response.body));
     } catch (error) {
-      if (error.message === 'Conflict') {
+      if (error.message === 'Conflict' && !project.invitationClaim) {
         const { projectId } = error.response.body.errors[0].meta;
 
         if (!projectId) {

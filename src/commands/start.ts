@@ -7,6 +7,18 @@ import fs from 'fs';
 
 import AbstractCommand from '../abstract-command';
 import {
+  INVALID_CLAIM_MESSAGE,
+  MAX_PROJECT_NAME_LENGTH,
+  REPEATED_CLAIM_MESSAGE,
+  inspectionFailure,
+  inviterLabel,
+  isClaimRepeated,
+  isSafeProjectName,
+  isWellFormedClaim,
+  parseInspection,
+  sanitizeForDisplay,
+} from '../services/invitation-claim';
+import {
   NODE_DATASOURCE,
   detectNodeStack,
   detectRails,
@@ -45,6 +57,7 @@ const READY = /schema was (updated|not updated)/i;
 const SCHEMA_SYNC_FAILED = /schema sync failed/i;
 
 type Flow = 'demo' | 'standalone' | 'inapp';
+type StartFlags = Record<string, string | undefined>;
 type Tail = {
   child?: ChildProcess;
   /** Forest project name — a label, not necessarily a directory. */
@@ -99,6 +112,9 @@ export default class StartCommand extends AbstractCommand {
       description: 'How to mount Forest in a Node app.',
       options: ['ai', 'manual', 'standalone'],
     }),
+    invitation: Flags.string({
+      description: 'Developer invitation claim, from the invitation page.',
+    }),
   };
 
   private dryRun = false;
@@ -121,6 +137,8 @@ export default class StartCommand extends AbstractCommand {
     const { flags } = await this.parse(StartCommand);
     this.dryRun = flags['dry-run'];
 
+    if (flags.invitation !== undefined) this.refuseUnusableInvitation(flags);
+
     // Refused before `login`, since every flow creates a project server-side before its first
     // spawn: `npm` is `npm.cmd` there, and a back-end cannot be stopped without a process group.
     if (process.platform === 'win32' && !this.dryRun) {
@@ -138,7 +156,7 @@ export default class StartCommand extends AbstractCommand {
       .forEach(key => delete process.env[key]);
 
     try {
-      await this.onboard(flags as Record<string, string | undefined>);
+      await this.onboard(flags as StartFlags);
     } catch (error) {
       // Anything after a boot — `layout:apply`, a readiness timeout — can fail. The back-end is
       // detached, so it would survive, and its open pipes can keep this command alive with it: an
@@ -149,7 +167,17 @@ export default class StartCommand extends AbstractCommand {
     }
   }
 
-  private async onboard(flags: Record<string, string | undefined>): Promise<void> {
+  private refuseUnusableInvitation(flags: StartFlags): void {
+    if (!isWellFormedClaim(flags.invitation)) throw new Error(INVALID_CLAIM_MESSAGE);
+    if (isClaimRepeated(this.argv, flags.invitation)) throw new Error(REPEATED_CLAIM_MESSAGE);
+    if (!flags.flow && !this.interactive) {
+      throw new Error(
+        'Without a terminal, --invitation needs a flow: add --flow standalone or --flow inapp.',
+      );
+    }
+  }
+
+  private async onboard(flags: StartFlags): Promise<void> {
     this.logger.log(
       `\nWelcome to ${this.chalk.green('Forest')}. Let's get your back-office running.`,
     );
@@ -162,14 +190,101 @@ export default class StartCommand extends AbstractCommand {
       await this.forest(['login']); // OIDC device flow (browser signup/login)
     }
 
+    if (flags.invitation && !(await this.acceptInvitation(flags, flags.invitation))) {
+      return this.logger.log('Nothing was created.');
+    }
+
     const flow = await this.pickFlow(flags.flow as Flow | undefined);
 
-    if (flow === 'demo') return this.flowDemo();
+    if (flow === 'demo') return this.flowDemo(flags);
     if (flow === 'standalone') return this.flowStandalone(flags);
 
     const stack = await this.pickStack(flags.stack as 'rails' | 'node' | undefined);
 
     return stack === 'rails' ? this.flowInAppRails(flags) : this.flowInAppNode(flags);
+  }
+
+  private async acceptInvitation(flags: StartFlags, claim: string): Promise<boolean> {
+    const { FOREST_SERVER_URL, FOREST_URL_IS_DEFAULT } = this.context.env;
+    const server = FOREST_URL_IS_DEFAULT ? '' : StartCommand.originOf(FOREST_SERVER_URL);
+
+    if (server) this.notice(this.chalk.yellow(`Δ This invitation will be sent to ${server}.`));
+    if (this.dryRun) {
+      this.logger.log(this.chalk.grey('  (dry-run — invitation not checked)'));
+
+      return true;
+    }
+
+    const { inviter, project } = parseInspection(await this.inspectInvitation(claim));
+    if (project) StartCommand.resumeProject(flags, project.name, claim);
+
+    const label = `${inviterLabel(inviter, claim)}${server ? ` on ${server}` : ''}`;
+    this.notice(`\nThis project is for ${this.chalk.bold(label)}.`);
+
+    if (!this.interactive) {
+      this.notice(`Creating this project for ${label} (non-interactive, not asking).`);
+    } else if (!(await this.confirm(`Create this project for ${label}?`, false))) {
+      return false;
+    }
+
+    if (project) this.logger.log(`Resuming the project ${project.name} this invitation started.`);
+
+    return true;
+  }
+
+  private async inspectInvitation(claim: string): Promise<unknown> {
+    try {
+      return await this.context.api.inspectInvitationClaim(
+        claim,
+        this.context.authenticator.getAuthToken(),
+      );
+    } catch (error) {
+      throw inspectionFailure(error, claim);
+    }
+  }
+
+  private static resumeProject(flags: StartFlags, name: string, claim: string): void {
+    if (!isSafeProjectName(name) || name.includes(claim)) {
+      throw new Error(
+        'Forest returned a project name this CLI cannot use as a directory. Nothing was created.',
+      );
+    }
+
+    if (flags.name && flags.name !== name) {
+      throw new Error(
+        `This invitation already started the project ${name}, not ${sanitizeForDisplay(
+          flags.name,
+          MAX_PROJECT_NAME_LENGTH,
+          claim,
+        )}. Run the command again without --name.`,
+      );
+    }
+
+    Object.assign(flags, { name, resume: name });
+  }
+
+  private refuseExistingResume(flags: StartFlags): void {
+    if (flags.resume && !this.dryRun && fs.existsSync(flags.resume)) {
+      throw new Error(
+        `./${flags.resume} already exists. Remove it, or finish the setup of ${flags.resume} by hand.`,
+      );
+    }
+  }
+
+  private notice(line: string): void {
+    this.context.stdout.write(`${line}\n`);
+  }
+
+  private static originOf(url: string): string {
+    try {
+      return sanitizeForDisplay(new URL(url).origin, 300);
+    } catch {
+      return sanitizeForDisplay(url, 300);
+    }
+  }
+
+  private static invitationArgs(flags: StartFlags): string[] {
+    return flags.invitation ? ['--invitation', flags.invitation] : [];
   }
 
   // ---------- primitives ----------
@@ -185,6 +300,7 @@ export default class StartCommand extends AbstractCommand {
     return (
       previous === '--databaseConnectionURL' ||
       previous === '-c' ||
+      previous === '--invitation' ||
       (command === 'bin/rails' && previous === 'forest_admin_rails:install')
     );
   }
@@ -202,14 +318,13 @@ export default class StartCommand extends AbstractCommand {
    * userinfo, so a bare positional or a URL's `?password=` would otherwise print in the clear.
    */
   private static scrubbed(error: unknown, command: string, args: string[]): Error {
-    const hidden = args.filter((_, index) => StartCommand.isHidden(command, args, index));
+    return new Error(StartCommand.masked((error as Error).message, command, args));
+  }
 
-    return new Error(
-      hidden.reduce(
-        (message, value) => message.split(value).join('<redacted>'),
-        (error as Error).message,
-      ),
-    );
+  private static masked(text: string, command: string, args: string[]): string {
+    return args
+      .filter((_, index) => StartCommand.isHidden(command, args, index))
+      .reduce((result, value) => result.split(value).join('<redacted>'), text);
   }
 
   /** Run a command, echoing it first. The echo is the point: it teaches what the wrapper does. */
@@ -252,7 +367,9 @@ export default class StartCommand extends AbstractCommand {
     }
 
     const onProgress = (chunk: string) =>
-      this.logger.log(this.chalk.grey(chunk.replace(/\n$/, '')));
+      this.logger.log(
+        this.chalk.grey(StartCommand.masked(chunk, 'forest', args).replace(/\n$/, '')),
+      );
 
     try {
       const { stdout } = await runCapture(process.execPath, [process.argv[1], ...args], {
@@ -265,7 +382,9 @@ export default class StartCommand extends AbstractCommand {
       // message would match every failure and re-run a command that creates a project.
       // Only the diagnostic below the first line can say the flag is unknown.
       const [, ...detail] = (error as Error).message.split('\n');
-      if (!args.includes('--format') || !/Nonexistent flag/i.test(detail.join('\n'))) throw error;
+      if (!args.includes('--format') || !/Nonexistent flag/i.test(detail.join('\n'))) {
+        throw StartCommand.scrubbed(error, 'forest', args);
+      }
 
       const withoutFormat = args.filter(
         (arg, index) => arg !== '--format' && args[index - 1] !== '--format',
@@ -279,7 +398,9 @@ export default class StartCommand extends AbstractCommand {
       const { stdout, stderr } = await runCapture(process.execPath, [
         process.argv[1],
         ...withoutFormat,
-      ]);
+      ]).catch(retryError => {
+        throw StartCommand.scrubbed(retryError, 'forest', args);
+      });
 
       return `${stdout}\n${stderr}`;
     }
@@ -313,8 +434,8 @@ export default class StartCommand extends AbstractCommand {
     return this.context.inquirer.prompt([question]);
   }
 
-  private async confirm(message: string): Promise<boolean> {
-    return (await this.ask({ type: 'confirm', name: 'value', message, default: true })).value;
+  private async confirm(message: string, def = true): Promise<boolean> {
+    return (await this.ask({ type: 'confirm', name: 'value', message, default: def })).value;
   }
 
   private instruct(title: string, lines: string[]): void {
@@ -401,12 +522,13 @@ export default class StartCommand extends AbstractCommand {
 
   // ---------- flows ----------
 
-  private async flowDemo(): Promise<void> {
+  private async flowDemo(flags: StartFlags): Promise<void> {
+    this.refuseExistingResume(flags);
     // Drawn until free: `create:demo` would register a project, then skip every existing file.
-    let name: string;
-    do {
+    let name = flags.resume;
+    while (!name || (!flags.resume && !this.dryRun && fs.existsSync(name))) {
       name = `forest-demo-${Math.random().toString(36).slice(2, 6)}`;
-    } while (!this.dryRun && fs.existsSync(name));
+    }
 
     await this.forest([
       'projects:create:demo',
@@ -417,6 +539,7 @@ export default class StartCommand extends AbstractCommand {
       'http://localhost',
       '-P',
       String(DEMO_PORT),
+      ...StartCommand.invitationArgs(flags),
     ]);
     await this.installAndBuild(name);
 
@@ -461,11 +584,12 @@ export default class StartCommand extends AbstractCommand {
     this.logger.log(this.chalk.grey('  Connect real data: forest projects:create:sql'));
   }
 
-  private async flowStandalone(flags: Record<string, string | undefined>): Promise<void> {
+  private async flowStandalone(flags: StartFlags): Promise<void> {
+    this.refuseExistingResume(flags);
     const name = await this.promptName(flags.name, { createsDir: true });
     // `create:sql` prompts for the database itself — including the connection URL — so nothing
     // about the user's credentials ever passes through this wrapper.
-    const args = ['projects:create:sql', name];
+    const args = ['projects:create:sql', name, ...StartCommand.invitationArgs(flags)];
 
     // Without a --db, `create:sql` asks for everything itself — language and hostname included.
     // Forcing them here would quietly take away the choice of JavaScript or of a free port.
@@ -517,7 +641,7 @@ export default class StartCommand extends AbstractCommand {
     await this.handoff({ ...tail, child: booted.child, mute: booted.mute });
   }
 
-  private async flowInAppRails(flags: Record<string, string | undefined>): Promise<void> {
+  private async flowInAppRails(flags: StartFlags): Promise<void> {
     const name = await this.promptName(flags.name);
     const output = await this.forestCapture([
       'projects:create:in-app',
@@ -528,6 +652,7 @@ export default class StartCommand extends AbstractCommand {
       String(RAILS_PORT),
       '--format',
       'json',
+      ...StartCommand.invitationArgs(flags),
     ]);
     const secrets = StartCommand.parseSecrets(output);
 
@@ -586,7 +711,7 @@ export default class StartCommand extends AbstractCommand {
     await this.handoff({ ...tail, child: booted.child, mute: booted.mute });
   }
 
-  private async flowInAppNode(flags: Record<string, string | undefined>): Promise<void> {
+  private async flowInAppNode(flags: StartFlags): Promise<void> {
     // Asked FIRST, and on purpose: "mount on standalone" abandons this flow, and everything below
     // has side effects — a Forest project created server-side, and packages written into the
     // user's own package.json. Asking after would leave both behind.
@@ -613,6 +738,7 @@ export default class StartCommand extends AbstractCommand {
       String(NODE_PORT),
       '--format',
       'json',
+      ...StartCommand.invitationArgs(flags),
     ]);
     const secrets = StartCommand.parseSecrets(output);
 

@@ -61,6 +61,24 @@ describe('project creator', () => {
 
       expect(context.api.createProject).toHaveBeenCalledTimes(1);
     });
+
+    it('should not relabel an invitation refusal as a name conflict', async () => {
+      expect.assertions(1);
+
+      const context = setupTest();
+      const refusal = Object.assign(new Error('Conflict'), {
+        response: {
+          body: {
+            errors: [{ detail: 'Expired.', meta: { code: 'developer_invitation_claim_expired' } }],
+          },
+        },
+      });
+      context.api.createProject.mockRejectedValue(refusal);
+
+      const projectCreator = new ProjectCreator(context);
+
+      await expect(projectCreator.create('dummy', {}, {}, 'claim')).rejects.toThrow('Conflict');
+    });
   });
 
   describe('when creating the project', () => {
@@ -104,6 +122,39 @@ describe('project creator', () => {
         authSecret: 'generated-key',
         endpoint: 'http://localhost:3310',
       });
+    });
+
+    it('should send the invitation claim when one is given', async () => {
+      expect.assertions(1);
+      const context = createContext();
+      const projectCreator = new ProjectCreator(context);
+      context.api.createProject.mockResolvedValue({ id: '1', defaultEnvironment: {} });
+
+      await projectCreator.create(
+        'session-token',
+        { appName: 'app' },
+        { agent: 'nodejs' },
+        'CLAIM',
+      );
+
+      expect(context.api.createProject).toHaveBeenCalledWith(
+        { appName: 'app' },
+        'session-token',
+        expect.objectContaining({ invitationClaim: 'CLAIM' }),
+      );
+    });
+
+    it('should not send the invitation claim key when none is given', async () => {
+      expect.assertions(1);
+      const context = createContext();
+      const projectCreator = new ProjectCreator(context);
+      context.api.createProject.mockResolvedValue({ id: '1', defaultEnvironment: {} });
+
+      await projectCreator.create('session-token', { appName: 'app' }, { agent: 'nodejs' });
+
+      expect(Object.keys(context.api.createProject.mock.calls[0][2])).not.toContain(
+        'invitationClaim',
+      );
     });
   });
 });

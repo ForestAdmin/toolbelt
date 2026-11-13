@@ -3,6 +3,10 @@
 import { Config, Flags } from '@oclif/core';
 
 import AbstractProjectCreateCommand from '../src/abstract-project-create-command';
+import DemoCommand from '../src/commands/projects/create/demo';
+import InAppCommand from '../src/commands/projects/create/in-app';
+import NosqlCommand from '../src/commands/projects/create/nosql';
+import SqlCommand from '../src/commands/projects/create/sql';
 import InvalidOptionError from '../src/errors/options/invalid-option-error';
 import { validateSqlConnectionUrl } from '../src/services/projects/create/options';
 import Agents from '../src/utils/agents';
@@ -199,6 +203,128 @@ describe('abstractProjectCreateCommand command', () => {
           projectId: 1,
         },
       );
+    });
+
+    describe('with --invitation', () => {
+      const CLAIM = 'SENTINELclaimAAAAAAAAAAAAAAAAAAAA';
+
+      class InvitedTestClass extends TestAbstractClass {
+        static override readonly args = AbstractProjectCreateCommand.args;
+
+        static override readonly flags = {
+          ...TestAbstractClass.flags,
+          ...AbstractProjectCreateCommand.invitationFlags,
+        };
+
+        override run() {
+          return AbstractProjectCreateCommand.prototype.run.call(this);
+        }
+      }
+
+      function makePlanAndStubsFrom(stubs: ReturnType<typeof makePlanAndStubs>['stubs']) {
+        return plan =>
+          plan
+            .addModule('chalk', stubs.chalk)
+            .addInstance('logger', stubs.logger)
+            .addInstance('authenticator', stubs.authenticator)
+            .addInstance('eventSender', stubs.eventSender)
+            .addInstance('optionParser', stubs.optionParser)
+            .addInstance('projectCreator', stubs.projectCreator)
+            .addInstance('database', stubs.database)
+            .addInstance('messages', stubs.messages)
+            .addInstance('databaseAnalyzer', stubs.databaseAnalyzer)
+            .addInstance('spinner', stubs.spinner);
+      }
+
+      function setupInvited(invitation: string) {
+        const { stubs } = setup();
+        const instance = new InvitedTestClass(
+          ['testApp', '--invitation', invitation],
+          new Config({ root: process.cwd() }),
+          makePlanAndStubsFrom(stubs),
+        );
+        jest.spyOn(instance, 'exit').mockReturnValue(undefined as never);
+
+        return { stubs, instance };
+      }
+
+      function loggedText(stubs: ReturnType<typeof makePlanAndStubs>['stubs']) {
+        return [stubs.logger.error, stubs.logger.log, stubs.logger.info, stubs.logger.warn]
+          .flatMap(logger => logger.mock.calls.flat())
+          .map(String)
+          .join('\n');
+      }
+
+      it('should pass the claim to the project creator', async () => {
+        expect.assertions(1);
+
+        const { stubs, instance } = setupInvited(CLAIM);
+        await instance.run();
+
+        expect(stubs.projectCreator.create).toHaveBeenCalledWith(
+          'authToken',
+          expect.anything(),
+          expect.anything(),
+          CLAIM,
+        );
+      });
+
+      it('should print the switch-account help on a wrong account, without logging out', async () => {
+        expect.assertions(4);
+
+        const { stubs, instance } = setupInvited(CLAIM);
+        stubs.spinner.attachToPromise.mockRejectedValue({
+          status: 403,
+          response: {
+            body: { errors: [{ meta: { code: 'developer_invitation_claim_wrong_account' } }] },
+          },
+        });
+
+        await instance.run();
+
+        expect(stubs.logger.error).toHaveBeenCalledWith(expect.stringContaining('forest logout'));
+        expect(instance.exit).toHaveBeenCalledWith(1);
+        expect(stubs.authenticator.logout).not.toHaveBeenCalled();
+        expect(loggedText(stubs)).not.toContain('You do not have the right');
+      });
+
+      it('should refuse a malformed claim before login and before any creation', async () => {
+        expect.assertions(4);
+
+        const { stubs, instance } = setupInvited('x;rm -rf ~');
+        await instance.run();
+
+        expect(stubs.logger.error).toHaveBeenCalledWith(
+          expect.stringContaining('is not a valid invitation claim'),
+        );
+        expect(loggedText(stubs)).not.toContain('x;rm');
+        expect(stubs.authenticator.tryLogin).not.toHaveBeenCalled();
+        expect(stubs.projectCreator.create).not.toHaveBeenCalled();
+      });
+
+      it('should refuse a claim also passed as the project name, before any creation', async () => {
+        expect.assertions(3);
+
+        const { stubs, instance } = setupInvited(CLAIM);
+        Object.assign(instance, { argv: [CLAIM, '--invitation', CLAIM] });
+        await instance.run();
+
+        expect(stubs.logger.error).toHaveBeenCalledWith(
+          expect.stringContaining('Pass the invitation claim once'),
+        );
+        expect(stubs.authenticator.tryLogin).not.toHaveBeenCalled();
+        expect(stubs.projectCreator.create).not.toHaveBeenCalled();
+      });
+
+      it.each([
+        ['sql', SqlCommand],
+        ['nosql', NosqlCommand],
+        ['in-app', InAppCommand],
+        ['demo', DemoCommand],
+      ])('should wire a hidden --invitation flag on projects:create:%s', (_, command) => {
+        expect.hasAssertions();
+        expect(command.flags.invitation.hidden).toBe(true);
+      });
     });
 
     it('should throw an error when there is a 401 error', async () => {
