@@ -302,6 +302,20 @@ describe('abstractProjectCreateCommand command', () => {
         expect(stubs.projectCreator.create).not.toHaveBeenCalled();
       });
 
+      it('should refuse a claim also passed as the project name, before any creation', async () => {
+        expect.assertions(3);
+
+        const { stubs, instance } = setupInvited(CLAIM);
+        Object.assign(instance, { argv: [CLAIM, '--invitation', CLAIM] });
+        await instance.run();
+
+        expect(stubs.logger.error).toHaveBeenCalledWith(
+          expect.stringContaining('Pass the invitation claim once'),
+        );
+        expect(stubs.authenticator.tryLogin).not.toHaveBeenCalled();
+        expect(stubs.projectCreator.create).not.toHaveBeenCalled();
+      });
+
       it.each([
         ['sql', SqlCommand],
         ['nosql', NosqlCommand],

@@ -9,8 +9,10 @@ import AbstractCommand from '../abstract-command';
 import {
   INVALID_CLAIM_MESSAGE,
   MAX_PROJECT_NAME_LENGTH,
+  REPEATED_CLAIM_MESSAGE,
   inspectionFailure,
   inviterLabel,
+  isClaimRepeated,
   isSafeProjectName,
   isWellFormedClaim,
   parseInspection,
@@ -167,6 +169,7 @@ export default class StartCommand extends AbstractCommand {
 
   private refuseUnusableInvitation(flags: StartFlags): void {
     if (!isWellFormedClaim(flags.invitation)) throw new Error(INVALID_CLAIM_MESSAGE);
+    if (isClaimRepeated(this.argv, flags.invitation)) throw new Error(REPEATED_CLAIM_MESSAGE);
     if (!flags.flow && !this.interactive) {
       throw new Error(
         'Without a terminal, --invitation needs a flow: add --flow standalone or --flow inapp.',
@@ -252,6 +255,7 @@ export default class StartCommand extends AbstractCommand {
         `This invitation already started the project ${name}, not ${sanitizeForDisplay(
           flags.name,
           MAX_PROJECT_NAME_LENGTH,
+          claim,
         )}. Run the command again without --name.`,
       );
     }

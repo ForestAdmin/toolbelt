@@ -17,7 +17,9 @@ import AbstractAuthenticatedCommand from './abstract-authenticated-command';
 import InvalidOptionError from './errors/options/invalid-option-error';
 import {
   INVALID_CLAIM_MESSAGE,
+  REPEATED_CLAIM_MESSAGE,
   invitationRefusal,
+  isClaimRepeated,
   isWellFormedClaim,
 } from './services/invitation-claim';
 import { getDialect } from './services/projects/create/options';
@@ -122,6 +124,12 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
     if (flags.invitation !== undefined && !isWellFormedClaim(flags.invitation)) {
       this.logger.error(INVALID_CLAIM_MESSAGE);
+
+      return this.exit(1);
+    }
+
+    if (flags.invitation !== undefined && isClaimRepeated(this.argv, flags.invitation)) {
+      this.logger.error(REPEATED_CLAIM_MESSAGE);
 
       return this.exit(1);
     }

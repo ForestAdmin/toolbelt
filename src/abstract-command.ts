@@ -6,7 +6,7 @@ import Context from '@forestadmin/context';
 import { Command } from '@oclif/core';
 
 import defaultPlan from './context/plan';
-import { withoutClaimsInParseError } from './services/invitation-claim';
+import { withoutClaimsInCliError } from './services/invitation-claim';
 
 export default abstract class AbstractCommand extends Command {
   protected readonly context: any;
@@ -31,6 +31,6 @@ export default abstract class AbstractCommand extends Command {
   }
 
   protected override catch(error: Parameters<Command['catch']>[0]) {
-    return super.catch(withoutClaimsInParseError(error, this.argv) as typeof error);
+    return super.catch(withoutClaimsInCliError(error, this.argv) as typeof error);
   }
 }

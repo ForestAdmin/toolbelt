@@ -5,12 +5,13 @@ import {
   inspectionFailure,
   invitationRefusal,
   inviterLabel,
+  isClaimRepeated,
   isSafeProjectName,
   isWellFormedClaim,
   maskClaimsInParseError,
   parseInspection,
   sanitizeForDisplay,
-  withoutClaimsInParseError,
+  withoutClaimsInCliError,
 } from '../../src/services/invitation-claim';
 
 const SENTINEL = 'SENTINELclaimAAAAAAAAAAAAAAAAAAAA';
@@ -77,6 +78,16 @@ describe('services > invitation-claim', () => {
       ).not.toContain(SENTINEL);
     });
 
+    it('masks a claim glued to a short flag', () => {
+      expect.hasAssertions();
+      expect(
+        maskClaimsInParseError(`Expected --language=${SENTINEL} to be one of: js, ts`, [
+          'app',
+          `-l${SENTINEL}`,
+        ]),
+      ).toBe('Expected --language=<redacted> to be one of: js, ts');
+    });
+
     it('leaves a message without claims untouched', () => {
       expect.hasAssertions();
       expect(maskClaimsInParseError('Nonexistent flag: --x', ['--x', 'demo'])).toBe(
@@ -85,14 +96,14 @@ describe('services > invitation-claim', () => {
     });
   });
 
-  describe('withoutClaimsInParseError', () => {
+  describe('withoutClaimsInCliError', () => {
     const parseError = (message: string) =>
       Object.assign(new Errors.CLIError(message, { exit: 2 }), { parse: {} });
 
     it('rebuilds a parse error so neither its message nor its stack carries the claim', () => {
       expect.hasAssertions();
 
-      const masked = withoutClaimsInParseError(parseError(`Unexpected argument: ${SENTINEL}`), [
+      const masked = withoutClaimsInCliError(parseError(`Unexpected argument: ${SENTINEL}`), [
         SENTINEL,
       ]) as Errors.CLIError;
 
@@ -106,15 +117,39 @@ describe('services > invitation-claim', () => {
 
       const error = parseError('Nonexistent flag: --x');
 
-      expect(withoutClaimsInParseError(error, ['--x'])).toBe(error);
+      expect(withoutClaimsInCliError(error, ['--x'])).toBe(error);
     });
 
-    it('leaves an error that is not a parse error alone, even when it quotes a long argument', () => {
+    it('masks an oclif flag-value error too, which carries no parse details', () => {
       expect.hasAssertions();
 
-      const error = new Errors.CLIError(`Cannot reach ${SENTINEL}`);
+      const masked = withoutClaimsInCliError(
+        new Errors.CLIError(`Expected an integer but received: ${SENTINEL}`),
+        ['--projectId', SENTINEL],
+      ) as Errors.CLIError;
 
-      expect(withoutClaimsInParseError(error, [SENTINEL])).toBe(error);
+      expect(masked.message).not.toContain(SENTINEL);
+      expect(masked.stack).not.toContain(SENTINEL);
+    });
+
+    it('leaves an error that does not come from oclif alone', () => {
+      expect.hasAssertions();
+
+      const error = new Error(`Cannot reach ${SENTINEL}`);
+
+      expect(withoutClaimsInCliError(error, [SENTINEL])).toBe(error);
+    });
+  });
+
+  describe('isClaimRepeated', () => {
+    it.each([
+      [['--invitation', SENTINEL], false],
+      [[`--invitation=${SENTINEL}`], false],
+      [['--name', SENTINEL, '--invitation', SENTINEL], true],
+      [[`--db=postgres://u:${SENTINEL}@h/d`, '--invitation', SENTINEL], true],
+    ])('says %p repeats the claim: %p', (argv, expected) => {
+      expect.hasAssertions();
+      expect(isClaimRepeated(argv, SENTINEL)).toBe(expected);
     });
   });
 

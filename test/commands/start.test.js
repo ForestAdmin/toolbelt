@@ -1085,6 +1085,21 @@ describe('start', () => {
         expect(runStep).not.toHaveBeenCalled();
       });
 
+      it('refuses a claim also passed to another flag, before logging in', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', CLAIM, '--invitation', CLAIM],
+          env,
+          exitMessage:
+            'Pass the invitation claim once, to --invitation only. Copy the command again from the invitation page.',
+        });
+
+        expect(runStep).not.toHaveBeenCalled();
+      });
+
       it.each([
         ['a stray positional', [CLAIM]],
         ['a mistyped flag', [`--invitaton=${CLAIM}`]],

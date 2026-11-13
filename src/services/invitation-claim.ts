@@ -45,21 +45,28 @@ function redact(text: string, claims: string[]): string {
 
 export function maskClaimsInParseError(message: string, argv: string[]): string {
   const claims = argv
-    .flatMap(token => [token, token.slice(token.indexOf('=') + 1)])
+    .flatMap(token => [token, token.slice(token.indexOf('=') + 1), token.replace(/^-\w/, '')])
     .filter(isWellFormedClaim)
     .sort((a, b) => b.length - a.length);
 
   return redact(message, claims);
 }
 
-export function withoutClaimsInParseError(error: unknown, argv: string[]): unknown {
-  if (!(error instanceof Errors.CLIError) || !('parse' in error)) return error;
+export function withoutClaimsInCliError(error: unknown, argv: string[]): unknown {
+  if (!(error instanceof Errors.CLIError)) return error;
 
   const message = maskClaimsInParseError(error.message, argv);
 
   return message === error.message
     ? error
     : new Errors.CLIError(message, { exit: error.oclif.exit ?? 2 });
+}
+
+export const REPEATED_CLAIM_MESSAGE =
+  'Pass the invitation claim once, to --invitation only. Copy the command again from the invitation page.';
+
+export function isClaimRepeated(argv: string[], claim: string): boolean {
+  return argv.join('\n').split(claim).length > 2;
 }
 
 export function sanitizeForDisplay(text: string, maxLength: number, claim?: string): string {
