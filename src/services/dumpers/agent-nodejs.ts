@@ -118,7 +118,8 @@ export default class AgentNodeJs extends AbstractDumper {
         start: 'node ./dist/index.js',
         'start:watch': 'nodemon ./index.ts',
       };
-      devDependencies.typescript = '^4.9.4';
+      devDependencies.typescript = '^5.9.3';
+      devDependencies['@types/node'] = '^22.20.5';
       devDependencies['ts-node'] = '^10.9.1';
       nodemonConfig.ignore.push('./typings.ts');
     }
