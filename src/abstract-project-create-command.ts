@@ -21,6 +21,7 @@ import {
   invitationRefusal,
   isClaimRepeated,
   isWellFormedClaim,
+  withoutClaimsInCliError,
 } from './services/invitation-claim';
 import { getDialect } from './services/projects/create/options';
 
@@ -116,27 +117,37 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
   }
 
   override async run(): Promise<void> {
-    const { flags } = (await this.parse(
-      this.constructor as typeof AbstractProjectCreateCommand,
-    )) as {
-      flags: { invitation?: string };
-    };
+    const invitation = await this.invitationFlagUnlessParseFails();
 
-    if (flags.invitation !== undefined && !isWellFormedClaim(flags.invitation)) {
+    if (invitation !== undefined && !isWellFormedClaim(invitation)) {
       this.logger.error(INVALID_CLAIM_MESSAGE);
 
       return this.exit(1);
     }
 
-    if (flags.invitation !== undefined && isClaimRepeated(this.argv, flags.invitation)) {
+    if (invitation !== undefined && isClaimRepeated(this.argv, invitation)) {
       this.logger.error(REPEATED_CLAIM_MESSAGE);
 
       return this.exit(1);
     }
 
-    this.invitationClaim = flags.invitation;
+    this.invitationClaim = invitation;
 
     return super.run();
+  }
+
+  private async invitationFlagUnlessParseFails(): Promise<string | undefined> {
+    try {
+      const { flags } = (await this.parse(
+        this.constructor as typeof AbstractProjectCreateCommand,
+      )) as {
+        flags: { invitation?: string };
+      };
+
+      return flags.invitation;
+    } catch {
+      return undefined;
+    }
   }
 
   protected async runAuthenticated(): Promise<void> {
@@ -193,7 +204,7 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
         // Unconditional: this is the only line telling the operator where help lives,
         // and a failure after creation needs it as much as one before.
         this.logger.error(`${this.messages.ERROR_UNEXPECTED}`);
-        this.logger.log(`${this.chalk.red(error)}`);
+        this.logger.log(`${this.chalk.red(withoutClaimsInCliError(error, this.argv))}`);
         this.exit(1);
       } else {
         throw error;
