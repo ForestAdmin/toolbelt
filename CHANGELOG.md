@@ -1,3 +1,10 @@
+## [5.25.1](https://github.com/ForestAdmin/toolbelt/compare/v5.25.0...v5.25.1) (2026-11-13)
+
+
+### Bug Fixes
+
+* **typescript:** generate projects that build with TypeScript 5 and @types/node 22 ([#846](https://github.com/ForestAdmin/toolbelt/issues/846)) ([3b94495](https://github.com/ForestAdmin/toolbelt/commit/3b94495f33d6ab66b9cf628fe7f56e3644d288cf))
+
 # [5.25.0](https://github.com/ForestAdmin/toolbelt/compare/v5.24.4...v5.25.0) (2026-11-10)
 
 
