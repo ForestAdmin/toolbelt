@@ -88,6 +88,19 @@ describe('services > invitation-claim', () => {
       ).toBe('Expected --language=<redacted> to be one of: js, ts');
     });
 
+    it.each([
+      ['grouped short flags', `-fl${SENTINEL}`, `Expected --language=${SENTINEL} to be one of: a`],
+      [
+        'a long flag glued to its value',
+        `--invitation${SENTINEL}`,
+        `Nonexistent flag: --invitation${SENTINEL}`,
+      ],
+      ['a value inside a URL', `--db=postgres://u:${SENTINEL}@h/d`, `Bad value ${SENTINEL}`],
+    ])('masks a claim hidden in %s', (_, token, message) => {
+      expect.hasAssertions();
+      expect(maskClaimsInParseError(message, ['app', token])).not.toContain(SENTINEL);
+    });
+
     it('leaves a message without claims untouched', () => {
       expect.hasAssertions();
       expect(maskClaimsInParseError('Nonexistent flag: --x', ['--x', 'demo'])).toBe(

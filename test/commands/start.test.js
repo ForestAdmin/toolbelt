@@ -1103,6 +1103,7 @@ describe('start', () => {
       it.each([
         ['a stray positional', [CLAIM]],
         ['a mistyped flag', [`--invitaton=${CLAIM}`]],
+        ['a long flag glued to its value', [`--invitation${CLAIM}`]],
       ])(
         'never echoes a claim passed as %s',
         async (_, args) => {

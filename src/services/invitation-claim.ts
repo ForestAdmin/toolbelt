@@ -10,6 +10,8 @@ export type Inspection = {
 export type Refusal = { code: string; message: string };
 
 const CLAIM = /^[A-Za-z0-9][A-Za-z0-9_-]{21,255}$/;
+const MIN_CLAIM_LENGTH = 22;
+const CLAIM_ALPHABET_RUN = new RegExp(`[A-Za-z0-9_-]{${MIN_CLAIM_LENGTH},}`, 'g');
 const REFUSAL_PREFIX = 'developer_invitation_claim_';
 const WRONG_ACCOUNT = `${REFUSAL_PREFIX}wrong_account`;
 const REDACTED = '<redacted>';
@@ -43,13 +45,16 @@ function redact(text: string, claims: string[]): string {
   return claims.reduce((result, claim) => result.split(claim).join(REDACTED), text);
 }
 
-export function maskClaimsInParseError(message: string, argv: string[]): string {
-  const claims = argv
-    .flatMap(token => [token, token.slice(token.indexOf('=') + 1), token.replace(/^-\w/, '')])
-    .filter(isWellFormedClaim)
-    .sort((a, b) => b.length - a.length);
+function claimLikeSuffixes(token: string): string[] {
+  return (token.match(CLAIM_ALPHABET_RUN) ?? []).flatMap(run =>
+    Array.from({ length: run.length - MIN_CLAIM_LENGTH + 1 }, (_, start) => run.slice(start)),
+  );
+}
 
-  return redact(message, claims);
+export function maskClaimsInParseError(message: string, argv: string[]): string {
+  const candidates = argv.flatMap(claimLikeSuffixes).sort((a, b) => b.length - a.length);
+
+  return redact(message, candidates);
 }
 
 export function withoutClaimsInCliError(error: unknown, argv: string[]): unknown {
