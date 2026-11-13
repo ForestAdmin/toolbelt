@@ -779,6 +779,23 @@ describe('start', () => {
     });
 
     describe('without a terminal', () => {
+      it('still names the inviter when SILENT drops every logger line', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo', '--invitation', CLAIM],
+          env: { ...env, SILENT: '1' },
+          token: 'valid-token',
+          api: [inspectOk()],
+          std: [
+            { out: `Creating this project for ${LABEL} (non-interactive, not asking).` },
+            { not: CLAIM },
+          ],
+        });
+      });
+
       it('checks the claim, names the inviter, then creates with the claim', async () => {
         expect.hasAssertions();
         resetProcessMocks();
@@ -925,7 +942,7 @@ describe('start', () => {
                   .post(INSPECT, { claim: CLAIM })
                   .reply(() => {
                     warnedBeforeRequest = stdout.output.includes(
-                      'This invitation will be sent to localhost:3001.',
+                      'This invitation will be sent to http://localhost:3001.',
                     );
 
                     return [200, { inviter: ADA, project: null }];
@@ -934,7 +951,10 @@ describe('start', () => {
             prompts: [
               {
                 in: [
-                  { ...question, message: `Create this project for ${LABEL} on localhost:3001?` },
+                  {
+                    ...question,
+                    message: `Create this project for ${LABEL} on http://localhost:3001?`,
+                  },
                 ],
                 out: { value: false },
               },
@@ -1012,6 +1032,11 @@ describe('start', () => {
         [
           'a network error',
           () => nock(SERVER).post(INSPECT).replyWithError(`socket hang up ${CLAIM}`),
+          'Could not check this invitation with Forest. Nothing was created. Try again in a moment.',
+        ],
+        [
+          'a 202 instead of a 200',
+          inspect(202, { inviter: ADA, project: null }),
           'Could not check this invitation with Forest. Nothing was created. Try again in a moment.',
         ],
         [

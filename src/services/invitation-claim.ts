@@ -1,3 +1,5 @@
+import { Errors } from '@oclif/core';
+
 export type Inviter = { name: string | null; email: string };
 
 export type Inspection = {
@@ -48,6 +50,16 @@ export function maskClaimsInParseError(message: string, argv: string[]): string 
     .sort((a, b) => b.length - a.length);
 
   return redact(message, claims);
+}
+
+export function withoutClaimsInParseError(error: unknown, argv: string[]): unknown {
+  if (!(error instanceof Errors.CLIError) || !('parse' in error)) return error;
+
+  const message = maskClaimsInParseError(error.message, argv);
+
+  return message === error.message
+    ? error
+    : new Errors.CLIError(message, { exit: error.oclif.exit ?? 2 });
 }
 
 export function sanitizeForDisplay(text: string, maxLength: number, claim?: string): string {
@@ -107,6 +119,7 @@ export function parseInspection(body: unknown): Inspection {
 export function isSafeProjectName(name: string): boolean {
   return (
     name !== '' &&
+    Buffer.byteLength(name) <= MAX_PROJECT_NAME_LENGTH &&
     sanitizeForDisplay(name, MAX_PROJECT_NAME_LENGTH) === name &&
     !/[/\\]/.test(name) &&
     !/^[-.]/.test(name)

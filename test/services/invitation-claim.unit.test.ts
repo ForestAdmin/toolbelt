@@ -1,3 +1,5 @@
+import { Errors } from '@oclif/core';
+
 import {
   INVALID_CLAIM_MESSAGE,
   inspectionFailure,
@@ -8,6 +10,7 @@ import {
   maskClaimsInParseError,
   parseInspection,
   sanitizeForDisplay,
+  withoutClaimsInParseError,
 } from '../../src/services/invitation-claim';
 
 const SENTINEL = 'SENTINELclaimAAAAAAAAAAAAAAAAAAAA';
@@ -79,6 +82,39 @@ describe('services > invitation-claim', () => {
       expect(maskClaimsInParseError('Nonexistent flag: --x', ['--x', 'demo'])).toBe(
         'Nonexistent flag: --x',
       );
+    });
+  });
+
+  describe('withoutClaimsInParseError', () => {
+    const parseError = (message: string) =>
+      Object.assign(new Errors.CLIError(message, { exit: 2 }), { parse: {} });
+
+    it('rebuilds a parse error so neither its message nor its stack carries the claim', () => {
+      expect.hasAssertions();
+
+      const masked = withoutClaimsInParseError(parseError(`Unexpected argument: ${SENTINEL}`), [
+        SENTINEL,
+      ]) as Errors.CLIError;
+
+      expect(masked.message).toBe('Unexpected argument: <redacted>');
+      expect(masked.stack).not.toContain(SENTINEL);
+      expect(masked.oclif.exit).toBe(2);
+    });
+
+    it('keeps a parse error without a claim as it is', () => {
+      expect.hasAssertions();
+
+      const error = parseError('Nonexistent flag: --x');
+
+      expect(withoutClaimsInParseError(error, ['--x'])).toBe(error);
+    });
+
+    it('leaves an error that is not a parse error alone, even when it quotes a long argument', () => {
+      expect.hasAssertions();
+
+      const error = new Errors.CLIError(`Cannot reach ${SENTINEL}`);
+
+      expect(withoutClaimsInParseError(error, [SENTINEL])).toBe(error);
     });
   });
 
@@ -226,6 +262,7 @@ describe('services > invitation-claim', () => {
       'a\nb',
       'a\u202Eb',
       ' padded',
+      '\u00E9'.repeat(108),
     ])('refuses %p', name => {
       expect.hasAssertions();
       expect(isSafeProjectName(name)).toBe(false);

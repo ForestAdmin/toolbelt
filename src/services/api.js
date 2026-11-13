@@ -74,7 +74,15 @@ function Api({
       .set(headers)
       .set('Authorization', `Bearer ${sessionToken}`)
       .send({ claim })
-      .then(response => response.body);
+      .then(response => {
+        if (response.status !== 200) {
+          throw Object.assign(new Error('Unexpected invitation check status'), {
+            status: response.status,
+          });
+        }
+
+        return response.body;
+      });
 
   this.createProject = async (config, sessionToken, project) => {
     let newProject;

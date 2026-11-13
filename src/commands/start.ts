@@ -2,7 +2,7 @@ import type { NodeStack } from '../services/onboarding/detect';
 import type { SecretsWrite } from '../services/onboarding/env-file';
 import type { ChildProcess } from 'child_process';
 
-import { Errors, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import fs from 'fs';
 
 import AbstractCommand from '../abstract-command';
@@ -13,7 +13,6 @@ import {
   inviterLabel,
   isSafeProjectName,
   isWellFormedClaim,
-  maskClaimsInParseError,
   parseInspection,
   sanitizeForDisplay,
 } from '../services/invitation-claim';
@@ -133,7 +132,7 @@ export default class StartCommand extends AbstractCommand {
   }
 
   async run(): Promise<void> {
-    const { flags } = await this.parseWithoutClaims();
+    const { flags } = await this.parse(StartCommand);
     this.dryRun = flags['dry-run'];
 
     if (flags.invitation !== undefined) this.refuseUnusableInvitation(flags);
@@ -163,17 +162,6 @@ export default class StartCommand extends AbstractCommand {
       stopAllProcesses();
 
       throw error;
-    }
-  }
-
-  private async parseWithoutClaims() {
-    try {
-      return await this.parse(StartCommand);
-    } catch (error) {
-      const message = maskClaimsInParseError((error as Error).message, this.argv);
-
-      if (message === (error as Error).message) throw error;
-      throw new Errors.CLIError(message, { exit: 2 });
     }
   }
 
@@ -215,9 +203,9 @@ export default class StartCommand extends AbstractCommand {
 
   private async acceptInvitation(flags: StartFlags, claim: string): Promise<boolean> {
     const { FOREST_SERVER_URL, FOREST_URL_IS_DEFAULT } = this.context.env;
-    const server = FOREST_URL_IS_DEFAULT ? '' : StartCommand.hostOf(FOREST_SERVER_URL);
+    const server = FOREST_URL_IS_DEFAULT ? '' : StartCommand.originOf(FOREST_SERVER_URL);
 
-    if (server) this.logger.warn(`This invitation will be sent to ${server}.`);
+    if (server) this.notice(this.chalk.yellow(`Δ This invitation will be sent to ${server}.`));
     if (this.dryRun) {
       this.logger.log(this.chalk.grey('  (dry-run — invitation not checked)'));
 
@@ -225,13 +213,13 @@ export default class StartCommand extends AbstractCommand {
     }
 
     const { inviter, project } = parseInspection(await this.inspectInvitation(claim));
-    if (project) StartCommand.resumeProject(flags, project.name);
+    if (project) StartCommand.resumeProject(flags, project.name, claim);
 
     const label = `${inviterLabel(inviter, claim)}${server ? ` on ${server}` : ''}`;
-    this.logger.log(`\nThis project is for ${this.chalk.bold(label)}.`);
+    this.notice(`\nThis project is for ${this.chalk.bold(label)}.`);
 
     if (!this.interactive) {
-      this.logger.log(`Creating this project for ${label} (non-interactive, not asking).`);
+      this.notice(`Creating this project for ${label} (non-interactive, not asking).`);
     } else if (!(await this.confirm(`Create this project for ${label}?`, false))) {
       return false;
     }
@@ -252,8 +240,8 @@ export default class StartCommand extends AbstractCommand {
     }
   }
 
-  private static resumeProject(flags: StartFlags, name: string): void {
-    if (!isSafeProjectName(name)) {
+  private static resumeProject(flags: StartFlags, name: string, claim: string): void {
+    if (!isSafeProjectName(name) || name.includes(claim)) {
       throw new Error(
         'Forest returned a project name this CLI cannot use as a directory. Nothing was created.',
       );
@@ -279,9 +267,13 @@ export default class StartCommand extends AbstractCommand {
     }
   }
 
-  private static hostOf(url: string): string {
+  private notice(line: string): void {
+    this.context.stdout.write(`${line}\n`);
+  }
+
+  private static originOf(url: string): string {
     try {
-      return sanitizeForDisplay(new URL(url).host, 300);
+      return sanitizeForDisplay(new URL(url).origin, 300);
     } catch {
       return sanitizeForDisplay(url, 300);
     }

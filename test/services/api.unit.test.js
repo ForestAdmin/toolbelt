@@ -146,7 +146,7 @@ describe('services > API', () => {
 
       const { superagent, api } = setup();
       const answer = { inviter: { name: 'Ada', email: 'ada@example.com' }, project: null };
-      superagent.send.mockResolvedValue({ body: answer });
+      superagent.send.mockResolvedValue({ status: 200, body: answer });
 
       await expect(api.inspectInvitationClaim('THE-CLAIM', 'THE-TOKEN')).resolves.toBe(answer);
       expect(superagent.post).toHaveBeenCalledWith(
@@ -154,6 +154,19 @@ describe('services > API', () => {
       );
       expect(superagent.set).toHaveBeenCalledWith('Authorization', 'Bearer THE-TOKEN');
       expect(superagent.send).toHaveBeenCalledWith({ claim: 'THE-CLAIM' });
+    });
+  });
+
+  describe('inspectInvitationClaim on another success status', () => {
+    it('refuses a 2xx other than 200, so a stray 202 never counts as a go', async () => {
+      expect.assertions(1);
+
+      const { superagent, api } = setup();
+      superagent.send.mockResolvedValue({ status: 202, body: { inviter: {}, project: null } });
+
+      await expect(api.inspectInvitationClaim('THE-CLAIM', 'THE-TOKEN')).rejects.toMatchObject({
+        status: 202,
+      });
     });
   });
 

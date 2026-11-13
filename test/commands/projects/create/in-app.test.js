@@ -366,6 +366,23 @@ describe('projects:create:in-app', () => {
       }),
     );
 
+    it.each([
+      ['a stray positional', ['name', CLAIM]],
+      ['a mistyped flag', ['name', `--invitaton=${CLAIM}`]],
+    ])(
+      'should never echo a claim passed as %s',
+      async (_, args) => {
+        expect.hasAssertions();
+
+        const error = await InAppCommand.run(args).catch(thrown => thrown);
+
+        expect(error.message).toContain('<redacted>');
+        expect(error.message).not.toContain(CLAIM);
+        expect(error.stack).not.toContain(CLAIM);
+      },
+      30000,
+    );
+
     it('should keep the flag out of --help', () => {
       expect.hasAssertions();
       expect(InAppCommand.flags.invitation.hidden).toBe(true);
