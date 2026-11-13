@@ -35,6 +35,7 @@ export default class InAppCommand extends AbstractProjectCreateCommand {
   /** @see https://oclif.io/docs/flags */
   static override readonly flags = {
     ...optionsToFlags(this.options),
+    ...AbstractProjectCreateCommand.invitationFlags,
     format: Flags.string({
       description:
         'Output format. With `json`, stdout carries only a machine-readable ' +

@@ -1,4 +1,6 @@
 const fs = require('fs');
+const nock = require('nock');
+const { stdout } = require('stdout-stderr');
 
 const StartCommand = require('../../src/commands/start').default;
 const { runCapture, runStep, startProcess } = require('../../src/services/process-runner');
@@ -13,6 +15,39 @@ jest.mock('../../src/services/process-runner');
 //
 // stdin is not a TTY under the harness, so the interactive tails are skipped — each test asserts
 // one flow's command sequence, deterministically.
+
+const CLAIM = 'SENTINELclaimAAAAAAAAAAAAAAAAAAAA';
+const INSPECT = '/api/developer-invitations/claim/inspect';
+const SERVER = 'http://localhost:3001';
+const env = { FOREST_SERVER_URL: SERVER, FOREST_URL_IS_DEFAULT: true };
+const ADA = { name: 'Ada Lovelace', email: 'ada@example.com' };
+const LABEL = 'ada@example.com (Ada Lovelace)';
+const PACKAGE_JSON = {
+  name: 'package.json',
+  content: JSON.stringify({ name: 'app', dependencies: { sequelize: '^6.0.0' } }),
+};
+
+const inspect = (status, body, headers) => () =>
+  nock(SERVER).post(INSPECT, { claim: CLAIM }).reply(status, body, headers);
+const inspectOk = (body = { inviter: ADA, project: null }) => inspect(200, body);
+const refusal = (status, code, detail) =>
+  inspect(status, { errors: [{ status, detail, meta: { code } }] });
+
+const createSteps = () =>
+  [...runStep.mock.calls, ...runCapture.mock.calls]
+    .map(([, args]) => args)
+    .filter(args => String(args?.[1]).startsWith('projects:create'));
+
+const forceTty = () =>
+  jest.spyOn(StartCommand.prototype, 'interactive', 'get').mockReturnValue(true);
+
+const resetProcessMocks = () => {
+  runStep.mockReset().mockResolvedValue(undefined);
+  runCapture.mockReset().mockResolvedValue({ stdout: '', stderr: '' });
+  startProcess
+    .mockReset()
+    .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
+};
 
 describe('start', () => {
   describe('demo flow', () => {
@@ -678,6 +713,537 @@ describe('start', () => {
         commandClass: StartCommand,
         commandArgs: ['--dry-run', '--flow', 'demo'],
         std: [{ out: '(dry-run — not executed)' }],
+      });
+    });
+  });
+
+  describe('--invitation', () => {
+    describe('with --dry-run', () => {
+      it.each([
+        ['demo', ['--flow', 'demo'], '$ forest projects:create:demo forest-demo-'],
+        [
+          'standalone',
+          ['--flow', 'standalone', '--name', 'app'],
+          '$ forest projects:create:sql app --invitation <redacted>\n',
+        ],
+        [
+          'in-app Node',
+          ['--flow', 'inapp', '--stack', 'node', '--name', 'app', '--mount', 'manual'],
+          '--format json --invitation <redacted>\n',
+        ],
+        [
+          'in-app Rails',
+          ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+          '--format json --invitation <redacted>\n',
+        ],
+        [
+          'in-app Node mounted on standalone',
+          ['--flow', 'inapp', '--stack', 'node', '--name', 'app', '--mount', 'standalone'],
+          '$ forest projects:create:sql app --invitation <redacted>\n',
+        ],
+      ])('forwards the claim to the %s creation, redacted in the echo', async (_, args, echo) => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--dry-run', ...args, '--invitation', CLAIM],
+          env,
+          token: 'valid-token',
+          files: [PACKAGE_JSON],
+          std: [
+            { out: '(dry-run — invitation not checked)' },
+            { out: echo },
+            { out: '--invitation <redacted>' },
+            { not: CLAIM },
+          ],
+        });
+      });
+
+      it('forwards the claim to the demo creation only, never to the real project after it', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--dry-run', '--flow', 'demo', '--invitation', CLAIM],
+          env,
+          token: 'valid-token',
+          std: [
+            { out: 'P 3310 --invitation <redacted>\n' },
+            { out: 'Connect real data: forest projects:create:sql' },
+            { not: CLAIM },
+          ],
+        });
+      });
+    });
+
+    describe('without a terminal', () => {
+      it('checks the claim, names the inviter, then creates with the claim', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        const seenBeforeCreate = [];
+        runStep
+          .mockImplementationOnce(async () => {
+            seenBeforeCreate.push(stdout.output);
+          })
+          .mockRejectedValueOnce(new Error('stop after the creation'));
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM],
+          env,
+          token: 'valid-token',
+          api: [inspectOk()],
+          std: [
+            { out: `This project is for ${LABEL}.` },
+            { out: `Creating this project for ${LABEL} (non-interactive, not asking).` },
+            { not: CLAIM },
+          ],
+          exitMessage: 'stop after the creation',
+        });
+
+        expect(createSteps()).toStrictEqual([
+          [process.argv[1], 'projects:create:sql', 'app', '--invitation', CLAIM],
+        ]);
+        expect(seenBeforeCreate[0]).toContain(`This project is for ${LABEL}.`);
+      });
+
+      it('refuses --invitation without --flow, before logging in or asking the server', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--invitation', CLAIM],
+          env,
+          exitMessage:
+            'Without a terminal, --invitation needs a flow: add --flow standalone or --flow inapp.',
+        });
+
+        expect(runStep).not.toHaveBeenCalled();
+      });
+
+      it('proceeds with an explicit --flow demo', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo', '--invitation', CLAIM],
+          env,
+          token: 'valid-token',
+          api: [inspectOk()],
+          std: [{ out: 'Demo back-office live.' }, { not: CLAIM }],
+        });
+
+        expect(createSteps()).toHaveLength(1);
+        expect(createSteps()[0]).toContain(CLAIM);
+      });
+    });
+
+    describe('on a terminal', () => {
+      const question = {
+        type: 'confirm',
+        name: 'value',
+        message: `Create this project for ${LABEL}?`,
+        default: false,
+      };
+
+      it('creates nothing when the answer is no, the default', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        const tty = forceTty();
+        try {
+          await testCli({
+            commandClass: StartCommand,
+            commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM],
+            env,
+            token: 'valid-token',
+            api: [inspectOk()],
+            prompts: [{ in: [question], out: { value: false } }],
+            std: [
+              { out: `This project is for ${LABEL}.` },
+              { out: 'Nothing was created.' },
+              { not: CLAIM },
+            ],
+          });
+        } finally {
+          tty.mockRestore();
+        }
+
+        expect(runStep).not.toHaveBeenCalled();
+        expect(runCapture).not.toHaveBeenCalled();
+      });
+
+      it('creates the project with the claim after a yes', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        runStep
+          .mockResolvedValueOnce(undefined)
+          .mockRejectedValueOnce(new Error('stop after the creation'));
+
+        const tty = forceTty();
+        try {
+          await testCli({
+            commandClass: StartCommand,
+            commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM],
+            env,
+            token: 'valid-token',
+            api: [inspectOk()],
+            prompts: [{ in: [question], out: { value: true } }],
+            std: [{ not: CLAIM }],
+            exitMessage: 'stop after the creation',
+          });
+        } finally {
+          tty.mockRestore();
+        }
+
+        expect(createSteps()).toStrictEqual([
+          [process.argv[1], 'projects:create:sql', 'app', '--invitation', CLAIM],
+        ]);
+      });
+
+      it('names the server in a warning before the check and in the question when it is not the default', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        let warnedBeforeRequest = false;
+        const tty = forceTty();
+        try {
+          await testCli({
+            commandClass: StartCommand,
+            commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM],
+            env: { ...env, FOREST_URL_IS_DEFAULT: false },
+            token: 'valid-token',
+            api: [
+              () =>
+                nock(SERVER)
+                  .post(INSPECT, { claim: CLAIM })
+                  .reply(() => {
+                    warnedBeforeRequest = stdout.output.includes(
+                      'This invitation will be sent to localhost:3001.',
+                    );
+
+                    return [200, { inviter: ADA, project: null }];
+                  }),
+            ],
+            prompts: [
+              {
+                in: [
+                  { ...question, message: `Create this project for ${LABEL} on localhost:3001?` },
+                ],
+                out: { value: false },
+              },
+            ],
+            std: [{ out: 'Nothing was created.' }],
+          });
+        } finally {
+          tty.mockRestore();
+        }
+
+        expect(warnedBeforeRequest).toBe(true);
+      });
+    });
+
+    describe('when the server does not give a clean go', () => {
+      it('points to logout then login on a claim for another account, without logging out', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        const logout = jest.fn();
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM],
+          env,
+          additionnalStep: plan =>
+            plan.replace('services/authenticator/authenticator', {
+              getAuthToken: () => 'valid-token',
+              login: () => {},
+              logout,
+              tryLogin: () => {},
+            }),
+          api: [refusal(403, 'developer_invitation_claim_wrong_account', 'nope')],
+          exitMessage:
+            'This invitation was accepted with another Forest account. Run `forest logout`, then ' +
+            '`forest login` with the invited account, and run this command again.',
+        });
+
+        expect(logout).not.toHaveBeenCalled();
+        expect(createSteps()).toStrictEqual([]);
+      });
+
+      it.each([
+        [
+          'expired',
+          refusal(422, 'developer_invitation_claim_expired', 'It expired.'),
+          'It expired.',
+        ],
+        ['revoked', refusal(422, 'developer_invitation_claim_revoked', 'Revoked.'), 'Revoked.'],
+        ['consumed', refusal(422, 'developer_invitation_claim_consumed', 'Used.'), 'Used.'],
+        [
+          'invalid, with the claim echoed',
+          refusal(422, 'developer_invitation_claim_invalid', `Unknown ${CLAIM}`),
+          'Unknown <redacted>',
+        ],
+        [
+          'a session that expired',
+          inspect(401, {}),
+          'Your session is no longer valid. Run `forest login`, then this command again.',
+        ],
+        [
+          'a server without the route',
+          inspect(404, {}),
+          'This Forest server does not support developer invitations.',
+        ],
+        [
+          'rate limited',
+          inspect(429, {}, { 'Retry-After': '30' }),
+          'Too many invitation checks. Try again in 30 seconds.',
+        ],
+        [
+          'a server error',
+          inspect(500, {}),
+          'Could not check this invitation with Forest. Nothing was created. Try again in a moment.',
+        ],
+        [
+          'a network error',
+          () => nock(SERVER).post(INSPECT).replyWithError(`socket hang up ${CLAIM}`),
+          'Could not check this invitation with Forest. Nothing was created. Try again in a moment.',
+        ],
+        [
+          'an answer without the inviter email',
+          inspect(200, { inviter: { name: 'Ada' }, project: null }),
+          'The Forest server sent an unexpected answer about this invitation. Nothing was created.',
+        ],
+        [
+          'an answer with a malformed project',
+          inspect(200, { inviter: ADA, project: { id: 7 } }),
+          'The Forest server sent an unexpected answer about this invitation. Nothing was created.',
+        ],
+      ])('stops before any creation on %s', async (_, api, message) => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM],
+          env,
+          token: 'valid-token',
+          api: [api],
+          exitMessage: message,
+        });
+
+        expect(createSteps()).toStrictEqual([]);
+      });
+
+      it.each([
+        ['an empty value', ''],
+        ['a short value', 'a'.repeat(21)],
+        ['a value with a space', `${'a'.repeat(15)} ${'a'.repeat(15)}`],
+        ['a shell command', `${'a'.repeat(15)};rm${'a'.repeat(10)}`],
+      ])('refuses %s before logging in, without echoing it', async (_, value) => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo', `--invitation=${value}`],
+          env,
+          exitMessage:
+            'The --invitation value is not a valid invitation claim. Copy the command again from the invitation page.',
+        });
+
+        expect(runStep).not.toHaveBeenCalled();
+      });
+
+      it.each([
+        ['a stray positional', [CLAIM]],
+        ['a mistyped flag', [`--invitaton=${CLAIM}`]],
+      ])(
+        'never echoes a claim passed as %s',
+        async (_, args) => {
+          expect.hasAssertions();
+          resetProcessMocks();
+
+          const error = await StartCommand.run(['--dry-run', '--flow', 'demo', ...args]).catch(
+            thrown => thrown,
+          );
+
+          expect(error.message).toContain('<redacted>');
+          expect(error.message).not.toContain(CLAIM);
+          expect(error.stack).not.toContain(CLAIM);
+        },
+        30000,
+      );
+    });
+
+    describe('when the claim already started a project', () => {
+      const resumed = name => inspectOk({ inviter: ADA, project: { id: '42', name } });
+
+      it('resumes that project under its name, whatever flow runs', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo', '--invitation', CLAIM],
+          env,
+          token: 'valid-token',
+          api: [resumed('invited-app')],
+          std: [
+            { out: 'Resuming the project invited-app this invitation started.' },
+            { not: CLAIM },
+          ],
+        });
+
+        expect(createSteps()[0].slice(0, 3)).toStrictEqual([
+          process.argv[1],
+          'projects:create:demo',
+          'invited-app',
+        ]);
+      });
+
+      it.each(['../x', '-H', 'a/b', '.', '‮app'])(
+        'stops on an unusable resumed name %p, spawning nothing',
+        async name => {
+          expect.hasAssertions();
+          resetProcessMocks();
+
+          await testCli({
+            commandClass: StartCommand,
+            commandArgs: ['--flow', 'standalone', '--invitation', CLAIM],
+            env,
+            token: 'valid-token',
+            api: [resumed(name)],
+            exitMessage:
+              'Forest returned a project name this CLI cannot use as a directory. Nothing was created.',
+          });
+
+          expect(runStep).not.toHaveBeenCalled();
+        },
+      );
+
+      it('stops when --name names another project', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'other', '--invitation', CLAIM],
+          env,
+          token: 'valid-token',
+          api: [resumed('invited-app')],
+          exitMessage:
+            'This invitation already started the project invited-app, not other. Run the command again without --name.',
+        });
+
+        expect(createSteps()).toStrictEqual([]);
+      });
+
+      it('stops when the scaffold directory of the resumed project already exists', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--invitation', CLAIM],
+          env,
+          token: 'valid-token',
+          files: [{ name: 'invited-app/package.json', content: '{}' }],
+          api: [resumed('invited-app')],
+          exitMessage:
+            './invited-app already exists. Remove it, or finish the setup of invited-app by hand.',
+        });
+
+        expect(createSteps()).toStrictEqual([]);
+      });
+    });
+
+    describe('in the output of a failing creation', () => {
+      it('redacts the claim from a failing create:sql', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        runStep.mockImplementationOnce(async (command, args) => {
+          throw new Error(`\`${args.join(' ')}\` exited with code 1\n${CLAIM} refused`);
+        });
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM],
+          env,
+          token: 'valid-token',
+          api: [inspectOk()],
+          std: [{ not: CLAIM }],
+          exitMessage: `\`${process.argv[1]} projects:create:sql app --invitation <redacted>\` exited with code 1\n<redacted> refused`,
+        });
+      });
+
+      it('redacts the claim from the streamed output and the error of a failing create:in-app', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        runCapture.mockImplementationOnce(async (command, args, { onProgress }) => {
+          onProgress(`progress for ${CLAIM}\n`);
+          throw new Error(`create failed\nchild said ${CLAIM}`);
+        });
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: [
+            '--flow',
+            'inapp',
+            '--stack',
+            'node',
+            '--name',
+            'app',
+            '--mount',
+            'manual',
+            '--invitation',
+            CLAIM,
+          ],
+          env,
+          token: 'valid-token',
+          files: [PACKAGE_JSON],
+          api: [inspectOk()],
+          std: [{ out: 'progress for <redacted>' }, { not: CLAIM }],
+          exitMessage: 'create failed\nchild said <redacted>',
+        });
+      });
+
+      it('redacts the claim from both attempts when --format json is unknown', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        runCapture
+          .mockRejectedValueOnce(new Error('cmd\nNonexistent flag: --format'))
+          .mockRejectedValueOnce(new Error(`retry failed ${CLAIM}`));
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: [
+            '--flow',
+            'inapp',
+            '--stack',
+            'node',
+            '--name',
+            'app',
+            '--mount',
+            'manual',
+            '--invitation',
+            CLAIM,
+          ],
+          env,
+          token: 'valid-token',
+          files: [PACKAGE_JSON],
+          api: [inspectOk()],
+          std: [{ not: CLAIM }],
+          exitMessage: 'retry failed <redacted>',
+        });
       });
     });
   });

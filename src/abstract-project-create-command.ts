@@ -11,10 +11,15 @@ import type Messages from './utils/messages';
 import type * as OptionParser from './utils/option-parser';
 import type { Config as OclifConfig } from '@oclif/core';
 
-import { Args } from '@oclif/core';
+import { Args, Flags } from '@oclif/core';
 
 import AbstractAuthenticatedCommand from './abstract-authenticated-command';
 import InvalidOptionError from './errors/options/invalid-option-error';
+import {
+  INVALID_CLAIM_MESSAGE,
+  invitationRefusal,
+  isWellFormedClaim,
+} from './services/invitation-claim';
 import { getDialect } from './services/projects/create/options';
 
 export default abstract class AbstractProjectCreateCommand extends AbstractAuthenticatedCommand {
@@ -66,6 +71,12 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     }),
   };
 
+  static invitationFlags = {
+    invitation: Flags.string({ hidden: true }),
+  };
+
+  private invitationClaim?: string;
+
   /** @see https://oclif.io/docs/commands */
   static override description = 'Create a new Forest Admin project.';
 
@@ -102,15 +113,36 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
     this.databaseAnalyzer = databaseAnalyzer;
   }
 
+  override async run(): Promise<void> {
+    const { flags } = (await this.parse(
+      this.constructor as typeof AbstractProjectCreateCommand,
+    )) as {
+      flags: { invitation?: string };
+    };
+
+    if (flags.invitation !== undefined && !isWellFormedClaim(flags.invitation)) {
+      this.logger.error(INVALID_CLAIM_MESSAGE);
+
+      return this.exit(1);
+    }
+
+    this.invitationClaim = flags.invitation;
+
+    return super.run();
+  }
+
   protected async runAuthenticated(): Promise<void> {
     try {
       const { appConfig, dbConfig, language, meta, authenticationToken } = await this.getConfig();
+
+      const invitation = this.invitationClaim ? [this.invitationClaim] : [];
 
       this.spinner.start({ text: 'Creating your project on Forest Admin' });
       const projectCreationPromise = this.projectCreator.create(
         authenticationToken,
         appConfig,
         meta,
+        ...invitation,
       );
       const { id, envSecret, authSecret, endpoint } = await this.spinner.attachToPromise(
         projectCreationPromise,
@@ -132,7 +164,12 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
 
       await this.notifySuccess();
     } catch (error) {
-      if (error instanceof InvalidOptionError) {
+      const refusal = invitationRefusal(error, this.invitationClaim);
+
+      if (refusal) {
+        this.logger.error(refusal.message);
+        this.exit(1);
+      } else if (error instanceof InvalidOptionError) {
         this.logger.error(error.userMessage);
         this.exit(1);
       }

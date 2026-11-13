@@ -4,6 +4,8 @@ describe('services > API', () => {
   function setup() {
     const superagent = {
       post: jest.fn().mockReturnThis(),
+      get: jest.fn().mockReturnThis(),
+      put: jest.fn().mockReturnThis(),
       delete: jest.fn().mockReturnThis(),
       set: jest.fn().mockReturnThis(),
       send: jest.fn(),
@@ -25,8 +27,17 @@ describe('services > API', () => {
       version: '1.2.3',
     };
 
+    const projectSerializer = { serialize: jest.fn(project => ({ project })) };
+    const projectDeserializer = { deserialize: jest.fn(body => body) };
+    const environmentSerializer = { serialize: jest.fn(environment => environment) };
+    const environmentDeserializer = { deserialize: jest.fn(body => body) };
+
     const context = {
       superagent,
+      projectSerializer,
+      projectDeserializer,
+      environmentSerializer,
+      environmentDeserializer,
       applicationTokenDeserializer,
       applicationTokenSerializer,
       env,
@@ -126,6 +137,61 @@ describe('services > API', () => {
       const error = new Error('Some other error');
       superagent.send.mockRejectedValue(error);
       await expect(api.deleteApplicationToken('THE-TOKEN')).rejects.toBe(error);
+    });
+  });
+
+  describe('inspectInvitationClaim', () => {
+    it('posts the claim in the body, never in the URL', async () => {
+      expect.assertions(4);
+
+      const { superagent, api } = setup();
+      const answer = { inviter: { name: 'Ada', email: 'ada@example.com' }, project: null };
+      superagent.send.mockResolvedValue({ body: answer });
+
+      await expect(api.inspectInvitationClaim('THE-CLAIM', 'THE-TOKEN')).resolves.toBe(answer);
+      expect(superagent.post).toHaveBeenCalledWith(
+        'https://api.test.forestadmin.com/api/developer-invitations/claim/inspect',
+      );
+      expect(superagent.set).toHaveBeenCalledWith('Authorization', 'Bearer THE-TOKEN');
+      expect(superagent.send).toHaveBeenCalledWith({ claim: 'THE-CLAIM' });
+    });
+  });
+
+  describe('createProject', () => {
+    const conflict = () =>
+      Object.assign(new Error('Conflict'), {
+        response: { body: { errors: [{ meta: { projectId: '42' } }] } },
+      });
+    const existing = { id: '42', initializedAt: null, defaultEnvironment: { id: '7' } };
+
+    it('reuses an uninitialized same-name project on a conflict without a claim', async () => {
+      expect.assertions(2);
+
+      const { superagent, api } = setup();
+      superagent.send
+        .mockRejectedValueOnce(conflict())
+        .mockResolvedValueOnce({ body: existing })
+        .mockResolvedValueOnce({ body: { secretKey: 'env-secret' } });
+
+      const project = await api.createProject({}, 'THE-TOKEN', { name: 'app' });
+
+      expect(superagent.get).toHaveBeenCalledWith(
+        'https://api.test.forestadmin.com/api/projects/42',
+      );
+      expect(project.defaultEnvironment.secretKey).toBe('env-secret');
+    });
+
+    it('never reuses a same-name project on a conflict when a claim is sent', async () => {
+      expect.assertions(2);
+
+      const { superagent, api } = setup();
+      const error = conflict();
+      superagent.send.mockRejectedValueOnce(error);
+
+      await expect(
+        api.createProject({}, 'THE-TOKEN', { name: 'app', invitationClaim: 'THE-CLAIM' }),
+      ).rejects.toBe(error);
+      expect(superagent.get).not.toHaveBeenCalled();
     });
   });
 });

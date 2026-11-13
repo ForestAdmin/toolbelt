@@ -182,6 +182,7 @@ const SECRET_WORDS = new Set([
   'auth',
   'credential',
   'credentials',
+  'invitation',
   'passwd',
   'password',
   'pwd',

@@ -243,4 +243,132 @@ describe('projects:create:in-app', () => {
         exitCode: 1,
       }));
   });
+
+  describe('with --invitation', () => {
+    const CLAIM = 'SENTINELclaimAAAAAAAAAAAAAAAAAAAA';
+
+    const refusal = (status, code, detail) => () =>
+      nock('http://localhost:3001')
+        .post('/api/projects')
+        .reply(status, { errors: [{ status, detail, meta: { code } }] });
+
+    const authenticatorWithLogout = logout => plan =>
+      plan
+        .replace('utils/keyGenerator', { generate: () => AUTH_SECRET })
+        .replace('services/authenticator/authenticator', {
+          getAuthToken: () => 'any',
+          login: () => {},
+          logout,
+          tryLogin: () => {},
+        });
+
+    it('should send the claim in the creation call and never print it', () =>
+      testCli({
+        commandClass: InAppCommand,
+        commandArgs: ['name', '--format', 'json', '--invitation', CLAIM],
+        env: testEnvWithSecret,
+        token: 'any',
+        additionnalStep: plan =>
+          plan.replace('utils/keyGenerator', { generate: () => AUTH_SECRET }),
+        prompts: [],
+        api: [
+          () =>
+            createProject({
+              databaseType: null,
+              agent: null,
+              architecture: 'in-app',
+              invitationClaim: CLAIM,
+            }),
+          () => updateNewEnvironmentEndpoint('http://localhost:3000'),
+        ],
+        std: [
+          {
+            out: {
+              projectId: '4242',
+              envSecret: ENV_SECRET,
+              authSecret: AUTH_SECRET,
+              endpoint: 'http://localhost:3000',
+            },
+          },
+          { err: 'Hooray, installation success!' },
+          { not: CLAIM },
+        ],
+        exitCode: 0,
+      }));
+
+    it('should point to logout then login, without logging out, on a claim for another account', async () => {
+      expect.hasAssertions();
+
+      const logout = jest.fn();
+
+      await testCli({
+        commandClass: InAppCommand,
+        commandArgs: ['name', '--format', 'json', '--invitation', CLAIM],
+        env: testEnvWithSecret,
+        additionnalStep: authenticatorWithLogout(logout),
+        prompts: [],
+        api: [refusal(403, 'developer_invitation_claim_wrong_account', `Not yours ${CLAIM}`)],
+        std: [
+          { err: 'Run `forest logout`, then `forest login` with the invited account' },
+          { not: 'You do not have the right' },
+          { not: 'Please use' },
+          { not: 'Not yours' },
+          { not: CLAIM },
+        ],
+        exitCode: 1,
+      });
+
+      expect(logout).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['expired', 'This invitation expired.'],
+      ['revoked', 'This invitation was revoked.'],
+      ['consumed', 'This invitation was already used.'],
+      ['invalid', 'This invitation does not exist.'],
+    ])('should show the server reason and create nothing when the claim is %s', (reason, detail) =>
+      testCli({
+        commandClass: InAppCommand,
+        commandArgs: ['name', '--format', 'json', '--invitation', CLAIM],
+        env: testEnvWithSecret,
+        token: 'any',
+        prompts: [],
+        api: [refusal(422, `developer_invitation_claim_${reason}`, `${detail} ${CLAIM}`)],
+        std: [
+          { err: `${detail} <redacted>` },
+          { not: 'Cannot generate your project.' },
+          { not: 'envSecret' },
+          { not: CLAIM },
+        ],
+        exitCode: 1,
+      }),
+    );
+
+    it.each([
+      ['empty', ''],
+      ['too short', 'a'.repeat(21)],
+      ['too long', 'a'.repeat(257)],
+      ['a shell command', `${'a'.repeat(15)};rm${'a'.repeat(10)}`],
+      ['a URL', 'https://app.forestadmin.com/invitations/abcdefghijklmnop'],
+    ])('should refuse a claim that is %s before login, without echoing it', (_, value) =>
+      testCli({
+        commandClass: InAppCommand,
+        commandArgs: ['name', `--invitation=${value}`],
+        env: testEnvWithSecret,
+        token: null,
+        prompts: [],
+        std: [
+          { err: 'The --invitation value is not a valid invitation claim.' },
+          { not: 'Login required' },
+          ...(value ? [{ not: value }] : []),
+        ],
+        exitCode: 1,
+      }),
+    );
+
+    it('should keep the flag out of --help', () => {
+      expect.hasAssertions();
+      expect(InAppCommand.flags.invitation.hidden).toBe(true);
+    });
+  });
 });
