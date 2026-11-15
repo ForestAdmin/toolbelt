@@ -512,18 +512,31 @@ describe('start', () => {
           FOREST_URL_IS_DEFAULT: true,
         });
 
-        expect(atBoot).toStrictEqual({ file: GENERATED, env: undefined });
+        expect(atBoot).toStrictEqual({
+          file: GENERATED,
+          env: { FOREST_SERVER_URL: 'https://api.forestadmin.com' },
+        });
       });
 
-      it('keeps a quote in the URL inside the Ruby string', async () => {
+      it.each([
+        ["https://x.test/'+`id`+'"],
+        ['https://x.test/\nputs 1\n#'],
+        ['https://x.test/\\'],
+        ['ftp://x.test'],
+      ])('refuses %j before creating anything, as it would land in Ruby source', async url => {
         expect.hasAssertions();
         setup();
 
-        await run({ FOREST_SERVER_URL: "https://x.test/'+`id`+'\\", FOREST_URL_IS_DEFAULT: false });
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+          env: { FOREST_SERVER_URL: url, FOREST_URL_IS_DEFAULT: false },
+          exitMessage: `FOREST_URL must be an http(s) URL with no quote, backslash or whitespace: ${JSON.stringify(
+            url,
+          )}`,
+        });
 
-        expect(atBoot.file).toContain(
-          "config.forest_server_url = ENV.fetch('FOREST_SERVER_URL', 'https://x.test/\\'+`id`+\\'\\\\')\n",
-        );
+        expect(runCapture).not.toHaveBeenCalled();
       });
 
       it('replaces the server an initializer kept from an earlier run already sets', async () => {
@@ -548,6 +561,30 @@ describe('start', () => {
       it.each([
         ['is missing', null],
         ['has no configure block', "ForestAdminRails.config.env_secret = 'deadbeef'\n"],
+        [
+          'opens and closes its block on one line',
+          "ForestAdminRails.configure do |config|; config.env_secret = 'deadbeef'; end\n",
+        ],
+        [
+          'spreads the server over two lines',
+          'ForestAdminRails.configure do |config|\n' +
+            '  config.forest_server_url = ENV.fetch(\n' +
+            "    'FOREST_SERVER_URL', 'https://api.staging.forestadmin.com')\n" +
+            'end\n',
+        ],
+        [
+          'sets the server twice',
+          'ForestAdminRails.configure do |config|\n' +
+            "  config.forest_server_url = 'https://a.test'\n" +
+            "  config.forest_server_url = 'https://b.test'\n" +
+            'end\n',
+        ],
+        [
+          'sets the server beside another statement',
+          'ForestAdminRails.configure do |config|\n' +
+            "  config.forest_server_url = 'https://a.test'; config.env_secret = 'deadbeef'\n" +
+            'end\n',
+        ],
       ])('stops before the boot when the initializer %s', async (_, content) => {
         expect.hasAssertions();
         setup(content);

@@ -15,6 +15,7 @@ import {
 import { bootSecrets, keysLoadedFromDotenv, writeSecrets } from '../services/onboarding/env-file';
 import {
   RAILS_INITIALIZER,
+  isSafeServerUrl,
   pinServerUrl,
   serverUrlLine,
 } from '../services/onboarding/rails-initializer';
@@ -523,6 +524,7 @@ export default class StartCommand extends AbstractCommand {
   }
 
   private async flowInAppRails(flags: Record<string, string | undefined>): Promise<void> {
+    const serverUrl = this.railsServerUrl();
     const name = await this.promptName(flags.name);
     const output = await this.forestCapture([
       'projects:create:in-app',
@@ -560,7 +562,7 @@ export default class StartCommand extends AbstractCommand {
       'forest_admin_rails:install',
       secrets.envSecret ?? '<FOREST_ENV_SECRET>',
     ]);
-    const bootEnv = this.pinRailsServerUrl();
+    const bootEnv = this.pinRailsServerUrl(serverUrl);
 
     const tail: Tail = {
       name,
@@ -594,12 +596,13 @@ export default class StartCommand extends AbstractCommand {
   }
 
   /** `forest_admin_rails` reads `FOREST_SERVER_URL` only, never the `FOREST_URL` this CLI honors. */
-  private pinRailsServerUrl(): NodeJS.ProcessEnv | undefined {
-    const { FOREST_SERVER_URL: url, FOREST_URL_IS_DEFAULT: isDefault } = this.context.env;
-    if (!url || isDefault) return undefined;
+  private pinRailsServerUrl(url: string | undefined): NodeJS.ProcessEnv | undefined {
+    if (!url) return undefined;
+    const bootEnv = { FOREST_SERVER_URL: url };
+    if (this.context.env.FOREST_URL_IS_DEFAULT) return bootEnv;
 
     this.logger.log(this.chalk.grey(`\n→ ${RAILS_INITIALIZER}: ${serverUrlLine(url)}`));
-    if (this.dryRun) return undefined;
+    if (this.dryRun) return bootEnv;
 
     if (!pinServerUrl(url)) {
       throw new Error(
@@ -609,7 +612,21 @@ export default class StartCommand extends AbstractCommand {
       );
     }
 
-    return { FOREST_SERVER_URL: url };
+    return bootEnv;
+  }
+
+  /** Checked before anything is created: the URL ends up inside the user's Ruby source. */
+  private railsServerUrl(): string | undefined {
+    const url: string | undefined = this.context.env.FOREST_SERVER_URL;
+    if (url && !isSafeServerUrl(url)) {
+      throw new Error(
+        `FOREST_URL must be an http(s) URL with no quote, backslash or whitespace: ${JSON.stringify(
+          url,
+        )}`,
+      );
+    }
+
+    return url;
   }
 
   private async flowInAppNode(flags: Record<string, string | undefined>): Promise<void> {
