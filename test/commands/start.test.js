@@ -578,6 +578,7 @@ describe('start', () => {
 
       it.each([
         ['.env.development', 'FOREST_SERVER_URL=https://api.forestadmin.com\n'],
+        ['.env', 'export FOREST_SERVER_URL=https://api.forestadmin.com\n'],
         ['.env.local', "export FOREST_SERVER_URL = 'https://api.forestadmin.com' # prod\n"],
         [
           '.env.development.local',

@@ -4,13 +4,19 @@ export const RAILS_INITIALIZER = 'config/initializers/forest_admin_rails.rb';
 
 const SAFE_SERVER_URL = /^https?:\/\/[^\s'\\]+$/;
 const CONFIGURE_LINE = /^[ \t]*ForestAdminRails\.configure do \|config\|[ \t]*\r?\n/m;
-const RAILS_DEVELOPMENT_DOTENVS = ['.env.development.local', '.env.local', '.env.development'];
+const RAILS_DEVELOPMENT_DOTENVS = [
+  '.env.development.local',
+  '.env.local',
+  '.env.development',
+  '.env',
+];
 const DOTENV_SERVER_URL =
   /^[ \t]*(?:export[ \t]+)?FOREST_SERVER_URL[ \t]*=[ \t]*(['"]?)(.*?)\1[ \t]*(?:#.*)?\r?$/gm;
 
 /**
- * The `FOREST_SERVER_URL` dotenv-rails would load in development, `.env` aside (the CLI reads that one):
- * the first file that sets it wins, and within a file its last assignment.
+ * The `FOREST_SERVER_URL` dotenv-rails would load in development, in its load order: the first file
+ * that sets it wins, and within a file its last assignment. `.env` counts too, since the CLI's dotenv
+ * skips the `export` lines and never overrides the shell, where Ruby dotenv reads them on a restart.
  */
 export function railsDotenvServerUrl(): { file: string; url: string } | undefined {
   return RAILS_DEVELOPMENT_DOTENVS.filter(file => fs.existsSync(file))
