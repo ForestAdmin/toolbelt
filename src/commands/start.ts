@@ -618,7 +618,7 @@ export default class StartCommand extends AbstractCommand {
   /** Checked before anything is created: the URL ends up inside the user's Ruby source. */
   private railsServerUrl(): string | undefined {
     const { FOREST_SERVER_URL: url, RAW_FOREST_SERVER_URL: rawUrl } = this.context.env;
-    if (rawUrl && rawUrl !== url) {
+    if (rawUrl !== undefined && rawUrl !== url) {
       throw new Error(
         `FOREST_SERVER_URL=${rawUrl} would send a later \`bin/rails server\` to another server ` +
           `than FOREST_URL=${url}. Unset it, or set it to the same URL.`,

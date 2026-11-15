@@ -455,6 +455,8 @@ describe('start', () => {
       const PINNED =
         "  config.forest_server_url = ENV.fetch('FOREST_SERVER_URL', 'https://api.development.forestadmin.com') unless Rails.env.production?\n";
 
+      const RAILS_SERVER = { command: 'bin/rails', args: ['server', '-p', '3002'] };
+
       let atBoot;
 
       const generatorWrites = content => {
@@ -472,7 +474,7 @@ describe('start', () => {
           .mockResolvedValue({ stdout: JSON.stringify({ envSecret: 'deadbeef' }), stderr: '' });
         generatorWrites(generated);
         startProcess.mockReset().mockImplementation((command, args, options) => {
-          atBoot = { file: fs.readFileSync(INITIALIZER, 'utf8'), env: options.env };
+          atBoot = { command, args, file: fs.readFileSync(INITIALIZER, 'utf8'), env: options.env };
 
           return { child: undefined, ready: Promise.resolve(), mute: () => {} };
         });
@@ -493,6 +495,7 @@ describe('start', () => {
         await run({ ...DEV, FOREST_URL_IS_DEFAULT: false });
 
         expect(atBoot).toStrictEqual({
+          ...RAILS_SERVER,
           file:
             'ForestAdminRails.configure do |config|\n' +
             `${PINNED}` +
@@ -513,6 +516,7 @@ describe('start', () => {
         });
 
         expect(atBoot).toStrictEqual({
+          ...RAILS_SERVER,
           file: GENERATED,
           env: { FOREST_SERVER_URL: 'https://api.forestadmin.com' },
         });
@@ -546,28 +550,31 @@ describe('start', () => {
 
         await run({ ...DEV, FOREST_URL_IS_DEFAULT: false });
 
-        expect(atBoot).toStrictEqual({ file: kept, env: DEV });
+        expect(atBoot).toStrictEqual({ ...RAILS_SERVER, file: kept, env: DEV });
       });
 
-      it('refuses a FOREST_SERVER_URL that a later restart would pick over FOREST_URL', async () => {
-        expect.hasAssertions();
-        setup();
+      it.each([['https://api.forestadmin.com'], ['']])(
+        'refuses a FOREST_SERVER_URL of %j that a later restart would pick over FOREST_URL',
+        async rawUrl => {
+          expect.hasAssertions();
+          setup();
 
-        await testCli({
-          commandClass: StartCommand,
-          commandArgs: ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
-          env: {
-            ...DEV,
-            FOREST_URL_IS_DEFAULT: false,
-            RAW_FOREST_SERVER_URL: 'https://api.forestadmin.com',
-          },
-          exitMessage:
-            'FOREST_SERVER_URL=https://api.forestadmin.com would send a later `bin/rails server` ' +
-            `to another server than FOREST_URL=${DEV.FOREST_SERVER_URL}. Unset it, or set it to the same URL.`,
-        });
+          await testCli({
+            commandClass: StartCommand,
+            commandArgs: ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+            env: {
+              ...DEV,
+              FOREST_URL_IS_DEFAULT: false,
+              RAW_FOREST_SERVER_URL: rawUrl,
+            },
+            exitMessage:
+              `FOREST_SERVER_URL=${rawUrl} would send a later \`bin/rails server\` ` +
+              `to another server than FOREST_URL=${DEV.FOREST_SERVER_URL}. Unset it, or set it to the same URL.`,
+          });
 
-        expect(runCapture).not.toHaveBeenCalled();
-      });
+          expect(runCapture).not.toHaveBeenCalled();
+        },
+      );
 
       it('names FOREST_SERVER_URL when the unsafe URL comes from it', async () => {
         expect.hasAssertions();
