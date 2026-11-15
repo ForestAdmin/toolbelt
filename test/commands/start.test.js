@@ -579,6 +579,10 @@ describe('start', () => {
       it.each([
         ['.env.development', 'FOREST_SERVER_URL=https://api.forestadmin.com\n'],
         ['.env.local', "export FOREST_SERVER_URL = 'https://api.forestadmin.com' # prod\n"],
+        [
+          '.env.development.local',
+          `FOREST_SERVER_URL=${DEV.FOREST_SERVER_URL}\nFOREST_SERVER_URL=https://api.forestadmin.com\n`,
+        ],
       ])(
         'refuses a %s that dotenv-rails would load over FOREST_URL on a restart',
         async (name, content) => {
