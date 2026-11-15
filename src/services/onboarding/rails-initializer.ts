@@ -61,9 +61,10 @@ export function pinServerUrl(url: string): boolean {
     return false;
   }
 
-  const line = `  ${serverUrlLine(url)}\n`;
+  const eol = content.includes('\r\n') ? '\r\n' : '\n';
+  const line = `  ${serverUrlLine(url)}${eol}`;
   const mentions = content.split('forest_server_url').length - 1;
-  if (mentions === 1 && content.includes(`\n${line}`)) return true;
+  if (mentions === 1 && content.includes(`${eol}${line}`)) return true;
   if (mentions > 0 || !CONFIGURE_LINE.test(content)) return false;
 
   fs.writeFileSync(

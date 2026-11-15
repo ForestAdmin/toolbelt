@@ -557,6 +557,19 @@ describe('start', () => {
         expect(atBoot).toStrictEqual({ ...RAILS_SERVER, file: kept, env: DEV });
       });
 
+      it('keeps the CRLF line endings of an initializer, pinned before or not', async () => {
+        expect.hasAssertions();
+        const crlf = text => text.replace(/\n/g, '\r\n');
+        const kept = crlf(`ForestAdminRails.configure do |config|\n${PINNED}end\n`);
+        setup(kept);
+        await run({ ...DEV, FOREST_URL_IS_DEFAULT: false });
+        expect(atBoot).toStrictEqual({ ...RAILS_SERVER, file: kept, env: DEV });
+
+        setup(crlf(GENERATED));
+        await run({ ...DEV, FOREST_URL_IS_DEFAULT: false });
+        expect(atBoot.file).toBe(crlf(GENERATED.replace('|config|\n', `|config|\n${PINNED}`)));
+      });
+
       it.each([['https://api.forestadmin.com'], ['']])(
         'refuses a FOREST_SERVER_URL of %j that a later restart would pick over FOREST_URL',
         async rawUrl => {
