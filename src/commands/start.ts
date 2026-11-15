@@ -15,9 +15,8 @@ import {
 import { bootSecrets, keysLoadedFromDotenv, writeSecrets } from '../services/onboarding/env-file';
 import {
   RAILS_INITIALIZER,
-  isSafeServerUrl,
+  checkRailsServerUrl,
   pinServerUrl,
-  railsDotenvServerUrl,
   serverUrlLine,
 } from '../services/onboarding/rails-initializer';
 import {
@@ -525,7 +524,7 @@ export default class StartCommand extends AbstractCommand {
   }
 
   private async flowInAppRails(flags: Record<string, string | undefined>): Promise<void> {
-    const serverUrl = this.railsServerUrl();
+    const serverUrl = checkRailsServerUrl(this.context.env);
     const name = await this.promptName(flags.name);
     const output = await this.forestCapture([
       'projects:create:in-app',
@@ -614,36 +613,6 @@ export default class StartCommand extends AbstractCommand {
     }
 
     return bootEnv;
-  }
-
-  /** Checked before anything is created: the URL ends up inside the user's Ruby source. */
-  private railsServerUrl(): string | undefined {
-    const { FOREST_SERVER_URL: url, RAW_FOREST_SERVER_URL: rawUrl } = this.context.env;
-    if (rawUrl !== undefined && rawUrl !== url) {
-      throw new Error(
-        `FOREST_SERVER_URL=${rawUrl} would send a later \`bin/rails server\` to another server ` +
-          `than FOREST_URL=${url}. Unset it, or set it to the same URL.`,
-      );
-    }
-
-    const dotenv = railsDotenvServerUrl();
-    if (dotenv && dotenv.url !== url) {
-      throw new Error(
-        `${dotenv.file} sets FOREST_SERVER_URL=${dotenv.url}, which would send a later ` +
-          `\`bin/rails server\` to another server than ${url}. Remove that line, or set it to the same URL.`,
-      );
-    }
-
-    if (url && !isSafeServerUrl(url)) {
-      const variable = rawUrl ? 'FOREST_SERVER_URL' : 'FOREST_URL';
-      throw new Error(
-        `${variable} must be an http(s) URL with no quote, backslash or whitespace: ${JSON.stringify(
-          url,
-        )}`,
-      );
-    }
-
-    return url;
   }
 
   private async flowInAppNode(flags: Record<string, string | undefined>): Promise<void> {

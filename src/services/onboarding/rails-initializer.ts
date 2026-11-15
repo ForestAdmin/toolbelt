@@ -4,22 +4,35 @@ export const RAILS_INITIALIZER = 'config/initializers/forest_admin_rails.rb';
 
 const SAFE_SERVER_URL = /^https?:\/\/[^\s'\\]+$/;
 const CONFIGURE_LINE = /^[ \t]*ForestAdminRails\.configure do \|config\|[ \t]*\r?\n/m;
-const RAILS_DEVELOPMENT_DOTENVS = [
-  '.env.development.local',
-  '.env.local',
-  '.env.development',
-  '.env',
-];
 const DOTENV_SERVER_URL =
-  /^[ \t]*(?:export[ \t]+)?FOREST_SERVER_URL[ \t]*=[ \t]*(['"]?)(.*?)\1[ \t]*(?:#.*)?\r?$/gm;
+  /^[ \t]*(?:export[ \t]+)?FOREST_SERVER_URL(?:[ \t]*=|:[ \t])[ \t]*(['"]?)(.*?)\1[ \t]*(?:#.*)?\r?$/gm;
+
+export type RailsServerUrlEnv = {
+  FOREST_SERVER_URL?: string;
+  FOREST_SERVER_URL_SOURCE?: string;
+  RAILS_ENV?: string;
+  RAW_FOREST_SERVER_URL?: string;
+};
+
+function railsDotenvFiles(railsEnv: string): string[] {
+  return [
+    `.env.${railsEnv}.local`,
+    ...(railsEnv === 'test' ? [] : ['.env.local']),
+    `.env.${railsEnv}`,
+    '.env',
+  ];
+}
 
 /**
- * The `FOREST_SERVER_URL` dotenv-rails would load in development, in its load order: the first file
+ * The `FOREST_SERVER_URL` dotenv-rails would load for `railsEnv`, in its load order: the first file
  * that sets it wins, and within a file its last assignment. `.env` counts too, since the CLI's dotenv
  * skips the `export` lines and never overrides the shell, where Ruby dotenv reads them on a restart.
  */
-export function railsDotenvServerUrl(): { file: string; url: string } | undefined {
-  return RAILS_DEVELOPMENT_DOTENVS.filter(file => fs.existsSync(file))
+export function railsDotenvServerUrl(
+  railsEnv = 'development',
+): { file: string; url: string } | undefined {
+  return railsDotenvFiles(railsEnv)
+    .filter(file => fs.existsSync(file))
     .map(file => ({
       file,
       matches: [...fs.readFileSync(file, 'utf8').matchAll(DOTENV_SERVER_URL)],
@@ -59,4 +72,34 @@ export function pinServerUrl(url: string): boolean {
   );
 
   return true;
+}
+
+/** Checked before anything is created: the URL ends up inside the user's Ruby source. */
+export function checkRailsServerUrl(env: RailsServerUrlEnv): string | undefined {
+  const { FOREST_SERVER_URL: url, FOREST_SERVER_URL_SOURCE: source } = env;
+  const rawUrl = env.RAW_FOREST_SERVER_URL;
+  if (rawUrl !== undefined && rawUrl !== url) {
+    throw new Error(
+      `FOREST_SERVER_URL=${rawUrl} would send a later \`bin/rails server\` to another server ` +
+        `than FOREST_URL=${url}. Unset it, or set it to the same URL.`,
+    );
+  }
+
+  const dotenv = railsDotenvServerUrl(env.RAILS_ENV);
+  if (dotenv && dotenv.url !== url) {
+    throw new Error(
+      `${dotenv.file} sets FOREST_SERVER_URL=${dotenv.url}, which would send a later ` +
+        `\`bin/rails server\` to another server than ${url}. Remove that line, or set it to the same URL.`,
+    );
+  }
+
+  if (url && !isSafeServerUrl(url)) {
+    throw new Error(
+      `${source} must be an http(s) URL with no quote, backslash or whitespace: ${JSON.stringify(
+        url,
+      )}`,
+    );
+  }
+
+  return url;
 }
