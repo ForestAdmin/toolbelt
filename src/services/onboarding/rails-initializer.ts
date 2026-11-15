@@ -4,6 +4,17 @@ export const RAILS_INITIALIZER = 'config/initializers/forest_admin_rails.rb';
 
 const SAFE_SERVER_URL = /^https?:\/\/[^\s'\\]+$/;
 const CONFIGURE_LINE = /^[ \t]*ForestAdminRails\.configure do \|config\|[ \t]*\r?\n/m;
+const RAILS_DEVELOPMENT_DOTENVS = ['.env.development.local', '.env.local', '.env.development'];
+const DOTENV_SERVER_URL =
+  /^[ \t]*(?:export[ \t]+)?FOREST_SERVER_URL[ \t]*=[ \t]*(['"]?)(.*?)\1[ \t]*(?:#.*)?\r?$/m;
+
+/** The first `FOREST_SERVER_URL` dotenv-rails would load in development, `.env` aside: the CLI reads that one. */
+export function railsDotenvServerUrl(): { file: string; url: string } | undefined {
+  return RAILS_DEVELOPMENT_DOTENVS.filter(file => fs.existsSync(file))
+    .map(file => ({ file, match: DOTENV_SERVER_URL.exec(fs.readFileSync(file, 'utf8')) }))
+    .filter(({ match }) => match)
+    .map(({ file, match }) => ({ file, url: match[2] }))[0];
+}
 
 /** Written into Ruby source between single quotes, so nothing in it may end the string or the line. */
 export const isSafeServerUrl = (url: string) => SAFE_SERVER_URL.test(url);

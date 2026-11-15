@@ -17,6 +17,7 @@ import {
   RAILS_INITIALIZER,
   isSafeServerUrl,
   pinServerUrl,
+  railsDotenvServerUrl,
   serverUrlLine,
 } from '../services/onboarding/rails-initializer';
 import {
@@ -622,6 +623,14 @@ export default class StartCommand extends AbstractCommand {
       throw new Error(
         `FOREST_SERVER_URL=${rawUrl} would send a later \`bin/rails server\` to another server ` +
           `than FOREST_URL=${url}. Unset it, or set it to the same URL.`,
+      );
+    }
+
+    const dotenv = railsDotenvServerUrl();
+    if (dotenv && dotenv.url !== url) {
+      throw new Error(
+        `${dotenv.file} sets FOREST_SERVER_URL=${dotenv.url}, which would send a later ` +
+          `\`bin/rails server\` to another server than ${url}. Remove that line, or set it to the same URL.`,
       );
     }
 

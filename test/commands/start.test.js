@@ -576,6 +576,47 @@ describe('start', () => {
         },
       );
 
+      it.each([
+        ['.env.development', 'FOREST_SERVER_URL=https://api.forestadmin.com\n'],
+        ['.env.local', "export FOREST_SERVER_URL = 'https://api.forestadmin.com' # prod\n"],
+      ])(
+        'refuses a %s that dotenv-rails would load over FOREST_URL on a restart',
+        async (name, content) => {
+          expect.hasAssertions();
+          setup();
+
+          await testCli({
+            commandClass: StartCommand,
+            commandArgs: ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+            files: [{ name, content }],
+            env: { ...DEV, FOREST_URL_IS_DEFAULT: false },
+            exitMessage:
+              `${name} sets FOREST_SERVER_URL=https://api.forestadmin.com, which would send a later ` +
+              `\`bin/rails server\` to another server than ${DEV.FOREST_SERVER_URL}. ` +
+              'Remove that line, or set it to the same URL.',
+          });
+
+          expect(runCapture).not.toHaveBeenCalled();
+        },
+      );
+
+      it('accepts a .env.development that names the same server', async () => {
+        expect.hasAssertions();
+        setup();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+          files: [
+            { name: '.env.development', content: `FOREST_SERVER_URL="${DEV.FOREST_SERVER_URL}"\n` },
+          ],
+          env: { ...DEV, FOREST_URL_IS_DEFAULT: false },
+          std: [{ out: 'Forest is live in your app!' }],
+        });
+
+        expect(atBoot.env).toStrictEqual(DEV);
+      });
+
       it('names FOREST_SERVER_URL when the unsafe URL comes from it', async () => {
         expect.hasAssertions();
         setup();
