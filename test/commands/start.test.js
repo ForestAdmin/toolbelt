@@ -619,7 +619,16 @@ describe('start', () => {
           std: [{ out: 'Forest is live in your app!' }],
         });
 
-        expect(atBoot.env).toStrictEqual(DEV);
+        expect(atBoot).toStrictEqual({
+          ...RAILS_SERVER,
+          file:
+            'ForestAdminRails.configure do |config|\n' +
+            `${PINNED}` +
+            "  config.auth_secret = 'a1'\n" +
+            "  config.env_secret = 'deadbeef'\n" +
+            'end\n',
+          env: DEV,
+        });
       });
 
       it('names FOREST_SERVER_URL when the unsafe URL comes from it', async () => {
