@@ -453,7 +453,7 @@ describe('start', () => {
         'end\n';
       const DEV = { FOREST_SERVER_URL: 'https://api.development.forestadmin.com' };
       const PINNED =
-        "  config.forest_server_url = ENV.fetch('FOREST_SERVER_URL', 'https://api.development.forestadmin.com')\n";
+        "  config.forest_server_url = ENV.fetch('FOREST_SERVER_URL', 'https://api.development.forestadmin.com') unless Rails.env.production?\n";
 
       let atBoot;
 
@@ -539,23 +539,14 @@ describe('start', () => {
         expect(runCapture).not.toHaveBeenCalled();
       });
 
-      it('replaces the server an initializer kept from an earlier run already sets', async () => {
+      it('leaves an initializer an earlier run already pointed there as it is', async () => {
         expect.hasAssertions();
-        setup(
-          'ForestAdminRails.configure do |config|\n' +
-            "  config.forest_server_url = 'https://api.staging.forestadmin.com'\n" +
-            "  config.env_secret = 'deadbeef'\n" +
-            'end\n',
-        );
+        const kept = `ForestAdminRails.configure do |config|\n${PINNED}  config.env_secret = 'old'\nend\n`;
+        setup(kept);
 
         await run({ ...DEV, FOREST_URL_IS_DEFAULT: false });
 
-        expect(atBoot.file).toBe(
-          'ForestAdminRails.configure do |config|\n' +
-            `${PINNED}` +
-            "  config.env_secret = 'deadbeef'\n" +
-            'end\n',
-        );
+        expect(atBoot.file).toBe(kept);
       });
 
       it.each([
@@ -570,6 +561,18 @@ describe('start', () => {
           'ForestAdminRails.configure do |config|\n' +
             '  config.forest_server_url = ENV.fetch(\n' +
             "    'FOREST_SERVER_URL', 'https://api.staging.forestadmin.com')\n" +
+            'end\n',
+        ],
+        [
+          'already sets another server',
+          'ForestAdminRails.configure do |config|\n' +
+            "  config.forest_server_url = 'https://api.staging.forestadmin.com'\n" +
+            'end\n',
+        ],
+        [
+          'sets the server only outside production',
+          'ForestAdminRails.configure do |config|\n' +
+            "  config.forest_server_url = 'https://a.test' if Rails.env.production?\n" +
             'end\n',
         ],
         [
