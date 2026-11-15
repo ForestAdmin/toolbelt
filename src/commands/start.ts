@@ -14,6 +14,11 @@ import {
 } from '../services/onboarding/detect';
 import { bootSecrets, keysLoadedFromDotenv, writeSecrets } from '../services/onboarding/env-file';
 import {
+  RAILS_INITIALIZER,
+  pinServerUrl,
+  serverUrlLine,
+} from '../services/onboarding/rails-initializer';
+import {
   runCapture,
   runStep,
   startProcess,
@@ -555,6 +560,7 @@ export default class StartCommand extends AbstractCommand {
       'forest_admin_rails:install',
       secrets.envSecret ?? '<FOREST_ENV_SECRET>',
     ]);
+    const bootEnv = this.pinRailsServerUrl();
 
     const tail: Tail = {
       name,
@@ -573,6 +579,7 @@ export default class StartCommand extends AbstractCommand {
     }
 
     const booted = this.boot('bin/rails', ['server', '-p', String(RAILS_PORT)], {
+      env: bootEnv,
       // Puma's bind line stays accepted here: when `forest_admin_rails` logs its schema push is
       // unverified, and waiting for a line that never comes would fail every Rails boot.
       ready: /Listening on http|schema was updated/i,
@@ -584,6 +591,25 @@ export default class StartCommand extends AbstractCommand {
     if (booted.troubled()) this.doneInAppWithoutSchema(name, RAILS_PORT);
     else this.doneInApp(name, RAILS_PORT);
     await this.handoff({ ...tail, child: booted.child, mute: booted.mute });
+  }
+
+  /** `forest_admin_rails` reads `FOREST_SERVER_URL` only, never the `FOREST_URL` this CLI honors. */
+  private pinRailsServerUrl(): NodeJS.ProcessEnv | undefined {
+    const { FOREST_SERVER_URL: url, FOREST_URL_IS_DEFAULT: isDefault } = this.context.env;
+    if (!url || isDefault) return undefined;
+
+    this.logger.log(this.chalk.grey(`\n→ ${RAILS_INITIALIZER}: ${serverUrlLine(url)}`));
+    if (this.dryRun) return undefined;
+
+    if (!pinServerUrl(url)) {
+      throw new Error(
+        `Could not point ${RAILS_INITIALIZER} at ${url}. Add this line to its ` +
+          `\`ForestAdminRails.configure\` block, then run \`bin/rails server -p ${RAILS_PORT}\`:\n` +
+          `  ${serverUrlLine(url)}`,
+      );
+    }
+
+    return { FOREST_SERVER_URL: url };
   }
 
   private async flowInAppNode(flags: Record<string, string | undefined>): Promise<void> {

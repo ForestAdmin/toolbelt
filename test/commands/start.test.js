@@ -444,6 +444,145 @@ describe('start', () => {
       });
     });
 
+    describe('on a non-default Forest server', () => {
+      const INITIALIZER = 'config/initializers/forest_admin_rails.rb';
+      const GENERATED =
+        'ForestAdminRails.configure do |config|\n' +
+        "  config.auth_secret = 'a1'\n" +
+        "  config.env_secret = 'deadbeef'\n" +
+        'end\n';
+      const DEV = { FOREST_SERVER_URL: 'https://api.development.forestadmin.com' };
+      const PINNED =
+        "  config.forest_server_url = ENV.fetch('FOREST_SERVER_URL', 'https://api.development.forestadmin.com')\n";
+
+      let atBoot;
+
+      const generatorWrites = content => {
+        runStep.mockReset().mockImplementation(async command => {
+          if (command !== 'bin/rails') return;
+          fs.mkdirSync('config/initializers', { recursive: true });
+          if (content !== null) fs.writeFileSync(INITIALIZER, content);
+        });
+      };
+
+      const setup = (generated = GENERATED) => {
+        atBoot = undefined;
+        runCapture
+          .mockReset()
+          .mockResolvedValue({ stdout: JSON.stringify({ envSecret: 'deadbeef' }), stderr: '' });
+        generatorWrites(generated);
+        startProcess.mockReset().mockImplementation((command, args, options) => {
+          atBoot = { file: fs.readFileSync(INITIALIZER, 'utf8'), env: options.env };
+
+          return { child: undefined, ready: Promise.resolve(), mute: () => {} };
+        });
+      };
+
+      const run = env =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+          env,
+          std: [{ out: 'Forest is live in your app!' }],
+        });
+
+      it('points the initializer and the boot at that server, the deploy env first', async () => {
+        expect.hasAssertions();
+        setup();
+
+        await run({ ...DEV, FOREST_URL_IS_DEFAULT: false });
+
+        expect(atBoot).toStrictEqual({
+          file:
+            'ForestAdminRails.configure do |config|\n' +
+            `${PINNED}` +
+            "  config.auth_secret = 'a1'\n" +
+            "  config.env_secret = 'deadbeef'\n" +
+            'end\n',
+          env: { FOREST_SERVER_URL: DEV.FOREST_SERVER_URL },
+        });
+      });
+
+      it('leaves the initializer as generated on the default server', async () => {
+        expect.hasAssertions();
+        setup();
+
+        await run({
+          FOREST_SERVER_URL: 'https://api.forestadmin.com',
+          FOREST_URL_IS_DEFAULT: true,
+        });
+
+        expect(atBoot).toStrictEqual({ file: GENERATED, env: undefined });
+      });
+
+      it('keeps a quote in the URL inside the Ruby string', async () => {
+        expect.hasAssertions();
+        setup();
+
+        await run({ FOREST_SERVER_URL: "https://x.test/'+`id`+'\\", FOREST_URL_IS_DEFAULT: false });
+
+        expect(atBoot.file).toContain(
+          "config.forest_server_url = ENV.fetch('FOREST_SERVER_URL', 'https://x.test/\\'+`id`+\\'\\\\')\n",
+        );
+      });
+
+      it('replaces the server an initializer kept from an earlier run already sets', async () => {
+        expect.hasAssertions();
+        setup(
+          'ForestAdminRails.configure do |config|\n' +
+            "  config.forest_server_url = 'https://api.staging.forestadmin.com'\n" +
+            "  config.env_secret = 'deadbeef'\n" +
+            'end\n',
+        );
+
+        await run({ ...DEV, FOREST_URL_IS_DEFAULT: false });
+
+        expect(atBoot.file).toBe(
+          'ForestAdminRails.configure do |config|\n' +
+            `${PINNED}` +
+            "  config.env_secret = 'deadbeef'\n" +
+            'end\n',
+        );
+      });
+
+      it.each([
+        ['is missing', null],
+        ['has no configure block', "ForestAdminRails.config.env_secret = 'deadbeef'\n"],
+      ])('stops before the boot when the initializer %s', async (_, content) => {
+        expect.hasAssertions();
+        setup(content);
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+          env: { ...DEV, FOREST_URL_IS_DEFAULT: false },
+          exitMessage:
+            `Could not point ${INITIALIZER} at ${DEV.FOREST_SERVER_URL}. Add this line to its ` +
+            '`ForestAdminRails.configure` block, then run `bin/rails server -p 3002`:\n' +
+            `${PINNED.trimEnd()}`,
+        });
+
+        expect(startProcess).not.toHaveBeenCalled();
+      });
+
+      it('shows the step in a dry run, and writes nothing', async () => {
+        expect.hasAssertions();
+        setup();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--dry-run', '--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+          env: { ...DEV, FOREST_URL_IS_DEFAULT: false },
+          std: [
+            { out: `→ ${INITIALIZER}:${PINNED.trimEnd().replace(/^ +/, ' ')}` },
+            { out: 'Forest is live in your app!' },
+          ],
+        });
+
+        expect(fs.existsSync(INITIALIZER)).toBe(false);
+      });
+    });
+
     it('registers an in-app project then installs the five gems the boot actually needs', async () => {
       expect.hasAssertions();
 
