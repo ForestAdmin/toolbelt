@@ -576,6 +576,12 @@ describe('start', () => {
             'end\n',
         ],
         [
+          'overrides an earlier pin further down',
+          `ForestAdminRails.configure do |config|\n${PINNED}` +
+            "  config.forest_server_url = 'https://api.staging.forestadmin.com'\n" +
+            'end\n',
+        ],
+        [
           'sets the server twice',
           'ForestAdminRails.configure do |config|\n' +
             "  config.forest_server_url = 'https://a.test'\n" +
