@@ -22,6 +22,7 @@ module.exports = plan =>
           FOREST_ENV_SECRET: process.env.FOREST_ENV_SECRET,
           FOREST_SERVER_URL,
           FOREST_URL_IS_DEFAULT,
+          RAW_FOREST_SERVER_URL: process.env.FOREST_SERVER_URL,
           SILENT: process.env.SILENT,
           TOKEN_PATH: process.env.TOKEN_PATH || os.homedir(),
         };

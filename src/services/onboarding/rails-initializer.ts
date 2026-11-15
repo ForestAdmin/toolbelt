@@ -27,7 +27,7 @@ export function pinServerUrl(url: string): boolean {
 
   const line = `  ${serverUrlLine(url)}\n`;
   const mentions = content.split('forest_server_url').length - 1;
-  if (mentions === 1 && content.includes(line)) return true;
+  if (mentions === 1 && content.includes(`\n${line}`)) return true;
   if (mentions > 0 || !CONFIGURE_LINE.test(content)) return false;
 
   fs.writeFileSync(

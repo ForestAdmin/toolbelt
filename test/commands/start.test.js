@@ -546,7 +546,46 @@ describe('start', () => {
 
         await run({ ...DEV, FOREST_URL_IS_DEFAULT: false });
 
-        expect(atBoot.file).toBe(kept);
+        expect(atBoot).toStrictEqual({ file: kept, env: DEV });
+      });
+
+      it('refuses a FOREST_SERVER_URL that a later restart would pick over FOREST_URL', async () => {
+        expect.hasAssertions();
+        setup();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+          env: {
+            ...DEV,
+            FOREST_URL_IS_DEFAULT: false,
+            RAW_FOREST_SERVER_URL: 'https://api.forestadmin.com',
+          },
+          exitMessage:
+            'FOREST_SERVER_URL=https://api.forestadmin.com would send a later `bin/rails server` ' +
+            `to another server than FOREST_URL=${DEV.FOREST_SERVER_URL}. Unset it, or set it to the same URL.`,
+        });
+
+        expect(runCapture).not.toHaveBeenCalled();
+      });
+
+      it('names FOREST_SERVER_URL when the unsafe URL comes from it', async () => {
+        expect.hasAssertions();
+        setup();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+          env: {
+            FOREST_SERVER_URL: 'ftp://x.test',
+            RAW_FOREST_SERVER_URL: 'ftp://x.test',
+            FOREST_URL_IS_DEFAULT: false,
+          },
+          exitMessage:
+            'FOREST_SERVER_URL must be an http(s) URL with no quote, backslash or whitespace: "ftp://x.test"',
+        });
+
+        expect(runCapture).not.toHaveBeenCalled();
       });
 
       it.each([
@@ -581,6 +620,7 @@ describe('start', () => {
             "  config.forest_server_url = 'https://api.staging.forestadmin.com'\n" +
             'end\n',
         ],
+        ['holds the pin commented out', `ForestAdminRails.configure do |config|\n#${PINNED}end\n`],
         [
           'sets the server twice',
           'ForestAdminRails.configure do |config|\n' +
@@ -603,8 +643,9 @@ describe('start', () => {
           commandArgs: ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
           env: { ...DEV, FOREST_URL_IS_DEFAULT: false },
           exitMessage:
-            `Could not point ${INITIALIZER} at ${DEV.FOREST_SERVER_URL}. Add this line to its ` +
-            '`ForestAdminRails.configure` block, then run `bin/rails server -p 3002`:\n' +
+            `Could not point ${INITIALIZER} at ${DEV.FOREST_SERVER_URL}. In its ` +
+            '`ForestAdminRails.configure` block, replace any `config.forest_server_url` line ' +
+            'with this one, then run `bin/rails server -p 3002`:\n' +
             `${PINNED.trimEnd()}`,
         });
 

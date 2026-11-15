@@ -606,9 +606,9 @@ export default class StartCommand extends AbstractCommand {
 
     if (!pinServerUrl(url)) {
       throw new Error(
-        `Could not point ${RAILS_INITIALIZER} at ${url}. Add this line to its ` +
-          `\`ForestAdminRails.configure\` block, then run \`bin/rails server -p ${RAILS_PORT}\`:\n` +
-          `  ${serverUrlLine(url)}`,
+        `Could not point ${RAILS_INITIALIZER} at ${url}. In its \`ForestAdminRails.configure\` ` +
+          'block, replace any `config.forest_server_url` line with this one, then run ' +
+          `\`bin/rails server -p ${RAILS_PORT}\`:\n  ${serverUrlLine(url)}`,
       );
     }
 
@@ -617,10 +617,18 @@ export default class StartCommand extends AbstractCommand {
 
   /** Checked before anything is created: the URL ends up inside the user's Ruby source. */
   private railsServerUrl(): string | undefined {
-    const url: string | undefined = this.context.env.FOREST_SERVER_URL;
-    if (url && !isSafeServerUrl(url)) {
+    const { FOREST_SERVER_URL: url, RAW_FOREST_SERVER_URL: rawUrl } = this.context.env;
+    if (rawUrl && rawUrl !== url) {
       throw new Error(
-        `FOREST_URL must be an http(s) URL with no quote, backslash or whitespace: ${JSON.stringify(
+        `FOREST_SERVER_URL=${rawUrl} would send a later \`bin/rails server\` to another server ` +
+          `than FOREST_URL=${url}. Unset it, or set it to the same URL.`,
+      );
+    }
+
+    if (url && !isSafeServerUrl(url)) {
+      const variable = rawUrl ? 'FOREST_SERVER_URL' : 'FOREST_URL';
+      throw new Error(
+        `${variable} must be an http(s) URL with no quote, backslash or whitespace: ${JSON.stringify(
           url,
         )}`,
       );
