@@ -263,8 +263,14 @@ describe('abstractProjectCreateCommand command', () => {
 
         expect(stubs.projectCreator.create).toHaveBeenCalledWith(
           'authToken',
-          expect.anything(),
-          expect.anything(),
+          { appName: 'testApp', appHostname: 'localhost', appPort: 3000 },
+          {
+            dbDialect: 'postgres',
+            agent: Agents.ExpressSequelize,
+            isLocal: true,
+            architecture: 'microservice',
+            projectId: 1,
+          },
           CLAIM,
         );
       });

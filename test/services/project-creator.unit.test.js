@@ -137,24 +137,30 @@ describe('project creator', () => {
         'CLAIM',
       );
 
-      expect(context.api.createProject).toHaveBeenCalledWith(
-        { appName: 'app' },
-        'session-token',
-        expect.objectContaining({ invitationClaim: 'CLAIM' }),
-      );
+      expect(context.api.createProject).toHaveBeenCalledWith({ appName: 'app' }, 'session-token', {
+        name: 'app',
+        agent: 'nodejs',
+        architecture: undefined,
+        databaseType: undefined,
+        invitationClaim: 'CLAIM',
+      });
     });
 
     it('should not send the invitation claim key when none is given', async () => {
-      expect.assertions(1);
+      expect.assertions(2);
       const context = createContext();
       const projectCreator = new ProjectCreator(context);
       context.api.createProject.mockResolvedValue({ id: '1', defaultEnvironment: {} });
 
       await projectCreator.create('session-token', { appName: 'app' }, { agent: 'nodejs' });
 
-      expect(Object.keys(context.api.createProject.mock.calls[0][2])).not.toContain(
-        'invitationClaim',
-      );
+      expect(context.api.createProject).toHaveBeenCalledWith({ appName: 'app' }, 'session-token', {
+        name: 'app',
+        agent: 'nodejs',
+        architecture: undefined,
+        databaseType: undefined,
+      });
+      expect(context.api.createProject.mock.calls[0][2]).not.toHaveProperty('invitationClaim');
     });
   });
 });
