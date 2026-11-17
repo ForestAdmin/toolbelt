@@ -1,4 +1,9 @@
-import { validateAppHostname, validateDbName, validatePort } from '../../src/utils/validators';
+import {
+  validateAppHostname,
+  validateDbName,
+  validateOrganizationId,
+  validatePort,
+} from '../../src/utils/validators';
 
 describe('validator', () => {
   describe('validatePort', () => {
@@ -40,5 +45,22 @@ describe('validator', () => {
       expect.assertions(1);
       expect(validateDbName('')).toBe('Please specify the database name.');
     });
+  });
+
+  describe('validateOrganizationId', () => {
+    it.each(['1', '42', '1234567'])('should accept the positive integer %s', id => {
+      expect.assertions(1);
+      expect(validateOrganizationId(id)).toBe(true);
+    });
+
+    it.each(['', '0', '-1', '01', '1.5', '1e3', 'abc', ' 42', '42abc', '99999999999'])(
+      'should refuse %j',
+      id => {
+        expect.assertions(1);
+        expect(validateOrganizationId(id)).toBe(
+          'The organization must be a positive integer id, like 42.',
+        );
+      },
+    );
   });
 });

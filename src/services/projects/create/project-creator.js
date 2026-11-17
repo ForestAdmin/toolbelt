@@ -1,9 +1,12 @@
+const InvalidOptionError = require('../../../errors/options/invalid-option-error');
+
 /**
  * @typedef {{
  *  agent: string;
  *  dbDialect: string;
  *  architecture: string;
  *  isLocal: boolean;
+ *  organizationId?: number;
  * }} ProjectMeta
  *
  * @typedef {{
@@ -55,6 +58,7 @@ class ProjectCreator {
         agent: meta.agent,
         architecture: meta.architecture,
         databaseType: meta.dbDialect,
+        ...(meta.organizationId && { organization: { id: meta.organizationId } }),
       };
 
       const newProject = await this.api.createProject(config, sessionToken, newProjectPayload);
@@ -71,6 +75,14 @@ class ProjectCreator {
     } catch (error) {
       if (error.message === 'Conflict') {
         error.message = 'A project with this name already exists. Please choose another name.';
+      }
+
+      if (error.status === 403 && meta.organizationId) {
+        const reason = error.response?.body?.errors?.[0]?.detail ?? error.message;
+
+        throw new InvalidOptionError(
+          `Cannot create the project in organization ${meta.organizationId}: ${reason}.`,
+        );
       }
 
       throw error;

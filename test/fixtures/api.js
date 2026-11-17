@@ -1517,6 +1517,7 @@ module.exports = {
     databaseType,
     agent = Agents.ExpressSequelize,
     architecture = 'microservice',
+    organizationId = undefined,
   }) =>
     nock('http://localhost:3001')
       .post('/api/projects', {
@@ -1528,6 +1529,11 @@ module.exports = {
             architecture,
             database_type: databaseType,
           },
+          ...(organizationId && {
+            relationships: {
+              organization: { data: { type: 'organizations', id: String(organizationId) } },
+            },
+          }),
         },
       })
       .reply(

@@ -13,6 +13,7 @@ export default class DemoCommand extends AbstractProjectCreateCommand {
     applicationHost: projectCreateOptions.applicationHost,
     applicationPort: projectCreateOptions.applicationPort,
     language: projectCreateOptions.language,
+    organization: projectCreateOptions.organization,
   };
 
   /** @see https://oclif.io/docs/args */

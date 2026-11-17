@@ -243,4 +243,62 @@ describe('projects:create:in-app', () => {
         exitCode: 1,
       }));
   });
+
+  describe('with --organization', () => {
+    it('should register the project in that organization', () =>
+      testCli({
+        commandClass: InAppCommand,
+        commandArgs: ['name', '--organization', '42'],
+        env: testEnvWithSecret,
+        token: 'any',
+        prompts: [
+          {
+            in: expectedPrompts,
+            out: { applicationHost: 'http://localhost', applicationPort: '3000' },
+          },
+        ],
+        api: [
+          () =>
+            createProject({
+              databaseType: null,
+              agent: null,
+              architecture: 'in-app',
+              organizationId: 42,
+            }),
+          () => updateNewEnvironmentEndpoint('http://localhost:3000'),
+        ],
+        std: [
+          { spinner: '√ Creating your project on Forest Admin' },
+          { out: 'In-app project created' },
+        ],
+        exitCode: 0,
+      }));
+
+    // The server refuses a user who is not owner of the organization with a 403. Read as a
+    // project permission problem, it would print a message about a project that does not exist.
+    it('should say which organization was refused and why, on stderr with --format json', () =>
+      testCli({
+        commandClass: InAppCommand,
+        commandArgs: ['name', '--organization', '42', '--format', 'json'],
+        env: testEnvWithSecret,
+        token: 'any',
+        prompts: [],
+        api: [
+          () =>
+            nock('http://localhost:3001')
+              .post('/api/projects')
+              .reply(403, {
+                errors: [{ status: 403, detail: 'You are not the owner of the organization' }],
+              }),
+        ],
+        std: [
+          {
+            err: 'Cannot create the project in organization 42: You are not the owner of the organization.',
+          },
+          { not: 'You do not have the right to execute this action on this project' },
+          { not: 'envSecret' },
+        ],
+        exitCode: 1,
+      }));
+  });
 });

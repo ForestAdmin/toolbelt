@@ -20,6 +20,7 @@ import {
   stopAllProcesses,
   stopProcess,
 } from '../services/process-runner';
+import { validateOrganizationId } from '../utils/validators';
 
 const DOCS_URL = 'https://docs.forest.app';
 const DEMO_PORT = 3310;
@@ -99,9 +100,16 @@ export default class StartCommand extends AbstractCommand {
       description: 'How to mount Forest in a Node app.',
       options: ['ai', 'manual', 'standalone'],
     }),
+    organization: Flags.string({
+      description:
+        'ID of the organization to create the project in (default: your Personal space).',
+    }),
   };
 
   private dryRun = false;
+
+  /** Passed to every `projects:create:*` call, so the project lands in the chosen organization. */
+  private organizationArgs: string[] = [];
 
   // eslint-disable-next-line class-methods-use-this -- reads the ambient TTY, not instance state
   private get interactive(): boolean {
@@ -120,6 +128,7 @@ export default class StartCommand extends AbstractCommand {
   async run(): Promise<void> {
     const { flags } = await this.parse(StartCommand);
     this.dryRun = flags['dry-run'];
+    this.organizationArgs = StartCommand.toOrganizationArgs(flags.organization);
 
     // Refused before `login`, since every flow creates a project server-side before its first
     // spawn: `npm` is `npm.cmd` there, and a back-end cannot be stopped without a process group.
@@ -173,6 +182,16 @@ export default class StartCommand extends AbstractCommand {
   }
 
   // ---------- primitives ----------
+
+  /** Refused here rather than by `projects:create:*`, which runs only after `login`. */
+  private static toOrganizationArgs(organization?: string): string[] {
+    if (organization === undefined) return [];
+
+    const invalid = validateOrganizationId(organization);
+    if (invalid !== true) throw new Error(`Invalid value for --organization: ${invalid}`);
+
+    return ['--organization', organization];
+  }
 
   /**
    * Values that must never reach the terminal, a scrollback or a CI log. The echo is a feature —
@@ -417,6 +436,7 @@ export default class StartCommand extends AbstractCommand {
       'http://localhost',
       '-P',
       String(DEMO_PORT),
+      ...this.organizationArgs,
     ]);
     await this.installAndBuild(name);
 
@@ -484,7 +504,7 @@ export default class StartCommand extends AbstractCommand {
       );
     }
 
-    await this.forest(args);
+    await this.forest([...args, ...this.organizationArgs]);
     await this.installAndBuild(name);
     this.logger.success(`Setup complete — booting your back-end on :${DEMO_PORT}…`);
 
@@ -528,6 +548,7 @@ export default class StartCommand extends AbstractCommand {
       String(RAILS_PORT),
       '--format',
       'json',
+      ...this.organizationArgs,
     ]);
     const secrets = StartCommand.parseSecrets(output);
 
@@ -613,6 +634,7 @@ export default class StartCommand extends AbstractCommand {
       String(NODE_PORT),
       '--format',
       'json',
+      ...this.organizationArgs,
     ]);
     const secrets = StartCommand.parseSecrets(output);
 

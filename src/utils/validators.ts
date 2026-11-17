@@ -23,3 +23,12 @@ export function validateDbName(dbName: string): string | true {
   }
   return 'Please specify the database name.';
 }
+
+const MAX_DATABASE_ID = 2147483647;
+
+export function validateOrganizationId(id: string): string | true {
+  if (/^[1-9]\d*$/.test(id) && Number(id) <= MAX_DATABASE_ID) {
+    return true;
+  }
+  return 'The organization must be a positive integer id, like 42.';
+}
