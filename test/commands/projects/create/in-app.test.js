@@ -288,7 +288,13 @@ describe('projects:create:in-app', () => {
             nock('http://localhost:3001')
               .post('/api/projects')
               .reply(403, {
-                errors: [{ status: 403, detail: 'You are not the owner of the organization' }],
+                errors: [
+                  {
+                    status: 403,
+                    detail: 'You are not the owner of the organization',
+                    name: 'UserNotOwnerOfOrganizationError',
+                  },
+                ],
               }),
         ],
         std: [

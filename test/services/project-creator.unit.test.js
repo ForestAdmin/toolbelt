@@ -140,7 +140,15 @@ describe('project creator', () => {
       const forbidden = Object.assign(new Error('Forbidden'), {
         status: 403,
         response: {
-          body: { errors: [{ status: 403, detail: 'You are not the owner of the organization' }] },
+          body: {
+            errors: [
+              {
+                status: 403,
+                detail: 'You are not the owner of the organization',
+                name: 'UserNotOwnerOfOrganizationError',
+              },
+            ],
+          },
         },
       });
       context.api.createProject.mockRejectedValue(forbidden);
@@ -152,6 +160,22 @@ describe('project creator', () => {
       );
       // Not a 403 any more: the command would print it as a project permission problem.
       await expect(creation).rejects.not.toHaveProperty('status');
+    });
+
+    it('should leave any other 403 to the generic permission handling', async () => {
+      expect.assertions(1);
+      const context = createContext();
+      const forbidden = Object.assign(new Error('Forbidden'), {
+        status: 403,
+        response: {
+          body: { errors: [{ status: 403, detail: 'Forbidden', name: 'ForbiddenError' }] },
+        },
+      });
+      context.api.createProject.mockRejectedValue(forbidden);
+
+      await expect(
+        new ProjectCreator(context).create('token', { appName: 'app' }, meta),
+      ).rejects.toBe(forbidden);
     });
 
     it('should keep the conflict message when the name is already taken', async () => {

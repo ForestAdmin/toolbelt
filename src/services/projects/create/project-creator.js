@@ -1,5 +1,10 @@
 const InvalidOptionError = require('../../../errors/options/invalid-option-error');
 
+const ORGANIZATION_REFUSALS = [
+  'UserNotOwnerOfOrganizationError',
+  'OrganizationAccessForbiddenError',
+];
+
 /**
  * @typedef {{
  *  agent: string;
@@ -77,11 +82,13 @@ class ProjectCreator {
         error.message = 'A project with this name already exists. Please choose another name.';
       }
 
-      if (error.status === 403 && meta.organizationId) {
-        const reason = error.response?.body?.errors?.[0]?.detail ?? error.message;
+      const serverError = error.response?.body?.errors?.[0];
 
+      if (meta.organizationId && ORGANIZATION_REFUSALS.includes(serverError?.name)) {
         throw new InvalidOptionError(
-          `Cannot create the project in organization ${meta.organizationId}: ${reason}.`,
+          `Cannot create the project in organization ${
+            meta.organizationId
+          }: ${serverError.detail.replace(/\.$/, '')}.`,
         );
       }
 
