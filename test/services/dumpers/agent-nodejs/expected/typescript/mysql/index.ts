@@ -20,7 +20,7 @@ const agent = createAgent<Schema>({
 });
 
 // Connect your datasources
-// All options are documented at https://docs.forestadmin.com/developer-guide-agents-nodejs/data-sources/connection
+// All options are documented at https://docs.forest.app/get-started/connect/data-sources/sql
 agent.addDataSource(
   createSqlDataSource({
     uri: process.env.DATABASE_URL,
@@ -37,7 +37,7 @@ agent.addDataSource(
 //
 // agent.customizeCollection('products', collection => {
 //   // Actions are documented here:
-//   // https://docs.forestadmin.com/developer-guide-agents-nodejs/agent-customization/actions
+//   // https://docs.forest.app/product/process/actions/custom-actions/overview
 //   collection.addAction('Order new batch from supplier', {
 //     scope: 'Single', // This action can be triggered product by product
 //     form: [{ label: 'Quantity', type: 'Number', isRequired: true }],
@@ -52,7 +52,7 @@ agent.addDataSource(
 //   });
 
 //   // Search customization is documented here:
-//   // https://docs.forestadmin.com/developer-guide-agents-nodejs/agent-customization/search
+//   // https://docs.forest.app/product/build/search-configuration
 //   collection.replaceSearch(searchString => {
 //     // user has most likely typed a product id, let's search only that column
 //     if (searchString.match(/^prdid[\d]{8}/$))
