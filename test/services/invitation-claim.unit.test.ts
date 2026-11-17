@@ -380,8 +380,14 @@ describe('services > invitation-claim', () => {
       [httpError(429, undefined, { 'retry-after': '999999' }), 'Try again in 3600 seconds'],
       [httpError(429, undefined, { 'retry-after': 'Wed, 21 Oct' }), 'Try again later'],
       [httpError(429), 'Try again later'],
-      [httpError(500), 'Could not check this invitation'],
-      [Object.assign(new Error(`connect ECONNREFUSED ${SENTINEL}`)), 'Could not check'],
+      [httpError(500), 'Could not check this invitation with Forest (HTTP 500). Nothing'],
+      [httpError(400), 'Could not check this invitation with Forest (HTTP 400). Nothing'],
+      [
+        Object.assign(new Error(`connect ECONNREFUSED ${SENTINEL}`), { code: 'ECONNREFUSED' }),
+        'Could not check this invitation with Forest (ECONNREFUSED). Nothing',
+      ],
+      [Object.assign(new Error('x'), { code: SENTINEL }), '(no answer)'],
+      [new Error(`connect ECONNREFUSED ${SENTINEL}`), '(no answer)'],
     ])('turns %p into a fixed message', (error, expected) => {
       expect.hasAssertions();
 

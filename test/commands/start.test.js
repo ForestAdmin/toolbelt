@@ -747,7 +747,7 @@ describe('start', () => {
 
         await testCli({
           commandClass: StartCommand,
-          commandArgs: ['--dry-run', ...args, '--invitation', CLAIM],
+          commandArgs: ['--dry-run', ...args, '--invitation', CLAIM, '--yes'],
           env,
           token: 'valid-token',
           files: [PACKAGE_JSON],
@@ -766,7 +766,7 @@ describe('start', () => {
 
         await testCli({
           commandClass: StartCommand,
-          commandArgs: ['--dry-run', '--flow', 'demo', '--invitation', CLAIM],
+          commandArgs: ['--dry-run', '--flow', 'demo', '--invitation', CLAIM, '--yes'],
           env,
           token: 'valid-token',
           std: [
@@ -785,12 +785,12 @@ describe('start', () => {
 
         await testCli({
           commandClass: StartCommand,
-          commandArgs: ['--flow', 'demo', '--invitation', CLAIM],
+          commandArgs: ['--flow', 'demo', '--invitation', CLAIM, '--yes'],
           env: { ...env, SILENT: '1' },
           token: 'valid-token',
           api: [inspectOk()],
           std: [
-            { out: `Creating this project for ${LABEL} (non-interactive, not asking).` },
+            { out: `Creating this project for ${LABEL} (confirmed with --yes).` },
             { not: CLAIM },
           ],
         });
@@ -809,13 +809,13 @@ describe('start', () => {
 
         await testCli({
           commandClass: StartCommand,
-          commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM],
+          commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM, '--yes'],
           env,
           token: 'valid-token',
           api: [inspectOk()],
           std: [
             { out: `This project is for ${LABEL}.` },
-            { out: `Creating this project for ${LABEL} (non-interactive, not asking).` },
+            { out: `Creating this project for ${LABEL} (confirmed with --yes).` },
             { not: CLAIM },
           ],
           exitMessage: 'stop after the creation',
@@ -842,13 +842,28 @@ describe('start', () => {
         expect(runStep).not.toHaveBeenCalled();
       });
 
+      it('refuses --invitation without --yes, before logging in or asking the server', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM],
+          env,
+          exitMessage:
+            'Without a terminal, --invitation cannot ask before creating the project for the inviter: add --yes to confirm.',
+        });
+
+        expect(runStep).not.toHaveBeenCalled();
+      });
+
       it('proceeds with an explicit --flow demo', async () => {
         expect.hasAssertions();
         resetProcessMocks();
 
         await testCli({
           commandClass: StartCommand,
-          commandArgs: ['--flow', 'demo', '--invitation', CLAIM],
+          commandArgs: ['--flow', 'demo', '--invitation', CLAIM, '--yes'],
           env,
           token: 'valid-token',
           api: [inspectOk()],
@@ -893,6 +908,35 @@ describe('start', () => {
 
         expect(runStep).not.toHaveBeenCalled();
         expect(runCapture).not.toHaveBeenCalled();
+      });
+
+      it('takes --yes as the answer, without asking', async () => {
+        expect.hasAssertions();
+        resetProcessMocks();
+
+        runStep.mockRejectedValueOnce(new Error('stop after the creation'));
+
+        const tty = forceTty();
+        try {
+          await testCli({
+            commandClass: StartCommand,
+            commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM, '--yes'],
+            env,
+            token: 'valid-token',
+            api: [inspectOk()],
+            std: [
+              { out: `Creating this project for ${LABEL} (confirmed with --yes).` },
+              { not: CLAIM },
+            ],
+            exitMessage: 'stop after the creation',
+          });
+        } finally {
+          tty.mockRestore();
+        }
+
+        expect(createSteps()).toStrictEqual([
+          [process.argv[1], 'projects:create:sql', 'app', '--invitation', CLAIM],
+        ]);
       });
 
       it('creates the project with the claim after a yes', async () => {
@@ -977,7 +1021,7 @@ describe('start', () => {
         const logout = jest.fn();
         await testCli({
           commandClass: StartCommand,
-          commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM],
+          commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM, '--yes'],
           env,
           additionnalStep: plan =>
             plan.replace('services/authenticator/authenticator', {
@@ -1027,17 +1071,17 @@ describe('start', () => {
         [
           'a server error',
           inspect(500, {}),
-          'Could not check this invitation with Forest. Nothing was created. Try again in a moment.',
+          'Could not check this invitation with Forest (HTTP 500). Nothing was created. Try again in a moment.',
         ],
         [
           'a network error',
           () => nock(SERVER).post(INSPECT).replyWithError(`socket hang up ${CLAIM}`),
-          'Could not check this invitation with Forest. Nothing was created. Try again in a moment.',
+          'Could not check this invitation with Forest (no answer). Nothing was created. Try again in a moment.',
         ],
         [
           'a 202 instead of a 200',
           inspect(202, { inviter: ADA, project: null }),
-          'Could not check this invitation with Forest. Nothing was created. Try again in a moment.',
+          'Could not check this invitation with Forest (HTTP 202). Nothing was created. Try again in a moment.',
         ],
         [
           'an answer without the inviter email',
@@ -1055,7 +1099,7 @@ describe('start', () => {
 
         await testCli({
           commandClass: StartCommand,
-          commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM],
+          commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM, '--yes'],
           env,
           token: 'valid-token',
           api: [api],
@@ -1091,7 +1135,7 @@ describe('start', () => {
 
         await testCli({
           commandClass: StartCommand,
-          commandArgs: ['--flow', 'standalone', '--name', CLAIM, '--invitation', CLAIM],
+          commandArgs: ['--flow', 'standalone', '--name', CLAIM, '--invitation', CLAIM, '--yes'],
           env,
           exitMessage:
             'Pass the invitation claim once, to --invitation only. Copy the command again from the invitation page.',
@@ -1125,26 +1169,37 @@ describe('start', () => {
     describe('when the claim already started a project', () => {
       const resumed = name => inspectOk({ inviter: ADA, project: { id: '42', name } });
 
-      it('resumes that project under its name, whatever flow runs', async () => {
+      it.each([
+        ['demo', ['--flow', 'demo'], 'projects:create:demo'],
+        ['standalone', ['--flow', 'standalone'], 'projects:create:sql'],
+        [
+          'in-app Node',
+          ['--flow', 'inapp', '--stack', 'node', '--mount', 'manual'],
+          'projects:create:in-app',
+        ],
+        ['in-app Rails', ['--flow', 'inapp', '--stack', 'rails'], 'projects:create:in-app'],
+      ])('resumes that project under its name in the %s flow', async (_, args, step) => {
         expect.hasAssertions();
         resetProcessMocks();
+        runStep.mockRejectedValueOnce(new Error('stop after the creation'));
+        runCapture.mockRejectedValueOnce(new Error('stop after the creation'));
 
         await testCli({
           commandClass: StartCommand,
-          commandArgs: ['--flow', 'demo', '--invitation', CLAIM],
+          commandArgs: [...args, '--invitation', CLAIM, '--yes'],
           env,
           token: 'valid-token',
+          files: [PACKAGE_JSON],
           api: [resumed('invited-app')],
           std: [
             { out: 'Resuming the project invited-app this invitation started.' },
             { not: CLAIM },
           ],
+          exitMessage: 'stop after the creation',
         });
 
-        expect(createSteps()[0].slice(0, 3)).toStrictEqual([
-          process.argv[1],
-          'projects:create:demo',
-          'invited-app',
+        expect(createSteps().map(command => command.slice(1, 3))).toStrictEqual([
+          [step, 'invited-app'],
         ]);
       });
 
@@ -1156,7 +1211,7 @@ describe('start', () => {
 
           await testCli({
             commandClass: StartCommand,
-            commandArgs: ['--flow', 'standalone', '--invitation', CLAIM],
+            commandArgs: ['--flow', 'standalone', '--invitation', CLAIM, '--yes'],
             env,
             token: 'valid-token',
             api: [resumed(name)],
@@ -1174,7 +1229,7 @@ describe('start', () => {
 
         await testCli({
           commandClass: StartCommand,
-          commandArgs: ['--flow', 'standalone', '--name', 'other', '--invitation', CLAIM],
+          commandArgs: ['--flow', 'standalone', '--name', 'other', '--invitation', CLAIM, '--yes'],
           env,
           token: 'valid-token',
           api: [resumed('invited-app')],
@@ -1185,23 +1240,26 @@ describe('start', () => {
         expect(createSteps()).toStrictEqual([]);
       });
 
-      it('stops when the scaffold directory of the resumed project already exists', async () => {
-        expect.hasAssertions();
-        resetProcessMocks();
+      it.each(['standalone', 'demo'])(
+        'stops in the %s flow when the scaffold directory of the resumed project already exists',
+        async flow => {
+          expect.hasAssertions();
+          resetProcessMocks();
 
-        await testCli({
-          commandClass: StartCommand,
-          commandArgs: ['--flow', 'standalone', '--invitation', CLAIM],
-          env,
-          token: 'valid-token',
-          files: [{ name: 'invited-app/package.json', content: '{}' }],
-          api: [resumed('invited-app')],
-          exitMessage:
-            './invited-app already exists. Remove it, or finish the setup of invited-app by hand.',
-        });
+          await testCli({
+            commandClass: StartCommand,
+            commandArgs: ['--flow', flow, '--invitation', CLAIM, '--yes'],
+            env,
+            token: 'valid-token',
+            files: [{ name: 'invited-app/package.json', content: '{}' }],
+            api: [resumed('invited-app')],
+            exitMessage:
+              './invited-app already exists. Remove it, or finish the setup of invited-app by hand.',
+          });
 
-        expect(createSteps()).toStrictEqual([]);
-      });
+          expect(createSteps()).toStrictEqual([]);
+        },
+      );
     });
 
     describe('in the output of a failing creation', () => {
@@ -1215,7 +1273,7 @@ describe('start', () => {
 
         await testCli({
           commandClass: StartCommand,
-          commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM],
+          commandArgs: ['--flow', 'standalone', '--name', 'app', '--invitation', CLAIM, '--yes'],
           env,
           token: 'valid-token',
           api: [inspectOk()],
@@ -1246,6 +1304,7 @@ describe('start', () => {
             'manual',
             '--invitation',
             CLAIM,
+            '--yes',
           ],
           env,
           token: 'valid-token',
@@ -1277,6 +1336,7 @@ describe('start', () => {
             'manual',
             '--invitation',
             CLAIM,
+            '--yes',
           ],
           env,
           token: 'valid-token',

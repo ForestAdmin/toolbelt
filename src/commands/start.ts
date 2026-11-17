@@ -8,14 +8,12 @@ import fs from 'fs';
 import AbstractCommand from '../abstract-command';
 import {
   INVALID_CLAIM_MESSAGE,
-  MAX_PROJECT_NAME_LENGTH,
   REPEATED_CLAIM_MESSAGE,
-  inspectionFailure,
+  inspectInvitation,
   inviterLabel,
   isClaimRepeated,
-  isSafeProjectName,
   isWellFormedClaim,
-  parseInspection,
+  resumedProjectName,
   sanitizeForDisplay,
 } from '../services/invitation-claim';
 import {
@@ -115,6 +113,11 @@ export default class StartCommand extends AbstractCommand {
     invitation: Flags.string({
       description: 'Developer invitation claim, from the invitation page.',
     }),
+    yes: Flags.boolean({
+      description:
+        'With --invitation, create the project for the inviter without asking. Required without a terminal.',
+      default: false,
+    }),
   };
 
   private dryRun = false;
@@ -170,9 +173,15 @@ export default class StartCommand extends AbstractCommand {
   private refuseUnusableInvitation(flags: StartFlags): void {
     if (!isWellFormedClaim(flags.invitation)) throw new Error(INVALID_CLAIM_MESSAGE);
     if (isClaimRepeated(this.argv, flags.invitation)) throw new Error(REPEATED_CLAIM_MESSAGE);
-    if (!flags.flow && !this.interactive) {
+    if (this.interactive) return;
+    if (!flags.flow) {
       throw new Error(
         'Without a terminal, --invitation needs a flow: add --flow standalone or --flow inapp.',
+      );
+    }
+    if (!flags.yes) {
+      throw new Error(
+        'Without a terminal, --invitation cannot ask before creating the project for the inviter: add --yes to confirm.',
       );
     }
   }
@@ -190,21 +199,27 @@ export default class StartCommand extends AbstractCommand {
       await this.forest(['login']); // OIDC device flow (browser signup/login)
     }
 
-    if (flags.invitation && !(await this.acceptInvitation(flags, flags.invitation))) {
-      return this.logger.log('Nothing was created.');
-    }
+    const invitation = flags.invitation ? await this.acceptInvitation(flags, flags.invitation) : {};
+    if (!invitation) return this.logger.log('Nothing was created.');
 
+    const { resume } = invitation;
+    const flowFlags = resume ? { ...flags, name: resume } : flags;
     const flow = await this.pickFlow(flags.flow as Flow | undefined);
 
-    if (flow === 'demo') return this.flowDemo(flags);
-    if (flow === 'standalone') return this.flowStandalone(flags);
+    if (flow === 'demo') return this.flowDemo(flowFlags, resume);
+    if (flow === 'standalone') return this.flowStandalone(flowFlags, resume);
 
     const stack = await this.pickStack(flags.stack as 'rails' | 'node' | undefined);
 
-    return stack === 'rails' ? this.flowInAppRails(flags) : this.flowInAppNode(flags);
+    return stack === 'rails'
+      ? this.flowInAppRails(flowFlags)
+      : this.flowInAppNode(flowFlags, resume);
   }
 
-  private async acceptInvitation(flags: StartFlags, claim: string): Promise<boolean> {
+  private async acceptInvitation(
+    flags: StartFlags,
+    claim: string,
+  ): Promise<{ resume?: string } | null> {
     const { FOREST_SERVER_URL, FOREST_URL_IS_DEFAULT } = this.context.env;
     const server = FOREST_URL_IS_DEFAULT ? '' : StartCommand.originOf(FOREST_SERVER_URL);
 
@@ -212,61 +227,34 @@ export default class StartCommand extends AbstractCommand {
     if (this.dryRun) {
       this.logger.log(this.chalk.grey('  (dry-run — invitation not checked)'));
 
-      return true;
+      return {};
     }
 
-    const { inviter, project } = parseInspection(await this.inspectInvitation(claim));
-    if (project) StartCommand.resumeProject(flags, project.name, claim);
+    const { inviter, project } = await inspectInvitation(
+      () =>
+        this.context.api.inspectInvitationClaim(claim, this.context.authenticator.getAuthToken()),
+      claim,
+    );
+    const resume = resumedProjectName(project, flags.name, claim);
 
     const label = `${inviterLabel(inviter, claim)}${server ? ` on ${server}` : ''}`;
     this.notice(`\nThis project is for ${this.chalk.bold(label)}.`);
 
-    if (!this.interactive) {
-      this.notice(`Creating this project for ${label} (non-interactive, not asking).`);
+    if (flags.yes) {
+      this.notice(`Creating this project for ${label} (confirmed with --yes).`);
     } else if (!(await this.confirm(`Create this project for ${label}?`, false))) {
-      return false;
+      return null;
     }
 
-    if (project) this.logger.log(`Resuming the project ${project.name} this invitation started.`);
+    if (resume) this.logger.log(`Resuming the project ${resume} this invitation started.`);
 
-    return true;
+    return { resume };
   }
 
-  private async inspectInvitation(claim: string): Promise<unknown> {
-    try {
-      return await this.context.api.inspectInvitationClaim(
-        claim,
-        this.context.authenticator.getAuthToken(),
-      );
-    } catch (error) {
-      throw inspectionFailure(error, claim);
-    }
-  }
-
-  private static resumeProject(flags: StartFlags, name: string, claim: string): void {
-    if (!isSafeProjectName(name) || name.includes(claim)) {
+  private refuseExistingResume(resume: string | undefined): void {
+    if (resume && !this.dryRun && fs.existsSync(resume)) {
       throw new Error(
-        'Forest returned a project name this CLI cannot use as a directory. Nothing was created.',
-      );
-    }
-
-    if (flags.name && flags.name !== name) {
-      throw new Error(
-        `This invitation already started the project ${name}, not ${sanitizeForDisplay(
-          flags.name,
-          MAX_PROJECT_NAME_LENGTH,
-          claim,
-        )}. Run the command again without --name.`,
-      );
-    }
-
-    Object.assign(flags, { name, resume: name });
-  }
-
-  private refuseExistingResume(flags: StartFlags): void {
-    if (flags.resume && !this.dryRun && fs.existsSync(flags.resume)) {
-      throw new Error(
-        `./${flags.resume} already exists. Remove it, or finish the setup of ${flags.resume} by hand.`,
+        `./${resume} already exists. Remove it, or finish the setup of ${resume} by hand.`,
       );
     }
   }
@@ -522,11 +510,11 @@ export default class StartCommand extends AbstractCommand {
 
   // ---------- flows ----------
 
-  private async flowDemo(flags: StartFlags): Promise<void> {
-    this.refuseExistingResume(flags);
+  private async flowDemo(flags: StartFlags, resume?: string): Promise<void> {
+    this.refuseExistingResume(resume);
     // Drawn until free: `create:demo` would register a project, then skip every existing file.
-    let name = flags.resume;
-    while (!name || (!flags.resume && !this.dryRun && fs.existsSync(name))) {
+    let name = resume;
+    while (!name || (!resume && !this.dryRun && fs.existsSync(name))) {
       name = `forest-demo-${Math.random().toString(36).slice(2, 6)}`;
     }
 
@@ -584,8 +572,8 @@ export default class StartCommand extends AbstractCommand {
     this.logger.log(this.chalk.grey('  Connect real data: forest projects:create:sql'));
   }
 
-  private async flowStandalone(flags: StartFlags): Promise<void> {
-    this.refuseExistingResume(flags);
+  private async flowStandalone(flags: StartFlags, resume?: string): Promise<void> {
+    this.refuseExistingResume(resume);
     const name = await this.promptName(flags.name, { createsDir: true });
     // `create:sql` prompts for the database itself — including the connection URL — so nothing
     // about the user's credentials ever passes through this wrapper.
@@ -711,7 +699,7 @@ export default class StartCommand extends AbstractCommand {
     await this.handoff({ ...tail, child: booted.child, mute: booted.mute });
   }
 
-  private async flowInAppNode(flags: StartFlags): Promise<void> {
+  private async flowInAppNode(flags: StartFlags, resume?: string): Promise<void> {
     // Asked FIRST, and on purpose: "mount on standalone" abandons this flow, and everything below
     // has side effects — a Forest project created server-side, and packages written into the
     // user's own package.json. Asking after would leave both behind.
@@ -723,7 +711,7 @@ export default class StartCommand extends AbstractCommand {
         ),
       );
 
-      await this.flowStandalone(flags);
+      await this.flowStandalone(flags, resume);
 
       return;
     }

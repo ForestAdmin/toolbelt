@@ -34,8 +34,10 @@ const MALFORMED_ANSWER_MESSAGE =
 const SESSION_EXPIRED_MESSAGE =
   'Your session is no longer valid. Run `forest login`, then this command again.';
 const UNSUPPORTED_SERVER_MESSAGE = 'This Forest server does not support developer invitations.';
-const UNREACHABLE_MESSAGE =
-  'Could not check this invitation with Forest. Nothing was created. Try again in a moment.';
+const UNREACHABLE_MESSAGE = 'Could not check this invitation with Forest';
+const UNREACHABLE_ADVICE = 'Nothing was created. Try again in a moment.';
+const UNUSABLE_PROJECT_NAME_MESSAGE =
+  'Forest returned a project name this CLI cannot use as a directory. Nothing was created.';
 
 export function isWellFormedClaim(value: unknown): value is string {
   return typeof value === 'string' && CLAIM.test(value);
@@ -174,6 +176,16 @@ function rateLimitMessage(error: unknown): string {
     : `Too many invitation checks. Try again in ${seconds} seconds.`;
 }
 
+function failureCause(error: unknown): string {
+  const status = field(error, 'status');
+  if (typeof status === 'number') return `HTTP ${status}`;
+
+  const code = field(error, 'code');
+  if (typeof code === 'string' && /^[A-Z][A-Z0-9_]{0,40}$/.test(code)) return code;
+
+  return 'no answer';
+}
+
 export function inspectionFailure(error: unknown, claim: string): Error {
   const refusal = invitationRefusal(error, claim);
   if (refusal) return new Error(refusal.message);
@@ -183,5 +195,44 @@ export function inspectionFailure(error: unknown, claim: string): Error {
   if (status === 404) return new Error(UNSUPPORTED_SERVER_MESSAGE);
   if (status === 429) return new Error(rateLimitMessage(error));
 
-  return new Error(UNREACHABLE_MESSAGE);
+  return new Error(`${UNREACHABLE_MESSAGE} (${failureCause(error)}). ${UNREACHABLE_ADVICE}`);
+}
+
+export async function inspectInvitation(
+  inspect: () => Promise<unknown>,
+  claim: string,
+): Promise<Inspection> {
+  let body: unknown;
+
+  try {
+    body = await inspect();
+  } catch (error) {
+    throw inspectionFailure(error, claim);
+  }
+
+  return parseInspection(body);
+}
+
+export function resumedProjectName(
+  project: Inspection['project'],
+  requestedName: string | undefined,
+  claim: string,
+): string | undefined {
+  if (!project) return undefined;
+
+  const { name } = project;
+  if (!isSafeProjectName(name) || name.includes(claim)) {
+    throw new Error(UNUSABLE_PROJECT_NAME_MESSAGE);
+  }
+
+  if (requestedName && requestedName !== name) {
+    const shown = sanitizeForDisplay(requestedName, MAX_PROJECT_NAME_LENGTH, claim);
+
+    throw new Error(
+      `This invitation already started the project ${name}, not ${shown}. ` +
+        'Run the command again without --name.',
+    );
+  }
+
+  return name;
 }
