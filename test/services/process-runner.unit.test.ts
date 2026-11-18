@@ -518,6 +518,29 @@ describe('process-runner', () => {
       expect(joined.message).toContain('--password=***');
     });
 
+    it('drops the value of --invitation, in both of its spellings and on both runners', async () => {
+      expect.assertions(4);
+      const claim = 'SENTINELclaimAAAAAAAAAAAAAAAAAAAA';
+      const spaced = await runStep('node', [
+        '-e',
+        'process.exit(1)',
+        '--',
+        '--invitation',
+        claim,
+      ]).catch((thrown: Error) => thrown);
+      const joined = await runCapture('node', [
+        '-e',
+        'process.exit(1)',
+        '--',
+        `--invitation=${claim}`,
+      ]).catch((thrown: Error) => thrown);
+
+      expect(spaced.message).not.toContain(claim);
+      expect(spaced.message).toContain('--invitation ***');
+      expect(joined.message).not.toContain(claim);
+      expect(joined.message).toContain('--invitation=***');
+    });
+
     it('reads the flag name as words, so a name that merely contains one is left alone', async () => {
       expect.assertions(6);
       const innocent = await runStep('node', [
