@@ -96,13 +96,11 @@ export default class LayoutPullCommand extends AbstractAuthenticatedCommand {
   static override flags = {
     env: Flags.string({
       char: 'e',
-      description:
-        'Environment to pull from (name or id). Defaults to the environment of FOREST_ENV_SECRET ' +
-        'when set, otherwise the development environment.',
+      description: 'Environment to pull from (name or id). Prompted if omitted.',
     }),
     team: Flags.string({
       char: 't',
-      description: 'Team whose layout to pull (name or id). Defaults to the "Operations" team.',
+      description: 'Team whose layout to pull (name or id). Prompted if omitted.',
     }),
     projectId: Flags.integer({
       char: 'p',
