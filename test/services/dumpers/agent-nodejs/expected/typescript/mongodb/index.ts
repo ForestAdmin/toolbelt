@@ -19,7 +19,7 @@ const agent = createAgent<Schema>({
 });
 
 // Connect your datasources
-// All options are documented at https://docs.forest.app/get-started/connect/data-sources/sql
+// All options are documented at https://docs.forest.app/get-started/connect/data-sources/mongodb
 agent.addDataSource(
   createMongoDataSource({
     uri: process.env.DATABASE_URL,

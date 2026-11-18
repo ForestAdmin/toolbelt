@@ -37,14 +37,14 @@ const agent = createAgent<Schema>({
 });
 
 // Connect your datasources
-// All options are documented at https://docs.forest.app/get-started/connect/data-sources/sql
 {{#if isDemo}}
 // Demo data source: a bank's back office (onboarding, alerts, disputes…) with realistic sample
 // data on a self-contained local SQLite database — no external database to connect.
-// Replace it with your real database: https://docs.forest.app/get-started/connect/data-sources/sql
+// Replace it with your real database: https://docs.forest.app/get-started/connect/data-sources/overview
 agent.addDataSource(createDemoBankDataSource());
 {{else}}
 {{#if isMongo}}
+// All options are documented at https://docs.forest.app/get-started/connect/data-sources/mongodb
 agent.addDataSource(
   createMongoDataSource({
     uri: process.env.DATABASE_URL,
@@ -54,6 +54,7 @@ agent.addDataSource(
   }),
 );
 {{else}}
+// All options are documented at https://docs.forest.app/get-started/connect/data-sources/sql
 agent.addDataSource(
   createSqlDataSource({
     uri: process.env.DATABASE_URL,
