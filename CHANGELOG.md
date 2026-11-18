@@ -1,3 +1,10 @@
+# [5.26.0](https://github.com/ForestAdmin/toolbelt/compare/v5.25.2...v5.26.0) (2026-11-18)
+
+
+### Features
+
+* **start:** create an invited project with --invitation ([#847](https://github.com/ForestAdmin/toolbelt/issues/847)) ([5a716c5](https://github.com/ForestAdmin/toolbelt/commit/5a716c5b603916311300f45671edd5ce42fedaa7))
+
 ## [5.25.2](https://github.com/ForestAdmin/toolbelt/compare/v5.25.1...v5.25.2) (2026-11-18)
 
 
