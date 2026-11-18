@@ -177,6 +177,7 @@ describe('project creator', () => {
       const context = createContext();
       context.api.createProject.mockResolvedValue({
         id: '1',
+        organizationId: 42,
         defaultEnvironment: { secretKey: 'secret-key', apiEndpoint: 'http://localhost:3310' },
       });
 
@@ -217,6 +218,42 @@ describe('project creator', () => {
       );
       // Not a 403 any more: the command would print it as a project permission problem.
       await expect(creation).rejects.not.toHaveProperty('status');
+    });
+
+    it.each([null, 7])(
+      'should refuse a reused project whose organization is %j',
+      async organizationId => {
+        expect.assertions(1);
+        const context = createContext();
+        context.api.createProject.mockResolvedValue({
+          id: '1',
+          organizationId,
+          defaultEnvironment: { secretKey: 'secret-key', apiEndpoint: 'http://localhost:3310' },
+        });
+
+        await expect(
+          new ProjectCreator(context).create('token', { appName: 'app' }, meta),
+        ).rejects.toThrow(
+          'A project named "app" already exists outside organization 42. Please choose another name.',
+        );
+      },
+    );
+
+    it('should fall back to a fixed reason when the refusal has no detail', async () => {
+      expect.assertions(1);
+      const context = createContext();
+      context.api.createProject.mockRejectedValue(
+        Object.assign(new Error('Forbidden'), {
+          status: 403,
+          response: { body: { errors: [{ name: 'OrganizationAccessForbiddenError' }] } },
+        }),
+      );
+
+      await expect(
+        new ProjectCreator(context).create('token', { appName: 'app' }, meta),
+      ).rejects.toThrow(
+        'Cannot create the project in organization 42: you are not an owner of this organization.',
+      );
     });
 
     it('should leave any other 403 to the generic permission handling', async () => {

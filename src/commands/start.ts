@@ -595,7 +595,11 @@ export default class StartCommand extends AbstractCommand {
 
     stopProcess(child);
     this.logger.log(this.chalk.grey(`  Launch it anytime: cd ${name} && npm start`));
-    this.logger.log(this.chalk.grey('  Connect real data: forest projects:create:sql'));
+    this.logger.log(
+      this.chalk.grey(
+        ['  Connect real data: forest projects:create:sql', ...this.organizationArgs].join(' '),
+      ),
+    );
   }
 
   private async flowStandalone(flags: StartFlags, resume?: string): Promise<void> {

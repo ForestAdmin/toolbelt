@@ -48,19 +48,28 @@ describe('validator', () => {
   });
 
   describe('validateOrganizationId', () => {
-    it.each(['1', '42', '1234567'])('should accept the positive integer %s', id => {
+    it.each(['1', '42', '1234567', '2147483647'])('should accept the positive integer %s', id => {
       expect.assertions(1);
       expect(validateOrganizationId(id)).toBe(true);
     });
 
-    it.each(['', '0', '-1', '01', '1.5', '1e3', 'abc', ' 42', '42abc', '99999999999'])(
-      'should refuse %j',
-      id => {
-        expect.assertions(1);
-        expect(validateOrganizationId(id)).toBe(
-          'The organization must be a positive integer id, like 42.',
-        );
-      },
-    );
+    it.each([
+      '',
+      '0',
+      '-1',
+      '01',
+      '1.5',
+      '1e3',
+      'abc',
+      ' 42',
+      '42abc',
+      '2147483648',
+      '99999999999',
+    ])('should refuse %j', id => {
+      expect.assertions(1);
+      expect(validateOrganizationId(id)).toBe(
+        'The organization must be a positive integer id, like 42.',
+      );
+    });
   });
 });

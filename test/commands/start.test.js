@@ -686,6 +686,16 @@ describe('start', () => {
       });
     });
 
+    it('points the real-data hint after a demo at the same organization', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--dry-run', '--flow', 'demo', '--organization', '42'],
+        std: [{ out: 'Connect real data: forest projects:create:sql --organization 42' }],
+      });
+    });
+
     it('keeps the project creation without it in the Personal space', async () => {
       expect.hasAssertions();
 

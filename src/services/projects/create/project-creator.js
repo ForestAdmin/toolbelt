@@ -71,6 +71,12 @@ class ProjectCreator {
 
       const newProject = await this.api.createProject(config, sessionToken, newProjectPayload);
 
+      if (meta.organizationId && Number(newProject.organizationId) !== meta.organizationId) {
+        throw new InvalidOptionError(
+          `A project named "${config.appName}" already exists outside organization ${meta.organizationId}. Please choose another name.`,
+        );
+      }
+
       return {
         id: newProject.id,
         envSecret: newProject.defaultEnvironment.secretKey,
@@ -88,10 +94,12 @@ class ProjectCreator {
       const serverError = error.response?.body?.errors?.[0];
 
       if (meta.organizationId && ORGANIZATION_REFUSALS.includes(serverError?.name)) {
+        const reason =
+          typeof serverError.detail === 'string'
+            ? serverError.detail.replace(/\.$/, '')
+            : 'you are not an owner of this organization';
         throw new InvalidOptionError(
-          `Cannot create the project in organization ${
-            meta.organizationId
-          }: ${serverError.detail.replace(/\.$/, '')}.`,
+          `Cannot create the project in organization ${meta.organizationId}: ${reason}.`,
         );
       }
 
