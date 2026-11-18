@@ -78,19 +78,19 @@ export function pinServerUrl(url: string): boolean {
 /** Checked before anything is created: the URL ends up inside the user's Ruby source. */
 export function checkRailsServerUrl(env: RailsServerUrlEnv): string | undefined {
   const { FOREST_SERVER_URL: url, FOREST_SERVER_URL_SOURCE: source } = env;
-  const rawUrl = env.RAW_FOREST_SERVER_URL;
-  if (rawUrl !== undefined && rawUrl !== url) {
-    throw new Error(
-      `FOREST_SERVER_URL=${rawUrl} would send a later \`bin/rails server\` to another server ` +
-        `than FOREST_URL=${url}. Unset it, or set it to the same URL.`,
-    );
-  }
-
   const dotenv = railsDotenvServerUrl(env.RAILS_ENV);
   if (dotenv && dotenv.url !== url) {
     throw new Error(
       `${dotenv.file} sets FOREST_SERVER_URL=${dotenv.url}, which would send a later ` +
         `\`bin/rails server\` to another server than ${url}. Remove that line, or set it to the same URL.`,
+    );
+  }
+
+  const rawUrl = env.RAW_FOREST_SERVER_URL;
+  if (rawUrl !== undefined && rawUrl !== url) {
+    throw new Error(
+      `FOREST_SERVER_URL=${rawUrl} would send a later \`bin/rails server\` to another server ` +
+        `than FOREST_URL=${url}. Unset it, or set it to the same URL.`,
     );
   }
 

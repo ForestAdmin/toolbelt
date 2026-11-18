@@ -21,4 +21,19 @@ describe('context > env', () => {
       process.env = saved;
     }
   });
+
+  it.each([
+    [{ RACK_ENV: 'staging' }, 'staging'],
+    [{ RAILS_ENV: 'test', RACK_ENV: 'staging' }, 'test'],
+  ])('reads the rails env from %j', (railsEnv, expected) => {
+    expect.assertions(1);
+    const saved = process.env;
+    process.env = { ...saved, RAILS_ENV: undefined, RACK_ENV: undefined, ...railsEnv };
+
+    try {
+      expect(Context.execute(contextPlan).env.RAILS_ENV).toBe(expected);
+    } finally {
+      process.env = saved;
+    }
+  });
 });

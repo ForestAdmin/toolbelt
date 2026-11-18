@@ -1,3 +1,4 @@
+const dotenv = require('dotenv');
 const fs = require('fs');
 const nock = require('nock');
 const { stdout } = require('stdout-stderr');
@@ -5,6 +6,11 @@ const { stdout } = require('stdout-stderr');
 const StartCommand = require('../../src/commands/start').default;
 const { runCapture, runStep, startProcess } = require('../../src/services/process-runner');
 const testCli = require('./test-cli-helper/test-cli');
+
+const rawFromCliDotenv = (name, content) => {
+  const loaded = name === '.env' ? dotenv.parse(content).FOREST_SERVER_URL : undefined;
+  return loaded === undefined ? {} : { RAW_FOREST_SERVER_URL: loaded };
+};
 
 // The process boundary: a test that goes past --dry-run spawns nothing, and says what came back.
 jest.mock('../../src/services/process-runner');
@@ -631,6 +637,7 @@ describe('start', () => {
       it.each([
         ['.env.development', 'FOREST_SERVER_URL=https://api.forestadmin.com\n'],
         ['.env', 'export FOREST_SERVER_URL=https://api.forestadmin.com\n'],
+        ['.env', 'FOREST_SERVER_URL=https://api.forestadmin.com\n'],
         ['.env.local', "export FOREST_SERVER_URL = 'https://api.forestadmin.com' # prod\n"],
         ['.env', 'FOREST_SERVER_URL: https://api.forestadmin.com\n'],
         [
@@ -647,7 +654,7 @@ describe('start', () => {
             commandClass: StartCommand,
             commandArgs: ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
             files: [{ name, content }],
-            env: { ...DEV, FOREST_URL_IS_DEFAULT: false },
+            env: { ...DEV, FOREST_URL_IS_DEFAULT: false, ...rawFromCliDotenv(name, content) },
             exitMessage:
               `${name} sets FOREST_SERVER_URL=https://api.forestadmin.com, which would send a later ` +
               `\`bin/rails server\` to another server than ${DEV.FOREST_SERVER_URL}. ` +
@@ -698,7 +705,12 @@ describe('start', () => {
             { name: '.env', content: `FOREST_SERVER_URL=${DEV.FOREST_SERVER_URL}\n` },
           ],
         ],
-      ])('boots with %s', async (_, files) => {
+        [
+          'a .env.local that dotenv-rails skips in the test env',
+          [{ name: '.env.local', content: 'FOREST_SERVER_URL=https://api.forestadmin.com\n' }],
+          { RAILS_ENV: 'test' },
+        ],
+      ])('boots with %s', async (_, files, railsEnv = {}) => {
         expect.hasAssertions();
         setup();
 
@@ -706,7 +718,7 @@ describe('start', () => {
           commandClass: StartCommand,
           commandArgs: ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
           files,
-          env: { ...DEV, FOREST_URL_IS_DEFAULT: false },
+          env: { ...DEV, ...railsEnv, FOREST_URL_IS_DEFAULT: false },
           std: [{ out: 'Forest is live in your app!' }],
         });
 
