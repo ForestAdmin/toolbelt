@@ -178,6 +178,23 @@ describe('projects:create', () => {
             exitCode: 1,
           }));
       });
+      describe('is missing with an invitation claim', () => {
+        const CLAIM = 'SENTINELclaimAAAAAAAAAAAAAAAAAAAA';
+
+        it.each([
+          ['the claim is well placed', ['--invitation', CLAIM]],
+          ['the claim sits in an unknown flag', [`--invitaton=${CLAIM}`]],
+        ])('should fail with exit 1 without printing the claim when %s', (_, commandArgs) =>
+          testCli({
+            commandClass: CreateProjectCommand,
+            commandArgs,
+            env: testEnvWithSecret,
+            token: 'any',
+            std: [{ err: '× Cannot generate your project.' }, { not: CLAIM }],
+            exitCode: 1,
+          }),
+        );
+      });
       describe('is provided', () => {
         it('should execute command', () =>
           testCli({

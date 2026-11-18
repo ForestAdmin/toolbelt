@@ -1,3 +1,17 @@
+# [5.26.0](https://github.com/ForestAdmin/toolbelt/compare/v5.25.2...v5.26.0) (2026-11-18)
+
+
+### Features
+
+* **start:** create an invited project with --invitation ([#847](https://github.com/ForestAdmin/toolbelt/issues/847)) ([5a716c5](https://github.com/ForestAdmin/toolbelt/commit/5a716c5b603916311300f45671edd5ce42fedaa7))
+
+## [5.25.2](https://github.com/ForestAdmin/toolbelt/compare/v5.25.1...v5.25.2) (2026-11-18)
+
+
+### Bug Fixes
+
+* **layout:** say that layout:pull prompts for --env and --team when omitted ([#850](https://github.com/ForestAdmin/toolbelt/issues/850)) ([777924e](https://github.com/ForestAdmin/toolbelt/commit/777924e0dd9c0f0d66bf973ddbb6e99151ce34dc))
+
 ## [5.25.1](https://github.com/ForestAdmin/toolbelt/compare/v5.25.0...v5.25.1) (2026-11-13)
 
 

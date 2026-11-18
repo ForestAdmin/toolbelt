@@ -1518,6 +1518,7 @@ module.exports = {
     agent = Agents.ExpressSequelize,
     architecture = 'microservice',
     organizationId = undefined,
+    invitationClaim,
   }) =>
     nock('http://localhost:3001')
       .post('/api/projects', {
@@ -1528,6 +1529,7 @@ module.exports = {
             agent,
             architecture,
             database_type: databaseType,
+            ...(invitationClaim ? { invitation_claim: invitationClaim } : {}),
           },
           ...(organizationId && {
             relationships: {

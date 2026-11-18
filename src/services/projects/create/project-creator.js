@@ -1,4 +1,5 @@
 const InvalidOptionError = require('../../../errors/options/invalid-option-error');
+const { invitationRefusal } = require('../../invitation-claim');
 
 const ORGANIZATION_REFUSALS = [
   'UserNotOwnerOfOrganizationError',
@@ -52,11 +53,12 @@ class ProjectCreator {
    *
    * }} config
    * @param {ProjectMeta} meta
+   * @param {string} [invitationClaim]
    * @returns {Promise<{
    *   id: number|string, envSecret: string, authSecret: string, endpoint: string
    * }>}
    */
-  async create(sessionToken, config, meta) {
+  async create(sessionToken, config, meta, invitationClaim) {
     try {
       const newProjectPayload = {
         name: config.appName,
@@ -64,6 +66,7 @@ class ProjectCreator {
         architecture: meta.architecture,
         databaseType: meta.dbDialect,
         ...(meta.organizationId && { organization: { id: meta.organizationId } }),
+        ...(invitationClaim ? { invitationClaim } : {}),
       };
 
       const newProject = await this.api.createProject(config, sessionToken, newProjectPayload);
@@ -78,7 +81,7 @@ class ProjectCreator {
         endpoint: newProject.defaultEnvironment.apiEndpoint,
       };
     } catch (error) {
-      if (error.message === 'Conflict') {
+      if (error.message === 'Conflict' && !invitationRefusal(error)) {
         error.message = 'A project with this name already exists. Please choose another name.';
       }
 
