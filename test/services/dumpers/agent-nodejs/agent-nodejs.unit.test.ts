@@ -914,5 +914,15 @@ describe('agent-nodejs index template datasource documentation link', () => {
 
       expect(linkedPages).toStrictEqual([expectedUrl]);
     });
+
+    it.each([
+      ['a demo project', { isDemo: true }],
+      ['a MongoDB project', { isMongo: true }],
+      ['a SQL project', {}],
+    ])('links %s to no page of the retired docs.forestadmin.com site', (_, config) => {
+      expect.assertions(1);
+
+      expect(render(language, config)).not.toContain('docs.forestadmin.com');
+    });
   });
 });
