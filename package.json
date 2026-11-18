@@ -1,7 +1,7 @@
 {
   "name": "forest-cli",
   "description": "The Lumberjacks' toolbelt is the Forest CLI which makes easy to manage your back office application directly from the terminal.",
-  "version": "5.25.1",
+  "version": "5.25.2",
   "author": "Sandro Munda",
   "contributors": [
     "Arnaud Valensi <arnaud.valensi@gmail.com>",
@@ -32,7 +32,7 @@
     "dotenv": "8.2.0",
     "handlebars": "4.7.10",
     "inquirer": "6.2.0",
-    "joi": "17.13.8",
+    "joi": "17.13.9",
     "json-diff": "1.0.0",
     "jsonapi-serializer": "3.6.2",
     "jsonwebtoken": "9.0.3",
@@ -142,11 +142,6 @@
     "inquirer/**/tmp": "^0.2.6",
     "mongodb/mongodb-connection-string-url": "^3.0.2",
     "filelist": "^2.0.2",
-    "fast-xml-parser": "^5.7.0",
-    "undici": "^6.29.1",
-    "superagent/qs": "^6.16.1",
-    "fast-uri": "^3.1.9",
-    "ip-address": "^10.7.4",
-    "npm": "^11.21.2"
+    "fast-xml-parser": "^5.7.0"
   }
 }

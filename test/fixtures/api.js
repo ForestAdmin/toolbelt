@@ -1517,6 +1517,7 @@ module.exports = {
     databaseType,
     agent = Agents.ExpressSequelize,
     architecture = 'microservice',
+    invitationClaim,
   }) =>
     nock('http://localhost:3001')
       .post('/api/projects', {
@@ -1527,6 +1528,7 @@ module.exports = {
             agent,
             architecture,
             database_type: databaseType,
+            ...(invitationClaim ? { invitation_claim: invitationClaim } : {}),
           },
         },
       })

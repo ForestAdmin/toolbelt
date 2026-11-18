@@ -3,8 +3,6 @@
  * (project / environment / team) is resolved on its own:
  *
  * - **flag given** → resolve the id-or-name against the live list (verified);
- * - **FOREST_ENV_SECRET set** → the project and environment are deduced from the
- *   secret (the team still has to be picked);
  * - **nothing** → prompt the user (project via `withCurrentProject`, environment
  *   via `askForEnvironment`, team via `askForTeam`).
  *

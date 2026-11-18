@@ -69,7 +69,10 @@ export default class NosqlCommand extends AbstractProjectCreateCommand {
   static override readonly args = AbstractProjectCreateCommand.args;
 
   /** @see https://oclif.io/docs/flags */
-  static override readonly flags = optionsToFlags(this.options);
+  static override readonly flags: ReturnType<typeof optionsToFlags> = {
+    ...optionsToFlags(this.options),
+    ...AbstractProjectCreateCommand.invitationFlags,
+  };
 
   protected readonly agent = Agents.NodeJS;
 

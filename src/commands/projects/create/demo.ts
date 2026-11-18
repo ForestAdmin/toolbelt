@@ -19,7 +19,10 @@ export default class DemoCommand extends AbstractProjectCreateCommand {
   static override readonly args = AbstractProjectCreateCommand.args;
 
   /** @see https://oclif.io/docs/flags */
-  static override readonly flags = optionsToFlags(this.options);
+  static override readonly flags = {
+    ...optionsToFlags(this.options),
+    ...AbstractProjectCreateCommand.invitationFlags,
+  };
 
   static override readonly description =
     'Create a new Forest Admin project with demo data — no database required.';
