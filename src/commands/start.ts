@@ -24,6 +24,12 @@ import {
 } from '../services/onboarding/detect';
 import { bootSecrets, keysLoadedFromDotenv, writeSecrets } from '../services/onboarding/env-file';
 import {
+  RAILS_INITIALIZER,
+  checkRailsServerUrl,
+  pinServerUrl,
+  serverUrlLine,
+} from '../services/onboarding/rails-initializer';
+import {
   runCapture,
   runStep,
   startProcess,
@@ -630,6 +636,7 @@ export default class StartCommand extends AbstractCommand {
   }
 
   private async flowInAppRails(flags: StartFlags): Promise<void> {
+    const serverUrl = checkRailsServerUrl(this.context.env);
     const name = await this.promptName(flags.name);
     const output = await this.forestCapture([
       'projects:create:in-app',
@@ -668,6 +675,7 @@ export default class StartCommand extends AbstractCommand {
       'forest_admin_rails:install',
       secrets.envSecret ?? '<FOREST_ENV_SECRET>',
     ]);
+    const bootEnv = this.pinRailsServerUrl(serverUrl);
 
     const tail: Tail = {
       name,
@@ -686,6 +694,7 @@ export default class StartCommand extends AbstractCommand {
     }
 
     const booted = this.boot('bin/rails', ['server', '-p', String(RAILS_PORT)], {
+      env: bootEnv,
       // Puma's bind line stays accepted here: when `forest_admin_rails` logs its schema push is
       // unverified, and waiting for a line that never comes would fail every Rails boot.
       ready: /Listening on http|schema was updated/i,
@@ -697,6 +706,26 @@ export default class StartCommand extends AbstractCommand {
     if (booted.troubled()) this.doneInAppWithoutSchema(name, RAILS_PORT);
     else this.doneInApp(name, RAILS_PORT);
     await this.handoff({ ...tail, child: booted.child, mute: booted.mute });
+  }
+
+  /** `forest_admin_rails` reads `FOREST_SERVER_URL` only, never the `FOREST_URL` this CLI honors. */
+  private pinRailsServerUrl(url: string | undefined): NodeJS.ProcessEnv | undefined {
+    if (!url) return undefined;
+    const bootEnv = { FOREST_SERVER_URL: url };
+    if (this.context.env.FOREST_URL_IS_DEFAULT) return bootEnv;
+
+    this.logger.log(this.chalk.grey(`\n→ ${RAILS_INITIALIZER}: ${serverUrlLine(url)}`));
+    if (this.dryRun) return bootEnv;
+
+    if (!pinServerUrl(url)) {
+      throw new Error(
+        `Could not point ${RAILS_INITIALIZER} at ${url}. In its \`ForestAdminRails.configure\` ` +
+          'block, replace any `config.forest_server_url` line with this one, then run ' +
+          `\`bin/rails server -p ${RAILS_PORT}\`:\n  ${serverUrlLine(url)}`,
+      );
+    }
+
+    return bootEnv;
   }
 
   private async flowInAppNode(flags: StartFlags, resume?: string): Promise<void> {
