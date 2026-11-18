@@ -883,3 +883,36 @@ describe('demo forest-layout.json asset', () => {
     });
   });
 });
+
+describe('agent-nodejs index template datasource documentation link', () => {
+  const docs = 'https://docs.forest.app/get-started/connect/data-sources';
+  const render = (language: string, config: Record<string, unknown>): string => {
+    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
+    const Handlebars = require('handlebars');
+    // eslint-disable-next-line global-require
+    require('../../../../src/utils/handlebars/loader');
+    const template = readFileSync(
+      path.join(
+        __dirname,
+        `../../../../src/services/dumpers/templates/agent-nodejs/${language}/index.hbs`,
+      ),
+      'utf8',
+    );
+
+    return Handlebars.compile(template, { noEscape: true })(config);
+  };
+
+  describe.each(['javascript', 'typescript'])('in %s', language => {
+    it.each([
+      ['a demo project', { isDemo: true }, `${docs}/overview`],
+      ['a MongoDB project', { isMongo: true }, `${docs}/mongodb`],
+      ['a SQL project', {}, `${docs}/sql`],
+    ])('points %s to its own page', (_, config, expectedUrl) => {
+      expect.assertions(1);
+
+      const linkedPages = render(language, config).match(new RegExp(`${docs}/[\\w-]+`, 'g'));
+
+      expect(linkedPages).toStrictEqual([expectedUrl]);
+    });
+  });
+});

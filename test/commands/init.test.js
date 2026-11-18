@@ -647,7 +647,7 @@ describe('init command', () => {
             // FIXME: Need to assert that env file was amended. In other cases too.
             { spinner: "√ You're now set up and ready to develop on Forest Admin" },
             {
-              out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forest.app/reference/cli/overview.',
+              out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forest.app/reference/cli/init.',
             },
           ],
         }));
@@ -709,7 +709,7 @@ describe('init command', () => {
               out: 'FOREST_ENV_SECRET=2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
             },
             {
-              out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forest.app/reference/cli/overview.',
+              out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forest.app/reference/cli/init.',
             },
           ],
         }));
@@ -763,7 +763,7 @@ describe('init command', () => {
             { spinner: '√ Creating a new `.env` file containing your environment variables' },
             { spinner: "√ You're now set up and ready to develop on Forest Admin" },
             {
-              out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forest.app/reference/cli/overview.',
+              out: 'To learn more about the recommended usage of this CLI, please visit https://docs.forest.app/reference/cli/init.',
             },
           ],
         }));
