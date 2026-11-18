@@ -36,6 +36,7 @@ import {
   stopAllProcesses,
   stopProcess,
 } from '../services/process-runner';
+import { validateOrganizationId } from '../utils/validators';
 
 const DOCS_URL = 'https://docs.forest.app';
 const DEMO_PORT = 3310;
@@ -116,6 +117,10 @@ export default class StartCommand extends AbstractCommand {
       description: 'How to mount Forest in a Node app.',
       options: ['ai', 'manual', 'standalone'],
     }),
+    organization: Flags.string({
+      description:
+        'ID of the organization to create the project in (default: your Personal space).',
+    }),
     invitation: Flags.string({
       description: 'Developer invitation claim, from the invitation page.',
     }),
@@ -127,6 +132,9 @@ export default class StartCommand extends AbstractCommand {
   };
 
   private dryRun = false;
+
+  /** Passed to every `projects:create:*` call, so the project lands in the chosen organization. */
+  private organizationArgs: string[] = [];
 
   // eslint-disable-next-line class-methods-use-this -- reads the ambient TTY, not instance state
   private get interactive(): boolean {
@@ -145,6 +153,13 @@ export default class StartCommand extends AbstractCommand {
   async run(): Promise<void> {
     const { flags } = await this.parse(StartCommand);
     this.dryRun = flags['dry-run'];
+    if (flags.organization !== undefined && flags.invitation !== undefined) {
+      throw new Error(
+        '--organization cannot be used with --invitation: the invitation creates the project for the inviter.',
+      );
+    }
+
+    this.organizationArgs = StartCommand.toOrganizationArgs(flags.organization);
 
     if (flags.invitation !== undefined) this.refuseUnusableInvitation(flags);
 
@@ -282,6 +297,16 @@ export default class StartCommand extends AbstractCommand {
   }
 
   // ---------- primitives ----------
+
+  /** Refused here rather than by `projects:create:*`, which runs only after `login`. */
+  private static toOrganizationArgs(organization?: string): string[] {
+    if (organization === undefined) return [];
+
+    const invalid = validateOrganizationId(organization);
+    if (invalid !== true) throw new Error(`Invalid value for --organization: ${invalid}`);
+
+    return ['--organization', organization];
+  }
 
   /**
    * Values that must never reach the terminal, a scrollback or a CI log. The echo is a feature —
@@ -533,6 +558,7 @@ export default class StartCommand extends AbstractCommand {
       'http://localhost',
       '-P',
       String(DEMO_PORT),
+      ...this.organizationArgs,
       ...StartCommand.invitationArgs(flags),
     ]);
     await this.installAndBuild(name);
@@ -575,7 +601,11 @@ export default class StartCommand extends AbstractCommand {
 
     stopProcess(child);
     this.logger.log(this.chalk.grey(`  Launch it anytime: cd ${name} && npm start`));
-    this.logger.log(this.chalk.grey('  Connect real data: forest projects:create:sql'));
+    this.logger.log(
+      this.chalk.grey(
+        ['  Connect real data: forest projects:create:sql', ...this.organizationArgs].join(' '),
+      ),
+    );
   }
 
   private async flowStandalone(flags: StartFlags, resume?: string): Promise<void> {
@@ -602,7 +632,7 @@ export default class StartCommand extends AbstractCommand {
       );
     }
 
-    await this.forest(args);
+    await this.forest([...args, ...this.organizationArgs]);
     await this.installAndBuild(name);
     this.logger.success(`Setup complete — booting your back-end on :${DEMO_PORT}…`);
 
@@ -647,6 +677,7 @@ export default class StartCommand extends AbstractCommand {
       String(RAILS_PORT),
       '--format',
       'json',
+      ...this.organizationArgs,
       ...StartCommand.invitationArgs(flags),
     ]);
     const secrets = StartCommand.parseSecrets(output);
@@ -755,6 +786,7 @@ export default class StartCommand extends AbstractCommand {
       String(NODE_PORT),
       '--format',
       'json',
+      ...this.organizationArgs,
       ...StartCommand.invitationArgs(flags),
     ]);
     const secrets = StartCommand.parseSecrets(output);

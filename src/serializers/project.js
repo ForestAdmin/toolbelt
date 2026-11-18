@@ -8,8 +8,10 @@ module.exports = new JSONAPISerializer('projects', {
     'agent',
     'databaseType',
     'architecture',
+    'organization',
     'invitationClaim',
   ],
+  organization: { ref: 'id', included: false },
   defaultEnvironment: {
     ref: 'id',
     attributes: ['name', 'apiEndpoint', 'type'],

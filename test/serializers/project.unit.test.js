@@ -27,6 +27,25 @@ describe('serializers > Project', () => {
     });
   });
 
+  it('should serialize the organization as a relationship, without including it', () => {
+    expect.assertions(1);
+
+    const serialized = projectSerializer.serialize({
+      name: 'the project',
+      organization: { id: 42 },
+    });
+
+    expect(serialized).toStrictEqual({
+      data: {
+        type: 'projects',
+        attributes: { name: 'the project' },
+        relationships: {
+          organization: { data: { type: 'organizations', id: '42' } },
+        },
+      },
+    });
+  });
+
   it('should serialize the default environment', async () => {
     expect.assertions(1);
 

@@ -163,4 +163,114 @@ describe('project creator', () => {
       expect(context.api.createProject.mock.calls[0][2]).not.toHaveProperty('invitationClaim');
     });
   });
+
+  describe('when an organization is requested', () => {
+    const meta = {
+      agent: 'nodejs',
+      architecture: 'microservice',
+      dbDialect: null,
+      organizationId: 42,
+    };
+
+    it('should send it as the organization relationship of the project', async () => {
+      expect.assertions(1);
+      const context = createContext();
+      context.api.createProject.mockResolvedValue({
+        id: '1',
+        defaultEnvironment: { secretKey: 'secret-key', apiEndpoint: 'http://localhost:3310' },
+      });
+
+      await new ProjectCreator(context).create('token', { appName: 'app' }, meta);
+
+      expect(context.api.createProject).toHaveBeenCalledWith({ appName: 'app' }, 'token', {
+        name: 'app',
+        agent: 'nodejs',
+        architecture: 'microservice',
+        databaseType: null,
+        organization: { id: 42 },
+      });
+    });
+
+    it('should name the organization and the server reason when the server refuses it', async () => {
+      expect.assertions(2);
+      const context = createContext();
+      const forbidden = Object.assign(new Error('Forbidden'), {
+        status: 403,
+        response: {
+          body: {
+            errors: [
+              {
+                status: 403,
+                detail: 'You are not the owner of the organization',
+                name: 'UserNotOwnerOfOrganizationError',
+              },
+            ],
+          },
+        },
+      });
+      context.api.createProject.mockRejectedValue(forbidden);
+
+      const creation = new ProjectCreator(context).create('token', { appName: 'app' }, meta);
+
+      await expect(creation).rejects.toThrow(
+        'Cannot create the project in organization 42: You are not the owner of the organization.',
+      );
+      // Not a 403 any more: the command would print it as a project permission problem.
+      await expect(creation).rejects.not.toHaveProperty('status');
+    });
+
+    it('should fall back to a fixed reason when the refusal has no detail', async () => {
+      expect.assertions(1);
+      const context = createContext();
+      context.api.createProject.mockRejectedValue(
+        Object.assign(new Error('Forbidden'), {
+          status: 403,
+          response: { body: { errors: [{ name: 'OrganizationAccessForbiddenError' }] } },
+        }),
+      );
+
+      await expect(
+        new ProjectCreator(context).create('token', { appName: 'app' }, meta),
+      ).rejects.toThrow(
+        'Cannot create the project in organization 42: you are not an owner of this organization.',
+      );
+    });
+
+    it('should leave any other 403 to the generic permission handling', async () => {
+      expect.assertions(1);
+      const context = createContext();
+      const forbidden = Object.assign(new Error('Forbidden'), {
+        status: 403,
+        response: {
+          body: { errors: [{ status: 403, detail: 'Forbidden', name: 'ForbiddenError' }] },
+        },
+      });
+      context.api.createProject.mockRejectedValue(forbidden);
+
+      await expect(
+        new ProjectCreator(context).create('token', { appName: 'app' }, meta),
+      ).rejects.toBe(forbidden);
+    });
+
+    it('should keep the conflict message when the name is already taken', async () => {
+      expect.assertions(1);
+      const context = createContext();
+      context.api.createProject.mockRejectedValue(new Error('Conflict'));
+
+      await expect(
+        new ProjectCreator(context).create('token', { appName: 'app' }, meta),
+      ).rejects.toThrow('A project with this name already exists. Please choose another name.');
+    });
+  });
+
+  it('should leave a 403 untouched when no organization was requested', async () => {
+    expect.assertions(1);
+    const context = createContext();
+    const forbidden = Object.assign(new Error('Forbidden'), { status: 403 });
+    context.api.createProject.mockRejectedValue(forbidden);
+
+    await expect(
+      new ProjectCreator(context).create('token', { appName: 'app' }, { agent: 'nodejs' }),
+    ).rejects.toBe(forbidden);
+  });
 });

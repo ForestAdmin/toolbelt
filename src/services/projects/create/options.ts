@@ -2,7 +2,12 @@ import type { Language } from '../../../utils/languages';
 import type { CommandOptions } from '../../../utils/option-parser';
 
 import languages from '../../../utils/languages';
-import { validateAppHostname, validateDbName, validatePort } from '../../../utils/validators';
+import {
+  validateAppHostname,
+  validateDbName,
+  validateOrganizationId,
+  validatePort,
+} from '../../../utils/validators';
 
 export type ProjectCreateOptions = {
   applicationName: string;
@@ -22,6 +27,7 @@ export type ProjectCreateOptions = {
   mongoDBSRV?: boolean;
 
   language?: Language;
+  organization?: string;
 };
 
 type Option = CommandOptions<ProjectCreateOptions>[string];
@@ -109,6 +115,14 @@ export const applicationPort: Option = {
   validate: validatePort,
   oclif: { char: 'P', description: 'Port of your admin backend application.' },
   prompter: { question: `What's the port on which your application will be running?` },
+};
+
+export const organization: Option = {
+  validate: validateOrganizationId,
+  oclif: {
+    description: 'ID of the organization to create the project in (default: your Personal space).',
+  },
+  prompter: null,
 };
 
 export const databaseConnectionURL: Option = {

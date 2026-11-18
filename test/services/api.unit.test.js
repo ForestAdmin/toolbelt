@@ -194,6 +194,57 @@ describe('services > API', () => {
       expect(project.defaultEnvironment.secretKey).toBe('env-secret');
     });
 
+    it.each([
+      [
+        'a conflict',
+        (send, project) =>
+          send.mockRejectedValueOnce(conflict()).mockResolvedValueOnce({ body: project }),
+      ],
+      ['a 201', (send, project) => send.mockResolvedValueOnce({ body: project })],
+    ])(
+      'refuses a project outside the requested organization after %s, before touching its environment',
+      async (_, answer) => {
+        expect.assertions(2);
+
+        const { superagent, api } = setup();
+        answer(superagent.send, { ...existing, organizationId: 7 });
+
+        await expect(
+          api.createProject({}, 'THE-TOKEN', { name: 'app', organization: { id: 42 } }),
+        ).rejects.toThrow(
+          'A project named "app" already exists outside organization 42. Please choose another name.',
+        );
+        expect(superagent.put).not.toHaveBeenCalled();
+      },
+    );
+
+    it('refuses a Personal-space project when an organization is requested', async () => {
+      expect.assertions(1);
+
+      const { superagent, api } = setup();
+      superagent.send.mockResolvedValueOnce({ body: { ...existing, organizationId: null } });
+
+      await expect(
+        api.createProject({}, 'THE-TOKEN', { name: 'app', organization: { id: 42 } }),
+      ).rejects.toThrow('already exists outside organization 42');
+    });
+
+    it('keeps a project of the requested organization', async () => {
+      expect.assertions(1);
+
+      const { superagent, api } = setup();
+      superagent.send
+        .mockResolvedValueOnce({ body: { ...existing, organizationId: 42 } })
+        .mockResolvedValueOnce({ body: { secretKey: 'env-secret' } });
+
+      const project = await api.createProject({}, 'THE-TOKEN', {
+        name: 'app',
+        organization: { id: 42 },
+      });
+
+      expect(project.defaultEnvironment.secretKey).toBe('env-secret');
+    });
+
     it('never reuses a same-name project on a conflict when a claim is sent', async () => {
       expect.assertions(2);
 

@@ -289,6 +289,8 @@ export default abstract class AbstractProjectCreateCommand extends AbstractAuthe
       ),
     };
 
+    if (config.organization) meta.organizationId = Number(config.organization);
+
     // This `await` seems to be useless but removing it breaks the tests.
     // Leaving it here for now until we figure out why the mocks are not compatible with the implementation.
     const authenticationToken = (await this.authenticator.getAuthToken()) || '';

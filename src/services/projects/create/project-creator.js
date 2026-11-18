@@ -1,4 +1,10 @@
+const InvalidOptionError = require('../../../errors/options/invalid-option-error');
 const { invitationRefusal } = require('../../invitation-claim');
+
+const ORGANIZATION_REFUSALS = [
+  'UserNotOwnerOfOrganizationError',
+  'OrganizationAccessForbiddenError',
+];
 
 /**
  * @typedef {{
@@ -6,6 +12,7 @@ const { invitationRefusal } = require('../../invitation-claim');
  *  dbDialect: string;
  *  architecture: string;
  *  isLocal: boolean;
+ *  organizationId?: number;
  * }} ProjectMeta
  *
  * @typedef {{
@@ -58,6 +65,7 @@ class ProjectCreator {
         agent: meta.agent,
         architecture: meta.architecture,
         databaseType: meta.dbDialect,
+        ...(meta.organizationId && { organization: { id: meta.organizationId } }),
         ...(invitationClaim ? { invitationClaim } : {}),
       };
 
@@ -75,6 +83,18 @@ class ProjectCreator {
     } catch (error) {
       if (error.message === 'Conflict' && !invitationRefusal(error)) {
         error.message = 'A project with this name already exists. Please choose another name.';
+      }
+
+      const serverError = error.response?.body?.errors?.[0];
+
+      if (meta.organizationId && ORGANIZATION_REFUSALS.includes(serverError?.name)) {
+        const reason =
+          typeof serverError.detail === 'string'
+            ? serverError.detail.replace(/\.$/, '')
+            : 'you are not an owner of this organization';
+        throw new InvalidOptionError(
+          `Cannot create the project in organization ${meta.organizationId}: ${reason}.`,
+        );
       }
 
       throw error;

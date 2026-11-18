@@ -1043,6 +1043,89 @@ describe('start', () => {
     });
   });
 
+  describe('--organization', () => {
+    it.each([
+      [['--flow', 'demo'], '$ forest projects:create:demo forest-demo-'],
+      [['--flow', 'standalone', '--name', 'x'], '$ forest projects:create:sql x --organization 42'],
+      [
+        ['--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+        '$ forest projects:create:in-app app -H http://localhost -P 3002 --format json --organization 42',
+      ],
+      [
+        ['--flow', 'inapp', '--stack', 'node', '--mount', 'manual', '--name', 'app'],
+        '$ forest projects:create:in-app app -H http://localhost -P 3001 --format json --organization 42',
+      ],
+      [
+        ['--flow', 'inapp', '--stack', 'node', '--mount', 'standalone', '--name', 'x'],
+        '$ forest projects:create:sql x --organization 42',
+      ],
+    ])('passes it to the project creation of %j', async (flowArgs, creation) => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--dry-run', ...flowArgs, '--organization', '42'],
+        std: [{ out: creation }, { out: '--organization 42' }],
+      });
+    });
+
+    it('points the real-data hint after a demo at the same organization', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--dry-run', '--flow', 'demo', '--organization', '42'],
+        std: [{ out: 'Connect real data: forest projects:create:sql --organization 42' }],
+      });
+    });
+
+    it('keeps the project creation without it in the Personal space', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--dry-run', '--flow', 'demo'],
+        std: [{ out: '$ forest projects:create:demo' }, { not: '--organization' }],
+      });
+    });
+
+    it('refuses an id that is not a positive integer before logging in', async () => {
+      expect.hasAssertions();
+      runStep.mockReset().mockResolvedValue(undefined);
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'demo', '--organization', 'acme'],
+        exitMessage:
+          'Invalid value for --organization: The organization must be a positive integer id, like 42.',
+      });
+
+      expect(runStep).not.toHaveBeenCalled();
+    });
+
+    it('refuses it with --invitation before logging in', async () => {
+      expect.hasAssertions();
+      runStep.mockReset().mockResolvedValue(undefined);
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: [
+          '--flow',
+          'standalone',
+          '--organization',
+          '42',
+          '--invitation',
+          'SENTINELclaimAAAAAAAAAAAAAAAAAAAA',
+          '--yes',
+        ],
+        exitMessage:
+          '--organization cannot be used with --invitation: the invitation creates the project for the inviter.',
+      });
+
+      expect(runStep).not.toHaveBeenCalled();
+    });
+  });
+
   describe('on Windows', () => {
     it('refuses before logging in, since every flow creates a project before its first spawn', async () => {
       expect.hasAssertions();

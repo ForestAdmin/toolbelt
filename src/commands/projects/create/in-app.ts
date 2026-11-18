@@ -27,6 +27,7 @@ export default class InAppCommand extends AbstractProjectCreateCommand {
       // …and that app already exists, hence "is running" (not "will be").
       prompter: { question: "What's the port on which your application is running?" },
     },
+    organization: projectCreateOptions.organization,
   };
 
   /** @see https://oclif.io/docs/args */

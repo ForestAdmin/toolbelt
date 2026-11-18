@@ -1517,6 +1517,8 @@ module.exports = {
     databaseType,
     agent = Agents.ExpressSequelize,
     architecture = 'microservice',
+    organizationId = undefined,
+    createdInOrganizationId = undefined,
     invitationClaim,
   }) =>
     nock('http://localhost:3001')
@@ -1530,11 +1532,15 @@ module.exports = {
             database_type: databaseType,
             ...(invitationClaim ? { invitation_claim: invitationClaim } : {}),
           },
+          ...(organizationId && {
+            relationships: {
+              organization: { data: { type: 'organizations', id: String(organizationId) } },
+            },
+          }),
         },
       })
-      .reply(
-        201,
-        ProjectSerializer.serialize({
+      .reply(201, () => {
+        const body = ProjectSerializer.serialize({
           name: 'name',
           // A JSON:API id is a string on the wire; a number here would lock a shape
           // no compliant server ever sends.
@@ -1547,8 +1553,11 @@ module.exports = {
             secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
           },
           origin: 'Lumber',
-        }),
-      ),
+        });
+        body.data.attributes.organization_id = createdInOrganizationId ?? organizationId ?? null;
+
+        return body;
+      }),
   updateNewEnvironmentEndpoint: (apiEndpoint = 'http://localhost:3310') =>
     nock('http://localhost:3001')
       .put('/api/environments/182', {

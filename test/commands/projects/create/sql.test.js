@@ -181,6 +181,41 @@ describe('projects:create:sql', () => {
     });
   });
 
+  describe('with --organization', () => {
+    it('should create the project in that organization', () =>
+      testCli({
+        commandClass: SqlCommand,
+        commandArgs: ['name', '--organization', '42'],
+        env: testEnvWithSecret,
+        token: 'any',
+        prompts: [
+          {
+            in: makePromptInputList(),
+            out: {
+              confirm: true,
+              databaseDialect: 'postgres',
+              databaseName: 'unknown_db',
+              databaseSchema: 'public',
+              databaseHost: 'unknown_host',
+              databasePort: 424242,
+              databaseUser: 'no_such_user',
+              databasePassword: 'wrong_password',
+              databaseSSL: false,
+              databaseSslMode: 'disabled',
+              language: languages.Javascript,
+            },
+          },
+        ],
+        api: [
+          // The nock body is the assertion: the POST must carry the organization relationship.
+          () =>
+            createProject({ databaseType: 'postgres', agent: Agents.NodeJS, organizationId: 42 }),
+        ],
+        std: [{ spinner: '√ Creating your project on Forest Admin' }],
+        exitCode: 1,
+      }));
+  });
+
   describe('arguments & flags', () => {
     describe('when "applicationName"', () => {
       describe('is missing', () => {
