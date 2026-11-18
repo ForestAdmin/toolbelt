@@ -3,6 +3,17 @@ const HEADER_CONTENT_TYPE_JSON = 'application/json';
 const HEADER_FOREST_ORIGIN = 'forest-origin';
 const HEADER_USER_AGENT = 'User-Agent';
 
+const InvalidOptionError = require('../errors/options/invalid-option-error');
+
+function refuseOutsideRequestedOrganization(project, requested) {
+  const organizationId = requested.organization?.id;
+  if (organizationId && Number(project.organizationId) !== Number(organizationId)) {
+    throw new InvalidOptionError(
+      `A project named "${requested.name}" already exists outside organization ${organizationId}. Please choose another name.`,
+    );
+  }
+}
+
 /**
  * @class
  * @param {import('../context/plan').Context} context
@@ -118,6 +129,8 @@ function Api({
         throw error;
       }
     }
+
+    refuseOutsideRequestedOrganization(newProject, project);
 
     const hostname = config.appHostname || 'http://localhost';
     const port = config.appPort || 3310;

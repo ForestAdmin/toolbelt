@@ -71,12 +71,6 @@ class ProjectCreator {
 
       const newProject = await this.api.createProject(config, sessionToken, newProjectPayload);
 
-      if (meta.organizationId && Number(newProject.organizationId) !== meta.organizationId) {
-        throw new InvalidOptionError(
-          `A project named "${config.appName}" already exists outside organization ${meta.organizationId}. Please choose another name.`,
-        );
-      }
-
       return {
         id: newProject.id,
         envSecret: newProject.defaultEnvironment.secretKey,
