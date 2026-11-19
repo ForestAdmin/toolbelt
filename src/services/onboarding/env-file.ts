@@ -119,10 +119,21 @@ export function writeSecrets(
   }
 
   const shadowed = keyed(secrets)
-    .filter(([key, value]) => value && ![undefined, value].includes(environment[key]))
+    .filter(([key, value]) => {
+      const exported = environment[key];
+
+      return value && exported !== undefined && exported !== value;
+    })
     .map(([key]) => key);
 
   return { file, written, conflicts, shadowed, exposed };
+}
+
+export function secretsReachApp({
+  conflicts,
+  shadowed,
+}: Pick<SecretsWrite, 'conflicts' | 'shadowed'>): boolean {
+  return [...conflicts, ...shadowed].every(key => key === 'FOREST_SERVER_URL');
 }
 
 /**

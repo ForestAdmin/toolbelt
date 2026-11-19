@@ -966,6 +966,7 @@ describe('start', () => {
             {
               [expectation]: 'forestServerUrl: process.env.FOREST_SERVER_URL, isProduction: false',
             },
+            { [expectation]: 'FOREST_AUTH_SECRET / FOREST_SERVER_URL)' },
           ],
         });
       },

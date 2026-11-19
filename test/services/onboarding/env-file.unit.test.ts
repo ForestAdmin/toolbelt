@@ -6,6 +6,7 @@ import path from 'path';
 import {
   bootSecrets,
   keysLoadedFromDotenv,
+  secretsReachApp,
   writeSecrets,
 } from '../../../src/services/onboarding/env-file';
 
@@ -235,6 +236,17 @@ describe('onboarding env-file', () => {
 
         expect(result.shadowed).toStrictEqual(['FOREST_ENV_SECRET']);
       });
+    });
+
+    it.each([
+      [{ conflicts: [], shadowed: [] }, true],
+      [{ conflicts: ['FOREST_SERVER_URL'], shadowed: ['FOREST_SERVER_URL'] }, true],
+      [{ conflicts: ['FOREST_ENV_SECRET'], shadowed: [] }, false],
+      [{ conflicts: [], shadowed: ['FOREST_AUTH_SECRET', 'FOREST_SERVER_URL'] }, false],
+    ])('tells whether the app reads the secrets from .env (%j)', (write, expected) => {
+      expect.assertions(1);
+
+      expect(secretsReachApp(write)).toBe(expected);
     });
 
     it('reports nothing written when no secret came back', () => {

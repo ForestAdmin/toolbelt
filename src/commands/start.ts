@@ -22,7 +22,12 @@ import {
   detectRails,
   mountHelper,
 } from '../services/onboarding/detect';
-import { bootSecrets, keysLoadedFromDotenv, writeSecrets } from '../services/onboarding/env-file';
+import {
+  bootSecrets,
+  keysLoadedFromDotenv,
+  secretsReachApp,
+  writeSecrets,
+} from '../services/onboarding/env-file';
 import {
   RAILS_INITIALIZER,
   checkRailsServerUrl,
@@ -814,7 +819,11 @@ export default class StartCommand extends AbstractCommand {
 
     if (this.dryRun) {
       this.logger.log(
-        this.chalk.grey('\n$ npm start   (with FOREST_ENV_SECRET / FOREST_AUTH_SECRET)'),
+        this.chalk.grey(
+          `\n$ npm start   (with FOREST_ENV_SECRET / FOREST_AUTH_SECRET${
+            secrets.serverUrl ? ' / FOREST_SERVER_URL' : ''
+          })`,
+        ),
       );
       this.doneInApp(name, NODE_PORT);
       await this.handoff(tail);
@@ -839,8 +848,7 @@ export default class StartCommand extends AbstractCommand {
 
     // The agent mounts Forest with the skills, so both come before the boot waits on a mount.
     if (mount === 'ai') {
-      const inDotenv = !written.conflicts.length && !written.shadowed.length;
-      await this.mountWithAgent(stack, inDotenv, Boolean(secrets.serverUrl)).catch(error => {
+      await this.mountWithAgent(stack, secretsReachApp(written)).catch(error => {
         // The project exists by now: a failed agent step costs the snippet, never the setup.
         this.logger.warn(`${(error as Error).message}\n  Mount it by hand instead:`);
         this.explainMount('manual', stack);
@@ -892,11 +900,7 @@ export default class StartCommand extends AbstractCommand {
   }
 
   /** Install the skills the agent mounts with, then offer to launch it on that one task. */
-  private async mountWithAgent(
-    stack: NodeStack,
-    secretsInDotenv: boolean,
-    pinsServerUrl: boolean,
-  ): Promise<void> {
+  private async mountWithAgent(stack: NodeStack, secretsInDotenv: boolean): Promise<void> {
     if (!this.canInstallSkills) return;
 
     await this.forest(['skills:init']);
@@ -904,7 +908,8 @@ export default class StartCommand extends AbstractCommand {
     const [agent] = StartCommand.launchableAgents('.');
     if (!agent || !(await this.confirm(`Launch ${agent.label} now to wire the mount?`))) return;
 
-    await this.run$(agent.bin, [StartCommand.mountSeed(stack, secretsInDotenv, pinsServerUrl)]);
+    const seed = StartCommand.mountSeed(stack, secretsInDotenv, Boolean(this.nodeServerUrl));
+    await this.run$(agent.bin, [seed]);
   }
 
   private get nodeServerUrl(): string | undefined {
