@@ -29,6 +29,8 @@ export const NODE_DATASOURCE: Record<NodeStack['orm'], string> = {
   sql: '@forestadmin/datasource-sql',
 };
 
+export const NODE_SERVER_URL_OPTION = 'forestServerUrl: process.env.FOREST_SERVER_URL';
+
 function readJson(file: string): Record<string, unknown> | null {
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'));

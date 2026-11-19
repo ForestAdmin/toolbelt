@@ -5,8 +5,8 @@ import path from 'path';
 
 import {
   bootSecrets,
+  checkNodeServerUrl,
   keysLoadedFromDotenv,
-  secretsReachApp,
   writeSecrets,
 } from '../../../src/services/onboarding/env-file';
 
@@ -238,17 +238,6 @@ describe('onboarding env-file', () => {
       });
     });
 
-    it.each([
-      [{ conflicts: [], shadowed: [] }, true],
-      [{ conflicts: ['FOREST_SERVER_URL'], shadowed: ['FOREST_SERVER_URL'] }, true],
-      [{ conflicts: ['FOREST_ENV_SECRET'], shadowed: [] }, false],
-      [{ conflicts: [], shadowed: ['FOREST_AUTH_SECRET', 'FOREST_SERVER_URL'] }, false],
-    ])('tells whether the app reads the secrets from .env (%j)', (write, expected) => {
-      expect.assertions(1);
-
-      expect(secretsReachApp(write)).toBe(expected);
-    });
-
     it('reports nothing written when no secret came back', () => {
       expect.assertions(1);
       inTempDir(() => {
@@ -302,6 +291,67 @@ describe('onboarding env-file', () => {
         expect(bootSecrets({ envSecret: 'AAA' }, written)).toStrictEqual({
           FOREST_ENV_SECRET: 'AAA',
         });
+      });
+    });
+  });
+
+  describe('checkNodeServerUrl', () => {
+    const DEV = 'https://api.development.forestadmin.com';
+    const PROD = 'https://api.forestadmin.com';
+    const target = { FOREST_SERVER_URL: DEV, FOREST_URL_IS_DEFAULT: false };
+
+    it.each([
+      ['FOREST_SERVER_URL=https://api.forestadmin.com\n'],
+      ["export FOREST_SERVER_URL = 'https://api.forestadmin.com' # prod\n"],
+      [`FOREST_SERVER_URL=${DEV}\nFOREST_SERVER_URL=https://api.forestadmin.com\n`],
+    ])('refuses a .env that sends the app to another server (%j)', content => {
+      expect.assertions(1);
+      inTempDir(() => {
+        fs.writeFileSync('.env', content);
+
+        expect(() => checkNodeServerUrl(target)).toThrow(
+          `.env sets FOREST_SERVER_URL=${PROD}, which would send your app to another server than ` +
+            `${DEV}. Remove that line, or set it to the same URL.`,
+        );
+      });
+    });
+
+    it('refuses a FOREST_SERVER_URL the shell exports for another server', () => {
+      expect.assertions(1);
+      inTempDir(() => {
+        expect(() => checkNodeServerUrl({ ...target, RAW_FOREST_SERVER_URL: PROD })).toThrow(
+          `FOREST_SERVER_URL=${PROD} would send your app to another server than FOREST_URL=${DEV}. ` +
+            'Unset it, or set it to the same URL.',
+        );
+      });
+    });
+
+    it.each([
+      ['no .env', undefined, {}],
+      ['the same URL', `FOREST_SERVER_URL=${DEV}\n`, { RAW_FOREST_SERVER_URL: DEV }],
+      ['a placeholder', 'FOREST_SERVER_URL=\n', {}],
+      ['another key only', 'PORT=3000\n', {}],
+    ])('accepts %s', (_label, content, raw) => {
+      expect.assertions(1);
+      inTempDir(() => {
+        if (content !== undefined) fs.writeFileSync('.env', content);
+
+        expect(() => checkNodeServerUrl({ ...target, ...raw })).not.toThrow();
+      });
+    });
+
+    it('lets the default server through, since the snippet then names no server', () => {
+      expect.assertions(1);
+      inTempDir(() => {
+        fs.writeFileSync('.env', `FOREST_SERVER_URL=${DEV}\n`);
+
+        expect(() =>
+          checkNodeServerUrl({
+            FOREST_SERVER_URL: PROD,
+            FOREST_URL_IS_DEFAULT: true,
+            RAW_FOREST_SERVER_URL: DEV,
+          }),
+        ).not.toThrow();
       });
     });
   });

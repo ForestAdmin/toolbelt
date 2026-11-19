@@ -18,14 +18,15 @@ import {
 } from '../services/invitation-claim';
 import {
   NODE_DATASOURCE,
+  NODE_SERVER_URL_OPTION,
   detectNodeStack,
   detectRails,
   mountHelper,
 } from '../services/onboarding/detect';
 import {
   bootSecrets,
+  checkNodeServerUrl,
   keysLoadedFromDotenv,
-  secretsReachApp,
   writeSecrets,
 } from '../services/onboarding/env-file';
 import {
@@ -781,6 +782,7 @@ export default class StartCommand extends AbstractCommand {
       return;
     }
 
+    checkNodeServerUrl(this.context.env);
     const name = await this.promptName(flags.name);
     const output = await this.forestCapture([
       'projects:create:in-app',
@@ -848,7 +850,8 @@ export default class StartCommand extends AbstractCommand {
 
     // The agent mounts Forest with the skills, so both come before the boot waits on a mount.
     if (mount === 'ai') {
-      await this.mountWithAgent(stack, secretsReachApp(written)).catch(error => {
+      const inDotenv = !written.conflicts.length && !written.shadowed.length;
+      await this.mountWithAgent(stack, inDotenv).catch(error => {
         // The project exists by now: a failed agent step costs the snippet, never the setup.
         this.logger.warn(`${(error as Error).message}\n  Mount it by hand instead:`);
         this.explainMount('manual', stack);
@@ -930,7 +933,7 @@ export default class StartCommand extends AbstractCommand {
       : "this project's FOREST_ENV_SECRET / FOREST_AUTH_SECRET are not configured yet, so ask me for them rather than reusing the ones already there";
 
     const server = pinsServerUrl
-      ? ' Pass `forestServerUrl: process.env.FOREST_SERVER_URL` to createAgent: this project lives on that Forest server, not the default one.'
+      ? ` Pass \`${NODE_SERVER_URL_OPTION}\` to createAgent: this project lives on that Forest server, not the default one.`
       : '';
 
     return (
@@ -971,9 +974,7 @@ export default class StartCommand extends AbstractCommand {
       typeorm: sqlDataSource,
       prisma: sqlDataSource,
     }[stack.orm];
-    const serverUrlOption = this.nodeServerUrl
-      ? 'forestServerUrl: process.env.FOREST_SERVER_URL, '
-      : '';
+    const serverUrlOption = this.nodeServerUrl ? `${NODE_SERVER_URL_OPTION}, ` : '';
 
     this.instruct('Add to your server (after your ORM is ready, before app.listen):', [
       this.chalk.cyan("import { createAgent } from '@forestadmin/agent';"),

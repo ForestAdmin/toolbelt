@@ -129,11 +129,31 @@ export function writeSecrets(
   return { file, written, conflicts, shadowed, exposed };
 }
 
-export function secretsReachApp({
-  conflicts,
-  shadowed,
-}: Pick<SecretsWrite, 'conflicts' | 'shadowed'>): boolean {
-  return [...conflicts, ...shadowed].every(key => key === 'FOREST_SERVER_URL');
+export type NodeServerUrlEnv = {
+  FOREST_SERVER_URL?: string;
+  FOREST_URL_IS_DEFAULT?: boolean;
+  RAW_FOREST_SERVER_URL?: string;
+};
+
+export function checkNodeServerUrl(env: NodeServerUrlEnv, file = '.env'): void {
+  const { FOREST_SERVER_URL: url, FOREST_URL_IS_DEFAULT, RAW_FOREST_SERVER_URL: raw } = env;
+  if (FOREST_URL_IS_DEFAULT || !url) return;
+
+  const content = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  const kept = effectiveAssignment(content, 'FOREST_SERVER_URL')?.value;
+  if (kept && kept !== url) {
+    throw new Error(
+      `${file} sets FOREST_SERVER_URL=${kept}, which would send your app to another server than ` +
+        `${url}. Remove that line, or set it to the same URL.`,
+    );
+  }
+
+  if (raw && raw !== url) {
+    throw new Error(
+      `FOREST_SERVER_URL=${raw} would send your app to another server than FOREST_URL=${url}. ` +
+        'Unset it, or set it to the same URL.',
+    );
+  }
 }
 
 /**

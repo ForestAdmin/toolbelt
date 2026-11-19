@@ -995,6 +995,101 @@ describe('start', () => {
       });
     });
 
+    it('refuses a .env sending the app to another server before creating the project', async () => {
+      expect.hasAssertions();
+      resetProcessMocks();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'inapp', '--stack', 'node', '--name', 'app', '--mount', 'manual'],
+        env: {
+          FOREST_SERVER_URL: 'https://api.development.forestadmin.com',
+          FOREST_URL_IS_DEFAULT: false,
+          RAW_FOREST_SERVER_URL: 'https://api.forestadmin.com',
+        },
+        files: [{ name: '.env', content: 'FOREST_SERVER_URL=https://api.forestadmin.com\n' }],
+        exitMessage:
+          '.env sets FOREST_SERVER_URL=https://api.forestadmin.com, which would send your app to ' +
+          'another server than https://api.development.forestadmin.com. Remove that line, or set ' +
+          'it to the same URL.',
+      });
+
+      expect(createSteps()).toStrictEqual([]);
+    });
+
+    it.each([
+      [
+        {
+          FOREST_SERVER_URL: 'https://api.development.forestadmin.com',
+          FOREST_URL_IS_DEFAULT: false,
+        },
+        true,
+      ],
+      [{ FOREST_SERVER_URL: 'https://api.forestadmin.com', FOREST_URL_IS_DEFAULT: true }, false],
+    ])(
+      'tells the coding agent to pass forestServerUrl only off the default server (%j)',
+      async (serverEnv, named) => {
+        expect.hasAssertions();
+        resetProcessMocks();
+        runCapture.mockResolvedValue({
+          stdout: JSON.stringify({ envSecret: 'deadbeef', authSecret: 'a1' }),
+          stderr: '',
+        });
+        startProcess.mockImplementation(() => {
+          throw new Error('stop at the boot');
+        });
+
+        const tty = forceTty();
+        const skills = jest
+          .spyOn(StartCommand.prototype, 'canInstallSkills', 'get')
+          .mockReturnValue(true);
+        try {
+          await testCli({
+            commandClass: StartCommand,
+            commandArgs: ['--flow', 'inapp', '--stack', 'node', '--name', 'app', '--mount', 'ai'],
+            env: serverEnv,
+            files: [
+              PACKAGE_JSON,
+              {
+                name: '.forest/skills-manifest.json',
+                content: JSON.stringify({ agents: ['claude'] }),
+              },
+            ],
+            prompts: [
+              {
+                in: [
+                  {
+                    type: 'confirm',
+                    name: 'value',
+                    message: 'Launch Claude Code now to wire the mount?',
+                    default: true,
+                  },
+                ],
+                out: { value: true },
+              },
+              {
+                in: [
+                  {
+                    type: 'input',
+                    name: 'go',
+                    message: 'Once Forest is mounted in your server, press Enter to boot it',
+                  },
+                ],
+                out: { go: '' },
+              },
+            ],
+            exitMessage: 'stop at the boot',
+          });
+        } finally {
+          skills.mockRestore();
+          tty.mockRestore();
+        }
+
+        const [[, [seed]]] = runStep.mock.calls.filter(([command]) => command === 'claude');
+        expect(seed.includes('Pass `forestServerUrl: process.env.FOREST_SERVER_URL`')).toBe(named);
+      },
+    );
+
     it('shows the snippet for --mount ai when this CLI cannot install the skills the agent needs', async () => {
       expect.hasAssertions();
 
