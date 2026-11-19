@@ -53,6 +53,25 @@ function effectiveAssignment(content: string, key: string) {
 }
 
 /**
+ * The keys this CLI's own dotenv loaded from the user's `.env` when it started. That dotenv is
+ * v8, which reads comments, backticks and multi-line values differently from the app's, so its
+ * values must not reach the app: they would win over the `.env` the app reads itself. Read before
+ * `writeSecrets` changes the file, since it compares against what was loaded.
+ */
+export function keysLoadedFromDotenv(
+  file = '.env',
+  environment: NodeJS.ProcessEnv = process.env,
+): string[] {
+  try {
+    const parsed = dotenv.parse(fs.readFileSync(file));
+
+    return Object.keys(parsed).filter(key => environment[key] === parsed[key]);
+  } catch {
+    return []; // no .env, so this CLI loaded nothing
+  }
+}
+
+/**
  * Also on a file that existed: the secrets written into it are new, and nobody chose to let other
  * local users read them. A file owned by someone else refuses, which is reported and never fatal,
  * since the secrets are already in it and the project already exists.
@@ -78,6 +97,7 @@ export function writeSecrets(
 ): SecretsWrite {
   const file = '.env';
   const current = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  const loadedFromFile = keysLoadedFromDotenv(file, environment);
   const written: string[] = [];
   const conflicts: string[] = [];
   const appended: string[] = [];
@@ -122,7 +142,7 @@ export function writeSecrets(
     .filter(([key, value]) => {
       const exported = environment[key];
 
-      return value && exported !== undefined && exported !== value;
+      return value && exported !== undefined && exported !== value && !loadedFromFile.includes(key);
     })
     .map(([key]) => key);
 
@@ -154,25 +174,6 @@ export function checkNodeServerUrl(env: NodeServerUrlEnv, file = '.env'): void {
       `FOREST_SERVER_URL=${raw} would send your app to another server than FOREST_URL=${url}. ` +
         'Unset it, or set it to the same URL.',
     );
-  }
-}
-
-/**
- * The keys this CLI's own dotenv loaded from the user's `.env` when it started. That dotenv is
- * v8, which reads comments, backticks and multi-line values differently from the app's, so its
- * values must not reach the app: they would win over the `.env` the app reads itself. Read before
- * `writeSecrets` changes the file, since it compares against what was loaded.
- */
-export function keysLoadedFromDotenv(
-  file = '.env',
-  environment: NodeJS.ProcessEnv = process.env,
-): string[] {
-  try {
-    const parsed = dotenv.parse(fs.readFileSync(file));
-
-    return Object.keys(parsed).filter(key => environment[key] === parsed[key]);
-  } catch {
-    return []; // no .env, so this CLI loaded nothing
   }
 }
 

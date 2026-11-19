@@ -293,6 +293,21 @@ describe('onboarding env-file', () => {
         });
       });
     });
+
+    it.each(['FOREST_SERVER_URL=\n', 'FOREST_SERVER_URL=https://dev.test # dev stack\n'])(
+      'hands the first boot the target server over the value this CLI kept from %j',
+      content => {
+        expect.assertions(2);
+        withLoadedDotenv(content, () => {
+          const written = writeSecrets({ envSecret: 'AAA', serverUrl: 'https://dev.test' });
+
+          expect(written.shadowed).toStrictEqual([]);
+          expect(
+            bootSecrets({ envSecret: 'AAA', serverUrl: 'https://dev.test' }, written),
+          ).toStrictEqual({ FOREST_ENV_SECRET: 'AAA', FOREST_SERVER_URL: 'https://dev.test' });
+        });
+      },
+    );
   });
 
   describe('checkNodeServerUrl', () => {
