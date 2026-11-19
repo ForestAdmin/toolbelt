@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import fs from 'fs';
 
-type Secrets = { envSecret?: string; authSecret?: string };
+type Secrets = { envSecret?: string; authSecret?: string; serverUrl?: string };
 
 export type SecretsWrite = {
   file: string;
@@ -17,6 +17,7 @@ const keyed = (secrets: Secrets) =>
   Object.entries({
     FOREST_ENV_SECRET: secrets.envSecret,
     FOREST_AUTH_SECRET: secrets.authSecret,
+    FOREST_SERVER_URL: secrets.serverUrl,
   });
 
 /**
@@ -118,7 +119,7 @@ export function writeSecrets(
   }
 
   const shadowed = keyed(secrets)
-    .filter(([key, value]) => value && environment[key] !== undefined)
+    .filter(([key, value]) => value && ![undefined, value].includes(environment[key]))
     .map(([key]) => key);
 
   return { file, written, conflicts, shadowed, exposed };

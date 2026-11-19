@@ -210,6 +210,33 @@ describe('onboarding env-file', () => {
       });
     });
 
+    it('writes the Forest server the project lives on next to its secrets', () => {
+      expect.assertions(2);
+      inTempDir(() => {
+        const result = writeSecrets(
+          { envSecret: 'AAA', serverUrl: 'https://api.development.forestadmin.com' },
+          {},
+        );
+
+        expect(result.written).toStrictEqual(['FOREST_ENV_SECRET', 'FOREST_SERVER_URL']);
+        expect(fs.readFileSync('.env', 'utf8')).toBe(
+          'FOREST_ENV_SECRET=AAA\nFOREST_SERVER_URL=https://api.development.forestadmin.com\n',
+        );
+      });
+    });
+
+    it('does not report a key the shell exports with the very value written', () => {
+      expect.assertions(1);
+      inTempDir(() => {
+        const result = writeSecrets(
+          { envSecret: 'AAA', serverUrl: 'https://dev.test' },
+          { FOREST_SERVER_URL: 'https://dev.test', FOREST_ENV_SECRET: 'OLD' },
+        );
+
+        expect(result.shadowed).toStrictEqual(['FOREST_ENV_SECRET']);
+      });
+    });
+
     it('reports nothing written when no secret came back', () => {
       expect.assertions(1);
       inTempDir(() => {

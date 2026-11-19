@@ -933,6 +933,67 @@ describe('start', () => {
       });
     });
 
+    it.each([
+      [
+        {
+          FOREST_SERVER_URL: 'https://api.development.forestadmin.com',
+          FOREST_URL_IS_DEFAULT: false,
+        },
+        'out',
+      ],
+      [{ FOREST_SERVER_URL: 'https://api.forestadmin.com', FOREST_URL_IS_DEFAULT: true }, 'not'],
+    ])(
+      'points the snippet at the Forest server only when it is not the default (%j)',
+      async (env, expectation) => {
+        expect.hasAssertions();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: [
+            '--dry-run',
+            '--flow',
+            'inapp',
+            '--stack',
+            'node',
+            '--name',
+            'app',
+            '--mount',
+            'manual',
+          ],
+          env,
+          std: [
+            { out: 'Add to your server' },
+            {
+              [expectation]: 'forestServerUrl: process.env.FOREST_SERVER_URL, isProduction: false',
+            },
+          ],
+        });
+      },
+    );
+
+    it('writes the non-default Forest server to .env with the secrets', async () => {
+      expect.hasAssertions();
+      runStep.mockReset().mockResolvedValue(undefined);
+      runCapture.mockReset().mockResolvedValue({
+        stdout: JSON.stringify({ envSecret: 'deadbeef', authSecret: 'a1' }),
+        stderr: '',
+      });
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'inapp', '--stack', 'node', '--name', 'app', '--mount', 'manual'],
+        env: {
+          FOREST_SERVER_URL: 'https://api.development.forestadmin.com',
+          FOREST_URL_IS_DEFAULT: false,
+        },
+        files: [{ name: 'package.json', content: JSON.stringify({ name: 'app' }) }],
+        std: [
+          { out: 'FOREST_ENV_SECRET and FOREST_AUTH_SECRET and FOREST_SERVER_URL written to .env' },
+          { out: 'forestServerUrl: process.env.FOREST_SERVER_URL' },
+        ],
+      });
+    });
+
     it('shows the snippet for --mount ai when this CLI cannot install the skills the agent needs', async () => {
       expect.hasAssertions();
 
