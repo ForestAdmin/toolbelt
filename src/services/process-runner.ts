@@ -2,6 +2,8 @@ import type { ChildProcess, SpawnOptions } from 'child_process';
 
 import { spawn } from 'child_process';
 
+import ExitCodeError from './exit-code-error';
+
 // `npm start` is a wrapper: the process holding the port is its child. So long-running processes
 // get their own process group, and stopping one signals the whole group.
 //
@@ -261,30 +263,46 @@ function redactArgs(args: string[]): string[] {
 const formatCommand = (command: string, args: string[]) =>
   `${command} ${redactArgs(args).join(' ')}`.trim();
 
-export function runStep(command: string, args: string[], options: RunOptions = {}): Promise<void> {
+export function runStep(
+  command: string,
+  args: string[],
+  { onStderr, ...options }: RunOptions & { onStderr?: (chunk: string) => void } = {},
+): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, spawnOptions(options, { stdio: 'inherit' }));
+    const stdio: SpawnOptions['stdio'] = onStderr ? ['inherit', 'inherit', 'pipe'] : 'inherit';
+    const child = spawn(command, args, spawnOptions(options, { stdio }));
+    let stderr = '';
 
+    child.stderr?.setEncoding('utf8');
+    child.stderr?.on('data', (text: string) => {
+      stderr += text;
+      onStderr?.(text);
+    });
     child.on('error', reject);
-    child.on('close', code =>
-      code === 0
-        ? resolve()
-        : reject(new Error(`\`${formatCommand(command, args)}\` exited with code ${code}`)),
-    );
+    child.on('close', code => {
+      if (code === 0) {
+        resolve();
+
+        return;
+      }
+
+      const detail = redactUrlCredentials(stderr.trim());
+      reject(
+        new ExitCodeError(
+          `\`${formatCommand(command, args)}\` exited with code ${code}${
+            detail ? `:\n${detail}` : ''
+          }`,
+          code,
+        ),
+      );
+    });
   });
 }
 
 export function runCapture(
   command: string,
   args: string[],
-  {
-    onProgress,
-    onStdout,
-    ...options
-  }: RunOptions & {
-    onProgress?: (chunk: string) => void;
-    onStdout?: (chunk: string) => void;
-  } = {},
+  { onProgress, ...options }: RunOptions & { onProgress?: (chunk: string) => void } = {},
 ): Promise<CaptureResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(
@@ -300,7 +318,6 @@ export function runCapture(
 
     child.stdout?.on('data', (text: string) => {
       stdout += text;
-      onStdout?.(text);
     });
     child.stderr?.on('data', (text: string) => {
       stderr += text;

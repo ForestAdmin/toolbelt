@@ -4,6 +4,7 @@ const nock = require('nock');
 const { stdout } = require('stdout-stderr');
 
 const StartCommand = require('../../src/commands/start').default;
+const ExitCodeError = require('../../src/services/exit-code-error').default;
 const {
   runCapture,
   runStep,
@@ -203,11 +204,9 @@ describe('start', () => {
       ],
     };
     const child = { pid: 4242 };
-    const layoutFails = message =>
-      runCapture.mockImplementation(async (_, args) => {
-        if (args[1] === 'layout:apply') throw new Error(message);
-
-        return { stdout: '', stderr: '' };
+    const layoutFails = error =>
+      runStep.mockImplementation(async (_, args) => {
+        if (args[1] === 'layout:apply') throw error;
       });
 
     const resetDemoMocks = () => {
@@ -226,7 +225,10 @@ describe('start', () => {
       expect.hasAssertions();
       resetDemoMocks();
       layoutFails(
-        '`forest layout:apply` exited with code 2:\n× Failed part: workflows — Server error (402): Feature is not active on project',
+        new ExitCodeError(
+          '`forest layout:apply` exited with code 2:\n× Failed part: workflows — Server error (402): Feature is not active on project',
+          2,
+        ),
       );
 
       const tty = forceTty();
@@ -236,7 +238,9 @@ describe('start', () => {
           commandArgs: ['--flow', 'demo'],
           prompts: [{ in: [DEMO_MENU], out: { next: 'stop' } }],
           std: [
-            { out: 'The curated layout was not fully applied: its workflows part failed.' },
+            {
+              out: 'The curated layout did not finish applying: it stopped at its workflows part.',
+            },
             { out: 'Your demo project works without it.' },
             { out: 'Retry anytime: cd forest-demo-' },
             { out: 'Demo back-office live.' },
@@ -251,16 +255,20 @@ describe('start', () => {
       expect(stopProcess.mock.calls).toStrictEqual([[child]]);
     });
 
-    it('warns that the curated layout was not applied when no part is named', async () => {
+    it('warns that the curated layout did not finish when no part is named', async () => {
       expect.hasAssertions();
       resetDemoMocks();
-      layoutFails('`forest layout:apply` exited with code 1:\nSession expired');
+      layoutFails(
+        new ExitCodeError('`forest layout:apply` exited with code 1:\nSession expired', 1),
+      );
 
       await testCli({
         commandClass: StartCommand,
         commandArgs: ['--flow', 'demo'],
         std: [
-          { out: 'The curated layout was not applied. Your demo project works without it.' },
+          {
+            out: 'The curated layout did not finish applying. Your demo project works without it.',
+          },
           { out: 'Demo back-office live.' },
           { out: 'Launch it anytime: cd forest-demo-' },
         ],
@@ -283,7 +291,27 @@ describe('start', () => {
       });
 
       expect(stopAllProcesses).toHaveBeenCalledTimes(1);
-      expect(runCapture).not.toHaveBeenCalled();
+      expect(runStep.mock.calls.map(([, args]) => args[1])).not.toContain('layout:apply');
+    });
+
+    it.each([
+      ['layout:apply cannot be spawned', new Error('spawn node ENOENT')],
+      [
+        'layout:apply is killed by a signal',
+        new ExitCodeError('`forest layout:apply` exited with code null', null),
+      ],
+    ])('stops everything when %s', async (_, error) => {
+      expect.hasAssertions();
+      resetDemoMocks();
+      layoutFails(error);
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'demo'],
+        exitMessage: error.message,
+      });
+
+      expect(stopAllProcesses).toHaveBeenCalledTimes(1);
     });
   });
 

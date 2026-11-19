@@ -311,7 +311,7 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       sidecarPlans: SidecarUpload[];
     },
   ): Promise<boolean> {
-    let part: LayoutDomain = 'workflows';
+    let part: LayoutDomain | undefined;
     try {
       const domainsToPatch = LAYOUT_DOMAINS.filter(domain =>
         plan.ops.some(op => op.domain === domain),
@@ -343,7 +343,8 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       return true;
     } catch (error) {
       if (error instanceof LayoutApiError && error.status !== 401) {
-        this.logger.error(`${failedPartLine(part)} — ${explainApiError(error, plan.ops)}`);
+        const where = part ? `${failedPartLine(part)} — ` : '';
+        this.logger.error(`${where}${explainApiError(error, plan.ops)}`);
         this.logger.warn(
           '`forest layout apply` is idempotent — some changes may already be applied; re-run it to converge.',
         );
