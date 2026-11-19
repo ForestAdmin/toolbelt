@@ -2,6 +2,8 @@ import type { ChildProcess, SpawnOptions } from 'child_process';
 
 import { spawn } from 'child_process';
 
+import ExitCodeError from './exit-code-error';
+
 // `npm start` is a wrapper: the process holding the port is its child. So long-running processes
 // get their own process group, and stopping one signals the whole group.
 //
@@ -261,16 +263,45 @@ function redactArgs(args: string[]): string[] {
 const formatCommand = (command: string, args: string[]) =>
   `${command} ${redactArgs(args).join(' ')}`.trim();
 
-export function runStep(command: string, args: string[], options: RunOptions = {}): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, spawnOptions(options, { stdio: 'inherit' }));
+function exitError(
+  command: string,
+  args: string[],
+  code: number | null,
+  output: string,
+): ExitCodeError {
+  const detail = redactUrlCredentials(output.trim());
 
+  return new ExitCodeError(
+    `\`${formatCommand(command, args)}\` exited with code ${code}${detail ? `:\n${detail}` : ''}`,
+    code,
+  );
+}
+
+export function runStep(
+  command: string,
+  args: string[],
+  { onStderr, ...options }: RunOptions & { onStderr?: (chunk: string) => void } = {},
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const stdio: SpawnOptions['stdio'] = onStderr ? ['inherit', 'inherit', 'pipe'] : 'inherit';
+    const child = spawn(command, args, spawnOptions(options, { stdio }));
+    let stderr = '';
+
+    child.stderr?.setEncoding('utf8');
+    child.stderr?.on('data', (text: string) => {
+      stderr += text;
+      onStderr?.(text);
+    });
     child.on('error', reject);
-    child.on('close', code =>
-      code === 0
-        ? resolve()
-        : reject(new Error(`\`${formatCommand(command, args)}\` exited with code ${code}`)),
-    );
+    child.on('close', code => {
+      if (code === 0) {
+        resolve();
+
+        return;
+      }
+
+      reject(exitError(command, args, code, stderr));
+    });
   });
 }
 
@@ -306,14 +337,7 @@ export function runCapture(
         return;
       }
 
-      const detail = redactUrlCredentials((stderr || stdout).trim());
-      reject(
-        new Error(
-          `\`${formatCommand(command, args)}\` exited with code ${code}${
-            detail ? `:\n${detail}` : ''
-          }`,
-        ),
-      );
+      reject(exitError(command, args, code, stderr || stdout));
     });
   });
 }

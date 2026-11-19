@@ -2,6 +2,7 @@ import type * as ProcessRunner from '../../src/services/process-runner';
 
 import net from 'net';
 
+import ExitCodeError from '../../src/services/exit-code-error';
 import {
   runCapture,
   runStep,
@@ -79,6 +80,27 @@ describe('process-runner', () => {
     it('rejects when the command does not exist rather than hanging', async () => {
       expect.assertions(1);
       await expect(runStep('definitely-not-a-command', [])).rejects.toThrow(/ENOENT/);
+    });
+
+    it('rejects a failed exit with an ExitCodeError carrying the code', async () => {
+      expect.assertions(2);
+      const error = await runStep('node', ['-e', 'process.exit(3)']).catch(caught => caught);
+
+      expect(error).toBeInstanceOf(ExitCodeError);
+      expect(error.exitCode).toBe(3);
+    });
+
+    it('streams stderr to onStderr and carries it in the failure message', async () => {
+      expect.assertions(2);
+      const streamed: string[] = [];
+      const error = await runStep(
+        'node',
+        ['-e', 'console.error("Failed part: workflows"); process.exit(2)'],
+        { onStderr: chunk => streamed.push(chunk) },
+      ).catch(caught => caught);
+
+      expect(streamed.join('')).toBe('Failed part: workflows\n');
+      expect(error.message).toMatch(/exited with code 2:\nFailed part: workflows/);
     });
   });
 

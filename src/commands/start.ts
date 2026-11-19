@@ -6,6 +6,7 @@ import { Flags } from '@oclif/core';
 import fs from 'fs';
 
 import AbstractCommand from '../abstract-command';
+import ExitCodeError from '../services/exit-code-error';
 import {
   INVALID_CLAIM_MESSAGE,
   REPEATED_CLAIM_MESSAGE,
@@ -16,6 +17,7 @@ import {
   resumedProjectName,
   sanitizeForDisplay,
 } from '../services/invitation-claim';
+import { readFailedPart } from '../services/layout/failed-part';
 import {
   NODE_DATASOURCE,
   detectNodeStack,
@@ -182,7 +184,7 @@ export default class StartCommand extends AbstractCommand {
     try {
       await this.onboard(flags as StartFlags);
     } catch (error) {
-      // Anything after a boot — `layout:apply`, a readiness timeout — can fail. The back-end is
+      // Anything after a boot — a readiness timeout, a failed step — can fail. The back-end is
       // detached, so it would survive, and its open pipes can keep this command alive with it: an
       // error message followed by a prompt that never returns, and a port still held.
       stopAllProcesses();
@@ -346,10 +348,16 @@ export default class StartCommand extends AbstractCommand {
       .reduce((result, value) => result.split(value).join('<redacted>'), text);
   }
 
+  private echo(command: string, args: string[]): boolean {
+    this.logger.log(this.chalk.grey(`\n$ ${StartCommand.redact(command, args)}`));
+    if (this.dryRun) this.logger.log(this.chalk.grey('  (dry-run — not executed)'));
+
+    return this.dryRun;
+  }
+
   /** Run a command, echoing it first. The echo is the point: it teaches what the wrapper does. */
   private async run$(command: string, args: string[], cwd?: string): Promise<void> {
-    this.logger.log(this.chalk.grey(`\n$ ${StartCommand.redact(command, args)}`));
-    if (this.dryRun) return this.logger.log(this.chalk.grey('  (dry-run — not executed)'));
+    if (this.echo(command, args)) return undefined;
 
     return runStep(command, args, { cwd }).catch(error => {
       throw StartCommand.scrubbed(error, command, args);
@@ -359,12 +367,7 @@ export default class StartCommand extends AbstractCommand {
   /** Invoke one of our own commands. Resolved through this executable, never through the PATH:
    *  under `npx forest-cli@latest start` there may be no `forest` installed anywhere. */
   private forest(args: string[], cwd?: string): Promise<void> {
-    this.logger.log(this.chalk.grey(`\n$ ${StartCommand.redact('forest', args)}`));
-    if (this.dryRun) {
-      this.logger.log(this.chalk.grey('  (dry-run — not executed)'));
-
-      return Promise.resolve();
-    }
+    if (this.echo('forest', args)) return Promise.resolve();
 
     return runStep(process.execPath, [process.argv[1], ...args], { cwd }).catch(error => {
       throw StartCommand.scrubbed(error, 'forest', args);
@@ -378,12 +381,7 @@ export default class StartCommand extends AbstractCommand {
    * there, and a silent terminal during project creation reads as a hang.
    */
   private async forestCapture(args: string[]): Promise<string> {
-    this.logger.log(this.chalk.grey(`\n$ ${StartCommand.redact('forest', args)}`));
-    if (this.dryRun) {
-      this.logger.log(this.chalk.grey('  (dry-run — not executed)'));
-
-      return '';
-    }
+    if (this.echo('forest', args)) return '';
 
     const onProgress = (chunk: string) =>
       this.logger.log(
@@ -588,7 +586,7 @@ export default class StartCommand extends AbstractCommand {
       this.logger.success('Schema pushed — applying curated layout + workflows');
     }
 
-    await this.forest(layout, name);
+    await this.applyDemoLayout(layout, name);
     this.doneDemo(name);
 
     // One tail for both modes: --dry-run exists to review the flow, and skipping its ending would
@@ -606,6 +604,28 @@ export default class StartCommand extends AbstractCommand {
         ['  Connect real data: forest projects:create:sql', ...this.organizationArgs].join(' '),
       ),
     );
+  }
+
+  private async applyDemoLayout(args: string[], dir: string): Promise<void> {
+    if (this.echo('forest', args)) return;
+
+    try {
+      await runStep(process.execPath, [process.argv[1], ...args], {
+        cwd: dir,
+        onStderr: chunk => process.stderr.write(StartCommand.masked(chunk, 'forest', args)),
+      });
+    } catch (error) {
+      if (!(error instanceof ExitCodeError) || error.exitCode === null) {
+        throw StartCommand.scrubbed(error, 'forest', args);
+      }
+
+      const part = readFailedPart(error.message);
+      const where = part ? `: it stopped at its ${part} part` : '';
+      this.logger.warn(
+        `The curated layout did not finish applying${where}. Your demo project works without it.`,
+        `  Retry anytime: cd ${dir} && ${StartCommand.redact('forest', args)}`,
+      );
+    }
   }
 
   private async flowStandalone(flags: StartFlags, resume?: string): Promise<void> {
