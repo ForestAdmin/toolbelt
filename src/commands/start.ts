@@ -16,6 +16,7 @@ import {
   resumedProjectName,
   sanitizeForDisplay,
 } from '../services/invitation-claim';
+import { readFailedPart } from '../services/layout/failed-part';
 import {
   NODE_DATASOURCE,
   detectNodeStack,
@@ -182,7 +183,7 @@ export default class StartCommand extends AbstractCommand {
     try {
       await this.onboard(flags as StartFlags);
     } catch (error) {
-      // Anything after a boot — `layout:apply`, a readiness timeout — can fail. The back-end is
+      // Anything after a boot — a readiness timeout, a failed step — can fail. The back-end is
       // detached, so it would survive, and its open pipes can keep this command alive with it: an
       // error message followed by a prompt that never returns, and a port still held.
       stopAllProcesses();
@@ -588,7 +589,7 @@ export default class StartCommand extends AbstractCommand {
       this.logger.success('Schema pushed — applying curated layout + workflows');
     }
 
-    await this.forest(layout, name);
+    await this.applyDemoLayout(layout, name);
     this.doneDemo(name);
 
     // One tail for both modes: --dry-run exists to review the flow, and skipping its ending would
@@ -606,6 +607,30 @@ export default class StartCommand extends AbstractCommand {
         ['  Connect real data: forest projects:create:sql', ...this.organizationArgs].join(' '),
       ),
     );
+  }
+
+  private async applyDemoLayout(args: string[], dir: string): Promise<void> {
+    this.logger.log(this.chalk.grey(`\n$ ${StartCommand.redact('forest', args)}`));
+    if (this.dryRun) {
+      this.logger.log(this.chalk.grey('  (dry-run — not executed)'));
+
+      return;
+    }
+
+    try {
+      await runCapture(process.execPath, [process.argv[1], ...args], {
+        cwd: dir,
+        onProgress: chunk => process.stderr.write(chunk),
+        onStdout: chunk => process.stdout.write(chunk),
+      });
+    } catch (error) {
+      const part = readFailedPart((error as Error).message);
+      const what = part ? `The ${part} part of the curated layout` : 'The curated layout';
+      this.logger.warn(
+        `${what} was not applied. Your demo project works without it.`,
+        `  Retry anytime: cd ${dir} && forest ${args.join(' ')}`,
+      );
+    }
   }
 
   private async flowStandalone(flags: StartFlags, resume?: string): Promise<void> {

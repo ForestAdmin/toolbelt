@@ -4,7 +4,13 @@ const nock = require('nock');
 const { stdout } = require('stdout-stderr');
 
 const StartCommand = require('../../src/commands/start').default;
-const { runCapture, runStep, startProcess } = require('../../src/services/process-runner');
+const {
+  runCapture,
+  runStep,
+  startProcess,
+  stopAllProcesses,
+  stopProcess,
+} = require('../../src/services/process-runner');
 const testCli = require('./test-cli-helper/test-cli');
 
 const rawFromCliDotenv = (name, content) => {
@@ -85,10 +91,12 @@ describe('start', () => {
       // Each `forest` step gets this process's environment, and a child's dotenv never overrides
       // it: the secret it sees is the project `layout:apply -f` would land on.
       const seen = [];
-      runStep.mockReset().mockImplementation(async (command, args) => {
+      const record = async (command, args) => {
         const step = command === process.execPath ? args[1] : `${command} ${args.join(' ')}`;
         seen.push([step, process.env.FOREST_ENV_SECRET]);
-      });
+      };
+      runStep.mockReset().mockImplementation(record);
+      runCapture.mockReset().mockImplementation(record);
       startProcess
         .mockReset()
         .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
@@ -116,9 +124,11 @@ describe('start', () => {
       expect.hasAssertions();
       // `layout:apply` runs in the scaffold: a token path set next to `forest start` must reach it.
       const seen = [];
-      runStep.mockReset().mockImplementation(async (command, args) => {
+      const record = async (command, args) => {
         if (command === process.execPath) seen.push([args[1], process.env.TOKEN_PATH]);
-      });
+      };
+      runStep.mockReset().mockImplementation(record);
+      runCapture.mockReset().mockImplementation(record);
       startProcess
         .mockReset()
         .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
@@ -178,6 +188,102 @@ describe('start', () => {
         ],
         { cwd: undefined },
       ]);
+    });
+  });
+
+  describe('demo flow, when layout:apply fails', () => {
+    const DEMO_MENU = {
+      type: 'list',
+      name: 'next',
+      message: 'Your demo back-end is live on :3310. What next?',
+      choices: [
+        { name: 'Connect my real database (create a real project)', value: 'db' },
+        { name: 'Keep exploring — leave the back-end running', value: 'stay' },
+        { name: 'Stop', value: 'stop' },
+      ],
+    };
+    const child = { pid: 4242 };
+    const layoutFails = message =>
+      runCapture.mockImplementation(async (_, args) => {
+        if (args[1] === 'layout:apply') throw new Error(message);
+
+        return { stdout: '', stderr: '' };
+      });
+
+    const resetDemoMocks = () => {
+      resetProcessMocks();
+      stopProcess.mockReset();
+      stopAllProcesses.mockReset();
+      startProcess.mockReturnValue({
+        child,
+        ready: Promise.resolve(),
+        exited: Promise.resolve(),
+        mute: () => {},
+      });
+    };
+
+    it('warns with the failed part and reaches the menu with the back-end still running', async () => {
+      expect.hasAssertions();
+      resetDemoMocks();
+      layoutFails(
+        '`forest layout:apply` exited with code 2:\n× Failed part: workflows — Server error (402): Feature is not active on project',
+      );
+
+      const tty = forceTty();
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          prompts: [{ in: [DEMO_MENU], out: { next: 'stop' } }],
+          std: [
+            { out: 'The workflows part of the curated layout was not applied.' },
+            { out: 'Your demo project works without it.' },
+            { out: 'Retry anytime: cd forest-demo-' },
+            { out: 'Demo back-office live.' },
+            { out: 'Stopped. Relaunch the demo anytime' },
+          ],
+        });
+      } finally {
+        tty.mockRestore();
+      }
+
+      expect(stopAllProcesses).not.toHaveBeenCalled();
+      expect(stopProcess.mock.calls).toStrictEqual([[child]]);
+    });
+
+    it('warns that the curated layout was not applied when no part is named', async () => {
+      expect.hasAssertions();
+      resetDemoMocks();
+      layoutFails('`forest layout:apply` exited with code 1:\nSession expired');
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'demo'],
+        std: [
+          { out: 'The curated layout was not applied. Your demo project works without it.' },
+          { out: 'Demo back-office live.' },
+          { out: 'Launch it anytime: cd forest-demo-' },
+        ],
+      });
+
+      expect(stopAllProcesses).not.toHaveBeenCalled();
+    });
+
+    it('still stops everything when the demo project cannot be created', async () => {
+      expect.hasAssertions();
+      resetDemoMocks();
+      runStep.mockImplementation(async (_, args) => {
+        if (args[1] === 'projects:create:demo') throw new Error('creation refused');
+      });
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'demo'],
+        exitMessage: 'creation refused',
+      });
+
+      expect(stopAllProcesses).toHaveBeenCalledTimes(1);
+      expect(runCapture).not.toHaveBeenCalled();
     });
   });
 

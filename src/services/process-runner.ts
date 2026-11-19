@@ -277,7 +277,14 @@ export function runStep(command: string, args: string[], options: RunOptions = {
 export function runCapture(
   command: string,
   args: string[],
-  { onProgress, ...options }: RunOptions & { onProgress?: (chunk: string) => void } = {},
+  {
+    onProgress,
+    onStdout,
+    ...options
+  }: RunOptions & {
+    onProgress?: (chunk: string) => void;
+    onStdout?: (chunk: string) => void;
+  } = {},
 ): Promise<CaptureResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(
@@ -293,6 +300,7 @@ export function runCapture(
 
     child.stdout?.on('data', (text: string) => {
       stdout += text;
+      onStdout?.(text);
     });
     child.stderr?.on('data', (text: string) => {
       stderr += text;

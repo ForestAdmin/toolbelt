@@ -97,6 +97,17 @@ describe('process-runner', () => {
       expect(progress.join('')).toContain('spinner');
     });
 
+    it('streams stdout to the caller as it comes, and still returns it', async () => {
+      expect.assertions(2);
+      const streamed: string[] = [];
+      const { stdout } = await runCapture('node', ['-e', 'console.log("plan preview")'], {
+        onStdout: chunk => streamed.push(chunk),
+      });
+
+      expect(streamed.join('')).toBe('plan preview\n');
+      expect(stdout).toBe('plan preview\n');
+    });
+
     it('decodes multibyte characters split across pipe chunks', async () => {
       expect.assertions(1);
       const { stdout } = await runCapture('node', [

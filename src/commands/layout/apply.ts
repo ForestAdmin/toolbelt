@@ -1,4 +1,4 @@
-import type { LayoutScope } from '../../services/layout/types';
+import type { LayoutDomain, LayoutScope } from '../../services/layout/types';
 import type {
   MissingSidecar,
   SidecarFile,
@@ -12,6 +12,7 @@ import path from 'path';
 
 import AbstractAuthenticatedCommand from '../../abstract-authenticated-command';
 import { LayoutApiError } from '../../services/layout/errors';
+import { failedPartLine } from '../../services/layout/failed-part';
 import { parseLayoutFile } from '../../services/layout/layout-file';
 import LayoutManager from '../../services/layout/layout-manager';
 import { explainApiError, formatPlan } from '../../services/layout/plan-format';
@@ -310,12 +311,14 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       sidecarPlans: SidecarUpload[];
     },
   ): Promise<boolean> {
+    let part: LayoutDomain = 'workflows';
     try {
       const domainsToPatch = LAYOUT_DOMAINS.filter(domain =>
         plan.ops.some(op => op.domain === domain),
       );
       // eslint-disable-next-line no-restricted-syntax -- sequential awaits: domains patched one at a time
       for (const domain of domainsToPatch) {
+        part = domain;
         // eslint-disable-next-line no-await-in-loop -- intentional: atomic, ordered per-domain patches
         await manager.patchDomain(
           domain,
@@ -327,6 +330,7 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       // Shells now exist, so upload each changed step-graph, then the sidecars —
       // each sidecar to its TARGET-env workflow id (resolved after the patches
       // for workflows this apply just added).
+      part = 'workflows';
       await uploadWorkflowBpmns(manager, scope, plan.bpmnToUpload, plan.renderingId);
       const sidecarUploads = await this.resolveSidecarTargets(manager, scope, plan.sidecarPlans);
       await uploadWorkflowBpmns(
@@ -339,7 +343,7 @@ export default class LayoutApplyCommand extends AbstractAuthenticatedCommand {
       return true;
     } catch (error) {
       if (error instanceof LayoutApiError && error.status !== 401) {
-        this.logger.error(explainApiError(error, plan.ops));
+        this.logger.error(`${failedPartLine(part)} — ${explainApiError(error, plan.ops)}`);
         this.logger.warn(
           '`forest layout apply` is idempotent — some changes may already be applied; re-run it to converge.',
         );

@@ -109,7 +109,10 @@ describe('layout:apply', () => {
               .reply(403, { errors: [{ detail: 'forbidden' }] }),
         ],
         // error -> stderr; the idempotency hint (warn) -> stdout.
-        std: [{ err: 'Access denied (403)' }, { out: 're-run it to converge' }],
+        std: [
+          { err: 'Failed part: folders — Access denied (403)' },
+          { out: 're-run it to converge' },
+        ],
         assertNoStdError: false,
         exitCode: 2,
       }));
