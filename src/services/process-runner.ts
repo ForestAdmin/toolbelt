@@ -263,6 +263,20 @@ function redactArgs(args: string[]): string[] {
 const formatCommand = (command: string, args: string[]) =>
   `${command} ${redactArgs(args).join(' ')}`.trim();
 
+function exitError(
+  command: string,
+  args: string[],
+  code: number | null,
+  output: string,
+): ExitCodeError {
+  const detail = redactUrlCredentials(output.trim());
+
+  return new ExitCodeError(
+    `\`${formatCommand(command, args)}\` exited with code ${code}${detail ? `:\n${detail}` : ''}`,
+    code,
+  );
+}
+
 export function runStep(
   command: string,
   args: string[],
@@ -286,15 +300,7 @@ export function runStep(
         return;
       }
 
-      const detail = redactUrlCredentials(stderr.trim());
-      reject(
-        new ExitCodeError(
-          `\`${formatCommand(command, args)}\` exited with code ${code}${
-            detail ? `:\n${detail}` : ''
-          }`,
-          code,
-        ),
-      );
+      reject(exitError(command, args, code, stderr));
     });
   });
 }
@@ -331,14 +337,7 @@ export function runCapture(
         return;
       }
 
-      const detail = redactUrlCredentials((stderr || stdout).trim());
-      reject(
-        new Error(
-          `\`${formatCommand(command, args)}\` exited with code ${code}${
-            detail ? `:\n${detail}` : ''
-          }`,
-        ),
-      );
+      reject(exitError(command, args, code, stderr || stdout));
     });
   });
 }

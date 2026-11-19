@@ -152,6 +152,36 @@ describe('start', () => {
       ]);
     });
 
+    it('applies the layout from the demo directory, with its stderr piped for the warning', async () => {
+      expect.hasAssertions();
+      resetProcessMocks();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'demo'],
+        std: [{ out: 'Demo back-office live.' }],
+      });
+
+      const layoutCalls = runStep.mock.calls.filter(([, args]) => args[1] === 'layout:apply');
+      expect(layoutCalls).toStrictEqual([
+        [
+          process.execPath,
+          [
+            process.argv[1],
+            'layout:apply',
+            'forest-layout.json',
+            '--with-workflows',
+            '-e',
+            'Development',
+            '-t',
+            'Operations',
+            '-f',
+          ],
+          { cwd: expect.stringMatching(/^forest-demo-/), onStderr: expect.any(Function) },
+        ],
+      ]);
+    });
+
     it('draws another demo name when the directory already exists, before creating the project', async () => {
       expect.hasAssertions();
       runStep.mockReset().mockResolvedValue(undefined);
@@ -290,7 +320,7 @@ describe('start', () => {
         exitMessage: 'creation refused',
       });
 
-      expect(stopAllProcesses).toHaveBeenCalledTimes(1);
+      expect(stopAllProcesses.mock.calls).toStrictEqual([[]]);
       expect(runStep.mock.calls.map(([, args]) => args[1])).not.toContain('layout:apply');
     });
 
@@ -311,7 +341,7 @@ describe('start', () => {
         exitMessage: error.message,
       });
 
-      expect(stopAllProcesses).toHaveBeenCalledTimes(1);
+      expect(stopAllProcesses.mock.calls).toStrictEqual([[]]);
     });
   });
 
