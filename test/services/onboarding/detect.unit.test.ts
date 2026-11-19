@@ -174,6 +174,17 @@ describe('onboarding detect', () => {
       });
     });
 
+    it('leaves json alone when the lockfile already holds json below 3', () => {
+      expect.assertions(2);
+      withTempDir(() => {
+        fs.writeFileSync('Gemfile.lock', `${lockfile('7.1.6')}    json (2.9.1)\n`);
+        expect(needsJsonBelow3()).toBe(false);
+
+        fs.writeFileSync('Gemfile.lock', `${lockfile('7.1.6')}    json (3.1.0)\n`);
+        expect(needsJsonBelow3()).toBe(true);
+      });
+    });
+
     it('leaves json alone without a lockfile, where the Rails version is unknown', () => {
       expect.assertions(1);
       withTempDir(() => {

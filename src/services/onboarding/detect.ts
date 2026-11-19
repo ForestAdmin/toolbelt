@@ -82,7 +82,7 @@ function readText(file: string): string {
   }
 }
 
-function declaresGem(name: string): boolean {
+function declaresGem(name: 'rails' | 'json'): boolean {
   return new RegExp(`^(?!\\s*#).*gem[\\s(]+['"]${name}['"]`, 'm').test(readText('Gemfile'));
 }
 
@@ -94,24 +94,30 @@ export function detectRails(): boolean {
   return declaresGem('rails');
 }
 
-function lockedActiveSupport(): [number, number, number] | undefined {
-  const version = /^ {4}activesupport \((\d+)\.(\d+)\.(\d+)/m.exec(readText('Gemfile.lock'));
+type Version = [number, number, number];
+
+function lockedVersion(gem: 'activesupport' | 'json'): Version | undefined {
+  const version = new RegExp(`^ {4}${gem} \\((\\d+)\\.(\\d+)\\.(\\d+)`, 'm').exec(
+    readText('Gemfile.lock'),
+  );
 
   return version ? [Number(version[1]), Number(version[2]), Number(version[3])] : undefined;
 }
 
-function activeSupportPassesQuirksMode([major, minor, patch]: [number, number, number]): boolean {
+function activeSupportPassesQuirksMode([major, minor, patch]: Version): boolean {
   if (major === 8) return minor === 0;
 
   return major < 7 || (major === 7 && (minor < 2 || (minor === 2 && patch < 4)));
 }
 
 export function needsJsonBelow3(): boolean {
-  const activeSupport = lockedActiveSupport();
+  const activeSupport = lockedVersion('activesupport');
+  const json = lockedVersion('json');
 
   return (
     activeSupport !== undefined &&
     activeSupportPassesQuirksMode(activeSupport) &&
+    (json === undefined || json[0] >= 3) &&
     !declaresGem('json')
   );
 }
