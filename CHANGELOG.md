@@ -1,3 +1,15 @@
+# [5.27.0](https://github.com/ForestAdmin/toolbelt/compare/v5.26.0...v5.27.0) (2026-11-19)
+
+
+### Bug Fixes
+
+* **start:** point the rails agent at the forest server the cli targets ([#848](https://github.com/ForestAdmin/toolbelt/issues/848)) ([d52130f](https://github.com/ForestAdmin/toolbelt/commit/d52130fe4cb9b6e4e220fc008d01bbfdd7e79726))
+
+
+### Features
+
+* **projects:** create the project in a given organization with --organization ([#851](https://github.com/ForestAdmin/toolbelt/issues/851)) ([6218cd1](https://github.com/ForestAdmin/toolbelt/commit/6218cd194b927714831cd141f56e1c383408e65a))
+
 # [5.26.0](https://github.com/ForestAdmin/toolbelt/compare/v5.25.2...v5.26.0) (2026-11-18)
 
 
