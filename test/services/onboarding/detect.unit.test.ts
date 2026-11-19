@@ -107,7 +107,7 @@ describe('onboarding detect', () => {
 
   describe('detectRails', () => {
     it('recognises a Gemfile declaring rails, and ignores anything else', () => {
-      expect.assertions(3);
+      expect.assertions(4);
       withTempDir(() => {
         expect(detectRails()).toBe(false); // no Gemfile at all
 
@@ -115,6 +115,9 @@ describe('onboarding detect', () => {
         expect(detectRails()).toBe(false);
 
         fs.writeFileSync('Gemfile', "source 'https://rubygems.org'\ngem \"rails\", '~> 8.0'\n");
+        expect(detectRails()).toBe(true);
+
+        fs.writeFileSync('Gemfile', "source 'https://rubygems.org'\ngem('rails', '~> 8.0')\n");
         expect(detectRails()).toBe(true);
       });
     });
