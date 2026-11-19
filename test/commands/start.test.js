@@ -870,7 +870,7 @@ describe('start', () => {
         commandArgs: ['--dry-run', '--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
         files: [{ name: 'Gemfile.lock', content: 'GEM\n  specs:\n    activesupport (7.1.6)\n' }],
         std: [
-          { out: '$ bundle add json --version < 3' },
+          { out: "$ bundle add json --version '< 3'" },
           { out: '$ bundle add forest_admin_agent forest_admin_rails' },
           { out: 'Forest is live in your app!' },
         ],

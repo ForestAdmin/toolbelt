@@ -327,10 +327,14 @@ export default class StartCommand extends AbstractCommand {
 
   private static redact(command: string, args: string[]): string {
     const shown = args.map((arg, index) =>
-      StartCommand.isHidden(command, args, index) ? '<redacted>' : arg,
+      StartCommand.isHidden(command, args, index) ? '<redacted>' : StartCommand.shellQuoted(arg),
     );
 
     return `${command} ${shown.join(' ')}`.trim();
+  }
+
+  private static shellQuoted(arg: string): string {
+    return /^[\w@%+=:,./-]+$/.test(arg) ? arg : `'${arg.replace(/'/g, `'\\''`)}'`;
   }
 
   /**
@@ -683,7 +687,7 @@ export default class StartCommand extends AbstractCommand {
     ]);
     const secrets = StartCommand.parseSecrets(output);
 
-    // Checked before `bundle add`: past that point five gems and a lockfile change are in the
+    // Checked before `bundle add`: past that point the gems and a lockfile change are in the
     // user's repo, and throwing "nothing was generated" would be false.
     if (!secrets.envSecret && !this.dryRun) {
       throw new Error(
