@@ -182,13 +182,16 @@ describe('onboarding detect', () => {
     });
 
     it('leaves a Gemfile that already declares json to its owner', () => {
-      expect.assertions(2);
+      expect.assertions(3);
       withTempDir(() => {
         fs.writeFileSync('Gemfile.lock', lockfile('7.1.6'));
         fs.writeFileSync('Gemfile', "gem 'rails', '~> 7.1'\n# gem 'json'\n");
         expect(needsJsonBelow3()).toBe(true);
 
         fs.writeFileSync('Gemfile', "gem 'rails', '~> 7.1'\ngem \"json\", '~> 2.7'\n");
+        expect(needsJsonBelow3()).toBe(false);
+
+        fs.writeFileSync('Gemfile', "gem 'rails', '~> 7.1'\ngem('json')\n");
         expect(needsJsonBelow3()).toBe(false);
       });
     });

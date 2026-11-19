@@ -83,7 +83,7 @@ function readText(file: string): string {
 }
 
 function declaresGem(name: string): boolean {
-  return new RegExp(`^(?!\\s*#).*gem\\s+['"]${name}['"]`, 'm').test(readText('Gemfile'));
+  return new RegExp(`^(?!\\s*#).*gem[\\s(]+['"]${name}['"]`, 'm').test(readText('Gemfile'));
 }
 
 /** True when the current directory holds a Rails application. */
