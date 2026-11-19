@@ -1,3 +1,10 @@
+## [5.27.2](https://github.com/ForestAdmin/toolbelt/compare/v5.27.1...v5.27.2) (2026-11-19)
+
+
+### Bug Fixes
+
+* **start:** point the node agent at the forest server the cli targets ([#853](https://github.com/ForestAdmin/toolbelt/issues/853)) ([58a3f89](https://github.com/ForestAdmin/toolbelt/commit/58a3f89757e36419ecf6a65865abb377dca059a8))
+
 ## [5.27.1](https://github.com/ForestAdmin/toolbelt/compare/v5.27.0...v5.27.1) (2026-11-19)
 
 
