@@ -870,10 +870,23 @@ describe('start', () => {
         commandArgs: ['--dry-run', '--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
         files: [{ name: 'Gemfile.lock', content: 'GEM\n  specs:\n    activesupport (7.1.6)\n' }],
         std: [
-          { out: "$ bundle add json --version '< 3'" },
-          { out: '$ bundle add forest_admin_agent forest_admin_rails' },
+          {
+            out:
+              "$ bundle add json --version '< 3'\n  (dry-run — not executed)\n\n" +
+              '$ bundle add forest_admin_agent forest_admin_rails',
+          },
           { out: 'Forest is live in your app!' },
         ],
+      });
+    });
+
+    it('escapes an apostrophe in an echoed argument so the shown command runs in a shell', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--dry-run', '--flow', 'inapp', '--stack', 'rails', '--name', "Bob's app"],
+        std: [{ out: "$ forest projects:create:in-app 'Bob'\\''s app' -H http://localhost" }],
       });
     });
 
