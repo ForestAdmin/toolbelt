@@ -944,7 +944,7 @@ describe('start', () => {
       [{ FOREST_SERVER_URL: 'https://api.forestadmin.com', FOREST_URL_IS_DEFAULT: true }, 'not'],
     ])(
       'points the snippet at the Forest server only when it is not the default (%j)',
-      async (env, expectation) => {
+      async (serverEnv, expectation) => {
         expect.hasAssertions();
 
         await testCli({
@@ -960,7 +960,7 @@ describe('start', () => {
             '--mount',
             'manual',
           ],
-          env,
+          env: serverEnv,
           std: [
             { out: 'Add to your server' },
             {

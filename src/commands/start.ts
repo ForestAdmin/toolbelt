@@ -930,8 +930,9 @@ export default class StartCommand extends AbstractCommand {
 
     return (
       `You're in a ${stack.framework} app using ${stack.orm}. @forestadmin/agent and ` +
-      `${NODE_DATASOURCE[stack.orm]} are installed, and ${secrets}.${server} Mount the Forest agent in ` +
-      "my server, then stop: don't start the server, `forest start` boots it once you are done."
+      `${NODE_DATASOURCE[stack.orm]} are installed, and ${secrets}.${server} ` +
+      "Mount the Forest agent in my server, then stop: don't start the server, " +
+      '`forest start` boots it once you are done.'
     );
   }
 
