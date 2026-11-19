@@ -20,11 +20,17 @@ import {
 import { readFailedPart } from '../services/layout/failed-part';
 import {
   NODE_DATASOURCE,
+  NODE_SERVER_URL_OPTION,
   detectNodeStack,
   detectRails,
   mountHelper,
 } from '../services/onboarding/detect';
-import { bootSecrets, keysLoadedFromDotenv, writeSecrets } from '../services/onboarding/env-file';
+import {
+  bootSecrets,
+  checkNodeServerUrl,
+  keysLoadedFromDotenv,
+  writeSecrets,
+} from '../services/onboarding/env-file';
 import {
   RAILS_INITIALIZER,
   checkRailsServerUrl,
@@ -796,6 +802,7 @@ export default class StartCommand extends AbstractCommand {
       return;
     }
 
+    checkNodeServerUrl(this.context.env);
     const name = await this.promptName(flags.name);
     const output = await this.forestCapture([
       'projects:create:in-app',
@@ -809,7 +816,7 @@ export default class StartCommand extends AbstractCommand {
       ...this.organizationArgs,
       ...StartCommand.invitationArgs(flags),
     ]);
-    const secrets = StartCommand.parseSecrets(output);
+    const secrets = { ...StartCommand.parseSecrets(output), serverUrl: this.nodeServerUrl };
 
     if (!secrets.envSecret && !this.dryRun) {
       throw new Error(
@@ -834,7 +841,11 @@ export default class StartCommand extends AbstractCommand {
 
     if (this.dryRun) {
       this.logger.log(
-        this.chalk.grey('\n$ npm start   (with FOREST_ENV_SECRET / FOREST_AUTH_SECRET)'),
+        this.chalk.grey(
+          `\n$ npm start   (with FOREST_ENV_SECRET / FOREST_AUTH_SECRET${
+            secrets.serverUrl ? ' / FOREST_SERVER_URL' : ''
+          })`,
+        ),
       );
       this.doneInApp(name, NODE_PORT);
       await this.handoff(tail);
@@ -920,20 +931,36 @@ export default class StartCommand extends AbstractCommand {
     const [agent] = StartCommand.launchableAgents('.');
     if (!agent || !(await this.confirm(`Launch ${agent.label} now to wire the mount?`))) return;
 
-    await this.run$(agent.bin, [StartCommand.mountSeed(stack, secretsInDotenv)]);
+    const seed = StartCommand.mountSeed(stack, secretsInDotenv, Boolean(this.nodeServerUrl));
+    await this.run$(agent.bin, [seed]);
   }
 
-  private static mountSeed(stack: NodeStack, secretsInDotenv: boolean): string {
+  private get nodeServerUrl(): string | undefined {
+    const { FOREST_SERVER_URL, FOREST_URL_IS_DEFAULT } = this.context.env;
+
+    return FOREST_URL_IS_DEFAULT ? undefined : FOREST_SERVER_URL;
+  }
+
+  private static mountSeed(
+    stack: NodeStack,
+    secretsInDotenv: boolean,
+    pinsServerUrl: boolean,
+  ): string {
     // On a conflict the new project's secrets are in neither `.env` nor the shell: an agent told
     // otherwise would wire the app to whichever project those hold.
     const secrets = secretsInDotenv
       ? 'FOREST_ENV_SECRET / FOREST_AUTH_SECRET are in .env'
       : "this project's FOREST_ENV_SECRET / FOREST_AUTH_SECRET are not configured yet, so ask me for them rather than reusing the ones already there";
 
+    const server = pinsServerUrl
+      ? ` Pass \`${NODE_SERVER_URL_OPTION}\` to createAgent: this project lives on that Forest server, not the default one.`
+      : '';
+
     return (
       `You're in a ${stack.framework} app using ${stack.orm}. @forestadmin/agent and ` +
-      `${NODE_DATASOURCE[stack.orm]} are installed, and ${secrets}. Mount the Forest agent in ` +
-      "my server, then stop: don't start the server, `forest start` boots it once you are done."
+      `${NODE_DATASOURCE[stack.orm]} are installed, and ${secrets}.${server} ` +
+      "Mount the Forest agent in my server, then stop: don't start the server, " +
+      '`forest start` boots it once you are done.'
     );
   }
 
@@ -967,12 +994,13 @@ export default class StartCommand extends AbstractCommand {
       typeorm: sqlDataSource,
       prisma: sqlDataSource,
     }[stack.orm];
+    const serverUrlOption = this.nodeServerUrl ? `${NODE_SERVER_URL_OPTION}, ` : '';
 
     this.instruct('Add to your server (after your ORM is ready, before app.listen):', [
       this.chalk.cyan("import { createAgent } from '@forestadmin/agent';"),
       this.chalk.cyan(`import { ${factory} } from '${NODE_DATASOURCE[stack.orm]}';`),
       this.chalk.cyan(
-        'createAgent({ authSecret: process.env.FOREST_AUTH_SECRET, envSecret: process.env.FOREST_ENV_SECRET, isProduction: false })',
+        `createAgent({ authSecret: process.env.FOREST_AUTH_SECRET, envSecret: process.env.FOREST_ENV_SECRET, ${serverUrlOption}isProduction: false })`,
       ),
       this.chalk.cyan(
         `  .addDataSource(${call}).mountOn${mountHelper(stack.framework)}(app).start();`,
