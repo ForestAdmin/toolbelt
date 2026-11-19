@@ -148,7 +148,8 @@ export function checkNodeServerUrl(env: NodeServerUrlEnv, file = '.env'): void {
     );
   }
 
-  if (raw && raw !== url) {
+  const loadedFromFile = content && dotenv.parse(content).FOREST_SERVER_URL === raw;
+  if (raw && raw !== url && !loadedFromFile) {
     throw new Error(
       `FOREST_SERVER_URL=${raw} would send your app to another server than FOREST_URL=${url}. ` +
         'Unset it, or set it to the same URL.',

@@ -331,6 +331,11 @@ describe('onboarding env-file', () => {
       ['the same URL', `FOREST_SERVER_URL=${DEV}\n`, { RAW_FOREST_SERVER_URL: DEV }],
       ['a placeholder', 'FOREST_SERVER_URL=\n', {}],
       ['another key only', 'PORT=3000\n', {}],
+      [
+        'the same URL with an inline comment the CLI dotenv kept',
+        `FOREST_SERVER_URL=${DEV} # development\n`,
+        { RAW_FOREST_SERVER_URL: `${DEV} # development` },
+      ],
     ])('accepts %s', (_label, content, raw) => {
       expect.assertions(1);
       inTempDir(() => {
