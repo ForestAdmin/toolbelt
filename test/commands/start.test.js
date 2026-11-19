@@ -236,7 +236,7 @@ describe('start', () => {
           commandArgs: ['--flow', 'demo'],
           prompts: [{ in: [DEMO_MENU], out: { next: 'stop' } }],
           std: [
-            { out: 'The workflows part of the curated layout was not applied.' },
+            { out: 'The curated layout was not fully applied: its workflows part failed.' },
             { out: 'Your demo project works without it.' },
             { out: 'Retry anytime: cd forest-demo-' },
             { out: 'Demo back-office live.' },

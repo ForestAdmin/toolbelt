@@ -625,9 +625,9 @@ export default class StartCommand extends AbstractCommand {
       });
     } catch (error) {
       const part = readFailedPart((error as Error).message);
-      const what = part ? `The ${part} part of the curated layout` : 'The curated layout';
+      const failure = part ? `was not fully applied: its ${part} part failed` : 'was not applied';
       this.logger.warn(
-        `${what} was not applied. Your demo project works without it.`,
+        `The curated layout ${failure}. Your demo project works without it.`,
         `  Retry anytime: cd ${dir} && forest ${args.join(' ')}`,
       );
     }

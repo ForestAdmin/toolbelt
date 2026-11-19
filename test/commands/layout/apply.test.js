@@ -118,6 +118,42 @@ describe('layout:apply', () => {
       }));
   });
 
+  describe('when workflows are not active on the project', () => {
+    it('names the workflows part that failed', async () => {
+      expect.hasAssertions();
+      const workflow = { id: 7, name: 'Original', collectionId: 'aml_alerts' };
+
+      await testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: LayoutApplyCommand,
+        commandArgs: ['-p', '2', '-e', 'name2', '-t', 'Operations', '-f', LAYOUT_FILE],
+        files: [
+          {
+            name: LAYOUT_FILE,
+            content: JSON.stringify({
+              forest: { version: 1 },
+              workflows: [{ ...workflow, name: 'Renamed' }],
+            }),
+          },
+        ],
+        api: [
+          ...scopeApi,
+          () => nock(SERVER).get('/api/workflows/project2/name2/Operations').reply(200, [workflow]),
+          () =>
+            nock(SERVER)
+              .patch('/api/workflows')
+              .reply(402, { errors: [{ detail: 'Feature is not active on project' }] }),
+        ],
+        std: [
+          { err: 'Failed part: workflows — Server error (402): Feature is not active on project' },
+        ],
+        assertNoStdError: false,
+        exitCode: 2,
+      });
+    });
+  });
+
   describe('with --with-workflows and a BPMN sidecar to upload', () => {
     const WORKFLOW_ID = 'a1b2c3d4-e5f6-4a1b-8c2d-1234567890ab';
     const BPMN = '<bpmn:definitions />';
