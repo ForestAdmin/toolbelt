@@ -1339,14 +1339,14 @@ export default class StartCommand extends AbstractCommand {
    * The app is up and `/forest` answers, but Forest has no schema for it: the panel opens empty.
    * Said here rather than in `doneInApp`, because "live" would be the one thing the user should
    * not conclude. The two causes seen in practice are named — an app with no model for the
-   * datasource to read, and Rails < 8.1, whose ActiveSupport passes an option `json` 3 rejects.
+   * datasource to read, and `json` 3 under an ActiveSupport that passes an option it rejects.
    */
   private doneInAppWithoutSchema(name: string, port: number): void {
     this.logger.warn('Forest is mounted, but your schema never reached it.');
     this.logger.log('  The back-office will open empty until the next boot pushes it.');
     this.logger.log(`  ${this.chalk.bold('Check →')} your app exposes at least one model`);
     this.logger.log(
-      `  ${this.chalk.bold('Check →')} Rails 8.1+ or 7.2.4+ (older ones break on \`json\` 3)`,
+      `  ${this.chalk.bold('Check →')} \`bundle info json\` is below 3 on Rails 8.0 or below 7.2.4`,
     );
     this.logger.log(
       `  ${this.chalk.bold('Then →')} ${this.chalk.grey(`bin/rails server -p ${port}`)}`,
