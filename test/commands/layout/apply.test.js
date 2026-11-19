@@ -109,10 +109,49 @@ describe('layout:apply', () => {
               .reply(403, { errors: [{ detail: 'forbidden' }] }),
         ],
         // error -> stderr; the idempotency hint (warn) -> stdout.
-        std: [{ err: 'Access denied (403)' }, { out: 're-run it to converge' }],
+        std: [
+          { err: 'Failed part: folders — Access denied (403)' },
+          { out: 're-run it to converge' },
+        ],
         assertNoStdError: false,
         exitCode: 2,
       }));
+  });
+
+  describe('when workflows are not active on the project', () => {
+    it('names the workflows part that failed', async () => {
+      expect.hasAssertions();
+      const workflow = { id: 7, name: 'Original', collectionId: 'aml_alerts' };
+
+      await testCli({
+        env: testEnvWithoutSecret,
+        token: 'any',
+        commandClass: LayoutApplyCommand,
+        commandArgs: ['-p', '2', '-e', 'name2', '-t', 'Operations', '-f', LAYOUT_FILE],
+        files: [
+          {
+            name: LAYOUT_FILE,
+            content: JSON.stringify({
+              forest: { version: 1 },
+              workflows: [{ ...workflow, name: 'Renamed' }],
+            }),
+          },
+        ],
+        api: [
+          ...scopeApi,
+          () => nock(SERVER).get('/api/workflows/project2/name2/Operations').reply(200, [workflow]),
+          () =>
+            nock(SERVER)
+              .patch('/api/workflows')
+              .reply(402, { errors: [{ detail: 'Feature is not active on project' }] }),
+        ],
+        std: [
+          { err: 'Failed part: workflows — Server error (402): Feature is not active on project' },
+        ],
+        assertNoStdError: false,
+        exitCode: 2,
+      });
+    });
   });
 
   describe('with --with-workflows and a BPMN sidecar to upload', () => {

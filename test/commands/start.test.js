@@ -4,7 +4,14 @@ const nock = require('nock');
 const { stdout } = require('stdout-stderr');
 
 const StartCommand = require('../../src/commands/start').default;
-const { runCapture, runStep, startProcess } = require('../../src/services/process-runner');
+const ExitCodeError = require('../../src/services/exit-code-error').default;
+const {
+  runCapture,
+  runStep,
+  startProcess,
+  stopAllProcesses,
+  stopProcess,
+} = require('../../src/services/process-runner');
 const testCli = require('./test-cli-helper/test-cli');
 
 const rawFromCliDotenv = (name, content) => {
@@ -85,10 +92,12 @@ describe('start', () => {
       // Each `forest` step gets this process's environment, and a child's dotenv never overrides
       // it: the secret it sees is the project `layout:apply -f` would land on.
       const seen = [];
-      runStep.mockReset().mockImplementation(async (command, args) => {
+      const record = async (command, args) => {
         const step = command === process.execPath ? args[1] : `${command} ${args.join(' ')}`;
         seen.push([step, process.env.FOREST_ENV_SECRET]);
-      });
+      };
+      runStep.mockReset().mockImplementation(record);
+      runCapture.mockReset().mockImplementation(record);
       startProcess
         .mockReset()
         .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
@@ -116,9 +125,11 @@ describe('start', () => {
       expect.hasAssertions();
       // `layout:apply` runs in the scaffold: a token path set next to `forest start` must reach it.
       const seen = [];
-      runStep.mockReset().mockImplementation(async (command, args) => {
+      const record = async (command, args) => {
         if (command === process.execPath) seen.push([args[1], process.env.TOKEN_PATH]);
-      });
+      };
+      runStep.mockReset().mockImplementation(record);
+      runCapture.mockReset().mockImplementation(record);
       startProcess
         .mockReset()
         .mockReturnValue({ child: undefined, ready: Promise.resolve(), mute: () => {} });
@@ -138,6 +149,36 @@ describe('start', () => {
         ['login', '/custom/tokens'],
         ['projects:create:demo', '/custom/tokens'],
         ['layout:apply', '/custom/tokens'],
+      ]);
+    });
+
+    it('applies the layout from the demo directory, with its stderr piped for the warning', async () => {
+      expect.hasAssertions();
+      resetProcessMocks();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'demo'],
+        std: [{ out: 'Demo back-office live.' }],
+      });
+
+      const layoutCalls = runStep.mock.calls.filter(([, args]) => args[1] === 'layout:apply');
+      expect(layoutCalls).toStrictEqual([
+        [
+          process.execPath,
+          [
+            process.argv[1],
+            'layout:apply',
+            'forest-layout.json',
+            '--with-workflows',
+            '-e',
+            'Development',
+            '-t',
+            'Operations',
+            '-f',
+          ],
+          { cwd: expect.stringMatching(/^forest-demo-/), onStderr: expect.any(Function) },
+        ],
       ]);
     });
 
@@ -178,6 +219,129 @@ describe('start', () => {
         ],
         { cwd: undefined },
       ]);
+    });
+  });
+
+  describe('demo flow, when layout:apply fails', () => {
+    const DEMO_MENU = {
+      type: 'list',
+      name: 'next',
+      message: 'Your demo back-end is live on :3310. What next?',
+      choices: [
+        { name: 'Connect my real database (create a real project)', value: 'db' },
+        { name: 'Keep exploring — leave the back-end running', value: 'stay' },
+        { name: 'Stop', value: 'stop' },
+      ],
+    };
+    const child = { pid: 4242 };
+    const layoutFails = error =>
+      runStep.mockImplementation(async (_, args) => {
+        if (args[1] === 'layout:apply') throw error;
+      });
+
+    const resetDemoMocks = () => {
+      resetProcessMocks();
+      stopProcess.mockReset();
+      stopAllProcesses.mockReset();
+      startProcess.mockReturnValue({
+        child,
+        ready: Promise.resolve(),
+        exited: Promise.resolve(),
+        mute: () => {},
+      });
+    };
+
+    it('warns with the failed part and reaches the menu with the back-end still running', async () => {
+      expect.hasAssertions();
+      resetDemoMocks();
+      layoutFails(
+        new ExitCodeError(
+          '`forest layout:apply` exited with code 2:\n× Failed part: workflows — Server error (402): Feature is not active on project',
+          2,
+        ),
+      );
+
+      const tty = forceTty();
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          prompts: [{ in: [DEMO_MENU], out: { next: 'stop' } }],
+          std: [
+            {
+              out: 'The curated layout did not finish applying: it stopped at its workflows part.',
+            },
+            { out: 'Your demo project works without it.' },
+            { out: 'Retry anytime: cd forest-demo-' },
+            { out: 'Demo back-office live.' },
+            { out: 'Stopped. Relaunch the demo anytime' },
+          ],
+        });
+      } finally {
+        tty.mockRestore();
+      }
+
+      expect(stopAllProcesses).not.toHaveBeenCalled();
+      expect(stopProcess.mock.calls).toStrictEqual([[child]]);
+    });
+
+    it('warns that the curated layout did not finish when no part is named', async () => {
+      expect.hasAssertions();
+      resetDemoMocks();
+      layoutFails(
+        new ExitCodeError('`forest layout:apply` exited with code 1:\nSession expired', 1),
+      );
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'demo'],
+        std: [
+          {
+            out: 'The curated layout did not finish applying. Your demo project works without it.',
+          },
+          { out: 'Demo back-office live.' },
+          { out: 'Launch it anytime: cd forest-demo-' },
+        ],
+      });
+
+      expect(stopAllProcesses).not.toHaveBeenCalled();
+    });
+
+    it('still stops everything when the demo project cannot be created', async () => {
+      expect.hasAssertions();
+      resetDemoMocks();
+      runStep.mockImplementation(async (_, args) => {
+        if (args[1] === 'projects:create:demo') throw new Error('creation refused');
+      });
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'demo'],
+        exitMessage: 'creation refused',
+      });
+
+      expect(stopAllProcesses.mock.calls).toStrictEqual([[]]);
+      expect(runStep.mock.calls.map(([, args]) => args[1])).not.toContain('layout:apply');
+    });
+
+    it.each([
+      ['layout:apply cannot be spawned', new Error('spawn node ENOENT')],
+      [
+        'layout:apply is killed by a signal',
+        new ExitCodeError('`forest layout:apply` exited with code null', null),
+      ],
+    ])('stops everything when %s', async (_, error) => {
+      expect.hasAssertions();
+      resetDemoMocks();
+      layoutFails(error);
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'demo'],
+        exitMessage: error.message,
+      });
+
+      expect(stopAllProcesses.mock.calls).toStrictEqual([[]]);
     });
   });
 
@@ -974,6 +1138,163 @@ describe('start', () => {
         ],
       });
     });
+
+    it.each([
+      [
+        {
+          FOREST_SERVER_URL: 'https://api.development.forestadmin.com',
+          FOREST_URL_IS_DEFAULT: false,
+        },
+        'out',
+      ],
+      [{ FOREST_SERVER_URL: 'https://api.forestadmin.com', FOREST_URL_IS_DEFAULT: true }, 'not'],
+    ])(
+      'points the snippet at the Forest server only when it is not the default (%j)',
+      async (serverEnv, expectation) => {
+        expect.hasAssertions();
+
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: [
+            '--dry-run',
+            '--flow',
+            'inapp',
+            '--stack',
+            'node',
+            '--name',
+            'app',
+            '--mount',
+            'manual',
+          ],
+          env: serverEnv,
+          std: [
+            { out: 'Add to your server' },
+            {
+              [expectation]: 'forestServerUrl: process.env.FOREST_SERVER_URL, isProduction: false',
+            },
+            { [expectation]: 'FOREST_AUTH_SECRET / FOREST_SERVER_URL)' },
+          ],
+        });
+      },
+    );
+
+    it('writes the non-default Forest server to .env with the secrets', async () => {
+      expect.hasAssertions();
+      runStep.mockReset().mockResolvedValue(undefined);
+      runCapture.mockReset().mockResolvedValue({
+        stdout: JSON.stringify({ envSecret: 'deadbeef', authSecret: 'a1' }),
+        stderr: '',
+      });
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'inapp', '--stack', 'node', '--name', 'app', '--mount', 'manual'],
+        env: {
+          FOREST_SERVER_URL: 'https://api.development.forestadmin.com',
+          FOREST_URL_IS_DEFAULT: false,
+        },
+        files: [{ name: 'package.json', content: JSON.stringify({ name: 'app' }) }],
+        std: [
+          { out: 'FOREST_ENV_SECRET and FOREST_AUTH_SECRET and FOREST_SERVER_URL written to .env' },
+          { out: 'forestServerUrl: process.env.FOREST_SERVER_URL' },
+        ],
+      });
+    });
+
+    it('refuses a .env sending the app to another server before creating the project', async () => {
+      expect.hasAssertions();
+      resetProcessMocks();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'inapp', '--stack', 'node', '--name', 'app', '--mount', 'manual'],
+        env: {
+          FOREST_SERVER_URL: 'https://api.development.forestadmin.com',
+          FOREST_URL_IS_DEFAULT: false,
+          RAW_FOREST_SERVER_URL: 'https://api.forestadmin.com',
+        },
+        files: [{ name: '.env', content: 'FOREST_SERVER_URL=https://api.forestadmin.com\n' }],
+        exitMessage:
+          '.env sets FOREST_SERVER_URL=https://api.forestadmin.com, which would send your app to ' +
+          'another server than https://api.development.forestadmin.com. Remove that line, or set ' +
+          'it to the same URL.',
+      });
+
+      expect(createSteps()).toStrictEqual([]);
+    });
+
+    it.each([
+      [
+        {
+          FOREST_SERVER_URL: 'https://api.development.forestadmin.com',
+          FOREST_URL_IS_DEFAULT: false,
+        },
+        true,
+      ],
+      [{ FOREST_SERVER_URL: 'https://api.forestadmin.com', FOREST_URL_IS_DEFAULT: true }, false],
+    ])(
+      'tells the coding agent to pass forestServerUrl only off the default server (%j)',
+      async (serverEnv, named) => {
+        expect.hasAssertions();
+        resetProcessMocks();
+        runCapture.mockResolvedValue({
+          stdout: JSON.stringify({ envSecret: 'deadbeef', authSecret: 'a1' }),
+          stderr: '',
+        });
+        startProcess.mockImplementation(() => {
+          throw new Error('stop at the boot');
+        });
+
+        const tty = forceTty();
+        const skills = jest
+          .spyOn(StartCommand.prototype, 'canInstallSkills', 'get')
+          .mockReturnValue(true);
+        try {
+          await testCli({
+            commandClass: StartCommand,
+            commandArgs: ['--flow', 'inapp', '--stack', 'node', '--name', 'app', '--mount', 'ai'],
+            env: serverEnv,
+            files: [
+              PACKAGE_JSON,
+              {
+                name: '.forest/skills-manifest.json',
+                content: JSON.stringify({ agents: ['claude'] }),
+              },
+            ],
+            prompts: [
+              {
+                in: [
+                  {
+                    type: 'confirm',
+                    name: 'value',
+                    message: 'Launch Claude Code now to wire the mount?',
+                    default: true,
+                  },
+                ],
+                out: { value: true },
+              },
+              {
+                in: [
+                  {
+                    type: 'input',
+                    name: 'go',
+                    message: 'Once Forest is mounted in your server, press Enter to boot it',
+                  },
+                ],
+                out: { go: '' },
+              },
+            ],
+            exitMessage: 'stop at the boot',
+          });
+        } finally {
+          skills.mockRestore();
+          tty.mockRestore();
+        }
+
+        const [[, [seed]]] = runStep.mock.calls.filter(([command]) => command === 'claude');
+        expect(seed.includes('Pass `forestServerUrl: process.env.FOREST_SERVER_URL`')).toBe(named);
+      },
+    );
 
     it('shows the snippet for --mount ai when this CLI cannot install the skills the agent needs', async () => {
       expect.hasAssertions();

@@ -5,6 +5,7 @@ import path from 'path';
 
 import {
   bootSecrets,
+  checkNodeServerUrl,
   keysLoadedFromDotenv,
   writeSecrets,
 } from '../../../src/services/onboarding/env-file';
@@ -210,6 +211,33 @@ describe('onboarding env-file', () => {
       });
     });
 
+    it('writes the Forest server the project lives on next to its secrets', () => {
+      expect.assertions(2);
+      inTempDir(() => {
+        const result = writeSecrets(
+          { envSecret: 'AAA', serverUrl: 'https://api.development.forestadmin.com' },
+          {},
+        );
+
+        expect(result.written).toStrictEqual(['FOREST_ENV_SECRET', 'FOREST_SERVER_URL']);
+        expect(fs.readFileSync('.env', 'utf8')).toBe(
+          'FOREST_ENV_SECRET=AAA\nFOREST_SERVER_URL=https://api.development.forestadmin.com\n',
+        );
+      });
+    });
+
+    it('does not report a key the shell exports with the very value written', () => {
+      expect.assertions(1);
+      inTempDir(() => {
+        const result = writeSecrets(
+          { envSecret: 'AAA', serverUrl: 'https://dev.test' },
+          { FOREST_SERVER_URL: 'https://dev.test', FOREST_ENV_SECRET: 'OLD' },
+        );
+
+        expect(result.shadowed).toStrictEqual(['FOREST_ENV_SECRET']);
+      });
+    });
+
     it('reports nothing written when no secret came back', () => {
       expect.assertions(1);
       inTempDir(() => {
@@ -263,6 +291,87 @@ describe('onboarding env-file', () => {
         expect(bootSecrets({ envSecret: 'AAA' }, written)).toStrictEqual({
           FOREST_ENV_SECRET: 'AAA',
         });
+      });
+    });
+
+    it.each(['FOREST_SERVER_URL=\n', 'FOREST_SERVER_URL=https://dev.test # dev stack\n'])(
+      'hands the first boot the target server over the value this CLI kept from %j',
+      content => {
+        expect.assertions(2);
+        withLoadedDotenv(content, () => {
+          const written = writeSecrets({ envSecret: 'AAA', serverUrl: 'https://dev.test' });
+
+          expect(written.shadowed).toStrictEqual([]);
+          expect(
+            bootSecrets({ envSecret: 'AAA', serverUrl: 'https://dev.test' }, written),
+          ).toStrictEqual({ FOREST_ENV_SECRET: 'AAA', FOREST_SERVER_URL: 'https://dev.test' });
+        });
+      },
+    );
+  });
+
+  describe('checkNodeServerUrl', () => {
+    const DEV = 'https://api.development.forestadmin.com';
+    const PROD = 'https://api.forestadmin.com';
+    const target = { FOREST_SERVER_URL: DEV, FOREST_URL_IS_DEFAULT: false };
+
+    it.each([
+      ['FOREST_SERVER_URL=https://api.forestadmin.com\n'],
+      ["export FOREST_SERVER_URL = 'https://api.forestadmin.com' # prod\n"],
+      [`FOREST_SERVER_URL=${DEV}\nFOREST_SERVER_URL=https://api.forestadmin.com\n`],
+    ])('refuses a .env that sends the app to another server (%j)', content => {
+      expect.assertions(1);
+      inTempDir(() => {
+        fs.writeFileSync('.env', content);
+
+        expect(() => checkNodeServerUrl(target)).toThrow(
+          `.env sets FOREST_SERVER_URL=${PROD}, which would send your app to another server than ` +
+            `${DEV}. Remove that line, or set it to the same URL.`,
+        );
+      });
+    });
+
+    it('refuses a FOREST_SERVER_URL the shell exports for another server', () => {
+      expect.assertions(1);
+      inTempDir(() => {
+        expect(() => checkNodeServerUrl({ ...target, RAW_FOREST_SERVER_URL: PROD })).toThrow(
+          `FOREST_SERVER_URL=${PROD} would send your app to another server than FOREST_URL=${DEV}. ` +
+            'Unset it, or set it to the same URL.',
+        );
+      });
+    });
+
+    it.each([
+      ['no .env', undefined, {}],
+      ['the same URL', `FOREST_SERVER_URL=${DEV}\n`, { RAW_FOREST_SERVER_URL: DEV }],
+      ['a placeholder', 'FOREST_SERVER_URL=\n', {}],
+      ['another key only', 'PORT=3000\n', {}],
+      [
+        'the same URL with an inline comment the CLI dotenv kept',
+        `FOREST_SERVER_URL=${DEV} # development\n`,
+        { RAW_FOREST_SERVER_URL: `${DEV} # development` },
+      ],
+    ])('accepts %s', (_label, content, raw) => {
+      expect.assertions(1);
+      inTempDir(() => {
+        if (content !== undefined) fs.writeFileSync('.env', content);
+
+        expect(() => checkNodeServerUrl({ ...target, ...raw })).not.toThrow();
+      });
+    });
+
+    it('lets the default server through, since the snippet then names no server', () => {
+      expect.assertions(1);
+      inTempDir(() => {
+        fs.writeFileSync('.env', `FOREST_SERVER_URL=${DEV}\n`);
+
+        expect(() =>
+          checkNodeServerUrl({
+            FOREST_SERVER_URL: PROD,
+            FOREST_URL_IS_DEFAULT: true,
+            RAW_FOREST_SERVER_URL: DEV,
+          }),
+        ).not.toThrow();
       });
     });
   });

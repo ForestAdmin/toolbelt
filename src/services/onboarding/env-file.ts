@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import fs from 'fs';
 
-type Secrets = { envSecret?: string; authSecret?: string };
+type Secrets = { envSecret?: string; authSecret?: string; serverUrl?: string };
 
 export type SecretsWrite = {
   file: string;
@@ -17,6 +17,7 @@ const keyed = (secrets: Secrets) =>
   Object.entries({
     FOREST_ENV_SECRET: secrets.envSecret,
     FOREST_AUTH_SECRET: secrets.authSecret,
+    FOREST_SERVER_URL: secrets.serverUrl,
   });
 
 /**
@@ -52,6 +53,25 @@ function effectiveAssignment(content: string, key: string) {
 }
 
 /**
+ * The keys this CLI's own dotenv loaded from the user's `.env` when it started. That dotenv is
+ * v8, which reads comments, backticks and multi-line values differently from the app's, so its
+ * values must not reach the app: they would win over the `.env` the app reads itself. Read before
+ * `writeSecrets` changes the file, since it compares against what was loaded.
+ */
+export function keysLoadedFromDotenv(
+  file = '.env',
+  environment: NodeJS.ProcessEnv = process.env,
+): string[] {
+  try {
+    const parsed = dotenv.parse(fs.readFileSync(file));
+
+    return Object.keys(parsed).filter(key => environment[key] === parsed[key]);
+  } catch {
+    return []; // no .env, so this CLI loaded nothing
+  }
+}
+
+/**
  * Also on a file that existed: the secrets written into it are new, and nobody chose to let other
  * local users read them. A file owned by someone else refuses, which is reported and never fatal,
  * since the secrets are already in it and the project already exists.
@@ -77,6 +97,7 @@ export function writeSecrets(
 ): SecretsWrite {
   const file = '.env';
   const current = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  const loadedFromFile = keysLoadedFromDotenv(file, environment);
   const written: string[] = [];
   const conflicts: string[] = [];
   const appended: string[] = [];
@@ -118,28 +139,41 @@ export function writeSecrets(
   }
 
   const shadowed = keyed(secrets)
-    .filter(([key, value]) => value && environment[key] !== undefined)
+    .filter(([key, value]) => {
+      const exported = environment[key];
+
+      return value && exported !== undefined && exported !== value && !loadedFromFile.includes(key);
+    })
     .map(([key]) => key);
 
   return { file, written, conflicts, shadowed, exposed };
 }
 
-/**
- * The keys this CLI's own dotenv loaded from the user's `.env` when it started. That dotenv is
- * v8, which reads comments, backticks and multi-line values differently from the app's, so its
- * values must not reach the app: they would win over the `.env` the app reads itself. Read before
- * `writeSecrets` changes the file, since it compares against what was loaded.
- */
-export function keysLoadedFromDotenv(
-  file = '.env',
-  environment: NodeJS.ProcessEnv = process.env,
-): string[] {
-  try {
-    const parsed = dotenv.parse(fs.readFileSync(file));
+export type NodeServerUrlEnv = {
+  FOREST_SERVER_URL?: string;
+  FOREST_URL_IS_DEFAULT?: boolean;
+  RAW_FOREST_SERVER_URL?: string;
+};
 
-    return Object.keys(parsed).filter(key => environment[key] === parsed[key]);
-  } catch {
-    return []; // no .env, so this CLI loaded nothing
+export function checkNodeServerUrl(env: NodeServerUrlEnv, file = '.env'): void {
+  const { FOREST_SERVER_URL: url, FOREST_URL_IS_DEFAULT, RAW_FOREST_SERVER_URL: raw } = env;
+  if (FOREST_URL_IS_DEFAULT || !url) return;
+
+  const content = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  const kept = effectiveAssignment(content, 'FOREST_SERVER_URL')?.value;
+  if (kept && kept !== url) {
+    throw new Error(
+      `${file} sets FOREST_SERVER_URL=${kept}, which would send your app to another server than ` +
+        `${url}. Remove that line, or set it to the same URL.`,
+    );
+  }
+
+  const loadedFromFile = content && dotenv.parse(content).FOREST_SERVER_URL === raw;
+  if (raw && raw !== url && !loadedFromFile) {
+    throw new Error(
+      `FOREST_SERVER_URL=${raw} would send your app to another server than FOREST_URL=${url}. ` +
+        'Unset it, or set it to the same URL.',
+    );
   }
 }
 
