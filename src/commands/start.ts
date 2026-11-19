@@ -21,6 +21,7 @@ import {
   detectNodeStack,
   detectRails,
   mountHelper,
+  needsJsonBelow3,
 } from '../services/onboarding/detect';
 import { bootSecrets, keysLoadedFromDotenv, writeSecrets } from '../services/onboarding/env-file';
 import {
@@ -690,6 +691,8 @@ export default class StartCommand extends AbstractCommand {
           'run it by hand and pass the secret to `bin/rails g forest_admin_rails:install`.',
       );
     }
+
+    if (needsJsonBelow3()) await this.run$('bundle', ['add', 'json', '--version', '< 3']);
 
     // Five gems, not the three the docs list: forest_admin_rails alone installs but fails to boot,
     // because it does not declare its companions as runtime dependencies.

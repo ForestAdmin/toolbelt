@@ -74,16 +74,46 @@ export function detectNodeStack(): NodeStack {
   };
 }
 
+function readText(file: string): string {
+  try {
+    return fs.readFileSync(file, 'utf8');
+  } catch {
+    return '';
+  }
+}
+
+function declaresGem(name: string): boolean {
+  return new RegExp(`^(?!\\s*#).*gem\\s+['"]${name}['"]`, 'm').test(readText('Gemfile'));
+}
+
 /** True when the current directory holds a Rails application. */
 export function detectRails(): boolean {
-  try {
-    // Anchored per line and excluding comments: `# gem 'rails'` is how a Gemfile records that
-    // Rails was considered and NOT used, so matching it sends a Node repo down the Rails flow —
-    // installing Rails gems and calling `bin/rails` in a project that has neither.
-    return /^(?!\s*#).*gem\s+['"]rails['"]/m.test(fs.readFileSync('Gemfile', 'utf8'));
-  } catch {
-    return false;
-  }
+  // Anchored per line and excluding comments: `# gem 'rails'` is how a Gemfile records that
+  // Rails was considered and NOT used, so matching it sends a Node repo down the Rails flow —
+  // installing Rails gems and calling `bin/rails` in a project that has neither.
+  return declaresGem('rails');
+}
+
+function lockedActiveSupport(): [number, number, number] | undefined {
+  const version = /^ {4}activesupport \((\d+)\.(\d+)\.(\d+)/m.exec(readText('Gemfile.lock'));
+
+  return version ? [Number(version[1]), Number(version[2]), Number(version[3])] : undefined;
+}
+
+function activeSupportPassesQuirksMode([major, minor, patch]: [number, number, number]): boolean {
+  if (major === 8) return minor === 0;
+
+  return major < 7 || (major === 7 && (minor < 2 || (minor === 2 && patch < 4)));
+}
+
+export function needsJsonBelow3(): boolean {
+  const activeSupport = lockedActiveSupport();
+
+  return (
+    activeSupport !== undefined &&
+    activeSupportPassesQuirksMode(activeSupport) &&
+    !declaresGem('json')
+  );
 }
 
 /** The mount helper name for a framework — `mountOnNestJs`, `mountOnExpress`, … */

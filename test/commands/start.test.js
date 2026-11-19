@@ -862,6 +862,35 @@ describe('start', () => {
       });
     });
 
+    it('keeps json below 3 before the gems on a Rails whose ActiveSupport json 3 breaks', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--dry-run', '--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+        files: [{ name: 'Gemfile.lock', content: 'GEM\n  specs:\n    activesupport (7.1.6)\n' }],
+        std: [
+          { out: '$ bundle add json --version < 3' },
+          { out: '$ bundle add forest_admin_agent forest_admin_rails' },
+          { out: 'Forest is live in your app!' },
+        ],
+      });
+    });
+
+    it('adds no json constraint on a Rails that json 3 does not break', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--dry-run', '--flow', 'inapp', '--stack', 'rails', '--name', 'app'],
+        files: [{ name: 'Gemfile.lock', content: 'GEM\n  specs:\n    activesupport (8.1.4)\n' }],
+        std: [
+          { out: '$ bundle add forest_admin_agent forest_admin_rails' },
+          { not: 'bundle add json' },
+        ],
+      });
+    });
+
     it('registers an in-app project then installs the five gems the boot actually needs', async () => {
       expect.hasAssertions();
 
