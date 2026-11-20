@@ -76,16 +76,52 @@ export function detectNodeStack(): NodeStack {
   };
 }
 
+function readText(file: string): string {
+  try {
+    return fs.readFileSync(file, 'utf8');
+  } catch {
+    return '';
+  }
+}
+
+function declaresGem(name: 'rails' | 'json'): boolean {
+  return new RegExp(`^(?!\\s*#).*gem[\\s(]+['"]${name}['"]`, 'm').test(readText('Gemfile'));
+}
+
 /** True when the current directory holds a Rails application. */
 export function detectRails(): boolean {
-  try {
-    // Anchored per line and excluding comments: `# gem 'rails'` is how a Gemfile records that
-    // Rails was considered and NOT used, so matching it sends a Node repo down the Rails flow —
-    // installing Rails gems and calling `bin/rails` in a project that has neither.
-    return /^(?!\s*#).*gem\s+['"]rails['"]/m.test(fs.readFileSync('Gemfile', 'utf8'));
-  } catch {
-    return false;
-  }
+  // Anchored per line and excluding comments: `# gem 'rails'` is how a Gemfile records that
+  // Rails was considered and NOT used, so matching it sends a Node repo down the Rails flow —
+  // installing Rails gems and calling `bin/rails` in a project that has neither.
+  return declaresGem('rails');
+}
+
+type Version = [number, number, number];
+
+function lockedVersion(gem: 'activesupport' | 'json'): Version | undefined {
+  const version = new RegExp(`^ {4}${gem} \\((\\d+)\\.(\\d+)\\.(\\d+)`, 'm').exec(
+    readText('Gemfile.lock'),
+  );
+
+  return version ? [Number(version[1]), Number(version[2]), Number(version[3])] : undefined;
+}
+
+function activeSupportPassesQuirksMode([major, minor, patch]: Version): boolean {
+  if (major === 8) return minor === 0;
+
+  return major < 7 || (major === 7 && (minor < 2 || (minor === 2 && patch < 4)));
+}
+
+export function needsJsonBelow3(): boolean {
+  const activeSupport = lockedVersion('activesupport');
+  const json = lockedVersion('json');
+
+  return (
+    activeSupport !== undefined &&
+    activeSupportPassesQuirksMode(activeSupport) &&
+    (json === undefined || json[0] >= 3) &&
+    !declaresGem('json')
+  );
 }
 
 /** The mount helper name for a framework — `mountOnNestJs`, `mountOnExpress`, … */

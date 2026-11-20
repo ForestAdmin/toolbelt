@@ -7,6 +7,7 @@ import {
   detectNodeStack,
   detectRails,
   mountHelper,
+  needsJsonBelow3,
 } from '../../../src/services/onboarding/detect';
 
 // Run `fn` inside a throwaway temp dir (cwd), restoring + cleaning up afterwards.
@@ -106,7 +107,7 @@ describe('onboarding detect', () => {
 
   describe('detectRails', () => {
     it('recognises a Gemfile declaring rails, and ignores anything else', () => {
-      expect.assertions(3);
+      expect.assertions(4);
       withTempDir(() => {
         expect(detectRails()).toBe(false); // no Gemfile at all
 
@@ -114,6 +115,9 @@ describe('onboarding detect', () => {
         expect(detectRails()).toBe(false);
 
         fs.writeFileSync('Gemfile', "source 'https://rubygems.org'\ngem \"rails\", '~> 8.0'\n");
+        expect(detectRails()).toBe(true);
+
+        fs.writeFileSync('Gemfile', "source 'https://rubygems.org'\ngem('rails', '~> 8.0')\n");
         expect(detectRails()).toBe(true);
       });
     });
@@ -129,6 +133,80 @@ describe('onboarding detect', () => {
         // …while an indented but live declaration still counts.
         fs.writeFileSync('Gemfile', "group :default do\n  gem 'rails'\nend\n");
         expect(detectRails()).toBe(true);
+      });
+    });
+  });
+
+  describe('needsJsonBelow3', () => {
+    const lockfile = (activeSupport: string) =>
+      'GEM\n' +
+      '  remote: https://rubygems.org/\n' +
+      '  specs:\n' +
+      '    actionpack (7.1.6)\n' +
+      '      activesupport (= 7.1.6)\n' +
+      `    activesupport (${activeSupport})\n` +
+      '      concurrent-ruby (~> 1.0, >= 1.0.2)\n';
+
+    it.each(['6.1.7.9', '7.1.6', '7.2.3.2', '8.0.0', '8.0.5.2', '8.0.0.rc1'])(
+      'pins json below 3 on activesupport %s, which passes quirks_mode to JSON.generate',
+      version => {
+        expect.assertions(1);
+        withTempDir(() => {
+          fs.writeFileSync('Gemfile.lock', lockfile(version));
+          expect(needsJsonBelow3()).toBe(true);
+        });
+      },
+    );
+
+    it.each(['7.2.4', '7.2.4.1', '8.1.0', '8.1.4.1', '9.0.0'])(
+      'leaves json alone on activesupport %s',
+      version => {
+        expect.assertions(1);
+        withTempDir(() => {
+          fs.writeFileSync('Gemfile.lock', lockfile(version));
+          expect(needsJsonBelow3()).toBe(false);
+        });
+      },
+    );
+
+    it('reads the locked spec, not a dependency constraint on activesupport', () => {
+      expect.assertions(1);
+      withTempDir(() => {
+        fs.writeFileSync('Gemfile.lock', lockfile('8.1.4').replace('(= 7.1.6)', '(= 8.1.4)'));
+        expect(needsJsonBelow3()).toBe(false);
+      });
+    });
+
+    it('leaves json alone when the lockfile already holds json below 3', () => {
+      expect.assertions(2);
+      withTempDir(() => {
+        fs.writeFileSync('Gemfile.lock', `${lockfile('7.1.6')}    json (2.9.1)\n`);
+        expect(needsJsonBelow3()).toBe(false);
+
+        fs.writeFileSync('Gemfile.lock', `${lockfile('7.1.6')}    json (3.1.0)\n`);
+        expect(needsJsonBelow3()).toBe(true);
+      });
+    });
+
+    it('leaves json alone without a lockfile, where the Rails version is unknown', () => {
+      expect.assertions(1);
+      withTempDir(() => {
+        expect(needsJsonBelow3()).toBe(false);
+      });
+    });
+
+    it('leaves a Gemfile that already declares json to its owner', () => {
+      expect.assertions(3);
+      withTempDir(() => {
+        fs.writeFileSync('Gemfile.lock', lockfile('7.1.6'));
+        fs.writeFileSync('Gemfile', "gem 'rails', '~> 7.1'\n# gem 'json'\n");
+        expect(needsJsonBelow3()).toBe(true);
+
+        fs.writeFileSync('Gemfile', "gem 'rails', '~> 7.1'\ngem \"json\", '~> 2.7'\n");
+        expect(needsJsonBelow3()).toBe(false);
+
+        fs.writeFileSync('Gemfile', "gem 'rails', '~> 7.1'\ngem('json')\n");
+        expect(needsJsonBelow3()).toBe(false);
       });
     });
   });
