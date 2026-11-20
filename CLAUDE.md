@@ -28,12 +28,9 @@
   - Example commit: `fix(deps): bump lodash to 4.17.21 [CVE-2021-23337]`
   - PRs must have the `:lock: security` label
 - Security fixes in **our own code**: the branch and commit conventions above do not
-  apply.
-  - On a private repository, keep the `:lock: security` label: it is what notifies
-    first-level support to prioritise the review.
-  - On a public repository, drop the label too, and tell first-level support through
-    the Linear ticket or the private security channel instead. See "Vulnerability
-    fixes on public repositories" below.
+  apply, and neither does the `:lock: security` label — on a public repository it would
+  advertise the fix. Tell first-level support through the Linear ticket or the private
+  security channel instead. See "Vulnerability fixes on public repositories" below.
 
 ## Security
 
