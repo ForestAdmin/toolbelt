@@ -285,6 +285,41 @@ describe('start', () => {
       expect(stopProcess.mock.calls).toStrictEqual([[child]]);
     });
 
+    it('holds the back-end lines while the menu is open and prints them once it is answered', async () => {
+      expect.hasAssertions();
+      resetDemoMocks();
+      let emitBackEndLine;
+      startProcess.mockImplementation((command, args, options) => {
+        emitBackEndLine = options.onOutput;
+
+        return { child, ready: Promise.resolve(), exited: Promise.resolve(), mute: () => {} };
+      });
+      let printedWhileMenuOpen;
+      const answeredMenu = {
+        in: [DEMO_MENU],
+        get out() {
+          emitBackEndLine('info: [200] GET /authentication/callback');
+          printedWhileMenuOpen = stdout.output.includes('GET /authentication/callback');
+
+          return { next: 'stop' };
+        },
+      };
+
+      const tty = forceTty();
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          prompts: [answeredMenu],
+          std: [{ out: '  | info: [200] GET /authentication/callback' }],
+        });
+      } finally {
+        tty.mockRestore();
+      }
+
+      expect(printedWhileMenuOpen).toBe(false);
+    });
+
     it('warns that the curated layout did not finish when no part is named', async () => {
       expect.hasAssertions();
       resetDemoMocks();
