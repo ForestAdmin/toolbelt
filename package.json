@@ -142,6 +142,15 @@
     "inquirer/**/tmp": "^0.2.6",
     "mongodb/mongodb-connection-string-url": "^3.0.2",
     "filelist": "^2.0.2",
-    "fast-xml-parser": "^5.7.0"
+    "fast-xml-parser": "^5.7.0",
+    "**/eslint/minimatch": "^3.1.2",
+    "**/eslint-plugin-import/minimatch": "^3.0.4",
+    "**/eslint-plugin-node/minimatch": "^3.0.4",
+    "**/@eslint/eslintrc/minimatch": "^3.0.5",
+    "**/@humanwhocodes/config-array/minimatch": "^3.0.5",
+    "**/rimraf/glob/minimatch": "^3.0.5",
+    "**/test-exclude/minimatch": "^3.0.4",
+    "**/test-exclude/glob/minimatch": "^3.0.5",
+    "minimatch": "^11.0.1"
   }
 }
