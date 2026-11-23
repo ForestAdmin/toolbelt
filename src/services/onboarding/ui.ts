@@ -492,11 +492,23 @@ export default class OnboardingUI {
       this.menu = menu;
     }
 
-    const lines = this.frameLines(this.live);
+    const lines = this.live ? this.fitWindow(this.frameLines(true)) : this.frameLines(false);
     const frame = lines.join('\n');
     if (frame === this.lastFrame) return;
     this.lastFrame = frame;
     this.draw(lines);
+  }
+
+  /**
+   * While the steps run, a frame taller than the window keeps its bottom, where the running step
+   * is: the next redraw moves the cursor back up over it, and it cannot go above the window.
+   */
+  private fitWindow(lines: string[]): string[] {
+    const rows = (this.stream.rows || 24) - 1;
+    let start = 0;
+    while (start < lines.length - 1 && this.rowsOf(lines.slice(start)) > rows) start += 1;
+
+    return lines.slice(start);
   }
 
   private draw(lines: string[]) {

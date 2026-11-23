@@ -170,9 +170,12 @@ export default class StartCommand extends AbstractCommand {
 
   private plain = false;
 
-  /** Where a booted back-end's output goes. Printed by default; the checklist reroutes it. */
-  private sink: (chunk: string) => void = chunk =>
+  /** A booted back-end's output, printed under the command that started it. */
+  private readonly printed = (chunk: string) =>
     this.logger.log(this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`));
+
+  /** Where a booted back-end's output goes. Printed by default; the checklist reroutes it. */
+  private sink: (chunk: string) => void = this.printed;
 
   /** The checklist screen: on a terminal, unless --plain. */
   private get rich(): boolean {
@@ -1471,12 +1474,14 @@ export default class StartCommand extends AbstractCommand {
         // eslint-disable-next-line no-await-in-loop -- leaves the loop right after
         await exited;
         ui.note('\n  Demo agent stopped. Setting up your real project…\n');
+        // The real project's back-end talks on screen, as in the classic flow: its errors included.
+        this.sink = this.printed;
         // eslint-disable-next-line no-await-in-loop -- leaves the loop right after
         await this.flowStandalone({});
 
         return;
       } else if (next === 'stay') {
-        this.sink = chunk => this.logger.log(this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`));
+        this.sink = this.printed;
         // eslint-disable-next-line no-await-in-loop -- leaves the loop right after
         if (child) await this.keepAlive(child, name, 'npm start');
 

@@ -214,6 +214,63 @@ describe('start', () => {
       );
     });
 
+    it("shows the real project's back-end output on screen after 'Connect a real database'", async () => {
+      expect.hasAssertions();
+      mockLiveDemo();
+      const demoChild = { pid: 4242 };
+      startProcess
+        .mockImplementationOnce((_, __, { onOutput }) => {
+          onOutput('info: the demo agent talks\n');
+
+          return { child: demoChild, ready: Promise.resolve(), exited: Promise.resolve() };
+        })
+        .mockImplementationOnce((_, __, { onOutput }) => {
+          onOutput('error: the real agent cannot reach its database\n');
+
+          return { child: undefined, ready: Promise.resolve(), mute: () => {} };
+        });
+
+      await onTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          prompts: [
+            { in: [menu], out: { next: 'db' } },
+            {
+              in: [
+                {
+                  type: 'input',
+                  name: 'name',
+                  message: 'Project name:',
+                  default: 'my-back-office',
+                },
+              ],
+              out: { name: 'x' },
+            },
+            {
+              in: [
+                {
+                  type: 'list',
+                  name: 'next',
+                  message: 'Your back-office is live. What next?',
+                  choices: [
+                    { name: 'Deploy to production', value: 'deploy' },
+                    { name: 'Get started guide (https://docs.forest.app)', value: 'docs' },
+                    { name: 'Keep exploring — leave the back-end running', value: 'stay' },
+                  ],
+                },
+              ],
+              out: { next: 'stay' },
+            },
+          ],
+          std: [
+            { out: '| error: the real agent cannot reach its database' },
+            { not: 'the demo agent talks' },
+          ],
+        }),
+      );
+    });
+
     it('warns on the layout step and reaches the menu with the agent still running when layout:apply fails', async () => {
       expect.hasAssertions();
       const child = mockLiveDemo({

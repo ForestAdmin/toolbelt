@@ -90,6 +90,46 @@ describe('the onboarding screen, in plain mode', () => {
   });
 });
 
+describe('the onboarding screen, on a terminal', () => {
+  it('never moves the cursor above the window when the checklist is taller than it', async () => {
+    expect.assertions(2);
+    const stdout = process.stdout as NodeJS.WriteStream;
+    const saved = { isTTY: stdout.isTTY, rows: stdout.rows, columns: stdout.columns };
+    Object.assign(stdout, { isTTY: true, rows: 8, columns: 80 });
+    let written = '';
+    const write = jest.spyOn(process.stdout, 'write').mockImplementation(chunk => {
+      written += String(chunk);
+
+      return true;
+    });
+    const ui = new OnboardingUI({ rich: true, logName: 'forest-start-test' });
+
+    try {
+      ui.plan('forest-demo-test', 'demo bank on sample data', [
+        { id: 'preflight', label: 'Checking this computer', why: 'Node and the ports.' },
+        { id: 'create', label: 'Registering the project on Forest', why: 'Its secrets.' },
+        { id: 'install', label: 'Installing the agent', why: 'npm downloads it once.' },
+        { id: 'boot', label: 'Starting the agent', why: 'It sends Forest the tables.' },
+        { id: 'layout', label: 'Applying the demo layout', why: 'Workspaces and workflows.' },
+      ]);
+      await ui.run('install', async step => {
+        step.log('$ npm install');
+        step.detail('dependencies installed');
+      });
+      ui.release();
+
+      // eslint-disable-next-line no-control-regex
+      const ups = [...written.matchAll(/\x1b\[(\d+)A/g)].map(match => Number(match[1]));
+      expect(ups.length).toBeGreaterThan(0);
+      expect(Math.max(...ups)).toBeLessThan(8);
+    } finally {
+      write.mockRestore();
+      Object.assign(stdout, saved);
+      fs.rmSync(ui.logFile, { force: true });
+    }
+  });
+});
+
 describe('isPortFree', () => {
   const listening = async (host?: string) => {
     const server = net.createServer();
