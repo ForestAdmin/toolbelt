@@ -56,6 +56,7 @@ Run `forest help <command>` for the flags of any command.
 | `projects:create:in-app` | Register a project for an app you host yourself and print its environment secret |
 | `projects` / `projects:get` | List your projects, get a project's configuration |
 | `skills:init` / `skills:update` | Install or refresh the Forest skills for your coding agent (Claude Code, Codex, Cursor, OpenCode…) |
+| `mcp` | Connect Claude (claude.ai) to the project in this folder: Forest's MCP server in front of its running agent, through a Cloudflare quick tunnel |
 
 </details>
 
