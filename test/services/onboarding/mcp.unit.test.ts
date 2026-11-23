@@ -35,6 +35,8 @@ async function withAgent(body: (port: number) => Promise<void>): Promise<void> {
   try {
     await body((server.address() as { port: number }).port);
   } finally {
+    // Node 18 waits for idle keep-alive connections on close: end them first.
+    server.closeAllConnections();
     await new Promise(resolve => {
       server.close(resolve);
     });
