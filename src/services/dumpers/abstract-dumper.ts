@@ -83,6 +83,28 @@ export default abstract class AbstractDumper {
     files.forEach(file => this.copyHandleBarsTemplate(`${source}/${file}`, `${target}/${file}`));
   }
 
+  // Copy a template sub-directory and its sub-folders byte for byte, for files that are not
+  // templates (scripts, styles, PDFs). An existing file is skipped, as writeFile does. An app's
+  // `uploads` folder, if one was ever run from the templates, is what its visitors sent: never
+  // copied.
+  protected copyTemplateTree(source: string, target: string) {
+    const sourcePath = `${__dirname}/templates/${this.templateFolder}/${source}`;
+    if (!this.fs.existsSync(sourcePath)) return;
+
+    this.fs.mkdirSync(`${this.projectPath}/${target}`, { recursive: true });
+    this.fs.readdirSync(sourcePath, { withFileTypes: true }).forEach(entry => {
+      if (entry.isDirectory() && entry.name === 'uploads') return;
+      if (entry.isDirectory()) {
+        this.copyTemplateTree(`${source}/${entry.name}`, `${target}/${entry.name}`);
+      } else {
+        this.writeFile(
+          `${target}/${entry.name}`,
+          this.fs.readFileSync(`${sourcePath}/${entry.name}`),
+        );
+      }
+    });
+  }
+
   async dump(dumperConfig: Config, schema?: any) {
     const cwd = this.constants.CURRENT_WORKING_DIRECTORY;
     this.projectPath = dumperConfig.appConfig.appName

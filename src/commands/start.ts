@@ -33,6 +33,7 @@ import {
   keysLoadedFromDotenv,
   writeSecrets,
 } from '../services/onboarding/env-file';
+import { expectedGatewayVersion } from '../services/onboarding/portals';
 import { MIN_NODE_MAJOR, isPortFree, nodeMajor } from '../services/onboarding/preflight';
 import {
   RAILS_INITIALIZER,
@@ -678,6 +679,8 @@ export default class StartCommand extends AbstractCommand {
 
     await this.forest(this.demoCreateArgs(name, flags));
     await this.installAndBuild(name);
+    const gateway = this.gatewayInstallArgs(name);
+    if (gateway) await this.run$('npm', gateway, name);
 
     let child: ChildProcess | undefined;
     let exited: Promise<unknown> | undefined;
@@ -784,6 +787,8 @@ export default class StartCommand extends AbstractCommand {
 
       await ui.run('install', async step => {
         await this.logged(step.log, 'npm', ['install'], name);
+        const gateway = this.gatewayInstallArgs(name);
+        if (gateway) await this.logged(step.log, 'npm', gateway, name);
         if (this.dryRun || StartCommand.hasBuildScript(name)) {
           await this.logged(step.log, 'npm', ['install', '--save-dev', 'typescript@^5.5'], name);
           await this.logged(step.log, 'npm', ['run', 'build'], name);
@@ -1340,6 +1345,20 @@ export default class StartCommand extends AbstractCommand {
 
     await this.run$('npm', ['install', '--save-dev', 'typescript@^5.5'], dir);
     await this.run$('npm', ['run', 'build'], dir);
+  }
+
+  /**
+   * The demo's Gateway (`forest portals`), at the exact version the installed agent expects: the
+   * agent turns it on as it starts, so it has to be there before the first start. Null when the
+   * agent names none: the demo then runs without it, and `forest portals` installs it later.
+   */
+  private gatewayInstallArgs(dir: string): string[] | null {
+    const version =
+      expectedGatewayVersion(dir) ?? (this.dryRun ? '<the version the agent expects>' : null);
+
+    return version
+      ? ['install', `@forestadmin/agent-bff@${version}`, '--save-exact', '--no-audit', '--no-fund']
+      : null;
   }
 
   private static hasBuildScript(dir: string): boolean {

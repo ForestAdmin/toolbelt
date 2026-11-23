@@ -1,0 +1,52 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 380] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R /F3 7 0 R >> /ExtGState << /Glare << /ca 0.88 >> /Faint << /ca 0.16 >> >> >> >>
+endobj
+4 0 obj
+<< /Length 1322 >>
+stream
+0.067 0.094 0.153 rg 0 0 300 380 re f
+q 30 80 240 260 re W n
+0.859 0.890 0.918 rg 30 80 240 260 re f
+q 0.024 0.373 0.275 rg 34.80000000000001 74.80000000000001 m 34.80000000000001 120.75136 86.37504000000001 158 150 158 c 213.62496 158 265.2 120.75136 265.2 74.80000000000001 c 265.2 28.84864000000001 213.62496 -8.399999999999991 150 -8.399999999999991 c 86.37504000000001 -8.399999999999991 34.80000000000001 28.84864000000001 34.80000000000001 74.80000000000001 c f Q
+q 0.722 0.545 0.290 rg 85.19999999999999 241.2 m 85.19999999999999 277.0995 114.21096 306.2 150 306.2 c 185.78904 306.2 214.8 277.0995 214.8 241.2 c 214.8 205.3005 185.78904 176.2 150 176.2 c 114.21096 176.2 85.19999999999999 205.3005 85.19999999999999 241.2 c f Q
+q 0.553 0.353 0.231 rg 97.2 223 m 97.2 251.7196 120.83856 275 150 275 c 179.16144 275 202.8 251.7196 202.8 223 c 202.8 194.2804 179.16144 171 150 171 c 120.83856 171 97.2 194.2804 97.2 223 c f Q
+Q
+0.067 0.094 0.153 rg 0 0 300 80 re f
+q BT /F2 12 Tf 1.000 1.000 1.000 rg 1 0 0 1 20 54 Tm (Liveness check) Tj ET Q
+q BT /F1 10 Tf 0.820 0.835 0.859 rg 1 0 0 1 20 36 Tm (Camille Rousseau) Tj ET Q
+q BT /F1 9 Tf 0.612 0.639 0.686 rg 1 0 0 1 20 18 Tm (Captured 28/10/2026 in the app) Tj ET Q
+q /Faint gs BT /F2 43 Tf 0.863 0.149 0.149 rg 0.914 0.407 -0.407 0.914 54 144.4 Tm (SPECIMEN) Tj ET Q
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+7 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000322 00000 n 
+0000001696 00000 n 
+0000001793 00000 n 
+0000001895 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+1990
+%%EOF
+%forest-lab-scan:clean

@@ -107,11 +107,21 @@ agent.addDataSource(
 agent.addWorkflowExecutor({
   inMemory: true,
   agentUrl: `http://localhost:${process.env.APPLICATION_PORT}`,
+  // 3400 unless set: a second agent of this project, such as the one `forest portals` starts once
+  // to activate Production, can run next to the first.
+  ...(process.env.WORKFLOW_EXECUTOR_PORT ? { port: Number(process.env.WORKFLOW_EXECUTOR_PORT) } : {}),
 });
 {{else}}
 agent.addWorkflowExecutor({ inMemory: true });
 {{/if}}
 
+{{#if isDemo}}
+// The Gateway: Forest's API for apps outside Forest, such as the partner portals in portals/
+// (`forest portals`). It needs @forestadmin/agent-bff at the exact version this agent expects,
+// which `forest portals` installs: until then, the agent runs without it.
+if (isInstalled('@forestadmin/agent-bff')) agent.addGateway({ api: true });
+
+{{/if}}
 {{#if isDemo}}
 // Expose an HTTP endpoint. It also serves the demo's Custom components (the Hub, the desk guides…)
 // from public/: the layout loads them from this agent, at /public/smart-components/…. CORS as the
@@ -167,3 +177,15 @@ async function shutdown(): Promise<void> {
 
 process.once('SIGTERM', shutdown);
 process.once('SIGINT', shutdown);
+{{#if isDemo}}
+
+function isInstalled(name: string): boolean {
+  try {
+    require.resolve(name);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+{{/if}}

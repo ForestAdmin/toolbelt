@@ -165,3 +165,18 @@ describe('isPortFree', () => {
     await closed(server);
   });
 });
+
+describe('a guided command on the onboarding screen', () => {
+  it('prints a step with its why, and a panel whose commands are whole', async () => {
+    expect.assertions(3);
+
+    await withScreen((ui, written) => {
+      ui.line('failed', 'Gateway key', 'refused by your agent', 'A key opens one environment.');
+      ui.panel('Next', [`1. \`forest environments:create -n Production -p ${'4'.repeat(90)}\``]);
+
+      expect(written()).toMatch(/✗ Gateway key · refused by your agent/);
+      expect(written()).toContain('Why: A key opens one environment.');
+      expect(written()).toContain(`forest environments:create -n Production -p ${'4'.repeat(90)}`);
+    });
+  });
+});
