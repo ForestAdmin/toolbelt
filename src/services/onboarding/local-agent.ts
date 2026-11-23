@@ -2,6 +2,7 @@ import type { ChildProcess } from 'child_process';
 
 import dotenv from 'dotenv';
 import fs from 'fs';
+import net from 'net';
 import path from 'path';
 
 /**
@@ -29,6 +30,26 @@ export async function agentAnswers(agentUrl: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** Whether anything listens on this port, IPv4 or IPv6, whatever it would answer. */
+export async function portTaken(port: number): Promise<boolean> {
+  const connects = (host: string) =>
+    new Promise<boolean>(resolve => {
+      const socket = net.connect({ host, port });
+      socket.setTimeout(1000);
+      socket.once('connect', () => {
+        socket.destroy();
+        resolve(true);
+      });
+      socket.once('timeout', () => {
+        socket.destroy();
+        resolve(false);
+      });
+      socket.once('error', () => resolve(false));
+    });
+
+  return (await Promise.all(['127.0.0.1', '::1'].map(connects))).some(Boolean);
 }
 
 /** Waits for Ctrl+C (then calls `stop`), or for every child to exit on its own. */

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import http from 'http';
+import net from 'net';
 import os from 'os';
 import path from 'path';
 
@@ -40,6 +41,20 @@ async function withAgent(body: (port: number) => Promise<void>): Promise<void> {
   }
 }
 
+/** A port free right now: listened on, then closed. */
+async function freePort(): Promise<number> {
+  const server = net.createServer();
+  await new Promise<void>(resolve => {
+    server.listen(0, resolve);
+  });
+  const { port } = server.address() as net.AddressInfo;
+  await new Promise(resolve => {
+    server.close(resolve);
+  });
+
+  return port;
+}
+
 describe('forest mcp', () => {
   it('says so outside a project folder, and starts nothing', async () => {
     expect.assertions(2);
@@ -77,48 +92,35 @@ describe('forest mcp', () => {
 
   it('shows what would start in a dry run, without the secrets of the .env', async () => {
     expect.assertions(3);
-    // Nothing on :3931, whatever runs on the machine running the tests.
-    const realFetch = global.fetch;
-    const fetch = jest
-      .spyOn(global, 'fetch')
-      .mockImplementation((url, init) =>
-        String(url).includes(':3931/')
-          ? Promise.reject(new Error('ECONNREFUSED'))
-          : realFetch(url, init),
-      );
+    // A port nothing listens on, whatever runs on the machine running the tests.
+    const free = await freePort();
 
-    try {
-      await withAgent(async port => {
-        const io = fakeIO();
-        await runMcp({
-          projectDir: projectWith(`FOREST_ENV_SECRET=sentinel-secret\nAPPLICATION_PORT=${port}\n`),
-          io,
-          dryRun: true,
-          nodeVersion: '22.12.0',
-        });
-
-        expect(io.lines()).toMatch(
-          /cloudflared tunnel --no-autoupdate --url http:\/\/localhost:3931/,
-        );
-        expect(io.lines()).toMatch(/npx -y @forestadmin\/gateway \(dry-run\)/);
-        expect(io.lines()).not.toContain('sentinel-secret');
+    await withAgent(async port => {
+      const io = fakeIO();
+      await runMcp({
+        projectDir: projectWith(`FOREST_ENV_SECRET=sentinel-secret\nAPPLICATION_PORT=${port}\n`),
+        io,
+        dryRun: true,
+        port: free,
+        nodeVersion: '22.12.0',
       });
-    } finally {
-      fetch.mockRestore();
-    }
+
+      expect(io.lines()).toContain(
+        `cloudflared tunnel --no-autoupdate --url http://localhost:${free} (dry-run)`,
+      );
+      expect(io.lines()).toMatch(/npx -y @forestadmin\/gateway \(dry-run\)/);
+      expect(io.lines()).not.toContain('sentinel-secret');
+    });
   });
 
-  it('says so when something holds its port but no tunnel reaches it', async () => {
-    expect.assertions(1);
-    const realFetch = global.fetch;
-    const fetch = jest.spyOn(global, 'fetch').mockImplementation((url, init) => {
-      if (String(url) === 'http://localhost:3931/health') {
-        return Promise.resolve(new Response('ok', { status: 200 }));
-      }
-      if (String(url).includes('/quicktunnel')) return Promise.reject(new Error('ECONNREFUSED'));
-
-      return realFetch(url, init);
+  it('refuses a port anything listens on, even what answers no HTTP, before any tunnel', async () => {
+    expect.assertions(2);
+    // Not an HTTP server: it would answer no health check, and still be made public.
+    const holder = net.createServer(socket => socket.destroy());
+    await new Promise<void>(resolve => {
+      holder.listen(0, resolve);
     });
+    const { port: taken } = holder.address() as net.AddressInfo;
 
     try {
       await withAgent(async port => {
@@ -126,13 +128,18 @@ describe('forest mcp', () => {
         await runMcp({
           projectDir: projectWith(`FOREST_ENV_SECRET=s\nAPPLICATION_PORT=${port}\n`),
           io,
+          dryRun: true,
+          port: taken,
           nodeVersion: '22.12.0',
         });
 
-        expect(io.lines()).toMatch(/Stop what runs on port 3931, or pick another one with --port/);
+        expect(io.lines()).toContain(`Port ${taken} is taken`);
+        expect(io.lines()).not.toContain('cloudflared tunnel');
       });
     } finally {
-      fetch.mockRestore();
+      await new Promise(resolve => {
+        holder.close(resolve);
+      });
     }
   });
 

@@ -5,7 +5,13 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { agentAnswers, localAgentUrl, readProjectEnv, untilStopped } from './local-agent';
+import {
+  agentAnswers,
+  localAgentUrl,
+  portTaken,
+  readProjectEnv,
+  untilStopped,
+} from './local-agent';
 
 /**
  * Claude on a project's local agent, through Forest's MCP server: the standalone Forest Gateway
@@ -16,8 +22,6 @@ import { agentAnswers, localAgentUrl, readProjectEnv, untilStopped } from './loc
 export const MCP_PORT = 3931;
 /** What `@forestadmin/gateway` declares in its `engines`. */
 export const GATEWAY_MIN_NODE: [number, number] = [22, 12];
-/** Where cloudflared serves its metrics, and the quick tunnel's hostname at /quicktunnel. */
-const TUNNEL_METRICS_PORTS = [20241, 20242, 20243, 20244, 20245];
 const TUNNEL_URL = /https:\/\/[a-z0-9-]+\.trycloudflare\.com/;
 const CLOUDFLARED_DOWNLOADS =
   'https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/';
@@ -51,26 +55,6 @@ async function status(url: string, ms = 3000): Promise<number> {
   } catch {
     return 0;
   }
-}
-
-/** The address of a quick tunnel already running on this machine, if any. */
-export async function runningTunnel(): Promise<string | null> {
-  const found = await Promise.all(
-    TUNNEL_METRICS_PORTS.map(async port => {
-      try {
-        const response = await fetch(`http://127.0.0.1:${port}/quicktunnel`, {
-          signal: AbortSignal.timeout(1000),
-        });
-        const { hostname } = (await response.json()) as { hostname?: string };
-
-        return hostname ? `https://${hostname}` : null;
-      } catch {
-        return null;
-      }
-    }),
-  );
-
-  return found.find(Boolean) ?? null;
 }
 
 export function hasCloudflared(): boolean {
@@ -199,21 +183,6 @@ async function guide(url: string, { io }: McpOptions): Promise<void> {
   EXAMPLE_PROMPTS.forEach(prompt => io.say(`    "${prompt}"`));
 }
 
-/** A gateway already on its port: reuse it with its tunnel, and leave both running. */
-async function reuseRunning(options: McpOptions): Promise<void> {
-  const { io } = options;
-  const port = options.port ?? MCP_PORT;
-  const url = await runningTunnel();
-
-  if (url && (await status(`${url}/health`, 8000)) === 200) {
-    io.say(`  The Forest MCP server already runs on :${port}, behind the tunnel ${url}.`);
-    await guide(url, options);
-  } else {
-    io.say(`  Something already answers on :${port}, but no tunnel reaches it.`);
-    io.say(`  Stop what runs on port ${port}, or pick another one with --port.`);
-  }
-}
-
 /** Says what is missing before anything starts, or null when everything is there. */
 async function missing(options: McpOptions, env: Record<string, string>): Promise<string | null> {
   if (!env.FOREST_ENV_SECRET) return 'No Forest project here. Run this from your project folder.';
@@ -246,9 +215,11 @@ export async function runMcp(options: McpOptions): Promise<void> {
     return;
   }
 
-  // Already running (started earlier, here or elsewhere): reuse it, and leave it running.
-  if ((await status(`http://localhost:${port}/health`)) === 200) {
-    await reuseRunning(options);
+  // Whatever listens there, the tunnel would make it public: another app, or the MCP server of
+  // another run or project, never reused.
+  if (await portTaken(port)) {
+    io.say(`  Port ${port} is taken: another app, or a Forest MCP server from another run.`);
+    io.say(`  See what holds it: lsof -nP -iTCP:${port} -sTCP:LISTEN. Stop it, or use --port.`);
 
     return;
   }
@@ -275,26 +246,44 @@ export async function runMcp(options: McpOptions): Promise<void> {
     logFile: path.join(os.tmpdir(), `forest-mcp-${Date.now()}.log`),
   };
   const stop = () => run.children.forEach(stopGroup);
-  const url = await startBoth(options, env, run);
-  const healthy = url && (await poll(async () => (await status(`${url}/health`)) === 200, 120000));
-
-  if (!url || !healthy) {
-    if (url) io.say(`  The MCP server didn't answer through the tunnel. Its log: ${run.logFile}`);
+  // The tunnel's address is public from its first second: an interruption at any step stops
+  // both, ahead of the spinner library's own handler, which exits first.
+  const interrupted = () => {
     stop();
+    process.exit(130);
+  };
+  process.prependOnceListener('SIGINT', interrupted);
+  process.prependOnceListener('SIGTERM', interrupted);
 
-    return;
+  try {
+    const url = await startBoth(options, env, run);
+    const healthy =
+      url && (await poll(async () => (await status(`${url}/health`)) === 200, 120000));
+
+    if (!url || !healthy) {
+      if (url) io.say(`  The MCP server didn't answer through the tunnel. Its log: ${run.logFile}`);
+      stop();
+
+      return;
+    }
+
+    // claude.ai signs in through the address the server names: a wrong one fails only at Connect.
+    const resource = await fetch(`${url}/.well-known/oauth-protected-resource/mcp`)
+      .then(response => response.text())
+      .catch(() => '');
+    if (!resource.includes(url)) {
+      io.say(`  Warning: the server doesn't name ${url}. Its log: ${run.logFile}`);
+    }
+
+    io.say(`  Logs: ${run.logFile}`);
+    await guide(url, options);
+  } catch (error) {
+    stop();
+    throw error;
+  } finally {
+    process.removeListener('SIGINT', interrupted);
+    process.removeListener('SIGTERM', interrupted);
   }
-
-  // claude.ai signs in through the address the server names: a wrong one fails only at Connect.
-  const resource = await fetch(`${url}/.well-known/oauth-protected-resource/mcp`)
-    .then(response => response.text())
-    .catch(() => '');
-  if (!resource.includes(url)) {
-    io.say(`  Warning: the server doesn't name ${url}. Its log: ${run.logFile}`);
-  }
-
-  io.say(`  Logs: ${run.logFile}`);
-  await guide(url, options);
 
   io.say('\n  Ctrl+C stops the MCP server and the tunnel.');
   await untilStopped(run.children, stop);
