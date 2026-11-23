@@ -1,10 +1,12 @@
 import { EventEmitter } from 'events';
 import fs from 'fs';
+import net from 'net';
 import os from 'os';
 import path from 'path';
 
 import {
   localAgentUrl,
+  portTaken,
   readProjectEnv,
   untilStopped,
 } from '../../../src/services/onboarding/local-agent';
@@ -50,6 +52,21 @@ describe('the local agent', () => {
     } finally {
       process.removeListener('SIGINT', earlier);
     }
+  });
+
+  it('sees a port taken by anything listening, and free once it stops', async () => {
+    expect.assertions(2);
+    const server = net.createServer(socket => socket.destroy());
+    await new Promise<void>(resolve => {
+      server.listen(0, resolve);
+    });
+    const { port } = server.address() as net.AddressInfo;
+
+    await expect(portTaken(port)).resolves.toBe(true);
+    await new Promise(resolve => {
+      server.close(resolve);
+    });
+    await expect(portTaken(port)).resolves.toBe(false);
   });
 
   it('resolves once every child has exited on its own, without stopping them', async () => {
