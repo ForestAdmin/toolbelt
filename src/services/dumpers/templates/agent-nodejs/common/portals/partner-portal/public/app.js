@@ -122,9 +122,19 @@ function show(index) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// Uploads still on their way: the review and the sending wait for them.
+const pending = new Set();
+
 function stepValid(step) {
   if (step.tagName === 'FORM' && !step.reportValidity()) return false;
   if (step.dataset.step === 'documents') {
+    if (pending.size) {
+      const note = $('#doc-error');
+      note.textContent = 'Please wait for your documents to finish uploading.';
+      note.hidden = false;
+
+      return false;
+    }
     const missing = Object.keys(DOCS).find(key => !files[key]);
     if (missing) {
       const note = $('#doc-error');
@@ -206,6 +216,7 @@ function wireDocuments() {
   $$('fieldset.doc').forEach(fieldset => {
     const key = fieldset.dataset.doc;
     const keep = async promise => {
+      pending.add(key);
       try {
         files[key] = await promise;
         showFile(fieldset, files[key]);
@@ -214,6 +225,8 @@ function wireDocuments() {
         delete files[key];
         $('.drop', fieldset).classList.remove('ok');
         $('.file', fieldset).textContent = error.message;
+      } finally {
+        pending.delete(key);
       }
     };
     $('input[type=file]', fieldset).addEventListener('change', event => {
@@ -241,13 +254,18 @@ async function send(event) {
   button.disabled = true;
   button.textContent = 'Sending to our bank…';
   const v = values();
-  const documents = [
-    { type: v.idType, fileId: files.id.id, number: v.idNumber, expires: v.idExpires },
-    { type: 'SELFIE', fileId: files.selfie.id },
-    { type: 'PROOF_OF_ADDRESS', fileId: files.address.id },
-  ];
 
   try {
+    // A replacement that failed, or one still uploading, leaves a document missing.
+    const missing = Object.keys(DOCS).find(key => pending.has(key) || !files[key]);
+    if (missing) {
+      throw new Error(`Your ${DOCS[missing].label} is missing or still uploading: go back to it.`);
+    }
+    const documents = [
+      { type: v.idType, fileId: files.id.id, number: v.idNumber, expires: v.idExpires },
+      { type: 'SELFIE', fileId: files.selfie.id },
+      { type: 'PROOF_OF_ADDRESS', fileId: files.address.id },
+    ];
     const response = await fetch('/api/apply', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

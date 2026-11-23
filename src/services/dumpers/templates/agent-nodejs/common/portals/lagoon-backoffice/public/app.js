@@ -176,7 +176,13 @@
     );
   }
 
+  // The page asked for last: an answer to an older request is dropped, or a slow one would
+  // replace the page the operator moved to, its buttons acting on another case.
+  let current = 0;
+
   pages.home = async () => {
+    current += 1;
+    const mine = current;
     view.innerHTML = '<p class="muted">Loading the queue…</p>';
     const query = new URLSearchParams(
       Object.entries(state.filters).filter(([, v]) => v),
@@ -186,10 +192,11 @@
     try {
       data = await api(`/api/home${query ? `?${query}` : ''}`);
     } catch (error) {
-      view.innerHTML = `<div class="card error">${esc(error.message)}</div>`;
+      if (mine === current) view.innerHTML = `<div class="card error">${esc(error.message)}</div>`;
 
       return;
     }
+    if (mine !== current) return;
     warn(data.hidden);
     const statuses = ['OPEN', 'IN_REVIEW', 'WAITING_CUSTOMER'].map(s => [s, STATUS[s][0]]);
     view.innerHTML = `${tiles(data.kpis)}
@@ -484,6 +491,8 @@
   }
 
   pages.showCase = async (id, keepResults = false) => {
+    current += 1;
+    const mine = current;
     if (!keepResults) {
       state.results = {};
       view.innerHTML = '<p class="muted">Loading the case…</p>';
@@ -493,12 +502,14 @@
     try {
       data = await api(`/api/cases/${id}`);
     } catch (error) {
+      if (mine !== current) return;
       view.innerHTML = `<p><a href="#/">← Queue</a></p><div class="card error">${esc(
         error.message,
       )}</div>`;
 
       return;
     }
+    if (mine !== current) return;
     warn(data.hidden);
     state.suggested = data.evidence.risk[0]?.value;
     view.innerHTML = `${caseHeader(data)}

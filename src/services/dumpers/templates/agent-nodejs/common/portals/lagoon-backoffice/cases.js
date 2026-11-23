@@ -142,9 +142,9 @@ function onlyLagoon(rows, seen) {
 
 const parsed = value => (value ? new Date(String(value).replace(' ', 'T')) : null);
 
-/** Monday 00:00 in Paris, this week. */
-function parisMonday(now = new Date()) {
-  const parts = Object.fromEntries(
+/** Paris's wall clock at an instant, to the second. */
+function parisParts(instant) {
+  return Object.fromEntries(
     new Intl.DateTimeFormat('en-GB', {
       timeZone: 'Europe/Paris',
       weekday: 'short',
@@ -152,16 +152,31 @@ function parisMonday(now = new Date()) {
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
       hour12: false,
     })
-      .formatToParts(now)
+      .formatToParts(instant)
       .map(p => [p.type, p.value]),
   );
-  const back = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(parts.weekday);
-  const offset = now.getTime() - Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour % 24);
-  const midnight = Date.UTC(parts.year, parts.month - 1, parts.day - back) + offset;
+}
 
-  return new Date(Math.round(midnight / 3600000) * 3600000);
+/** How far Paris's wall clock is ahead of UTC at an instant (1 or 2 hours). */
+function parisOffset(instant) {
+  const p = parisParts(instant);
+  const wall = Date.UTC(p.year, p.month - 1, p.day, p.hour % 24, p.minute, p.second);
+
+  return wall - Math.floor(instant.getTime() / 1000) * 1000;
+}
+
+/** Monday 00:00 in Paris, this week, with Paris's offset on that Monday (summer time aside). */
+function parisMonday(now = new Date()) {
+  const p = parisParts(now);
+  const back = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(p.weekday);
+  const wallMidnight = Date.UTC(p.year, p.month - 1, p.day - back);
+  const guess = wallMidnight - parisOffset(now);
+
+  return new Date(wallMidnight - parisOffset(new Date(guess)));
 }
 
 const median = list => {
@@ -278,8 +293,10 @@ async function queue(gateway, { status, age } = {}, seen = {}) {
   const [low, high] = AGES[age] || [0, Infinity];
 
   return cases
-    .map(k => {
-      const days = (now - parsed(k.opened_at)) / DAY;
+    .map(k => ({ k, days: (now - parsed(k.opened_at)) / DAY }))
+    // On the exact age: rounded, a case opened 23.5 hours ago would leave "Under a day".
+    .filter(({ days }) => days >= low && days < high)
+    .map(({ k, days }) => {
       const customer = byId.get(k.customer_id);
 
       return {
@@ -295,8 +312,7 @@ async function queue(gateway, { status, age } = {}, seen = {}) {
         customerReference: customer?.reference || null,
         risk: customer?.risk_rating || null,
       };
-    })
-    .filter(k => k.ageDays >= low && k.ageDays < high);
+    });
 }
 
 /** Does Forest scope this key to Lagoon? Counts the cases of anyone else it can see. */

@@ -129,15 +129,25 @@ export default class PortalsCommand extends AbstractCommand {
     });
     child.once('exit', () => fs.rmSync(cwd, { recursive: true, force: true }));
 
+    const stopChild = () => {
+      if (child.exitCode !== null || !child.pid) return;
+      try {
+        process.kill(-child.pid, 'SIGTERM');
+      } catch {
+        child.kill('SIGTERM');
+      }
+    };
+    // In its own process group, Ctrl+C never reaches it: stopped first, ahead of the spinner
+    // library's own handler, which exits, so it never outlives the command with its secret.
+    process.prependOnceListener('SIGINT', stopChild);
+    process.prependOnceListener('SIGTERM', stopChild);
+
     return {
       logFile,
       stop: () => {
-        if (child.exitCode !== null || !child.pid) return;
-        try {
-          process.kill(-child.pid, 'SIGTERM');
-        } catch {
-          child.kill('SIGTERM');
-        }
+        process.removeListener('SIGINT', stopChild);
+        process.removeListener('SIGTERM', stopChild);
+        stopChild();
       },
     };
   }

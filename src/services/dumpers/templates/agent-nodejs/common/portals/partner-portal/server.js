@@ -21,6 +21,7 @@ const {
   createGateway,
   explain,
   forestRecordUrl,
+  localOnly,
   passwordGate,
   publicOrigin,
 } = require('./gateway');
@@ -103,10 +104,9 @@ function readBody(req, limit) {
     let size = 0;
     req.on('data', chunk => {
       size += chunk.length;
-      if (size > limit) {
-        reject(Object.assign(new Error('Too large'), { status: 413 }));
-        req.destroy();
-      } else chunks.push(chunk);
+      // Past the limit, the rest is read and dropped: cutting the socket would lose the 413.
+      if (size > limit) reject(Object.assign(new Error('Too large'), { status: 413 }));
+      else chunks.push(chunk);
     });
     req.on('end', () => resolve(Buffer.concat(chunks)));
     req.on('error', reject);
@@ -222,6 +222,16 @@ async function uploadDocument(kycId, doc) {
 
 async function apply(req, res) {
   const { applicant = {}, documents = [] } = await readJson(req);
+  // Checked before the bank opens a case: failing after it would lose the case's reference, and a
+  // retry would open a second one.
+  if (
+    !applicant ||
+    typeof applicant !== 'object' ||
+    !Array.isArray(documents) ||
+    documents.some(doc => !doc || typeof doc !== 'object')
+  ) {
+    return send(res, 400, { error: 'Invalid application.' });
+  }
   const reference = portalReference();
   const submitted = await gateway.execute(
     'kyc_cases',
@@ -244,7 +254,15 @@ async function apply(req, res) {
     });
   }
   const { id, status } = await caseId(caseReference);
-  const uploads = [];
+  // Without the case, no document can reach it: each says so, the references stay for recovery.
+  const uploads = id
+    ? []
+    : documents.slice(0, 6).map(doc => ({
+        type: doc.type,
+        status,
+        ok: false,
+        error: 'The bank opened the case, but it could not be found to attach this document.',
+      }));
   if (id) {
     // One after the other: the bank files them in the order the customer sent them.
     for (const doc of documents.slice(0, 6)) {
@@ -299,7 +317,7 @@ const ROUTES = {
 };
 
 async function route(req, res) {
-  if (!passwordGate(req, res)) return null;
+  if (!localOnly(req, res) || !passwordGate(req, res)) return null;
   const { pathname } = new URL(req.url, origin);
   const handler = ROUTES[`${req.method} ${pathname}`];
   if (handler) return handler(req, res);

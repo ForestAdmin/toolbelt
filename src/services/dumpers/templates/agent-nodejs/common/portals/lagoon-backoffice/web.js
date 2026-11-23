@@ -27,12 +27,12 @@ function readJson(req) {
     let size = 0;
     req.on('data', chunk => {
       size += chunk.length;
-      if (size > MAX_JSON) {
-        reject(Object.assign(new Error('Too large'), { status: 413 }));
-        req.destroy();
-      } else chunks.push(chunk);
+      // Past the limit, the rest is read and dropped: cutting the socket would lose the 413.
+      if (size > MAX_JSON) reject(Object.assign(new Error('Too large'), { status: 413 }));
+      else chunks.push(chunk);
     });
     req.on('end', () => {
+      if (size > MAX_JSON) return;
       try {
         resolve(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'));
       } catch {

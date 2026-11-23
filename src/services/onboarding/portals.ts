@@ -103,6 +103,8 @@ export function setDotenv(file: string, key: string, value: string): void {
     const separator = before && !before.endsWith('\n') ? '\n' : '';
     fs.appendFileSync(file, `${separator}${key}=${value}\n`, { mode: 0o600 });
   }
+  // `mode` applies to a file it creates only: a .env that was there may be readable by others.
+  fs.chmodSync(file, 0o600);
 }
 
 /** Why a pasted key is refused, or null when it looks right. Never quotes the key. */
@@ -226,11 +228,11 @@ async function answers(port: number): Promise<boolean> {
   }
 }
 
-async function waitUntilAnswers(port: number, child: ChildProcess, ms = 15000): Promise<boolean> {
+async function waitUntilAnswers(port: number, ended: () => boolean, ms = 15000): Promise<boolean> {
   const deadline = Date.now() + ms;
 
   while (Date.now() < deadline) {
-    if (child.exitCode !== null) return false;
+    if (ended()) return false;
     // eslint-disable-next-line no-await-in-loop -- polling is sequential by nature
     if (await answers(port)) return true;
     // eslint-disable-next-line no-await-in-loop -- polling is sequential by nature
@@ -624,8 +626,13 @@ async function startApp(
     },
   );
   run.children.push(child);
+  // A spawn that fails (its folder gone) emits an error, never an exit: a failed start too.
+  let failed = false;
+  child.once('error', () => {
+    failed = true;
+  });
 
-  if (await waitUntilAnswers(spec.port, child)) {
+  if (await waitUntilAnswers(spec.port, () => failed || child.exitCode !== null)) {
     io.step('done', spec.label, url, spec.what);
 
     return true;

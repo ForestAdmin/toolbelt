@@ -76,6 +76,8 @@ async function withAgent(gateway: boolean, body: (port: number) => Promise<void>
   try {
     await body((server.address() as { port: number }).port);
   } finally {
+    // Node 18 waits for idle keep-alive connections on close: end them first.
+    server.closeAllConnections();
     await new Promise(resolve => {
       server.close(resolve);
     });
@@ -127,7 +129,8 @@ describe('forest portals', () => {
   it('sets the key on a line of its own, replacing an old one, in a file its user only can read', () => {
     expect.assertions(3);
     const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'dotenv-')), '.env');
-    fs.writeFileSync(file, 'FOREST_ENV_SECRET=s', { mode: 0o600 });
+    // Readable by others, as a .env written without a mode is.
+    fs.writeFileSync(file, 'FOREST_ENV_SECRET=s', { mode: 0o644 });
 
     setDotenv(file, 'FOREST_GATEWAY_KEY', 'fgw_old');
     expect(fs.readFileSync(file, 'utf8')).toBe('FOREST_ENV_SECRET=s\nFOREST_GATEWAY_KEY=fgw_old\n');
@@ -367,6 +370,22 @@ describe('forest portals', () => {
 
       expect(io.lines()).toMatch(new RegExp(`\\[failed\\] Test portal · port ${port} is taken`));
       expect(io.lines()).toContain(`\`lsof -nP -iTCP:${port} -sTCP:LISTEN\``);
+      expect(io.open).not.toHaveBeenCalled();
+    });
+  });
+
+  it('reports an app that cannot start, its folder gone, and goes on without crashing', async () => {
+    expect.assertions(2);
+
+    await withAgent(true, async port => {
+      const io = fakeIO();
+      await runPortals(
+        options(onPort(port, `FOREST_GATEWAY_KEY=${GOOD_KEY}\n`), io, {
+          portals: [{ ...TEST_PORTAL, dir: 'portals/gone' }],
+        }),
+      );
+
+      expect(io.lines()).toMatch(/\[failed\] Test portal · didn't start/);
       expect(io.open).not.toHaveBeenCalled();
     });
   });

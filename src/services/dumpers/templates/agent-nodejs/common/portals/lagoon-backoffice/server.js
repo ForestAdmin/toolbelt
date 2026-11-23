@@ -23,6 +23,7 @@ const path = require('path');
 const {
   createGateway,
   forestRecordUrl,
+  localOnly,
   passwordGate,
   publicOrigin,
   settingsFrom,
@@ -166,7 +167,7 @@ const ROUTES = [
 ];
 
 async function route(req, res) {
-  if (!passwordGate(req, res)) return null;
+  if (!localOnly(req, res) || !passwordGate(req, res)) return null;
   const url = new URL(req.url, origin);
   for (const [method, pattern, handler] of ROUTES) {
     const match = pattern.exec(url.pathname);

@@ -927,6 +927,74 @@ describe('demo forest-layout.json asset', () => {
     });
   });
 
+  describe("the portals' gates", () => {
+    /** One of the apps' modules, as a demo project gets it. */
+    const portalModule = (...parts: string[]) =>
+      // eslint-disable-next-line global-require, import/no-dynamic-require, @typescript-eslint/no-var-requires
+      require(path.join(path.dirname(file), 'portals', ...parts));
+    const gateway = () => portalModule('partner-portal', 'gateway.js');
+    const reply = () => {
+      const res = { status: 0, writeHead: jest.fn(), end: jest.fn() };
+      res.writeHead.mockImplementation((status: number) => {
+        res.status = status;
+      });
+
+      return res;
+    };
+    const request = (method: string, url: string, remoteAddress = '127.0.0.1') => ({
+      method,
+      url,
+      headers: {},
+      socket: { remoteAddress },
+    });
+
+    it('answers this computer only when run locally, anyone when hosted', () => {
+      expect.assertions(4);
+      const { localOnly } = gateway();
+      const refused = reply();
+
+      expect(localOnly(request('GET', '/', '192.168.1.20'), refused)).toBe(false);
+      expect(refused.status).toBe(403);
+      expect(localOnly(request('GET', '/', '::1'), reply())).toBe(true);
+      process.env.PUBLIC_URL = 'https://portal.example.com';
+      try {
+        expect(localOnly(request('GET', '/', '192.168.1.20'), reply())).toBe(true);
+      } finally {
+        delete process.env.PUBLIC_URL;
+      }
+    });
+
+    it('keeps the demo password on everything but an uploaded file, read as the router reads it', () => {
+      expect.assertions(4);
+      const { passwordGate } = gateway();
+      process.env.DEMO_PASSWORD = 'sentinel';
+      try {
+        const upload = `/files/${'a'.repeat(32)}`;
+        expect(passwordGate(request('GET', upload), reply())).toBe(true);
+        expect(passwordGate(request('GET', '/files/../api/home'), reply())).toBe(false);
+        expect(passwordGate(request('POST', `/files/../api/apply`), reply())).toBe(false);
+        expect(passwordGate(request('POST', upload), reply())).toBe(false);
+      } finally {
+        delete process.env.DEMO_PASSWORD;
+      }
+    });
+
+    it("counts the back office's week from Monday 00:00 in Paris, summer time included", () => {
+      expect.assertions(3);
+      const { parisMonday } = portalModule('lagoon-backoffice', 'cases.js');
+
+      expect(parisMonday(new Date('2026-11-26T23:30:00Z')).toISOString()).toBe(
+        '2026-11-22T23:00:00.000Z',
+      );
+      expect(parisMonday(new Date('2026-03-30T10:47:13Z')).toISOString()).toBe(
+        '2026-03-29T22:00:00.000Z',
+      );
+      expect(parisMonday(new Date('2026-10-28T08:15:59Z')).toISOString()).toBe(
+        '2026-10-25T23:00:00.000Z',
+      );
+    });
+  });
+
   it('ships a sample PDF for every kind the portal asks for, clean and flawed', () => {
     expect.hasAssertions();
     const samples = path.join(path.dirname(file), 'portals', 'partner-portal', 'samples');

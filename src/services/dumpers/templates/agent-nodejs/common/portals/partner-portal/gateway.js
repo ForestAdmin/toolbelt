@@ -140,14 +140,34 @@ const sameText = (a, b) => {
   return x.length === y.length && crypto.timingSafeEqual(x, y);
 };
 
+/** The machine itself, over IPv4 or IPv6. */
+const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
+
+/**
+ * Run locally (no PUBLIC_URL), both apps answer this machine only: they act with the key the
+ * server holds, and their port is open on every interface. Answers 403 itself and returns false
+ * when the request may not go on.
+ */
+function localOnly(req, res) {
+  if (process.env.PUBLIC_URL || LOOPBACK.has(req.socket.remoteAddress)) return true;
+  res.writeHead(403, { 'content-type': 'text/plain; charset=utf-8' });
+  res.end('This demo answers this computer only.');
+
+  return false;
+}
+
 /**
  * The shared demo password (DEMO_PASSWORD, any user name), asked by the browser. Off when unset.
- * Uploaded files (/files/<random id>) stay open: the bank's agent fetches them from there.
- * Answers 401 itself and returns false when the request may not go on.
+ * An uploaded file (GET /files/<random id>) stays open: the bank's agent fetches it from there.
+ * The path is read as the router reads it, so `/files/../api/…` is not a file. Answers 401 itself
+ * and returns false when the request may not go on.
  */
 function passwordGate(req, res) {
   const password = process.env.DEMO_PASSWORD;
-  if (!password || req.url.startsWith('/files/')) return true;
+  const { pathname } = new URL(req.url, 'http://portal');
+  if (!password || (req.method === 'GET' && /^\/files\/[a-f0-9]{32}$/.test(pathname))) {
+    return true;
+  }
   const [scheme, encoded] = String(req.headers.authorization || '').split(' ');
   const given = scheme === 'Basic' ? Buffer.from(encoded || '', 'base64').toString('utf8') : '';
   if (sameText(given.slice(given.indexOf(':') + 1), password)) return true;
@@ -168,6 +188,7 @@ module.exports = {
   createGateway,
   explain,
   forestRecordUrl,
+  localOnly,
   passwordGate,
   publicOrigin,
   readEnv,
