@@ -2,7 +2,8 @@
 import type { Config } from '../../../../src/interfaces/project-create-interface';
 import type { Language } from '../../../../src/utils/languages';
 
-import { existsSync, readFileSync } from 'fs';
+import fs, { existsSync, readFileSync } from 'fs';
+import os from 'os';
 import path from 'path';
 
 import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
@@ -995,6 +996,42 @@ describe('demo forest-layout.json asset', () => {
       expect(post({ host: '127.0.0.1:3500', origin: 'http://127.0.0.1:3500' })).toBe(true);
       // A command-line client sends no Origin: still from this machine, to localhost.
       expect(post({ host: 'localhost:3500' })).toBe(true);
+    });
+
+    it('reads a quoted key followed by spaces without its quotes', () => {
+      expect.assertions(1);
+      const dotenv = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'portal-env-')), '.env');
+      fs.writeFileSync(dotenv, 'FOREST_GATEWAY_KEY="fgw_key"   \n');
+
+      expect(gateway().readEnv(dotenv).FOREST_GATEWAY_KEY).toBe('fgw_key');
+    });
+
+    it('asks for screening before an approval, and reads the whole queue, page after page', async () => {
+      expect.assertions(3);
+      const { guide, queue } = portalModule('lagoon-backoffice', 'cases.js');
+      const checked = { status: 'OPEN', docs_complete: '✓', idcheck_result: '✓ match' };
+      const open = Array.from({ length: 237 }, (_, i) => ({
+        id: `k${i}`,
+        status: 'OPEN',
+        opened_at: new Date(Date.now() - (i + 1) * 3600e3).toISOString(),
+        customer_id: `c${i}`,
+        partner: 'Lagoon',
+      }));
+      const fake = {
+        mask: (text: string) => text,
+        list: async (collection: string, { page }: { page: { limit: number; offset: number } }) => {
+          const rows =
+            collection === 'kyc_cases'
+              ? open
+              : open.map(k => ({ id: k.customer_id, partner: 'Lagoon' }));
+
+          return { status: 200, body: { data: rows.slice(page.offset, page.offset + page.limit) } };
+        },
+      };
+
+      expect(guide({ ...checked, screening_result: '' }).advice.action).toBe('screen');
+      expect(guide({ ...checked, screening_result: '✓ no hit' }).advice.action).toBe('approve');
+      await expect(queue(fake, {}, {})).resolves.toHaveLength(237);
     });
 
     it('takes no name inherited from Object for an action or an age, as an address could ask', () => {

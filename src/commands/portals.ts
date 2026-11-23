@@ -143,6 +143,9 @@ export default class PortalsCommand extends AbstractCommand {
     // command with its secret, and the command ends there, before any later step of the setup.
     const interrupted = () => {
       stopChild();
+      // The process exits before the agent's exit is heard: its folder (a copy of the demo's
+      // data) goes now. Removing files it still has open is safe on macOS and Linux.
+      fs.rmSync(cwd, { recursive: true, force: true });
       process.exit(130);
     };
     process.prependOnceListener('SIGINT', interrupted);

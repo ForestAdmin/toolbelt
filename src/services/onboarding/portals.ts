@@ -94,17 +94,15 @@ const WRONG_ENVIRONMENT =
 
 /** Sets KEY=value in a .env, replacing its line if there is one, without ever echoing it. */
 export function setDotenv(file: string, key: string, value: string): void {
+  // Private before the key is in it: a .env that was there may be readable by others, and `mode`
+  // applies only to a file it creates.
+  if (fs.existsSync(file)) fs.chmodSync(file, 0o600);
   const before = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-  const line = new RegExp(`^${key}=.*$`, 'm');
-
-  if (line.test(before)) {
-    fs.writeFileSync(file, before.replace(line, `${key}=${value}`), { mode: 0o600 });
-  } else {
-    const separator = before && !before.endsWith('\n') ? '\n' : '';
-    fs.appendFileSync(file, `${separator}${key}=${value}\n`, { mode: 0o600 });
-  }
-  // `mode` applies to a file it creates only: a .env that was there may be readable by others.
-  fs.chmodSync(file, 0o600);
+  // Every line that sets it goes, and one is written: with two, the apps would read the last.
+  const sets = new RegExp(`^\\s*(?:export\\s+)?${key}\\s*=`);
+  const kept = before.split('\n').filter(line => !sets.test(line));
+  const rest = kept.join('\n').replace(/\n*$/, '');
+  fs.writeFileSync(file, `${rest ? `${rest}\n` : ''}${key}=${value}\n`, { mode: 0o600 });
 }
 
 /** Why a pasted key is refused, or null when it looks right. Never quotes the key. */
@@ -495,7 +493,18 @@ async function setUpProduction(
   } catch (error) {
     const [reason] = (error as Error).message.split('\n');
     io.step('failed', 'Production', reason);
-    io.panel('To finish by hand, in this folder', productionSteps(await options.facts()));
+    // With Production and its branch there, what is left is the demo's layout on the branch: the
+    // next runs find nothing to set up, so it is said here.
+    const left = productionSteps(await options.facts());
+    io.panel(
+      'To finish by hand, in this folder',
+      left.length
+        ? left
+        : [
+            '1. `forest layout:apply forest-layout.json --with-workflows -e Development -t Operations -f`',
+            "   The demo's layout and workflows, on the branch.",
+          ],
+    );
 
     return null;
   }
@@ -701,7 +710,10 @@ export async function runPortals(options: PortalsOptions): Promise<void> {
     return;
   }
 
-  await io.open(`http://localhost:${up[0].port}`);
+  // A browser that does not open leaves the apps running all the same, stopped as usual.
+  await io.open(`http://localhost:${up[0].port}`).catch(() => {
+    io.say(`  Open http://localhost:${up[0].port} in your browser.`);
+  });
 
   io.say(`\n  Ctrl+C stops them. Logs: ${logFile}`);
   await untilStopped(run.children, stop);

@@ -124,6 +124,22 @@ async function rowsOf(gateway, what, call) {
   return (result.body.data || []).map(snake);
 }
 
+/**
+ * Every row of a list, a page at a time (up to 10,000): a single page would hide the rest from the
+ * queue, or leave the 30-day figures short. `list` takes the page to read.
+ */
+async function allRows(gateway, what, list, size = 200) {
+  const rows = [];
+  for (let offset = 0; offset < 10000; offset += size) {
+    // eslint-disable-next-line no-await-in-loop -- one page after the other
+    const page = await rowsOf(gateway, what, list({ limit: size, offset }));
+    rows.push(...page);
+    if (page.length < size) break;
+  }
+
+  return rows;
+}
+
 async function countOf(gateway, what, call) {
   const result = await call;
   if (result.status !== 200) throw new GatewayError(what, result, gateway);
@@ -211,13 +227,12 @@ async function kpis(gateway, now = new Date()) {
       gateway.count('kyc_cases', { filter: decidedSince(parisMonday(now).toISOString()) }),
     ),
     countOf(gateway, '30 days', gateway.count('kyc_cases', { filter: decidedSince(since30) })),
-    rowsOf(
-      gateway,
-      'decided',
+    allRows(gateway, 'decided', page =>
       gateway.list('kyc_cases', {
         filter: decidedSince(since30),
         projection: ['id', 'status', 'opened_at', 'resolved_at', 'rejection_code', 'partner'],
-        page: { limit: 1000, offset: 0 },
+        sort: [{ field: 'id', direction: 'asc' }],
+        page,
       }),
     ),
   ]);
@@ -251,9 +266,7 @@ const AGES = Object.assign(Object.create(null), {
 async function queue(gateway, { status, age } = {}, seen = {}) {
   const statuses = OPEN.includes(status) ? [status] : OPEN;
   const cases = onlyLagoon(
-    await rowsOf(
-      gateway,
-      'queue',
+    await allRows(gateway, 'queue', page =>
       gateway.list('kyc_cases', {
         filter: lagoon(leaf('status', 'In', statuses)),
         projection: [
@@ -266,17 +279,18 @@ async function queue(gateway, { status, age } = {}, seen = {}) {
           'customer_id',
           'partner',
         ],
-        sort: [{ field: 'opened_at', direction: 'asc' }],
-        page: { limit: 200, offset: 0 },
+        sort: [
+          { field: 'opened_at', direction: 'asc' },
+          { field: 'id', direction: 'asc' },
+        ],
+        page,
       }),
     ),
     seen,
   );
   const customers = cases.length
     ? onlyLagoon(
-        await rowsOf(
-          gateway,
-          'customers',
+        await allRows(gateway, 'customers', page =>
           gateway.list('customers', {
             filter: and(
               leaf('partner', 'Equal', PARTNER),
@@ -287,7 +301,8 @@ async function queue(gateway, { status, age } = {}, seen = {}) {
               ),
             ),
             projection: ['id', 'display_name', 'reference', 'risk_rating', 'partner'],
-            page: { limit: 200, offset: 0 },
+            sort: [{ field: 'id', direction: 'asc' }],
+            page,
           }),
         ),
         seen,
@@ -357,6 +372,8 @@ function guide(k) {
   const docsOk = starts(k.docs_complete, '✓');
   const idChecked = /^[✓✗⚠]/.test(k.idcheck_result || '');
   const idOk = starts(k.idcheck_result, '✓');
+  // Empty until Screen against sanctions lists ran: no evidence is not a clear result.
+  const screened = /^[✓✗⚠]/.test(k.screening_result || '');
   const openHit = /✗[^·]*open/i.test(k.screening_result || '');
   const riskLow = starts(k.risk_rating_suggested, '✓');
   let advice;
@@ -371,7 +388,9 @@ function guide(k) {
   } else if (!docsOk) {
     advice = { action: 'missing', why: 'Documents missing or outdated: ask for them.' };
   } else if (!idChecked) advice = { action: 'verify', why: 'Run the ID check first (step 1).' };
-  else if (openHit) {
+  else if (!screened) {
+    advice = { action: 'screen', why: 'Screen the applicant against the sanctions lists (step 2).' };
+  } else if (openHit) {
     advice = { action: null, why: 'An open screening hit: the screening team decides first.' };
   } else if (riskLow) advice = { action: 'approve', why: 'Every check passed, low risk: approve.' };
   else {
@@ -386,7 +405,7 @@ function guide(k) {
     steps: {
       papers: idState(docsChecked, docsOk),
       idcheck: idState(idChecked, idOk),
-      screening: openHit ? 'hit' : 'clear',
+      screening: screened ? (openHit ? 'hit' : 'clear') : 'todo',
       decision: closed ? 'done' : 'todo',
     },
     docsChecked,

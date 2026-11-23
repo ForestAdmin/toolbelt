@@ -36,7 +36,8 @@ function readEnv(file) {
       .split(/\r?\n/)
       .map(line => /^\s*(?:export\s+)?([\w.]+)\s*=\s*(.*)\s*$/.exec(line))
       .filter(Boolean)
-      .map(([, name, value]) => [name, value.replace(/^(['"])(.*)\1$/, '$2')]),
+      // Trimmed first: spaces after a quoted value would keep its quotes in the key sent.
+      .map(([, name, value]) => [name, value.trim().replace(/^(['"])(.*)\1$/, '$2')]),
   );
 }
 

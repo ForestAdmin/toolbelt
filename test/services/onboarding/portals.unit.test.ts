@@ -140,6 +140,19 @@ describe('forest portals', () => {
     expect(fs.statSync(file).mode.toString(8).slice(-3)).toBe('600');
   });
 
+  it('keeps one line for the key when the .env sets it twice, so the apps read the new one', () => {
+    expect.assertions(1);
+    const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'dotenv-')), '.env');
+    fs.writeFileSync(
+      file,
+      'FOREST_GATEWAY_KEY=fgw_a\nFOREST_ENV_SECRET=s\nexport FOREST_GATEWAY_KEY=fgw_b\n',
+    );
+
+    setDotenv(file, 'FOREST_GATEWAY_KEY', 'fgw_new');
+
+    expect(fs.readFileSync(file, 'utf8')).toBe('FOREST_ENV_SECRET=s\nFOREST_GATEWAY_KEY=fgw_new\n');
+  });
+
   it('reads the agent-bff version the installed agent asks for', () => {
     expect.assertions(1);
     expect(expectedGatewayVersion(demoProject({ peer: '1.47.0' }))).toBe('1.47.0');
@@ -292,6 +305,29 @@ describe('forest portals', () => {
 
       expect(io.lines()).toMatch(/\[failed\] Production · `forest branch` exited with code 1/);
       expect(io.lines()).toContain('To finish by hand, in this folder');
+    });
+  });
+
+  it('gives the layout command to finish by hand when the layout step fails after the branch', async () => {
+    expect.assertions(1);
+
+    await withAgent(true, async port => {
+      const io = fakeIO();
+      io.confirm.mockResolvedValue(true);
+      const forest = jest.fn(async ([command]: string[]) => {
+        if (command === 'layout:apply') throw new Error('`forest layout:apply` exited with code 2');
+
+        return '';
+      });
+      const facts = jest
+        .fn()
+        .mockResolvedValueOnce({ ...FACTS, hasBranch: false })
+        .mockResolvedValue(FACTS);
+      await runPortals(options(onPort(port), io, { facts, forest }));
+
+      expect(io.lines()).toContain(
+        '1. `forest layout:apply forest-layout.json --with-workflows -e Development -t Operations -f`',
+      );
     });
   });
 
