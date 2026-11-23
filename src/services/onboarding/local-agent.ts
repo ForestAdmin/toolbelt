@@ -16,9 +16,9 @@ export function readProjectEnv(projectDir: string): Record<string, string> {
   return fs.existsSync(file) ? dotenv.parse(fs.readFileSync(file)) : {};
 }
 
-/** Where the project's agent listens on this machine. */
+/** Where the project's agent listens on this machine: the CLI's APPLICATION_PORT, else an app's PORT. */
 export function localAgentUrl(env: Record<string, string>): string {
-  return `http://localhost:${env.APPLICATION_PORT || 3310}`;
+  return `http://localhost:${env.APPLICATION_PORT || env.PORT || 3310}`;
 }
 
 /** Whether something answers there, whatever the status: a stopped agent refuses the connection. */

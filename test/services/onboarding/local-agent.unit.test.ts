@@ -29,9 +29,10 @@ describe('the local agent', () => {
     );
   });
 
-  it('finds the agent on its APPLICATION_PORT, 3310 by default', () => {
-    expect.assertions(2);
-    expect(localAgentUrl({ APPLICATION_PORT: '3311' })).toBe('http://localhost:3311');
+  it("finds the agent on its APPLICATION_PORT, else an app's PORT, 3310 by default", () => {
+    expect.assertions(3);
+    expect(localAgentUrl({ APPLICATION_PORT: '3311', PORT: '4000' })).toBe('http://localhost:3311');
+    expect(localAgentUrl({ PORT: '4000' })).toBe('http://localhost:4000');
     expect(localAgentUrl({})).toBe('http://localhost:3310');
   });
 
