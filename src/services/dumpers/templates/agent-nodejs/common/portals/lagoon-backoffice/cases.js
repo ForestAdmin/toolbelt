@@ -372,8 +372,9 @@ function guide(k) {
   const docsOk = starts(k.docs_complete, '✓');
   const idChecked = /^[✓✗⚠]/.test(k.idcheck_result || '');
   const idOk = starts(k.idcheck_result, '✓');
-  // Empty until Screen against sanctions lists ran: no evidence is not a clear result.
-  const screened = /^[✓✗⚠]/.test(k.screening_result || '');
+  // Empty until Screen against sanctions lists ran: no evidence is not a clear result. A hit
+  // cleared before reads ○, a finished screening too.
+  const screened = /^[✓✗⚠○]/.test(k.screening_result || '');
   const openHit = /✗[^·]*open/i.test(k.screening_result || '');
   const riskLow = starts(k.risk_rating_suggested, '✓');
   let advice;

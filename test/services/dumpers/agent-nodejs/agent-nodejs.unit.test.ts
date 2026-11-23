@@ -1007,7 +1007,7 @@ describe('demo forest-layout.json asset', () => {
     });
 
     it('asks for screening before an approval, and reads the whole queue, page after page', async () => {
-      expect.assertions(3);
+      expect.assertions(4);
       const { guide, queue } = portalModule('lagoon-backoffice', 'cases.js');
       const checked = { status: 'OPEN', docs_complete: '✓', idcheck_result: '✓ match' };
       const open = Array.from({ length: 237 }, (_, i) => ({
@@ -1031,6 +1031,10 @@ describe('demo forest-layout.json asset', () => {
 
       expect(guide({ ...checked, screening_result: '' }).advice.action).toBe('screen');
       expect(guide({ ...checked, screening_result: '✓ no hit' }).advice.action).toBe('approve');
+      expect(
+        guide({ ...checked, screening_result: '○ SCR-1: A. Name, PEP, score 81, cleared before' })
+          .advice.action,
+      ).toBe('approve');
       await expect(queue(fake, {}, {})).resolves.toHaveLength(237);
     });
 
