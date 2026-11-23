@@ -652,4 +652,29 @@ export default class OnboardingUI {
   note(text: string): void {
     this.print(`  ${colors.muted(text)}\n`);
   }
+
+  // ---------- a guided command's screen, outside any checklist ----------
+
+  /** One step, printed for good as the checklist shows it, with its "why" when it needs one. */
+  line(state: 'done' | 'warned' | 'failed', label: string, detail?: string, why?: string): void {
+    const lines = [this.stepLine({ id: label, label, state, detail })];
+    if (why) {
+      wrap(`Why: ${why}`, Math.min(this.width - 8, 90)).forEach(text =>
+        lines.push(colors.muted(`      ${text}`)),
+      );
+    }
+    this.print(`${lines.join('\n')}\n`);
+  }
+
+  /**
+   * What the user does next, under a bar in the accent color. Never clipped, so a command stays
+   * whole to copy; `code` in backticks shows in the accent color.
+   */
+  panel(title: string, lines: string[]): void {
+    const bar = colors.accent('┃');
+    const body = lines.map(line =>
+      `  ${bar} ${line.replace(/`([^`]+)`/g, (_, code) => colors.accent(code))}`.trimEnd(),
+    );
+    this.print(`\n  ${bar} ${colors.bold(title)}\n${body.join('\n')}\n\n`);
+  }
 }

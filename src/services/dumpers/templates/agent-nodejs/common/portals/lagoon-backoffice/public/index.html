@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lagoon · Onboarding back office</title>
+    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <a class="brand" href="#/"
+        ><img src="/logo.svg" alt="" width="26" height="26" /> Lagoon
+        <span class="brand-sub">Onboarding back office</span></a
+      >
+      <div class="bar-right">
+        <span class="pill" id="scope" title="Only Lagoon's clients: the server filters every call on partner = Lagoon">Filter: …</span>
+        <span class="pill" id="bank" title="The bank's Gateway API">Bank: …</span>
+      </div>
+    </header>
+    <div class="warning" id="warning" hidden></div>
+    <main id="view"><p class="muted">Loading…</p></main>
+    <script src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,60 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R /F3 7 0 R >> /ExtGState << /Glare << /ca 0.88 >> /Faint << /ca 0.16 >> >> >> >>
+endobj
+4 0 obj
+<< /Length 1357 >>
+stream
+0.114 0.306 0.847 rg 0 752 595 90 re f
+q BT /F2 20 Tf 1.000 1.000 1.000 rg 1 0 0 1 48 790 Tm (EDF) Tj ET Q
+q BT /F2 18 Tf 0.067 0.094 0.153 rg 1 0 0 1 48 702 Tm (Electricity bill) Tj ET Q
+q BT /F1 10 Tf 0.294 0.333 0.388 rg 1 0 0 1 48 680 Tm (Issued on 10/10/2026) Tj ET Q
+0.976 0.980 0.984 rg 330 648 220 74 re f
+0.898 0.906 0.922 RG 0.8 w 330 648 220 74 re S
+q BT /F2 10 Tf 0.067 0.094 0.153 rg 1 0 0 1 342 702 Tm (Camille Rousseau) Tj ET Q
+q BT /F1 10 Tf 0.067 0.094 0.153 rg 1 0 0 1 342 686 Tm (27 rue de la Roquette) Tj ET Q
+q BT /F1 10 Tf 0.067 0.094 0.153 rg 1 0 0 1 342 670 Tm (75011 Paris) Tj ET Q
+0.953 0.957 0.965 rg 48 572 500 26 re f
+q BT /F1 10 Tf 0.067 0.094 0.153 rg 1 0 0 1 58 582 Tm (Consumption, 2 months) Tj ET Q
+q BT /F2 10 Tf 0.067 0.094 0.153 rg 1 0 0 1 250 582 Tm (68.00 EUR) Tj ET Q
+q BT /F1 10 Tf 0.067 0.094 0.153 rg 1 0 0 1 58 556 Tm (Subscription) Tj ET Q
+q BT /F2 10 Tf 0.067 0.094 0.153 rg 1 0 0 1 250 556 Tm (28.40 EUR) Tj ET Q
+0.953 0.957 0.965 rg 48 520 500 26 re f
+q BT /F1 10 Tf 0.067 0.094 0.153 rg 1 0 0 1 58 530 Tm (Taxes) Tj ET Q
+q BT /F2 10 Tf 0.067 0.094 0.153 rg 1 0 0 1 250 530 Tm (25.00 EUR) Tj ET Q
+q BT /F1 8 Tf 0.612 0.639 0.686 rg 1 0 0 1 48 62 Tm (EDF · document generated for the Forest demo) Tj ET Q
+q /Faint gs BT /F2 85 Tf 0.863 0.149 0.149 rg 0.914 0.407 -0.407 0.914 107.1 319.96 Tm (SPECIMEN) Tj ET Q
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+7 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000322 00000 n 
+0000001731 00000 n 
+0000001828 00000 n 
+0000001930 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+2025
+%%EOF
+%forest-lab-scan:clean
+%forest-lab-issued:2026-10-10

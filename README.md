@@ -57,6 +57,7 @@ Run `forest help <command>` for the flags of any command.
 | `projects` / `projects:get` | List your projects, get a project's configuration |
 | `skills:init` / `skills:update` | Install or refresh the Forest skills for your coding agent (Claude Code, Codex, Cursor, OpenCode…) |
 | `mcp` | Connect Claude (claude.ai) to the project in this folder: Forest's MCP server in front of its running agent, through a Cloudflare quick tunnel |
+| `portals` | Open the demo bank's partner portals: apps outside Forest that call the agent through Forest's Gateway API; guides you to the Gateway key the first time |
 
 </details>
 

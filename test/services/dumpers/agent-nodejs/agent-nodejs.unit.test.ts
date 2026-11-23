@@ -168,6 +168,45 @@ describe('services > dumpers > AgentNodeJs', () => {
         );
       });
 
+      it('copies the partner portals byte for byte, sub-folders included', async () => {
+        expect.assertions(3);
+        const { dumper, context, defaultConfig } = createDumper(language);
+        const entry = (name: string, isDir = false) => ({ name, isDirectory: () => isDir });
+        const pdf = Buffer.from([0x25, 0x50, 0x44, 0x46, 0xe9]);
+        context.fs.existsSync.mockImplementation((p: string) => p.includes('/common/portals'));
+        context.fs.readFileSync.mockImplementation((p: string) =>
+          p.endsWith('.pdf') ? pdf : 'mockedContent',
+        );
+        Object.assign(context.fs, {
+          readdirSync: jest.fn().mockImplementation((p: string) => {
+            if (p.endsWith('/common/portals')) return [entry('partner-portal', true)];
+            if (p.endsWith('/partner-portal')) return [entry('server.js'), entry('samples', true)];
+            if (p.endsWith('/samples')) return [entry('passport.pdf')];
+
+            return [];
+          }),
+          mkdirSync: jest.fn(),
+        });
+
+        await dumper.dump(demoConfig(defaultConfig));
+
+        const project = `/test/a${language.name}Application`;
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          `${project}/portals/partner-portal/samples/passport.pdf`,
+          pdf,
+        );
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          `${project}/portals/partner-portal/server.js`,
+          'mockedContent',
+        );
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          `${project}/.gitignore`,
+          `node_modules\n.env\n${
+            language === languages.Typescript ? 'dist\n' : ''
+          }portals/partner-portal/uploads\n`,
+        );
+      });
+
       it('passes isDemo to the index and .env templates', async () => {
         expect.assertions(2);
         const { dumper, context, defaultConfig } = createDumper(language);
@@ -853,6 +892,49 @@ describe('demo forest-layout.json asset', () => {
         readFileSync(path.join(path.dirname(file), '..', language, 'index.hbs'), 'utf8'),
       ).toContain('agentUrl: `http://localhost:'),
     );
+  });
+
+  it('turns the Gateway on only once @forestadmin/agent-bff is installed', () => {
+    expect.hasAssertions();
+    ['javascript', 'typescript'].forEach(language => {
+      const index = readFileSync(
+        path.join(path.dirname(file), '..', language, 'index.hbs'),
+        'utf8',
+      );
+
+      expect(index).toContain(
+        "if (isInstalled('@forestadmin/agent-bff')) agent.addGateway({ api: true });",
+      );
+      expect(index).toContain('function isInstalled(name');
+    });
+  });
+
+  it('ships portals whose files require only files that ship with them', () => {
+    expect.hasAssertions();
+    const portals = path.join(path.dirname(file), 'portals');
+    const scripts = ['partner-portal', 'lagoon-backoffice'].flatMap(app =>
+      ['server.js', 'gateway.js', 'samples.js', 'web.js', 'cases.js']
+        .map(name => path.join(portals, app, name))
+        .filter(existsSync),
+    );
+
+    expect(scripts.length).toBeGreaterThanOrEqual(6);
+    scripts.forEach(script => {
+      const relative = [...readFileSync(script, 'utf8').matchAll(/require\('(\.{1,2}\/[^']+)'\)/g)];
+      relative.forEach(([, required]) =>
+        expect(existsSync(`${path.resolve(path.dirname(script), required)}.js`)).toBe(true),
+      );
+    });
+  });
+
+  it('ships a sample PDF for every kind the portal asks for, clean and flawed', () => {
+    expect.hasAssertions();
+    const samples = path.join(path.dirname(file), 'portals', 'partner-portal', 'samples');
+
+    ['passport', 'carte_identite', 'selfie', 'facture_edf'].forEach(name => {
+      expect(existsSync(path.join(samples, `${name}.pdf`))).toBe(true);
+      expect(existsSync(path.join(samples, `${name}_flawed.pdf`))).toBe(true);
+    });
   });
 
   it('closes the demo server on shutdown, as the standalone server does', () => {

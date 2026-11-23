@@ -84,6 +84,9 @@ describe('start', () => {
           { out: '-l typescript -H http://localhost -P 3310' },
           { out: '$ npm install' },
           { out: '$ npm run build' },
+          {
+            out: '$ npm install @forestadmin/agent-bff@<the version the agent expects> --save-exact',
+          },
           { out: '$ forest layout:apply forest-layout.json --with-workflows' },
           { out: 'Demo back-office live.' },
           // Non-interactive: no menu, but never a dead end either.

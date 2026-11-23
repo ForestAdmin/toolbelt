@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lagoon · Open your account</title>
+    <link rel="icon" href="logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="/"><img src="logo.svg" alt="" width="30" height="30" /> Lagoon</a>
+      <span class="bank" id="bank-status" title="Connection to our partner bank">Partner bank: …</span>
+    </header>
+
+    <main>
+      <ol class="progress" id="progress" aria-label="Steps">
+        <li>You</li>
+        <li>Address</li>
+        <li>Work &amp; money</li>
+        <li>Documents</li>
+        <li>Review</li>
+      </ol>
+
+      <!-- 0: welcome -->
+      <section class="step card" data-step="welcome">
+        <p class="eyebrow">Free account · card in 3 days</p>
+        <h1>Banking that keeps up with you.</h1>
+        <p class="lead">
+          Open your Lagoon account in about five minutes. Have your passport or ID card at hand,
+          and a recent bill with your address.
+        </p>
+        <div class="actions">
+          <button class="primary" data-next>Open my account</button>
+          <button class="link" id="demo-fill" type="button">Fill with a demo customer</button>
+        </div>
+        <p class="fine">
+          Lagoon accounts are held at Forest Lab Bank, a licensed credit institution. Your
+          application is checked by the bank's onboarding team.
+        </p>
+      </section>
+
+      <!-- 1: identity -->
+      <form class="step card" data-step="you">
+        <h2>About you</h2>
+        <p class="hint">As written on your ID.</p>
+        <div class="grid">
+          <label>First name <input name="firstName" required autocomplete="given-name" /></label>
+          <label>Last name <input name="lastName" required autocomplete="family-name" /></label>
+          <label>Birth name <span class="opt">optional</span><input name="birthName" /></label>
+          <label>Date of birth <input name="dateOfBirth" type="date" required /></label>
+          <label>Place of birth <input name="placeOfBirth" /></label>
+          <label>Nationality <select name="nationality" required data-countries></select></label>
+          <label>Email <input name="email" type="email" required autocomplete="email" /></label>
+          <label>Mobile phone <input name="phone" type="tel" required autocomplete="tel" /></label>
+        </div>
+        <div class="actions"><button type="button" data-back>Back</button><button class="primary" data-next>Continue</button></div>
+      </form>
+
+      <!-- 2: address -->
+      <form class="step card" data-step="address">
+        <h2>Where you live</h2>
+        <div class="grid">
+          <label class="wide">Address <input name="address" required autocomplete="address-line1" /></label>
+          <label class="wide">Address line 2 <span class="opt">optional</span><input name="address2" autocomplete="address-line2" /></label>
+          <label>Postal code <input name="postalCode" required autocomplete="postal-code" /></label>
+          <label>City <input name="city" required autocomplete="address-level2" /></label>
+          <label>Country <select name="country" required data-countries></select></label>
+          <label>Tax number <span class="opt">optional</span><input name="taxId" /></label>
+          <label class="check wide"><input type="checkbox" name="usPerson" /> I am a US citizen or US tax resident</label>
+        </div>
+        <div class="actions"><button type="button" data-back>Back</button><button class="primary" data-next>Continue</button></div>
+      </form>
+
+      <!-- 3: work and money -->
+      <form class="step card" data-step="work">
+        <h2>Work &amp; money</h2>
+        <p class="hint">The law asks us where your money comes from and how you will use the account.</p>
+        <div class="grid">
+          <label>Situation
+            <select name="employmentStatus" required>
+              <option value="EMPLOYED">Employed</option>
+              <option value="SELF_EMPLOYED">Self-employed</option>
+              <option value="STUDENT">Student</option>
+              <option value="RETIRED">Retired</option>
+              <option value="UNEMPLOYED">Looking for work</option>
+            </select>
+          </label>
+          <label>Profession <input name="occupation" required /></label>
+          <label>Employer <span class="opt">optional</span><input name="employer" /></label>
+          <label>Yearly income
+            <select name="incomeBand" required>
+              <option value="BELOW_20K">Under €20,000</option>
+              <option value="FROM_20K_TO_40K">€20,000 – €40,000</option>
+              <option value="FROM_40K_TO_70K">€40,000 – €70,000</option>
+              <option value="FROM_70K_TO_120K">€70,000 – €120,000</option>
+              <option value="ABOVE_120K">Over €120,000</option>
+            </select>
+          </label>
+          <label>Main source of money
+            <select name="sourceOfFunds" required>
+              <option value="SALARY">Salary</option>
+              <option value="BUSINESS_INCOME">Business income</option>
+              <option value="PENSION">Pension</option>
+              <option value="SAVINGS">Savings</option>
+              <option value="INHERITANCE">Inheritance</option>
+              <option value="INVESTMENTS">Investments</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </label>
+          <label>Savings come from <span class="opt">optional</span><input name="sourceOfWealth" placeholder="e.g. salary savings" /></label>
+          <label>Money in per month (€) <input name="monthlyIn" type="number" min="0" step="50" required /></label>
+          <label>Money out per month (€) <input name="monthlyOut" type="number" min="0" step="50" required /></label>
+        </div>
+        <div class="actions"><button type="button" data-back>Back</button><button class="primary" data-next>Continue</button></div>
+      </form>
+
+      <!-- 4: documents -->
+      <form class="step card" data-step="documents">
+        <h2>Your documents</h2>
+        <p class="hint">Photos or PDFs, up to 5 MB each.</p>
+
+        <fieldset class="doc" data-doc="id">
+          <legend>ID document</legend>
+          <div class="segmented">
+            <label><input type="radio" name="idType" value="PASSPORT" checked /> Passport</label>
+            <label><input type="radio" name="idType" value="NATIONAL_ID" /> ID card</label>
+          </div>
+          <div class="grid">
+            <label>Document number <input name="idNumber" required /></label>
+            <label>Expiry date <input name="idExpires" type="date" required /></label>
+          </div>
+          <div class="drop"><input type="file" accept="application/pdf,image/png,image/jpeg" /><span class="file">No file yet</span></div>
+          <p class="samples">Demo: <button type="button" class="link" data-sample="clean">use a sample</button> · <button type="button" class="link" data-sample="flawed">a flawed one</button></p>
+        </fieldset>
+
+        <fieldset class="doc" data-doc="selfie">
+          <legend>Selfie</legend>
+          <p class="hint">Face the camera, no hat or glasses.</p>
+          <div class="drop"><input type="file" accept="application/pdf,image/png,image/jpeg" capture="user" /><span class="file">No file yet</span></div>
+          <p class="samples">Demo: <button type="button" class="link" data-sample="clean">use a sample</button> · <button type="button" class="link" data-sample="flawed">a flawed one</button></p>
+        </fieldset>
+
+        <fieldset class="doc" data-doc="address">
+          <legend>Proof of address</legend>
+          <p class="hint">A bill or rent receipt from the last 3 months.</p>
+          <div class="drop"><input type="file" accept="application/pdf,image/png,image/jpeg" /><span class="file">No file yet</span></div>
+          <p class="samples">Demo: <button type="button" class="link" data-sample="clean">use a sample</button> · <button type="button" class="link" data-sample="flawed">a flawed one</button></p>
+        </fieldset>
+
+        <p class="error" id="doc-error" hidden></p>
+        <div class="actions"><button type="button" data-back>Back</button><button class="primary" data-next>Continue</button></div>
+      </form>
+
+      <!-- 5: review -->
+      <form class="step card" data-step="review">
+        <h2>Check and send</h2>
+        <dl class="summary" id="summary"></dl>
+        <label class="check"><input type="checkbox" required /> I confirm this information is true and I agree that Lagoon shares it with Forest Lab Bank to open my account.</label>
+        <p class="error" id="error" hidden></p>
+        <div class="actions"><button type="button" data-back>Back</button><button class="primary" id="send">Send my application</button></div>
+      </form>
+
+      <!-- 6: done -->
+      <section class="step card done" data-step="done">
+        <div class="tick" aria-hidden="true">✓</div>
+        <h2>Application received</h2>
+        <p class="lead">Thank you, <span id="done-name"></span>. Our partner bank is checking your documents; we will email you within 2 working days.</p>
+        <p class="reference">Your reference <strong id="done-ref"></strong></p>
+        <ul class="docs" id="done-docs"></ul>
+        <div class="forest-link" id="done-forest" hidden>
+          <p><strong>Behind the scenes</strong> · your application is now KYC case <strong id="done-case"></strong> in the bank’s Forest back office, with your papers attached. Their onboarding team takes it from there.</p>
+          <a id="done-forest-link" target="_blank" rel="noopener">Open it in Forest →</a>
+        </div>
+        <p class="fine" id="done-bank"></p>
+        <div class="actions"><button class="primary" id="again" type="button">Start a new application</button></div>
+      </section>
+    </main>
+
+    <footer>Lagoon is a fictional neobank for a Forest demo. Accounts provided by Forest Lab Bank.</footer>
+    <script src="app.js"></script>
+  </body>
+</html>
