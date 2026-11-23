@@ -5,8 +5,10 @@ const { stdout } = require('stdout-stderr');
 
 const StartCommand = require('../../src/commands/start').default;
 const ExitCodeError = require('../../src/services/exit-code-error').default;
+const { isPortFree } = require('../../src/services/onboarding/preflight');
 const {
   runCapture,
+  runLogged,
   runStep,
   startProcess,
   stopAllProcesses,
@@ -21,6 +23,11 @@ const rawFromCliDotenv = (name, content) => {
 
 // The process boundary: a test that goes past --dry-run spawns nothing, and says what came back.
 jest.mock('../../src/services/process-runner');
+// Ports are free unless a test says otherwise, whatever runs on the machine running the tests.
+jest.mock('../../src/services/onboarding/preflight', () => ({
+  ...jest.requireActual('../../src/services/onboarding/preflight'),
+  isPortFree: jest.fn(async () => true),
+}));
 
 // `--dry-run` prints every command instead of running it, so the whole orchestration can be
 // asserted with no project created, no package installed and no process spawned. It is also what
@@ -83,6 +90,212 @@ describe('start', () => {
           { out: 'Connect real data: forest projects:create:sql' },
         ],
       });
+    });
+  });
+
+  describe('demo flow on a terminal', () => {
+    // A terminal gets the checklist: the commands and their output go to a log file, and the
+    // screen ends on a menu. Under jest stdout is not a TTY, so the checklist prints its plain lines.
+    const onTerminal = async run => {
+      const interactive = jest
+        .spyOn(StartCommand.prototype, 'interactive', 'get')
+        .mockReturnValue(true);
+      try {
+        await run();
+      } finally {
+        interactive.mockRestore();
+      }
+    };
+
+    const menu = {
+      type: 'list',
+      name: 'next',
+      message: 'What next?',
+      // No coding-agent choice: `skills:init` is not among the commands the tests load.
+      choices: [
+        { name: 'Open it in the browser', value: 'browse' },
+        { name: 'Connect a real database (creates a real project)', value: 'db' },
+        { name: 'Keep the agent running here, with live logs', value: 'stay' },
+        { name: 'Stop the agent', value: 'stop' },
+      ],
+    };
+
+    it('shows the steps, keeps the commands in the log, and ends on the menu', async () => {
+      expect.hasAssertions();
+
+      await onTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--dry-run', '--flow', 'demo'],
+          prompts: [{ in: [menu], out: { next: 'stop' } }],
+          std: [
+            { out: 'set up your back-office' },
+            { out: 'Checking this computer' },
+            { out: 'Registering the project on Forest' },
+            { out: 'Installing the agent' },
+            { out: 'Starting the agent' },
+            { out: 'Applying the demo layout' },
+            { out: 'is live' },
+            { out: 'dry-run: nothing is running' },
+            { out: 'Stopped. Relaunch the demo anytime' },
+            { not: '$ npm install' },
+            { not: '$ forest layout:apply' },
+          ],
+        }),
+      );
+    });
+
+    it('prints every command instead with --plain', async () => {
+      expect.hasAssertions();
+
+      await onTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--dry-run', '--flow', 'demo', '--plain'],
+          prompts: [
+            {
+              in: [
+                {
+                  type: 'list',
+                  name: 'next',
+                  message: 'Your demo back-end is live on :3310. What next?',
+                  choices: [
+                    { name: 'Connect my real database (create a real project)', value: 'db' },
+                    { name: 'Keep exploring — leave the back-end running', value: 'stay' },
+                    { name: 'Stop', value: 'stop' },
+                  ],
+                },
+              ],
+              out: { next: 'stop' },
+            },
+          ],
+          std: [
+            { out: 'Welcome to Forest' },
+            { out: '$ npm install' },
+            { out: '$ forest layout:apply forest-layout.json --with-workflows' },
+            { not: 'Checking this computer' },
+          ],
+        }),
+      );
+    });
+
+    // Past --dry-run, every process mocked: the agent prints `output` while it boots.
+    const mockLiveDemo = ({ layoutError, output } = {}) => {
+      const child = { pid: 4242 };
+      resetProcessMocks();
+      stopProcess.mockReset();
+      stopAllProcesses.mockReset();
+      startProcess.mockImplementation((_, __, { onOutput }) => {
+        if (output) onOutput(output);
+
+        return { child, ready: Promise.resolve(), exited: Promise.resolve(), mute: () => {} };
+      });
+      runLogged.mockReset().mockImplementation(async (_, args) => {
+        if (args[1] === 'layout:apply' && layoutError) throw layoutError;
+      });
+
+      return child;
+    };
+
+    it('counts the agent warnings in the summary, coloured or not', async () => {
+      expect.hasAssertions();
+      mockLiveDemo({
+        output:
+          '\u001b[33mwarning\u001b[39m: Fields generation stopped\nwarn: plain\ninfo: mounted\n',
+      });
+
+      await onTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          prompts: [{ in: [menu], out: { next: 'stop' } }],
+          std: [{ out: '2 startup warnings · log:' }],
+        }),
+      );
+    });
+
+    it("shows the real project's back-end output on screen after 'Connect a real database'", async () => {
+      expect.hasAssertions();
+      mockLiveDemo();
+      const demoChild = { pid: 4242 };
+      startProcess
+        .mockImplementationOnce((_, __, { onOutput }) => {
+          onOutput('info: the demo agent talks\n');
+
+          return { child: demoChild, ready: Promise.resolve(), exited: Promise.resolve() };
+        })
+        .mockImplementationOnce((_, __, { onOutput }) => {
+          onOutput('error: the real agent cannot reach its database\n');
+
+          return { child: undefined, ready: Promise.resolve(), mute: () => {} };
+        });
+
+      await onTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          prompts: [
+            { in: [menu], out: { next: 'db' } },
+            {
+              in: [
+                {
+                  type: 'input',
+                  name: 'name',
+                  message: 'Project name:',
+                  default: 'my-back-office',
+                },
+              ],
+              out: { name: 'x' },
+            },
+            {
+              in: [
+                {
+                  type: 'list',
+                  name: 'next',
+                  message: 'Your back-office is live. What next?',
+                  choices: [
+                    { name: 'Deploy to production', value: 'deploy' },
+                    { name: 'Get started guide (https://docs.forest.app)', value: 'docs' },
+                    { name: 'Keep exploring — leave the back-end running', value: 'stay' },
+                  ],
+                },
+              ],
+              out: { next: 'stay' },
+            },
+          ],
+          std: [
+            { out: '| error: the real agent cannot reach its database' },
+            { not: 'the demo agent talks' },
+          ],
+        }),
+      );
+    });
+
+    it('warns on the layout step and reaches the menu with the agent still running when layout:apply fails', async () => {
+      expect.hasAssertions();
+      const child = mockLiveDemo({
+        layoutError: new ExitCodeError(
+          '`forest layout:apply` exited with code 2:\n× Failed part: workflows — Server error (402)',
+          2,
+        ),
+      });
+
+      await onTerminal(() =>
+        testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          prompts: [{ in: [menu], out: { next: 'stop' } }],
+          std: [
+            { out: 'Applying the demo layout · stopped at its workflows part' },
+            { out: 'The demo works without its layout. Retry anytime: cd forest-demo-' },
+            { out: 'Stopped. Relaunch the demo anytime' },
+          ],
+        }),
+      );
+
+      expect(isPortFree).toHaveBeenCalledWith(3310);
+      expect(stopAllProcesses).not.toHaveBeenCalled();
+      expect(stopProcess.mock.calls).toStrictEqual([[child]]);
     });
   });
 
@@ -265,7 +478,7 @@ describe('start', () => {
       try {
         await testCli({
           commandClass: StartCommand,
-          commandArgs: ['--flow', 'demo'],
+          commandArgs: ['--flow', 'demo', '--plain'],
           prompts: [{ in: [DEMO_MENU], out: { next: 'stop' } }],
           std: [
             {
