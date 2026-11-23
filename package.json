@@ -151,6 +151,7 @@
     "**/rimraf/glob/minimatch": "^3.0.5",
     "**/test-exclude/minimatch": "^3.0.4",
     "**/test-exclude/glob/minimatch": "^3.0.5",
-    "minimatch": "^11.0.1"
+    "minimatch": "^11.0.1",
+    "@types/node": "^24.9.1"
   }
 }
