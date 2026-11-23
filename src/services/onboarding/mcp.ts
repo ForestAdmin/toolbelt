@@ -1,6 +1,6 @@
 import type { ChildProcess } from 'child_process';
 
-import { execFileSync, spawn } from 'child_process';
+import { execFile, execFileSync, spawn } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -92,15 +92,23 @@ async function poll<T>(probe: () => Promise<T | null>, ms: number): Promise<T | 
   return null;
 }
 
-type Run = { children: ChildProcess[]; logFile: string; failure?: Error };
+type Run = {
+  children: ChildProcess[];
+  logFile: string;
+  /** Why the run cannot go on: a process that could not start, or that stopped. */
+  failure?: Error;
+  /** Called when a process stops on its own, while the flow still needs both. */
+  ended?: () => void;
+};
 
 /**
- * Its own process group, so that stopping it also stops what `npx` started under it. A command
- * that cannot start emits an error, never an exit: kept as the run's failure, which the waits
- * below stop on.
+ * Its own process group, so that stopping it also stops what `npx` started under it. A process
+ * that cannot start (an error, never an exit) or that stops is kept as the run's failure, which
+ * the waits below stop on; one that stops also calls `run.ended`.
  */
 function startDetached(
   run: Run,
+  label: string,
   command: string,
   args: string[],
   options: { cwd: string; env: NodeJS.ProcessEnv; log: number },
@@ -111,13 +119,32 @@ function startDetached(
     stdio: ['ignore', options.log, options.log],
     detached: true,
   });
+  /* eslint-disable no-param-reassign -- the run is the flow's shared state */
   child.once('error', error => {
-    // eslint-disable-next-line no-param-reassign -- the run is the flow's shared state
-    run.failure ??= new Error(`${command} could not start: ${error.message}`);
+    run.failure ??= new Error(`${label} could not start: ${error.message}`);
   });
+  child.once('exit', () => {
+    run.failure ??= new Error(`${label} stopped`);
+    run.ended?.();
+  });
+  /* eslint-enable no-param-reassign */
   run.children.push(child);
 
   return child;
+}
+
+/**
+ * Downloads the gateway before the tunnel opens, so that the tunnel never points for long at a
+ * port nothing of ours holds yet.
+ */
+function prepareGateway(cwd: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    execFile('npx', ['-y', GATEWAY_PACKAGE, '--version'], { cwd, timeout: 300000 }, error =>
+      error
+        ? reject(new Error(`npx could not get ${GATEWAY_PACKAGE}: ${error.message}`))
+        : resolve(),
+    );
+  });
 }
 
 /** Throws the run's failure, if a process could not start. */
@@ -148,6 +175,7 @@ async function startBoth(
   const log = fs.openSync(run.logFile, 'wx', 0o600);
   startDetached(
     run,
+    'The tunnel',
     'cloudflared',
     ['tunnel', '--no-autoupdate', '--url', `http://localhost:${port}`],
     {
@@ -170,8 +198,8 @@ async function startBoth(
     return null;
   }
 
-  io.say('  Starting the Forest MCP server (the first time, npx downloads it: about 30 s)…');
-  startDetached(run, 'npx', ['-y', GATEWAY_PACKAGE], {
+  io.say('  Starting the Forest MCP server…');
+  startDetached(run, 'The MCP server', 'npx', ['-y', GATEWAY_PACKAGE], {
     cwd: options.projectDir,
     env: {
       ...process.env,
@@ -227,6 +255,54 @@ async function missing(options: McpOptions, env: Record<string, string>): Promis
   return null;
 }
 
+/**
+ * Gets the gateway, opens the tunnel, starts the gateway behind it and checks it is this run's.
+ * Resolves the tunnel's address, or null once both are stopped (after saying why).
+ */
+async function bringUp(
+  options: McpOptions,
+  env: Record<string, string>,
+  run: Run,
+  stop: () => void,
+): Promise<string | null> {
+  const { io } = options;
+  io.say('  Getting the Forest MCP server ready (the first time, npx downloads it: about 30 s)…');
+  await prepareGateway(options.projectDir);
+  const url = await startBoth(options, env, run);
+  const healthy =
+    url &&
+    (await poll(async () => {
+      checkRun(run);
+
+      return (await status(`${url}/health`)) === 200;
+    }, 120000));
+
+  if (!url || !healthy) {
+    if (url) io.say(`  The MCP server didn't answer through the tunnel. Its log: ${run.logFile}`);
+    stop();
+
+    return null;
+  }
+
+  // The server behind the tunnel must be this run's: it names the tunnel's address, as it was
+  // told to. Another app, or another run's server, on that port is never left public.
+  const resource = await fetch(`${url}/.well-known/oauth-protected-resource/mcp`)
+    .then(response => response.text())
+    .catch(() => '');
+  if (!resource.includes(url)) {
+    io.say(
+      `  The server behind the tunnel isn't this run's: both are stopped. Log: ${run.logFile}`,
+    );
+    stop();
+
+    return null;
+  }
+
+  io.say(`  Logs: ${run.logFile}`);
+
+  return url;
+}
+
 /** The whole flow. Resolves once the tunnel and the gateway it started are stopped. */
 export async function runMcp(options: McpOptions): Promise<void> {
   const { io } = options;
@@ -272,7 +348,11 @@ export async function runMcp(options: McpOptions): Promise<void> {
     // could be someone else's file, with another tunnel's address in it.
     logFile: path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'forest-mcp-')), 'forest-mcp.log'),
   };
-  const stop = () => run.children.forEach(stopGroup);
+  let stopping = false;
+  const stop = () => {
+    stopping = true;
+    run.children.forEach(stopGroup);
+  };
   // The tunnel's address is public from its first second: an interruption at any step stops
   // both, ahead of the spinner library's own handler, which exits first.
   const interrupted = () => {
@@ -281,38 +361,24 @@ export async function runMcp(options: McpOptions): Promise<void> {
   };
   process.prependOnceListener('SIGINT', interrupted);
   process.prependOnceListener('SIGTERM', interrupted);
+  // Until the end of the guide, either process stopping ends the flow: a tunnel left alone would
+  // stay public, and Claude would be pointed at a dead address.
+  run.ended = () => {
+    if (stopping) return;
+    stop();
+    io.say(`\n  ${run.failure?.message}, so both are stopped now. Run forest mcp again.`);
+    process.exit(1);
+  };
 
   try {
-    const url = await startBoth(options, env, run);
-    const healthy =
-      url &&
-      (await poll(async () => {
-        checkRun(run);
-
-        return (await status(`${url}/health`)) === 200;
-      }, 120000));
-
-    if (!url || !healthy) {
-      if (url) io.say(`  The MCP server didn't answer through the tunnel. Its log: ${run.logFile}`);
-      stop();
-
-      return;
-    }
-
-    // claude.ai signs in through the address the server names: a wrong one fails only at Connect.
-    const resource = await fetch(`${url}/.well-known/oauth-protected-resource/mcp`)
-      .then(response => response.text())
-      .catch(() => '');
-    if (!resource.includes(url)) {
-      io.say(`  Warning: the server doesn't name ${url}. Its log: ${run.logFile}`);
-    }
-
-    io.say(`  Logs: ${run.logFile}`);
+    const url = await bringUp(options, env, run, stop);
+    if (!url) return;
     await guide(url, options);
   } catch (error) {
     stop();
     throw error;
   } finally {
+    run.ended = undefined;
     process.removeListener('SIGINT', interrupted);
     process.removeListener('SIGTERM', interrupted);
   }
