@@ -357,6 +357,45 @@ describe('start', () => {
       }
     });
 
+    it('counts the lines of one multi-line back-end chunk against the 20-line limit', async () => {
+      expect.hasAssertions();
+      resetDemoMocks();
+      let emitBackEndLine;
+      startProcess.mockImplementation((command, args, options) => {
+        emitBackEndLine = options.onOutput;
+
+        return { child, ready: Promise.resolve(), exited: Promise.resolve(), mute: () => {} };
+      });
+      const line = n => `info: [200] GET /ping-${String(n).padStart(2, '0')}`;
+      const answeredMenu = {
+        in: [DEMO_MENU],
+        get out() {
+          emitBackEndLine(
+            `${Array.from({ length: 22 }, (_, index) => line(index + 1)).join('\n')}\n`,
+          );
+
+          return { next: 'stop' };
+        },
+      };
+
+      const tty = forceTty();
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          prompts: [answeredMenu],
+          std: [
+            { out: '  | … 2 earlier back-end lines not shown' },
+            { out: `  | ${line(3)}` },
+            { out: `  | ${line(22)}` },
+            { not: line(2) },
+          ],
+        });
+      } finally {
+        tty.mockRestore();
+      }
+    });
+
     it('warns that the curated layout did not finish when no part is named', async () => {
       expect.hasAssertions();
       resetDemoMocks();

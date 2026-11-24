@@ -13,6 +13,9 @@ const MAX_BACK_END_LINES_HELD_DURING_PROMPT = 20;
  */
 const READY = /schema was (updated|not updated)/i;
 
+/** A stream chunk can carry many lines: each gets its own prefix and counts once against the cap. */
+const linesOf = (chunk: string): string[] => chunk.replace(/\r?\n$/, '').split(/\r?\n/);
+
 /**
  * How `forest start` runs every step: echoed first, redacted, skipped under --dry-run, and with a
  * booted back-end's log lines held back while a prompt owns the terminal.
@@ -129,7 +132,7 @@ export default class StepRunner {
       env: options.env,
       onOutput: chunk => {
         if (options.trouble?.test(chunk)) troubled = true;
-        this.printBackEndLine(this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`));
+        linesOf(chunk).forEach(line => this.printBackEndLine(this.chalk.grey(`  | ${line}`)));
       },
     });
 
