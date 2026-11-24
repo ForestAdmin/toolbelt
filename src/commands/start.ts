@@ -24,6 +24,7 @@ import {
   detectNodeStack,
   detectRails,
   mountHelper,
+  needsJsonBelow3,
 } from '../services/onboarding/detect';
 import {
   bootSecrets,
@@ -334,10 +335,14 @@ export default class StartCommand extends AbstractCommand {
 
   private static redact(command: string, args: string[]): string {
     const shown = args.map((arg, index) =>
-      StartCommand.isHidden(command, args, index) ? '<redacted>' : arg,
+      StartCommand.isHidden(command, args, index) ? '<redacted>' : StartCommand.shellQuoted(arg),
     );
 
     return `${command} ${shown.join(' ')}`.trim();
+  }
+
+  private static shellQuoted(arg: string): string {
+    return /^[\w@%+=:,./-]+$/.test(arg) ? arg : `'${arg.replace(/'/g, `'\\''`)}'`;
   }
 
   /**
@@ -708,7 +713,7 @@ export default class StartCommand extends AbstractCommand {
     ]);
     const secrets = StartCommand.parseSecrets(output);
 
-    // Checked before `bundle add`: past that point five gems and a lockfile change are in the
+    // Checked before `bundle add`: past that point the gems and a lockfile change are in the
     // user's repo, and throwing "nothing was generated" would be false.
     if (!secrets.envSecret && !this.dryRun) {
       throw new Error(
@@ -716,6 +721,8 @@ export default class StartCommand extends AbstractCommand {
           'run it by hand and pass the secret to `bin/rails g forest_admin_rails:install`.',
       );
     }
+
+    if (needsJsonBelow3()) await this.run$('bundle', ['add', 'json', '--version', '< 3']);
 
     // Five gems, not the three the docs list: forest_admin_rails alone installs but fails to boot,
     // because it does not declare its companions as runtime dependencies.
@@ -1380,14 +1387,14 @@ export default class StartCommand extends AbstractCommand {
    * The app is up and `/forest` answers, but Forest has no schema for it: the panel opens empty.
    * Said here rather than in `doneInApp`, because "live" would be the one thing the user should
    * not conclude. The two causes seen in practice are named — an app with no model for the
-   * datasource to read, and Rails < 8.1, whose ActiveSupport passes an option `json` 3 rejects.
+   * datasource to read, and `json` 3 under an ActiveSupport that passes an option it rejects.
    */
   private doneInAppWithoutSchema(name: string, port: number): void {
     this.logger.warn('Forest is mounted, but your schema never reached it.');
     this.logger.log('  The back-office will open empty until the next boot pushes it.');
     this.logger.log(`  ${this.chalk.bold('Check →')} your app exposes at least one model`);
     this.logger.log(
-      `  ${this.chalk.bold('Check →')} Rails 8.1+ or 7.2.4+ (older ones break on \`json\` 3)`,
+      `  ${this.chalk.bold('Check →')} \`bundle info json\` is below 3 on Rails 8.0 or below 7.2.4`,
     );
     this.logger.log(
       `  ${this.chalk.bold('Then →')} ${this.chalk.grey(`bin/rails server -p ${port}`)}`,
