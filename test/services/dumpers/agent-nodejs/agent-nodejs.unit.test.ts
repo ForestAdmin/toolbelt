@@ -2,7 +2,9 @@
 import type { Config } from '../../../../src/interfaces/project-create-interface';
 import type { Language } from '../../../../src/utils/languages';
 
+import dotenv from 'dotenv';
 import { existsSync, readFileSync } from 'fs';
+import Handlebars from 'handlebars';
 import path from 'path';
 
 import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
@@ -106,6 +108,55 @@ describe('services > dumpers > AgentNodeJs', () => {
       schemaSample,
     };
   };
+
+  describe.each([languages.Javascript, languages.Typescript])(
+    'rendered $name project',
+    language => {
+      const apiOrigin = 'https://api.development.forestadmin.com';
+      const frontendOrigin = 'https://app.development.forestadmin.com';
+
+      it.each([
+        ['demo with an app URL', true, apiOrigin, frontendOrigin, frontendOrigin],
+        ['demo using the SDK default', true, undefined, undefined, undefined],
+        [
+          'database project with an app URL in the CLI environment',
+          false,
+          apiOrigin,
+          frontendOrigin,
+          undefined,
+        ],
+      ])(
+        'writes the Forest app configuration for a %s',
+        async (_, isDemo, serverUrl, appUrl, expected) => {
+          expect.assertions(3);
+          const { dumper, context, defaultConfig } = createDumper(language, {
+            env: {
+              FOREST_URL_IS_DEFAULT: !serverUrl,
+              FOREST_SERVER_URL: serverUrl,
+              FOREST_APP_URL: appUrl,
+            },
+            Handlebars,
+          });
+          context.fs.readFileSync.mockImplementation(file => readFileSync(file, 'utf8'));
+
+          await dumper.dump({ ...defaultConfig, isDemo });
+
+          const [, envFile] = context.fs.writeFileSync.mock.calls.find(([file]) =>
+            file.endsWith('/.env'),
+          );
+          const [, index] = context.fs.writeFileSync.mock.calls.find(([file]) =>
+            file.endsWith(`/index.${language.fileExtension}`),
+          );
+          const parsedEnv = dotenv.parse(envFile);
+          expect(parsedEnv.FOREST_SERVER_URL).toBe(serverUrl);
+          expect(parsedEnv.FOREST_APP_URL).toBe(expected);
+          expect(index.includes('forestAppUrl: process.env.FOREST_APP_URL')).toBe(
+            Boolean(expected),
+          );
+        },
+      );
+    },
+  );
 
   describe.each([languages.Javascript, languages.Typescript])(
     'when dumping a demo project in $name (isDemo)',
@@ -294,6 +345,7 @@ describe('services > dumpers > AgentNodeJs', () => {
               dbSslMode: 'disabled',
               dbSchema: 'public',
               appPort: 3310,
+              forestAppUrl: false,
               forestServerUrl: false,
               forestEnvSecret: 'aForestEnvSecret',
               forestAuthSecret: 'aForestAuthSecret',

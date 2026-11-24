@@ -16,7 +16,11 @@ interface ModelConfiguration {
 }
 
 export default class AgentNodeJs extends AbstractDumper {
-  private env: { FOREST_SERVER_URL: string; FOREST_URL_IS_DEFAULT: boolean };
+  private env: {
+    FOREST_APP_URL?: string;
+    FOREST_SERVER_URL: string;
+    FOREST_URL_IS_DEFAULT: boolean;
+  };
 
   private readonly DEFAULT_PORT = 3310;
 
@@ -179,6 +183,7 @@ export default class AgentNodeJs extends AbstractDumper {
       isMSSQL: dbDialect === 'mssql',
       isMariaDB: dbDialect === 'mariadb',
       dbSchema,
+      forestAppUrl: isDemo && this.env.FOREST_APP_URL,
       forestServerUrl: this.env.FOREST_URL_IS_DEFAULT ? false : this.env.FOREST_SERVER_URL,
     };
 
@@ -203,6 +208,7 @@ export default class AgentNodeJs extends AbstractDumper {
       dbSchema: dbConfig.dbSchema,
       dbSslMode: dbConfig.dbSslMode ?? 'disabled',
       appPort,
+      forestAppUrl: isDemo && this.env.FOREST_APP_URL,
       forestServerUrl: this.env.FOREST_URL_IS_DEFAULT ? false : this.env.FOREST_SERVER_URL,
       forestEnvSecret,
       forestAuthSecret,

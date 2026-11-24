@@ -78,15 +78,49 @@ describe('start', () => {
           { out: '$ npm install' },
           { out: '$ npm run build' },
           { out: '$ forest layout:apply forest-layout.json --with-workflows' },
-          { out: 'Demo back-office live.' },
+          { out: 'Demo back-office live. Open https://app.forestadmin.com/forest-demo-' },
           // Non-interactive: no menu, but never a dead end either.
           { out: 'Connect real data: forest projects:create:sql' },
+        ],
+      });
+    });
+
+    it('opens the configured Forest app for the demo', async () => {
+      expect.hasAssertions();
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--dry-run', '--flow', 'demo'],
+        env: { FOREST_APP_URL: 'https://app.development.forestadmin.com' },
+        std: [
+          {
+            out: 'Demo back-office live. Open https://app.development.forestadmin.com/forest-demo-',
+          },
         ],
       });
     });
   });
 
   describe('demo flow, past --dry-run', () => {
+    it('boots the demo with the same app origin as the printed link', async () => {
+      expect.hasAssertions();
+      resetProcessMocks();
+      const appOrigin = 'https://app.development.forestadmin.com';
+
+      await testCli({
+        commandClass: StartCommand,
+        commandArgs: ['--flow', 'demo'],
+        env: { FOREST_APP_URL: appOrigin },
+        std: [{ out: `Demo back-office live. Open ${appOrigin}/forest-demo-` }],
+      });
+
+      expect(startProcess).toHaveBeenCalledWith(
+        'npm',
+        ['start'],
+        expect.objectContaining({ env: { FOREST_APP_URL: appOrigin } }),
+      );
+    });
+
     it('applies the demo layout without the secret of the .env it was started next to', async () => {
       expect.hasAssertions();
       // Each `forest` step gets this process's environment, and a child's dotenv never overrides

@@ -27,6 +27,9 @@ const agent = createAgent<Schema>({
   {{#if forestServerUrl}}
   forestServerUrl: process.env.FOREST_SERVER_URL!,
   {{/if}}
+  {{#if forestAppUrl}}
+  forestAppUrl: process.env.FOREST_APP_URL,
+  {{/if}}
 
   // Make sure to set NODE_ENV to 'production' when you deploy your project
   isProduction: process.env.NODE_ENV === 'production',
