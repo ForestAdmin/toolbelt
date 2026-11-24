@@ -530,3 +530,57 @@ export function startProcess(
 
   return { child, ready: readyOrFailed, exited, mute };
 }
+
+/**
+ * Like `runStep`, but the child's output is read line by line instead of drawn on the terminal:
+ * `forest start`'s checklist shows only the last line and keeps the rest in its log. stdin stays
+ * inherited, so a child that does ask a question can still be answered.
+ */
+export function runLogged(
+  command: string,
+  args: string[],
+  { onLine, ...options }: RunOptions & { onLine: (line: string) => void },
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      command,
+      args,
+      spawnOptions(
+        { ...options, env: { FORCE_COLOR: '0', ...options.env } },
+        { stdio: ['inherit', 'pipe', 'pipe'] },
+      ),
+    );
+    const tail: string[] = [];
+    const pending = { stdout: '', stderr: '' };
+
+    const take = (line: string) => {
+      const safe = redactUrlCredentials(line);
+      tail.push(safe);
+      if (tail.length > 20) tail.shift();
+      onLine(safe);
+    };
+    const feed = (key: 'stdout' | 'stderr') => (text: string) => {
+      // npm redraws progress with \r: each redraw is a line of its own here.
+      const parts = (pending[key] + text).split(/\r?\n|\r/);
+      pending[key] = parts.pop() ?? '';
+      parts.forEach(take);
+    };
+
+    child.stdout?.setEncoding('utf8');
+    child.stderr?.setEncoding('utf8');
+    child.stdout?.on('data', feed('stdout'));
+    child.stderr?.on('data', feed('stderr'));
+    child.on('error', reject);
+    child.on('close', code => {
+      // A last line without its newline: the same masking, and it is often the error itself.
+      [pending.stdout, pending.stderr].filter(Boolean).forEach(take);
+      if (code === 0) {
+        resolve();
+
+        return;
+      }
+
+      reject(exitError(command, args, code, tail.join('\n')));
+    });
+  });
+}

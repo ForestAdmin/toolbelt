@@ -16,7 +16,11 @@
     "stripInternal": true
   },
   "include": ["./src/"],
-  "exclude": ["node_modules", "src/services/dumpers/templates/**/components/**"],
+  "exclude": [
+    "node_modules",
+    "src/services/dumpers/templates/**/components/**",
+    "src/services/dumpers/templates/**/portals/**"
+  ],
 
   "ts-node": {
     "swc": true // For ultra fast compilation in dev mode

@@ -25,8 +25,13 @@ module.exports = {
   env: {
     node: true,
   },
-  // The demo's Custom components are browser files, served by the demo's agent.
-  ignorePatterns: ['expected', 'src/services/dumpers/templates/**/components/**'],
+  // The demo's Custom components are browser files, served by the demo's agent; its portals are
+  // apps of their own, copied into demo projects.
+  ignorePatterns: [
+    'expected',
+    'src/services/dumpers/templates/**/components/**',
+    'src/services/dumpers/templates/**/portals/**',
+  ],
   rules: {
     'jest/valid-describe': 0, // This rule does not exist anymore. It has been replaced by jest/valid-describe-callback
     'jest/require-hook': 0, // This rule does not seem to be functional at this time (eslint-plugin-jest-25.2.2)

@@ -224,10 +224,13 @@ export default class AgentNodeJs extends AbstractDumper {
     this.copyHandleBarsTemplate('common/env.hbs', '.env', context);
   }
 
-  private writeGitignore(language: Language) {
+  private writeGitignore(language: Language, isDemo = false) {
     this.writeFile(
       '.gitignore',
-      `node_modules\n.env\n${language === languages.Typescript ? 'dist\n' : ''}`,
+      `node_modules\n.env\n${language === languages.Typescript ? 'dist\n' : ''}${
+        // What the partner portal's visitors upload.
+        isDemo ? 'portals/partner-portal/uploads\n' : ''
+      }`,
     );
   }
 
@@ -278,6 +281,9 @@ export default class AgentNodeJs extends AbstractDumper {
     this.copyWorkflowBpmnSidecars();
     // The layout's Custom components: the demo's agent serves this folder (index template).
     this.copyTemplateDirectory('common/components/hub', 'public/smart-components/hub');
+    // The partner portals (`forest portals`): small apps outside Forest that call this agent
+    // through its Gateway. Plain Node, no dependency; their sample PDFs are copied as they are.
+    this.copyTemplateTree('common/portals', 'portals');
   }
 
   // The curated workflows ship their compiled BPMN as portable sidecar files
@@ -314,7 +320,7 @@ export default class AgentNodeJs extends AbstractDumper {
       isDemo,
     );
     this.writeTypings();
-    this.writeGitignore(dumpConfig.language);
+    this.writeGitignore(dumpConfig.language, isDemo);
     this.writeDockerignore(dumpConfig.language);
     this.writeDockerfile(dumpConfig.language);
     // The demo project has no database, so no docker-compose DB service is needed.

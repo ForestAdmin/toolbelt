@@ -21,3 +21,6 @@ test-output/
 
 # Typescript
 dist/
+
+# what the demo's partner portal stores when run from the templates
+src/services/dumpers/templates/agent-nodejs/common/portals/partner-portal/uploads/

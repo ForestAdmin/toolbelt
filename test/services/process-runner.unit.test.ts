@@ -5,6 +5,7 @@ import net from 'net';
 import ExitCodeError from '../../src/services/exit-code-error';
 import {
   runCapture,
+  runLogged,
   runStep,
   startProcess,
   stopAllProcesses,
@@ -137,6 +138,39 @@ describe('process-runner', () => {
           'console.error("A project with this name already exists"); process.exit(2)',
         ]),
       ).rejects.toThrow(/A project with this name already exists/);
+    });
+  });
+
+  describe('runLogged', () => {
+    it('hands back each line, stdout and stderr, with the redraws of a progress bar split', async () => {
+      expect.assertions(1);
+      const lines: string[] = [];
+      await runLogged(
+        'node',
+        [
+          '-e',
+          'console.log("added 12 packages"); console.error("npm warn"); process.stdout.write("1%\\r50%\\r100%\\n")',
+        ],
+        { onLine: line => lines.push(line) },
+      );
+
+      expect(lines.sort()).toStrictEqual(['1%', '100%', '50%', 'added 12 packages', 'npm warn']);
+    });
+
+    it('fails with the last lines the command printed, its credentials stripped', async () => {
+      expect.assertions(3);
+      const error = await runLogged(
+        'node',
+        [
+          '-e',
+          'console.error("cannot reach postgres://forest:hunter2@db:5432/bank"); process.exit(3)',
+        ],
+        { onLine: () => {} },
+      ).catch((thrown: Error) => thrown);
+
+      expect(error.message).toContain('exited with code 3');
+      expect(error.message).toContain('postgres://forest:***@db:5432/bank');
+      expect(error.message).not.toContain('hunter2');
     });
   });
 

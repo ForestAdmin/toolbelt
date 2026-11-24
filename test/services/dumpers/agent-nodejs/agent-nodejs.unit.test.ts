@@ -2,11 +2,19 @@
 import type { Config } from '../../../../src/interfaces/project-create-interface';
 import type { Language } from '../../../../src/utils/languages';
 
-import { existsSync, readFileSync } from 'fs';
+import fs, { existsSync, readFileSync } from 'fs';
+import os from 'os';
 import path from 'path';
 
 import AgentNodeJs from '../../../../src/services/dumpers/agent-nodejs';
 import languages from '../../../../src/utils/languages';
+
+/** A template folder tree for a mocked readdirSync: each folder's name, then its entries. */
+const templateTree = (tree: Record<string, [string, boolean][]>) => (folder: string) =>
+  (tree[folder.split('/').pop() as string] ?? []).map(([name, isDir]) => ({
+    name,
+    isDirectory: () => isDir,
+  }));
 
 describe('services > dumpers > AgentNodeJs', () => {
   const createDumper = (language: Language, dependencies = {}) => {
@@ -165,6 +173,54 @@ describe('services > dumpers > AgentNodeJs', () => {
         expect(context.fs.writeFileSync).toHaveBeenCalledWith(
           `/test/a${language.name}Application/public/smart-components/hub/go-to.js`,
           'mockedContent',
+        );
+      });
+
+      it('copies the partner portals byte for byte, sub-folders included, uploads left out', async () => {
+        expect.assertions(4);
+        const { dumper, context, defaultConfig } = createDumper(language);
+        const pdf = Buffer.from([0x25, 0x50, 0x44, 0x46, 0xe9]);
+        context.fs.existsSync.mockImplementation((p: string) => p.includes('/common/portals'));
+        context.fs.readFileSync.mockImplementation((p: string) =>
+          p.endsWith('.pdf') ? pdf : 'mockedContent',
+        );
+        Object.assign(context.fs, {
+          readdirSync: jest.fn().mockImplementation(
+            templateTree({
+              portals: [['partner-portal', true]],
+              'partner-portal': [
+                ['server.js', false],
+                ['samples', true],
+                ['uploads', true],
+              ],
+              samples: [['passport.pdf', false]],
+              uploads: [['a-visitor-upload', false]],
+            }),
+          ),
+          mkdirSync: jest.fn(),
+        });
+
+        await dumper.dump(demoConfig(defaultConfig));
+
+        const project = `/test/a${language.name}Application`;
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          `${project}/portals/partner-portal/samples/passport.pdf`,
+          pdf,
+        );
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          `${project}/portals/partner-portal/server.js`,
+          'mockedContent',
+        );
+        expect(
+          context.fs.writeFileSync.mock.calls.some(([target]: [string]) =>
+            target.includes('/uploads/'),
+          ),
+        ).toBe(false);
+        expect(context.fs.writeFileSync).toHaveBeenCalledWith(
+          `${project}/.gitignore`,
+          `node_modules\n.env\n${
+            language === languages.Typescript ? 'dist\n' : ''
+          }portals/partner-portal/uploads\n`,
         );
       });
 
@@ -853,6 +909,182 @@ describe('demo forest-layout.json asset', () => {
         readFileSync(path.join(path.dirname(file), '..', language, 'index.hbs'), 'utf8'),
       ).toContain('agentUrl: `http://localhost:'),
     );
+  });
+
+  it('turns the Gateway on only once @forestadmin/agent-bff is installed', () => {
+    expect.hasAssertions();
+    ['javascript', 'typescript'].forEach(language => {
+      const index = readFileSync(
+        path.join(path.dirname(file), '..', language, 'index.hbs'),
+        'utf8',
+      );
+
+      expect(index).toContain(
+        "if (isInstalled('@forestadmin/agent-bff')) agent.addGateway({ api: true });",
+      );
+      expect(index).toContain('function isInstalled(name');
+    });
+  });
+
+  it('ships portals whose files require only files that ship with them', () => {
+    expect.hasAssertions();
+    const portals = path.join(path.dirname(file), 'portals');
+    const scripts = ['partner-portal', 'lagoon-backoffice'].flatMap(app =>
+      ['server.js', 'gateway.js', 'samples.js', 'web.js', 'cases.js']
+        .map(name => path.join(portals, app, name))
+        .filter(existsSync),
+    );
+
+    expect(scripts.length).toBeGreaterThanOrEqual(6);
+    scripts.forEach(script => {
+      const relative = [...readFileSync(script, 'utf8').matchAll(/require\('(\.{1,2}\/[^']+)'\)/g)];
+      relative.forEach(([, required]) =>
+        expect(existsSync(`${path.resolve(path.dirname(script), required)}.js`)).toBe(true),
+      );
+    });
+  });
+
+  describe("the portals' gates", () => {
+    /** One of the apps' modules, as a demo project gets it. */
+    const portalModule = (...parts: string[]) =>
+      // eslint-disable-next-line global-require, import/no-dynamic-require, @typescript-eslint/no-var-requires
+      require(path.join(path.dirname(file), 'portals', ...parts));
+    const gateway = () => portalModule('partner-portal', 'gateway.js');
+    const reply = () => {
+      const res = { status: 0, writeHead: jest.fn(), end: jest.fn() };
+      res.writeHead.mockImplementation((status: number) => {
+        res.status = status;
+      });
+
+      return res;
+    };
+    const request = (
+      method: string,
+      url: string,
+      remoteAddress = '127.0.0.1',
+      headers: Record<string, string> = { host: 'localhost:3500' },
+    ) => ({ method, url, headers, socket: { remoteAddress } });
+
+    it('answers this computer only when run locally, anyone when hosted', () => {
+      expect.assertions(4);
+      const { localOnly } = gateway();
+      const refused = reply();
+
+      expect(localOnly(request('GET', '/', '192.168.1.20'), refused)).toBe(false);
+      expect(refused.status).toBe(403);
+      expect(localOnly(request('GET', '/', '::1', { host: '[::1]:3500' }), reply())).toBe(true);
+      process.env.PUBLIC_URL = 'https://portal.example.com';
+      try {
+        expect(localOnly(request('GET', '/', '192.168.1.20'), reply())).toBe(true);
+      } finally {
+        delete process.env.PUBLIC_URL;
+      }
+    });
+
+    it('refuses a page addressed by another name (DNS rebinding), and writes from another site', () => {
+      expect.assertions(6);
+      const { localOnly } = gateway();
+      const post = (headers: Record<string, string>) =>
+        localOnly(request('POST', '/api/apply', '127.0.0.1', headers), reply());
+
+      expect(
+        localOnly(request('GET', '/api/home', '127.0.0.1', { host: 'evil.example:3600' }), reply()),
+      ).toBe(false);
+      expect(post({ host: 'localhost:3500', origin: 'http://evil.example' })).toBe(false);
+      expect(post({ host: 'localhost:3500', 'sec-fetch-site': 'cross-site' })).toBe(false);
+      expect(post({ host: 'localhost:3500', origin: 'null' })).toBe(false);
+      expect(post({ host: '127.0.0.1:3500', origin: 'http://127.0.0.1:3500' })).toBe(true);
+      // A command-line client sends no Origin: still from this machine, to localhost.
+      expect(post({ host: 'localhost:3500' })).toBe(true);
+    });
+
+    it('reads a quoted key followed by spaces without its quotes', () => {
+      expect.assertions(1);
+      const dotenv = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'portal-env-')), '.env');
+      fs.writeFileSync(dotenv, 'FOREST_GATEWAY_KEY="fgw_key"   \n');
+
+      expect(gateway().readEnv(dotenv).FOREST_GATEWAY_KEY).toBe('fgw_key');
+    });
+
+    it('asks for screening before an approval, and reads the whole queue, page after page', async () => {
+      expect.assertions(4);
+      const { guide, queue } = portalModule('lagoon-backoffice', 'cases.js');
+      const checked = { status: 'OPEN', docs_complete: '✓', idcheck_result: '✓ match' };
+      const open = Array.from({ length: 237 }, (_, i) => ({
+        id: `k${i}`,
+        status: 'OPEN',
+        opened_at: new Date(Date.now() - (i + 1) * 3600e3).toISOString(),
+        customer_id: `c${i}`,
+        partner: 'Lagoon',
+      }));
+      const fake = {
+        mask: (text: string) => text,
+        list: async (collection: string, { page }: { page: { limit: number; offset: number } }) => {
+          const rows =
+            collection === 'kyc_cases'
+              ? open
+              : open.map(k => ({ id: k.customer_id, partner: 'Lagoon' }));
+
+          return { status: 200, body: { data: rows.slice(page.offset, page.offset + page.limit) } };
+        },
+      };
+
+      expect(guide({ ...checked, screening_result: '' }).advice.action).toBe('screen');
+      expect(guide({ ...checked, screening_result: '✓ no hit' }).advice.action).toBe('approve');
+      expect(
+        guide({ ...checked, screening_result: '○ SCR-1: A. Name, PEP, score 81, cleared before' })
+          .advice.action,
+      ).toBe('approve');
+      await expect(queue(fake, {}, {})).resolves.toHaveLength(237);
+    });
+
+    it('takes no name inherited from Object for an action or an age, as an address could ask', () => {
+      expect.assertions(2);
+      const { ACTIONS } = portalModule('lagoon-backoffice', 'cases.js');
+
+      expect(ACTIONS.toString).toBeUndefined();
+      expect(ACTIONS.approve).toBe('Approve KYC');
+    });
+
+    it('keeps the demo password on everything but an uploaded file, read as the router reads it', () => {
+      expect.assertions(4);
+      const { passwordGate } = gateway();
+      process.env.DEMO_PASSWORD = 'sentinel';
+      try {
+        const upload = `/files/${'a'.repeat(32)}`;
+        expect(passwordGate(request('GET', upload), reply())).toBe(true);
+        expect(passwordGate(request('GET', '/files/../api/home'), reply())).toBe(false);
+        expect(passwordGate(request('POST', `/files/../api/apply`), reply())).toBe(false);
+        expect(passwordGate(request('POST', upload), reply())).toBe(false);
+      } finally {
+        delete process.env.DEMO_PASSWORD;
+      }
+    });
+
+    it("counts the back office's week from Monday 00:00 in Paris, summer time included", () => {
+      expect.assertions(3);
+      const { parisMonday } = portalModule('lagoon-backoffice', 'cases.js');
+
+      expect(parisMonday(new Date('2026-11-26T23:30:00Z')).toISOString()).toBe(
+        '2026-11-22T23:00:00.000Z',
+      );
+      expect(parisMonday(new Date('2026-03-30T10:47:13Z')).toISOString()).toBe(
+        '2026-03-29T22:00:00.000Z',
+      );
+      expect(parisMonday(new Date('2026-10-28T08:15:59Z')).toISOString()).toBe(
+        '2026-10-25T23:00:00.000Z',
+      );
+    });
+  });
+
+  it('ships a sample PDF for every kind the portal asks for, clean and flawed', () => {
+    expect.hasAssertions();
+    const samples = path.join(path.dirname(file), 'portals', 'partner-portal', 'samples');
+
+    ['passport', 'carte_identite', 'selfie', 'facture_edf'].forEach(name => {
+      expect(existsSync(path.join(samples, `${name}.pdf`))).toBe(true);
+      expect(existsSync(path.join(samples, `${name}_flawed.pdf`))).toBe(true);
+    });
   });
 
   it('closes the demo server on shutdown, as the standalone server does', () => {
