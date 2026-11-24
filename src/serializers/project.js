@@ -10,6 +10,7 @@ module.exports = new JSONAPISerializer('projects', {
     'architecture',
     'organization',
     'invitationClaim',
+    'supportsInvitationEnvironmentSetup',
   ],
   organization: { ref: 'id', included: false },
   defaultEnvironment: {

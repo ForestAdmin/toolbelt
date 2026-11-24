@@ -1530,7 +1530,12 @@ module.exports = {
             agent,
             architecture,
             database_type: databaseType,
-            ...(invitationClaim ? { invitation_claim: invitationClaim } : {}),
+            ...(invitationClaim
+              ? {
+                  invitation_claim: invitationClaim,
+                  supports_invitation_environment_setup: true,
+                }
+              : {}),
           },
           ...(organizationId && {
             relationships: {
