@@ -1,3 +1,10 @@
+## [5.27.3](https://github.com/ForestAdmin/toolbelt/compare/v5.27.2...v5.27.3) (2026-11-24)
+
+
+### Bug Fixes
+
+* **start:** keep json below 3 on a rails whose activesupport json 3 breaks ([#854](https://github.com/ForestAdmin/toolbelt/issues/854)) ([0fd13ad](https://github.com/ForestAdmin/toolbelt/commit/0fd13adac3b84e1ecf88e5bce585ab7d682389d1))
+
 ## [5.27.2](https://github.com/ForestAdmin/toolbelt/compare/v5.27.1...v5.27.2) (2026-11-19)
 
 
