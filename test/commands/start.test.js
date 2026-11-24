@@ -285,6 +285,78 @@ describe('start', () => {
       expect(stopProcess.mock.calls).toStrictEqual([[child]]);
     });
 
+    it('holds the back-end lines while the menu is open and prints them once it is answered', async () => {
+      expect.hasAssertions();
+      resetDemoMocks();
+      let emitBackEndLine;
+      startProcess.mockImplementation((command, args, options) => {
+        emitBackEndLine = options.onOutput;
+
+        return { child, ready: Promise.resolve(), exited: Promise.resolve(), mute: () => {} };
+      });
+      let printedWhileMenuOpen;
+      const answeredMenu = {
+        in: [DEMO_MENU],
+        get out() {
+          emitBackEndLine('info: [200] GET /authentication/callback');
+          printedWhileMenuOpen = stdout.output.includes('GET /authentication/callback');
+
+          return { next: 'stop' };
+        },
+      };
+
+      const tty = forceTty();
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          prompts: [answeredMenu],
+          std: [{ out: '  | info: [200] GET /authentication/callback' }],
+        });
+      } finally {
+        tty.mockRestore();
+      }
+
+      expect(printedWhileMenuOpen).toBe(false);
+    });
+
+    it('prints only the last 20 back-end lines held under the menu, and counts the others', async () => {
+      expect.hasAssertions();
+      resetDemoMocks();
+      let emitBackEndLine;
+      startProcess.mockImplementation((command, args, options) => {
+        emitBackEndLine = options.onOutput;
+
+        return { child, ready: Promise.resolve(), exited: Promise.resolve(), mute: () => {} };
+      });
+      const line = n => `info: [200] GET /ping-${String(n).padStart(2, '0')}`;
+      const answeredMenu = {
+        in: [DEMO_MENU],
+        get out() {
+          for (let n = 1; n <= 21; n += 1) emitBackEndLine(line(n));
+
+          return { next: 'stop' };
+        },
+      };
+
+      const tty = forceTty();
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'demo'],
+          prompts: [answeredMenu],
+          std: [
+            { out: '  | … 1 earlier back-end lines not shown' },
+            { out: `  | ${line(2)}` },
+            { out: `  | ${line(21)}` },
+            { not: line(1) },
+          ],
+        });
+      } finally {
+        tty.mockRestore();
+      }
+    });
+
     it('warns that the curated layout did not finish when no part is named', async () => {
       expect.hasAssertions();
       resetDemoMocks();
@@ -342,6 +414,66 @@ describe('start', () => {
       });
 
       expect(stopAllProcesses.mock.calls).toStrictEqual([[]]);
+    });
+  });
+
+  describe('handoff menu', () => {
+    it('holds the back-end lines while skills:init asks which coding agents to teach', async () => {
+      expect.hasAssertions();
+      resetProcessMocks();
+      let emitBackEndLine;
+      let printedWhileSkillsInitOpen;
+      runStep.mockImplementation(async (_, args) => {
+        if (args[1] === 'projects:create:sql') {
+          fs.mkdirSync('x');
+          fs.writeFileSync('x/package.json', JSON.stringify({ scripts: { build: 'tsc' } }));
+        }
+        if (args[1] === 'skills:init') {
+          emitBackEndLine('info: [200] GET /forest/ping');
+          printedWhileSkillsInitOpen = stdout.output.includes('GET /forest/ping');
+        }
+      });
+      startProcess.mockImplementation((command, args, options) => {
+        emitBackEndLine = options.onOutput;
+
+        return {
+          child: { pid: 4242, exitCode: 0, signalCode: null },
+          ready: Promise.resolve(),
+          mute: () => {},
+        };
+      });
+      const menu = {
+        type: 'list',
+        name: 'next',
+        message: 'Your back-office is live. What next?',
+        choices: [
+          { name: 'Teach your coding agent about Forest', value: 'skills' },
+          { name: 'Deploy to production', value: 'deploy' },
+          { name: 'Get started guide (https://docs.forest.app)', value: 'docs' },
+          { name: 'Keep exploring — leave the back-end running', value: 'stay' },
+        ],
+      };
+
+      const tty = forceTty();
+      const skills = jest
+        .spyOn(StartCommand.prototype, 'canInstallSkills', 'get')
+        .mockReturnValue(true);
+      try {
+        await testCli({
+          commandClass: StartCommand,
+          commandArgs: ['--flow', 'standalone', '--name', 'x'],
+          prompts: [
+            { in: [menu], out: { next: 'skills' } },
+            { in: [menu], out: { next: 'stay' } },
+          ],
+          std: [{ out: '  | info: [200] GET /forest/ping' }],
+        });
+      } finally {
+        skills.mockRestore();
+        tty.mockRestore();
+      }
+
+      expect(printedWhileSkillsInitOpen).toBe(false);
     });
   });
 

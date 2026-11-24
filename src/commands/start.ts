@@ -50,6 +50,7 @@ const DOCS_URL = 'https://docs.forest.app';
 const DEMO_PORT = 3310;
 const RAILS_PORT = 3002;
 const NODE_PORT = 3001;
+const MAX_BACK_END_LINES_HELD_DURING_PROMPT = 20;
 
 /** What configures this CLI rather than a project: where its token lives, which server it calls. */
 const CLI_SETTINGS = [
@@ -143,6 +144,10 @@ export default class StartCommand extends AbstractCommand {
 
   /** Passed to every `projects:create:*` call, so the project lands in the chosen organization. */
   private organizationArgs: string[] = [];
+
+  private backEndLinesHeldDuringPrompt: string[] | undefined;
+
+  private backEndLinesSkippedDuringPrompt = 0;
 
   // eslint-disable-next-line class-methods-use-this -- reads the ambient TTY, not instance state
   private get interactive(): boolean {
@@ -446,15 +451,56 @@ export default class StartCommand extends AbstractCommand {
       env: options.env,
       onOutput: chunk => {
         if (options.trouble?.test(chunk)) troubled = true;
-        this.logger.log(this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`));
+        this.printBackEndLine(this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`));
       },
     });
 
     return Object.assign(started, { troubled: () => troubled });
   }
 
+  private printBackEndLine(line: string): void {
+    const held = this.backEndLinesHeldDuringPrompt;
+    if (!held) {
+      this.logger.log(line);
+
+      return;
+    }
+
+    held.push(line);
+    if (held.length > MAX_BACK_END_LINES_HELD_DURING_PROMPT) {
+      held.shift();
+      this.backEndLinesSkippedDuringPrompt += 1;
+    }
+  }
+
+  private releaseBackEndLines(): void {
+    const held = this.backEndLinesHeldDuringPrompt ?? [];
+    const skipped = this.backEndLinesSkippedDuringPrompt;
+    this.backEndLinesHeldDuringPrompt = undefined;
+    this.backEndLinesSkippedDuringPrompt = 0;
+
+    if (skipped) {
+      this.logger.log(this.chalk.grey(`  | … ${skipped} earlier back-end lines not shown`));
+    }
+    held.forEach(line => this.logger.log(line));
+  }
+
+  /** Hold the back-end lines while `work` owns the terminal with a prompt, then print them. */
+  private async holdBackEndLines<T>(work: () => Promise<T>): Promise<T> {
+    if (this.backEndLinesHeldDuringPrompt) return work();
+
+    this.backEndLinesHeldDuringPrompt = [];
+    try {
+      return await work();
+    } finally {
+      this.releaseBackEndLines();
+    }
+  }
+
   private ask(question: Record<string, unknown>) {
-    return this.context.inquirer.prompt([question]);
+    const prompt = () => this.context.inquirer.prompt([question]);
+
+    return this.holdBackEndLines<Awaited<ReturnType<typeof prompt>>>(prompt);
   }
 
   private async confirm(message: string, def = true): Promise<boolean> {
@@ -1135,7 +1181,7 @@ export default class StartCommand extends AbstractCommand {
     if (choice === 'skills') {
       // No --agent: `skills:init` asks which agents this repo uses, with the full list and its own
       // repo-aware detection. One question, asked once, where the answer belongs.
-      await this.forest(['skills:init'], tail.dir);
+      await this.holdBackEndLines(() => this.forest(['skills:init'], tail.dir));
 
       return this.offerLaunch(tail, StartCommand.seed('customise', tail));
     }
