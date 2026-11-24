@@ -485,15 +485,22 @@ export default class StartCommand extends AbstractCommand {
     held.forEach(line => this.logger.log(line));
   }
 
-  private async ask(question: Record<string, unknown>) {
-    if (this.backEndLinesHeldDuringPrompt) return this.context.inquirer.prompt([question]);
+  /** Hold the back-end lines while `work` owns the terminal with a prompt, then print them. */
+  private async holdBackEndLines<T>(work: () => Promise<T>): Promise<T> {
+    if (this.backEndLinesHeldDuringPrompt) return work();
 
     this.backEndLinesHeldDuringPrompt = [];
     try {
-      return await this.context.inquirer.prompt([question]);
+      return await work();
     } finally {
       this.releaseBackEndLines();
     }
+  }
+
+  private ask(question: Record<string, unknown>) {
+    const prompt = () => this.context.inquirer.prompt([question]);
+
+    return this.holdBackEndLines<Awaited<ReturnType<typeof prompt>>>(prompt);
   }
 
   private async confirm(message: string, def = true): Promise<boolean> {
@@ -1174,7 +1181,7 @@ export default class StartCommand extends AbstractCommand {
     if (choice === 'skills') {
       // No --agent: `skills:init` asks which agents this repo uses, with the full list and its own
       // repo-aware detection. One question, asked once, where the answer belongs.
-      await this.forest(['skills:init'], tail.dir);
+      await this.holdBackEndLines(() => this.forest(['skills:init'], tail.dir));
 
       return this.offerLaunch(tail, StartCommand.seed('customise', tail));
     }
