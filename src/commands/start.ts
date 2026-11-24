@@ -1,5 +1,6 @@
 import type { NodeStack } from '../services/onboarding/detect';
 import type { SecretsWrite } from '../services/onboarding/env-file';
+import type { Tail } from '../services/start/agent-handoff';
 import type { ChildProcess } from 'child_process';
 
 import { Flags } from '@oclif/core';
@@ -37,20 +38,17 @@ import {
   pinServerUrl,
   serverUrlLine,
 } from '../services/onboarding/rails-initializer';
-import {
-  runCapture,
-  runStep,
-  startProcess,
-  stopAllProcesses,
-  stopProcess,
-} from '../services/process-runner';
+import { runStep, stopAllProcesses, stopProcess } from '../services/process-runner';
+import { agentSeed, hasSkills, launchableAgents, mountSeed } from '../services/start/agent-handoff';
+import { masked, redact, scrubbed } from '../services/start/command-redaction';
+import { hasBuildScript, parseSecrets, readPort } from '../services/start/project-files';
+import StepRunner from '../services/start/step-runner';
 import { validateOrganizationId } from '../utils/validators';
 
 const DOCS_URL = 'https://docs.forest.app';
 const DEMO_PORT = 3310;
 const RAILS_PORT = 3002;
 const NODE_PORT = 3001;
-const MAX_BACK_END_LINES_HELD_DURING_PROMPT = 20;
 
 /** What configures this CLI rather than a project: where its token lives, which server it calls. */
 const CLI_SETTINGS = [
@@ -61,33 +59,12 @@ const CLI_SETTINGS = [
   'SILENT',
 ];
 
-// What `@forestadmin/agent` logs from `start()`, once its schema reached Forest. Neither "Listening
-// on http", which an app with nothing mounted prints too, nor "Successfully mounted on", which the
-// framework mounts log before `start()` has run, and so before it can fail.
-const READY = /schema was (updated|not updated)/i;
-
 // What `forest_admin_rails` logs when its schema never reached Forest. It boots anyway — the app
 // serves, `/forest` answers — so nothing else in the flow can tell that the panel will be empty.
 const SCHEMA_SYNC_FAILED = /schema sync failed/i;
 
 type Flow = 'demo' | 'standalone' | 'inapp';
 type StartFlags = Record<string, string | undefined>;
-type Tail = {
-  child?: ChildProcess;
-  /** Forest project name — a label, not necessarily a directory. */
-  name: string;
-  /** Where the repo lives: the scaffolded dir for standalone/demo, the user's own dir for in-app.
-   *  Derived from the FLOW, never from whether a process happens to be running. */
-  dir: string;
-  stack: string;
-  url: string;
-  demo?: boolean;
-  /** Stops streaming the back-end's logs — they would otherwise be drawn into a full-screen TUI. */
-  mute?: () => () => void;
-  /** How to start this back-end again. Rails is not started with `npm start`. */
-  restart: string;
-};
-
 /**
  * `forest start` — the whole onboarding, from an empty terminal to a running back-office.
  *
@@ -145,9 +122,7 @@ export default class StartCommand extends AbstractCommand {
   /** Passed to every `projects:create:*` call, so the project lands in the chosen organization. */
   private organizationArgs: string[] = [];
 
-  private backEndLinesHeldDuringPrompt: string[] | undefined;
-
-  private backEndLinesSkippedDuringPrompt = 0;
+  private runner!: StepRunner;
 
   // eslint-disable-next-line class-methods-use-this -- reads the ambient TTY, not instance state
   private get interactive(): boolean {
@@ -166,6 +141,7 @@ export default class StartCommand extends AbstractCommand {
   async run(): Promise<void> {
     const { flags } = await this.parse(StartCommand);
     this.dryRun = flags['dry-run'];
+    this.runner = new StepRunner(this.logger, this.chalk, this.dryRun);
     if (flags.organization !== undefined && flags.invitation !== undefined) {
       throw new Error(
         '--organization cannot be used with --invitation: the invitation creates the project for the inviter.',
@@ -230,7 +206,7 @@ export default class StartCommand extends AbstractCommand {
     if (this.context.authenticator.getAuthToken()) {
       this.logger.log(this.chalk.grey('  (already logged in — skipping `forest login`)'));
     } else {
-      await this.forest(['login']); // OIDC device flow (browser signup/login)
+      await this.runner.forest(['login']); // OIDC device flow (browser signup/login)
     }
 
     const invitation = flags.invitation ? await this.acceptInvitation(flags, flags.invitation) : {};
@@ -321,186 +297,10 @@ export default class StartCommand extends AbstractCommand {
     return ['--organization', organization];
   }
 
-  /**
-   * Values that must never reach the terminal, a scrollback or a CI log. The echo is a feature —
-   * it teaches what the wrapper does — but a database URL carries credentials and an env secret is
-   * a long-lived one, so what is shown and what is run are not the same string.
-   */
-  private static isHidden(command: string, args: string[], index: number): boolean {
-    const previous = args[index - 1];
-
-    return (
-      previous === '--databaseConnectionURL' ||
-      previous === '-c' ||
-      previous === '--invitation' ||
-      (command === 'bin/rails' && previous === 'forest_admin_rails:install')
-    );
-  }
-
-  private static redact(command: string, args: string[]): string {
-    const shown = args.map((arg, index) =>
-      StartCommand.isHidden(command, args, index) ? '<redacted>' : arg,
-    );
-
-    return `${command} ${shown.join(' ')}`.trim();
-  }
-
-  /**
-   * The same values, out of a failure's message. The runner only knows secret-named flags and URL
-   * userinfo, so a bare positional or a URL's `?password=` would otherwise print in the clear.
-   */
-  private static scrubbed(error: unknown, command: string, args: string[]): Error {
-    return new Error(StartCommand.masked((error as Error).message, command, args));
-  }
-
-  private static masked(text: string, command: string, args: string[]): string {
-    return args
-      .filter((_, index) => StartCommand.isHidden(command, args, index))
-      .reduce((result, value) => result.split(value).join('<redacted>'), text);
-  }
-
-  private echo(command: string, args: string[]): boolean {
-    this.logger.log(this.chalk.grey(`\n$ ${StartCommand.redact(command, args)}`));
-    if (this.dryRun) this.logger.log(this.chalk.grey('  (dry-run — not executed)'));
-
-    return this.dryRun;
-  }
-
-  /** Run a command, echoing it first. The echo is the point: it teaches what the wrapper does. */
-  private async run$(command: string, args: string[], cwd?: string): Promise<void> {
-    if (this.echo(command, args)) return undefined;
-
-    return runStep(command, args, { cwd }).catch(error => {
-      throw StartCommand.scrubbed(error, command, args);
-    });
-  }
-
-  /** Invoke one of our own commands. Resolved through this executable, never through the PATH:
-   *  under `npx forest-cli@latest start` there may be no `forest` installed anywhere. */
-  private forest(args: string[], cwd?: string): Promise<void> {
-    if (this.echo('forest', args)) return Promise.resolve();
-
-    return runStep(process.execPath, [process.argv[1], ...args], { cwd }).catch(error => {
-      throw StartCommand.scrubbed(error, 'forest', args);
-    });
-  }
-
-  /**
-   * Invoke one of our own commands and read its stdout back. `--format json` is only understood by
-   * newer CLIs, so a rejection mentioning it is retried without: the flow must not die on a flag.
-   * stderr is streamed rather than swallowed — this command prints the secrets and the next steps
-   * there, and a silent terminal during project creation reads as a hang.
-   */
-  private async forestCapture(args: string[]): Promise<string> {
-    if (this.echo('forest', args)) return '';
-
-    const onProgress = (chunk: string) =>
-      this.logger.log(
-        this.chalk.grey(StartCommand.masked(chunk, 'forest', args).replace(/\n$/, '')),
-      );
-
-    try {
-      const { stdout } = await runCapture(process.execPath, [process.argv[1], ...args], {
-        onProgress,
-      });
-
-      return stdout;
-    } catch (error) {
-      // The error message opens with the command, which contains `--format` — testing the whole
-      // message would match every failure and re-run a command that creates a project.
-      // Only the diagnostic below the first line can say the flag is unknown.
-      const [, ...detail] = (error as Error).message.split('\n');
-      if (!args.includes('--format') || !/Nonexistent flag/i.test(detail.join('\n'))) {
-        throw StartCommand.scrubbed(error, 'forest', args);
-      }
-
-      const withoutFormat = args.filter(
-        (arg, index) => arg !== '--format' && args[index - 1] !== '--format',
-      );
-      this.logger.log(
-        this.chalk.grey('  (this CLI has no --format json — reading the printed secrets)'),
-      );
-      // NO onProgress here, unlike above: this retry captures the human output precisely because
-      // that is where the secrets are printed. Echoing it would put a long-lived credential in
-      // the terminal, the scrollback and — on the non-interactive path — a retained CI log.
-      const { stdout, stderr } = await runCapture(process.execPath, [
-        process.argv[1],
-        ...withoutFormat,
-      ]).catch(retryError => {
-        throw StartCommand.scrubbed(retryError, 'forest', args);
-      });
-
-      return `${stdout}\n${stderr}`;
-    }
-  }
-
-  /** Boot a back-end, streaming its logs, and wait until its schema reached Forest. */
-  private boot(
-    command: string,
-    args: string[],
-    options: { cwd?: string; env?: NodeJS.ProcessEnv; ready?: RegExp; trouble?: RegExp } = {},
-  ) {
-    // A boot can succeed and still not deliver what the flow promised. `trouble` is the line that
-    // says so, read off the same stream `ready` watches, so the caller can report what happened
-    // instead of the tail it would have printed. Non-global on purpose: `test()` on a /g regex
-    // carries `lastIndex` between chunks and would start missing matches.
-    let troubled = false;
-    const started = startProcess(command, args, {
-      ready: options.ready ?? READY,
-      cwd: options.cwd,
-      env: options.env,
-      onOutput: chunk => {
-        if (options.trouble?.test(chunk)) troubled = true;
-        this.printBackEndLine(this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`));
-      },
-    });
-
-    return Object.assign(started, { troubled: () => troubled });
-  }
-
-  private printBackEndLine(line: string): void {
-    const held = this.backEndLinesHeldDuringPrompt;
-    if (!held) {
-      this.logger.log(line);
-
-      return;
-    }
-
-    held.push(line);
-    if (held.length > MAX_BACK_END_LINES_HELD_DURING_PROMPT) {
-      held.shift();
-      this.backEndLinesSkippedDuringPrompt += 1;
-    }
-  }
-
-  private releaseBackEndLines(): void {
-    const held = this.backEndLinesHeldDuringPrompt ?? [];
-    const skipped = this.backEndLinesSkippedDuringPrompt;
-    this.backEndLinesHeldDuringPrompt = undefined;
-    this.backEndLinesSkippedDuringPrompt = 0;
-
-    if (skipped) {
-      this.logger.log(this.chalk.grey(`  | … ${skipped} earlier back-end lines not shown`));
-    }
-    held.forEach(line => this.logger.log(line));
-  }
-
-  /** Hold the back-end lines while `work` owns the terminal with a prompt, then print them. */
-  private async holdBackEndLines<T>(work: () => Promise<T>): Promise<T> {
-    if (this.backEndLinesHeldDuringPrompt) return work();
-
-    this.backEndLinesHeldDuringPrompt = [];
-    try {
-      return await work();
-    } finally {
-      this.releaseBackEndLines();
-    }
-  }
-
   private ask(question: Record<string, unknown>) {
     const prompt = () => this.context.inquirer.prompt([question]);
 
-    return this.holdBackEndLines<Awaited<ReturnType<typeof prompt>>>(prompt);
+    return this.runner.holdBackEndLines<Awaited<ReturnType<typeof prompt>>>(prompt);
   }
 
   private async confirm(message: string, def = true): Promise<boolean> {
@@ -599,7 +399,7 @@ export default class StartCommand extends AbstractCommand {
       name = `forest-demo-${Math.random().toString(36).slice(2, 6)}`;
     }
 
-    await this.forest([
+    await this.runner.forest([
       'projects:create:demo',
       name,
       '-l',
@@ -631,7 +431,7 @@ export default class StartCommand extends AbstractCommand {
     if (this.dryRun) {
       this.logger.log(this.chalk.grey('\n$ npm start   (background — wait for schema push)'));
     } else {
-      const booted = this.boot('npm', ['start'], { cwd: name });
+      const booted = this.runner.boot('npm', ['start'], { cwd: name });
       ({ child, exited } = booted);
       this.logger.log(this.chalk.grey('\n$ npm start   (booting — waiting for the schema push…)'));
       await booted.ready;
@@ -659,23 +459,23 @@ export default class StartCommand extends AbstractCommand {
   }
 
   private async applyDemoLayout(args: string[], dir: string): Promise<void> {
-    if (this.echo('forest', args)) return;
+    if (this.runner.echo('forest', args)) return;
 
     try {
       await runStep(process.execPath, [process.argv[1], ...args], {
         cwd: dir,
-        onStderr: chunk => process.stderr.write(StartCommand.masked(chunk, 'forest', args)),
+        onStderr: chunk => process.stderr.write(masked(chunk, 'forest', args)),
       });
     } catch (error) {
       if (!(error instanceof ExitCodeError) || error.exitCode === null) {
-        throw StartCommand.scrubbed(error, 'forest', args);
+        throw scrubbed(error, 'forest', args);
       }
 
       const part = readFailedPart(error.message);
       const where = part ? `: it stopped at its ${part} part` : '';
       this.logger.warn(
         `The curated layout did not finish applying${where}. Your demo project works without it.`,
-        `  Retry anytime: cd ${dir} && ${StartCommand.redact('forest', args)}`,
+        `  Retry anytime: cd ${dir} && ${redact('forest', args)}`,
       );
     }
   }
@@ -704,7 +504,7 @@ export default class StartCommand extends AbstractCommand {
       );
     }
 
-    await this.forest([...args, ...this.organizationArgs]);
+    await this.runner.forest([...args, ...this.organizationArgs]);
     await this.installAndBuild(name);
     this.logger.success(`Setup complete — booting your back-end on :${DEMO_PORT}…`);
 
@@ -727,10 +527,10 @@ export default class StartCommand extends AbstractCommand {
     // Without --db the port came from `create:sql`'s own prompt, so DEMO_PORT is a guess. The
     // generated .env records what was actually chosen — reporting the wrong one would send both
     // the user and the coding agent to a back-end that is not listening there.
-    const port = StartCommand.readPort(name) ?? DEMO_PORT;
+    const port = readPort(name) ?? DEMO_PORT;
     tail.url = `http://localhost:${port}`;
 
-    const booted = this.boot('npm', ['start'], { cwd: name });
+    const booted = this.runner.boot('npm', ['start'], { cwd: name });
     this.logger.log(this.chalk.grey('  (waiting for the schema push…)'));
     await booted.ready;
     this.doneStandalone(name, port);
@@ -740,7 +540,7 @@ export default class StartCommand extends AbstractCommand {
   private async flowInAppRails(flags: StartFlags): Promise<void> {
     const serverUrl = checkRailsServerUrl(this.context.env);
     const name = await this.promptName(flags.name);
-    const output = await this.forestCapture([
+    const output = await this.runner.forestCapture([
       'projects:create:in-app',
       name,
       '-H',
@@ -752,7 +552,7 @@ export default class StartCommand extends AbstractCommand {
       ...this.organizationArgs,
       ...StartCommand.invitationArgs(flags),
     ]);
-    const secrets = StartCommand.parseSecrets(output);
+    const secrets = parseSecrets(output);
 
     // Checked before `bundle add`: past that point five gems and a lockfile change are in the
     // user's repo, and throwing "nothing was generated" would be false.
@@ -765,7 +565,7 @@ export default class StartCommand extends AbstractCommand {
 
     // Five gems, not the three the docs list: forest_admin_rails alone installs but fails to boot,
     // because it does not declare its companions as runtime dependencies.
-    await this.run$('bundle', [
+    await this.runner.run('bundle', [
       'add',
       'forest_admin_agent',
       'forest_admin_rails',
@@ -773,7 +573,7 @@ export default class StartCommand extends AbstractCommand {
       'forest_admin_datasource_toolkit',
       'forest_admin_datasource_customizer',
     ]);
-    await this.run$('bin/rails', [
+    await this.runner.run('bin/rails', [
       'g',
       'forest_admin_rails:install',
       secrets.envSecret ?? '<FOREST_ENV_SECRET>',
@@ -796,7 +596,7 @@ export default class StartCommand extends AbstractCommand {
       return;
     }
 
-    const booted = this.boot('bin/rails', ['server', '-p', String(RAILS_PORT)], {
+    const booted = this.runner.boot('bin/rails', ['server', '-p', String(RAILS_PORT)], {
       env: bootEnv,
       // Puma's bind line stays accepted here: when `forest_admin_rails` logs its schema push is
       // unverified, and waiting for a line that never comes would fail every Rails boot.
@@ -850,7 +650,7 @@ export default class StartCommand extends AbstractCommand {
 
     checkNodeServerUrl(this.context.env);
     const name = await this.promptName(flags.name);
-    const output = await this.forestCapture([
+    const output = await this.runner.forestCapture([
       'projects:create:in-app',
       name,
       '-H',
@@ -862,7 +662,7 @@ export default class StartCommand extends AbstractCommand {
       ...this.organizationArgs,
       ...StartCommand.invitationArgs(flags),
     ]);
-    const secrets = { ...StartCommand.parseSecrets(output), serverUrl: this.nodeServerUrl };
+    const secrets = { ...parseSecrets(output), serverUrl: this.nodeServerUrl };
 
     if (!secrets.envSecret && !this.dryRun) {
       throw new Error(
@@ -872,7 +672,7 @@ export default class StartCommand extends AbstractCommand {
     }
 
     const stack = detectNodeStack();
-    await this.run$('npm', ['install', '@forestadmin/agent', NODE_DATASOURCE[stack.orm]]);
+    await this.runner.run('npm', ['install', '@forestadmin/agent', NODE_DATASOURCE[stack.orm]]);
 
     this.explainMount(mount, stack);
 
@@ -929,7 +729,7 @@ export default class StartCommand extends AbstractCommand {
       name: 'go',
       message: 'Once Forest is mounted in your server, press Enter to boot it',
     });
-    const booted = this.boot('npm', ['start'], {
+    const booted = this.runner.boot('npm', ['start'], {
       env: { ...bootSecrets(secrets, written), PORT: String(NODE_PORT) },
     });
     this.logger.log(this.chalk.grey('\n$ npm start   (booting…)'));
@@ -972,42 +772,19 @@ export default class StartCommand extends AbstractCommand {
   private async mountWithAgent(stack: NodeStack, secretsInDotenv: boolean): Promise<void> {
     if (!this.canInstallSkills) return;
 
-    await this.forest(['skills:init']);
+    await this.runner.forest(['skills:init']);
 
-    const [agent] = StartCommand.launchableAgents('.');
+    const [agent] = launchableAgents('.');
     if (!agent || !(await this.confirm(`Launch ${agent.label} now to wire the mount?`))) return;
 
-    const seed = StartCommand.mountSeed(stack, secretsInDotenv, Boolean(this.nodeServerUrl));
-    await this.run$(agent.bin, [seed]);
+    const seed = mountSeed(stack, secretsInDotenv, Boolean(this.nodeServerUrl));
+    await this.runner.run(agent.bin, [seed]);
   }
 
   private get nodeServerUrl(): string | undefined {
     const { FOREST_SERVER_URL, FOREST_URL_IS_DEFAULT } = this.context.env;
 
     return FOREST_URL_IS_DEFAULT ? undefined : FOREST_SERVER_URL;
-  }
-
-  private static mountSeed(
-    stack: NodeStack,
-    secretsInDotenv: boolean,
-    pinsServerUrl: boolean,
-  ): string {
-    // On a conflict the new project's secrets are in neither `.env` nor the shell: an agent told
-    // otherwise would wire the app to whichever project those hold.
-    const secrets = secretsInDotenv
-      ? 'FOREST_ENV_SECRET / FOREST_AUTH_SECRET are in .env'
-      : "this project's FOREST_ENV_SECRET / FOREST_AUTH_SECRET are not configured yet, so ask me for them rather than reusing the ones already there";
-
-    const server = pinsServerUrl
-      ? ` Pass \`${NODE_SERVER_URL_OPTION}\` to createAgent: this project lives on that Forest server, not the default one.`
-      : '';
-
-    return (
-      `You're in a ${stack.framework} app using ${stack.orm}. @forestadmin/agent and ` +
-      `${NODE_DATASOURCE[stack.orm]} are installed, and ${secrets}.${server} ` +
-      "Mount the Forest agent in my server, then stop: don't start the server, " +
-      '`forest start` boots it once you are done.'
-    );
   }
 
   private explainMount(mount: string, stack: NodeStack): void {
@@ -1060,22 +837,12 @@ export default class StartCommand extends AbstractCommand {
    * JavaScript one has no build step at all, and `npm run build` would fail on the missing script.
    */
   private async installAndBuild(dir: string): Promise<void> {
-    await this.run$('npm', ['install'], dir);
+    await this.runner.run('npm', ['install'], dir);
     // A dry run scaffolded nothing to read, so it shows the TypeScript path the demo always takes.
-    if (!this.dryRun && !StartCommand.hasBuildScript(dir)) return;
+    if (!this.dryRun && !hasBuildScript(dir)) return;
 
-    await this.run$('npm', ['install', '--save-dev', 'typescript@^5.5'], dir);
-    await this.run$('npm', ['run', 'build'], dir);
-  }
-
-  private static hasBuildScript(dir: string): boolean {
-    try {
-      const pkg = JSON.parse(fs.readFileSync(`${dir}/package.json`, 'utf8'));
-
-      return Boolean(pkg.scripts?.build);
-    } catch {
-      return false;
-    }
+    await this.runner.run('npm', ['install', '--save-dev', 'typescript@^5.5'], dir);
+    await this.runner.run('npm', ['run', 'build'], dir);
   }
 
   // ---------- tails ----------
@@ -1181,20 +948,20 @@ export default class StartCommand extends AbstractCommand {
     if (choice === 'skills') {
       // No --agent: `skills:init` asks which agents this repo uses, with the full list and its own
       // repo-aware detection. One question, asked once, where the answer belongs.
-      await this.holdBackEndLines(() => this.forest(['skills:init'], tail.dir));
+      await this.runner.holdBackEndLines(() => this.runner.forest(['skills:init'], tail.dir));
 
-      return this.offerLaunch(tail, StartCommand.seed('customise', tail));
+      return this.offerLaunch(tail, agentSeed('customise', tail));
     }
 
     if (choice === 'deploy') {
       // Deploying lives in the `deploy-heroku` SKILL, so it needs the skills installed first —
       // `forest deploy` ships layout changes, it does not deploy the app.
-      if (await this.launch(tail, StartCommand.seed('deploy', tail))) return true;
+      if (await this.launch(tail, agentSeed('deploy', tail))) return true;
 
       // Skills present, but no agent we can start from here — Cursor and OpenCode have them and
       // are not launchable. Sending those users back to `skills:init` loops them on a step they
       // have already done, with no way to ever reach a deploy.
-      if (StartCommand.hasSkills(tail.dir)) {
+      if (hasSkills(tail.dir)) {
         this.instruct('Ask your coding agent to deploy:', [
           this.chalk.cyan('"deploy this Forest project to production"'),
           this.chalk.grey('It has the Forest skills — the steps are in `deploy-heroku`.'),
@@ -1221,7 +988,7 @@ export default class StartCommand extends AbstractCommand {
   }
 
   private async offerLaunch(tail: Tail, seed: string): Promise<boolean> {
-    const [agent] = StartCommand.launchableAgents(tail.dir);
+    const [agent] = launchableAgents(tail.dir);
     if (!agent) return false;
     if (!(await this.confirm(`Launch ${agent.label} here now?`))) return false;
 
@@ -1230,7 +997,7 @@ export default class StartCommand extends AbstractCommand {
 
   /** Hand the terminal to a coding agent, seeded with a task. False when none was set up. */
   private async launch(tail: Tail, seed: string): Promise<boolean> {
-    const [agent] = StartCommand.launchableAgents(tail.dir);
+    const [agent] = launchableAgents(tail.dir);
     if (!agent) return false;
 
     this.logger.log(
@@ -1242,7 +1009,7 @@ export default class StartCommand extends AbstractCommand {
     // display for the whole session. It keeps running, we just stop echoing it.
     const unmute = tail.mute?.();
     try {
-      await this.run$(agent.bin, [seed], tail.dir);
+      await this.runner.run(agent.bin, [seed], tail.dir);
     } catch (error) {
       // The menu comes back over a live back-end, so its logs must too.
       unmute?.();
@@ -1294,57 +1061,6 @@ export default class StartCommand extends AbstractCommand {
     });
   }
 
-  // ---------- seeds & helpers ----------
-
-  /**
-   * What the CLI knows and the coding agent would otherwise have to guess — or guess wrong. Two
-   * facts earn their place: the back-end is ALREADY running (a fresh agent's first reflex is to
-   * boot it, which collides on the port or kills the live one), and nothing is deployed yet, so no
-   * role exists and inviting anyone is premature. Everything durable belongs in the skills.
-   */
-  private static seed(intent: 'customise' | 'deploy', tail: Tail): string {
-    const situation = [
-      `Stack: ${tail.stack}.`,
-      `Its back-end is already running on ${tail.url} — it is live, don't start it.`,
-      tail.demo
-        ? "The records are Forest sample data, not the user's own database."
-        : 'Development only: no production environment exists yet, so no role exists either.',
-      'The Forest skills and the Forest docs MCP are installed in this repo.',
-    ].join(' ');
-
-    const task =
-      intent === 'customise'
-        ? 'Help me customise my back-office — e.g. add a segment to a collection, a Smart Action, or an approval workflow.'
-        : "Deploy it to production, then invite my team — the first deploy is what creates the project's first role, so inviting only works once it has succeeded.";
-
-    return `You're in a Forest project. ${situation} ${task}`;
-  }
-
-  /**
-   * Which coding agents `skills:init` actually set up, read back from the manifest it just wrote.
-   * We deliberately do not detect them here: the toolbelt already does it, better — from the repo's
-   * own marks, and knowing Cursor and OpenCode too — and asking twice makes a flow feel like a form.
-   */
-  /** Whether `skills:init` ran here at all — regardless of which agent it set up. */
-  private static hasSkills(dir: string): boolean {
-    return fs.existsSync(`${dir}/.forest/skills-manifest.json`);
-  }
-
-  private static launchableAgents(cwd: string): { bin: string; label: string }[] {
-    const labels: Record<string, string> = { claude: 'Claude Code', codex: 'Codex' };
-    try {
-      const manifest = JSON.parse(
-        fs.readFileSync(`${cwd}/.forest/skills-manifest.json`, 'utf8'),
-      ) as { agents?: string[] };
-
-      return (manifest.agents ?? [])
-        .filter(agent => labels[agent])
-        .map(agent => ({ bin: agent, label: labels[agent] }));
-    } catch {
-      return []; // no manifest → skills were never installed here
-    }
-  }
-
   /** Say what actually happened to the secrets — never the values themselves. */
   private reportSecrets({ file, written, conflicts, shadowed, exposed }: SecretsWrite): void {
     if (written.length)
@@ -1373,43 +1089,10 @@ export default class StartCommand extends AbstractCommand {
     }
   }
 
-  /**
-   * Read the secrets `projects:create:in-app` printed.
-   *
-   * Two shapes on purpose: the `--format json` document when the CLI supports it, and otherwise
-   * the human output, which prints `FOREST_ENV_SECRET=…` ungated for exactly this consumer. The
-   * fallback is what makes this work against a CLI that predates the flag rather than dying on
-   * `Nonexistent flag: --format`.
-   */
-  private static parseSecrets(output: string): { envSecret?: string; authSecret?: string } {
-    try {
-      const parsed = JSON.parse(output.trim());
-      if (parsed?.envSecret) return parsed;
-    } catch {
-      // Not JSON — fall through to the human output.
-    }
-
-    return {
-      envSecret: /FOREST_ENV_SECRET=(\S+)/.exec(output)?.[1],
-      authSecret: /FOREST_AUTH_SECRET=(\S+)/.exec(output)?.[1],
-    };
-  }
-
   private doneDemo(name: string): void {
     this.logger.success(
       `Demo back-office live. Open ${this.chalk.cyan(`https://app.forestadmin.com/${name}`)}`,
     );
-  }
-
-  /** The port the scaffolded project actually runs on, from its generated .env. */
-  private static readPort(dir: string): number | undefined {
-    try {
-      const port = /^APPLICATION_PORT=(\d+)/m.exec(fs.readFileSync(`${dir}/.env`, 'utf8'))?.[1];
-
-      return port ? Number(port) : undefined;
-    } catch {
-      return undefined;
-    }
   }
 
   private doneStandalone(name: string, port: number): void {
