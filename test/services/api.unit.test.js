@@ -280,6 +280,22 @@ describe('services > API', () => {
       return { ...context, call };
     }
 
+    // The mock is shared with the project POST, which sets the same header: only a
+    // set() between the last post() and the last send() proves the claim request has it.
+    function expectBearerOnLastRequest(superagent) {
+      const lastOrder = mock => mock.mock.invocationCallOrder.at(-1);
+      const bearerOrders = superagent.set.mock.calls
+        .map((args, index) => [args, superagent.set.mock.invocationCallOrder[index]])
+        .filter(([[name, value]]) => name === 'Authorization' && value === 'Bearer THE-TOKEN')
+        .map(([, order]) => order);
+
+      expect(
+        bearerOrders.some(
+          order => order > lastOrder(superagent.post) && order < lastOrder(superagent.send),
+        ),
+      ).toBe(true);
+    }
+
     function expectClaimOutOfUrls(superagent) {
       const urls = [...superagent.post.mock.calls, ...superagent.put.mock.calls].map(
         ([url]) => url,
@@ -313,7 +329,7 @@ describe('services > API', () => {
           claim: CLAIM,
           apiEndpoint: 'http://localhost:3000',
         });
-        expect(superagent.set).toHaveBeenCalledWith('Authorization', 'Bearer THE-TOKEN');
+        expectBearerOnLastRequest(superagent);
         expect(superagent.put).not.toHaveBeenCalled();
         expectClaimOutOfUrls(superagent);
       },
