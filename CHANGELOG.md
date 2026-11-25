@@ -1,3 +1,10 @@
+## [5.27.4](https://github.com/ForestAdmin/toolbelt/compare/v5.27.3...v5.27.4) (2026-11-25)
+
+
+### Bug Fixes
+
+* **projects:** configure an invited project's environment through its claim ([#868](https://github.com/ForestAdmin/toolbelt/issues/868)) ([486909e](https://github.com/ForestAdmin/toolbelt/commit/486909ef0ccc647d4920f8fb4b9f30e9372303ef))
+
 ## [5.27.3](https://github.com/ForestAdmin/toolbelt/compare/v5.27.2...v5.27.3) (2026-11-24)
 
 
