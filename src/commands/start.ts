@@ -590,7 +590,10 @@ export default class StartCommand extends AbstractCommand {
     if (this.dryRun) {
       this.logger.log(this.chalk.grey('\n$ npm start   (background — wait for schema push)'));
     } else {
-      const booted = this.boot('npm', ['start'], { cwd: name });
+      const booted = this.boot('npm', ['start'], {
+        cwd: name,
+        env: { FOREST_APP_URL: this.context.env.FOREST_APP_URL },
+      });
       ({ child, exited } = booted);
       this.logger.log(this.chalk.grey('\n$ npm start   (booting — waiting for the schema push…)'));
       await booted.ready;
@@ -1357,9 +1360,8 @@ export default class StartCommand extends AbstractCommand {
   }
 
   private doneDemo(name: string): void {
-    this.logger.success(
-      `Demo back-office live. Open ${this.chalk.cyan(`https://app.forestadmin.com/${name}`)}`,
-    );
+    const appUrl = this.context.env.FOREST_APP_URL ?? 'https://app.forestadmin.com';
+    this.logger.success(`Demo back-office live. Open ${this.chalk.cyan(`${appUrl}/${name}`)}`);
   }
 
   /** The port the scaffolded project actually runs on, from its generated .env. */

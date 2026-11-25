@@ -1,4 +1,23 @@
 /* eslint-disable global-require */
+function resolveForestAppUrl(appUrl, apiUrl) {
+  const configuredUrl = appUrl || apiUrl;
+  if (!configuredUrl) return undefined;
+
+  try {
+    const url = new URL(configuredUrl);
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) {
+      return undefined;
+    }
+    if (appUrl) return url.origin;
+    if (!/^api\.[a-z0-9-]+\.forestadmin\.com$/.test(url.hostname)) return undefined;
+
+    url.hostname = url.hostname.replace(/^api\./, 'app.');
+    return url.origin;
+  } catch {
+    return undefined;
+  }
+}
+
 module.exports = plan =>
   plan
     .addPackage('dotenv', planDotenv =>
@@ -23,6 +42,7 @@ module.exports = plan =>
         return {
           DATABASE_SCHEMA: process.env.DATABASE_SCHEMA,
           DATABASE_URL: process.env.DATABASE_URL,
+          FOREST_APP_URL: resolveForestAppUrl(process.env.FOREST_APP_URL, FOREST_SERVER_URL),
           FOREST_ENV_SECRET: process.env.FOREST_ENV_SECRET,
           FOREST_SERVER_URL,
           FOREST_SERVER_URL_SOURCE,
