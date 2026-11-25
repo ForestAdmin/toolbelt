@@ -42,7 +42,7 @@ module.exports = plan =>
         return {
           DATABASE_SCHEMA: process.env.DATABASE_SCHEMA,
           DATABASE_URL: process.env.DATABASE_URL,
-          FOREST_APP_URL: resolveForestAppUrl(process.env.FOREST_APP_URL, process.env.FOREST_URL),
+          FOREST_APP_URL: resolveForestAppUrl(process.env.FOREST_APP_URL, FOREST_SERVER_URL),
           FOREST_ENV_SECRET: process.env.FOREST_ENV_SECRET,
           FOREST_SERVER_URL,
           FOREST_SERVER_URL_SOURCE,

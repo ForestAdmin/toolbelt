@@ -3,7 +3,6 @@ const contextPlan = require('../../src/context/plan');
 
 describe('context > env', () => {
   it.each([
-    [undefined, undefined, undefined],
     ['https://api.forestadmin.com', undefined, undefined],
     [
       'https://api.development.forestadmin.com',
@@ -42,6 +41,29 @@ describe('context > env', () => {
         FOREST_URL: apiUrl,
         FOREST_APP_URL: appUrl,
         FOREST_SERVER_URL: 'https://api.other.forestadmin.com',
+      };
+
+      try {
+        expect(Context.execute(contextPlan).env.FOREST_APP_URL).toBe(expected);
+      } finally {
+        process.env = saved;
+      }
+    },
+  );
+
+  it.each([
+    [undefined, undefined],
+    ['https://api.development.forestadmin.com', 'https://app.development.forestadmin.com'],
+  ])(
+    'derives the app origin from FOREST_SERVER_URL=%j when FOREST_URL is unset',
+    (serverUrl, expected) => {
+      expect.assertions(1);
+      const saved = process.env;
+      process.env = {
+        ...saved,
+        FOREST_URL: undefined,
+        FOREST_APP_URL: undefined,
+        FOREST_SERVER_URL: serverUrl,
       };
 
       try {
