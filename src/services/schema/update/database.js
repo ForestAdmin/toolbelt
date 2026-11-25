@@ -51,12 +51,9 @@ class Database {
   connectToMongodb(options, isSSL) {
     let connectionOptionsMongoClient = options.connectionOptions;
     if (!connectionOptionsMongoClient) {
-      connectionOptionsMongoClient = {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      };
+      connectionOptionsMongoClient = {};
       if (isSSL) {
-        connectionOptionsMongoClient.ssl = true;
+        connectionOptionsMongoClient.tls = true;
       }
     }
 

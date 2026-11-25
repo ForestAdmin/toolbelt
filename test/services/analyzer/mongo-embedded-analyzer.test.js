@@ -35,7 +35,7 @@ describe('services > Mongo Embedded Analyser', () => {
         expect(getMongooseSchema(1)).toBe('Number');
         expect(getMongooseSchema(true)).toBe('Boolean');
         expect(getMongooseSchema(new Date())).toBe('Date');
-        expect(getMongooseSchema(new ObjectId('objectIdFake'))).toStrictEqual(
+        expect(getMongooseSchema(new ObjectId('5f1d7f3b9c1e4a0012345678'))).toStrictEqual(
           MONGOOSE_SCHEMA_TYPE_OBJECTID,
         );
       });
@@ -60,7 +60,7 @@ describe('services > Mongo Embedded Analyser', () => {
         expect(getMongooseSchema(true)).toBe('Boolean');
         expect(getMongooseSchema(false)).toBe('Boolean');
         expect(getMongooseSchema(new Date())).toBe('Date');
-        expect(getMongooseSchema(new ObjectId('objectIdFake'))).toStrictEqual(
+        expect(getMongooseSchema(new ObjectId('5f1d7f3b9c1e4a0012345678'))).toStrictEqual(
           MONGOOSE_SCHEMA_TYPE_OBJECTID,
         );
       });
@@ -82,8 +82,8 @@ describe('services > Mongo Embedded Analyser', () => {
         const arrayOfBooleanTypeDetection = getMongooseArraySchema([true, false, true]);
         const arrayOfDateTypeDetection = getMongooseArraySchema([new Date(), new Date()]);
         const arrayOfObjectIdsTypeDetection = getMongooseArraySchema([
-          new ObjectId('objectIdFake'),
-          new ObjectId('objectIdFake'),
+          new ObjectId('5f1d7f3b9c1e4a0012345678'),
+          new ObjectId('5f1d7f3b9c1e4a0012345678'),
         ]);
 
         expect(arrayOfStringTypeDetection).toStrictEqual(['String', 'String', 'String']);
@@ -130,7 +130,7 @@ describe('services > Mongo Embedded Analyser', () => {
           number: 1,
           boolean: true,
           date: new Date(),
-          objectId: new ObjectId('objectIdFake'),
+          objectId: new ObjectId('5f1d7f3b9c1e4a0012345678'),
         });
 
         expect(typeof embeddedOfPrimitiveTypeDetection === 'object').toBe(true);
@@ -163,9 +163,9 @@ describe('services > Mongo Embedded Analyser', () => {
       it('should not handle `_id` keys if not explicitly requested to', () => {
         expect.assertions(4);
         const embeddedWithIdKey = {
-          _id: ObjectId(),
+          _id: new ObjectId(),
           embeddedValue: {
-            _id: ObjectId(),
+            _id: new ObjectId(),
             stringValue: 'my value',
           },
         };
@@ -181,9 +181,9 @@ describe('services > Mongo Embedded Analyser', () => {
       it('should handle `_id` keys if explicitly requested to', () => {
         expect.assertions(4);
         const embeddedWithIdKey = {
-          _id: ObjectId(),
+          _id: new ObjectId(),
           embeddedValue: {
-            _id: ObjectId(),
+            _id: new ObjectId(),
             stringValue: 'my value',
           },
         };
@@ -506,7 +506,10 @@ describe('services > Mongo Embedded Analyser', () => {
         expect(haveSameEmbeddedType(true, false)).toBe(true);
         expect(haveSameEmbeddedType(new Date(), new Date())).toBe(true);
         expect(
-          haveSameEmbeddedType(new ObjectId('objectIdFake'), new ObjectId('objectIdFake')),
+          haveSameEmbeddedType(
+            new ObjectId('5f1d7f3b9c1e4a0012345678'),
+            new ObjectId('5f1d7f3b9c1e4a0012345678'),
+          ),
         ).toBe(true);
         expect(haveSameEmbeddedType({}, {})).toBe(true);
         expect(haveSameEmbeddedType([], [])).toBe(true);
