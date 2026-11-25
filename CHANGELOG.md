@@ -1,3 +1,10 @@
+## [5.27.5](https://github.com/ForestAdmin/toolbelt/compare/v5.27.4...v5.27.5) (2026-11-25)
+
+
+### Bug Fixes
+
+* **start:** pass the forest app url to generated demo agents ([#866](https://github.com/ForestAdmin/toolbelt/issues/866)) ([fe12455](https://github.com/ForestAdmin/toolbelt/commit/fe12455feb83e2837e50b0dc7b03d4ffa757bdc0))
+
 ## [5.27.4](https://github.com/ForestAdmin/toolbelt/compare/v5.27.3...v5.27.4) (2026-11-25)
 
 
