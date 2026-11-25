@@ -1530,7 +1530,12 @@ module.exports = {
             agent,
             architecture,
             database_type: databaseType,
-            ...(invitationClaim ? { invitation_claim: invitationClaim } : {}),
+            ...(invitationClaim
+              ? {
+                  invitation_claim: invitationClaim,
+                  supports_invitation_environment_setup: true,
+                }
+              : {}),
           },
           ...(organizationId && {
             relationships: {
@@ -1558,6 +1563,16 @@ module.exports = {
 
         return body;
       }),
+  configureClaimedEnvironment: (claim, apiEndpoint = 'http://localhost:3310') =>
+    nock('http://localhost:3001')
+      .post('/api/developer-invitations/claim/configure-environment', { claim, apiEndpoint })
+      .reply(200, {
+        secretKey: '2c38a1c6bb28e7bea1c943fac1c1c95db5dc1b7bc73bd649a0b113713ee29125',
+      }),
+  configureClaimedEnvironmentUnsupported: () =>
+    nock('http://localhost:3001')
+      .post('/api/developer-invitations/claim/configure-environment')
+      .reply(404, { errors: [{ status: 404, detail: 'Not Found' }] }),
   updateNewEnvironmentEndpoint: (apiEndpoint = 'http://localhost:3310') =>
     nock('http://localhost:3001')
       .put('/api/environments/182', {

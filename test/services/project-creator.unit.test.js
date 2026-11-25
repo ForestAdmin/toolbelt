@@ -143,11 +143,12 @@ describe('project creator', () => {
         architecture: undefined,
         databaseType: undefined,
         invitationClaim: 'CLAIM',
+        supportsInvitationEnvironmentSetup: true,
       });
     });
 
     it('should not send the invitation claim key when none is given', async () => {
-      expect.assertions(2);
+      expect.assertions(3);
       const context = createContext();
       const projectCreator = new ProjectCreator(context);
       context.api.createProject.mockResolvedValue({ id: '1', defaultEnvironment: {} });
@@ -161,6 +162,9 @@ describe('project creator', () => {
         databaseType: undefined,
       });
       expect(context.api.createProject.mock.calls[0][2]).not.toHaveProperty('invitationClaim');
+      expect(context.api.createProject.mock.calls[0][2]).not.toHaveProperty(
+        'supportsInvitationEnvironmentSetup',
+      );
     });
   });
 

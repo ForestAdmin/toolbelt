@@ -66,7 +66,9 @@ class ProjectCreator {
         architecture: meta.architecture,
         databaseType: meta.dbDialect,
         ...(meta.organizationId && { organization: { id: meta.organizationId } }),
-        ...(invitationClaim ? { invitationClaim } : {}),
+        // Tells the server this CLI configures the environment through the claim route,
+        // so it can refuse a claim from an older CLI before consuming it.
+        ...(invitationClaim ? { invitationClaim, supportsInvitationEnvironmentSetup: true } : {}),
       };
 
       const newProject = await this.api.createProject(config, sessionToken, newProjectPayload);

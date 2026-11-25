@@ -3,7 +3,12 @@ const nock = require('nock');
 const testCli = require('../../test-cli-helper/test-cli');
 const InAppCommand = require('../../../../src/commands/projects/create/in-app').default;
 const { testEnvWithSecret } = require('../../../fixtures/env');
-const { createProject, updateNewEnvironmentEndpoint } = require('../../../fixtures/api');
+const {
+  configureClaimedEnvironment,
+  configureClaimedEnvironmentUnsupported,
+  createProject,
+  updateNewEnvironmentEndpoint,
+} = require('../../../fixtures/api');
 
 // Secrets coming from the fixtures: the env secret is the `secretKey` served by
 // `createProject`, the auth secret comes from the mocked keyGenerator below.
@@ -326,7 +331,7 @@ describe('projects:create:in-app', () => {
           tryLogin: () => {},
         });
 
-    it('should send the claim in the creation call and never print it', () =>
+    it('should send the claim in the creation call, configure the environment with it and never print it', () =>
       testCli({
         commandClass: InAppCommand,
         commandArgs: ['name', '--format', 'json', '--invitation', CLAIM],
@@ -343,6 +348,41 @@ describe('projects:create:in-app', () => {
               architecture: 'in-app',
               invitationClaim: CLAIM,
             }),
+          () => configureClaimedEnvironment(CLAIM, 'http://localhost:3000'),
+        ],
+        std: [
+          {
+            out: {
+              projectId: '4242',
+              envSecret: ENV_SECRET,
+              authSecret: AUTH_SECRET,
+              endpoint: 'http://localhost:3000',
+            },
+          },
+          { err: 'Hooray, installation success!' },
+          { not: CLAIM },
+        ],
+        exitCode: 0,
+      }));
+
+    it('should fall back to the legacy environment update on a server without the claim route', () =>
+      testCli({
+        commandClass: InAppCommand,
+        commandArgs: ['name', '--format', 'json', '--invitation', CLAIM],
+        env: testEnvWithSecret,
+        token: 'any',
+        additionnalStep: plan =>
+          plan.replace('utils/keyGenerator', { generate: () => AUTH_SECRET }),
+        prompts: [],
+        api: [
+          () =>
+            createProject({
+              databaseType: null,
+              agent: null,
+              architecture: 'in-app',
+              invitationClaim: CLAIM,
+            }),
+          () => configureClaimedEnvironmentUnsupported(),
           () => updateNewEnvironmentEndpoint('http://localhost:3000'),
         ],
         std: [
@@ -358,6 +398,42 @@ describe('projects:create:in-app', () => {
           { not: CLAIM },
         ],
         exitCode: 0,
+      }));
+
+    it('should show the server reason when the environment configuration refuses the claim', () =>
+      testCli({
+        commandClass: InAppCommand,
+        commandArgs: ['name', '--format', 'json', '--invitation', CLAIM],
+        env: testEnvWithSecret,
+        token: 'any',
+        prompts: [],
+        api: [
+          () =>
+            createProject({
+              databaseType: null,
+              agent: null,
+              architecture: 'in-app',
+              invitationClaim: CLAIM,
+            }),
+          () =>
+            nock('http://localhost:3001')
+              .post('/api/developer-invitations/claim/configure-environment')
+              .reply(403, {
+                errors: [
+                  {
+                    status: 403,
+                    detail: `This invitation was already used. ${CLAIM}`,
+                    meta: { code: 'developer_invitation_claim_consumed' },
+                  },
+                ],
+              }),
+        ],
+        std: [
+          { err: 'This invitation was already used. <redacted>' },
+          { not: 'envSecret' },
+          { not: CLAIM },
+        ],
+        exitCode: 1,
       }));
 
     it('should point to logout then login, without logging out, on a claim for another account', async () => {

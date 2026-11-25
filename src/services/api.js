@@ -4,6 +4,7 @@ const HEADER_FOREST_ORIGIN = 'forest-origin';
 const HEADER_USER_AGENT = 'User-Agent';
 
 const InvalidOptionError = require('../errors/options/invalid-option-error');
+const { invitationRefusal } = require('./invitation-claim');
 
 function refuseOutsideRequestedOrganization(project, requested) {
   const organizationId = requested.organization?.id;
@@ -95,6 +96,68 @@ function Api({
         return response.body;
       });
 
+  /**
+   * Configures the development environment of the project a claim created or resumed.
+   * Resolves to null when the server predates this route (a 404 carrying no claim
+   * refusal), so the caller falls back to the legacy environment update.
+   * @returns {Promise<string|null>} the development environment secret key
+   */
+  this.configureClaimedEnvironment = async (claim, apiEndpoint, sessionToken) => {
+    let response;
+
+    try {
+      response = await agent
+        .post(`${this.endpoint()}/api/developer-invitations/claim/configure-environment`)
+        .set(headers)
+        .set('Authorization', `Bearer ${sessionToken}`)
+        .send({ claim, apiEndpoint });
+    } catch (error) {
+      if (error.status === 404 && !invitationRefusal(error)) return null;
+
+      throw error;
+    }
+
+    const secretKey = response.body?.secretKey;
+
+    if (response.status !== 200 || typeof secretKey !== 'string' || !secretKey) {
+      throw Object.assign(new Error('Unexpected invitation environment answer'), {
+        status: response.status,
+      });
+    }
+
+    return secretKey;
+  };
+
+  /**
+   * @returns {Promise<string>} the environment secret key
+   */
+  this.updateEnvironmentEndpoint = async (environment, sessionToken) =>
+    agent
+      .put(`${this.endpoint()}/api/environments/${environment.id}`)
+      .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
+      .set(HEADER_USER_AGENT, this.userAgent)
+      .set('Authorization', `Bearer ${sessionToken}`)
+      .send(environmentSerializer.serialize(environment))
+      .then(response => environmentDeserializer.deserialize(response.body))
+      .then(updated => updated.secretKey);
+
+  /**
+   * A claim configures its environment through the claim route; ordinary creation, and
+   * a claim on a server that predates that route, update the environment directly.
+   * @returns {Promise<string>} the environment secret key
+   */
+  this.configureEnvironment = async (environment, sessionToken, invitationClaim) => {
+    const claimedSecretKey = invitationClaim
+      ? await this.configureClaimedEnvironment(
+          invitationClaim,
+          environment.apiEndpoint,
+          sessionToken,
+        )
+      : null;
+
+    return claimedSecretKey ?? this.updateEnvironmentEndpoint(environment, sessionToken);
+  };
+
   this.createProject = async (config, sessionToken, project) => {
     let newProject;
 
@@ -135,16 +198,14 @@ function Api({
     const hostname = config.appHostname || 'http://localhost';
     const port = config.appPort || 3310;
     const protocol = hostname.startsWith('http') ? '' : 'http://';
-    newProject.defaultEnvironment.apiEndpoint = `${protocol}${hostname}:${port}`;
-    const updatedEnvironment = await agent
-      .put(`${this.endpoint()}/api/environments/${newProject.defaultEnvironment.id}`)
-      .set(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_JSON)
-      .set(HEADER_USER_AGENT, this.userAgent)
-      .set('Authorization', `Bearer ${sessionToken}`)
-      .send(environmentSerializer.serialize(newProject.defaultEnvironment))
-      .then(response => environmentDeserializer.deserialize(response.body));
+    const environment = newProject.defaultEnvironment;
+    environment.apiEndpoint = `${protocol}${hostname}:${port}`;
 
-    newProject.defaultEnvironment.secretKey = updatedEnvironment.secretKey;
+    environment.secretKey = await this.configureEnvironment(
+      environment,
+      sessionToken,
+      project.invitationClaim,
+    );
 
     return newProject;
   };
