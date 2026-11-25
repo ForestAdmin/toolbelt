@@ -1,9 +1,11 @@
 import type { NodeStack } from '../services/onboarding/detect';
 import type { SecretsWrite } from '../services/onboarding/env-file';
+import type { StepContext } from '../services/onboarding/ui';
 import type { ChildProcess } from 'child_process';
 
 import { Flags } from '@oclif/core';
 import fs from 'fs';
+import path from 'path';
 
 import AbstractCommand from '../abstract-command';
 import ExitCodeError from '../services/exit-code-error';
@@ -32,14 +34,17 @@ import {
   keysLoadedFromDotenv,
   writeSecrets,
 } from '../services/onboarding/env-file';
+import { MIN_NODE_MAJOR, isPortFree, nodeMajor } from '../services/onboarding/preflight';
 import {
   RAILS_INITIALIZER,
   checkRailsServerUrl,
   pinServerUrl,
   serverUrlLine,
 } from '../services/onboarding/rails-initializer';
+import OnboardingUI, { colors } from '../services/onboarding/ui';
 import {
   runCapture,
+  runLogged,
   runStep,
   startProcess,
   stopAllProcesses,
@@ -51,6 +56,19 @@ const DOCS_URL = 'https://docs.forest.app';
 const DEMO_PORT = 3310;
 const RAILS_PORT = 3002;
 const NODE_PORT = 3001;
+/** Where every agent's embedded workflow executor listens, whatever its app port. */
+const EXECUTOR_PORT = 3400;
+// The demo ships a curated layout; applying it needs the schema pushed first, so boot once.
+const DEMO_LAYOUT = [
+  'layout:apply',
+  'forest-layout.json',
+  '--with-workflows',
+  '-e',
+  'Development',
+  '-t',
+  'Operations',
+  '-f',
+];
 
 /** What configures this CLI rather than a project: where its token lives, which server it calls. */
 const CLI_SETTINGS = [
@@ -87,6 +105,8 @@ type Tail = {
   /** How to start this back-end again. Rails is not started with `npm start`. */
   restart: string;
 };
+type LayoutItem = { id: string; type: string; isVisible?: boolean };
+type LayoutFolder = { id: string; isMain?: boolean; children: LayoutItem[] };
 
 /**
  * `forest start` — the whole onboarding, from an empty terminal to a running back-office.
@@ -122,6 +142,10 @@ export default class StartCommand extends AbstractCommand {
     name: Flags.string({ description: 'Project name (skips the prompt).' }),
     db: Flags.string({ description: 'Database connection URL (skips the database prompts).' }),
     schema: Flags.string({ description: 'Database schema, with --db (default: public).' }),
+    plain: Flags.boolean({
+      description: 'Classic output: print every command and its full log instead of the checklist.',
+      default: false,
+    }),
     mount: Flags.string({
       description: 'How to mount Forest in a Node app.',
       options: ['ai', 'manual', 'standalone'],
@@ -145,6 +169,20 @@ export default class StartCommand extends AbstractCommand {
   /** Passed to every `projects:create:*` call, so the project lands in the chosen organization. */
   private organizationArgs: string[] = [];
 
+  private plain = false;
+
+  /** A booted back-end's output, printed under the command that started it. */
+  private readonly printed = (chunk: string) =>
+    this.logger.log(this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`));
+
+  /** Where a booted back-end's output goes. Printed by default; the checklist reroutes it. */
+  private sink: (chunk: string) => void = this.printed;
+
+  /** The checklist screen: on a terminal, unless --plain. */
+  private get rich(): boolean {
+    return this.interactive && !this.plain;
+  }
+
   // eslint-disable-next-line class-methods-use-this -- reads the ambient TTY, not instance state
   private get interactive(): boolean {
     return Boolean(process.stdin.isTTY);
@@ -162,6 +200,7 @@ export default class StartCommand extends AbstractCommand {
   async run(): Promise<void> {
     const { flags } = await this.parse(StartCommand);
     this.dryRun = flags['dry-run'];
+    this.plain = flags.plain;
     if (flags.organization !== undefined && flags.invitation !== undefined) {
       throw new Error(
         '--organization cannot be used with --invitation: the invitation creates the project for the inviter.',
@@ -217,14 +256,32 @@ export default class StartCommand extends AbstractCommand {
   }
 
   private async onboard(flags: StartFlags): Promise<void> {
-    this.logger.log(
-      `\nWelcome to ${this.chalk.green('Forest')}. Let's get your back-office running.`,
-    );
+    const loggedIn = Boolean(this.context.authenticator.getAuthToken());
+
+    if (this.rich) {
+      const intro = new OnboardingUI({ rich: true });
+      intro.logo('The back-office your ops team deserves, on your own data.');
+      intro.header([
+        `${colors.accent.bold('Forest')} ${colors.muted(
+          `· set up your back-office · forest-cli ${this.config.version}`,
+        )}`,
+        colors.muted(
+          loggedIn ? 'Logged in' : 'Not logged in yet: your browser opens to sign in or sign up',
+        ),
+        colors.muted(`cwd ${process.cwd().replace(process.env.HOME ?? '\0', '~')}`),
+      ]);
+    } else {
+      this.logger.log(
+        `\nWelcome to ${this.chalk.green('Forest')}. Let's get your back-office running.`,
+      );
+    }
 
     // A session still valid here is the one every step below reads, from the same TOKEN_PATH:
     // sending the user through the browser device flow again would only cost them a code.
-    if (this.context.authenticator.getAuthToken()) {
-      this.logger.log(this.chalk.grey('  (already logged in — skipping `forest login`)'));
+    if (loggedIn) {
+      if (!this.rich) {
+        this.logger.log(this.chalk.grey('  (already logged in — skipping `forest login`)'));
+      }
     } else {
       await this.forest(['login']); // OIDC device flow (browser signup/login)
     }
@@ -350,7 +407,12 @@ export default class StartCommand extends AbstractCommand {
    * userinfo, so a bare positional or a URL's `?password=` would otherwise print in the clear.
    */
   private static scrubbed(error: unknown, command: string, args: string[]): Error {
-    return new Error(StartCommand.masked((error as Error).message, command, args));
+    const message = StartCommand.masked((error as Error).message, command, args);
+
+    // The exit code survives: a failed layout is a warning, not the end of the demo.
+    return error instanceof ExitCodeError
+      ? new ExitCodeError(message, error.exitCode)
+      : new Error(message);
   }
 
   private static masked(text: string, command: string, args: string[]): string {
@@ -434,6 +496,40 @@ export default class StartCommand extends AbstractCommand {
     }
   }
 
+  /** A command inside the checklist: its output goes to the step's log, not the terminal. */
+  private async logged(
+    log: (line: string) => void,
+    command: string,
+    args: string[],
+    cwd?: string,
+  ): Promise<void> {
+    log(`$ ${StartCommand.redact(command, args)}`);
+    if (this.dryRun) {
+      log('(dry-run — not executed)');
+
+      // Long enough for each step of a dry run to show on screen before the next one.
+      return new Promise(resolve => {
+        setTimeout(resolve, 600);
+      });
+    }
+
+    return runLogged(command, args, { cwd, onLine: log }).catch(error => {
+      throw StartCommand.scrubbed(error, command, args);
+    });
+  }
+
+  /** One of our own commands, inside the checklist. */
+  private forestLogged(log: (line: string) => void, args: string[], cwd?: string): Promise<void> {
+    if (this.dryRun) return this.logged(log, 'forest', args, cwd);
+    log(`$ ${StartCommand.redact('forest', args)}`);
+
+    return runLogged(process.execPath, [process.argv[1], ...args], { cwd, onLine: log }).catch(
+      error => {
+        throw StartCommand.scrubbed(error, 'forest', args);
+      },
+    );
+  }
+
   /** Boot a back-end, streaming its logs, and wait until its schema reached Forest. */
   private boot(
     command: string,
@@ -451,7 +547,7 @@ export default class StartCommand extends AbstractCommand {
       env: options.env,
       onOutput: chunk => {
         if (options.trouble?.test(chunk)) troubled = true;
-        this.logger.log(this.chalk.grey(`  | ${chunk.replace(/\n$/, '')}`));
+        this.sink(chunk);
       },
     });
 
@@ -550,15 +646,18 @@ export default class StartCommand extends AbstractCommand {
 
   // ---------- flows ----------
 
-  private async flowDemo(flags: StartFlags, resume?: string): Promise<void> {
-    this.refuseExistingResume(resume);
-    // Drawn until free: `create:demo` would register a project, then skip every existing file.
+  /** Drawn until free: `create:demo` would register a project, then skip every existing file. */
+  private demoName(resume?: string): string {
     let name = resume;
     while (!name || (!resume && !this.dryRun && fs.existsSync(name))) {
       name = `forest-demo-${Math.random().toString(36).slice(2, 6)}`;
     }
 
-    await this.forest([
+    return name;
+  }
+
+  private demoCreateArgs(name: string, flags: StartFlags): string[] {
+    return [
       'projects:create:demo',
       name,
       '-l',
@@ -569,20 +668,21 @@ export default class StartCommand extends AbstractCommand {
       String(DEMO_PORT),
       ...this.organizationArgs,
       ...StartCommand.invitationArgs(flags),
-    ]);
-    await this.installAndBuild(name);
-
-    // The demo ships a curated layout; applying it needs the schema pushed first, so boot once.
-    const layout = [
-      'layout:apply',
-      'forest-layout.json',
-      '--with-workflows',
-      '-e',
-      'Development',
-      '-t',
-      'Operations',
-      '-f',
     ];
+  }
+
+  private async flowDemo(flags: StartFlags, resume?: string): Promise<void> {
+    this.refuseExistingResume(resume);
+    if (this.rich) {
+      await this.flowDemoRich(flags, resume);
+
+      return;
+    }
+
+    const name = this.demoName(resume);
+
+    await this.forest(this.demoCreateArgs(name, flags));
+    await this.installAndBuild(name);
 
     let child: ChildProcess | undefined;
     let exited: Promise<unknown> | undefined;
@@ -600,7 +700,7 @@ export default class StartCommand extends AbstractCommand {
       this.logger.success('Schema pushed — applying curated layout + workflows');
     }
 
-    await this.applyDemoLayout(layout, name);
+    await this.applyDemoLayout(DEMO_LAYOUT, name);
     this.doneDemo(name);
 
     // One tail for both modes: --dry-run exists to review the flow, and skipping its ending would
@@ -638,6 +738,226 @@ export default class StartCommand extends AbstractCommand {
       this.logger.warn(
         `The curated layout did not finish applying${where}. Your demo project works without it.`,
         `  Retry anytime: cd ${dir} && ${StartCommand.redact('forest', args)}`,
+      );
+    }
+  }
+
+  /**
+   * The demo on a terminal: a live checklist instead of every command and its full output. What
+   * the children print goes to a log file, and only its last line shows under the running step.
+   */
+  private async flowDemoRich(flags: StartFlags, resume?: string): Promise<void> {
+    const name = this.demoName(resume);
+    const ui = new OnboardingUI({ rich: true, logName: `forest-start-${name}` });
+    let child: ChildProcess | undefined;
+    let exited: Promise<unknown> | undefined;
+    let warnings = 0;
+    let layoutApplied = false;
+
+    ui.plan(name, 'demo bank on sample data', [
+      {
+        id: 'preflight',
+        label: 'Checking this computer',
+        why: 'Node version and free ports, before anything is created on Forest.',
+      },
+      {
+        id: 'create',
+        label: 'Registering the project on Forest',
+        why: 'Forest creates the project and its two secrets. They are written to .env and never printed.',
+      },
+      {
+        id: 'install',
+        label: 'Installing the agent',
+        why: 'The agent is a small Node server running on this computer, between the data and Forest. npm downloads it once, usually in about a minute.',
+      },
+      {
+        id: 'boot',
+        label: 'Starting the agent',
+        why: 'It sends Forest a description of the tables, not the data. The browser then reads the data from this computer directly.',
+      },
+      {
+        id: 'layout',
+        label: 'Applying the demo layout',
+        why: 'Workspaces, inboxes, segments and workflows, so the first screen looks like a finished back-office.',
+      },
+    ]);
+
+    try {
+      await ui.run('preflight', step => this.preflight(step));
+
+      await ui.run('create', async step => {
+        await this.forestLogged(step.log, this.demoCreateArgs(name, flags));
+        step.detail(`${name}/.env written`);
+      });
+
+      await ui.run('install', async step => {
+        await this.logged(step.log, 'npm', ['install'], name);
+        if (this.dryRun || StartCommand.hasBuildScript(name)) {
+          await this.logged(step.log, 'npm', ['install', '--save-dev', 'typescript@^5.5'], name);
+          await this.logged(step.log, 'npm', ['run', 'build'], name);
+        }
+        step.detail('dependencies installed, TypeScript built');
+      });
+
+      await ui.run('boot', async step => {
+        if (this.dryRun) {
+          await this.logged(step.log, 'npm', ['start'], name);
+        } else {
+          this.sink = chunk =>
+            chunk.split('\n').forEach(line => {
+              // The agent colours its levels: `\x1b[33mwarning` has no word boundary before `warn`.
+              // eslint-disable-next-line no-control-regex
+              if (/\bwarn/i.test(line.replace(/\x1b\[[0-9;]*m/g, ''))) warnings += 1;
+              step.log(line);
+            });
+          step.log('$ npm start');
+          const booted = this.boot('npm', ['start'], { cwd: name });
+          ({ child, exited } = booted);
+          await booted.ready;
+        }
+        step.detail(`live on :${DEMO_PORT}, schema sent to Forest`);
+      });
+
+      await ui.run('layout', async step => {
+        layoutApplied = await this.applyDemoLayoutLogged(step, name);
+      });
+    } catch (error) {
+      throw this.reportFailure(ui, error as Error);
+    }
+
+    // The checklist stays live under the summary and the menu, for the beaver to breathe in.
+    // The agent keeps talking after its step: to the log only, until someone asks to see it.
+    this.sink = chunk => chunk.split('\n').forEach(line => ui.record(line));
+
+    this.printDemoSummary(ui, name, warnings, layoutApplied);
+
+    if (!this.interactive) {
+      ui.release();
+      stopProcess(child);
+
+      return;
+    }
+
+    await this.demoMenuRich(child, name, exited, ui);
+  }
+
+  /** The demo works without its layout: a failure warns, the agent stays up, the summary says how to retry. */
+  private async applyDemoLayoutLogged(step: StepContext, name: string): Promise<boolean> {
+    try {
+      await this.forestLogged(step.log, DEMO_LAYOUT, name);
+    } catch (error) {
+      if (!(error instanceof ExitCodeError) || error.exitCode === null) throw error;
+
+      const part = readFailedPart(error.message);
+      step.warn(part ? `stopped at its ${part} part` : 'not finished');
+
+      return false;
+    }
+
+    const summary = StartCommand.demoLayoutSummary(name);
+    if (summary) step.detail(`${summary.workspaces} workspaces, ${summary.workflows} workflows`);
+
+    return true;
+  }
+
+  /** Fails in seconds, before a project exists on Forest, rather than after. */
+  private async preflight(step: StepContext): Promise<void> {
+    if (nodeMajor() < MIN_NODE_MAJOR) {
+      throw new Error(
+        `Node ${process.versions.node} is too old: install Node ${MIN_NODE_MAJOR} or later from nodejs.org.`,
+      );
+    }
+
+    if (!(await isPortFree(DEMO_PORT))) {
+      const message = `Port ${DEMO_PORT} is already in use, probably by another Forest agent. Stop it (Ctrl+C in its terminal), then run forest start again.`;
+      if (!this.dryRun) throw new Error(message);
+      step.warn(`port ${DEMO_PORT} busy (ignored in dry-run)`);
+
+      return;
+    }
+
+    if (!(await isPortFree(EXECUTOR_PORT))) {
+      step.warn(
+        `port ${EXECUTOR_PORT} busy: another agent's workflow executor runs, workflows may not start`,
+      );
+
+      return;
+    }
+
+    step.detail(`Node ${nodeMajor()} · ports ${DEMO_PORT} and ${EXECUTOR_PORT} free`);
+  }
+
+  /** What the demo's navigation shows: its visible workspaces, and the workflows it ships. */
+  private static demoLayoutSummary(dir: string) {
+    try {
+      const doc = JSON.parse(fs.readFileSync(path.join(dir, 'forest-layout.json'), 'utf8'));
+      const shown = StartCommand.visibleItems(doc.folders ?? []);
+
+      return {
+        workspaces: shown.filter(item => item.type === 'workspace').length,
+        workflows: (doc.workflows ?? []).length as number,
+      };
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** Folder children the navigation shows: visible ones, in visible folders, from the main one. */
+  private static visibleItems(folders: LayoutFolder[]): LayoutItem[] {
+    const byId = new Map(folders.map(folder => [folder.id, folder]));
+    const walk = (folder: LayoutFolder): LayoutItem[] =>
+      folder.children
+        .filter(child => child.isVisible)
+        .flatMap(child =>
+          child.type === 'folder' && byId.has(child.id)
+            ? walk(byId.get(child.id) as LayoutFolder)
+            : [child],
+        );
+
+    return folders.filter(folder => folder.isMain).flatMap(walk);
+  }
+
+  /** Print the end of the log, where the cause usually is, and return a one-line error. */
+  private reportFailure(ui: OnboardingUI, error: Error): Error {
+    ui.release();
+    const tail = ui.logTail();
+    if (tail.length) {
+      this.logger.log(colors.muted('\n  Last lines of the log:'));
+      tail.forEach(line => this.logger.log(colors.muted(`  │ ${line}`)));
+    }
+    this.logger.log(colors.muted(`\n  Full log: ${ui.logFile}`));
+    const [firstLine] = error.message.split('\n');
+
+    return new Error(firstLine);
+  }
+
+  private printDemoSummary(
+    ui: OnboardingUI,
+    name: string,
+    warnings: number,
+    layoutApplied: boolean,
+  ): void {
+    const url = `https://app.forestadmin.com/${name}`;
+    ui.banner(`${name} is live`, [
+      `Open  ${colors.info(url)}`,
+      colors.muted(`${process.platform === 'darwin' ? '⌘' : 'Ctrl'}-click the link to open it`),
+    ]);
+    ui.status(
+      [
+        { label: `Agent :${DEMO_PORT}`, ok: !this.dryRun },
+        { label: 'Schema synced', ok: !this.dryRun },
+        { label: 'Layout applied', ok: !this.dryRun && layoutApplied },
+      ],
+      this.dryRun
+        ? 'dry-run: nothing is running'
+        : `${warnings} startup warning${warnings === 1 ? '' : 's'} · log: ${ui.logFile}`,
+    );
+    if (!layoutApplied) {
+      ui.note(
+        `The demo works without its layout. Retry anytime: cd ${name} && ${StartCommand.redact(
+          'forest',
+          DEMO_LAYOUT,
+        )}`,
       );
     }
   }
@@ -1086,6 +1406,115 @@ export default class StartCommand extends AbstractCommand {
     this.logger.log(
       this.chalk.grey(`\n  Stopped. Relaunch the demo anytime: cd ${name} && npm start`),
     );
+  }
+
+  /**
+   * The demo menu's answer. Our own list where the screen allows it: an inquirer prompt would
+   * freeze the beaver. Every choice but the browser hands the screen over (`skills:init`, a coding
+   * agent, live logs, a new flow's prompts), so the region, and the beaver with it, step aside.
+   */
+  private async pickNext(
+    ui: OnboardingUI,
+    choices: { name: string; value: string }[],
+  ): Promise<string> {
+    const next = ui.canChoose
+      ? await ui.choose('What next?', choices)
+      : (await this.ask({ type: 'list', name: 'next', message: 'What next?', choices })).next;
+    if (next !== 'browse') ui.release();
+
+    return next;
+  }
+
+  /** The checklist's last screen: the coding-agent finale first, the trampoline to real data second. */
+  private async demoMenuRich(
+    child: ChildProcess | undefined,
+    name: string,
+    exited: Promise<unknown> | undefined,
+    ui: OnboardingUI,
+  ): Promise<void> {
+    const tail: Tail = {
+      name,
+      dir: name,
+      restart: 'npm start',
+      stack: 'Forest demo project on generated bank sample data (TypeScript agent)',
+      url: `http://localhost:${DEMO_PORT}`,
+      demo: true,
+      child,
+      mute: () => {
+        const previous = this.sink;
+        this.sink = chunk => chunk.split('\n').forEach(line => ui.record(line));
+
+        return () => {
+          this.sink = previous;
+        };
+      },
+    };
+
+    const choices = [
+      ...(this.canInstallSkills
+        ? [{ name: 'Customise it live with your coding agent', value: 'skills' }]
+        : []),
+      { name: 'Open it in the browser', value: 'browse' },
+      { name: 'Connect a real database (creates a real project)', value: 'db' },
+      { name: 'Keep the agent running here, with live logs', value: 'stay' },
+      { name: 'Stop the agent', value: 'stop' },
+    ];
+
+    // eslint-disable-next-line no-constant-condition -- left by return, once a choice is final
+    while (true) {
+      // eslint-disable-next-line no-await-in-loop -- a menu loop is sequential by nature
+      const next = await this.pickNext(ui, choices);
+
+      if (next === 'skills') {
+        // eslint-disable-next-line no-await-in-loop -- sequential by nature
+        const handedOver = await this.forest(['skills:init'], name)
+          .then(() => this.offerLaunch(tail, StartCommand.seed('customise', tail)))
+          .catch(error => {
+            this.logger.warn(`${(error as Error).message}\n  The agent is still running.`);
+
+            return false;
+          });
+        if (handedOver) return;
+      } else if (next === 'browse') {
+        // eslint-disable-next-line no-await-in-loop -- back to the menu right after
+        await this.openDemo(name, ui);
+      } else if (next === 'db') {
+        stopProcess(child);
+        // Signalled is not gone: the real back-end boots on the same port.
+        // eslint-disable-next-line no-await-in-loop -- leaves the loop right after
+        await exited;
+        ui.note('\n  Demo agent stopped. Setting up your real project…\n');
+        // The real project's back-end talks on screen, as in the classic flow: its errors included.
+        this.sink = this.printed;
+        // eslint-disable-next-line no-await-in-loop -- leaves the loop right after
+        await this.flowStandalone({});
+
+        return;
+      } else if (next === 'stay') {
+        this.sink = this.printed;
+        // eslint-disable-next-line no-await-in-loop -- leaves the loop right after
+        if (child) await this.keepAlive(child, name, 'npm start');
+
+        return;
+      } else {
+        stopProcess(child);
+        ui.note(`\n  Stopped. Relaunch the demo anytime: cd ${name} && npm start`);
+
+        return;
+      }
+    }
+  }
+
+  private async openDemo(name: string, ui: OnboardingUI): Promise<void> {
+    const url = `https://app.forestadmin.com/${name}`;
+    if (this.dryRun) {
+      ui.note(`  open ${url} (dry-run — not executed)`);
+
+      return;
+    }
+
+    await this.context.open(url);
+    ui.note(`\n  Opened ${url} in your browser.`);
   }
 
   /**
