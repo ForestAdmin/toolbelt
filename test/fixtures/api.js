@@ -545,6 +545,13 @@ module.exports = {
         ],
       }),
 
+  getPermissionLabelsValid: (environmentId, teamId, body, projectId = 2) =>
+    nock('http://localhost:3001')
+      .get(`/api/environments/${environmentId}/permission-labels`)
+      .query({ teamId: String(teamId) })
+      .matchHeader('forest-project-id', String(projectId))
+      .reply(200, body),
+
   createTeamValid: (projectId = 2) =>
     nock('http://localhost:3001')
       .post('/api/teams', {
