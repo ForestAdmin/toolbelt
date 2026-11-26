@@ -1,4 +1,10 @@
-const { formatWide, parseWide, computeDiff } = require('../../src/services/roles-csv');
+const {
+  currentStateOf,
+  environmentCollectionsOf,
+  formatWide,
+  parseWide,
+  computeDiff,
+} = require('../../src/services/roles-csv');
 
 // Real backend shape: environments[].environmentId, collections[].<crud>Enabled,
 // smartActions[].{triggerEnabled, approvalRequired, userApprovalEnabled,
@@ -530,5 +536,186 @@ describe('roles-csv computeDiff', () => {
         value: false,
       },
     ]);
+  });
+});
+
+describe('roles-csv displayName columns', () => {
+  const ENV = 3;
+  const sa = (name, extra = {}) => ({
+    smartActionName: name,
+    triggerEnabled: true,
+    approvalRequired: false,
+    userApprovalEnabled: false,
+    selfApprovalEnabled: false,
+    ...extra,
+  });
+  const collection = (name, smartActions = [], flag = true) => ({
+    collectionName: name,
+    browseEnabled: flag,
+    readEnabled: flag,
+    addEnabled: flag,
+    editEnabled: flag,
+    deleteEnabled: flag,
+    exportEnabled: flag,
+    smartActions,
+  });
+  const admin = collections => role('Admin', [{ environmentId: ENV, enabled: true, collections }]);
+  const labelsOf = collections => ({ collections });
+
+  // The same inputs apply.ts builds: the roles' own state (with ids), and the file parsed
+  // with the environment's collections.
+  const diffOf = (roles, csv) => {
+    const current = currentStateOf(roles, ENV).map((state, i) => ({ ...state, id: `id-${i}` }));
+    const desired = parseWide(csv, ENV, environmentCollectionsOf(roles, ENV));
+    return computeDiff(current, desired);
+  };
+  const expectNoOp = diffs => {
+    expect(diffs.map(d => d.roleId)).not.toContain(null);
+    expect(diffs.flatMap(d => d.ops)).toStrictEqual([]);
+  };
+
+  const roles = [admin([collection('orders', [sa('Mark as shipped')])])];
+  const labels = labelsOf([
+    {
+      name: 'orders',
+      displayName: 'Commandes',
+      actions: [{ name: 'Mark as shipped', displayName: 'Marquer expédiée' }],
+    },
+  ]);
+
+  it('leaves the CSV untouched when no labels are given', () => {
+    expect.assertions(2);
+    expect(formatWide(roles, ENV, undefined)).toBe(formatWide(roles, ENV));
+    expect(rows(formatWide(roles, ENV))[0]).not.toContain('displayName');
+  });
+
+  it('puts each display name first in its collection and smart action group', () => {
+    expect.assertions(2);
+    const [header, row] = rows(formatWide(roles, ENV, labels));
+    expect(header.split(',').filter(h => h.endsWith(':displayName'))).toStrictEqual([
+      'orders:displayName',
+      'orders:Mark as shipped:displayName',
+    ]);
+    expect(row.split(',').slice(0, 3)).toStrictEqual(['Admin', 'true', 'Commandes']);
+  });
+
+  it('fills a smart action column with its display name on every role row', () => {
+    expect.assertions(1);
+    const two = [
+      ...roles,
+      role('Viewer', [{ environmentId: ENV, enabled: false, collections: [] }]),
+    ];
+    const [header, ...body] = rows(formatWide(two, ENV, labels));
+    const index = header.split(',').indexOf('orders:Mark as shipped:displayName');
+    expect(body.map(r => r.split(',')[index])).toStrictEqual([
+      'Marquer expédiée',
+      'Marquer expédiée',
+    ]);
+  });
+
+  it('falls back to the technical name for a collection or action the labels lack', () => {
+    expect.assertions(2);
+    const partial = labelsOf([{ name: 'orders', displayName: 'Commandes', actions: [] }]);
+    const [header, row] = rows(formatWide(roles, ENV, partial));
+    const cells = row.split(',');
+    expect(cells[header.split(',').indexOf('orders:displayName')]).toBe('Commandes');
+    expect(cells[header.split(',').indexOf('orders:Mark as shipped:displayName')]).toBe(
+      'Mark as shipped',
+    );
+  });
+
+  it('falls back to technical names for an empty label list', () => {
+    expect.assertions(1);
+    const [header, row] = rows(formatWide(roles, ENV, labelsOf([])));
+    expect(row.split(',')[header.split(',').indexOf('orders:displayName')]).toBe('orders');
+  });
+
+  it('replaces line breaks in a label with a space and still plans no operation', () => {
+    expect.assertions(3);
+    const multiLine = labelsOf([
+      { name: 'orders', displayName: 'Ship\nnow\r\nplease\r', actions: [] },
+    ]);
+    const csv = formatWide(roles, ENV, multiLine);
+    expect(rows(csv)[1].split(',')[2]).toBe('Ship now please ');
+    expectNoOp(diffOf(roles, csv));
+  });
+
+  it('plans no operation on a --team export read back unchanged', () => {
+    expect.assertions(2);
+    expectNoOp(diffOf(roles, formatWide(roles, ENV, labels)));
+  });
+
+  it('ignores an edited displayName cell', () => {
+    expect.assertions(2);
+    const csv = formatWide(roles, ENV, labels)
+      .replace('Commandes', 'Renamed')
+      .replace('Marquer expédiée', 'true');
+    expectNoOp(diffOf(roles, csv));
+  });
+
+  it('still rejects a wrong-case displayName column', () => {
+    expect.assertions(2);
+    const header = 'role,enabled,orders:displayname';
+    expect(() => parseWide(`${header}\nAdmin,true,x\n`, ENV)).toThrow(
+      'Unknown permission column "orders:displayname"',
+    );
+    expect(() => parseWide('role,enabled,orders:Ship:displayname\nAdmin,true,x\n', ENV)).toThrow(
+      'Unknown permission column "orders:Ship:displayname"',
+    );
+  });
+
+  it('still parses an action literally named displayName as a write column', () => {
+    expect.assertions(1);
+    const parsed = parseWide('role,enabled,orders:displayName:trigger\nAdmin,true,true\n', ENV);
+    expect(parsed[0].collections).toStrictEqual([
+      {
+        collectionName: 'orders',
+        smartActions: [{ smartActionName: 'displayName', triggerEnabled: true }],
+      },
+    ]);
+  });
+
+  describe('with colon names', () => {
+    const colonRoles = [
+      admin([
+        collection('billing', [sa('SAML SSO #2: Edit SSO config')]),
+        collection('billing:invoices', [sa('Refund')]),
+      ]),
+    ];
+    const colonLabels = labelsOf([
+      {
+        name: 'billing',
+        displayName: 'Facturation',
+        actions: [{ name: 'SAML SSO #2: Edit SSO config', displayName: 'SSO' }],
+      },
+      {
+        name: 'billing:invoices',
+        displayName: 'Factures',
+        actions: [{ name: 'Refund', displayName: 'Rembourser' }],
+      },
+    ]);
+
+    it('carries the right label on each column and plans no operation', () => {
+      expect.assertions(4);
+      const csv = formatWide(colonRoles, ENV, colonLabels);
+      const [header, row] = rows(csv);
+      const cell = h => row.split(',')[header.split(',').indexOf(h)];
+      expect(cell('billing:invoices:Refund:displayName')).toBe('Rembourser');
+      expect(cell('billing:SAML SSO #2: Edit SSO config:displayName')).toBe('SSO');
+      expectNoOp(diffOf(colonRoles, csv));
+    });
+
+    it('rejects colliding write headers as ambiguous, not as a displayName error', () => {
+      expect.assertions(1);
+      const colliding = [
+        admin([
+          collection('billing', [sa('invoices:Refund', { triggerEnabled: true })]),
+          collection('billing:invoices', [sa('Refund', { triggerEnabled: false })]),
+        ]),
+      ];
+      expect(() => diffOf(colliding, formatWide(colliding, ENV, labelsOf([])))).toThrow(
+        'Ambiguous CSV column',
+      );
+    });
   });
 });

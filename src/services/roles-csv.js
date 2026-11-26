@@ -13,6 +13,9 @@ const SMART_ACTION_SUFFIXES = [
 ];
 const SMART_ACTION_WRITE_SUFFIXES = ['trigger', 'approvalRequired', 'userApproval', 'selfApproval'];
 
+// Read-only column carrying the name a team's layout shows, exported with `--team`.
+const DISPLAY_NAME_SUFFIX = 'displayName';
+
 const CRUD_FIELD_MAP = {
   browse: 'browseEnabled',
   read: 'readEnabled',
@@ -98,9 +101,14 @@ function collectSmartActionsForCollection(roles, envId, colName) {
   return Array.from(actionSet).sort();
 }
 
-function collectColumns(collections, roles, envId) {
+function collectColumns(collections, roles, envId, withDisplayNames) {
+  const crudSuffixes = withDisplayNames ? [DISPLAY_NAME_SUFFIX, ...CRUD_SUFFIXES] : CRUD_SUFFIXES;
+  const saSuffixes = withDisplayNames
+    ? [DISPLAY_NAME_SUFFIX, ...SMART_ACTION_SUFFIXES]
+    : SMART_ACTION_SUFFIXES;
+
   return collections.reduce((cols, colName) => {
-    const crudCols = CRUD_SUFFIXES.map(s => ({
+    const crudCols = crudSuffixes.map(s => ({
       header: `${colName}:${s}`,
       collectionName: colName,
       suffix: s,
@@ -109,7 +117,7 @@ function collectColumns(collections, roles, envId) {
     const saCols = actions.reduce(
       (acc, action) => [
         ...acc,
-        ...SMART_ACTION_SUFFIXES.map(s => ({
+        ...saSuffixes.map(s => ({
           header: `${colName}:${action}:${s}`,
           collectionName: colName,
           actionName: action,
@@ -140,8 +148,8 @@ function collectionNamesOf(roles, envId) {
   return Array.from(collectionSet).sort();
 }
 
-function buildColumns(roles, envId) {
-  return collectColumns(collectionNamesOf(roles, envId), roles, envId);
+function buildColumns(roles, envId, withDisplayNames) {
+  return collectColumns(collectionNamesOf(roles, envId), roles, envId, withDisplayNames);
 }
 
 /**
@@ -218,13 +226,16 @@ function getSmartActionValue(col, actionName, suffix) {
 // Reads the structured column descriptor built by collectColumns rather than
 // re-splitting its `header`: a smart-action name may itself contain a colon
 // (e.g. "SAML SSO #2: Edit SSO config"), which a split would mis-slice.
-function buildCellForColumn(column, colByName) {
+function buildCellForColumn(column, colByName, displayNameOf) {
+  if (column.suffix === DISPLAY_NAME_SUFFIX) {
+    return displayNameOf(column.collectionName, column.actionName);
+  }
   const col = colByName[column.collectionName];
   if (column.actionName === undefined) return String(getCrudValue(col, column.suffix));
   return String(getSmartActionValue(col, column.actionName, column.suffix));
 }
 
-function buildRoleRow(role, columns, envId) {
+function buildRoleRow(role, columns, envId, displayNameOf) {
   const envPerms = (role.permissions.environments || []).find(
     e => String(e.environmentId ?? e.id) === String(envId),
   );
@@ -235,20 +246,46 @@ function buildRoleRow(role, columns, envId) {
       colByName[col.collectionName] = col;
     });
   }
-  const cells = [role.name, String(enabled), ...columns.map(h => buildCellForColumn(h, colByName))];
+  const cells = [
+    role.name,
+    String(enabled),
+    ...columns.map(h => buildCellForColumn(h, colByName, displayNameOf)),
+  ];
   return cells.map(escapeCsv).join(',');
+}
+
+// A label with a line break would split its row over several physical lines, which
+// parseWide reads one record per line: keep the file one record per line.
+function singleLine(label) {
+  return String(label).replace(/\r\n|\r|\n/g, ' ');
+}
+
+// An entry the labels do not carry (layout lag, team without a rendering) shows its
+// technical name.
+function displayNameLookup(labels) {
+  const collections = new Map((labels.collections || []).map(c => [c.name, c]));
+  return (collectionName, actionName) => {
+    const collection = collections.get(collectionName);
+    if (actionName === undefined) return singleLine(collection?.displayName || collectionName);
+    const action = (collection?.actions || []).find(a => a.name === actionName);
+    return singleLine(action?.displayName || actionName);
+  };
 }
 
 /**
  * Format an array of full role objects into a wide CSV string.
  * @param {Array<{ id: string, name: string, permissions: { environments: Array } }>} roles
  * @param {string|number} envId
+ * @param {{ collections: Array<{ name: string, displayName: string,
+ *   actions: Array<{ name: string, displayName: string }> }> }} [labels] a team's
+ *   display names: when given, read-only `displayName` columns are added.
  * @returns {string}
  */
-function formatWide(roles, envId) {
-  const columns = buildColumns(roles, envId);
+function formatWide(roles, envId, labels) {
+  const columns = buildColumns(roles, envId, labels !== undefined);
+  const displayNameOf = labels ? displayNameLookup(labels) : undefined;
   const header = ['role', 'enabled', ...columns.map(c => c.header)].map(escapeCsv).join(',');
-  const rows = [header, ...roles.map(role => buildRoleRow(role, columns, envId))];
+  const rows = [header, ...roles.map(role => buildRoleRow(role, columns, envId, displayNameOf))];
   return `${rows.join('\n')}\n`;
 }
 
@@ -380,8 +417,10 @@ function parseRow(headers, cells, envId, knownCollections) {
   const name = row.role;
   const enabled = parseBool(row.enabled);
 
+  // displayName columns are read-only on export (like hasConditions): skipped before
+  // parseHeader so a colon-named collection can never make them ambiguous.
   const collectionMap = Object.keys(row)
-    .filter(h => h !== 'role' && h !== 'enabled')
+    .filter(h => h !== 'role' && h !== 'enabled' && splitSuffix(h)?.suffix !== DISPLAY_NAME_SUFFIX)
     .reduce((map, h) => applyHeader(map, h, row[h], knownCollections), {});
 
   return { name, enabled, envId: String(envId), collections: Object.values(collectionMap) };
